@@ -7,7 +7,7 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : DbContext
     {
 
-        public CardOverflowDb(DbContextOptions<CardOverflowDb> options)
+        public CardOverflowDb(DbContextOptions options)
             : base(options)
         {
         }
