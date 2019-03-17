@@ -4,7 +4,7 @@ open Microsoft.EntityFrameworkCore
 open CardOverflow.Entity
 
 module DbFactory =
-  let options = DbContextOptionsBuilder().UseSqlServer("Server=localhost;Database=TwitterCurator;Trusted_Connection=True;").Options
+  let options = DbContextOptionsBuilder().UseSqlServer("Server=localhost;Database=CardOverflow;Trusted_Connection=True;").Options
   let create () = new CardOverflowDb(options)
 
 module DbService =
