@@ -1,5 +1,6 @@
-namespace TwitterCurator.Shared
+namespace CardOverflow.Api
 open System
+open System.Linq
 
 module Temperature =
   [<Measure>] type degC
@@ -18,3 +19,15 @@ type WeatherForecast = {
   Summary : string
 } with
   member this.TemperatureF = convertDegCToF this.TemperatureC
+
+type WeatherService () =
+
+  let summaries = [| "Freezing"; "Bracing"; "Chilly"; "Cool"; "Mild"; "Warm"; "Balmy"; "Hot"; "Sweltering"; "Scorching" |]
+
+  member this.GetForecasts () =
+    let rng = Random ()
+    Enumerable.Range(1, 5).Select(fun index -> {
+      Date = DateTime.Now.AddDays (float index)
+      TemperatureC = rng.Next (-20, 55) |> float |> (*) 1.0<degC>
+      Summary = summaries.[rng.Next summaries.Length]
+    })

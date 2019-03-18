@@ -1,6 +1,6 @@
 @page "/fetchdata"
-@using CardOverflow.Web.Services
-@inject WeatherForecastService ForecastService
+@using CardOverflow.Api
+@inject WeatherService ForecastService
 
 <h1>Weather forecast</h1>
 
@@ -36,10 +36,10 @@ else
 }
 
 @functions {
-    WeatherForecast[] forecasts;
+    IEnumerable<WeatherForecast> forecasts;
 
     protected override async Task OnInitAsync()
     {
-        forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
+        forecasts = ForecastService.GetForecasts();
     }
 }
