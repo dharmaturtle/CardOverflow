@@ -1,4 +1,4 @@
-﻿namespace TwitterCurator.Shared
+﻿namespace CardOverflow.Api
 
 open Microsoft.EntityFrameworkCore
 open CardOverflow.Entity

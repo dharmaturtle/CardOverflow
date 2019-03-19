@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <Compile Include="DbFactory.fs" />
+    <Compile Include="CardService.fs" />
     <Compile Include="WeatherForecast.fs" />
   </ItemGroup>
 

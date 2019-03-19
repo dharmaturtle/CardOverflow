@@ -1,0 +1,46 @@
+﻿@page "/TestCards"
+@using CardOverflow.Api
+@using CardOverflow.Entity
+@using System
+@using System.Linq
+@inject CardService CardService
+
+<p>Let's test your progress!</p>
+
+@if (Cards == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <div tabindex="0" onkeydown=@OnKeyDown>
+    <p>@Cards[ActiveCardIndex].Question</p>
+    <button class="btn btn-primary" onclick="@ToggleAnswer">Show answer</button>
+    <p class="@AnswerCss">@Cards[ActiveCardIndex].Answer</p>
+    <button class="btn btn-primary" onclick="@NextCardClick">Next card</button>
+  </div>
+}
+
+@functions {
+  List<Card> Cards;
+  int ActiveCardIndex = 0;
+  string AnswerCss => _hideAnswer ? "collapse" : "";
+  bool _hideAnswer = true;
+
+  protected override async Task OnInitAsync() {
+    Cards = CardService.GetCards().OrderBy(a => Guid.NewGuid()).ToList();
+  }
+
+  void NextCardClick() {
+    ActiveCardIndex++;
+    _hideAnswer = true;
+  }
+
+  void ToggleAnswer() =>
+    _hideAnswer = !_hideAnswer;
+
+  void OnKeyDown(UIKeyboardEventArgs eventArgs) {
+    Console.WriteLine(Json.Serialize(eventArgs));
+    if (eventArgs.Key == "ArrowDown") {
+      NextCardClick();
+    }
+  }
+
+}

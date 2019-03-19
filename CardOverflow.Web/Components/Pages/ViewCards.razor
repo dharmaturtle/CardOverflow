@@ -1,0 +1,36 @@
+﻿@page "/ViewCards"
+@using CardOverflow.Api
+@using CardOverflow.Entity
+@inject CardService CardService
+
+<p>All the cards you've made!</p>
+
+@if (Cards == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Question</th>
+        <th>Answer</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var card in Cards) {
+        <tr>
+          <td>@card.Question</td>
+          <td>@card.Answer</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@functions {
+  IEnumerable<Card> Cards;
+
+  protected override async Task OnInitAsync() {
+    Cards = CardService.GetCards();
+  }
+
+}

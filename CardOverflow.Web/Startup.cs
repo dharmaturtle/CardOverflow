@@ -22,6 +22,7 @@ namespace CardOverflow.Web {
       services.AddRazorComponents();
 
       services.AddSingleton<WeatherService>();
+      services.AddSingleton<CardService>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
