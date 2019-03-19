@@ -15,4 +15,11 @@
     <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Watch Include="**\*.cshtml" />
+    <Watch Include="**\*.razor" />
+    <Watch Include="**\(!.g.)*.cs" />
+    <Watch Include="..\**\*.fs" />
+  </ItemGroup>
+
 </Project>
