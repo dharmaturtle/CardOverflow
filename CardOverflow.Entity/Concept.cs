@@ -3,19 +3,19 @@ using System.Collections.Generic;
 
 namespace CardOverflow.Entity
 {
-    public partial class User
+    public partial class Concept
     {
-        public User()
+        public Concept()
         {
+            Cards = new HashSet<Card>();
             ConceptTagUsers = new HashSet<ConceptTagUser>();
-            Decks = new HashSet<Deck>();
         }
 
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
 
+        public virtual ICollection<Card> Cards { get; set; }
         public virtual ICollection<ConceptTagUser> ConceptTagUsers { get; set; }
-        public virtual ICollection<Deck> Decks { get; set; }
     }
 }

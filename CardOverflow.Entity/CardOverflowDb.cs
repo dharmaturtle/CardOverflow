@@ -13,8 +13,12 @@ namespace CardOverflow.Entity
         }
 
         public virtual DbSet<Card> Cards { get; set; }
-        public virtual DbSet<CardDeck> CardDecks { get; set; }
+        public virtual DbSet<Concept> Concepts { get; set; }
+        public virtual DbSet<ConceptTagUser> ConceptTagUsers { get; set; }
         public virtual DbSet<Deck> Decks { get; set; }
+        public virtual DbSet<DeckCard> DeckCards { get; set; }
+        public virtual DbSet<DeckTag> DeckTags { get; set; }
+        public virtual DbSet<Tag> Tags { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -33,30 +37,53 @@ namespace CardOverflow.Entity
 
                 entity.Property(e => e.Answer)
                     .IsRequired()
-                    .HasMaxLength(1000);
+                    .HasMaxLength(1028);
 
                 entity.Property(e => e.Question)
                     .IsRequired()
-                    .HasMaxLength(1000);
+                    .HasMaxLength(1028);
+
+                entity.HasOne(d => d.Concept)
+                    .WithMany(p => p.Cards)
+                    .HasForeignKey(d => d.ConceptId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Card_Concept");
             });
 
-            modelBuilder.Entity<CardDeck>(entity =>
+            modelBuilder.Entity<Concept>(entity =>
             {
-                entity.HasKey(e => new { e.CardId, e.DeckId });
+                entity.ToTable("Concept");
 
-                entity.ToTable("CardDeck");
+                entity.Property(e => e.Description).HasMaxLength(512);
 
-                entity.HasOne(d => d.Card)
-                    .WithMany(p => p.CardDecks)
-                    .HasForeignKey(d => d.CardId)
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(128);
+            });
+
+            modelBuilder.Entity<ConceptTagUser>(entity =>
+            {
+                entity.HasKey(e => new { e.ConceptId, e.TagId, e.UserId });
+
+                entity.ToTable("Concept_Tag_User");
+
+                entity.HasOne(d => d.Concept)
+                    .WithMany(p => p.ConceptTagUsers)
+                    .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CardDeck_Card");
+                    .HasConstraintName("FK_Concept_Tag_User_Concept");
 
-                entity.HasOne(d => d.Deck)
-                    .WithMany(p => p.CardDecks)
-                    .HasForeignKey(d => d.DeckId)
+                entity.HasOne(d => d.Tag)
+                    .WithMany(p => p.ConceptTagUsers)
+                    .HasForeignKey(d => d.TagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CardDeck_Deck");
+                    .HasConstraintName("FK_Concept_Tag_User_Tag");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.ConceptTagUsers)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Concept_Tag_User_User");
             });
 
             modelBuilder.Entity<Deck>(entity =>
@@ -72,6 +99,53 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deck_User");
+            });
+
+            modelBuilder.Entity<DeckCard>(entity =>
+            {
+                entity.HasKey(e => new { e.DeckId, e.CardId });
+
+                entity.ToTable("Deck_Card");
+
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.DeckCards)
+                    .HasForeignKey(d => d.CardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Deck_Card_Card");
+
+                entity.HasOne(d => d.Deck)
+                    .WithMany(p => p.DeckCards)
+                    .HasForeignKey(d => d.DeckId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Deck_Card_Deck");
+            });
+
+            modelBuilder.Entity<DeckTag>(entity =>
+            {
+                entity.HasKey(e => new { e.DeckId, e.TagId });
+
+                entity.ToTable("Deck_Tag");
+
+                entity.HasOne(d => d.Deck)
+                    .WithMany(p => p.DeckTags)
+                    .HasForeignKey(d => d.DeckId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Deck_Tag_Deck");
+
+                entity.HasOne(d => d.Tag)
+                    .WithMany(p => p.DeckTags)
+                    .HasForeignKey(d => d.TagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Deck_Tag_Tag");
+            });
+
+            modelBuilder.Entity<Tag>(entity =>
+            {
+                entity.ToTable("Tag");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(64);
             });
 
             modelBuilder.Entity<User>(entity =>

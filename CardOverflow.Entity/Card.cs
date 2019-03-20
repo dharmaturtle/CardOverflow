@@ -7,13 +7,15 @@ namespace CardOverflow.Entity
     {
         public Card()
         {
-            CardDecks = new HashSet<CardDeck>();
+            DeckCards = new HashSet<DeckCard>();
         }
 
         public int Id { get; set; }
+        public int ConceptId { get; set; }
         public string Question { get; set; }
         public string Answer { get; set; }
 
-        public virtual ICollection<CardDeck> CardDecks { get; set; }
+        public virtual Concept Concept { get; set; }
+        public virtual ICollection<DeckCard> DeckCards { get; set; }
     }
 }
