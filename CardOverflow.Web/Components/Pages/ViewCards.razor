@@ -1,7 +1,7 @@
 ﻿@page "/ViewCards"
 @using CardOverflow.Api
 @using CardOverflow.Entity
-@inject CardService CardService
+@inject CardRepository CardRepository
 
 <p>All the cards you've made!</p>
 
@@ -30,7 +30,7 @@
   IEnumerable<Card> Cards;
 
   protected override async Task OnInitAsync() {
-    Cards = CardService.GetCards();
+    Cards = CardRepository.GetCards();
   }
 
 }

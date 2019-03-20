@@ -3,7 +3,7 @@
 @using CardOverflow.Entity
 @using System
 @using System.Linq
-@inject CardService CardService
+@inject CardRepository CardRepository
 
 <p>Let's test your progress!</p>
 
@@ -25,7 +25,7 @@
   bool _hideAnswer = true;
 
   protected override async Task OnInitAsync() {
-    Cards = CardService.GetCards().OrderBy(a => Guid.NewGuid()).ToList();
+    Cards = CardRepository.GetCards().OrderBy(a => Guid.NewGuid()).ToList();
   }
 
   void NextCardClick() {

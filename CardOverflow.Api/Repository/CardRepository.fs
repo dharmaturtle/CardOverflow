@@ -3,7 +3,7 @@ open System
 open System.Linq
 open CardOverflow.Entity
 
-type CardService () =
+type CardRepository () =
 
   member this.GetCards () =
     DbService.query(fun db -> db.Cards.ToList())

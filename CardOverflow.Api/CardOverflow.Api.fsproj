@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="DbFactory.fs" />
-    <Compile Include="CardService.fs" />
+    <Compile Include="Repository\DbFactory.fs" />
+    <Compile Include="Repository\CardRepository.fs" />
     <Compile Include="WeatherForecast.fs" />
   </ItemGroup>
 

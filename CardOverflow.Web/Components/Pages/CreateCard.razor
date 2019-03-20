@@ -1,6 +1,6 @@
 ﻿@page "/CreateCard"
 @using CardOverflow.Api
-@inject CardService CardService
+@inject CardRepository CardRepository
 
 <input type="text" bind-value-oninput="@Question" placeholder="Question" />
 <input type="text" bind-value-oninput="@Answer" placeholder="Answer" />
@@ -11,7 +11,7 @@
   string Answer = "";
 
   void Save() {
-    CardService.SaveCard(Question, Answer);
+    CardRepository.SaveCard(Question, Answer);
     Question = "";
     Answer = "";
     // TODO: Set focus back on Question https://devblogs.microsoft.com/aspnet/blazor-0-3-0-experimental-release-now-available/
