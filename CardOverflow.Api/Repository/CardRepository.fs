@@ -3,11 +3,11 @@ open System
 open System.Linq
 open CardOverflow.Entity
 
-type CardRepository () =
+type CardRepository(dbService:DbService) =
 
   member this.GetCards () =
-    DbService.query(fun db -> db.Cards.ToList())
+    dbService.Query(fun db -> db.Cards.ToList())
   
   member this.SaveCard (question: string, answer: string) =
-    let c = Card(Question=question, Answer=answer)
-    DbService.command(fun db -> db.Cards.Add(c))
+    let c = Card(Question=question, Answer=answer, ConceptId=1) // todo
+    dbService.Command(fun db -> db.Cards.Add(c))

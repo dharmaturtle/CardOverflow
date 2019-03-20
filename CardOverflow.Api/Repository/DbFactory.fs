@@ -3,15 +3,23 @@
 open Microsoft.EntityFrameworkCore
 open CardOverflow.Entity
 
-module DbFactory =
-  let options = DbContextOptionsBuilder().UseSqlServer("Server=localhost;Database=CardOverflow;Trusted_Connection=True;").Options
-  let create () = new CardOverflowDb(options)
+type IConnectionStringProvider =
+  abstract member Get : string
 
-module DbService =
-  let query (q) =
-    use db = DbFactory.create ()
+type ConnectionStringProvider() =
+  interface IConnectionStringProvider with 
+    member this.Get = "Server=localhost;Database=CardOverflow;Trusted_Connection=True;"
+
+type DbFactory(connectionStringProvider:IConnectionStringProvider) =
+  member this.Create() = 
+    DbContextOptionsBuilder().UseSqlServer(connectionStringProvider.Get).Options
+    |> fun o -> new CardOverflowDb(o)
+
+type DbService(dbFactory: DbFactory) =
+  member this.Query(q) =
+    use db = dbFactory.Create()
     q db
-  let command (q) : unit =
-    use db = DbFactory.create () // is this actually disposed?
+  member this.Command(q) : unit =
+    use db = dbFactory.Create()
     q db |> ignore
-    db.SaveChanges () |> ignore
+    db.SaveChanges() |> ignore
