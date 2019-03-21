@@ -9,6 +9,36 @@
   <base href="~/" />
   <environment include="Development">
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <script>
+      var wait = ms => new Promise((r, j) => setTimeout(r, ms)); // Inspired by https://github.com/martasp/BlazorLiveReload
+      var failed = false;
+      async function fetchAsync() {
+        try {
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function () {
+            if (this.status === 200 && failed) { // connected and previously failed
+              location.reload();
+            } else if (this.status === 0 && this.readyState === 4) { // connection broken
+              failed = true;
+            }
+          };
+          xhttp.open("GET", "/", true);
+          xhttp.send();
+        }
+        catch (e) {
+          failed = true;
+          await wait(200);
+          console.log("failed " + e);
+        }
+      }
+      async function Pooling() {
+        while (true) {
+          fetchAsync();
+          await wait(200);
+        }
+      }
+      Pooling();
+    </script>
   </environment>
   <environment exclude="Development">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
