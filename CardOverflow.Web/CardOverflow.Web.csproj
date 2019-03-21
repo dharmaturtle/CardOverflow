@@ -18,6 +18,7 @@
   <ItemGroup>
     <Watch Include="**\*.cshtml" />
     <Watch Include="**\*.razor" />
+    <Watch Include="**\(!*\obj)*.json" />
     <Watch Include="**\(!.g.)*.cs" />
     <Watch Include="..\**\*.fs" />
   </ItemGroup>
