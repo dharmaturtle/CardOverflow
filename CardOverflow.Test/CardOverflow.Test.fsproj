@@ -8,8 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="CardServiceTests.fs" />
+    <Compile Include="TestHelpers.fs" />
     <Compile Include="DbServiceTests.fs" />
+    <Compile Include="CardServiceTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
