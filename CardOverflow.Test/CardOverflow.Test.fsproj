@@ -1,32 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-
-    <IsPackable>false</IsPackable>
-    <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Include="TestHelpers.fs" />
-    <Compile Include="DbServiceTests.fs" />
-    <Compile Include="CardServiceTests.fs" />
-    <Compile Include="Program.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
     <ProjectReference Include="..\CardOverflow.Entity\CardOverflow.Entity.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Compile Include="TestHelpers.fs" />
+    <Compile Include="MergeTests.fs" />
+    <Compile Include="DbServiceTests.fs" />
+    <Compile Include="CardServiceTests.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
 </Project>
