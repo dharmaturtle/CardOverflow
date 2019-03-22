@@ -7,11 +7,11 @@ module Extensions =
   type IEnumerable<'TDest> with
     member target.Merge<'TDest, 'TSource>
       (source:IEnumerable<'TSource>) 
-      (predicate:'TDest * 'TSource -> bool)
-      (create:'TSource -> 'TDest)
-      (delete:'TDest -> unit)
-      (add:'TDest -> unit)
-      (update:'TDest -> 'TSource -> unit) =
+      (predicate)
+      (create)
+      (delete)
+      (add)
+      (update) =
       let updates = [ for d in target do
                       for s in source do
                       yield (d,s)
