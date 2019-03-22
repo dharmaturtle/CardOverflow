@@ -1,0 +1,15 @@
+@page "/Webcam"
+@inject IJSRuntime JsRuntime
+
+<h1>Webcam</h1>
+<input type="text" bind="@Message" />
+<button onclick="@ShowAlert">Show Alert</button>
+
+@functions {
+  string Message = "";
+
+  private async Task ShowAlert() {
+    await JsRuntime.InvokeAsync<object>("ShowAlert", Message);
+  }
+
+}
