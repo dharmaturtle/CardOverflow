@@ -14,20 +14,20 @@ open Temperature
 
 [<CLIMutable>]
 type WeatherForecast = {
-  Date : DateTime
-  TemperatureC : float<degC>
-  Summary : string
-} with
+  Date: DateTime
+  TemperatureC: float<degC>
+  Summary: string
+ } with
   member this.TemperatureF = convertDegCToF this.TemperatureC
 
-type WeatherService () =
+type WeatherService() =
 
   let summaries = [| "Freezing"; "Bracing"; "Chilly"; "Cool"; "Mild"; "Warm"; "Balmy"; "Hot"; "Sweltering"; "Scorching" |]
 
-  member this.GetForecasts () =
-    let rng = Random ()
+  member this.GetForecasts() =
+    let rng = Random()
     Enumerable.Range(1, 5).Select(fun index -> {
-      Date = DateTime.Now.AddDays (float index)
-      TemperatureC = rng.Next (-20, 55) |> float |> (*) 1.0<degC>
+      Date = DateTime.Now.AddDays(float index)
+      TemperatureC = rng.Next(-20, 55) |> float |> (*) 1.0<degC>
       Summary = summaries.[rng.Next summaries.Length]
     })

@@ -1,12 +1,12 @@
 module DbServiceTests
 
+open CardOverflow.Entity
 open System
 open System.Linq
 open Xunit
-open CardOverflow.Entity
 
 [<Fact>]
-let ``DbService can add and retreive a user`` () =
+let ``DbService can add and retreive a user``() =
   let name = Guid.NewGuid().ToString().Take(32) |> String.Concat
   let email = Guid.NewGuid().ToString()
 
