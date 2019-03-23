@@ -19,3 +19,7 @@ let ``DbService can add and retreive a user``() =
   |> Seq.filter (fun x -> x.Name = name && x.Email = email)
   |> Seq.length
   |> fun l -> Assert.Equal(1, l)
+
+//[<Fact>]
+let ``Create a new database``() =
+  Test.DbService.Command(fun db -> db.Database.EnsureCreated())
