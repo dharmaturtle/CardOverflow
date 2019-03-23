@@ -49,7 +49,15 @@
   </environment>
   <link href="css/site.css" rel="stylesheet" />
   <script language="JavaScript">
-    function StartWebCam() { // https://simpl.info/getusermedia/sources/ , https://www.html5rocks.com/en/tutorials/getusermedia/intro/ , for snapshot: https://www.c-sharpcorner.com/article/capturing-image-from-web-cam-in-asp-net-core-mvc/
+    /*
+     * https://simpl.info/getusermedia/sources/ ,
+     * https://www.html5rocks.com/en/tutorials/getusermedia/intro/
+     * for snapshot:
+     * https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Taking_still_photos
+     * https://stackoverflow.com/questions/33975431/how-can-i-capture-an-image-via-the-users-webcam-using-getusermedia
+     * https://www.c-sharpcorner.com/article/capturing-image-from-web-cam-in-asp-net-core-mvc/
+     */
+    function StartWebCam() {
       var videoElement = document.querySelector('video');
       var audioSelect = document.querySelector('select#audioSource');
       var videoSelect = document.querySelector('select#videoSource');
