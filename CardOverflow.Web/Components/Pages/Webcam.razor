@@ -2,21 +2,22 @@
 @inject IJSRuntime JsRuntime
 
 <h1>Webcam</h1>
-<div class="select">
-  <label for="audioSource">Audio source: </label><select id="audioSource"></select>
+<div class="camera">
+  <video id="video">Video stream not available.</video>
+  <button id="startbutton">Take photo</button>
 </div>
-<div class="select">
-  <label for="videoSource">Video source: </label><select id="videoSource"></select>
+<div>
+  <p>Canvas</p>
+  <canvas id="canvas"></canvas>
 </div>
-<video autoplay></video>
-
-<button onclick="@StartWebcam">Start Webcam</button>
+<div class="output">
+  <p>Img</p>
+  <img id="photo">
+</div>
 
 @functions {
-  string Message = "";
 
-  private async Task StartWebcam() {
+  protected override async Task OnAfterRenderAsync() => // todo: https://github.com/aspnet/AspNetCore/issues/8327
     await JsRuntime.InvokeAsync<object>("StartWebCam");
-  }
 
 }
