@@ -25,9 +25,10 @@ type ConceptRepository(dbService: DbService) =
         id
         (db.Remove >> ignore)
         (db.Add >> ignore)
-        (fun d s -> 
-          d.Title <- s.Title // { Title = "", Description = "" }
-          d.Description <- s.Description)
+        (fun d s -> // todo make copyto
+          d.Title <- s.Title
+          d.Description <- s.Description
+          db.Update d |> ignore)
     )
 
 type UserRepository(dbService: DbService) =

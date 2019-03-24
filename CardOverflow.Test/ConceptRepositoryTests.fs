@@ -4,6 +4,7 @@ open CardOverflow.Api
 open CardOverflow.Entity
 open CardOverflow.Test
 open System
+open System.Linq
 open Xunit
 
 [<Fact>]
@@ -20,5 +21,25 @@ let ``ConceptRepository can add and retreive a Concept``() =
 
   conceptRepository.GetConcepts()
   |> Seq.filter(fun x -> x.Title = title && x.Description = description)
-  |> Seq.length
-  |> fun l -> Assert.Equal(1, l)
+  |> Assert.Single
+
+[<Fact>]
+let ``ConceptRepository's SaveConcepts updates a Concept``() =
+  use tempDb = new TempDbService()
+  let service = tempDb.RecreateDatabaseAndGetDbService()
+  let conceptRepository = service |> ConceptRepository
+  service.Command(fun db -> db.Concepts.Add(Concept(Title = "", Description = "")))
+  let updatedTitle = Guid.NewGuid().ToString()
+  let updatedDescription = Guid.NewGuid().ToString()
+  let updatedConcept = conceptRepository.GetConcepts().Single()
+  updatedConcept.Title <- updatedTitle
+  updatedConcept.Description <- updatedDescription
+
+  updatedConcept 
+  |> Seq.singleton 
+  |> fun x -> new ResizeArray<Concept>(x) 
+  |> conceptRepository.SaveConcepts
+
+  conceptRepository.GetConcepts()
+  |> Seq.filter(fun x -> x.Title = updatedTitle && x.Description = updatedDescription)
+  |> Assert.Single
