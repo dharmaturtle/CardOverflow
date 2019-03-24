@@ -19,42 +19,55 @@
   <tbody>
     @foreach (var concept in Concepts) {
       <tr>
-        <td>@concept.Title</td>
-        <td>@concept.Description</td>
         <td>
-          <button onclick="@(() => Delete(concept.Id))">Delete</button>
+          <p class="@(concept.EditTitle ? "collapse" : "")" onclick="@(() => ToggleTitle(concept.ViewId))">@concept.Model.Title</p>
+          <input class="@(concept.EditTitle ? "" : "collapse")" onblur="@(() => ToggleTitle(concept.ViewId))" type="text" bind-value-oninput="@concept.Model.Title" />
+        </td>
+        <td>@concept.Model.Description</td>
+        <td>
+          <button onclick="@(() => Delete(concept.ViewId))">Delete</button>
         </td>
       </tr>
     }
-    <tr>
-      <td><input type="text" bind-value-oninput="@Title" placeholder="Title" /></td>
-      <td><input type="text" bind-value-oninput="@Description" placeholder="Description" /></td>
-      <td><button onclick="@Save">Save</button></td>
-    </tr>
   </tbody>
 </table>
+
+<button onclick="@AddConcept">Add Concept</button>
+<button onclick="@Save">Save</button>
 
 @functions {
   string Question = "";
   string Answer = "";
-  string Title = "";
-  string Description = "";
-  List<Concept> Concepts;
+  List<ConceptViewModel> Concepts;
 
   protected override async Task OnInitAsync() {
-    Concepts = ConceptRepository.GetConcepts();
+    Concepts = ConceptRepository.GetConcepts().Select((c, i) => new ConceptViewModel(c, i)).ToList();
   }
 
-  void Delete(int id) {
-    Concepts.Remove(Concepts.First(c => c.Id == id));
-  }
+  void Delete(int viewId) =>
+    Concepts.Remove(Concepts.First(c => c.ViewId == viewId));
+
+  void ToggleTitle(int viewId) =>
+    Concepts.First(c => c.ViewId == viewId).EditTitle = !Concepts.First(c => c.ViewId == viewId).EditTitle;
+
+  void AddConcept() =>
+    new Concept { Title = "Title", Description = "Description" }
+    .Apply(c => new ConceptViewModel(c, Concepts.Max(x => x.ViewId) + 1))
+    .Do(Concepts.Add);
 
   void Save() {
-    Concepts.Add(new Concept { Title = Title, Description = Description }); // TODO Clicking save always adds a new row lol
-    ConceptRepository.SaveConcepts(Concepts);
-    Title = "";
-    Description = "";
+    ConceptRepository.SaveConcepts(Concepts.Select(c => c.Model).ToList());
     // TODO: Set focus back on Question https://devblogs.microsoft.com/aspnet/blazor-0-3-0-experimental-release-now-available/
+  }
+
+  private class ConceptViewModel {
+    public ConceptViewModel(Concept model, int viewId) {
+      Model = model;
+      ViewId = viewId;
+    }
+    public Concept Model { get; set; }
+    public int ViewId { get; set; }
+    public bool EditTitle { get; set; } = false;
   }
 
 }
