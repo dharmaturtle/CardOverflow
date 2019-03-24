@@ -12,7 +12,6 @@
     <Compile Include="DbServiceTests.fs" />
     <Compile Include="CardServiceTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
-    <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.3" />
