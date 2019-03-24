@@ -1,8 +1,10 @@
-﻿namespace CardOverflow.Api
+namespace CardOverflow.Api
 
 open System.Collections.Generic
 open System.Linq
+open System
 
+[<System.Runtime.CompilerServices.Extension>]
 module Extensions =
   type IEnumerable<'TDest> with
     member target.Merge<'TDest, 'TSource>
@@ -25,3 +27,11 @@ module Extensions =
         let o = create item
         update o item
         add o
+  
+  [<System.Runtime.CompilerServices.Extension>]
+  let Apply(input, (func: Func<'TInput, 'TOutput>)) = 
+    func.Invoke(input)
+
+  [<System.Runtime.CompilerServices.Extension>]
+  let Do(input, (action: Action<'TInput>)) = 
+    action.Invoke(input)
