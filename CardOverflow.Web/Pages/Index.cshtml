@@ -76,6 +76,7 @@
         canvas = document.getElementById('canvas');
         photo = document.getElementById('photo');
         startbutton = document.getElementById('startbutton');
+        rasterizebutton = document.getElementById('rasterizebutton');
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: false })
           .then(function (stream) {
@@ -110,6 +111,11 @@
           ev.preventDefault();
         }, false);
 
+        rasterizebutton.addEventListener('click', function (ev) {
+          rasterize();
+          ev.preventDefault();
+        }, false);
+
         clearphoto();
       }
 
@@ -121,6 +127,11 @@
         context.fillStyle = "#AAA";
         context.fillRect(0, 0, canvas.width, canvas.height);
 
+        var data = canvas.toDataURL('image/png');
+        photo.setAttribute('src', data);
+      }
+
+      function rasterize() {
         var data = canvas.toDataURL('image/png');
         photo.setAttribute('src', data);
       }
@@ -138,8 +149,45 @@
           canvas.height = height;
           context.drawImage(video, 0, 0, width, height);
 
-          var data = canvas.toDataURL('image/png');
-          photo.setAttribute('src', data);
+          // https://stackoverflow.com/questions/2368784
+          // last known position
+          var pos = { x: 0, y: 0 };
+
+          window.addEventListener('resize', resize);
+          document.addEventListener('mousemove', draw);
+          document.addEventListener('mousedown', setPosition);
+          document.addEventListener('mouseenter', setPosition);
+
+          // new position from mouse event
+          function setPosition(e) {
+            pos.x = e.clientX - canvas.offsetLeft;
+            pos.y = e.clientY - canvas.offsetTop;
+          }
+
+          // resize canvas
+          function resize() {
+            context.canvas.width = window.innerWidth;
+            context.canvas.height = window.innerHeight;
+          }
+
+          function draw(e) {
+            // mouse left button must be pressed
+            if (e.buttons !== 1) return;
+
+            context.beginPath(); // begin
+
+            context.lineWidth = 5;
+            context.lineCap = 'round';
+            context.strokeStyle = '#c0392b';
+
+            context.moveTo(pos.x, pos.y); // from
+            setPosition(e);
+            context.lineTo(pos.x, pos.y); // to
+
+            context.stroke(); // draw it!
+          }
+
+          rasterize();
         } else {
           clearphoto();
         }
