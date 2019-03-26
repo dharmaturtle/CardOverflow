@@ -195,6 +195,11 @@
       startup();
     }
   </script>
+  <script language="JavaScript">
+    function focusElement(element) {
+      element.focus();
+    }
+  </script>
 </head>
 <body>
   <app>@(await Html.RenderComponentAsync<App>())</app>

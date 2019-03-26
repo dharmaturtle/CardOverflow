@@ -1,6 +1,8 @@
 ﻿@page "/CreateCard"
 @using CardOverflow.Api
 @using CardOverflow.Entity
+@using CardOverflow.Web.Helpers
+@inject IJSRuntime JsRuntime
 @inject CardRepository CardRepository
 @inject ConceptRepository ConceptRepository
 
@@ -20,8 +22,8 @@
     @foreach (var concept in Concepts) {
       <tr>
         <td>
-          <p class="@(concept.EditTitle ? "collapse" : "")" onclick="@(() => ToggleTitle(concept.ViewId))">@concept.Model.Title</p>
-          <input class="@(concept.EditTitle ? "" : "collapse")" onblur="@(() => ToggleTitle(concept.ViewId))" type="text" bind-value-oninput="@concept.Model.Title" />
+          <p class="@(concept.EditTitle ? "collapse" : "")" onclick="@(() => EditTitle(concept.ViewId))">@concept.Model.Title</p>
+          <input ref="titleInput" class="@(concept.EditTitle ? "" : "collapse")" onblur="@(() => StopEditTitle(concept.ViewId))" type="text" bind-value-oninput="@concept.Model.Title" />
         </td>
         <td>@concept.Model.Description</td>
         <td>
@@ -39,6 +41,7 @@
   string Question = "";
   string Answer = "";
   List<ConceptViewModel> Concepts;
+  ElementRef titleInput;
 
   protected override async Task OnInitAsync() {
     Concepts = ConceptRepository.GetConcepts().Select((c, i) => new ConceptViewModel(c, i)).ToList();
@@ -47,8 +50,13 @@
   void Delete(int viewId) =>
     Concepts.Remove(Concepts.First(c => c.ViewId == viewId));
 
-  void ToggleTitle(int viewId) =>
-    Concepts.First(c => c.ViewId == viewId).EditTitle = !Concepts.First(c => c.ViewId == viewId).EditTitle;
+  void EditTitle(int viewId) {
+    Concepts.First(c => c.ViewId == viewId).EditTitle = true;
+    titleInput.Focus(JsRuntime);
+  }
+
+  void StopEditTitle(int viewId) =>
+    Concepts.First(c => c.ViewId == viewId).EditTitle = false;
 
   void AddConcept() =>
     new Concept { Title = "Title", Description = "Description" }
