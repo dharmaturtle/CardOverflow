@@ -1,4 +1,4 @@
-﻿@page "/CreateCard"
+﻿@page "/Concepts"
 @using CardOverflow.Api
 @using CardOverflow.Entity
 @using CardOverflow.Web.Helpers
@@ -19,7 +19,7 @@
     </tr>
   </thead>
   <tbody>
-    @foreach (var concept in Concepts) {
+    @foreach (var concept in ConceptList) {
       <tr>
         <td>
           <p class="@(concept.EditTitle ? "collapse" : "")" onclick="@(() => EditTitle(concept.ViewId))">@concept.Model.Title</p>
@@ -40,31 +40,31 @@
 @functions {
   string Question = "";
   string Answer = "";
-  List<ConceptViewModel> Concepts;
+  List<ConceptViewModel> ConceptList;
   ElementRef titleInput;
 
   protected override async Task OnInitAsync() {
-    Concepts = ConceptRepository.GetConcepts().Select((c, i) => new ConceptViewModel(c, i)).ToList();
+    ConceptList = ConceptRepository.GetConcepts().Select((c, i) => new ConceptViewModel(c, i)).ToList();
   }
 
   void Delete(int viewId) =>
-    Concepts.Remove(Concepts.First(c => c.ViewId == viewId));
+    ConceptList.Remove(ConceptList.First(c => c.ViewId == viewId));
 
   void EditTitle(int viewId) {
-    Concepts.First(c => c.ViewId == viewId).EditTitle = true;
+    ConceptList.First(c => c.ViewId == viewId).EditTitle = true;
     titleInput.Focus(JsRuntime);
   }
 
   void StopEditTitle(int viewId) =>
-    Concepts.First(c => c.ViewId == viewId).EditTitle = false;
+    ConceptList.First(c => c.ViewId == viewId).EditTitle = false;
 
   void AddConcept() =>
     new Concept { Title = "Title", Description = "Description" }
-    .Apply(c => new ConceptViewModel(c, Concepts.Max(x => x.ViewId) + 1))
-    .Do(Concepts.Add);
+    .Apply(c => new ConceptViewModel(c, ConceptList.Max(x => x.ViewId) + 1))
+    .Do(ConceptList.Add);
 
   void Save() {
-    ConceptRepository.SaveConcepts(Concepts.Select(c => c.Model).ToList());
+    ConceptRepository.SaveConcepts(ConceptList.Select(c => c.Model).ToList());
     // TODO: Set focus back on Question https://devblogs.microsoft.com/aspnet/blazor-0-3-0-experimental-release-now-available/
   }
 
