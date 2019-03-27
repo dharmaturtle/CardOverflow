@@ -1,0 +1,34 @@
+﻿@using CardOverflow.Api
+@using CardOverflow.Entity
+@using CardOverflow.Web.Helpers
+@inject IJSRuntime JsRuntime
+@inject CardRepository CardRepository
+@inject ConceptRepository ConceptRepository
+
+<tr>
+  <td>
+    <p class="@(EditTitle ? "collapse" : "")" onclick="@StartEditTitle">@Concept.Title</p>
+    <input ref="titleInput" class="@(EditTitle ? "" : "collapse")" onblur="@StopEditTitle" type="text" bind-value-oninput="@Concept.Title" />
+  </td>
+  <td>@Concept.Description</td>
+  <td>
+    <button onclick="@Delete">Delete</button>
+  </td>
+</tr>
+
+@functions {
+  ElementRef titleInput;
+  [Parameter] Action Delete { get; set; }
+  [Parameter] Concept Concept { get; set; }
+  bool EditTitle { get; set; } = false;
+
+
+  void StartEditTitle() {
+    EditTitle = true;
+    titleInput.Focus(JsRuntime);
+  }
+
+  void StopEditTitle() =>
+    EditTitle = false;
+
+}

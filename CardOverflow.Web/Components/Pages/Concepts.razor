@@ -20,16 +20,7 @@
   </thead>
   <tbody>
     @foreach (var concept in ConceptList) {
-      <tr>
-        <td>
-          <p class="@(concept.EditTitle ? "collapse" : "")" onclick="@(() => EditTitle(concept.ViewId))">@concept.Model.Title</p>
-          <input ref="titleInput" class="@(concept.EditTitle ? "" : "collapse")" onblur="@(() => StopEditTitle(concept.ViewId))" type="text" bind-value-oninput="@concept.Model.Title" />
-        </td>
-        <td>@concept.Model.Description</td>
-        <td>
-          <button onclick="@(() => Delete(concept.ViewId))">Delete</button>
-        </td>
-      </tr>
+      <ConceptView Concept="@concept" Delete="@(() => Delete(concept))" />
     }
   </tbody>
 </table>
@@ -40,42 +31,24 @@
 @functions {
   string Question = "";
   string Answer = "";
-  List<ConceptViewModel> ConceptList;
-  ElementRef titleInput;
+  List<Concept> ConceptList;
 
   protected override async Task OnInitAsync() {
-    ConceptList = ConceptRepository.GetConcepts().Select((c, i) => new ConceptViewModel(c, i)).ToList();
+    ConceptList = ConceptRepository.GetConcepts();
   }
 
-  void Delete(int viewId) =>
-    ConceptList.Remove(ConceptList.First(c => c.ViewId == viewId));
-
-  void EditTitle(int viewId) {
-    ConceptList.First(c => c.ViewId == viewId).EditTitle = true;
-    titleInput.Focus(JsRuntime);
+  void Delete(Concept concept) {
+    ConceptList.Remove(concept);
+    StateHasChanged();
   }
-
-  void StopEditTitle(int viewId) =>
-    ConceptList.First(c => c.ViewId == viewId).EditTitle = false;
 
   void AddConcept() =>
     new Concept { Title = "Title", Description = "Description" }
-    .Apply(c => new ConceptViewModel(c, ConceptList.Max(x => x.ViewId) + 1))
     .Do(ConceptList.Add);
 
   void Save() {
-    ConceptRepository.SaveConcepts(ConceptList.Select(c => c.Model).ToList());
+    ConceptRepository.SaveConcepts(ConceptList);
     // TODO: Set focus back on Question https://devblogs.microsoft.com/aspnet/blazor-0-3-0-experimental-release-now-available/
-  }
-
-  private class ConceptViewModel {
-    public ConceptViewModel(Concept model, int viewId) {
-      Model = model;
-      ViewId = viewId;
-    }
-    public Concept Model { get; set; }
-    public int ViewId { get; set; }
-    public bool EditTitle { get; set; } = false;
   }
 
 }
