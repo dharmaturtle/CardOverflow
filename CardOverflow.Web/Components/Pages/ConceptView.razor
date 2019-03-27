@@ -5,17 +5,17 @@
 @inject CardRepository CardRepository
 @inject ConceptRepository ConceptRepository
 
-<tr>
-  <td>
+<div class="row">
+  <div class="col">
     <ClickToEditInputText Text="@Concept.Title" UpdateText="@(s => Concept.Title = s)" />
-  </td>
-  <td>
+  </div>
+  <div class="col">
     <ClickToEditInputText Text="@Concept.Description" UpdateText="@(s => Concept.Description = s)" />
-  </td>
-  <td>
+  </div>
+  <div class="col">
     <button onclick="@Delete">Delete</button>
-  </td>
-</tr>
+  </div>
+</div>
 
 @functions {
   [Parameter] Action Delete { get; set; }

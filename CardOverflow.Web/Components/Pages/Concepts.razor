@@ -10,20 +10,9 @@
 <input type="text" bind-value-oninput="@Answer" placeholder="Answer" />
 <button class="btn btn-primary" onclick="@Save">Save</button>
 
-<table class='table'>
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Description</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    @foreach (var concept in ConceptList) {
-      <ConceptView Concept="@concept" Delete="@(() => Delete(concept))" />
-    }
-  </tbody>
-</table>
+@foreach (var concept in ConceptList) {
+  <ConceptView Concept="@concept" Delete="@(() => Delete(concept))" />
+}
 
 <button onclick="@AddConcept">Add Concept</button>
 <button onclick="@Save">Save</button>
