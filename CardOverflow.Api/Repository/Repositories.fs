@@ -3,6 +3,8 @@ namespace CardOverflow.Api
 open CardOverflow.Api.Extensions
 open CardOverflow.Entity
 open System.Linq
+open System.Collections.Generic
+open Microsoft.EntityFrameworkCore
 
 type CardRepository(dbService: DbService) =
   member __.GetCards() =
@@ -13,13 +15,22 @@ type CardRepository(dbService: DbService) =
 
 type ConceptRepository(dbService: DbService) =
   member __.GetConcepts() =
-    dbService.Query(fun db -> db.Concepts.ToList())
+    dbService.Query(fun db -> db.Concepts.Include(fun x -> x.Cards).ToList())
 
   member __.SaveConcept(concept: Concept) =
     dbService.Command(fun db -> db.Concepts.Add concept)
 
   member this.SaveConcepts(concepts: ResizeArray<Concept>) =
-    dbService.Command(fun db -> 
+    dbService.Command(fun db ->
+      let updateCards(target: ICollection<Card>)(source: ICollection<Card>) = 
+        target.Merge source
+          (fun (x, y) -> x.Id = y.Id)
+          (id)
+          (target.Remove >> ignore)
+          (target.Add)
+          (fun d s -> // todo make copyto
+            d.Question <- s.Question
+            d.Answer <- s.Answer)
       this.GetConcepts().Merge concepts
         (fun (x, y) -> x.Id = y.Id)
         id
@@ -28,6 +39,7 @@ type ConceptRepository(dbService: DbService) =
         (fun d s -> // todo make copyto
           d.Title <- s.Title
           d.Description <- s.Description
+          updateCards d.Cards s.Cards
           db.Update d |> ignore)
     )
 

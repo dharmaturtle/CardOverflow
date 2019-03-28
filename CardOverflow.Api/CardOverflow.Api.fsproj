@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Entity\CardOverflow.Entity.csproj" />
+    <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
   </ItemGroup>
 
 </Project>

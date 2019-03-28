@@ -37,9 +37,50 @@ let ``ConceptRepository's SaveConcepts updates a Concept``() =
 
   updatedConcept 
   |> Seq.singleton 
-  |> fun x -> new ResizeArray<Concept>(x) 
+  |> ResizeArray<Concept>
   |> conceptRepository.SaveConcepts
 
   conceptRepository.GetConcepts()
   |> Seq.filter(fun x -> x.Title = updatedTitle && x.Description = updatedDescription)
+  |> Assert.Single
+
+[<Fact>]
+let ``ConceptRepository's SaveConcepts can add card to existing Concept``() =
+  use tempDb = new TempDbService()
+  let service = tempDb.RecreateDatabaseAndGetDbService()
+  let conceptRepository = service |> ConceptRepository
+  service.Command(fun db -> db.Concepts.Add(Concept(Title = "", Description = "")))
+  let question = Guid.NewGuid().ToString()
+  let answer = Guid.NewGuid().ToString()
+  let updatedConcept = conceptRepository.GetConcepts().Single()
+  updatedConcept.Cards.Add(Card(Question = question, Answer = answer))
+
+  updatedConcept
+  |> Seq.singleton 
+  |> ResizeArray<Concept>
+  |> conceptRepository.SaveConcepts
+
+  conceptRepository.GetConcepts()
+  |> Seq.filter(fun x -> x.Cards.Single().Question = question && x.Cards.Single().Answer = answer )
+  |> Assert.Single
+
+
+[<Fact>]
+let ``ConceptRepository's SaveConcepts can add a Concept with a card``() =
+  use tempDb = new TempDbService()
+  let service = tempDb.RecreateDatabaseAndGetDbService()
+  let conceptRepository = service |> ConceptRepository
+  let question = Guid.NewGuid().ToString()
+  let answer = Guid.NewGuid().ToString()
+
+  Card(Question = question, Answer = answer)
+  |> Seq.singleton
+  |> ResizeArray<Card>
+  |> fun cards -> Concept(Title = "", Description = "", Cards = cards)
+  |> Seq.singleton 
+  |> ResizeArray<Concept>
+  |> conceptRepository.SaveConcepts
+
+  conceptRepository.GetConcepts()
+  |> Seq.filter(fun x -> x.Cards.Single().Question = question && x.Cards.Single().Answer = answer )
   |> Assert.Single
