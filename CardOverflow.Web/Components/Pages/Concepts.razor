@@ -6,20 +6,14 @@
 @inject CardRepository CardRepository
 @inject ConceptRepository ConceptRepository
 
-<input type="text" bind-value-oninput="@Question" placeholder="Question" />
-<input type="text" bind-value-oninput="@Answer" placeholder="Answer" />
-<button class="btn btn-primary" onclick="@Save">Save</button>
-
 @foreach (var concept in ConceptList) {
   <ConceptView Concept="@concept" Delete="@(() => Delete(concept))" />
 }
 
-<button onclick="@AddConcept">Add Concept</button>
-<button onclick="@Save">Save</button>
+<button class="btn btn-success" onclick="@AddConcept">Add Concept</button>
+<button class="btn btn-primary" onclick="@Save">Save</button>
 
 @functions {
-  string Question = "";
-  string Answer = "";
   List<Concept> ConceptList;
 
   protected override async Task OnInitAsync() {
@@ -32,12 +26,10 @@
   }
 
   void AddConcept() =>
-    new Concept { Title = "Title", Description = "Description" }
+    new Concept { Title = "Concept Title", Description = "Concept Description", Cards = new List<Card> { new Card { Question = "Question", Answer = "Answer" } } }
     .Do(ConceptList.Add);
 
-  void Save() {
+  void Save() =>
     ConceptRepository.SaveConcepts(ConceptList);
-    // TODO: Set focus back on Question https://devblogs.microsoft.com/aspnet/blazor-0-3-0-experimental-release-now-available/
-  }
 
 }

@@ -14,10 +14,25 @@
   </div>
   <div class="col">
     <button onclick="@Delete">Delete</button>
+    <button onclick="@AddCard">Add Card</button>
   </div>
 </div>
+@foreach (var card in Concept.Cards) {
+  <CardView Card="@card" Delete="@(() => DeleteCard(card))" />
+}
 
 @functions {
   [Parameter] Action Delete { get; set; }
   [Parameter] Concept Concept { get; set; }
+
+  void AddCard() {
+    Concept.Cards.Add(new Card { Question = "Question", Answer = "Answer" });
+    StateHasChanged();
+  }
+
+  void DeleteCard(Card card) {
+    Concept.Cards.Remove(card);
+    StateHasChanged();
+  }
+
 }
