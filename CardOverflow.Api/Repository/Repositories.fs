@@ -10,14 +10,14 @@ type CardRepository(dbService: DbService) =
   member __.GetCards() =
     dbService.Query(fun db -> db.Cards.ToList())
 
-  member __.SaveCard(card: Card) =
+  member __.SaveCard card =
     dbService.Command(fun db -> db.Cards.Add card)
 
 type ConceptRepository(dbService: DbService) =
   member __.GetConcepts() =
     dbService.Query(fun db -> db.Concepts.Include(fun x -> x.Cards).ToList())
 
-  member __.SaveConcept(concept: Concept) =
+  member __.SaveConcept concept =
     dbService.Command(fun db -> db.Concepts.Add concept)
 
   member this.SaveConcepts(concepts: ResizeArray<Concept>) =
@@ -44,31 +44,31 @@ type ConceptRepository(dbService: DbService) =
     )
 
 type UserRepository(dbService: DbService) =
-  member __.GetUser(email: string) =
+  member __.GetUser email =
     dbService.Query(fun db -> db.Users.First(fun x -> x.Email = email))
 
 type TagRepository(dbService: DbService) =
-  member __.CreateTag(tag: Tag) =
+  member __.CreateTag tag =
     dbService.Command(fun db -> db.Tags.Add tag)
 
-  member __.SearchTags(input: string) =
+  member __.SearchTags(input:string) =
     dbService.Query(fun db -> db.Tags.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())))
     
-  member __.UpdateTag(tag: Tag) =
+  member __.UpdateTag tag =
     dbService.Command(fun db -> db.Tags.Update tag)
 
-  member __.DeleteTag(tag: Tag) =
+  member __.DeleteTag tag =
     dbService.Command(fun db -> db.Tags.Remove tag)
 
 type DeckRepository(dbService: DbService) =
-  member __.CreateDeck(deck: Deck) =
+  member __.Create deck =
     dbService.Command(fun db -> db.Decks.Add deck)
 
-  member __.GetDecks(userId: int) =
+  member __.Get userId =
     dbService.Query(fun db -> db.Decks.Where(fun d -> d.UserId = userId))
     
-  member __.UpdateDeck(deck: Deck) =
+  member __.Update deck =
     dbService.Command(fun db -> db.Decks.Update deck)
 
-  member __.DeleteDeck(deck: Deck) =
+  member __.Delete deck =
     dbService.Command(fun db -> db.Decks.Remove deck)
