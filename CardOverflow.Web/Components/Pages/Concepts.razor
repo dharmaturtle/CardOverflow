@@ -6,9 +6,11 @@
 @inject CardRepository CardRepository
 @inject ConceptRepository ConceptRepository
 
-@foreach (var concept in ConceptList) {
-  <ConceptView Concept="@concept" Delete="@(() => Delete(concept))" />
-}
+<div class="container">
+  @foreach (var concept in ConceptList) {
+    <ConceptView Concept="@concept" Delete="@(() => Delete(concept))" />
+  }
+</div>
 
 <button class="btn btn-success" onclick="@AddConcept">Add Concept</button>
 <button class="btn btn-primary" onclick="@Save">Save</button>

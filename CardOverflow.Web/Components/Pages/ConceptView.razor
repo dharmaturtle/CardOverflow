@@ -7,6 +7,7 @@
 
 <div class="row">
   <div class="col">
+    ★
     <ClickToEditInputText Text="@Concept.Title" UpdateText="@(s => Concept.Title = s)" />
   </div>
   <div class="col">
@@ -17,9 +18,11 @@
     <button onclick="@AddCard">Add Card</button>
   </div>
 </div>
-@foreach (var card in Concept.Cards) {
-  <CardView Card="@card" Delete="@(() => DeleteCard(card))" />
-}
+<div class="container">
+  @foreach (var card in Concept.Cards) {
+    <CardView Card="@card" Delete="@(() => DeleteCard(card))" />
+  }
+</div>
 
 @functions {
   [Parameter] Action Delete { get; set; }

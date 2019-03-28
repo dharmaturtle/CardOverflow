@@ -1,7 +1,7 @@
 ﻿@using CardOverflow.Web.Helpers
 @inject IJSRuntime JsRuntime
 
-<p class="@(IsEditing ? " collapse" : "" )" onclick="@StartEditText">@Text</p>
+<span class="@(IsEditing ? " collapse" : "" )" onclick="@StartEditText">@Text</span>
 <input ref="inputElement" class="@(IsEditing ? " " : " collapse")" onblur="@StopEditTitle" type="text" bind-value-oninput="@Text" />
 
 @functions {
