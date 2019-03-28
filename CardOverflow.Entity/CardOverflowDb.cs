@@ -18,6 +18,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<Deck> Decks { get; set; }
         public virtual DbSet<DeckCard> DeckCards { get; set; }
         public virtual DbSet<DeckTag> DeckTags { get; set; }
+        public virtual DbSet<History> Histories { get; set; }
         public virtual DbSet<Tag> Tags { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
@@ -137,6 +138,25 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.TagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deck_Tag_Tag");
+            });
+
+            modelBuilder.Entity<History>(entity =>
+            {
+                entity.ToTable("History");
+
+                entity.Property(e => e.Timestamp).HasColumnType("smalldatetime");
+
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.Histories)
+                    .HasForeignKey(d => d.CardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_History_Card");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Histories)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_History_User");
             });
 
             modelBuilder.Entity<Tag>(entity =>
