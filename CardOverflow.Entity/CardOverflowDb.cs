@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -13,6 +13,7 @@ namespace CardOverflow.Entity
         }
 
         public virtual DbSet<Card> Cards { get; set; }
+        public virtual DbSet<CardOption> CardOptions { get; set; }
         public virtual DbSet<Concept> Concepts { get; set; }
         public virtual DbSet<ConceptTagUser> ConceptTagUsers { get; set; }
         public virtual DbSet<Deck> Decks { get; set; }
@@ -36,9 +37,13 @@ namespace CardOverflow.Entity
             {
                 entity.ToTable("Card");
 
+                entity.HasIndex(e => e.ConceptId);
+
                 entity.Property(e => e.Answer)
                     .IsRequired()
                     .HasMaxLength(1028);
+
+                entity.Property(e => e.Modified).HasColumnType("smalldatetime");
 
                 entity.Property(e => e.Question)
                     .IsRequired()
@@ -49,6 +54,27 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Card_Concept");
+            });
+
+            modelBuilder.Entity<CardOption>(entity =>
+            {
+                entity.Property(e => e.LapsedCardsSteps)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.NewCardsSteps)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.CardOptions)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_CardOptions_User");
             });
 
             modelBuilder.Entity<Concept>(entity =>
@@ -67,6 +93,10 @@ namespace CardOverflow.Entity
                 entity.HasKey(e => new { e.ConceptId, e.TagId, e.UserId });
 
                 entity.ToTable("Concept_Tag_User");
+
+                entity.HasIndex(e => e.TagId);
+
+                entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.ConceptTagUsers)
@@ -91,6 +121,8 @@ namespace CardOverflow.Entity
             {
                 entity.ToTable("Deck");
 
+                entity.HasIndex(e => e.UserId);
+
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(128);
@@ -107,6 +139,8 @@ namespace CardOverflow.Entity
                 entity.HasKey(e => new { e.DeckId, e.CardId });
 
                 entity.ToTable("Deck_Card");
+
+                entity.HasIndex(e => e.CardId);
 
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.DeckCards)
@@ -127,6 +161,8 @@ namespace CardOverflow.Entity
 
                 entity.ToTable("Deck_Tag");
 
+                entity.HasIndex(e => e.TagId);
+
                 entity.HasOne(d => d.Deck)
                     .WithMany(p => p.DeckTags)
                     .HasForeignKey(d => d.DeckId)
@@ -143,6 +179,10 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<History>(entity =>
             {
                 entity.ToTable("History");
+
+                entity.HasIndex(e => e.CardId);
+
+                entity.HasIndex(e => e.UserId);
 
                 entity.Property(e => e.Timestamp).HasColumnType("smalldatetime");
 

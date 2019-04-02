@@ -7,6 +7,7 @@ namespace CardOverflow.Entity
     {
         public User()
         {
+            CardOptions = new HashSet<CardOption>();
             ConceptTagUsers = new HashSet<ConceptTagUser>();
             Decks = new HashSet<Deck>();
             Histories = new HashSet<History>();
@@ -16,6 +17,7 @@ namespace CardOverflow.Entity
         public string Name { get; set; }
         public string Email { get; set; }
 
+        public virtual ICollection<CardOption> CardOptions { get; set; }
         public virtual ICollection<ConceptTagUser> ConceptTagUsers { get; set; }
         public virtual ICollection<Deck> Decks { get; set; }
         public virtual ICollection<History> Histories { get; set; }

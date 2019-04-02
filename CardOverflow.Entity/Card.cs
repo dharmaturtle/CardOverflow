@@ -15,6 +15,12 @@ namespace CardOverflow.Entity
         public int ConceptId { get; set; }
         public string Question { get; set; }
         public string Answer { get; set; }
+        public DateTime Modified { get; set; }
+        public byte MemorizationStateAndCardState { get; set; }
+        public byte LapseCount { get; set; }
+        public short EaseFactor { get; set; }
+        public short Interval { get; set; }
+        public byte? ReviewsUntilGraduation { get; set; }
 
         public virtual Concept Concept { get; set; }
         public virtual ICollection<DeckCard> DeckCards { get; set; }

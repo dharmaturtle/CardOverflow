@@ -8,8 +8,11 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public int UserId { get; set; }
         public int CardId { get; set; }
-        public byte Difficulty { get; set; }
+        public byte ScoreAndMemorizationState { get; set; }
         public DateTime Timestamp { get; set; }
+        public short Interval { get; set; }
+        public short EaseFactor { get; set; }
+        public short Time { get; set; }
 
         public virtual Card Card { get; set; }
         public virtual User User { get; set; }
