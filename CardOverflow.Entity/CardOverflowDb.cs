@@ -60,7 +60,8 @@ namespace CardOverflow.Entity
             {
                 entity.Property(e => e.LapsedCardsSteps)
                     .IsRequired()
-                    .HasMaxLength(100);
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.Name)
                     .IsRequired()
@@ -68,7 +69,8 @@ namespace CardOverflow.Entity
 
                 entity.Property(e => e.NewCardsSteps)
                     .IsRequired()
-                    .HasMaxLength(100);
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.CardOptions)
