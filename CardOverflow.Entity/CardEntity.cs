@@ -24,7 +24,7 @@ namespace CardOverflow.Entity
         public string Answer { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Modified { get; set; }
-        public byte MemorizationStateAndCardState { get; set; }
+        public MemorizationStateAndCardStateEnum MemorizationStateAndCardState { get; set; }
         public byte LapseCount { get; set; }
         public short EaseFactor { get; set; }
         public short Interval { get; set; }

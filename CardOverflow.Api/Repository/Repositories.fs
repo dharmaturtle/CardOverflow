@@ -2,9 +2,9 @@ namespace CardOverflow.Api
 
 open CardOverflow.Api.Extensions
 open CardOverflow.Entity
-open System.Linq
-open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
+open System.Collections.Generic
+open System.Linq
 
 type CardRepository(dbService: DbService) =
   member __.GetCards() =
