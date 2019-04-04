@@ -16,19 +16,19 @@
 <button class="btn btn-primary" onclick="@Save">Save</button>
 
 @functions {
-  List<Concept> ConceptList;
+  List<ConceptEntity> ConceptList;
 
   protected override async Task OnInitAsync() {
     ConceptList = ConceptRepository.GetConcepts();
   }
 
-  void Delete(Concept concept) {
+  void Delete(ConceptEntity concept) {
     ConceptList.Remove(concept);
     StateHasChanged();
   }
 
   void AddConcept() =>
-    new Concept { Title = "Concept Title", Description = "Concept Description", Cards = new List<Card> { new Card { Question = "Question", Answer = "Answer" } } }
+    new ConceptEntity { Title = "Concept Title", Description = "Concept Description", Cards = new List<CardEntity> { new CardEntity { Question = "Question", Answer = "Answer" } } }
     .Do(ConceptList.Add);
 
   void Save() =>

@@ -29,11 +29,11 @@
 }
 
 @functions {
-  LinkedList<Card> Cards;
+  LinkedList<CardEntity> Cards;
   bool IsAnswerHidden = true;
 
   protected override async Task OnInitAsync() {
-    Cards = CardRepository.GetCards().OrderBy(a => Guid.NewGuid()).Apply(x => new LinkedList<Card>(x));
+    Cards = CardRepository.GetCards().OrderBy(a => Guid.NewGuid()).Apply(x => new LinkedList<CardEntity>(x));
   }
 
   void Evaluate(int difficulty) {

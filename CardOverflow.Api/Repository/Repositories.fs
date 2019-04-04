@@ -20,9 +20,9 @@ type ConceptRepository(dbService: DbService) =
   member __.SaveConcept concept =
     dbService.Command(fun db -> db.Concepts.Add concept)
 
-  member this.SaveConcepts(concepts: ResizeArray<Concept>) =
+  member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
     dbService.Command(fun db ->
-      let updateCards(target: ICollection<Card>)(source: ICollection<Card>) = 
+      let updateCards(target: ICollection<CardEntity>)(source: ICollection<CardEntity>) = 
         target.Merge source
           (fun (x, y) -> x.Id = y.Id)
           (id)

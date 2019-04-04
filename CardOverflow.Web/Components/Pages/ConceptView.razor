@@ -26,14 +26,14 @@
 
 @functions {
   [Parameter] Action Delete { get; set; }
-  [Parameter] Concept Concept { get; set; }
+  [Parameter] ConceptEntity Concept { get; set; }
 
   void AddCard() {
-    Concept.Cards.Add(new Card { Question = "Question", Answer = "Answer" });
+    Concept.Cards.Add(new CardEntity { Question = "Question", Answer = "Answer" });
     StateHasChanged();
   }
 
-  void DeleteCard(Card card) {
+  void DeleteCard(CardEntity card) {
     Concept.Cards.Remove(card);
     StateHasChanged();
   }

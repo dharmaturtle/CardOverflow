@@ -27,7 +27,7 @@
 }
 
 @functions {
-  IEnumerable<Card> Cards;
+  IEnumerable<CardEntity> Cards;
 
   protected override async Task OnInitAsync() {
     Cards = CardRepository.GetCards();

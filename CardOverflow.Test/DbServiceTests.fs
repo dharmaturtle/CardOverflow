@@ -14,7 +14,7 @@ let ``DbService can add and retreive a user``() =
   let name = Guid.NewGuid().ToString().Take(32) |> String.Concat
   let email = Guid.NewGuid().ToString()
 
-  service.Command(fun db -> db.Users.Add(User(Email = email, Name = name)))
+  service.Command(fun db -> db.Users.Add(UserEntity(Email = email, Name = name)))
 
   service.Query(fun db -> db.Users.ToList())
   |> Seq.filter(fun x -> x.Name = name && x.Email = email)

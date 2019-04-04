@@ -11,12 +11,12 @@ let ``CardService can add and retreive a card``() =
   use tempDb = new TempDbService()
   let service = tempDb.RecreateDatabaseAndGetDbService()
   let cardRepository = service |> CardRepository
-  let concept = Concept(Title = "", Description = "")
+  let concept = ConceptEntity(Title = "", Description = "")
   service.Command(fun db -> db.Concepts.Add(concept))
   let question = Guid.NewGuid().ToString()
   let answer = Guid.NewGuid().ToString()
 
-  cardRepository.SaveCard(Card(Question = question, Answer = answer, ConceptId = concept.Id))
+  cardRepository.SaveCard(CardEntity(Question = question, Answer = answer, ConceptId = concept.Id))
 
   cardRepository.GetCards()
   |> Seq.filter(fun x -> x.Question = question && x.Answer = answer)
