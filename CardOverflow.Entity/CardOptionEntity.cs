@@ -5,8 +5,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
+[Table("CardOption")]
     public partial class CardOptionEntity
     {
+        public CardOptionEntity()
+        {
+            Cards = new HashSet<CardEntity>();
+        }
+
         public int Id { get; set; }
         [Required]
         [StringLength(100)]
@@ -38,5 +44,7 @@ namespace CardOverflow.Entity
         [ForeignKey("UserId")]
         [InverseProperty("CardOptions")]
         public virtual UserEntity User { get; set; }
+        [InverseProperty("CardOption")]
+        public virtual ICollection<CardEntity> Cards { get; set; }
     }
 }

@@ -35,6 +35,12 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.ConceptId);
 
+                entity.HasOne(d => d.CardOption)
+                    .WithMany(p => p.Cards)
+                    .HasForeignKey(d => d.CardOptionId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Card_CardOption");
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.Cards)
                     .HasForeignKey(d => d.ConceptId)
@@ -52,7 +58,7 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.CardOptions)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CardOptions_User");
+                    .HasConstraintName("FK_CardOption_User");
             });
 
             modelBuilder.Entity<ConceptTagUserEntity>(entity =>

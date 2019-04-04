@@ -29,7 +29,11 @@ namespace CardOverflow.Entity
         public short EaseFactor { get; set; }
         public short Interval { get; set; }
         public byte? ReviewsUntilGraduation { get; set; }
+        public int CardOptionId { get; set; }
 
+        [ForeignKey("CardOptionId")]
+        [InverseProperty("Cards")]
+        public virtual CardOptionEntity CardOption { get; set; }
         [ForeignKey("ConceptId")]
         [InverseProperty("Cards")]
         public virtual ConceptEntity Concept { get; set; }
