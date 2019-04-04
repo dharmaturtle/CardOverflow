@@ -11,6 +11,18 @@ namespace CardOverflow.Entity.DesignTime {
 
     public void ConfigureDesignTimeServices(IServiceCollection services) {
       services.AddSingleton<IPluralizer, Pluralizer>();
+      services.AddHandlebarsScaffolding();
+      services.AddHandlebarsTransformers(
+        entityNameTransformer: x => x + "Entity",
+        entityFileNameTransformer: x => x + "Entity",
+        constructorTransformer: x => {
+          x.PropertyType += "Entity";
+          return x;
+        },
+        navPropertyTransformer: x => {
+          x.PropertyType += "Entity";
+          return x;
+        });
     }
 
   }
