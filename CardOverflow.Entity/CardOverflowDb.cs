@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -6,22 +6,20 @@ namespace CardOverflow.Entity
 {
     public partial class CardOverflowDb : DbContext
     {
+        public virtual DbSet<CardEntity> Cards { get; set; }
+        public virtual DbSet<CardOptionEntity> CardOptions { get; set; }
+        public virtual DbSet<ConceptEntity> Concepts { get; set; }
+        public virtual DbSet<ConceptTagUserEntity> ConceptTagUsers { get; set; }
+        public virtual DbSet<DeckEntity> Decks { get; set; }
+        public virtual DbSet<DeckCardEntity> DeckCards { get; set; }
+        public virtual DbSet<DeckTagEntity> DeckTags { get; set; }
+        public virtual DbSet<HistoryEntity> Histories { get; set; }
+        public virtual DbSet<TagEntity> Tags { get; set; }
+        public virtual DbSet<UserEntity> Users { get; set; }
 
-        public CardOverflowDb(DbContextOptions options)
-            : base(options)
+        public CardOverflowDb(DbContextOptions options) : base(options)
         {
         }
-
-        public virtual DbSet<Card> Cards { get; set; }
-        public virtual DbSet<CardOption> CardOptions { get; set; }
-        public virtual DbSet<Concept> Concepts { get; set; }
-        public virtual DbSet<ConceptTagUser> ConceptTagUsers { get; set; }
-        public virtual DbSet<Deck> Decks { get; set; }
-        public virtual DbSet<DeckCard> DeckCards { get; set; }
-        public virtual DbSet<DeckTag> DeckTags { get; set; }
-        public virtual DbSet<History> Histories { get; set; }
-        public virtual DbSet<Tag> Tags { get; set; }
-        public virtual DbSet<User> Users { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -33,7 +31,7 @@ namespace CardOverflow.Entity
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Card>(entity =>
+            modelBuilder.Entity<CardEntity>(entity =>
             {
                 entity.ToTable("Card");
 
@@ -56,7 +54,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Card_Concept");
             });
 
-            modelBuilder.Entity<CardOption>(entity =>
+            modelBuilder.Entity<CardOptionEntity>(entity =>
             {
                 entity.Property(e => e.LapsedCardsSteps)
                     .IsRequired()
@@ -79,7 +77,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_CardOptions_User");
             });
 
-            modelBuilder.Entity<Concept>(entity =>
+            modelBuilder.Entity<ConceptEntity>(entity =>
             {
                 entity.ToTable("Concept");
 
@@ -90,7 +88,7 @@ namespace CardOverflow.Entity
                     .HasMaxLength(128);
             });
 
-            modelBuilder.Entity<ConceptTagUser>(entity =>
+            modelBuilder.Entity<ConceptTagUserEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptId, e.TagId, e.UserId });
 
@@ -119,7 +117,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Concept_Tag_User_User");
             });
 
-            modelBuilder.Entity<Deck>(entity =>
+            modelBuilder.Entity<DeckEntity>(entity =>
             {
                 entity.ToTable("Deck");
 
@@ -136,7 +134,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Deck_User");
             });
 
-            modelBuilder.Entity<DeckCard>(entity =>
+            modelBuilder.Entity<DeckCardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.DeckId, e.CardId });
 
@@ -157,7 +155,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Deck_Card_Deck");
             });
 
-            modelBuilder.Entity<DeckTag>(entity =>
+            modelBuilder.Entity<DeckTagEntity>(entity =>
             {
                 entity.HasKey(e => new { e.DeckId, e.TagId });
 
@@ -178,7 +176,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Deck_Tag_Tag");
             });
 
-            modelBuilder.Entity<History>(entity =>
+            modelBuilder.Entity<HistoryEntity>(entity =>
             {
                 entity.ToTable("History");
 
@@ -201,7 +199,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_History_User");
             });
 
-            modelBuilder.Entity<Tag>(entity =>
+            modelBuilder.Entity<TagEntity>(entity =>
             {
                 entity.ToTable("Tag");
 
@@ -210,7 +208,7 @@ namespace CardOverflow.Entity
                     .HasMaxLength(64);
             });
 
-            modelBuilder.Entity<User>(entity =>
+            modelBuilder.Entity<UserEntity>(entity =>
             {
                 entity.ToTable("User");
 
@@ -223,6 +221,10 @@ namespace CardOverflow.Entity
                     .HasMaxLength(32)
                     .IsUnicode(false);
             });
+
+            OnModelCreatingExt(modelBuilder);
         }
+
+        partial void OnModelCreatingExt(ModelBuilder modelBuilder);
     }
 }

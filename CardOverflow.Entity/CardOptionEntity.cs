@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardOption
+    public partial class CardOptionEntity
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -27,6 +27,6 @@ namespace CardOverflow.Entity
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAnswerAudioOnAnswer { get; set; }
 
-        public virtual User User { get; set; }
+        public virtual UserEntity User { get; set; }
     }
 }

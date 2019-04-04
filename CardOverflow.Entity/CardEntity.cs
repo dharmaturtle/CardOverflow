@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace CardOverflow.Entity
 {
-    public partial class Card
+    public partial class CardEntity
     {
-        public Card()
+        public CardEntity()
         {
-            DeckCards = new HashSet<DeckCard>();
-            Histories = new HashSet<History>();
+            DeckCards = new HashSet<DeckCardEntity>();
+            Histories = new HashSet<HistoryEntity>();
         }
 
         public int Id { get; set; }
@@ -22,8 +22,8 @@ namespace CardOverflow.Entity
         public short Interval { get; set; }
         public byte? ReviewsUntilGraduation { get; set; }
 
-        public virtual Concept Concept { get; set; }
-        public virtual ICollection<DeckCard> DeckCards { get; set; }
-        public virtual ICollection<History> Histories { get; set; }
+        public virtual ConceptEntity Concept { get; set; }
+        public virtual ICollection<DeckCardEntity> DeckCards { get; set; }
+        public virtual ICollection<HistoryEntity> Histories { get; set; }
     }
 }

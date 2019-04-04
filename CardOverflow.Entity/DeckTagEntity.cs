@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace CardOverflow.Entity
 {
-    public partial class DeckTag
+    public partial class DeckTagEntity
     {
         public int DeckId { get; set; }
         public int TagId { get; set; }
 
-        public virtual Deck Deck { get; set; }
-        public virtual Tag Tag { get; set; }
+        public virtual DeckEntity Deck { get; set; }
+        public virtual TagEntity Tag { get; set; }
     }
 }

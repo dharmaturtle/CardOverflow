@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CardOverflow.Entity
 {
-    public partial class History
+    public partial class HistoryEntity
     {
         public int Id { get; set; }
         public int UserId { get; set; }
@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         public short EaseFactor { get; set; }
         public short Time { get; set; }
 
-        public virtual Card Card { get; set; }
-        public virtual User User { get; set; }
+        public virtual CardEntity Card { get; set; }
+        public virtual UserEntity User { get; set; }
     }
 }
