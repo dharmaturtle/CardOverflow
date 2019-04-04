@@ -33,19 +33,7 @@ namespace CardOverflow.Entity
         {
             modelBuilder.Entity<CardEntity>(entity =>
             {
-                entity.ToTable("Card");
-
                 entity.HasIndex(e => e.ConceptId);
-
-                entity.Property(e => e.Answer)
-                    .IsRequired()
-                    .HasMaxLength(1028);
-
-                entity.Property(e => e.Modified).HasColumnType("smalldatetime");
-
-                entity.Property(e => e.Question)
-                    .IsRequired()
-                    .HasMaxLength(1028);
 
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.Cards)
@@ -56,19 +44,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardOptionEntity>(entity =>
             {
-                entity.Property(e => e.LapsedCardsSteps)
-                    .IsRequired()
-                    .HasMaxLength(100)
-                    .IsUnicode(false);
+                entity.Property(e => e.LapsedCardsSteps).IsUnicode(false);
 
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(100);
-
-                entity.Property(e => e.NewCardsSteps)
-                    .IsRequired()
-                    .HasMaxLength(100)
-                    .IsUnicode(false);
+                entity.Property(e => e.NewCardsSteps).IsUnicode(false);
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.CardOptions)
@@ -77,22 +55,9 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_CardOptions_User");
             });
 
-            modelBuilder.Entity<ConceptEntity>(entity =>
-            {
-                entity.ToTable("Concept");
-
-                entity.Property(e => e.Description).HasMaxLength(512);
-
-                entity.Property(e => e.Title)
-                    .IsRequired()
-                    .HasMaxLength(128);
-            });
-
             modelBuilder.Entity<ConceptTagUserEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptId, e.TagId, e.UserId });
-
-                entity.ToTable("Concept_Tag_User");
 
                 entity.HasIndex(e => e.TagId);
 
@@ -119,13 +84,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<DeckEntity>(entity =>
             {
-                entity.ToTable("Deck");
-
                 entity.HasIndex(e => e.UserId);
-
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(128);
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Decks)
@@ -137,8 +96,6 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<DeckCardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.DeckId, e.CardId });
-
-                entity.ToTable("Deck_Card");
 
                 entity.HasIndex(e => e.CardId);
 
@@ -159,8 +116,6 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.DeckId, e.TagId });
 
-                entity.ToTable("Deck_Tag");
-
                 entity.HasIndex(e => e.TagId);
 
                 entity.HasOne(d => d.Deck)
@@ -178,13 +133,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
-                entity.ToTable("History");
-
                 entity.HasIndex(e => e.CardId);
 
                 entity.HasIndex(e => e.UserId);
-
-                entity.Property(e => e.Timestamp).HasColumnType("smalldatetime");
 
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.Histories)
@@ -199,27 +150,9 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_History_User");
             });
 
-            modelBuilder.Entity<TagEntity>(entity =>
-            {
-                entity.ToTable("Tag");
-
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(64);
-            });
-
             modelBuilder.Entity<UserEntity>(entity =>
             {
-                entity.ToTable("User");
-
-                entity.Property(e => e.Email)
-                    .IsRequired()
-                    .HasMaxLength(254);
-
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(32)
-                    .IsUnicode(false);
+                entity.Property(e => e.Name).IsUnicode(false);
             });
 
             OnModelCreatingExt(modelBuilder);

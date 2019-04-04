@@ -1,13 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
     public partial class CardOptionEntity
     {
         public int Id { get; set; }
+        [Required]
+        [StringLength(100)]
         public string Name { get; set; }
         public int UserId { get; set; }
+        [Required]
+        [StringLength(100)]
         public string NewCardsSteps { get; set; }
         public short NewCardsMaxPerDay { get; set; }
         public byte NewCardsGraduatingInterval { get; set; }
@@ -19,6 +25,8 @@ namespace CardOverflow.Entity
         public short MatureCardsIntervalModifier { get; set; }
         public short MatureCardsMaximumInterval { get; set; }
         public bool MatureCardsBuryRelated { get; set; }
+        [Required]
+        [StringLength(100)]
         public string LapsedCardsSteps { get; set; }
         public short LapsedCardsNewInterval { get; set; }
         public byte LapsedCardsMinimumInterval { get; set; }
@@ -27,6 +35,8 @@ namespace CardOverflow.Entity
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAnswerAudioOnAnswer { get; set; }
 
+        [ForeignKey("UserId")]
+        [InverseProperty("CardOptions")]
         public virtual UserEntity User { get; set; }
     }
 }
