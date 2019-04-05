@@ -42,47 +42,48 @@ type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
 type CardOption = {
   Id: int
   Name: string
-  NewCardsSteps: seq<int>
+  NewCardsSteps: list<TimeSpan>
   NewCardsMaxPerDay: int16
-  NewCardsGraduatingInterval: byte
-  NewCardsEasyInterval: byte
+  NewCardsGraduatingInterval: TimeSpan
+  NewCardsEasyInterval: TimeSpan
   NewCardsStartingEase: int16
   NewCardsBuryRelated: bool
   MatureCardsMaxPerDay: int16
   MatureCardsEasyBonus: int16
   MatureCardsIntervalModifier: int16
-  MatureCardsMaximumInterval: int16
+  MatureCardsMaximumInterval: TimeSpan
   MatureCardsBuryRelated: bool
-  LapsedCardsSteps: seq<int>
+  LapsedCardsSteps: list<TimeSpan>
   LapsedCardsNewInterval: int16
-  LapsedCardsMinimumInterval: byte
+  LapsedCardsMinimumInterval: TimeSpan
   LapsedCardsLeechThreshold: byte
   ShowAnswerTimer: bool
   AutomaticallyPlayAudio: bool
   ReplayQuestionAnswerAudioOnAnswer: bool
 } with 
-  static member Create(entity: CardOptionEntity) = {
-    Id = entity.Id
-    Name = entity.Name
-    NewCardsSteps = entity.NewCardsSteps.Split [|','|] |> Seq.map Int32.Parse
-    NewCardsMaxPerDay = entity.NewCardsMaxPerDay
-    NewCardsGraduatingInterval = entity.NewCardsGraduatingInterval
-    NewCardsEasyInterval = entity.NewCardsEasyInterval
-    NewCardsStartingEase = entity.NewCardsStartingEase
-    NewCardsBuryRelated = entity.NewCardsBuryRelated
-    MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
-    MatureCardsEasyBonus = entity.MatureCardsEasyBonus
-    MatureCardsIntervalModifier = entity.MatureCardsIntervalModifier
-    MatureCardsMaximumInterval = entity.MatureCardsMaximumInterval
-    MatureCardsBuryRelated = entity.MatureCardsBuryRelated
-    LapsedCardsSteps = entity.LapsedCardsSteps.Split [|','|] |> Seq.map Int32.Parse
-    LapsedCardsNewInterval = entity.LapsedCardsNewInterval
-    LapsedCardsMinimumInterval = entity.LapsedCardsMinimumInterval
-    LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
-    ShowAnswerTimer = entity.ShowAnswerTimer
-    AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
-    ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAnswerAudioOnAnswer
-  }
+  static member Create(entity: CardOptionEntity) =
+    let parse(string: string) =
+      string.Split [|' '|] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
+    { Id = entity.Id
+      Name = entity.Name
+      NewCardsSteps = parse entity.NewCardsSteps
+      NewCardsMaxPerDay = entity.NewCardsMaxPerDay
+      NewCardsGraduatingInterval = entity.NewCardsGraduatingInterval |> float |> TimeSpan.FromDays
+      NewCardsEasyInterval = entity.NewCardsEasyInterval |> float |> TimeSpan.FromDays
+      NewCardsStartingEase = entity.NewCardsStartingEase
+      NewCardsBuryRelated = entity.NewCardsBuryRelated
+      MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
+      MatureCardsEasyBonus = entity.MatureCardsEasyBonus
+      MatureCardsIntervalModifier = entity.MatureCardsIntervalModifier
+      MatureCardsMaximumInterval = entity.MatureCardsMaximumInterval |> float |> TimeSpan.FromDays
+      MatureCardsBuryRelated = entity.MatureCardsBuryRelated
+      LapsedCardsSteps = parse entity.LapsedCardsSteps
+      LapsedCardsNewInterval = entity.LapsedCardsNewInterval
+      LapsedCardsMinimumInterval = entity.LapsedCardsMinimumInterval |> float |> TimeSpan.FromDays
+      LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
+      ShowAnswerTimer = entity.ShowAnswerTimer
+      AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
+      ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAnswerAudioOnAnswer }
 
 type QuizCard = {
   Id: int
@@ -92,8 +93,8 @@ type QuizCard = {
   CardState: CardState
   LapseCount: byte
   EaseFactor: int16
-  Interval: int16
-  ReviewsUntilGraduation: option<byte>
+  Interval: TimeSpan
+  StepsIndex: option<byte>
   Options: CardOption
 } with
   static member Create(entity: CardEntity) = {
@@ -104,10 +105,14 @@ type QuizCard = {
     CardState = CardState.Create entity.MemorizationStateAndCardState
     LapseCount = entity.LapseCount
     EaseFactor = entity.EaseFactor
-    Interval = entity.Interval
-    ReviewsUntilGraduation = 
-      if entity.ReviewsUntilGraduation.HasValue 
-      then Some entity.ReviewsUntilGraduation.Value 
+    Interval = 
+      if int32 entity.Interval < 0 
+      then int16 -1 * entity.Interval |> float |> TimeSpan.FromMinutes 
+      else entity.Interval |> float |> TimeSpan.FromDays
+    StepsIndex = 
+      if entity.StepsIndex.HasValue 
+      then Some entity.StepsIndex.Value 
       else None
-    Options = CardOption.Create entity.CardOption
-  }
+    Options = CardOption.Create entity.CardOption }
+
+type Score = | Again | Hard | Good | Easy

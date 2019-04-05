@@ -9,6 +9,7 @@
     <Compile Include="Core\Extensions.fs" />
     <Compile Include="Repository\DbFactory.fs" />
     <Compile Include="Repository\Repositories.fs" />
+    <Compile Include="Scheduler.fs" />
     <Compile Include="WeatherForecast.fs" />
   </ItemGroup>
 
