@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
         public byte LapseCount { get; set; }
         public short EaseFactor { get; set; }
         public short Interval { get; set; }
-        public byte? ReviewsUntilGraduation { get; set; }
+        public byte? StepsIndex { get; set; }
         public int CardOptionId { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
