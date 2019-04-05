@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,6 +30,8 @@ namespace CardOverflow.Entity
         public short Interval { get; set; }
         public byte? ReviewsUntilGraduation { get; set; }
         public int CardOptionId { get; set; }
+        [Column(TypeName = "smalldatetime")]
+        public DateTime Due { get; set; }
 
         [ForeignKey("CardOptionId")]
         [InverseProperty("Cards")]

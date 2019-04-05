@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -33,6 +33,8 @@ namespace CardOverflow.Entity
         {
             modelBuilder.Entity<CardEntity>(entity =>
             {
+                entity.HasIndex(e => e.CardOptionId);
+
                 entity.HasIndex(e => e.ConceptId);
 
                 entity.HasOne(d => d.CardOption)
@@ -50,6 +52,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardOptionEntity>(entity =>
             {
+                entity.HasIndex(e => e.UserId);
+
                 entity.Property(e => e.LapsedCardsSteps).IsUnicode(false);
 
                 entity.Property(e => e.NewCardsSteps).IsUnicode(false);
