@@ -1,8 +1,9 @@
 ﻿module Scheduler
 
 open CardOverflow.Api
+open System
 
-let schedule card score =
+let interval card score =
     let intervalOfNewOrLearning card = 
         function
         | Again -> card.Options.NewCardsSteps.Head
@@ -21,12 +22,20 @@ let schedule card score =
                 | None -> card.Options.NewCardsGraduatingInterval
             | None -> card.Options.NewCardsGraduatingInterval // TODO log this, this branch should never be reached
         | Easy -> card.Options.NewCardsEasyInterval
-    let intervalOfMature card = 
+    let intervalOfMature card =
+        let interval latenessCoefficient easeFactor (previousInterval: TimeSpan) =
+            let max(a: TimeSpan)(b: TimeSpan) =
+                if a.Ticks > b.Ticks then a else b
+            max (DateTime.UtcNow - card.Due |> (*) latenessCoefficient |> (+) card.Interval |> (*) easeFactor |> (*) card.Options.MatureCardsIntervalModifier)
+                (TimeSpan.FromDays 1.0 |> previousInterval.Add)
+        let hard = interval 0.25 1.2 card.Interval
+        let good = interval 0.50 card.EaseFactor hard
+        let easy = interval 1.00 (card.EaseFactor * card.Options.MatureCardsEasyBonus) good
         function
         | Again -> card.Options.NewCardsSteps.Head
-        | Hard -> failwith "not implemented"
-        | Good -> failwith "not implemented"
-        | Easy -> failwith "not implemented"
+        | Hard -> hard
+        | Good -> good
+        | Easy -> easy
     match card.MemorizationState with
     | New 
     | Learning -> intervalOfNewOrLearning card score

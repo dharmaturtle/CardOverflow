@@ -49,8 +49,8 @@ type CardOption = {
   NewCardsStartingEase: int16
   NewCardsBuryRelated: bool
   MatureCardsMaxPerDay: int16
-  MatureCardsEasyBonus: int16
-  MatureCardsIntervalModifier: decimal
+  MatureCardsEasyBonus: float
+  MatureCardsIntervalModifier: float
   MatureCardsMaximumInterval: TimeSpan
   MatureCardsBuryRelated: bool
   LapsedCardsSteps: list<TimeSpan>
@@ -73,8 +73,8 @@ type CardOption = {
       NewCardsStartingEase = entity.NewCardsStartingEase
       NewCardsBuryRelated = entity.NewCardsBuryRelated
       MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
-      MatureCardsEasyBonus = entity.MatureCardsEasyBonus
-      MatureCardsIntervalModifier = float32 entity.MatureCardsIntervalModifier / 100.0f |> decimal
+      MatureCardsEasyBonus = float entity.MatureCardsEasyBonus / 100.0
+      MatureCardsIntervalModifier = float entity.MatureCardsIntervalModifier / 100.0
       MatureCardsMaximumInterval = entity.MatureCardsMaximumInterval |> float |> TimeSpan.FromDays
       MatureCardsBuryRelated = entity.MatureCardsBuryRelated
       LapsedCardsSteps = parse entity.LapsedCardsSteps
@@ -87,24 +87,26 @@ type CardOption = {
 
 type QuizCard = {
   Id: int
+  Due: DateTime
   Question: string
   Answer: string
   MemorizationState: MemorizationState
   CardState: CardState
   LapseCount: byte
-  EaseFactor: int16
+  EaseFactor: float
   Interval: TimeSpan
   StepsIndex: option<byte>
   Options: CardOption
 } with
   static member Create(entity: CardEntity) = {
     Id = entity.Id
+    Due = entity.Due
     Question = entity.Question
     Answer = entity.Answer
     MemorizationState = MemorizationState.Create entity.MemorizationStateAndCardState
     CardState = CardState.Create entity.MemorizationStateAndCardState
     LapseCount = entity.LapseCount
-    EaseFactor = entity.EaseFactor
+    EaseFactor = float entity.EaseFactor / 1000.0
     Interval = 
       if int32 entity.Interval < 0 
       then int16 -1 * entity.Interval |> float |> TimeSpan.FromMinutes 
