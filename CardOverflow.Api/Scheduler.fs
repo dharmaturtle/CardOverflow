@@ -26,11 +26,11 @@ let interval card score =
         let interval latenessCoefficient easeFactor (previousInterval: TimeSpan) =
             let max(a: TimeSpan)(b: TimeSpan) =
                 if a.Ticks > b.Ticks then a else b
-            max (DateTime.UtcNow - card.Due |> (*) latenessCoefficient |> (+) card.Interval |> (*) easeFactor |> (*) card.Options.MatureCardsIntervalModifier)
+            max (DateTime.UtcNow - card.Due |> (*) latenessCoefficient |> (+) card.Interval |> (*) easeFactor |> (*) card.Options.MatureCardsIntervalFactor)
                 (TimeSpan.FromDays 1.0 |> previousInterval.Add)
         let hard = interval 0.25 1.2 card.Interval
         let good = interval 0.50 card.EaseFactor hard
-        let easy = interval 1.00 (card.EaseFactor * card.Options.MatureCardsEasyBonus) good
+        let easy = interval 1.00 (card.EaseFactor * card.Options.MatureCardsEaseFactorEasyBonusFactor) good
         function
         | Again -> card.Options.NewCardsSteps.Head
         | Hard -> hard

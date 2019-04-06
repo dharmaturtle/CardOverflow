@@ -14,9 +14,9 @@ namespace CardOverflow.Entity
         public byte ScoreAndMemorizationState { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Timestamp { get; set; }
-        public short Interval { get; set; }
-        public short EaseFactor { get; set; }
-        public short Time { get; set; }
+        public short IntervalNegativeIsMinutesPositiveIsDays { get; set; }
+        public short EaseFactorInPermille { get; set; }
+        public short TimeFromSeeingQuestionToScoreInSecondsMinus32768 { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("Histories")]

@@ -20,26 +20,27 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         [Required]
         [StringLength(100)]
-        public string NewCardsSteps { get; set; }
+        public string NewCardsStepsInMinutes { get; set; }
         public short NewCardsMaxPerDay { get; set; }
-        public byte NewCardsGraduatingInterval { get; set; }
-        public byte NewCardsEasyInterval { get; set; }
-        public short NewCardsStartingEase { get; set; }
+        public byte NewCardsGraduatingIntervalInDays { get; set; }
+        public byte NewCardsEasyIntervalInDays { get; set; }
+        public short NewCardsStartingEaseFactorInPermille { get; set; }
         public bool NewCardsBuryRelated { get; set; }
         public short MatureCardsMaxPerDay { get; set; }
-        public short MatureCardsEasyBonus { get; set; }
-        public short MatureCardsIntervalModifier { get; set; }
-        public short MatureCardsMaximumInterval { get; set; }
+        public short MatureCardsEaseFactorEasyBonusFactorInPermille { get; set; }
+        public short MatureCardsIntervalFactorInPermille { get; set; }
+        public short MatureCardsMaximumIntervalInDays { get; set; }
+        public short MatureCardsHardIntervalFactorInPermille { get; set; }
         public bool MatureCardsBuryRelated { get; set; }
         [Required]
         [StringLength(100)]
-        public string LapsedCardsSteps { get; set; }
-        public short LapsedCardsNewInterval { get; set; }
-        public byte LapsedCardsMinimumInterval { get; set; }
+        public string LapsedCardsStepsInMinutes { get; set; }
+        public short LapsedCardsNewIntervalInPermille { get; set; }
+        public byte LapsedCardsMinimumIntervalInDays { get; set; }
         public byte LapsedCardsLeechThreshold { get; set; }
         public bool ShowAnswerTimer { get; set; }
         public bool AutomaticallyPlayAudio { get; set; }
-        public bool ReplayQuestionAnswerAudioOnAnswer { get; set; }
+        public bool ReplayQuestionAudioOnAnswer { get; set; }
 
         [ForeignKey("UserId")]
         [InverseProperty("CardOptions")]
