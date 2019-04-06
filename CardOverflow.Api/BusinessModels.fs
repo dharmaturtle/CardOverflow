@@ -50,7 +50,7 @@ type CardOption = {
   NewCardsBuryRelated: bool
   MatureCardsMaxPerDay: int16
   MatureCardsEasyBonus: int16
-  MatureCardsIntervalModifier: int16
+  MatureCardsIntervalModifier: decimal
   MatureCardsMaximumInterval: TimeSpan
   MatureCardsBuryRelated: bool
   LapsedCardsSteps: list<TimeSpan>
@@ -74,7 +74,7 @@ type CardOption = {
       NewCardsBuryRelated = entity.NewCardsBuryRelated
       MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
       MatureCardsEasyBonus = entity.MatureCardsEasyBonus
-      MatureCardsIntervalModifier = entity.MatureCardsIntervalModifier
+      MatureCardsIntervalModifier = float32 entity.MatureCardsIntervalModifier / 100.0f |> decimal
       MatureCardsMaximumInterval = entity.MatureCardsMaximumInterval |> float |> TimeSpan.FromDays
       MatureCardsBuryRelated = entity.MatureCardsBuryRelated
       LapsedCardsSteps = parse entity.LapsedCardsSteps
