@@ -3,6 +3,10 @@
 open CardOverflow.Api
 open System
 
+let max a b = if a > b then a else b
+let min a b = if a < b then a else b
+let equals a b threshold = abs(a-b) < threshold
+
 let interval card score =
     let intervalOfNewOrLearning card = 
         function
@@ -23,8 +27,6 @@ let interval card score =
             | None -> card.Options.NewCardsGraduatingInterval // TODO log this, this branch should never be reached
         | Easy -> card.Options.NewCardsEasyInterval
     let intervalOfMature card =
-        let max a b = if a > b then a else b
-        let min a b = if a < b then a else b
         let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
             max (rawInterval * card.Options.MatureCardsIntervalFactor)
                 (TimeSpan.FromDays 1.0 |> previousInterval.Add)
@@ -42,3 +44,18 @@ let interval card score =
     | New 
     | Learning -> intervalOfNewOrLearning card score
     | Mature -> intervalOfMature card score
+
+let fuzzedInterval(interval: TimeSpan) =
+    let fuzzedIntervalRangeInDaysInclusive =
+        let days = interval.TotalDays
+        let atLeastOneDay = max 1.0
+        let buildFuzzierInterval = atLeastOneDay >> fun x -> (days - x, days + x)
+        if days < 2.0              then (1.0, 1.0)
+        elif equals days 2.0 0.001 then (2.0, 3.0)
+        elif days < 7.00 then         (days * 0.25) |> buildFuzzierInterval
+        elif days < 30.0 then max 2.0 (days * 0.15) |> buildFuzzierInterval
+        else                  max 4.0 (days * 0.05) |> buildFuzzierInterval
+    let getRandom(minInclusive, maxExclusive) = // todo make max inclusive https://stackoverflow.com/questions/1064901
+        let r = Random()
+        r.NextDouble() * (maxExclusive - minInclusive) + minInclusive
+    getRandom fuzzedIntervalRangeInDaysInclusive |> TimeSpan.FromDays
