@@ -46,8 +46,8 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
         | Learning -> intervalOfNewOrLearning card score
         | Mature -> intervalOfMature card score
 
-    let fuzzedInterval(interval: TimeSpan) =
-        let fuzzedIntervalRangeInDaysInclusive =
+    let fuzz(interval: TimeSpan) =
+        let fuzzRangeInDaysInclusive =
             let days = interval.TotalDays
             let atLeastOneDay = max 1.0
             let buildFuzzierInterval = atLeastOneDay >> fun x -> (days - x, days + x)
@@ -57,4 +57,4 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
             elif days < 30.0 then max 2.0 (days * 0.15) |> buildFuzzierInterval
             else                  max 4.0 (days * 0.05) |> buildFuzzierInterval
         // todo, low priority but find an implementation that is max inclusive
-        randomProvider.GetRandomFloat fuzzedIntervalRangeInDaysInclusive |> TimeSpan.FromDays
+        randomProvider.GetRandomFloat fuzzRangeInDaysInclusive |> TimeSpan.FromDays
