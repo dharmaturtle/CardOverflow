@@ -9,6 +9,9 @@ open System.Linq
 type CardRepository(dbService: DbService) =
   member __.GetCards() =
     dbService.Query(fun db -> db.Cards.ToList())
+  
+  member __.GetCardsForQuiz() =
+    dbService.Query(fun db -> db.Cards.Include(fun x -> x.CardOption).ToList()) |> Seq.map QuizCard.Create
 
   member __.SaveCard card =
     dbService.Command(fun db -> db.Cards.Add card)
