@@ -23,14 +23,16 @@ let interval card score =
             | None -> card.Options.NewCardsGraduatingInterval // TODO log this, this branch should never be reached
         | Easy -> card.Options.NewCardsEasyInterval
     let intervalOfMature card =
-        let interval latenessCoefficient easeFactor (previousInterval: TimeSpan) =
-            let max(a: TimeSpan)(b: TimeSpan) =
-                if a.Ticks > b.Ticks then a else b
-            max (DateTime.UtcNow - card.Due |> (*) latenessCoefficient |> (+) card.Interval |> (*) easeFactor |> (*) card.Options.MatureCardsIntervalFactor)
+        let max a b = if a > b then a else b
+        let min a b = if a < b then a else b
+        let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
+            max (rawInterval * card.Options.MatureCardsIntervalFactor)
                 (TimeSpan.FromDays 1.0 |> previousInterval.Add)
-        let hard = interval 0.25 1.2 card.Interval
-        let good = interval 0.50 card.EaseFactor hard
-        let easy = interval 1.00 (card.EaseFactor * card.Options.MatureCardsEaseFactorEasyBonusFactor) good
+            |> min card.Options.MatureCardsMaximumInterval
+        let delta = DateTime.UtcNow - card.Due |> max TimeSpan.Zero
+        let hard = interval card.Interval (card.Interval * card.Options.MatureCardsHardInterval)
+        let good = interval hard (delta * 0.5 |> (+) card.Interval |> (*) card.EaseFactor)
+        let easy = interval good (delta * 1.0 |> (+) card.Interval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
         function
         | Again -> card.Options.NewCardsSteps.Head
         | Hard -> hard

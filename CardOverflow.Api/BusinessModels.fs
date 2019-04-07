@@ -52,6 +52,7 @@ type CardOption = {
   MatureCardsEaseFactorEasyBonusFactor: float
   MatureCardsIntervalFactor: float
   MatureCardsMaximumInterval: TimeSpan
+  MatureCardsHardInterval: float
   MatureCardsBuryRelated: bool
   LapsedCardsSteps: list<TimeSpan>
   LapsedCardsNewInterval: float
@@ -76,6 +77,7 @@ type CardOption = {
       MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.0
       MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.0
       MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpan.FromDays
+      MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.0
       MatureCardsBuryRelated = entity.MatureCardsBuryRelated
       LapsedCardsSteps = parse entity.LapsedCardsStepsInMinutes
       LapsedCardsNewInterval = float entity.LapsedCardsNewIntervalInPermille / 1000.0
