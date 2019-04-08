@@ -25,9 +25,9 @@ type DbService(dbFactory: DbFactory) =
         q db |> ignore
         db.SaveChanges() |> ignore
 
-type AnkiDbFactory(connectionString: string) =
+type AnkiDbFactory(dbPath: string) =
     member __.Create() =
-        DbContextOptionsBuilder().UseSqlite(connectionString).Options
+        DbContextOptionsBuilder().UseSqlite("DataSource=" + dbPath).Options
         |> fun o -> new AnkiDb(o)
 
 type AnkiDbService(dbFactory: AnkiDbFactory) =

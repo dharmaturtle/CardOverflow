@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
@@ -8,11 +8,15 @@
     <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.apkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="TestHelpers.fs" />
     <Compile Include="MergeTests.fs" />
     <Compile Include="DbServiceTests.fs" />
     <Compile Include="CardServiceTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
+    <Compile Include="AnkiImportTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.3" />
