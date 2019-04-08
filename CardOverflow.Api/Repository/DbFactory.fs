@@ -1,6 +1,7 @@
 ﻿namespace CardOverflow.Api
 
 open CardOverflow.Entity
+open CardOverflow.Entity.Anki
 open Microsoft.EntityFrameworkCore
 
 type IConnectionStringProvider =
@@ -8,18 +9,32 @@ type IConnectionStringProvider =
 
 type ConnectionStringProvider() =
     interface IConnectionStringProvider with
-        member this.Get = "Server=localhost;Database=CardOverflow;Trusted_Connection=True;"
+        member __.Get = "Server=localhost;Database=CardOverflow;Trusted_Connection=True;"
 
 type DbFactory(connectionStringProvider: IConnectionStringProvider) =
-    member this.Create() =
+    member __.Create() =
         DbContextOptionsBuilder().UseSqlServer(connectionStringProvider.Get).Options
         |> fun o -> new CardOverflowDb(o)
 
 type DbService(dbFactory: DbFactory) =
-    member this.Query(q) =
+    member __.Query(q) =
         use db = dbFactory.Create()
         q db
-    member this.Command(q): unit =
+    member __.Command(q): unit =
+        use db = dbFactory.Create()
+        q db |> ignore
+        db.SaveChanges() |> ignore
+
+type AnkiDbFactory(connectionString: string) =
+    member __.Create() =
+        DbContextOptionsBuilder().UseSqlite(connectionString).Options
+        |> fun o -> new AnkiDb(o)
+
+type AnkiDbService(dbFactory: AnkiDbFactory) =
+    member __.Query(q) =
+        use db = dbFactory.Create()
+        q db
+    member __.Command(q): unit =
         use db = dbFactory.Create()
         q db |> ignore
         db.SaveChanges() |> ignore
