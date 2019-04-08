@@ -11,7 +11,12 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Api", "CardOve
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Test", "CardOverflow.Test\CardOverflow.Test.fsproj", "{46255A67-B0B9-4186-90D7-E3676F361578}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardOverflow.Legacy", "CardOverflow.Legacy\CardOverflow.Legacy.csproj", "{7673B222-B67D-4652-A47F-3F08630BEC3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardOverflow.Legacy", "CardOverflow.Legacy\CardOverflow.Legacy.csproj", "{7673B222-B67D-4652-A47F-3F08630BEC3D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Stuff", "Stuff", "{7F59CD36-812D-42FB-8D9A-CB3E4C8C2D0C}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
