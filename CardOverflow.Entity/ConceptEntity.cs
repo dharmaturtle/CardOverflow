@@ -18,9 +18,20 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(128)]
         public string Title { get; set; }
+        [Required]
         [StringLength(512)]
         public string Description { get; set; }
+        public int ConceptOptionId { get; set; }
+        public int ConceptTemplateId { get; set; }
+        [Required]
+        public string Fields { get; set; }
 
+        [ForeignKey("ConceptOptionId")]
+        [InverseProperty("Concepts")]
+        public virtual ConceptOptionEntity ConceptOption { get; set; }
+        [ForeignKey("ConceptTemplateId")]
+        [InverseProperty("Concepts")]
+        public virtual ConceptTemplateEntity ConceptTemplate { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Concept")]

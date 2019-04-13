@@ -7,9 +7,10 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : DbContext
     {
         public virtual DbSet<CardEntity> Cards { get; set; }
-        public virtual DbSet<CardOptionEntity> CardOptions { get; set; }
         public virtual DbSet<ConceptEntity> Concepts { get; set; }
+        public virtual DbSet<ConceptOptionEntity> ConceptOptions { get; set; }
         public virtual DbSet<ConceptTagUserEntity> ConceptTagUsers { get; set; }
+        public virtual DbSet<ConceptTemplateEntity> ConceptTemplates { get; set; }
         public virtual DbSet<DeckEntity> Decks { get; set; }
         public virtual DbSet<DeckCardEntity> DeckCards { get; set; }
         public virtual DbSet<DeckTagEntity> DeckTags { get; set; }
@@ -33,15 +34,7 @@ namespace CardOverflow.Entity
         {
             modelBuilder.Entity<CardEntity>(entity =>
             {
-                entity.HasIndex(e => e.CardOptionId);
-
                 entity.HasIndex(e => e.ConceptId);
-
-                entity.HasOne(d => d.CardOption)
-                    .WithMany(p => p.Cards)
-                    .HasForeignKey(d => d.CardOptionId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Card_CardOption");
 
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.Cards)
@@ -50,19 +43,32 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Card_Concept");
             });
 
-            modelBuilder.Entity<CardOptionEntity>(entity =>
+            modelBuilder.Entity<ConceptEntity>(entity =>
             {
-                entity.HasIndex(e => e.UserId);
+                entity.HasOne(d => d.ConceptOption)
+                    .WithMany(p => p.Concepts)
+                    .HasForeignKey(d => d.ConceptOptionId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Concept_ConceptOption");
 
+                entity.HasOne(d => d.ConceptTemplate)
+                    .WithMany(p => p.Concepts)
+                    .HasForeignKey(d => d.ConceptTemplateId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Concept_ConceptTemplate");
+            });
+
+            modelBuilder.Entity<ConceptOptionEntity>(entity =>
+            {
                 entity.Property(e => e.LapsedCardsStepsInMinutes).IsUnicode(false);
 
                 entity.Property(e => e.NewCardsStepsInMinutes).IsUnicode(false);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.CardOptions)
+                    .WithMany(p => p.ConceptOptions)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CardOption_User");
+                    .HasConstraintName("FK_ConceptOption_User");
             });
 
             modelBuilder.Entity<ConceptTagUserEntity>(entity =>
@@ -90,6 +96,17 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Concept_Tag_User_User");
+            });
+
+            modelBuilder.Entity<ConceptTemplateEntity>(entity =>
+            {
+                entity.Property(e => e.Css).IsUnicode(false);
+
+                entity.HasOne(d => d.DefaultConceptOptions)
+                    .WithMany(p => p.ConceptTemplates)
+                    .HasForeignKey(d => d.DefaultConceptOptionsId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ConceptTemplate_ConceptOption");
             });
 
             modelBuilder.Entity<DeckEntity>(entity =>

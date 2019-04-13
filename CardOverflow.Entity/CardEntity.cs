@@ -16,26 +16,15 @@ namespace CardOverflow.Entity
 
         public int Id { get; set; }
         public int ConceptId { get; set; }
-        [Required]
-        [StringLength(1028)]
-        public string Question { get; set; }
-        [Required]
-        [StringLength(1028)]
-        public string Answer { get; set; }
-        [Column(TypeName = "smalldatetime")]
-        public DateTime Modified { get; set; }
         public MemorizationStateAndCardStateEnum MemorizationStateAndCardState { get; set; }
         public byte LapseCount { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalNegativeIsMinutesPositiveIsDays { get; set; }
         public byte? StepsIndex { get; set; }
-        public int CardOptionId { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
+        public byte TemplateIndex { get; set; }
 
-        [ForeignKey("CardOptionId")]
-        [InverseProperty("Cards")]
-        public virtual CardOptionEntity CardOption { get; set; }
         [ForeignKey("ConceptId")]
         [InverseProperty("Cards")]
         public virtual ConceptEntity Concept { get; set; }
