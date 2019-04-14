@@ -150,6 +150,16 @@ type Field = {
         MappingTools.splitByRecordSeparator >> List.map Field.Create
     static member GetNames = 
         MappingTools.splitByRecordSeparator >> List.map Field.GetName
+    member this.ToEntityString =
+        [   this.Name
+            this.Font
+            this.FontSize |> string
+            this.IsRightToLeft |> MappingTools.boolToString
+            this.Ordinal |> string
+            this.IsSticky |> MappingTools.boolToString
+        ] |> MappingTools.joinByUnitSeparator
+    static member ManyToEntityString =
+        List.map (fun (x: Field) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
 
 type CardTemplate = {
     Name: string
@@ -169,6 +179,48 @@ type CardTemplate = {
             Ordinal = Byte.Parse parsed.[5] }
     static member CreateMany = 
         MappingTools.splitByRecordSeparator >> List.map CardTemplate.Create
+    member this.ToEntityString =
+        [   this.Name
+            this.QuestionTemplate
+            this.AnswerTemplate
+            this.ShortQuestionTemplate
+            this.ShortAnswerTemplate
+            this.Ordinal |> string
+        ] |> MappingTools.joinByUnitSeparator
+    static member ManyToEntityString =
+        List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
+
+type ConceptTemplate = {
+    Id: int
+    Name: string
+    Css: string
+    Fields: Field list
+    CardTemplates: CardTemplate list
+    Modified: DateTime
+    IsCloze: bool
+    DefaultTags: int list
+    DefaultConceptOptionsId: int
+} with
+    static member Create(entity: ConceptTemplateEntity) = {
+        Id = entity.Id
+        Name = entity.Name
+        Css = entity.Css
+        Fields = entity.Fields |> Field.CreateMany
+        CardTemplates = entity.CardTemplates |> CardTemplate.CreateMany
+        Modified = entity.Modified
+        IsCloze = entity.IsCloze
+        DefaultTags = entity.DefaultTags |> MappingTools.stringOfIntsToIntList
+        DefaultConceptOptionsId = entity.DefaultConceptOptionsId }
+    member this.CopyTo(entity: ConceptTemplateEntity) =
+        entity.Id <- this.Id
+        entity.Name <- this.Name
+        entity.Css <- this.Css
+        entity.Fields <- this.Fields |> Field.ManyToEntityString
+        entity.CardTemplates <- this.CardTemplates |> CardTemplate.ManyToEntityString
+        entity.Modified <- this.Modified
+        entity.IsCloze <- this.IsCloze
+        entity.DefaultTags <- this.DefaultTags |> MappingTools.intsListToStringOfInts
+        entity.DefaultConceptOptionsId <- this.DefaultConceptOptionsId
 
 type QuizCard = {
     Id: int
