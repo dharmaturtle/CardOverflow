@@ -1,5 +1,15 @@
 ﻿module MappingTools
 
+open System
+
+let delimiter = ' '
+
+let stringOfMinutesToTimeSpanList(string: string) =
+    string.Split [|delimiter|] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
+
+let timeSpanListToStringOfMinutes(timeSpans: TimeSpan list) =
+    timeSpans |> List.map (fun x -> x.TotalMinutes.ToString()) |> fun x -> String.Join(delimiter, x)
+
 let stringIntToBool =
     function
     | "0" -> false

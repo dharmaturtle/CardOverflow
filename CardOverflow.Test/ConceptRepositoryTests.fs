@@ -10,30 +10,44 @@ open Xunit
 [<Fact>]
 let ``ConceptRepository can add and retreive a Concept``() =
   use tempDb = new TempDbService()
-  let service = tempDb.RecreateDatabaseAndGetDbService()
-  let conceptRepository = service |> ConceptRepository
-  let concept = ConceptEntity(Title = "", Description = "")
-  service.Command(fun db -> db.Concepts.Add(concept))
+  let user = tempDb.WithUser
+  let conceptOptions = tempDb.WithDefaultConceptOptions user
+  let conceptTemplate = tempDb.WithConceptTemplate conceptOptions
   let title = Guid.NewGuid().ToString()
-  let description = Guid.NewGuid().ToString()
+  let concept = 
+    ConceptEntity(
+      Title = title,
+      Description = "",
+      Fields = "",
+      ConceptOptionId = conceptOptions.Id,
+      ConceptTemplateId = conceptTemplate.Id)
+  let conceptRepository = tempDb.DbService |> ConceptRepository
 
-  conceptRepository.SaveConcept(ConceptEntity(Title = title, Description = description))
+  conceptRepository.SaveConcept concept
 
   conceptRepository.GetConcepts()
-  |> Seq.filter(fun x -> x.Title = title && x.Description = description)
+  |> Seq.filter(fun x -> x.Title = title)
   |> Assert.Single
 
 [<Fact>]
 let ``ConceptRepository's SaveConcepts updates a Concept``() =
   use tempDb = new TempDbService()
-  let service = tempDb.RecreateDatabaseAndGetDbService()
+  let user = tempDb.WithUser
+  let conceptOptions = tempDb.WithDefaultConceptOptions user
+  let conceptTemplate = tempDb.WithConceptTemplate conceptOptions
+  let concept = 
+    ConceptEntity(
+      Title = "",
+      Description = "",
+      Fields = "",
+      ConceptOptionId = conceptOptions.Id,
+      ConceptTemplateId = conceptTemplate.Id)
+  let service = tempDb.DbService
+  service.Command(fun db -> db.Concepts.Add concept)
   let conceptRepository = service |> ConceptRepository
-  service.Command(fun db -> db.Concepts.Add(ConceptEntity(Title = "", Description = "")))
-  let updatedTitle = Guid.NewGuid().ToString()
-  let updatedDescription = Guid.NewGuid().ToString()
   let updatedConcept = conceptRepository.GetConcepts().Single()
+  let updatedTitle = Guid.NewGuid().ToString()
   updatedConcept.Title <- updatedTitle
-  updatedConcept.Description <- updatedDescription
 
   updatedConcept 
   |> Seq.singleton 
@@ -41,5 +55,5 @@ let ``ConceptRepository's SaveConcepts updates a Concept``() =
   |> conceptRepository.SaveConcepts
 
   conceptRepository.GetConcepts()
-  |> Seq.filter(fun x -> x.Title = updatedTitle && x.Description = updatedDescription)
+  |> Seq.filter(fun x -> x.Title = updatedTitle)
   |> Assert.Single

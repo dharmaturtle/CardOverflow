@@ -63,11 +63,9 @@ type ConceptOption = {
   ReplayQuestionAnswerAudioOnAnswer: bool
 } with 
   static member Create(entity: ConceptOptionEntity) =
-    let parse(string: string) =
-      string.Split [|' '|] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
     { Id = entity.Id
       Name = entity.Name
-      NewCardsSteps = parse entity.NewCardsStepsInMinutes
+      NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
       NewCardsMaxPerDay = entity.NewCardsMaxPerDay
       NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
       NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> TimeSpan.FromDays
@@ -79,13 +77,56 @@ type ConceptOption = {
       MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpan.FromDays
       MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.0
       MatureCardsBuryRelated = entity.MatureCardsBuryRelated
-      LapsedCardsSteps = parse entity.LapsedCardsStepsInMinutes
+      LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
       LapsedCardsNewInterval = float entity.LapsedCardsNewIntervalInPermille / 1000.0
       LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> TimeSpan.FromDays
       LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
       ShowAnswerTimer = entity.ShowAnswerTimer
       AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
       ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
+  member this.CopyTo(entity: ConceptOptionEntity) =
+    entity.Name <- this.Name
+    entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
+    entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
+    entity.NewCardsGraduatingIntervalInDays <- this.NewCardsGraduatingInterval.TotalDays |> Math.Round |> byte
+    entity.NewCardsEasyIntervalInDays <- this.NewCardsEasyInterval.TotalDays |> Math.Round |> byte
+    entity.NewCardsStartingEaseFactorInPermille <- this.NewCardsStartingEaseFactor * 1000.0 |> Math.Round |> int16
+    entity.NewCardsBuryRelated <- this.NewCardsBuryRelated
+    entity.MatureCardsMaxPerDay <- this.MatureCardsMaxPerDay
+    entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000.0 |> Math.Round |> int16
+    entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000.0 |> Math.Round |> int16
+    entity.MatureCardsMaximumIntervalInDays <- this.MatureCardsMaximumInterval.TotalDays |> Math.Round |> int16
+    entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000.0 |> Math.Round |> int16
+    entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
+    entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
+    entity.LapsedCardsNewIntervalInPermille <- this.LapsedCardsNewInterval * 1000.0 |> Math.Round |> int16
+    entity.LapsedCardsMinimumIntervalInDays <- this.LapsedCardsMinimumInterval.TotalDays |> Math.Round |> byte
+    entity.LapsedCardsLeechThreshold <- this.LapsedCardsLeechThreshold
+    entity.ShowAnswerTimer <- this.ShowAnswerTimer
+    entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
+    entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAnswerAudioOnAnswer
+  static member Default = {
+    Id = 0
+    Name = "Default"
+    NewCardsSteps = [ TimeSpan.FromMinutes 1.0; TimeSpan.FromMinutes 10.0 ]
+    NewCardsMaxPerDay = int16 20
+    NewCardsGraduatingInterval = TimeSpan.FromDays 1.0
+    NewCardsEasyInterval = TimeSpan.FromDays 4.0
+    NewCardsStartingEaseFactor = 2.5
+    NewCardsBuryRelated = true
+    MatureCardsMaxPerDay = int16 200
+    MatureCardsEaseFactorEasyBonusFactor = 1.3
+    MatureCardsIntervalFactor = 1.0
+    MatureCardsMaximumInterval = TimeSpan.FromDays 36500.0
+    MatureCardsHardInterval = 1.2
+    MatureCardsBuryRelated = true
+    LapsedCardsSteps = [ TimeSpan.FromMinutes 10.0 ]
+    LapsedCardsNewInterval = 0.0
+    LapsedCardsMinimumInterval = TimeSpan.FromDays 1.0
+    LapsedCardsLeechThreshold = byte 8
+    ShowAnswerTimer = false
+    AutomaticallyPlayAudio = false
+    ReplayQuestionAnswerAudioOnAnswer = false }
 
 type Field = {
   Name: string

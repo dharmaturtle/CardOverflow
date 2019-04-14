@@ -10,7 +10,7 @@ open Xunit
 [<Fact>]
 let ``DbService can add and retreive a user``() =
   use tempDb = new TempDbService()
-  let service = tempDb.RecreateDatabaseAndGetDbService()
+  let service = tempDb.DbService
   let name = Guid.NewGuid().ToString().Take(32) |> String.Concat
   let email = Guid.NewGuid().ToString()
 
