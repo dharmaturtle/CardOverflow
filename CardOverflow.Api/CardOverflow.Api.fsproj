@@ -5,9 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="BusinessModels.fs" />
     <Compile Include="Core\Core.fs" />
     <Compile Include="Core\Extensions.fs" />
+    <Compile Include="Core\MappingTools.fs" />
+    <Compile Include="BusinessModels.fs" />
     <Compile Include="Repository\DbFactory.fs" />
     <Compile Include="Repository\Repositories.fs" />
     <Compile Include="Scheduler.fs" />

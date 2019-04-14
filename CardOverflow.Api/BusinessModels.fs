@@ -39,7 +39,7 @@ type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
     | MemorizationStateAndCardStateEnum.MatureSuspended -> Suspended
     | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
 
-type CardOption = {
+type ConceptOption = {
   Id: int
   Name: string
   NewCardsSteps: list<TimeSpan>
@@ -62,7 +62,7 @@ type CardOption = {
   AutomaticallyPlayAudio: bool
   ReplayQuestionAnswerAudioOnAnswer: bool
 } with 
-  static member Create(entity: CardOptionEntity) =
+  static member Create(entity: ConceptOptionEntity) =
     let parse(string: string) =
       string.Split [|' '|] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
     { Id = entity.Id
@@ -87,6 +87,48 @@ type CardOption = {
       AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
       ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
 
+type Field = {
+  Name: string
+  Font: string
+  FontSize: byte
+  IsRightToLeft: bool
+  Ordinal: byte
+  IsSticky: bool
+} with
+  static member Create =
+    MappingTools.splitByUnitSeparator >> fun parsed ->
+    { Name = parsed.[0]
+      Font = parsed.[1]
+      FontSize = Byte.Parse parsed.[2]
+      IsRightToLeft = MappingTools.stringIntToBool parsed.[3]
+      Ordinal = Byte.Parse parsed.[4]
+      IsSticky = MappingTools.stringIntToBool parsed.[5] }
+  static member GetName =
+    MappingTools.splitByUnitSeparator >> List.item 0
+  static member CreateMany =
+    MappingTools.splitByRecordSeparator >> List.map Field.Create
+  static member GetNames = 
+    MappingTools.splitByRecordSeparator >> List.map Field.GetName
+
+type CardTemplate = {
+  Name: string
+  QuestionTemplate: string
+  AnswerTemplate: string
+  ShortQuestionTemplate: string
+  ShortAnswerTemplate: string
+  Ordinal: byte
+} with
+  static member Create = 
+    MappingTools.splitByUnitSeparator >> fun parsed ->
+    { Name = parsed.[0]
+      QuestionTemplate = parsed.[1]
+      AnswerTemplate = parsed.[2]
+      ShortQuestionTemplate = parsed.[3]
+      ShortAnswerTemplate = parsed.[4]
+      Ordinal = Byte.Parse parsed.[5] }
+  static member CreateMany = 
+    MappingTools.splitByRecordSeparator >> List.map CardTemplate.Create
+
 type QuizCard = {
   Id: int
   Due: DateTime
@@ -98,25 +140,36 @@ type QuizCard = {
   EaseFactor: float
   Interval: TimeSpan
   StepsIndex: option<byte>
-  Options: CardOption
+  Options: ConceptOption
 } with
-  static member Create(entity: CardEntity) = {
-    Id = entity.Id
-    Due = entity.Due
-    Question = entity.Question
-    Answer = entity.Answer
-    MemorizationState = MemorizationState.Create entity.MemorizationStateAndCardState
-    CardState = CardState.Create entity.MemorizationStateAndCardState
-    LapseCount = entity.LapseCount
-    EaseFactor = float entity.EaseFactorInPermille / 1000.0
-    Interval = 
-      if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0 
-      then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes 
-      else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
-    StepsIndex = 
-      if entity.StepsIndex.HasValue 
-      then Some entity.StepsIndex.Value 
-      else None
-    Options = CardOption.Create entity.CardOption }
+  static member Create(entity: CardEntity) = 
+    let fieldNameValueMap = 
+      Seq.zip
+        (entity.Concept.ConceptTemplate.Fields |> Field.GetNames)
+        (entity.Concept.Fields |> MappingTools.splitByUnitSeparator)
+    let replaceFields template =
+      fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
+    let cardTemplate =
+      entity.Concept.ConceptTemplate.CardTemplates
+      |> MappingTools.splitByRecordSeparator
+      |> List.item (int entity.TemplateIndex)
+      |> CardTemplate.Create
+    { Id = entity.Id
+      Due = entity.Due
+      Question = replaceFields cardTemplate.QuestionTemplate
+      Answer = replaceFields cardTemplate.AnswerTemplate
+      MemorizationState = MemorizationState.Create entity.MemorizationStateAndCardState
+      CardState = CardState.Create entity.MemorizationStateAndCardState
+      LapseCount = entity.LapseCount
+      EaseFactor = float entity.EaseFactorInPermille / 1000.0
+      Interval = 
+        if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0 
+        then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes 
+        else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
+      StepsIndex = 
+        if entity.StepsIndex.HasValue 
+        then Some entity.StepsIndex.Value 
+        else None
+      Options = ConceptOption.Create entity.Concept.ConceptOption }
 
 type Score = | Again | Hard | Good | Easy

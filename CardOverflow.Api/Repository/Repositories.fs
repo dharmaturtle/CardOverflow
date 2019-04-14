@@ -11,7 +11,7 @@ type CardRepository(dbService: DbService) =
     dbService.Query(fun db -> db.Cards.ToList())
   
   member __.GetCardsForQuiz() =
-    dbService.Query(fun db -> db.Cards.Include(fun x -> x.CardOption).ToList()) |> Seq.map QuizCard.Create
+    dbService.Query(fun db -> db.Cards.Include(fun x -> x.Concept.ConceptOption).ToList()) |> Seq.map QuizCard.Create
 
   member __.SaveCard card =
     dbService.Command(fun db -> db.Cards.Add card)
@@ -25,15 +25,6 @@ type ConceptRepository(dbService: DbService) =
 
   member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
     dbService.Command(fun db ->
-      let updateCards(target: ICollection<CardEntity>)(source: ICollection<CardEntity>) = 
-        target.Merge source
-          (fun (x, y) -> x.Id = y.Id)
-          (id)
-          (target.Remove >> ignore)
-          (target.Add)
-          (fun d s -> // todo make copyto
-            d.Question <- s.Question
-            d.Answer <- s.Answer)
       this.GetConcepts().Merge concepts
         (fun (x, y) -> x.Id = y.Id)
         id
@@ -42,7 +33,9 @@ type ConceptRepository(dbService: DbService) =
         (fun d s -> // todo make copyto
           d.Title <- s.Title
           d.Description <- s.Description
-          updateCards d.Cards s.Cards
+          d.Fields <- s.Fields
+          d.ConceptOption <- s.ConceptOption
+          d.ConceptTemplate <- s.ConceptTemplate
           db.Update d |> ignore)
     )
 
