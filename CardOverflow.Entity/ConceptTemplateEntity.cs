@@ -30,6 +30,12 @@ namespace CardOverflow.Entity
         public DateTime Modified { get; set; }
         public bool IsCloze { get; set; }
         [Required]
+        [StringLength(500)]
+        public string LatexPre { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string LatexPost { get; set; }
+        [Required]
         [StringLength(50)]
         public string DefaultTags { get; set; }
         public int DefaultConceptOptionsId { get; set; }

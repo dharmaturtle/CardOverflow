@@ -1,4 +1,4 @@
-﻿namespace CardOverflow.Api
+namespace CardOverflow.Api
 
 open CardOverflow.Entity
 open System
@@ -22,7 +22,7 @@ type MemorizationState = | New | Learning | Mature
         | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
 
 type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
-    with 
+    with
     static member Create enum =
         match enum with
         | MemorizationStateAndCardStateEnum.NewNormal -> Normal
@@ -61,7 +61,7 @@ type ConceptOption = {
     ShowAnswerTimer: bool
     AutomaticallyPlayAudio: bool
     ReplayQuestionAnswerAudioOnAnswer: bool
-} with 
+} with
     static member Create(entity: ConceptOptionEntity) = {
         Id = entity.Id
         Name = entity.Name
@@ -148,7 +148,7 @@ type Field = {
         MappingTools.splitByUnitSeparator >> List.item 0
     static member CreateMany =
         MappingTools.splitByRecordSeparator >> List.map Field.Create
-    static member GetNames = 
+    static member GetNames =
         MappingTools.splitByRecordSeparator >> List.map Field.GetName
     member this.ToEntityString =
         [   this.Name
@@ -169,7 +169,7 @@ type CardTemplate = {
     ShortAnswerTemplate: string
     Ordinal: byte
 } with
-    static member Create = 
+    static member Create =
         MappingTools.splitByUnitSeparator >> fun parsed -> {
             Name = parsed.[0]
             QuestionTemplate = parsed.[1]
@@ -177,7 +177,7 @@ type CardTemplate = {
             ShortQuestionTemplate = parsed.[3]
             ShortAnswerTemplate = parsed.[4]
             Ordinal = Byte.Parse parsed.[5] }
-    static member CreateMany = 
+    static member CreateMany =
         MappingTools.splitByRecordSeparator >> List.map CardTemplate.Create
     member this.ToEntityString =
         [   this.Name
@@ -200,6 +200,8 @@ type ConceptTemplate = {
     IsCloze: bool
     DefaultTags: int list
     DefaultConceptOptionsId: int
+    LatexPre: string
+    LatexPost: string
 } with
     static member Create(entity: ConceptTemplateEntity) = {
         Id = entity.Id
@@ -210,7 +212,9 @@ type ConceptTemplate = {
         Modified = entity.Modified
         IsCloze = entity.IsCloze
         DefaultTags = entity.DefaultTags |> MappingTools.stringOfIntsToIntList
-        DefaultConceptOptionsId = entity.DefaultConceptOptionsId }
+        DefaultConceptOptionsId = entity.DefaultConceptOptionsId
+        LatexPre = entity.LatexPre
+        LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
         entity.Id <- this.Id
         entity.Name <- this.Name
@@ -221,6 +225,8 @@ type ConceptTemplate = {
         entity.IsCloze <- this.IsCloze
         entity.DefaultTags <- this.DefaultTags |> MappingTools.intsListToStringOfInts
         entity.DefaultConceptOptionsId <- this.DefaultConceptOptionsId
+        entity.LatexPre <- this.LatexPre
+        entity.LatexPost <- this.LatexPost
 
 type QuizCard = {
     Id: int
@@ -255,13 +261,13 @@ type QuizCard = {
             CardState = CardState.Create entity.MemorizationStateAndCardState
             LapseCount = entity.LapseCount
             EaseFactor = float entity.EaseFactorInPermille / 1000.0
-            Interval = 
-                if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0 
-                then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes 
+            Interval =
+                if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
+                then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
                 else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
-            StepsIndex = 
-                if entity.StepsIndex.HasValue 
-                then Some entity.StepsIndex.Value 
+            StepsIndex =
+                if entity.StepsIndex.HasValue
+                then Some entity.StepsIndex.Value
                 else None
             Options = ConceptOption.Create entity.Concept.ConceptOption }
 
