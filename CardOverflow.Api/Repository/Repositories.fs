@@ -10,7 +10,7 @@ type CardRepository(dbService: DbService) =
         dbService.Query(fun db -> db.Cards.ToList())
     
     member __.GetCardsForQuiz() =
-        dbService.Query(fun db -> db.Cards.Include(fun x -> x.Concept.ConceptOption).ToList()) |> Seq.map QuizCard.Load
+        dbService.Query(fun db -> db.Cards.Include(fun x -> x.CardOption).ToList()) |> Seq.map QuizCard.Load
 
     member __.SaveCard card =
         dbService.Command(fun db -> db.Cards.Add card)
@@ -33,7 +33,6 @@ type ConceptRepository(dbService: DbService) =
                     d.Title <- s.Title
                     d.Description <- s.Description
                     d.Fields <- s.Fields
-                    d.ConceptOption <- s.ConceptOption
                     d.ConceptTemplate <- s.ConceptTemplate
                     db.Update d |> ignore)
         )

@@ -5,7 +5,7 @@ open CardOverflow.Entity
 open System
 open Xunit
 
-let defaultConceptOptions =
+let defaultCardOptions =
     { Id = 0
       Name = "Default"
       NewCardsSteps = [ TimeSpan.FromMinutes 1.0; TimeSpan.FromMinutes 10.0 ]
@@ -27,7 +27,7 @@ let defaultConceptOptions =
       ShowAnswerTimer = false
       AutomaticallyPlayAudio = false
       ReplayQuestionAnswerAudioOnAnswer = false }
-let defaultAnkiConceptOptions =
+let defaultAnkiCardOptions =
     { Id = 1
       Name = "Default Anki Options"
       NewCardsSteps = [ TimeSpan.FromMinutes 1.0; TimeSpan.FromMinutes 10.0 ]
@@ -63,7 +63,8 @@ let basicFrontBackCardTemplate =
       QuestionTemplate = "{{Front}}"
       AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
       ShortQuestionTemplate = ""
-      ShortAnswerTemplate = "" }
+      ShortAnswerTemplate = "" 
+      DefaultCardTemplateId = 1 }
 let basicConceptTemplate =
     { Id = 0
       Name = "Basic"
@@ -74,16 +75,15 @@ let basicConceptTemplate =
     color: black;
     background-color: white;
 }"
-      Fields = [
-          frontField
-          { frontField with
-              Name = "Back"
-              Ordinal = byte 1 }]
+      Fields = 
+          [ frontField
+            { frontField with
+                Name = "Back"
+                Ordinal = byte 1 }]
       CardTemplates = [ basicFrontBackCardTemplate ]
       Modified = DateTime.UtcNow
       IsCloze = false
       DefaultTags = []
-      DefaultConceptOptionsId = -1 // temp value
       LatexPre = @"\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
@@ -105,28 +105,28 @@ let basicWithReversedCardConceptTemplate =
 let basicWithOptionalReversedCardConceptTemplate =
     { basicWithReversedCardConceptTemplate with
         Name = "Basic with optional reversed card"
-        Fields = [
-            frontField
-            { frontField with
-                Name = "Back"
-                Ordinal = byte 1 }
-            { frontField with
-                Name = "Leave Nonempty to Generate Reversed Card"
-                Ordinal = byte 2 }]
-        CardTemplates = [
-            basicFrontBackCardTemplate
-            { basicFrontBackCardTemplate with
-                Name = "Optional Reversed Card Template"
-                Ordinal = byte 1
-                QuestionTemplate = "{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}"
-                AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Front}}" }]}
+        Fields = 
+            [ frontField
+              { frontField with
+                  Name = "Back"
+                  Ordinal = byte 1 }
+              { frontField with
+                  Name = "Leave Nonempty to Generate Reversed Card"
+                  Ordinal = byte 2 }]
+        CardTemplates = 
+            [ basicFrontBackCardTemplate
+              { basicFrontBackCardTemplate with
+                  Name = "Optional Reversed Card Template"
+                  Ordinal = byte 1
+                  QuestionTemplate = "{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}"
+                  AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Front}}" }]}
 let basicTypeInAnswerConceptTemplate =
     { basicConceptTemplate with
         Name = "Basic type in the answer"
-        CardTemplates = [
-            { basicFrontBackCardTemplate with
-                QuestionTemplate = "{{Front}}\n{{type:Back}}"
-                AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}" }]}
+        CardTemplates = 
+            [{ basicFrontBackCardTemplate with
+                 QuestionTemplate = "{{Front}}\n{{type:Back}}"
+                 AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}" }]}
 let basicClozeConceptTemplate =
     { basicConceptTemplate with
         Name = "Basic Cloze"
@@ -146,17 +146,17 @@ let basicClozeConceptTemplate =
 .nightMode .cloze {
     color: lightblue;
 }"
-        Fields = [
-            { frontField with
-                Name = "Text" }
-            { frontField with
-                Name = "Extra"
-                Ordinal = byte 1 }]
-        CardTemplates = [
-            { basicFrontBackCardTemplate with
-                Name = "Basic Cloze"
-                QuestionTemplate = "{{cloze:Text}}"
-                AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
+        Fields = 
+            [{ frontField with
+                 Name = "Text" }
+             { frontField with
+                 Name = "Extra"
+                 Ordinal = byte 1 }]
+        CardTemplates = 
+            [{ basicFrontBackCardTemplate with
+                 Name = "Basic Cloze"
+                 QuestionTemplate = "{{cloze:Text}}"
+                 AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
 
 let admin = UserEntity(Name = "Admin", Email = "admin@cardoverflow.io")
 let first = UserEntity(Name = "First", Email = "first@cardoverflow.io")
@@ -170,16 +170,16 @@ let deleteAndRecreateDatabase =
             [ admin
               first
               roboturtle ]
-        let defaultConceptOptions = defaultConceptOptions.CopyToNew first
-        db.ConceptOptions.AddRange
-            [ defaultConceptOptions
-              defaultAnkiConceptOptions.CopyToNew first ]
+        let defaultCardOptions = defaultCardOptions.CopyToNew first
+        db.CardOptions.AddRange
+            [ defaultCardOptions
+              defaultAnkiCardOptions.CopyToNew first ]
         db.ConceptTemplates.AddRange 
-            [ basicConceptTemplate.CopyToNew defaultConceptOptions
-              basicWithReversedCardConceptTemplate.CopyToNew defaultConceptOptions
-              basicWithOptionalReversedCardConceptTemplate.CopyToNew defaultConceptOptions
-              basicTypeInAnswerConceptTemplate.CopyToNew defaultConceptOptions
-              basicClozeConceptTemplate.CopyToNew defaultConceptOptions ]
+            [ basicConceptTemplate.CopyToNew
+              basicWithReversedCardConceptTemplate.CopyToNew
+              basicWithOptionalReversedCardConceptTemplate.CopyToNew
+              basicTypeInAnswerConceptTemplate.CopyToNew
+              basicClozeConceptTemplate.CopyToNew ]
     )
 
 //[<Fact>]

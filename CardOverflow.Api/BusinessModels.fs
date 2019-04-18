@@ -39,7 +39,7 @@ type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
         | MemorizationStateAndCardStateEnum.MatureSuspended -> Suspended
         | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
 
-type ConceptOption = {
+type CardOption = {
     Id: int
     Name: string
     NewCardsSteps: list<TimeSpan>
@@ -62,7 +62,7 @@ type ConceptOption = {
     AutomaticallyPlayAudio: bool
     ReplayQuestionAnswerAudioOnAnswer: bool
 } with
-    static member Load(entity: ConceptOptionEntity) = {
+    static member Load(entity: CardOptionEntity) = {
         Id = entity.Id
         Name = entity.Name
         NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
@@ -84,7 +84,7 @@ type ConceptOption = {
         ShowAnswerTimer = entity.ShowAnswerTimer
         AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
         ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
-    member this.CopyTo(entity: ConceptOptionEntity) =
+    member this.CopyTo(entity: CardOptionEntity) =
         entity.Name <- this.Name
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
@@ -106,7 +106,7 @@ type ConceptOption = {
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
         entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAnswerAudioOnAnswer
     member this.CopyToNew(user: UserEntity) =
-        let entity = ConceptOptionEntity()
+        let entity = CardOptionEntity()
         this.CopyTo entity
         entity.User <- user
         entity
@@ -151,6 +151,7 @@ type CardTemplate = {
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
     Ordinal: byte
+    DefaultCardTemplateId: int
 } with
     static member Load =
         MappingTools.splitByUnitSeparator >> fun parsed -> {
@@ -159,7 +160,8 @@ type CardTemplate = {
             AnswerTemplate = parsed.[2]
             ShortQuestionTemplate = parsed.[3]
             ShortAnswerTemplate = parsed.[4]
-            Ordinal = Byte.Parse parsed.[5] }
+            Ordinal = Byte.Parse parsed.[5]
+            DefaultCardTemplateId = parsed.[6] |> int }
     static member LoadMany =
         MappingTools.splitByRecordSeparator >> List.map CardTemplate.Load
     member this.ToEntityString =
@@ -169,6 +171,7 @@ type CardTemplate = {
             this.ShortQuestionTemplate
             this.ShortAnswerTemplate
             this.Ordinal |> string
+            this.DefaultCardTemplateId |> string
         ] |> MappingTools.joinByUnitSeparator
     static member ManyToEntityString =
         List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
@@ -182,7 +185,6 @@ type ConceptTemplate = {
     Modified: DateTime
     IsCloze: bool
     DefaultTags: int list
-    DefaultConceptOptionsId: int
     LatexPre: string
     LatexPost: string
 } with
@@ -195,7 +197,6 @@ type ConceptTemplate = {
         Modified = entity.Modified
         IsCloze = entity.IsCloze
         DefaultTags = entity.DefaultTags |> MappingTools.stringOfIntsToIntList
-        DefaultConceptOptionsId = entity.DefaultConceptOptionsId
         LatexPre = entity.LatexPre
         LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
@@ -207,13 +208,11 @@ type ConceptTemplate = {
         entity.Modified <- this.Modified
         entity.IsCloze <- this.IsCloze
         entity.DefaultTags <- this.DefaultTags |> MappingTools.intsListToStringOfInts
-        entity.DefaultConceptOptionsId <- this.DefaultConceptOptionsId
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-    member this.CopyToNew(defaultConceptOptions: ConceptOptionEntity) =
+    member this.CopyToNew =
         let entity = ConceptTemplateEntity()
         this.CopyTo entity
-        entity.DefaultConceptOptions <- defaultConceptOptions
         entity
 
 type QuizCard = {
@@ -227,7 +226,7 @@ type QuizCard = {
     EaseFactor: float
     Interval: TimeSpan
     StepsIndex: option<byte>
-    Options: ConceptOption
+    Options: CardOption
 } with
     static member Load(entity: CardEntity) =
         let fieldNameValueMap =
@@ -257,7 +256,7 @@ type QuizCard = {
                 if entity.StepsIndex.HasValue
                 then Some entity.StepsIndex.Value
                 else None
-            Options = ConceptOption.Load entity.Concept.ConceptOption }
+            Options = CardOption.Load entity.CardOption }
 
 type Score = | Again | Hard | Good | Easy
 
@@ -265,7 +264,6 @@ type Concept = {
     Id: int
     Title: string
     Description: string
-    ConceptOption: ConceptOption
     ConceptTemplate: ConceptTemplate
     Fields: Field list
 } with
@@ -273,6 +271,5 @@ type Concept = {
         { Id = entity.Id
           Title = entity.Title
           Description = entity.Description
-          ConceptOption = ConceptOption.Load entity.ConceptOption
           ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
           Fields = Field.LoadMany entity.Fields }
