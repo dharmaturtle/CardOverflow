@@ -5,7 +5,7 @@ open System
 
 type MemorizationState = | New | Learning | Mature
     with
-    static member Create enum =
+    static member Load enum =
         match enum with
         | MemorizationStateAndCardStateEnum.NewNormal -> New
         | MemorizationStateAndCardStateEnum.NewSchedulerBuried -> New
@@ -23,7 +23,7 @@ type MemorizationState = | New | Learning | Mature
 
 type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
     with
-    static member Create enum =
+    static member Load enum =
         match enum with
         | MemorizationStateAndCardStateEnum.NewNormal -> Normal
         | MemorizationStateAndCardStateEnum.NewSchedulerBuried -> SchedulerBuried
@@ -62,7 +62,7 @@ type ConceptOption = {
     AutomaticallyPlayAudio: bool
     ReplayQuestionAnswerAudioOnAnswer: bool
 } with
-    static member Create(entity: ConceptOptionEntity) = {
+    static member Load(entity: ConceptOptionEntity) = {
         Id = entity.Id
         Name = entity.Name
         NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
@@ -119,7 +119,7 @@ type Field = {
     Ordinal: byte
     IsSticky: bool
 } with
-    static member Create =
+    static member Load =
         MappingTools.splitByUnitSeparator >> fun parsed -> {
             Name = parsed.[0]
             Font = parsed.[1]
@@ -129,8 +129,8 @@ type Field = {
             IsSticky = MappingTools.stringIntToBool parsed.[5] }
     static member GetName =
         MappingTools.splitByUnitSeparator >> List.item 0
-    static member CreateMany =
-        MappingTools.splitByRecordSeparator >> List.map Field.Create
+    static member LoadMany =
+        MappingTools.splitByRecordSeparator >> List.map Field.Load
     static member GetNames =
         MappingTools.splitByRecordSeparator >> List.map Field.GetName
     member this.ToEntityString =
@@ -152,7 +152,7 @@ type CardTemplate = {
     ShortAnswerTemplate: string
     Ordinal: byte
 } with
-    static member Create =
+    static member Load =
         MappingTools.splitByUnitSeparator >> fun parsed -> {
             Name = parsed.[0]
             QuestionTemplate = parsed.[1]
@@ -160,8 +160,8 @@ type CardTemplate = {
             ShortQuestionTemplate = parsed.[3]
             ShortAnswerTemplate = parsed.[4]
             Ordinal = Byte.Parse parsed.[5] }
-    static member CreateMany =
-        MappingTools.splitByRecordSeparator >> List.map CardTemplate.Create
+    static member LoadMany =
+        MappingTools.splitByRecordSeparator >> List.map CardTemplate.Load
     member this.ToEntityString =
         [   this.Name
             this.QuestionTemplate
@@ -186,12 +186,12 @@ type ConceptTemplate = {
     LatexPre: string
     LatexPost: string
 } with
-    static member Create(entity: ConceptTemplateEntity) = {
+    static member Load(entity: ConceptTemplateEntity) = {
         Id = entity.Id
         Name = entity.Name
         Css = entity.Css
-        Fields = entity.Fields |> Field.CreateMany
-        CardTemplates = entity.CardTemplates |> CardTemplate.CreateMany
+        Fields = entity.Fields |> Field.LoadMany
+        CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
         Modified = entity.Modified
         IsCloze = entity.IsCloze
         DefaultTags = entity.DefaultTags |> MappingTools.stringOfIntsToIntList
@@ -229,7 +229,7 @@ type QuizCard = {
     StepsIndex: option<byte>
     Options: ConceptOption
 } with
-    static member Create(entity: CardEntity) =
+    static member Load(entity: CardEntity) =
         let fieldNameValueMap =
             Seq.zip
                 (entity.Concept.ConceptTemplate.Fields |> Field.GetNames)
@@ -240,13 +240,13 @@ type QuizCard = {
             entity.Concept.ConceptTemplate.CardTemplates
             |> MappingTools.splitByRecordSeparator
             |> List.item (int entity.TemplateIndex)
-            |> CardTemplate.Create
+            |> CardTemplate.Load
         {   Id = entity.Id
             Due = entity.Due
             Question = replaceFields cardTemplate.QuestionTemplate
             Answer = replaceFields cardTemplate.AnswerTemplate
-            MemorizationState = MemorizationState.Create entity.MemorizationStateAndCardState
-            CardState = CardState.Create entity.MemorizationStateAndCardState
+            MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
+            CardState = CardState.Load entity.MemorizationStateAndCardState
             LapseCount = entity.LapseCount
             EaseFactor = float entity.EaseFactorInPermille / 1000.0
             Interval =
@@ -257,6 +257,22 @@ type QuizCard = {
                 if entity.StepsIndex.HasValue
                 then Some entity.StepsIndex.Value
                 else None
-            Options = ConceptOption.Create entity.Concept.ConceptOption }
+            Options = ConceptOption.Load entity.Concept.ConceptOption }
 
 type Score = | Again | Hard | Good | Easy
+
+type Concept = {
+    Id: int
+    Title: string
+    Description: string
+    ConceptOption: ConceptOption
+    ConceptTemplate: ConceptTemplate
+    Fields: Field list
+} with
+    static member Load(entity: ConceptEntity) =
+        { Id = entity.Id
+          Title = entity.Title
+          Description = entity.Description
+          ConceptOption = ConceptOption.Load entity.ConceptOption
+          ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
+          Fields = Field.LoadMany entity.Fields }
