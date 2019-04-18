@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
@@ -11,10 +11,10 @@
     <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="InitializeDatabase.fs" />
     <Compile Include="TestHelpers.fs" />
     <Compile Include="MergeTests.fs" />
     <Compile Include="DbServiceTests.fs" />
-    <Compile Include="InitializeDatabase.fs" />
     <Compile Include="CardServiceTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="AnkiImportTests.fs" />

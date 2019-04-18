@@ -162,10 +162,10 @@ let admin = UserEntity(Name = "Admin", Email = "admin@cardoverflow.io")
 let first = UserEntity(Name = "First", Email = "first@cardoverflow.io")
 let roboturtle = UserEntity(Name = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
 
-//[<Fact>]
-let ``Initialize database``() =
-    ConnectionStringProvider() |> DbFactory |> DbService |> fun x -> x.Command(fun db ->
-        db.Database.EnsureCreated() |> ignore
+let deleteAndRecreateDatabase =
+    DbService >> fun x -> x.Command(fun db ->
+        db.Database.EnsureDeleted() |> ignore
+        db.Database.EnsureCreated() |> Assert.True
         db.Users.AddRange
             [ admin
               first
@@ -181,3 +181,7 @@ let ``Initialize database``() =
               basicTypeInAnswerConceptTemplate.CopyToNew defaultConceptOptions
               basicClozeConceptTemplate.CopyToNew defaultConceptOptions ]
     )
+
+//[<Fact>]
+let ``Delete and Recreate "official" Database``() =
+    ConnectionStringProvider() |> DbFactory |> deleteAndRecreateDatabase

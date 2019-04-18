@@ -10,17 +10,14 @@ open Xunit
 [<Fact>]
 let ``ConceptRepository can add and retreive a Concept``() =
     use tempDb = new TempDbService()
-    let user = tempDb.WithUser
-    let conceptOptions = tempDb.WithDefaultConceptOptions user
-    let conceptTemplate = tempDb.WithConceptTemplate conceptOptions
     let title = Guid.NewGuid().ToString()
     let concept = 
         ConceptEntity(
             Title = title,
             Description = "",
             Fields = "",
-            ConceptOptionId = conceptOptions.Id,
-            ConceptTemplateId = conceptTemplate.Id)
+            ConceptOptionId = 1,
+            ConceptTemplateId = 1)
     let conceptRepository = tempDb.DbService |> ConceptRepository
 
     conceptRepository.SaveConcept concept
@@ -32,16 +29,13 @@ let ``ConceptRepository can add and retreive a Concept``() =
 [<Fact>]
 let ``ConceptRepository's SaveConcepts updates a Concept``() =
     use tempDb = new TempDbService()
-    let user = tempDb.WithUser
-    let conceptOptions = tempDb.WithDefaultConceptOptions user
-    let conceptTemplate = tempDb.WithConceptTemplate conceptOptions
     let concept = 
         ConceptEntity(
             Title = "",
             Description = "",
             Fields = "",
-            ConceptOptionId = conceptOptions.Id,
-            ConceptTemplateId = conceptTemplate.Id)
+            ConceptOptionId = 1,
+            ConceptTemplateId = 1)
     let service = tempDb.DbService
     service.Command(fun db -> db.Concepts.Add concept)
     let conceptRepository = service |> ConceptRepository
