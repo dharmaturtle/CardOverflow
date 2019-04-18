@@ -5,13 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("ConceptOption")]
-    public partial class ConceptOptionEntity
+[Table("CardOption")]
+    public partial class CardOptionEntity
     {
-        public ConceptOptionEntity()
+        public CardOptionEntity()
         {
-            ConceptTemplates = new HashSet<ConceptTemplateEntity>();
-            Concepts = new HashSet<ConceptEntity>();
+            Cards = new HashSet<CardEntity>();
         }
 
         public int Id { get; set; }
@@ -44,11 +43,9 @@ namespace CardOverflow.Entity
         public bool ReplayQuestionAudioOnAnswer { get; set; }
 
         [ForeignKey("UserId")]
-        [InverseProperty("ConceptOptions")]
+        [InverseProperty("CardOptions")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("DefaultConceptOptions")]
-        public virtual ICollection<ConceptTemplateEntity> ConceptTemplates { get; set; }
-        [InverseProperty("ConceptOption")]
-        public virtual ICollection<ConceptEntity> Concepts { get; set; }
+        [InverseProperty("CardOption")]
+        public virtual ICollection<CardEntity> Cards { get; set; }
     }
 }

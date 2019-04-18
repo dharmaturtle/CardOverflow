@@ -24,7 +24,11 @@ namespace CardOverflow.Entity
         [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
         public byte TemplateIndex { get; set; }
+        public int CardOptionId { get; set; }
 
+        [ForeignKey("CardOptionId")]
+        [InverseProperty("Cards")]
+        public virtual CardOptionEntity CardOption { get; set; }
         [ForeignKey("ConceptId")]
         [InverseProperty("Cards")]
         public virtual ConceptEntity Concept { get; set; }
