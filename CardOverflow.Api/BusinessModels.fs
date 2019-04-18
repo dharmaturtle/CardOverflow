@@ -1,4 +1,4 @@
-namespace CardOverflow.Api
+﻿namespace CardOverflow.Api
 
 open CardOverflow.Entity
 open System
@@ -105,28 +105,11 @@ type ConceptOption = {
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
         entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAnswerAudioOnAnswer
-    static member Default = {
-        Id = 0
-        Name = "Default"
-        NewCardsSteps = [ TimeSpan.FromMinutes 1.0; TimeSpan.FromMinutes 10.0 ]
-        NewCardsMaxPerDay = int16 20
-        NewCardsGraduatingInterval = TimeSpan.FromDays 1.0
-        NewCardsEasyInterval = TimeSpan.FromDays 4.0
-        NewCardsStartingEaseFactor = 2.5
-        NewCardsBuryRelated = true
-        MatureCardsMaxPerDay = int16 200
-        MatureCardsEaseFactorEasyBonusFactor = 1.3
-        MatureCardsIntervalFactor = 1.0
-        MatureCardsMaximumInterval = TimeSpan.FromDays 36500.0
-        MatureCardsHardInterval = 1.2
-        MatureCardsBuryRelated = true
-        LapsedCardsSteps = [ TimeSpan.FromMinutes 10.0 ]
-        LapsedCardsNewInterval = 0.0
-        LapsedCardsMinimumInterval = TimeSpan.FromDays 1.0
-        LapsedCardsLeechThreshold = byte 8
-        ShowAnswerTimer = false
-        AutomaticallyPlayAudio = false
-        ReplayQuestionAnswerAudioOnAnswer = false }
+    member this.CopyToNew(user: UserEntity) =
+        let entity = ConceptOptionEntity()
+        this.CopyTo entity
+        entity.User <- user
+        entity
 
 type Field = {
     Name: string
@@ -227,6 +210,11 @@ type ConceptTemplate = {
         entity.DefaultConceptOptionsId <- this.DefaultConceptOptionsId
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
+    member this.CopyToNew(defaultConceptOptions: ConceptOptionEntity) =
+        let entity = ConceptTemplateEntity()
+        this.CopyTo entity
+        entity.DefaultConceptOptions <- defaultConceptOptions
+        entity
 
 type QuizCard = {
     Id: int
