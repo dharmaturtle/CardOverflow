@@ -130,6 +130,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<PrivateTagEntity>(entity =>
             {
+                entity.HasIndex(e => new { e.UserId, e.Name })
+                    .HasName("AK_PrivateTag__UserId_Name")
+                    .IsUnique();
+
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.PrivateTags)
                     .HasForeignKey(d => d.UserId)
@@ -156,6 +160,13 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.PrivateTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PrivateTag_Concept_PrivateTag");
+            });
+
+            modelBuilder.Entity<PublicTagEntity>(entity =>
+            {
+                entity.HasIndex(e => e.Name)
+                    .HasName("AK_PublicTag__Name")
+                    .IsUnique();
             });
 
             modelBuilder.Entity<PublicTagConceptEntity>(entity =>
