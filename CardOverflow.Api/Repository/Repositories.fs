@@ -41,18 +41,18 @@ type UserRepository(dbService: DbService) =
     member __.GetUser email =
         dbService.Query(fun db -> db.Users.First(fun x -> x.Email = email))
 
-type TagRepository(dbService: DbService) =
-    member __.CreateTag tag =
-        dbService.Command(fun db -> db.Tags.Add tag)
+type PrivateTagRepository(dbService: DbService) =
+    member __.Create tag =
+        dbService.Command(fun db -> db.PrivateTags.Add tag)
 
-    member __.SearchTags(input:string) =
-        dbService.Query(fun db -> db.Tags.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())))
+    member __.Search(input: string) =
+        dbService.Query(fun db -> db.PrivateTags.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())))
         
-    member __.UpdateTag tag =
-        dbService.Command(fun db -> db.Tags.Update tag)
+    member __.Update tag =
+        dbService.Command(fun db -> db.PrivateTags.Update tag)
 
-    member __.DeleteTag tag =
-        dbService.Command(fun db -> db.Tags.Remove tag)
+    member __.Delete tag =
+        dbService.Command(fun db -> db.PrivateTags.Remove tag)
 
 type DeckRepository(dbService: DbService) =
     member __.Create deck =
