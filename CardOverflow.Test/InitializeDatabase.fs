@@ -159,7 +159,7 @@ let basicClozeConceptTemplate =
                  AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
 
 let admin = UserEntity(Name = "Admin", Email = "admin@cardoverflow.io")
-let first = UserEntity(Name = "First", Email = "first@cardoverflow.io")
+let theCollective = UserEntity(Name = "The Collective", Email = "theCollective@cardoverflow.io")
 let roboturtle = UserEntity(Name = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
 
 let deleteAndRecreateDatabase =
@@ -168,12 +168,12 @@ let deleteAndRecreateDatabase =
         db.Database.EnsureCreated() |> Assert.True
         db.Users.AddRange
             [ admin
-              first
+              theCollective
               roboturtle ]
-        let defaultCardOptions = defaultCardOptions.CopyToNew first
+        let defaultCardOptions = defaultCardOptions.CopyToNew theCollective
         db.CardOptions.AddRange
             [ defaultCardOptions
-              defaultAnkiCardOptions.CopyToNew first ]
+              defaultAnkiCardOptions.CopyToNew theCollective ]
         db.ConceptTemplates.AddRange 
             [ basicConceptTemplate.CopyToNew
               basicWithReversedCardConceptTemplate.CopyToNew
