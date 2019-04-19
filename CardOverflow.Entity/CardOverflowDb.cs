@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -9,13 +9,14 @@ namespace CardOverflow.Entity
         public virtual DbSet<CardEntity> Cards { get; set; }
         public virtual DbSet<CardOptionEntity> CardOptions { get; set; }
         public virtual DbSet<ConceptEntity> Concepts { get; set; }
-        public virtual DbSet<ConceptTagUserEntity> ConceptTagUsers { get; set; }
         public virtual DbSet<ConceptTemplateEntity> ConceptTemplates { get; set; }
         public virtual DbSet<DeckEntity> Decks { get; set; }
         public virtual DbSet<DeckCardEntity> DeckCards { get; set; }
-        public virtual DbSet<DeckTagEntity> DeckTags { get; set; }
         public virtual DbSet<HistoryEntity> Histories { get; set; }
-        public virtual DbSet<TagEntity> Tags { get; set; }
+        public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
+        public virtual DbSet<PrivateTagConceptEntity> PrivateTagConcepts { get; set; }
+        public virtual DbSet<PublicTagEntity> PublicTags { get; set; }
+        public virtual DbSet<PublicTagConceptEntity> PublicTagConcepts { get; set; }
         public virtual DbSet<UserEntity> Users { get; set; }
 
         public CardOverflowDb(DbContextOptions options) : base(options)
@@ -73,33 +74,6 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Concept_ConceptTemplate");
             });
 
-            modelBuilder.Entity<ConceptTagUserEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.ConceptId, e.TagId, e.UserId });
-
-                entity.HasIndex(e => e.TagId);
-
-                entity.HasIndex(e => e.UserId);
-
-                entity.HasOne(d => d.Concept)
-                    .WithMany(p => p.ConceptTagUsers)
-                    .HasForeignKey(d => d.ConceptId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Concept_Tag_User_Concept");
-
-                entity.HasOne(d => d.Tag)
-                    .WithMany(p => p.ConceptTagUsers)
-                    .HasForeignKey(d => d.TagId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Concept_Tag_User_Tag");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.ConceptTagUsers)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Concept_Tag_User_User");
-            });
-
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>
             {
                 entity.Property(e => e.Css).IsUnicode(false);
@@ -135,25 +109,6 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Deck_Card_Deck");
             });
 
-            modelBuilder.Entity<DeckTagEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.DeckId, e.TagId });
-
-                entity.HasIndex(e => e.TagId);
-
-                entity.HasOne(d => d.Deck)
-                    .WithMany(p => p.DeckTags)
-                    .HasForeignKey(d => d.DeckId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Deck_Tag_Deck");
-
-                entity.HasOne(d => d.Tag)
-                    .WithMany(p => p.DeckTags)
-                    .HasForeignKey(d => d.TagId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Deck_Tag_Tag");
-            });
-
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
                 entity.HasIndex(e => e.CardId);
@@ -171,6 +126,57 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_History_User");
+            });
+
+            modelBuilder.Entity<PrivateTagEntity>(entity =>
+            {
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.PrivateTags)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PrivateTag_User");
+            });
+
+            modelBuilder.Entity<PrivateTagConceptEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.ConceptId, e.PrivateTagId });
+
+                entity.HasIndex(e => new { e.PrivateTagId, e.ConceptId })
+                    .HasName("UK_PrivateTag_Concept_PrivateTagId_ConceptId")
+                    .IsUnique();
+
+                entity.HasOne(d => d.Concept)
+                    .WithMany(p => p.PrivateTagConcepts)
+                    .HasForeignKey(d => d.ConceptId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PrivateTag_Concept_Concept");
+
+                entity.HasOne(d => d.PrivateTag)
+                    .WithMany(p => p.PrivateTagConcepts)
+                    .HasForeignKey(d => d.PrivateTagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PrivateTag_Concept_PrivateTag");
+            });
+
+            modelBuilder.Entity<PublicTagConceptEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.ConceptId, e.PublicTagId });
+
+                entity.HasIndex(e => new { e.PublicTagId, e.ConceptId })
+                    .HasName("UK_PublicTag_Concept_PublicTagId_ConceptId")
+                    .IsUnique();
+
+                entity.HasOne(d => d.Concept)
+                    .WithMany(p => p.PublicTagConcepts)
+                    .HasForeignKey(d => d.ConceptId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PublicTag_Concept_Concept");
+
+                entity.HasOne(d => d.PublicTag)
+                    .WithMany(p => p.PublicTagConcepts)
+                    .HasForeignKey(d => d.PublicTagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PublicTag_Concept_PublicTag");
             });
 
             modelBuilder.Entity<UserEntity>(entity =>

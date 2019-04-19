@@ -11,9 +11,9 @@ namespace CardOverflow.Entity
         public UserEntity()
         {
             CardOptions = new HashSet<CardOptionEntity>();
-            ConceptTagUsers = new HashSet<ConceptTagUserEntity>();
             Decks = new HashSet<DeckEntity>();
             Histories = new HashSet<HistoryEntity>();
+            PrivateTags = new HashSet<PrivateTagEntity>();
         }
 
         public int Id { get; set; }
@@ -27,10 +27,10 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<ConceptTagUserEntity> ConceptTagUsers { get; set; }
-        [InverseProperty("User")]
         public virtual ICollection<DeckEntity> Decks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<PrivateTagEntity> PrivateTags { get; set; }
     }
 }

@@ -5,24 +5,24 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("Deck")]
-    public partial class DeckEntity
+[Table("PrivateTag")]
+    public partial class PrivateTagEntity
     {
-        public DeckEntity()
+        public PrivateTagEntity()
         {
-            DeckCards = new HashSet<DeckCardEntity>();
+            PrivateTagConcepts = new HashSet<PrivateTagConceptEntity>();
         }
 
         public int Id { get; set; }
         [Required]
-        [StringLength(128)]
+        [StringLength(250)]
         public string Name { get; set; }
         public int UserId { get; set; }
 
         [ForeignKey("UserId")]
-        [InverseProperty("Decks")]
+        [InverseProperty("PrivateTags")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("Deck")]
-        public virtual ICollection<DeckCardEntity> DeckCards { get; set; }
+        [InverseProperty("PrivateTag")]
+        public virtual ICollection<PrivateTagConceptEntity> PrivateTagConcepts { get; set; }
     }
 }
