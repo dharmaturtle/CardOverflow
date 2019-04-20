@@ -55,12 +55,12 @@ type CardOption = {
     MatureCardsHardInterval: float
     MatureCardsBuryRelated: bool
     LapsedCardsSteps: list<TimeSpan>
-    LapsedCardsNewInterval: float
+    LapsedCardsNewIntervalFactor: float // percent by which to multiply the current interval when a card goes has lapsed, called "new interval" in anki gui
     LapsedCardsMinimumInterval: TimeSpan
     LapsedCardsLeechThreshold: byte
     ShowAnswerTimer: bool
     AutomaticallyPlayAudio: bool
-    ReplayQuestionAnswerAudioOnAnswer: bool
+    ReplayQuestionAudioOnAnswer: bool
 } with
     static member Load(entity: CardOptionEntity) =
         { Id = entity.Id
@@ -78,12 +78,12 @@ type CardOption = {
           MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.0
           MatureCardsBuryRelated = entity.MatureCardsBuryRelated
           LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
-          LapsedCardsNewInterval = float entity.LapsedCardsNewIntervalInPermille / 1000.0
+          LapsedCardsNewIntervalFactor = float entity.LapsedCardsNewIntervalFactorInPermille / 1000.0
           LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> TimeSpan.FromDays
           LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
           ShowAnswerTimer = entity.ShowAnswerTimer
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
-          ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
+          ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
     member this.CopyTo(entity: CardOptionEntity) =
         entity.Name <- this.Name
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
@@ -99,12 +99,12 @@ type CardOption = {
         entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000.0 |> Math.Round |> int16
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
         entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
-        entity.LapsedCardsNewIntervalInPermille <- this.LapsedCardsNewInterval * 1000.0 |> Math.Round |> int16
+        entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000.0 |> Math.Round |> int16
         entity.LapsedCardsMinimumIntervalInDays <- this.LapsedCardsMinimumInterval.TotalDays |> Math.Round |> byte
         entity.LapsedCardsLeechThreshold <- this.LapsedCardsLeechThreshold
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
-        entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAnswerAudioOnAnswer
+        entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAudioOnAnswer
     member this.CopyToNew(user: UserEntity) =
         let entity = CardOptionEntity()
         this.CopyTo entity

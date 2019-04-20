@@ -14,10 +14,10 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
+        public int UserId { get; set; }
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
-        public int UserId { get; set; }
         [Required]
         [StringLength(100)]
         public string NewCardsStepsInMinutes { get; set; }
@@ -35,7 +35,7 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(100)]
         public string LapsedCardsStepsInMinutes { get; set; }
-        public short LapsedCardsNewIntervalInPermille { get; set; }
+        public short LapsedCardsNewIntervalFactorInPermille { get; set; }
         public byte LapsedCardsMinimumIntervalInDays { get; set; }
         public byte LapsedCardsLeechThreshold { get; set; }
         public bool ShowAnswerTimer { get; set; }

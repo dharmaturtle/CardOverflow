@@ -17,15 +17,15 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
                 | Some index -> 
                     match card.Options.NewCardsSteps |> List.tryItem (int32 index) with
                     | Some step -> step
-                    | None -> card.Options.NewCardsSteps.Head // TODO log this, this branch should never be reached
-                | None -> card.Options.NewCardsSteps.Head // TODO log this, this branch should never be reached
+                    | None -> card.Options.NewCardsSteps.Head // medTODO log this, this branch should never be reached
+                | None -> card.Options.NewCardsSteps.Head // medTODO log this, this branch should never be reached
             | Good ->
                 match card.StepsIndex with
                 | Some index ->
                     match card.Options.NewCardsSteps |> List.tryItem (int32 index + 1) with
                     | Some step -> step
                     | None -> card.Options.NewCardsGraduatingInterval
-                | None -> card.Options.NewCardsGraduatingInterval // TODO log this, this branch should never be reached
+                | None -> card.Options.NewCardsGraduatingInterval // medTODO log this, this branch should never be reached
             | Easy -> card.Options.NewCardsEasyInterval
         let intervalOfMature card =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
