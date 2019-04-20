@@ -83,7 +83,8 @@ let basicConceptTemplate =
       CardTemplates = [ basicFrontBackCardTemplate ]
       Modified = DateTime.UtcNow
       IsCloze = false
-      DefaultTags = []
+      DefaultPublicTags = []
+      DefaultPrivateTags = []
       LatexPre = @"\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}

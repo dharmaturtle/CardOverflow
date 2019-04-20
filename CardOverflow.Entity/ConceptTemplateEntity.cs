@@ -36,8 +36,11 @@ namespace CardOverflow.Entity
         [StringLength(500)]
         public string LatexPost { get; set; }
         [Required]
-        [StringLength(50)]
-        public string DefaultTags { get; set; }
+        [StringLength(100)]
+        public string DefaultPublicTags { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string DefaultPrivateTags { get; set; }
 
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<ConceptEntity> Concepts { get; set; }

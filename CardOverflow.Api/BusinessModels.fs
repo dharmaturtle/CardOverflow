@@ -184,7 +184,8 @@ type ConceptTemplate = {
     CardTemplates: CardTemplate list
     Modified: DateTime
     IsCloze: bool
-    DefaultTags: int list
+    DefaultPublicTags: int list
+    DefaultPrivateTags: int list
     LatexPre: string
     LatexPost: string
 } with
@@ -196,7 +197,8 @@ type ConceptTemplate = {
         CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
         Modified = entity.Modified
         IsCloze = entity.IsCloze
-        DefaultTags = entity.DefaultTags |> MappingTools.stringOfIntsToIntList
+        DefaultPublicTags = entity.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
+        DefaultPrivateTags = entity.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
         LatexPre = entity.LatexPre
         LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
@@ -207,7 +209,8 @@ type ConceptTemplate = {
         entity.CardTemplates <- this.CardTemplates |> CardTemplate.ManyToEntityString
         entity.Modified <- this.Modified
         entity.IsCloze <- this.IsCloze
-        entity.DefaultTags <- this.DefaultTags |> MappingTools.intsListToStringOfInts
+        entity.DefaultPublicTags <- this.DefaultPublicTags |> MappingTools.intsListToStringOfInts
+        entity.DefaultPrivateTags <- this.DefaultPrivateTags |> MappingTools.intsListToStringOfInts
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew =
