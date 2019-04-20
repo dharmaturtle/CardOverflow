@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -35,6 +35,8 @@ namespace CardOverflow.Entity
         {
             modelBuilder.Entity<CardEntity>(entity =>
             {
+                entity.HasIndex(e => e.CardOptionId);
+
                 entity.HasIndex(e => e.ConceptId);
 
                 entity.HasOne(d => d.CardOption)
@@ -52,6 +54,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardOptionEntity>(entity =>
             {
+                entity.HasIndex(e => e.UserId);
+
                 entity.Property(e => e.LapsedCardsStepsInMinutes).IsUnicode(false);
 
                 entity.Property(e => e.NewCardsStepsInMinutes).IsUnicode(false);
@@ -130,9 +134,12 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<PrivateTagEntity>(entity =>
             {
+                entity.HasKey(e => e.Id).ForSqlServerIsClustered(false);
+
                 entity.HasIndex(e => new { e.UserId, e.Name })
                     .HasName("AK_PrivateTag__UserId_Name")
-                    .IsUnique();
+                    .IsUnique()
+                    .HasAnnotation("SqlServer:Clustered", true);
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.PrivateTags)
@@ -159,7 +166,7 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.PrivateTagConcepts)
                     .HasForeignKey(d => d.PrivateTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PrivateTag_Concept_PrivateTag");
+                    .HasConstraintName("FK_PrivateTag_Concept__PrivateTag");
             });
 
             modelBuilder.Entity<PublicTagEntity>(entity =>
