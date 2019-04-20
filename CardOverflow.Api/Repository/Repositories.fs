@@ -41,9 +41,14 @@ type UserRepository(dbService: DbService) =
     member __.GetUser email =
         dbService.Query(fun db -> db.Users.First(fun x -> x.Email = email))
 
-type PrivateTagRepository(dbService: DbService) =
-    member __.Create tag =
-        dbService.Command(fun db -> db.PrivateTags.Add tag)
+type PrivateTagRepository(dbService: DbService, userId) =
+    member __.Add newTags =
+        let newTags = newTags |> List.distinct
+        dbService.Command(fun db -> // https://stackoverflow.com/a/18113534
+            let tagsInDb = db.PrivateTags.Select(fun x -> x.Name).Where(newTags.Contains)
+            newTags.Where(not << tagsInDb.Contains)
+            |> Seq.map (fun x -> PrivateTagEntity(Name = x, UserId = userId ))
+            |> db.PrivateTags.AddRange )
 
     member __.Search(input: string) =
         dbService.Query(fun db -> db.PrivateTags.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())))

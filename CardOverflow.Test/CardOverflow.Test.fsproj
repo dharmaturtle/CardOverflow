@@ -17,6 +17,7 @@
     <Compile Include="DbServiceTests.fs" />
     <Compile Include="CardServiceTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
+    <Compile Include="PrivateTagRepositoryTests.fs" />
     <Compile Include="AnkiImportTests.fs" />
   </ItemGroup>
   <ItemGroup>
