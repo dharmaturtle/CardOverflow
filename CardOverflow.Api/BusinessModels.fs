@@ -1,4 +1,4 @@
-﻿namespace CardOverflow.Api
+namespace CardOverflow.Api
 
 open CardOverflow.Entity
 open System
@@ -62,28 +62,28 @@ type CardOption = {
     AutomaticallyPlayAudio: bool
     ReplayQuestionAnswerAudioOnAnswer: bool
 } with
-    static member Load(entity: CardOptionEntity) = {
-        Id = entity.Id
-        Name = entity.Name
-        NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
-        NewCardsMaxPerDay = entity.NewCardsMaxPerDay
-        NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
-        NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> TimeSpan.FromDays
-        NewCardsStartingEaseFactor = float entity.NewCardsStartingEaseFactorInPermille / 1000.0
-        NewCardsBuryRelated = entity.NewCardsBuryRelated
-        MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
-        MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.0
-        MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.0
-        MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpan.FromDays
-        MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.0
-        MatureCardsBuryRelated = entity.MatureCardsBuryRelated
-        LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
-        LapsedCardsNewInterval = float entity.LapsedCardsNewIntervalInPermille / 1000.0
-        LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> TimeSpan.FromDays
-        LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
-        ShowAnswerTimer = entity.ShowAnswerTimer
-        AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
-        ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
+    static member Load(entity: CardOptionEntity) =
+        { Id = entity.Id
+          Name = entity.Name
+          NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
+          NewCardsMaxPerDay = entity.NewCardsMaxPerDay
+          NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
+          NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> TimeSpan.FromDays
+          NewCardsStartingEaseFactor = float entity.NewCardsStartingEaseFactorInPermille / 1000.0
+          NewCardsBuryRelated = entity.NewCardsBuryRelated
+          MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
+          MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.0
+          MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.0
+          MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpan.FromDays
+          MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.0
+          MatureCardsBuryRelated = entity.MatureCardsBuryRelated
+          LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
+          LapsedCardsNewInterval = float entity.LapsedCardsNewIntervalInPermille / 1000.0
+          LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> TimeSpan.FromDays
+          LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
+          ShowAnswerTimer = entity.ShowAnswerTimer
+          AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
+          ReplayQuestionAnswerAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
     member this.CopyTo(entity: CardOptionEntity) =
         entity.Name <- this.Name
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
@@ -120,13 +120,13 @@ type Field = {
     IsSticky: bool
 } with
     static member Load =
-        MappingTools.splitByUnitSeparator >> fun parsed -> {
-            Name = parsed.[0]
-            Font = parsed.[1]
-            FontSize = Byte.Parse parsed.[2]
-            IsRightToLeft = MappingTools.stringIntToBool parsed.[3]
-            Ordinal = Byte.Parse parsed.[4]
-            IsSticky = MappingTools.stringIntToBool parsed.[5] }
+        MappingTools.splitByUnitSeparator >> fun parsed ->
+            { Name = parsed.[0]
+              Font = parsed.[1]
+              FontSize = Byte.Parse parsed.[2]
+              IsRightToLeft = MappingTools.stringIntToBool parsed.[3]
+              Ordinal = Byte.Parse parsed.[4]
+              IsSticky = MappingTools.stringIntToBool parsed.[5] }
     static member GetName =
         MappingTools.splitByUnitSeparator >> List.item 0
     static member LoadMany =
@@ -134,12 +134,12 @@ type Field = {
     static member GetNames =
         MappingTools.splitByRecordSeparator >> List.map Field.GetName
     member this.ToEntityString =
-        [   this.Name
-            this.Font
-            this.FontSize |> string
-            this.IsRightToLeft |> MappingTools.boolToString
-            this.Ordinal |> string
-            this.IsSticky |> MappingTools.boolToString
+        [ this.Name
+          this.Font
+          this.FontSize |> string
+          this.IsRightToLeft |> MappingTools.boolToString
+          this.Ordinal |> string
+          this.IsSticky |> MappingTools.boolToString
         ] |> MappingTools.joinByUnitSeparator
     static member ManyToEntityString =
         List.map (fun (x: Field) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
@@ -151,27 +151,27 @@ type CardTemplate = {
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
     Ordinal: byte
-    DefaultCardTemplateId: int
+    DefaultCardOptionId: int
 } with
     static member Load =
-        MappingTools.splitByUnitSeparator >> fun parsed -> {
-            Name = parsed.[0]
-            QuestionTemplate = parsed.[1]
-            AnswerTemplate = parsed.[2]
-            ShortQuestionTemplate = parsed.[3]
-            ShortAnswerTemplate = parsed.[4]
-            Ordinal = Byte.Parse parsed.[5]
-            DefaultCardTemplateId = parsed.[6] |> int }
+        MappingTools.splitByUnitSeparator >> fun parsed ->
+            { Name = parsed.[0]
+              QuestionTemplate = parsed.[1]
+              AnswerTemplate = parsed.[2]
+              ShortQuestionTemplate = parsed.[3]
+              ShortAnswerTemplate = parsed.[4]
+              Ordinal = Byte.Parse parsed.[5]
+              DefaultCardOptionId = parsed.[6] |> int }
     static member LoadMany =
         MappingTools.splitByRecordSeparator >> List.map CardTemplate.Load
     member this.ToEntityString =
-        [   this.Name
-            this.QuestionTemplate
-            this.AnswerTemplate
-            this.ShortQuestionTemplate
-            this.ShortAnswerTemplate
-            this.Ordinal |> string
-            this.DefaultCardTemplateId |> string
+        [ this.Name
+          this.QuestionTemplate
+          this.AnswerTemplate
+          this.ShortQuestionTemplate
+          this.ShortAnswerTemplate
+          this.Ordinal |> string
+          this.DefaultCardOptionId |> string
         ] |> MappingTools.joinByUnitSeparator
     static member ManyToEntityString =
         List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
@@ -189,18 +189,18 @@ type ConceptTemplate = {
     LatexPre: string
     LatexPost: string
 } with
-    static member Load(entity: ConceptTemplateEntity) = {
-        Id = entity.Id
-        Name = entity.Name
-        Css = entity.Css
-        Fields = entity.Fields |> Field.LoadMany
-        CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
-        Modified = entity.Modified
-        IsCloze = entity.IsCloze
-        DefaultPublicTags = entity.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
-        DefaultPrivateTags = entity.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
-        LatexPre = entity.LatexPre
-        LatexPost = entity.LatexPost }
+    static member Load(entity: ConceptTemplateEntity) =
+        { Id = entity.Id
+          Name = entity.Name
+          Css = entity.Css
+          Fields = entity.Fields |> Field.LoadMany
+          CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
+          Modified = entity.Modified
+          IsCloze = entity.IsCloze
+          DefaultPublicTags = entity.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
+          DefaultPrivateTags = entity.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          LatexPre = entity.LatexPre
+          LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
         entity.Id <- this.Id
         entity.Name <- this.Name
@@ -243,23 +243,23 @@ type QuizCard = {
             |> MappingTools.splitByRecordSeparator
             |> List.item (int entity.TemplateIndex)
             |> CardTemplate.Load
-        {   Id = entity.Id
-            Due = entity.Due
-            Question = replaceFields cardTemplate.QuestionTemplate
-            Answer = replaceFields cardTemplate.AnswerTemplate
-            MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
-            CardState = CardState.Load entity.MemorizationStateAndCardState
-            LapseCount = entity.LapseCount
-            EaseFactor = float entity.EaseFactorInPermille / 1000.0
-            Interval =
-                if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
-                then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
-                else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
-            StepsIndex =
-                if entity.StepsIndex.HasValue
-                then Some entity.StepsIndex.Value
-                else None
-            Options = CardOption.Load entity.CardOption }
+        { Id = entity.Id
+          Due = entity.Due
+          Question = replaceFields cardTemplate.QuestionTemplate
+          Answer = replaceFields cardTemplate.AnswerTemplate
+          MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
+          CardState = CardState.Load entity.MemorizationStateAndCardState
+          LapseCount = entity.LapseCount
+          EaseFactor = float entity.EaseFactorInPermille / 1000.0
+          Interval =
+              if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
+              then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
+              else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
+          StepsIndex =
+              if entity.StepsIndex.HasValue
+              then Some entity.StepsIndex.Value
+              else None
+          Options = CardOption.Load entity.CardOption }
 
 type Score = | Again | Hard | Good | Easy
 

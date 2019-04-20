@@ -56,5 +56,5 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
             elif days < 7.00 then         (days * 0.25) |> buildFuzzierInterval
             elif days < 30.0 then max 2.0 (days * 0.15) |> buildFuzzierInterval
             else                  max 4.0 (days * 0.05) |> buildFuzzierInterval
-        // todo, low priority but find an implementation that is max inclusive
+        // lowTODO find an implementation that is max inclusive
         randomProvider.GetRandomFloat fuzzRangeInDaysInclusive |> TimeSpan.FromDays

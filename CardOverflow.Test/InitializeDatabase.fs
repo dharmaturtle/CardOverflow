@@ -6,7 +6,7 @@ open System
 open Xunit
 
 let defaultCardOptions =
-    { Id = 0
+    { Id = 1
       Name = "Default"
       NewCardsSteps = [ TimeSpan.FromMinutes 1.0; TimeSpan.FromMinutes 10.0 ]
       NewCardsMaxPerDay = int16 20
@@ -28,7 +28,7 @@ let defaultCardOptions =
       AutomaticallyPlayAudio = false
       ReplayQuestionAnswerAudioOnAnswer = false }
 let defaultAnkiCardOptions =
-    { Id = 1
+    { Id = 2
       Name = "Default Anki Options"
       NewCardsSteps = [ TimeSpan.FromMinutes 1.0; TimeSpan.FromMinutes 10.0 ]
       NewCardsMaxPerDay = int16 20
@@ -64,7 +64,7 @@ let basicFrontBackCardTemplate =
       AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
       ShortQuestionTemplate = ""
       ShortAnswerTemplate = "" 
-      DefaultCardTemplateId = 1 }
+      DefaultCardOptionId = 1 }
 let basicConceptTemplate =
     { Id = 0
       Name = "Basic"

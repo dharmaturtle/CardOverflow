@@ -10,7 +10,7 @@ let unzipAndGetAnkiDb ankiDb =
     let baseDir = @"..\netcoreapp3.0\AnkiExports\"
     let tempDir = baseDir  + @"Temp\"
     let apkgPath = baseDir + ankiDb + ".apkg"
-    if Directory.Exists(tempDir) 
+    if Directory.Exists(tempDir)
     then Directory.Delete(tempDir, true)
     ZipFile.Open(apkgPath, ZipArchiveMode.Read).ExtractToDirectory(tempDir)
     tempDir + "collection.anki2"
