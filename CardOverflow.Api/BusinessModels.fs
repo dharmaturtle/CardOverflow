@@ -105,7 +105,7 @@ type CardOption = {
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
         entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAudioOnAnswer
-    member this.CopyToNew(user: UserEntity) =
+    member this.CopyToNew user =
         let entity = CardOptionEntity()
         this.CopyTo entity
         entity.User <- user
@@ -213,9 +213,10 @@ type ConceptTemplate = {
         entity.DefaultPrivateTags <- this.DefaultPrivateTags |> MappingTools.intsListToStringOfInts
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-    member this.CopyToNew =
+    member this.CopyToNew user =
         let entity = ConceptTemplateEntity()
         this.CopyTo entity
+        entity.User <- user
         entity
 
 type QuizCard = {

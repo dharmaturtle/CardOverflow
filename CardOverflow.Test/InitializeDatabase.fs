@@ -177,11 +177,11 @@ let deleteAndRecreateDatabase =
             [ defaultCardOptions
               defaultAnkiCardOptions.CopyToNew(theCollective()) ]
         db.ConceptTemplates.AddRange 
-            [ basicConceptTemplate.CopyToNew
-              basicWithReversedCardConceptTemplate.CopyToNew
-              basicWithOptionalReversedCardConceptTemplate.CopyToNew
-              basicTypeInAnswerConceptTemplate.CopyToNew
-              basicClozeConceptTemplate.CopyToNew ]
+            [ basicConceptTemplate.CopyToNew(theCollective())
+              basicWithReversedCardConceptTemplate.CopyToNew(theCollective())
+              basicWithOptionalReversedCardConceptTemplate.CopyToNew(theCollective())
+              basicTypeInAnswerConceptTemplate.CopyToNew(theCollective())
+              basicClozeConceptTemplate.CopyToNew(theCollective()) ]
     )
 
 //[<Fact>]
