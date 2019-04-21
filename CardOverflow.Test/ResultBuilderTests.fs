@@ -3,7 +3,7 @@ module ResultBuilderTests
 open CardOverflow.Api
 open Xunit
 
-let result = new ResultBuilder()
+let result = ResultBuilder()
 
 type MyErr = Err1 | Err2
 

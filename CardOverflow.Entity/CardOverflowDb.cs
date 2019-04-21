@@ -205,7 +205,13 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<UserEntity>(entity =>
             {
-                entity.Property(e => e.Name).IsUnicode(false);
+                entity.HasIndex(e => e.DisplayName)
+                    .HasName("AK_User__DisplayName")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Email)
+                    .HasName("AK_User__Email")
+                    .IsUnique();
             });
 
             OnModelCreatingExt(modelBuilder);

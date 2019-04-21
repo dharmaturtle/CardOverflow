@@ -25,6 +25,8 @@ namespace CardOverflow.Entity
         public int ConceptTemplateId { get; set; }
         [Required]
         public string Fields { get; set; }
+        [Column(TypeName = "smalldatetime")]
+        public DateTime Modified { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("Concepts")]

@@ -20,7 +20,7 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         [Required]
         [StringLength(32)]
-        public string Name { get; set; }
+        public string DisplayName { get; set; }
         [Required]
         [StringLength(254)]
         public string Email { get; set; }

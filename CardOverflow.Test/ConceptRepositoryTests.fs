@@ -16,7 +16,8 @@ let ``ConceptRepository can add and retreive a Concept``() =
             Title = title,
             Description = "",
             Fields = "",
-            ConceptTemplateId = 1)
+            ConceptTemplateId = 1,
+            Modified = DateTime.UtcNow)
     let conceptRepository = tempDb.DbService |> ConceptRepository
 
     conceptRepository.SaveConcept concept
@@ -33,7 +34,8 @@ let ``ConceptRepository's SaveConcepts updates a Concept``() =
             Title = "",
             Description = "",
             Fields = "",
-            ConceptTemplateId = 1)
+            ConceptTemplateId = 1,
+            Modified = DateTime.UtcNow)
     let service = tempDb.DbService
     service.Command(fun db -> db.Concepts.Add concept)
     let conceptRepository = service |> ConceptRepository
