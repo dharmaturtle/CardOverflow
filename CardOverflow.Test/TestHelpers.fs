@@ -17,7 +17,7 @@ type TempDbService( [<CallerMemberName>] ?memberName: string) =
         | Some testName -> Regex.Replace(testName, "[^A-Za-z0-9 _]", "").Replace(' ', '_') |> TestConnectionStringProvider |> DbFactory
         | _ -> failwith "Missing the caller's member name somehow."
     do 
-        dbFactory |> InitializeDatabase.deleteAndRecreateDatabase
+        dbFactory |> InitializeDatabase.deleteAndRecreateDatabase()
 
     interface IDisposable with
         member __.Dispose() =
