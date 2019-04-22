@@ -110,6 +110,11 @@ type CardOption = {
         this.CopyTo entity
         entity.User <- user
         entity
+    member this.CopyToNew userId =
+        let entity = CardOptionEntity()
+        this.CopyTo entity
+        entity.UserId <- userId
+        entity
 
 type Field = {
     Name: string
@@ -218,6 +223,11 @@ type ConceptTemplate = {
         this.CopyTo entity
         entity.User <- user
         entity
+    member this.CopyToNew userId =
+        let entity = ConceptTemplateEntity()
+        this.CopyTo entity
+        entity.UserId <- userId
+        entity
 
 type QuizCard = {
     Id: int
@@ -269,11 +279,13 @@ type Concept = {
     Title: string
     Description: string
     ConceptTemplate: ConceptTemplate
-    Fields: Field list
+    Fields: string list
+    Modified: DateTime
 } with
     static member Load(entity: ConceptEntity) =
         { Id = entity.Id
           Title = entity.Title
           Description = entity.Description
           ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
-          Fields = Field.LoadMany entity.Fields }
+          Fields = MappingTools.splitByUnitSeparator entity.Fields
+          Modified = entity.Modified }
