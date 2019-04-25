@@ -3,6 +3,7 @@
 open CardOverflow.Entity
 open CardOverflow.Entity.Anki
 open Microsoft.EntityFrameworkCore
+open Microsoft.EntityFrameworkCore.Diagnostics
 
 type IConnectionStringProvider =
     abstract Get: string
@@ -13,7 +14,10 @@ type ConnectionStringProvider() =
 
 type DbFactory(connectionStringProvider: IConnectionStringProvider) =
     member __.Create() =
-        DbContextOptionsBuilder().UseSqlServer(connectionStringProvider.Get).Options
+        DbContextOptionsBuilder()
+            .UseSqlServer(connectionStringProvider.Get)
+            .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
+            .Options
         |> fun o -> new CardOverflowDb(o)
 
 type DbService(dbFactory: DbFactory) =
@@ -27,7 +31,10 @@ type DbService(dbFactory: DbFactory) =
 
 type AnkiDbFactory(dbPath: string) =
     member __.Create() =
-        DbContextOptionsBuilder().UseSqlite("DataSource=" + dbPath).Options
+        DbContextOptionsBuilder()
+            .UseSqlite("DataSource=" + dbPath)
+            .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
+            .Options
         |> fun o -> new AnkiDb(o)
 
 type AnkiDbService(dbFactory: AnkiDbFactory) =

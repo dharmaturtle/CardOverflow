@@ -45,8 +45,14 @@ type PrivateTagRepository(dbService: DbService, userId) =
     member __.Add newTags =
         let newTags = newTags |> List.distinct
         dbService.Command(fun db -> // https://stackoverflow.com/a/18113534
-            let tagsInDb = db.PrivateTags.Select(fun x -> x.Name).Where(newTags.Contains)
-            newTags.Where(not << tagsInDb.Contains)
+            db.PrivateTags
+                .Where(fun x -> x.UserId = userId)
+                .Select(fun x -> x.Name)
+                .AsEnumerable()
+                .Where(newTags.Contains)
+                .ToList()
+                .Contains >> not
+            |> newTags.Where
             |> Seq.map (fun x -> PrivateTagEntity(Name = x, UserId = userId ))
             |> db.PrivateTags.AddRange )
 
