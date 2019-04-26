@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
@@ -9,6 +9,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.apkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="InitializeDatabase.fs" />

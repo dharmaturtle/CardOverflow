@@ -11,46 +11,63 @@ open Microsoft.FSharp.Quotations
 open Xunit
 
 let nameof (q:Expr<_>) = // https://stackoverflow.com/a/48311816
-  match q with 
-  | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
-  | Patterns.PropertyGet(_, mi, _) -> mi.Name
-  | DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _)) -> mi.Name
-  | _ -> failwith "Unexpected format"
+    match q with 
+    | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
+    | Patterns.PropertyGet(_, mi, _) -> mi.Name
+    | DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _)) -> mi.Name
+    | _ -> failwith "Unexpected format"
 let any<'R> : 'R = failwith "!"
 
-let unzipAndGetAnkiDb ankiDb =
+let unzipAndGetAnkiDbService collection ankiFileName =
     let baseDir = @"..\netcoreapp3.0\AnkiExports\"
-    let tempDir = baseDir  + @"Temp\"
-    let apkgPath = baseDir + ankiDb + ".apkg"
-    if Directory.Exists(tempDir)
+    let tempDir = baseDir  + @"Temp\" + ankiFileName + @"\" // Need to isolate ankiDb otherwise tests run in parallel fail
+    if Directory.Exists tempDir
     then Directory.Delete(tempDir, true)
-    ZipFile.Open(apkgPath, ZipArchiveMode.Read).ExtractToDirectory(tempDir)
-    tempDir + "collection.anki2"
+    ZipFile.Open(baseDir + ankiFileName, ZipArchiveMode.Read).ExtractToDirectory tempDir
+    tempDir + collection |> AnkiDbFactory |> AnkiDbService
 
-[<Fact>]
-let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3``() =
-    let service = "AllDefaultTemplatesAndImageAndMp3" |> unzipAndGetAnkiDb |> AnkiDbFactory |> AnkiDbService
-    service.Query(fun x -> x.Cards.ToList()) |> Assert.NotEmpty
-    service.Query(fun x -> x.Notes.ToList()) |> Assert.NotEmpty
+let getAnki2 =
+    unzipAndGetAnkiDbService "collection.anki2"
 
-[<Fact>]
-let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3``() =
-    use temp = new TempDbService()
-    let service = "AllDefaultTemplatesAndImageAndMp3" |> unzipAndGetAnkiDb |> AnkiDbFactory |> AnkiDbService
-    
-    AnkiImporter(service, temp.DbService, 3).run()
-    |> function 
+let getAnki21 =
+    unzipAndGetAnkiDbService "collection.anki21"
+
+let assertHasBasicInfo ankiService dbService =
+    AnkiImporter(ankiService, dbService, 3).run()
+    |> function
     | Ok _ -> true
     | Error _ -> false
     |> Assert.True
-    Assert.Equal(7, temp.DbService.Query(fun x -> x.Concepts.Count()))
+    Assert.Equal(7, dbService.Query(fun x -> x.Concepts.Count()))
     Assert.Equal<string>(
         ["Basic"; "OtherTag"; "Tag"],
-        temp.DbService.Query(fun x -> x.PrivateTags.ToList()).Select(fun x -> x.Name).OrderBy(fun x -> x))
+        dbService.Query(fun x -> x.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
     Assert.Equal<string>(
         ["OtherTag"],
-        temp.DbService.Query(fun db ->
+        dbService.Query(fun db ->
             db.Concepts
                 .Include(nameof <@ any<ConceptEntity>.PrivateTagConcepts @> + "." + nameof <@ any<PrivateTagConceptEntity>.PrivateTag @>)
                 .Single(fun c -> c.Fields.Contains("mp3"))
                 .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name)))
+
+let assertNotEmpty (service: AnkiDbService) =
+    service.Query(fun db -> db.Cards.ToList()) |> Assert.NotEmpty
+    service.Query(fun db -> db.Notes.ToList()) |> Assert.NotEmpty
+
+[<Fact>]
+let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3.apkg``() =
+    "AllDefaultTemplatesAndImageAndMp3.apkg" |> getAnki2 |> assertNotEmpty
+
+[<Fact>]
+let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
+    use tempDbService = new TempDbService()
+    "AllDefaultTemplatesAndImageAndMp3.apkg" |> getAnki2 |> assertHasBasicInfo <| tempDbService.DbService
+
+[<Fact>]
+let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3.colpkg``() =
+    "AllDefaultTemplatesAndImageAndMp3.colpkg" |> getAnki21 |> assertNotEmpty
+
+[<Fact>]
+let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
+    use tempDbService = new TempDbService()
+    "AllDefaultTemplatesAndImageAndMp3.colpkg" |> getAnki21 |> assertHasBasicInfo <| tempDbService.DbService
