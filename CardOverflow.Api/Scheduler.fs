@@ -8,7 +8,7 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
     let min a b = if a < b then a else b
     let equals a b threshold = abs(a-b) < threshold
 
-    let interval card score =
+    let interval (card: QuizCard) score =
         let intervalOfNewOrLearning card = 
             function
             | Again -> card.Options.NewCardsSteps.Head

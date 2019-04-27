@@ -1,9 +1,9 @@
-namespace CardOverflow.Api
+﻿namespace CardOverflow.Api
 
 open CardOverflow.Entity
 open System
 
-type MemorizationState = | New | Learning | Mature
+type MemorizationState = | New | Learning | Mature // highTODO make Lapsed, also consider renaming Learning to Young or something clearer
     with
     static member Load enum =
         match enum with
@@ -38,6 +38,22 @@ type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
         | MemorizationStateAndCardStateEnum.MatureUserBuried -> UserBuried
         | MemorizationStateAndCardStateEnum.MatureSuspended -> Suspended
         | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
+
+module MemorizationStateAndCardStateEnum =
+    let from cardState memorizationState =
+        match (cardState, memorizationState) with
+        | (New, Normal) -> MemorizationStateAndCardStateEnum.NewNormal
+        | (New, SchedulerBuried) -> MemorizationStateAndCardStateEnum.NewSchedulerBuried
+        | (New, UserBuried) -> MemorizationStateAndCardStateEnum.NewUserBuried
+        | (New, Suspended) -> MemorizationStateAndCardStateEnum.NewSuspended
+        | (Learning, Normal) -> MemorizationStateAndCardStateEnum.LearningNormal
+        | (Learning, SchedulerBuried) -> MemorizationStateAndCardStateEnum.LearningSchedulerBuried
+        | (Learning, UserBuried) -> MemorizationStateAndCardStateEnum.LearningUserBuried
+        | (Learning, Suspended) -> MemorizationStateAndCardStateEnum.LearningSuspended
+        | (Mature, Normal) -> MemorizationStateAndCardStateEnum.MatureNormal
+        | (Mature, SchedulerBuried) -> MemorizationStateAndCardStateEnum.MatureSchedulerBuried
+        | (Mature, UserBuried) -> MemorizationStateAndCardStateEnum.MatureUserBuried
+        | (Mature, Suspended) -> MemorizationStateAndCardStateEnum.MatureSuspended
 
 type CardOption = {
     Id: int
@@ -289,3 +305,32 @@ type Concept = {
           ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
           Fields = MappingTools.splitByUnitSeparator entity.Fields
           Modified = entity.Modified }
+
+type Card = {
+    Id: int
+    ConceptId: int
+    MemorizationState: MemorizationState
+    CardState: CardState
+    LapseCount: byte
+    EaseFactorInPermille: int16
+    IntervalNegativeIsMinutesPositiveIsDays: int16
+    StepsIndex: option<byte>
+    Due: DateTime
+    TemplateIndex: byte
+    CardOptionId: int
+} with
+    member this.CopyTo(entity: CardEntity) =
+        entity.Id <- this.Id
+        entity.ConceptId <- this.ConceptId
+        entity.MemorizationStateAndCardState <- MemorizationStateAndCardStateEnum.from this.MemorizationState this.CardState
+        entity.LapseCount <- this.LapseCount
+        entity.EaseFactorInPermille <- this.EaseFactorInPermille
+        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
+        entity.StepsIndex <- Option.toNullable this.StepsIndex
+        entity.Due <- this.Due
+        entity.TemplateIndex <- this.TemplateIndex
+        entity.CardOptionId <- this.CardOptionId
+    member this.CopyToNew =
+        let entity = CardEntity()
+        this.CopyTo entity
+        entity

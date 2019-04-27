@@ -1,4 +1,4 @@
-﻿namespace CardOverflow.Api
+namespace CardOverflow.Api
 
 open CardOverflow.Api
 open CardOverflow.Entity
@@ -8,7 +8,6 @@ open System.Linq
 open Thoth.Json.Net
 
 type AnkiConceptWrite = {
-    Id: int
     Title: string
     Description: string
     ConceptTemplateId: int
@@ -67,7 +66,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let parseModels (nameAndDeckConfigurationIdByDeckId: Map<int, (string * int)>) (cardOptionByDeckConfigurationId: Map<string, CardOption>) =
+    let parseModels getCardOption =
         Decode.object(fun get ->
             { Id = 0
               Name = get.Required.Field "name" Decode.string
@@ -81,17 +80,16 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                       Ordinal = get.Required.Field "ord" Decode.int |> byte
                       IsSticky = get.Required.Field "sticky" Decode.bool })
                     |> Decode.list )
-              CardTemplates = get.Required.Field "tmpls" (Decode.object(fun g ->
-                { Name = g.Required.Field "name" Decode.string
+              CardTemplates =
+                get.Required.Field "tmpls" (Decode.object(fun g ->
+                    { Name = g.Required.Field "name" Decode.string
                   QuestionTemplate = g.Required.Field "qfmt" Decode.string
                   AnswerTemplate = g.Required.Field "afmt" Decode.string
-                  ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
-                  ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
-                  Ordinal = g.Required.Field "ord" Decode.int |> byte
-                  DefaultCardOptionId =
-                    let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[get.Required.Field "did" Decode.int] // medTODO tag imported cards with the name of the deck they're in
-                    cardOptionByDeckConfigurationId.[string deckConfigurationId].Id })
-                |> Decode.list )
+                      ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
+                      ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
+                      Ordinal = g.Required.Field "ord" Decode.int |> byte
+                      DefaultCardOptionId = get.Required.Field "did" Decode.int |> getCardOption |> fun (x:CardOption) -> x.Id })
+                      |> Decode.list )
               Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
               IsCloze = get.Required.Field "type" ankiIntToBool
               DefaultPublicTags = []
@@ -100,7 +98,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
               LatexPost = get.Required.Field "latexPost" Decode.string })
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags concepts =
+    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags conceptsByNoteId =
         function
         | (note: NoteEntity) :: tail -> 
             let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
@@ -112,16 +110,60 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                 |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
                 |> List.append tags
             let concept =
-                { Id = 0
-                  Title = ""
+                { Title = ""
                   Description = ""
                   ConceptTemplateId = conceptTemplatesByModelId.[string note.Mid].Id
                   Fields = MappingTools.splitByUnitSeparator note.Flds
                   Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime }.CopyToNew
                   (allTags.Where(fun x -> notesTags.Contains x.Name))
-            parseNotes conceptTemplatesByModelId allTags (concept::concepts) tail
-        | _ -> concepts
-    member __.run() =
+            parseNotes conceptTemplatesByModelId allTags ((note.Id, concept)::conceptsByNoteId) tail
+        | _ -> conceptsByNoteId
+
+    let mapCard getCardOption (ankiCard: Anki.CardEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) =
+        ResultBuilder() {
+            let cardOption = int ankiCard.Did |> getCardOption
+            let! memorizationState =
+                match ankiCard.Type with
+                | 0L -> Ok MemorizationState.New
+                | 1L -> Ok MemorizationState.Learning
+                | 2L -> Ok MemorizationState.Mature
+                | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
+                | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
+            return
+                { Card.Id = 0
+                  ConceptId = conceptsByAnkiId.[ankiCard.Nid].Id
+                  MemorizationState = memorizationState
+                  CardState =
+                    match ankiCard.Queue with
+                    | -3L -> CardState.UserBuried
+                    | -2L -> CardState.SchedulerBuried
+                    | -1L -> CardState.Suspended
+                    | _ -> CardState.Normal
+                  LapseCount = ankiCard.Lapses |> byte // medTODO validate these, eg 9999 will yield 15
+                  EaseFactorInPermille = ankiCard.Factor |> int16
+                  IntervalNegativeIsMinutesPositiveIsDays =
+                    if ankiCard.Ivl > 0L
+                    then ankiCard.Ivl |> int16
+                    else float ankiCard.Ivl * -1.0 / 60.0 |> Math.Round |> int16
+                  StepsIndex =
+                    match memorizationState with
+                    | MemorizationState.New
+                    | MemorizationState.Learning ->
+                        if ankiCard.Left = 0L
+                        then 0
+                        else cardOption.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
+                        |> byte |> Some // medTODO handle importing of lapsed cards, this assumes it's a new card
+                    | MemorizationState.Mature -> None
+                  Due =
+                    match memorizationState with
+                    | MemorizationState.New -> DateTime.UtcNow.Date
+                    | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
+                    | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
+                  TemplateIndex = ankiCard.Ord |> byte
+                  CardOptionId = cardOption.Id }.CopyToNew
+        }
+
+    member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
         let col = ankiDbService.Query(fun db -> db.Cols.Single())
         ResultBuilder() {
             let! cardOptionByDeckConfigurationId =
@@ -142,16 +184,23 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                     if filtered |> List.length = tuples.Count()
                     then filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
+            let getCardOption deckId =
+                let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
+                cardOptionByDeckConfigurationId.[string deckConfigurationId]
             let! conceptTemplatesByModelId = 
-                parseModels nameAndDeckConfigurationIdByDeckId cardOptionByDeckConfigurationId col.Models
+                parseModels getCardOption col.Models
                 |> Result.map (Seq.map(fun (key, value) -> (key, value.CopyToNew userId)) >> Map.ofSeq )
             dbService.Command(fun db -> db.ConceptTemplates.AddRange (conceptTemplatesByModelId |> Seq.map (fun x -> x.Value))) // EF updates the entities' Ids
-            let conceptsToAdd =
+            let conceptsByAnkiId =
                 parseNotes
                     conceptTemplatesByModelId
                     (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId).ToList()) |> Seq.toList)
                     []
                     (ankiDbService.Query(fun db -> db.Notes.ToList()) |> Seq.toList)
-            dbService.Command(fun db -> db.Concepts.AddRange conceptsToAdd)
+            dbService.Command(fun db -> List.map snd conceptsByAnkiId |> db.Concepts.AddRange)
+            let conceptsByAnkiId = conceptsByAnkiId |> Map.ofList
+            let collectionCreateDate = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
+            let cards = ankiDbService.Query(fun db -> db.Cards.ToList())
+            cards |> Seq.map(fun x -> mapCard getCardOption x conceptsByAnkiId collectionCreateDate) // medTODO write to database
             return ()
         }
