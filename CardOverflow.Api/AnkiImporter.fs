@@ -10,14 +10,14 @@ open Thoth.Json.Net
 type AnkiConceptWrite = {
     Title: string
     Description: string
-    ConceptTemplateId: int
+    ConceptTemplate: ConceptTemplateEntity
     Fields: string list
     Modified: DateTime
 } with
     member this.CopyTo(entity: ConceptEntity) =
         entity.Title <- this.Title
         entity.Description <- this.Description
-        entity.ConceptTemplateId <- this.ConceptTemplateId
+        entity.ConceptTemplate <- this.ConceptTemplate
         entity.Fields <- this.Fields |> MappingTools.joinByUnitSeparator
         entity.Modified <- this.Modified
     member this.CopyToNew (privateTagConcepts: seq<PrivateTagEntity>) =
@@ -112,7 +112,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
             let concept =
                 { Title = ""
                   Description = ""
-                  ConceptTemplateId = conceptTemplatesByModelId.[string note.Mid].Id
+                  ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                   Fields = MappingTools.splitByUnitSeparator note.Flds
                   Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime }.CopyToNew
                   (allTags.Where(fun x -> notesTags.Contains x.Name))
@@ -190,7 +190,6 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
             let! conceptTemplatesByModelId = 
                 parseModels getCardOption col.Models
                 |> Result.map (Seq.map(fun (key, value) -> (key, value.CopyToNew userId)) >> Map.ofSeq )
-            dbService.Command(fun db -> db.ConceptTemplates.AddRange (conceptTemplatesByModelId |> Seq.map (fun x -> x.Value))) // EF updates the entities' Ids
             let conceptsByAnkiId =
                 parseNotes
                     conceptTemplatesByModelId
