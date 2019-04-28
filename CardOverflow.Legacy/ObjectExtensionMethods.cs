@@ -19,5 +19,10 @@ namespace CardOverflow.Legacy {
       return input;
     }
 
+    public static TInput CDump<TInput>(this TInput input) {
+      ObjectDumper.Dump(input, DumpStyle.CSharp).Dump();
+      return input;
+    }
+
   }
 }
