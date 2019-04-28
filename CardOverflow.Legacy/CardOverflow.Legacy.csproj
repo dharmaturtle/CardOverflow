@@ -4,4 +4,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="ObjectDumper.NET" Version="2.3.19050.6" />
+  </ItemGroup>
+
 </Project>
