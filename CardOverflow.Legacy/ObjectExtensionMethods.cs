@@ -6,9 +6,9 @@ namespace CardOverflow.Legacy {
     public static TInput Dump<TInput>(this TInput input, string id = "") {
 #if DEBUG
       if (string.IsNullOrWhiteSpace(id)) {
-        Console.WriteLine(ObjectDumper.Dump(input));
+        Console.WriteLine(MyObjectDumper.Dump(input));
       } else {
-        Console.WriteLine(id + ": " + ObjectDumper.Dump(input));
+        Console.WriteLine(id + ": " + MyObjectDumper.Dump(input));
       }
 #endif
       return input;

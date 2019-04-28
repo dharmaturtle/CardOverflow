@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 
 namespace CardOverflow.Legacy {
-  public class ObjectDumper {
+  public class MyObjectDumper {
     private int _currentIndent;
     private readonly int _indentSize;
     private readonly StringBuilder _stringBuilder;
@@ -15,7 +15,7 @@ namespace CardOverflow.Legacy {
     private readonly int _depth;
     private int _currentLine;
 
-    private ObjectDumper(int depth, int indentSize, char indentChar) {
+    private MyObjectDumper(int depth, int indentSize, char indentChar) {
       _depth = depth;
       _indentSize = indentSize;
       _indentChar = indentChar;
@@ -24,7 +24,7 @@ namespace CardOverflow.Legacy {
     }
 
     public static string Dump(object element, int depth = 4, int indentSize = 2, char indentChar = ' ') {
-      var instance = new ObjectDumper(depth, indentSize, indentChar);
+      var instance = new MyObjectDumper(depth, indentSize, indentChar);
       return instance.DumpElement(element, true);
     }
 
