@@ -66,7 +66,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let parseModels getCardOption =
+    let parseModels =
         Decode.object(fun get ->
             { Id = 0
               Name = get.Required.Field "name" Decode.string
@@ -88,7 +88,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                       ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
                       ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
                       Ordinal = g.Required.Field "ord" Decode.int |> byte
-                      DefaultCardOptionId = get.Required.Field "did" Decode.int |> getCardOption |> fun (x:CardOption) -> x.Id })
+                      DefaultCardOptionId = get.Required.Field "did" Decode.int * -1 }) // temp value that will be overwritten later highTODO actually do this
                       |> Decode.list )
               Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
               IsCloze = get.Required.Field "type" ankiIntToBool
@@ -100,10 +100,10 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
         |> Decode.fromString
     let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags conceptsByNoteId =
         function
-        | (note: NoteEntity) :: tail -> 
+        | (note: NoteEntity) :: tail ->
             let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
-            let allTags = 
-                Set.difference 
+            let allTags =
+                Set.difference
                     notesTags
                     (tags |> List.map (fun (x: PrivateTagEntity) -> x.Name) |> Set.ofSeq)
                 |> List.ofSeq
@@ -119,8 +119,8 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
             parseNotes conceptTemplatesByModelId allTags ((note.Id, concept)::conceptsByNoteId) tail
         | _ -> conceptsByNoteId
 
-    let mapCard getCardOption (ankiCard: Anki.CardEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) =
-        let cardOption = int ankiCard.Did |> getCardOption
+    let mapCard (getCardOption: int -> CardOption * CardOptionEntity) (ankiCard: Anki.CardEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) =
+        let cardOption, cardOptionEntity = int ankiCard.Did |> getCardOption
         match ankiCard.Type with
         | 0L -> Ok MemorizationState.New
         | 1L -> Ok MemorizationState.Learning
@@ -158,20 +158,18 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                 | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = cardOption.Id }.CopyToNew)
+              CardOptionId = cardOptionEntity.Id }.CopyToNew)
 
     member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
         let col = ankiDbService.Query(fun db -> db.Cols.Single())
         ResultBuilder() {
             let! cardOptionByDeckConfigurationId =
                 parseDconf col.Dconf
-                |> Result.bind(fun cardOptions ->
-                    let entitiesByDeckConfigurationId = cardOptions |> List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, cardOption.CopyToNew userId))
-                    dbService.Command(fun db -> List.map snd entitiesByDeckConfigurationId |> db.CardOptions.AddRange)
-                    entitiesByDeckConfigurationId |> List.map (fun (deckConfigurationId, co) -> (deckConfigurationId, CardOption.Load co)) |> Map.ofList |> Ok ) // EF updates the entities' Ids which are then loaded into the records
+                |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, (cardOption, cardOption.CopyToNew userId))) >> Map.ofList >> Ok )
+
             let! nameAndDeckConfigurationIdByDeckId =
                 parseDecks col.Decks
-                |> Result.bind (fun tuples -> 
+                |> Result.bind (fun tuples ->
                     let names = tuples |> List.map(fun (_, (_, name, _)) -> name)
                     if names |> List.distinct |> List.length = names.Count()
                     then tuples |> List.map snd |> Ok
@@ -184,8 +182,8 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
             let getCardOption deckId =
                 let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
                 cardOptionByDeckConfigurationId.[string deckConfigurationId]
-            let! conceptTemplatesByModelId = 
-                parseModels getCardOption col.Models
+            let! conceptTemplatesByModelId =
+                parseModels col.Models
                 |> Result.map (Seq.map(fun (key, value) -> (key, value.CopyToNew userId)) >> Map.ofSeq )
             let conceptsByAnkiId =
                 parseNotes
@@ -194,6 +192,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                     []
                     (ankiDbService.Query(fun db -> db.Notes.ToList()) |> Seq.toList)
             dbService.Command(fun db -> List.map snd conceptsByAnkiId |> db.Concepts.AddRange)
+            dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the entities' Ids
             let conceptsByAnkiId = conceptsByAnkiId |> Map.ofList
             let collectionCreateDate = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let cards = ankiDbService.Query(fun db -> db.Cards.ToList())
