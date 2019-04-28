@@ -1,62 +1,64 @@
-module MappingTools
+namespace CardOverflow.Api
 
 open System
 
-let delimiter = ' '
+module MappingTools =
 
-let stringOfIntsToIntList(string: string) =
-    string.Split [|delimiter|] |> Seq.map int |> Seq.toList
+    let delimiter = ' '
 
-let intsListToStringOfInts(ints: int list) =
-    ints |> List.map string |> fun x -> String.Join(delimiter, x)
+    let stringOfIntsToIntList(string: string) =
+        string.Split [|delimiter|] |> Seq.map int |> Seq.toList
 
-let stringOfMinutesToTimeSpanList(string: string) =
-    string.Split [|delimiter|] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
+    let intsListToStringOfInts(ints: int list) =
+        ints |> List.map string |> fun x -> String.Join(delimiter, x)
 
-let timeSpanListToStringOfMinutes(timeSpans: TimeSpan list) =
-    timeSpans |> List.map (fun x -> x.TotalMinutes.ToString()) |> fun x -> String.Join(delimiter, x)
+    let stringOfMinutesToTimeSpanList(string: string) =
+        string.Split [|delimiter|] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
 
-let stringIntToBool =
-    function
-    | "0" -> false
-    | _-> true
+    let timeSpanListToStringOfMinutes(timeSpans: TimeSpan list) =
+        timeSpans |> List.map (fun x -> x.TotalMinutes.ToString()) |> fun x -> String.Join(delimiter, x)
 
-let boolToString =
-    function
-    | false -> "0"
-    | true -> "1"
+    let stringIntToBool =
+        function
+        | "0" -> false
+        | _-> true
 
-// https://en.wikipedia.org/wiki/C0_and_C1_control_codes
+    let boolToString =
+        function
+        | false -> "0"
+        | true -> "1"
 
-let split separator (string: string) =
-    string.Split [|separator|] |> Array.toList
+    // https://en.wikipedia.org/wiki/C0_and_C1_control_codes
 
-let splitByFileSeparator =
-    split '\x1c'
+    let split separator (string: string) =
+        string.Split [|separator|] |> Array.toList
 
-let splitByGroupSeparator =
-    split '\x1d'
+    let splitByFileSeparator =
+        split '\x1c'
 
-let splitByRecordSeparator =
-    split '\x1e'
+    let splitByGroupSeparator =
+        split '\x1d'
 
-let splitByUnitSeparator =
-    split '\x1f'
+    let splitByRecordSeparator =
+        split '\x1e'
 
-let join separator (strings: string list) =
-    String.Join(string separator, strings)
+    let splitByUnitSeparator =
+        split '\x1f'
 
-let joinByFileSeparator =
-    join '\x1c'
+    let join separator (strings: string list) =
+        String.Join(string separator, strings)
 
-let joinByGroupSeparator =
-    join '\x1d'
+    let joinByFileSeparator =
+        join '\x1c'
 
-let joinByRecordSeparator =
-    join '\x1e'
+    let joinByGroupSeparator =
+        join '\x1d'
 
-let joinByUnitSeparator =
-    join '\x1f'
+    let joinByRecordSeparator =
+        join '\x1e'
+
+    let joinByUnitSeparator =
+        join '\x1f'
     
 module Option =
     let fromNullable (n: _ Nullable) = 
@@ -67,3 +69,8 @@ module Option =
         function
         | None -> Nullable()
         | Some x -> Nullable x
+
+module Result =
+    let isOk = function
+        | Ok _ -> true
+        | Error _ -> false

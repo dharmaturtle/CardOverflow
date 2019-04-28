@@ -35,9 +35,7 @@ let getAnki21 =
 let assertHasBasicInfo ankiService dbService =
     let userId = 3
     AnkiImporter(ankiService, dbService, userId).run()
-    |> function
-    | Ok _ -> true
-    | Error _ -> false
+    |> Result.isOk
     |> Assert.True
     Assert.Equal(7, dbService.Query(fun x -> x.Concepts.Count()))
     Assert.Single(dbService.Query(fun x -> x.CardOptions.Where(fun x -> x.UserId = userId).ToList())) |> ignore
