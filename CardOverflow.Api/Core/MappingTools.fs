@@ -84,7 +84,7 @@ module Result =
         | Error error -> error
 
     let consolidate results =
-        let notOks = results |> List.filter (not << isOk)
-        if notOks.IsEmpty
+        let errors = results |> List.filter (not << isOk)
+        if errors.IsEmpty
         then results |> List.map getOk |> Ok
-        else notOks |> List.map getError |> String.concat "\n" |> Error
+        else errors |> List.map getError |> String.concat "\n" |> Error

@@ -119,7 +119,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
             parseNotes conceptTemplatesByModelId allTags ((note.Id, concept)::conceptsByNoteId) tail
         | _ -> conceptsByNoteId
 
-    let mapCard (getCardOption: int -> CardOption * CardOptionEntity) (ankiCard: Anki.CardEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) =
+    let mapCard (getCardOption: int -> CardOption * CardOptionEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
         let cardOption, cardOptionEntity = int ankiCard.Did |> getCardOption
         match ankiCard.Type with
         | 0L -> Ok MemorizationState.New
@@ -166,7 +166,6 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
             let! cardOptionByDeckConfigurationId =
                 parseDconf col.Dconf
                 |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, (cardOption, cardOption.CopyToNew userId))) >> Map.ofList >> Ok )
-
             let! nameAndDeckConfigurationIdByDeckId =
                 parseDecks col.Decks
                 |> Result.bind (fun tuples ->
@@ -191,11 +190,18 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                     (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId).ToList()) |> Seq.toList)
                     []
                     (ankiDbService.Query(fun db -> db.Notes.ToList()) |> Seq.toList)
-            dbService.Command(fun db -> List.map snd conceptsByAnkiId |> db.Concepts.AddRange)
-            dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the entities' Ids
-            let conceptsByAnkiId = conceptsByAnkiId |> Map.ofList
-            let collectionCreateDate = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
-            let cards = ankiDbService.Query(fun db -> db.Cards.ToList())
-            cards |> Seq.map(fun x -> mapCard getCardOption x conceptsByAnkiId collectionCreateDate) // medTODO write to database
+                |> Map.ofList
+            let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
+            let getCardEntities() =
+                ankiDbService.Query(fun db -> db.Cards.ToList())
+                |> Seq.map (mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
+                |> List.ofSeq
+                |> Result.consolidate
+            let! _ = getCardEntities() // checking if there are any errors
+
+            dbService.Command(fun db -> conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange)
+            dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the options' Ids
+            let! cardEntities = getCardEntities() // called again to update the Card's Option Id (from the line above)
+            dbService.Command(fun db -> cardEntities |> db.Cards.AddRange)
             return ()
         }
