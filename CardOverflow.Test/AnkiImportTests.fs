@@ -51,6 +51,7 @@ let assertHasBasicInfo ankiService dbService =
                 .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name)))
 
 let assertNotEmpty (service: AnkiDbService) =
+    service.Query(fun db -> db.Cols.ToList()) |> Assert.NotEmpty
     service.Query(fun db -> db.Cards.ToList()) |> Assert.NotEmpty
     service.Query(fun db -> db.Notes.ToList()) |> Assert.NotEmpty
 

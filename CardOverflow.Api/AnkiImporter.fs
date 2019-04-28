@@ -83,8 +83,8 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
               CardTemplates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
                     { Name = g.Required.Field "name" Decode.string
-                  QuestionTemplate = g.Required.Field "qfmt" Decode.string
-                  AnswerTemplate = g.Required.Field "afmt" Decode.string
+                      QuestionTemplate = g.Required.Field "qfmt" Decode.string
+                      AnswerTemplate = g.Required.Field "afmt" Decode.string
                       ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
                       ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
                       Ordinal = g.Required.Field "ord" Decode.int |> byte
@@ -120,48 +120,45 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
         | _ -> conceptsByNoteId
 
     let mapCard getCardOption (ankiCard: Anki.CardEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) =
-        ResultBuilder() {
-            let cardOption = int ankiCard.Did |> getCardOption
-            let! memorizationState =
-                match ankiCard.Type with
-                | 0L -> Ok MemorizationState.New
-                | 1L -> Ok MemorizationState.Learning
-                | 2L -> Ok MemorizationState.Mature
-                | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
-                | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
-            return
-                { Card.Id = 0
-                  ConceptId = conceptsByAnkiId.[ankiCard.Nid].Id
-                  MemorizationState = memorizationState
-                  CardState =
-                    match ankiCard.Queue with
-                    | -3L -> CardState.UserBuried
-                    | -2L -> CardState.SchedulerBuried
-                    | -1L -> CardState.Suspended
-                    | _ -> CardState.Normal
-                  LapseCount = ankiCard.Lapses |> byte // medTODO validate these, eg 9999 will yield 15
-                  EaseFactorInPermille = ankiCard.Factor |> int16
-                  IntervalNegativeIsMinutesPositiveIsDays =
-                    if ankiCard.Ivl > 0L
-                    then ankiCard.Ivl |> int16
-                    else float ankiCard.Ivl * -1.0 / 60.0 |> Math.Round |> int16
-                  StepsIndex =
-                    match memorizationState with
-                    | MemorizationState.New
-                    | MemorizationState.Learning ->
-                        if ankiCard.Left = 0L
-                        then 0
-                        else cardOption.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
-                        |> byte |> Some // medTODO handle importing of lapsed cards, this assumes it's a new card
-                    | MemorizationState.Mature -> None
-                  Due =
-                    match memorizationState with
-                    | MemorizationState.New -> DateTime.UtcNow.Date
-                    | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                    | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
-                  TemplateIndex = ankiCard.Ord |> byte
-                  CardOptionId = cardOption.Id }.CopyToNew
-        }
+        let cardOption = int ankiCard.Did |> getCardOption
+        match ankiCard.Type with
+        | 0L -> Ok MemorizationState.New
+        | 1L -> Ok MemorizationState.Learning
+        | 2L -> Ok MemorizationState.Mature
+        | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
+        | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
+        |> Result.map (fun memorizationState ->
+            { Card.Id = 0
+              ConceptId = conceptsByAnkiId.[ankiCard.Nid].Id
+              MemorizationState = memorizationState
+              CardState =
+                match ankiCard.Queue with
+                | -3L -> CardState.UserBuried
+                | -2L -> CardState.SchedulerBuried
+                | -1L -> CardState.Suspended
+                | _ -> CardState.Normal
+              LapseCount = ankiCard.Lapses |> byte // medTODO validate these, eg 9999 will yield 15
+              EaseFactorInPermille = ankiCard.Factor |> int16
+              IntervalNegativeIsMinutesPositiveIsDays =
+                if ankiCard.Ivl > 0L
+                then ankiCard.Ivl |> int16
+                else float ankiCard.Ivl * -1.0 / 60.0 |> Math.Round |> int16
+              StepsIndex =
+                match memorizationState with
+                | MemorizationState.New
+                | MemorizationState.Learning ->
+                    if ankiCard.Left = 0L
+                    then 0
+                    else cardOption.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
+                    |> byte |> Some // medTODO handle importing of lapsed cards, this assumes it's a new card
+                | MemorizationState.Mature -> None
+              Due =
+                match memorizationState with
+                | MemorizationState.New -> DateTime.UtcNow.Date
+                | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
+                | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
+              TemplateIndex = ankiCard.Ord |> byte
+              CardOptionId = cardOption.Id }.CopyToNew)
 
     member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
         let col = ankiDbService.Query(fun db -> db.Cols.Single())
