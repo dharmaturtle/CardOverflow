@@ -50,25 +50,25 @@ let assertHasBasicInfo ankiService dbService =
                 .Single(fun c -> c.Fields.Contains("mp3"))
                 .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name)))
 
-let assertNotEmpty (service: AnkiDbService) =
-    service.Query(fun db -> db.Cols.ToList()) |> Assert.NotEmpty
-    service.Query(fun db -> db.Cards.ToList()) |> Assert.NotEmpty
-    service.Query(fun db -> db.Notes.ToList()) |> Assert.NotEmpty
+let assertNotEmpty (ankiDb: SimpleAnkiDb) =
+    ankiDb.Cols |> Assert.NotEmpty
+    ankiDb.Cards |> Assert.NotEmpty
+    ankiDb.Notes |> Assert.NotEmpty
 
 [<Fact>]
 let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3.apkg``() =
-    "AllDefaultTemplatesAndImageAndMp3.apkg" |> getAnki2 |> assertNotEmpty
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertNotEmpty
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
     use tempDbService = new TempDbService()
-    "AllDefaultTemplatesAndImageAndMp3.apkg" |> getAnki2 |> assertHasBasicInfo <| tempDbService.DbService
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertHasBasicInfo <| tempDbService.DbService
 
 [<Fact>]
 let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3.colpkg``() =
-    "AllDefaultTemplatesAndImageAndMp3.colpkg" |> getAnki21 |> assertNotEmpty
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertNotEmpty
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
     use tempDbService = new TempDbService()
-    "AllDefaultTemplatesAndImageAndMp3.colpkg" |> getAnki21 |> assertHasBasicInfo <| tempDbService.DbService
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| tempDbService.DbService

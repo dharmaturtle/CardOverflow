@@ -7,6 +7,20 @@ open System
 open System.Linq
 open Thoth.Json.Net
 
+type SimpleAnkiDb = {
+    Cards: CardEntity list
+    Cols: ColEntity list
+    Notes: NoteEntity list
+    Revlogs: RevlogEntity list
+}
+
+module AnkiImporter =
+    let getSimpleAnkiDb (ankiDbService: AnkiDbService) =
+        { Cards = ankiDbService.Query(fun db -> db.Cards.ToList() ) |> List.ofSeq
+          Cols = ankiDbService.Query(fun db -> db.Cols.ToList() ) |> List.ofSeq
+          Notes = ankiDbService.Query(fun db -> db.Notes.ToList() ) |> List.ofSeq
+          Revlogs = ankiDbService.Query(fun db -> db.Revlogs.ToList() ) |> List.ofSeq }
+
 type AnkiConceptWrite = {
     Title: string
     Description: string
@@ -26,7 +40,7 @@ type AnkiConceptWrite = {
         entity.PrivateTagConcepts <- privateTagConcepts.Select(fun x -> PrivateTagConceptEntity(Concept = entity, PrivateTag = x)).ToList()
         entity
 
-type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: int) =
+type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: DbService, userId: int) =
     let ankiIntToBool =
         Decode.int
         |> Decode.andThen (fun i ->
@@ -161,7 +175,7 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
               CardOptionId = cardOptionEntity.Id }.CopyToNew)
 
     member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
-        let col = ankiDbService.Query(fun db -> db.Cols.Single())
+        let col = ankiDb.Cols.Single()
         ResultBuilder() {
             let! cardOptionByDeckConfigurationId =
                 parseDconf col.Dconf
@@ -189,11 +203,11 @@ type AnkiImporter(ankiDbService: AnkiDbService, dbService: DbService, userId: in
                     conceptTemplatesByModelId
                     (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId).ToList()) |> Seq.toList)
                     []
-                    (ankiDbService.Query(fun db -> db.Notes.ToList()) |> Seq.toList)
+                    (ankiDb.Notes)
                 |> Map.ofList
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let getCardEntities() =
-                ankiDbService.Query(fun db -> db.Cards.ToList())
+                ankiDb.Cards
                 |> Seq.map (mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
                 |> List.ofSeq
                 |> Result.consolidate
