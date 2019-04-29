@@ -12,15 +12,19 @@ type ConnectionStringProvider() =
     interface IConnectionStringProvider with
         member __.Get = "Server=localhost;Database=CardOverflow;Trusted_Connection=True;"
 
-type DbFactory(connectionStringProvider: IConnectionStringProvider) =
-    member __.Create() =
-        DbContextOptionsBuilder()
-            .UseSqlServer(connectionStringProvider.Get)
-            .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
-            .Options
-        |> fun o -> new CardOverflowDb(o)
+type IDbFactory =
+    abstract Create: unit -> CardOverflowDb
 
-type DbService(dbFactory: DbFactory) =
+type DbFactory(connectionStringProvider: IConnectionStringProvider) =
+    interface IDbFactory with
+        member __.Create() =
+            DbContextOptionsBuilder()
+                .UseSqlServer(connectionStringProvider.Get)
+                .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
+                .Options
+            |> fun o -> new CardOverflowDb(o)
+
+type DbService(dbFactory: IDbFactory) =
     member __.Query(q) =
         use db = dbFactory.Create()
         q db
