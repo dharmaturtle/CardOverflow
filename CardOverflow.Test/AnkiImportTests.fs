@@ -18,20 +18,6 @@ let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
     | _ -> failwith "Unexpected format"
 let any<'R> : 'R = failwith "!"
 
-let unzipAndGetAnkiDbService collection ankiFileName =
-    let baseDir = @"..\netcoreapp3.0\AnkiExports\"
-    let tempDir = baseDir + @"Temp\" + ankiFileName + @"\" // Need to isolate ankiDb otherwise tests run in parallel fail
-    if Directory.Exists tempDir
-    then Directory.Delete(tempDir, true)
-    ZipFile.Open(baseDir + ankiFileName, ZipArchiveMode.Read).ExtractToDirectory tempDir
-    tempDir + collection |> AnkiDbFactory |> AnkiDbService
-
-let getAnki2 =
-    unzipAndGetAnkiDbService "collection.anki2"
-
-let getAnki21 =
-    unzipAndGetAnkiDbService "collection.anki21"
-
 let assertHasBasicInfo ankiService dbService =
     let userId = 3
     AnkiImporter(ankiService, dbService, userId).run()
@@ -50,23 +36,10 @@ let assertHasBasicInfo ankiService dbService =
                 .Single(fun c -> c.Fields.Contains("mp3"))
                 .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name)))
 
-let assertNotEmpty (ankiDb: SimpleAnkiDb) =
-    ankiDb.Cols |> Assert.NotEmpty
-    ankiDb.Cards |> Assert.NotEmpty
-    ankiDb.Notes |> Assert.NotEmpty
-
-[<Fact>]
-let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3.apkg``() =
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertNotEmpty
-
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
     use tempDbService = new TempDbService()
     AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertHasBasicInfo <| tempDbService.DbService
-
-[<Fact>]
-let ``AnkiDbService can read from AllDefaultTemplatesAndImageAndMp3.colpkg``() =
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertNotEmpty
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =

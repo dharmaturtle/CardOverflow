@@ -571,3 +571,50 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
             ]
         Revlogs = []
     }
+
+let unzipAndGetAnkiDbService collection ankiFileName =
+    let baseDir = @"..\netcoreapp3.0\AnkiExports\"
+    let tempDir = baseDir + @"Temp\" + ankiFileName + @"\" // Need to isolate ankiDb otherwise tests run in parallel fail
+    if Directory.Exists tempDir
+    then Directory.Delete(tempDir, true)
+    ZipFile.Open(baseDir + ankiFileName, ZipArchiveMode.Read).ExtractToDirectory tempDir
+    tempDir + collection |> AnkiDbFactory |> AnkiDbService
+
+let getAnki2 =
+    unzipAndGetAnkiDbService "collection.anki2"
+
+let getAnki21 =
+    unzipAndGetAnkiDbService "collection.anki21"
+
+let serialize x =
+    ObjectDumper.Dump(x, DumpOptions(DumpStyle = DumpStyle.CSharp,
+                                     LineBreakChar = "",
+                                     IndentSize = 0))
+
+[<Fact>]
+let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg matches AllDefaultTemplatesAndImageAndMp3.colpkg``() =
+    let actualDb = 
+        "AllDefaultTemplatesAndImageAndMp3.colpkg"
+        |> getAnki21
+        |> AnkiImporter.getSimpleAnkiDb
+    
+    let mock = allDefaultTemplatesAndImageAndMp3_colpkg
+
+    serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
+    serialize actualDb.Cols = serialize mock.Cols |> Assert.True
+    serialize actualDb.Notes = serialize mock.Notes |> Assert.True
+    serialize actualDb.Cards = serialize mock.Cards |> Assert.True
+
+[<Fact>]
+let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg matches AllDefaultTemplatesAndImageAndMp3.apkg``() =
+    let actualDb = 
+        "AllDefaultTemplatesAndImageAndMp3.apkg"
+        |> getAnki2
+        |> AnkiImporter.getSimpleAnkiDb
+    
+    let mock = allDefaultTemplatesAndImageAndMp3_apkg
+
+    serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
+    serialize actualDb.Cols = serialize mock.Cols |> Assert.True
+    serialize actualDb.Notes = serialize mock.Notes |> Assert.True
+    serialize actualDb.Cards = serialize mock.Cards |> Assert.True
