@@ -184,4 +184,4 @@ let deleteAndRecreateDatabase() =
 
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
-    ConnectionStringProvider() |> DbFactory |> fun f -> f.Create |>  deleteAndRecreateDatabase()
+    "Server=localhost;Database=CardOverflow;Trusted_Connection=True;" |> DbFactory |> fun f -> f.Create |>  deleteAndRecreateDatabase()

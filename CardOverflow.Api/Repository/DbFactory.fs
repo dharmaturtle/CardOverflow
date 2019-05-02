@@ -5,19 +5,12 @@ open CardOverflow.Entity.Anki
 open Microsoft.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore.Diagnostics
 
-type IConnectionStringProvider =
-    abstract Get: string
-
-type ConnectionStringProvider() =
-    interface IConnectionStringProvider with
-        member __.Get = "Server=localhost;Database=CardOverflow;Trusted_Connection=True;"
-
 type CreateCardOverflowDb = unit -> CardOverflowDb
 
-type DbFactory(connectionStringProvider: IConnectionStringProvider) =
+type DbFactory(connectionString: string) =
     member __.Create() =
         DbContextOptionsBuilder()
-            .UseSqlServer(connectionStringProvider.Get)
+            .UseSqlServer(connectionString)
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options
         |> fun o -> new CardOverflowDb(o)
