@@ -15,7 +15,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="InitializeDatabase.fs" />
-    <Compile Include="TestHelpers.fs" />
+    <Compile Include="TestDbServices.fs" />
     <Compile Include="MergeTests.fs" />
     <Compile Include="ResultBuilderTests.fs" />
     <Compile Include="DbServiceTests.fs" />

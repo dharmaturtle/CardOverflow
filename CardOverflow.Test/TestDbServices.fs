@@ -22,7 +22,7 @@ type TestDbFactory(connectionStringProvider: IConnectionStringProvider) =
                 .Options
             |> fun o -> new CardOverflowDb(o)
 
-type TempDbService( [<CallerMemberName>] ?memberName: string) =
+type SqlTempDbProvider( [<CallerMemberName>] ?memberName: string) =
     let dbFactory =
         match memberName with
         | Some testName -> Regex.Replace(testName, "[^A-Za-z0-9 _]", "").Replace(' ', '_') |> TestConnectionStringProvider |> TestDbFactory :> IDbFactory

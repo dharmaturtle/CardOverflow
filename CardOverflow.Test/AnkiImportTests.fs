@@ -38,10 +38,10 @@ let assertHasBasicInfo ankiService dbService =
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
-    use tempDbService = new TempDbService()
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertHasBasicInfo <| tempDbService.DbService
+    use p = new SqlTempDbProvider()
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertHasBasicInfo <| p.DbService
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
-    use tempDbService = new TempDbService()
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| tempDbService.DbService
+    use p = new SqlTempDbProvider()
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| p.DbService

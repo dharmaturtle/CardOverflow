@@ -9,14 +9,13 @@ open Xunit
 
 [<Fact>]
 let ``DbService can add and retreive a user``() =
-    use tempDb = new TempDbService()
-    let service = tempDb.DbService
+    use p = new SqlTempDbProvider()
     let name = Guid.NewGuid().ToString().Take(32) |> String.Concat
     let email = Guid.NewGuid().ToString()
 
-    service.Command(fun db -> db.Users.Add(UserEntity(Email = email, DisplayName = name)))
+    p.DbService.Command(fun db -> db.Users.Add(UserEntity(Email = email, DisplayName = name)))
 
-    service.Query(fun db -> db.Users.ToList())
+    p.DbService.Query(fun db -> db.Users.ToList())
     |> Seq.filter(fun x -> x.DisplayName = name && x.Email = email)
     |> Seq.length
     |> fun l -> Assert.Equal(1, l)
