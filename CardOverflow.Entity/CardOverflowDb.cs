@@ -80,6 +80,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>
             {
+                entity.HasIndex(e => e.UserId);
+
                 entity.Property(e => e.Css).IsUnicode(false);
 
                 entity.HasOne(d => d.User)
@@ -140,13 +142,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<PrivateTagEntity>(entity =>
             {
-                entity.HasKey(e => e.Id).ForSqlServerIsClustered(false);
-
-                entity.HasIndex(e => new { e.UserId, e.Name })
-                    .HasName("AK_PrivateTag__UserId_Name")
-                    .IsUnique()
-                    .HasAnnotation("SqlServer:Clustered", true);
-
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.PrivateTags)
                     .HasForeignKey(d => d.UserId)
