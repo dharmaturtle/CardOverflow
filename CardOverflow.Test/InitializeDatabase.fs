@@ -184,4 +184,4 @@ let deleteAndRecreateDatabase() =
 
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
-    ConnectionStringProvider() |> DbFactory |> deleteAndRecreateDatabase()
+    ConnectionStringProvider() |> DbFactory |> fun f -> f.Create |>  deleteAndRecreateDatabase()
