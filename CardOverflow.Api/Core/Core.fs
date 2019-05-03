@@ -2,18 +2,14 @@ namespace CardOverflow.Api
 
 open System
 
-type ITimeProvider =
-    abstract UtcNow: DateTime
+type TimeProvider = DateTime
 
-type TimeProvider() =
-    interface ITimeProvider with
-        member __.UtcNow = DateTime.UtcNow
+module TimeProvider =
+    let utcNow = DateTime.UtcNow
 
-type IRandomProvider =
-    abstract GetRandomFloat: float * float -> float
+type RandomFloatProvider = float * float -> float
 
-type RandomProvider() =
+module RandomProvider =
     let r = Random()
-    interface IRandomProvider with
-        member __.GetRandomFloat(minInclusive, maxExclusive) = // https://stackoverflow.com/questions/1064901
-            r.NextDouble() * (maxExclusive - minInclusive) + minInclusive
+    let randomFloat(minInclusive, maxExclusive) = // https://stackoverflow.com/questions/1064901
+        r.NextDouble() * (maxExclusive - minInclusive) + minInclusive

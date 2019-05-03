@@ -3,7 +3,7 @@
 open CardOverflow.Api
 open System
 
-type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
+type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
     let max a b = if a > b then a else b
     let min a b = if a < b then a else b
     let equals a b threshold = abs(a-b) < threshold
@@ -32,7 +32,7 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
                 max (rawInterval * card.Options.MatureCardsIntervalFactor)
                     (TimeSpan.FromDays 1.0 |> previousInterval.Add)
                 |> min card.Options.MatureCardsMaximumInterval
-            let delta = timeProvider.UtcNow - card.Due |> max TimeSpan.Zero
+            let delta = time - card.Due |> max TimeSpan.Zero
             let hard = interval card.Interval (card.Interval * card.Options.MatureCardsHardInterval)
             let good = interval hard (delta * 0.5 |> (+) card.Interval |> (*) card.EaseFactor)
             let easy = interval good (delta * 1.0 |> (+) card.Interval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
@@ -57,4 +57,4 @@ type Scheduler(randomProvider: IRandomProvider, timeProvider: ITimeProvider) =
             elif days < 30.0 then max 2.0 (days * 0.15) |> buildFuzzierInterval
             else                  max 4.0 (days * 0.05) |> buildFuzzierInterval
         // lowTODO find an implementation that is max inclusive
-        randomProvider.GetRandomFloat fuzzRangeInDaysInclusive |> TimeSpan.FromDays
+        randomFloatProvider fuzzRangeInDaysInclusive |> TimeSpan.FromDays
