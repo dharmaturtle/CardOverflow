@@ -5,7 +5,7 @@ open CardOverflow.Entity
 open Microsoft.EntityFrameworkCore
 open System.Linq
 
-type CardRepository(dbService: DbService) =
+type CardRepository(dbService: IDbService) =
     member __.GetCards() =
         dbService.Query(fun db -> db.Cards.ToList())
     
@@ -15,7 +15,7 @@ type CardRepository(dbService: DbService) =
     member __.SaveCard card =
         dbService.Command(fun db -> db.Cards.Add card)
 
-type ConceptRepository(dbService: DbService) =
+type ConceptRepository(dbService: IDbService) =
     member __.GetConcepts() =
         dbService.Query(fun db -> db.Concepts.Include(fun x -> x.Cards).ToList())
 
@@ -37,11 +37,11 @@ type ConceptRepository(dbService: DbService) =
                     db.Update d |> ignore)
         )
 
-type UserRepository(dbService: DbService) =
+type UserRepository(dbService: IDbService) =
     member __.GetUser email =
         dbService.Query(fun db -> db.Users.First(fun x -> x.Email = email))
 
-type PrivateTagRepository(dbService: DbService, userId) =
+type PrivateTagRepository(dbService: IDbService, userId) =
     member __.Add newTags =
         let newTags = newTags |> List.distinct
         dbService.Command(fun db -> // https://stackoverflow.com/a/18113534
@@ -65,7 +65,7 @@ type PrivateTagRepository(dbService: DbService, userId) =
     member __.Delete tag =
         dbService.Command(fun db -> db.PrivateTags.Remove tag)
 
-type DeckRepository(dbService: DbService) =
+type DeckRepository(dbService: IDbService) =
     member __.Create deck =
         dbService.Command(fun db -> db.Decks.Add deck)
 

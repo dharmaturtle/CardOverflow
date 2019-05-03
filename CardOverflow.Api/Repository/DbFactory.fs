@@ -15,14 +15,19 @@ type DbFactory(connectionString: string) =
             .Options
         |> fun o -> new CardOverflowDb(o)
 
+type IDbService =
+    abstract Query: (CardOverflowDb -> 'a) -> 'a
+    abstract Command: (CardOverflowDb -> 'a) -> unit
+
 type DbService(createCardOverflowDb: CreateCardOverflowDb) =
-    member __.Query(q) =
-        use db = createCardOverflowDb()
-        q db
-    member __.Command(q): unit =
-        use db = createCardOverflowDb()
-        q db |> ignore
-        db.SaveChanges() |> ignore
+    interface IDbService with
+        member __.Query q =
+            use db = createCardOverflowDb()
+            q db
+        member __.Command c =
+            use db = createCardOverflowDb()
+            c db |> ignore
+            db.SaveChanges() |> ignore
 
 type AnkiDbFactory(dbPath: string) =
     member __.Create() =

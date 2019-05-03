@@ -40,7 +40,7 @@ type AnkiConceptWrite = {
         entity.PrivateTagConcepts <- privateTagConcepts.Select(fun x -> PrivateTagConceptEntity(Concept = entity, PrivateTag = x)).ToList()
         entity
 
-type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: DbService, userId: int) =
+type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
     let ankiIntToBool =
         Decode.int
         |> Decode.andThen (fun i ->

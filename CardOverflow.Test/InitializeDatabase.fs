@@ -160,13 +160,13 @@ let basicClozeConceptTemplate =
                  AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
 
 // This should be a function because each user needs to be a new instance. Otherwise, tests run in parallel by Ncrunch fail.
-let deleteAndRecreateDatabase() =
+let deleteAndRecreateDatabase(dbService: IDbService) =
     let admin = UserEntity(DisplayName = "Admin", Email = "admin@cardoverflow.io")
     let theCollective = UserEntity(DisplayName = "The Collective", Email = "theCollective@cardoverflow.io")
     let roboturtle = UserEntity(DisplayName = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
-    DbService >> fun x -> x.Command(fun db ->
+    dbService.Command(fun db ->
         db.Database.EnsureDeleted() |> ignore
-        db.Database.EnsureCreated() |> Assert.True
+        db.Database.EnsureCreated() |> ignore
         db.Users.AddRange
             [ admin
               theCollective
@@ -184,4 +184,4 @@ let deleteAndRecreateDatabase() =
 
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
-    "Server=localhost;Database=CardOverflow;Trusted_Connection=True;" |> DbFactory |> fun f -> f.Create |>  deleteAndRecreateDatabase()
+    "Server=localhost;Database=CardOverflow;Trusted_Connection=True;" |> DbFactory |> fun f -> f.Create |> DbService |> deleteAndRecreateDatabase
