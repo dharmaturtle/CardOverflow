@@ -184,4 +184,4 @@ let deleteAndRecreateDatabase(dbService: IDbService) =
 
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
-    CompositionRoot.local.connectionString |> DbFactory |> fun f -> f.Create |> DbService |> deleteAndRecreateDatabase
+    CompositionRoot.local.connectionString |> CreateCardOverflowDb.create |> DbService |> deleteAndRecreateDatabase

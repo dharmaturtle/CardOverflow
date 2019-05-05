@@ -17,7 +17,6 @@ namespace CardOverflow.Web {
 
       services.AddSingleton<WeatherService>();
       services.AddSingleton<ConnectionString>(CompositionRootModule.local.connectionString);
-      services.AddSingleton<DbFactory>();
       services.AddSingleton<DbService>();
       services.AddSingleton<CardRepository>();
       services.AddSingleton<ConceptRepository>();

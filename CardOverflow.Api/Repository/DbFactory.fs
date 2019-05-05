@@ -5,14 +5,13 @@ open CardOverflow.Entity.Anki
 open Microsoft.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore.Diagnostics
 
-type CreateCardOverflowDb = unit -> CardOverflowDb
-
 type ConnectionString = ConnectionString of string
 module ConnectionString =
     let value (ConnectionString cs) = cs
 
-type DbFactory(connectionString: ConnectionString) =
-    member __.Create() =
+type CreateCardOverflowDb = unit -> CardOverflowDb
+module CreateCardOverflowDb =
+    let create (connectionString: ConnectionString) () =
         DbContextOptionsBuilder()
             .UseSqlServer(connectionString |> ConnectionString.value)
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
