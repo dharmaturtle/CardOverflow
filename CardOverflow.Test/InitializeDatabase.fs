@@ -184,4 +184,4 @@ let deleteAndRecreateDatabase(dbService: IDbService) =
 
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
-    "Server=localhost;Database=CardOverflow;Trusted_Connection=True;" |> DbFactory |> fun f -> f.Create |> DbService |> deleteAndRecreateDatabase
+    "Server=localhost;Database=CardOverflow;Trusted_Connection=True;" |> ConnectionString |> DbFactory |> fun f -> f.Create |> DbService |> deleteAndRecreateDatabase

@@ -7,10 +7,14 @@ open Microsoft.EntityFrameworkCore.Diagnostics
 
 type CreateCardOverflowDb = unit -> CardOverflowDb
 
-type DbFactory(connectionString: string) =
+type ConnectionString = ConnectionString of string
+module ConnectionString =
+    let value (ConnectionString cs) = cs
+
+type DbFactory(connectionString: ConnectionString) =
     member __.Create() =
         DbContextOptionsBuilder()
-            .UseSqlServer(connectionString)
+            .UseSqlServer(connectionString |> ConnectionString.value)
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options
         |> fun o -> new CardOverflowDb(o)
