@@ -12,7 +12,7 @@ module ConnectionString =
 type CreateCardOverflowDb = unit -> CardOverflowDb
 module CreateCardOverflowDb =
     let create (connectionString: ConnectionString) () =
-        DbContextOptionsBuilder()
+        DbContextOptionsBuilder<CardOverflowDb>()
             .UseSqlServer(connectionString |> ConnectionString.value)
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options

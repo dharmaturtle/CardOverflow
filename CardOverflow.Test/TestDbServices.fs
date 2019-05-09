@@ -11,7 +11,7 @@ open Microsoft.EntityFrameworkCore.Diagnostics
 
 type TestDbFactory(connectionString: string) =
     member __.Create() =
-        DbContextOptionsBuilder()
+        DbContextOptionsBuilder<CardOverflowDb>()
             .UseSqlServer(connectionString)
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options
@@ -41,7 +41,7 @@ type SqlTempDbProvider( [<CallerMemberName>] ?memberName: string) =
 
 type SqliteDbFactory() =
     let c =
-        DbContextOptionsBuilder()
+        DbContextOptionsBuilder<CardOverflowDb>()
             .UseSqlite("DataSource=:memory:")
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options

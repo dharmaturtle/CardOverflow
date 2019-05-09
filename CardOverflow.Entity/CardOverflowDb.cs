@@ -19,7 +19,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<PublicTagConceptEntity> PublicTagConcepts { get; set; }
         public virtual DbSet<UserEntity> Users { get; set; }
 
-        public CardOverflowDb(DbContextOptions options) : base(options)
+        public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options)
         {
         }
 
