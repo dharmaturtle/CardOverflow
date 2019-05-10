@@ -24,6 +24,7 @@
     <Compile Include="PrivateTagRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />
     <Compile Include="AnkiImportTests.fs" />
+    <Compile Include="ContainerExtensionsTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.4" />

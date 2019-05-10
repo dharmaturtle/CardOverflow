@@ -2,8 +2,10 @@ module InitializeDatabase
 
 open CardOverflow.Api
 open CardOverflow.Entity
+open ContainerExtensions
 open System
 open Xunit
+open SimpleInjector
 
 let defaultCardOptions =
     { Id = 1
@@ -184,4 +186,6 @@ let deleteAndRecreateDatabase(dbService: IDbService) =
 
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
-    CompositionRoot.local.dbService |> deleteAndRecreateDatabase
+    use c = new Container()
+    c.RegisterNonView
+    c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
