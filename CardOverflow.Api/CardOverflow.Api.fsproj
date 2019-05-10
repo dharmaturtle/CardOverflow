@@ -15,7 +15,6 @@
     <Compile Include="Scheduler.fs" />
     <Compile Include="AnkiImporter.fs" />
     <Compile Include="WeatherForecast.fs" />
-    <Compile Include="CompositionRoot.fs" />
   </ItemGroup>
 
   <ItemGroup>
