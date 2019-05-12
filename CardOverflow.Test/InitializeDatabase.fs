@@ -6,6 +6,9 @@ open ContainerExtensions
 open System
 open Xunit
 open SimpleInjector
+open System.Data.SqlClient
+open System.IO
+open System.Linq
 
 let defaultCardOptions =
     { Id = 1
@@ -189,3 +192,14 @@ let ``Delete and Recreate "official" Database``() =
     use c = new Container()
     c.RegisterNonView
     c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
+
+//[<Fact>]
+let ``Run InitializeDatabase.sql``() =
+    let conn = new SqlConnection "Server=localhost;Trusted_Connection=True;"
+    conn.Open()
+    File.ReadAllText(@"..\netcoreapp3.0\Stuff\InitializeDatabase.sql").Split("GO").Where(fun x -> x.Any())
+    |> Seq.iter(fun s -> 
+        use command = new SqlCommand(s,conn)
+        command.ExecuteNonQuery() |> ignore
+    )
+    conn.Close()

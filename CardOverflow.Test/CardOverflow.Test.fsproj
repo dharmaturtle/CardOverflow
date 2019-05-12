@@ -8,6 +8,9 @@
     <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\InitializeDatabase.sql" Link="Stuff\InitializeDatabase.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -28,7 +31,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.4" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Stuff\" />
   </ItemGroup>
 </Project>
