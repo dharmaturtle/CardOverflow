@@ -17,6 +17,15 @@
     <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="AnkiExports\RandomReviews.apkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AnkiExports\RandomReviews.colpkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="AnkiExports\RandomReviews-21.colpkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="InitializeDatabase.fs" />
     <Compile Include="TestDbServices.fs" />
     <Compile Include="MergeTests.fs" />
