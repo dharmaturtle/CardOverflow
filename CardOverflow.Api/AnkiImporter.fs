@@ -208,8 +208,7 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let getCardEntities() =
                 ankiDb.Cards
-                |> Seq.map (mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
-                |> List.ofSeq
+                |> List.map (mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let! _ = getCardEntities() // checking if there are any errors
 
