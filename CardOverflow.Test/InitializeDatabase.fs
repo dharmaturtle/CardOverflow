@@ -194,10 +194,24 @@ let ``Delete and Recreate "official" Database``() =
     c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
 
 //[<Fact>]
-let ``Run InitializeDatabase.sql``() =
+let ``Delete and recreate localhost's CardOverflow database``() =
     let conn = new SqlConnection "Server=localhost;Trusted_Connection=True;"
     conn.Open()
-    File.ReadAllText(@"..\netcoreapp3.0\Stuff\InitializeDatabase.sql").Split("GO").Where(fun x -> x.Any())
+    [
+        """
+        USE [master]
+        GO
+        IF EXISTS (SELECT name FROM sys.databases WHERE name = N'CardOverflow')
+        BEGIN
+            ALTER DATABASE [CardOverflow] SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+            DROP DATABASE [CardOverflow]
+        END
+        GO
+        """
+        File.ReadAllText(@"..\netcoreapp3.0\Stuff\InitializeDatabase.sql")
+    ]
+    |> String.concat "\r\n"
+    |> fun s -> s.Split("GO").Where(fun x -> x.Any())
     |> Seq.iter(fun s -> 
         use command = new SqlCommand(s,conn)
         command.ExecuteNonQuery() |> ignore
