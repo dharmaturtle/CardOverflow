@@ -193,8 +193,7 @@ let ``Delete and Recreate "official" Database``() =
     c.RegisterNonView
     c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
 
-//[<Fact>]
-let ``Delete and recreate localhost's CardOverflow database``() =
+let deleteAndRecreateDb dbName =
     let conn = new SqlConnection "Server=localhost;Trusted_Connection=True;"
     conn.Open()
     [
@@ -211,9 +210,15 @@ let ``Delete and recreate localhost's CardOverflow database``() =
         File.ReadAllText(@"..\netcoreapp3.0\Stuff\InitializeDatabase.sql")
     ]
     |> String.concat "\r\n"
-    |> fun s -> s.Split("GO").Where(fun x -> x.Any())
+    |> fun s -> s.Replace("[CardOverflow]", sprintf "[%s]" dbName)
+                 .Replace("'CardOverflow'", sprintf "'%s'" dbName)
+                 .Split("GO").Where(fun x -> x.Any())
     |> Seq.iter(fun s -> 
         use command = new SqlCommand(s,conn)
         command.ExecuteNonQuery() |> ignore
     )
     conn.Close()
+
+//[<Fact>]
+let ``Delete and recreate localhost's CardOverflow database``() =
+    deleteAndRecreateDb "CardOverflow"
