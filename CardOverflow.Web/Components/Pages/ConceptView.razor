@@ -29,7 +29,7 @@
   [Parameter] ConceptEntity Concept { get; set; }
 
   void AddCard() {
-    Concept.Cards.Add(new CardEntity { Question = "Question", Answer = "Answer" });
+    Concept.Cards.Add(new CardEntity());
     StateHasChanged();
   }
 

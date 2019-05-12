@@ -28,7 +28,7 @@
   }
 
   void AddConcept() =>
-    new ConceptEntity { Title = "Concept Title", Description = "Concept Description", Cards = new List<CardEntity> { new CardEntity { Question = "Question", Answer = "Answer" } } }
+    new ConceptEntity { Title = "Concept Title", Description = "Concept Description", Cards = new List<CardEntity> { new CardEntity() } }
     .Do(ConceptList.Add);
 
   void Save() =>
