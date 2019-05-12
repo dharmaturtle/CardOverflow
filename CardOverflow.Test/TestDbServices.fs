@@ -18,16 +18,16 @@ type TestDbFactory(connectionString: string) =
         |> fun o -> new CardOverflowDb(o)
 
 type SqlTempDbProvider( [<CallerMemberName>] ?memberName: string) =
+    let dbName =
+        Regex.Replace(memberName.Value, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
+        |> sprintf "CardOverflow_%s"
     let createCardOverflowDb =
-        match memberName with
-        | Some testName ->
-            Regex.Replace(testName, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
-            |> sprintf "Server=localhost;Database=CardOverflow_%s;Trusted_Connection=True;"
-            |> TestDbFactory
-            |> fun x -> x.Create
-        | _ -> failwith "Missing the caller's member name somehow."
+        dbName
+        |> sprintf "Server=localhost;Database=%s;Trusted_Connection=True;"
+        |> TestDbFactory
+        |> fun x -> x.Create
     do 
-        createCardOverflowDb |> DbService |> InitializeDatabase.deleteAndRecreateDatabase
+        dbName |> InitializeDatabase.deleteAndRecreateDb
 
     interface IDisposable with
         member __.Dispose() =
