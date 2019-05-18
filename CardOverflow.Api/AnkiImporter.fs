@@ -7,13 +7,6 @@ open System
 open System.Linq
 open Thoth.Json.Net
 
-type SimpleAnkiDb = {
-    Cards: CardEntity list
-    Cols: ColEntity list
-    Notes: NoteEntity list
-    Revlogs: RevlogEntity list
-}
-
 module AnkiImporter =
     let getSimpleAnkiDb (ankiDbService: AnkiDbService) =
         { Cards = ankiDbService.Query(fun db -> db.Cards.ToList() ) |> List.ofSeq
@@ -21,167 +14,15 @@ module AnkiImporter =
           Notes = ankiDbService.Query(fun db -> db.Notes.ToList() ) |> List.ofSeq
           Revlogs = ankiDbService.Query(fun db -> db.Revlogs.ToList() ) |> List.ofSeq }
 
-type AnkiConceptWrite = {
-    Title: string
-    Description: string
-    ConceptTemplate: ConceptTemplateEntity
-    Fields: string list
-    Modified: DateTime
-} with
-    member this.CopyTo(entity: ConceptEntity) =
-        entity.Title <- this.Title
-        entity.Description <- this.Description
-        entity.ConceptTemplate <- this.ConceptTemplate
-        entity.Fields <- this.Fields |> MappingTools.joinByUnitSeparator
-        entity.Modified <- this.Modified
-    member this.CopyToNew (privateTagConcepts: seq<PrivateTagEntity>) =
-        let entity = ConceptEntity()
-        this.CopyTo entity
-        entity.PrivateTagConcepts <- privateTagConcepts.Select(fun x -> PrivateTagConceptEntity(Concept = entity, PrivateTag = x)).ToList()
-        entity
-
 type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
-    let ankiIntToBool =
-        Decode.int
-        |> Decode.andThen (fun i ->
-            match i with
-            | 0 -> Decode.succeed false
-            | 1 -> Decode.succeed true
-            | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
-    let parseDconf =
-        Decode.object(fun get -> // medTODO input validation
-            { Id = 0
-              Name = get.Required.Field "name" Decode.string
-              NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
-              NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16
-              NewCardsGraduatingInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 0
-              NewCardsEasyInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 1
-              NewCardsStartingEaseFactor = (get.Required.At ["new"; "initialFactor"] Decode.float) / 1000.0
-              NewCardsBuryRelated = get.Required.At ["new"; "bury"] Decode.bool
-              MatureCardsMaxPerDay = get.Required.At ["rev"; "perDay"] Decode.int |> int16
-              MatureCardsEaseFactorEasyBonusFactor = get.Required.At ["rev"; "ease4"] Decode.float
-              MatureCardsIntervalFactor = get.Required.At ["rev"; "ivlFct"] Decode.float
-              MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> TimeSpan.FromDays
-              MatureCardsHardInterval = get.Required.At ["rev"; "hardFactor"] Decode.float
-              MatureCardsBuryRelated = get.Required.At ["rev"; "bury"] Decode.bool
-              LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
-              LapsedCardsNewIntervalFactor = get.Required.At ["lapse"; "mult"] Decode.float
-              LapsedCardsMinimumInterval = get.Required.At ["lapse"; "minInt"] Decode.float |> TimeSpan.FromDays
-              LapsedCardsLeechThreshold = get.Required.At ["lapse"; "leechFails"] Decode.int |> byte
-              ShowAnswerTimer = get.Required.Field "timer" ankiIntToBool
-              AutomaticallyPlayAudio = get.Required.Field "autoplay" Decode.bool
-              ReplayQuestionAudioOnAnswer = get.Required.Field "replayq" Decode.bool })
-        |> Decode.keyValuePairs
-        |> Decode.fromString
-    let parseDecks =
-        Decode.object(fun get ->
-            (get.Required.Field "id" Decode.int,
-             get.Required.Field "name" Decode.string,
-             get.Optional.Field "conf" Decode.int))
-        |> Decode.keyValuePairs
-        |> Decode.fromString
-    let parseModels =
-        Decode.object(fun get ->
-            { Id = 0
-              Name = get.Required.Field "name" Decode.string
-              Css = get.Required.Field "css" Decode.string
-              Fields =
-                get.Required.Field "flds" (Decode.object(fun get ->
-                    { Name = get.Required.Field "name" Decode.string
-                      Font = get.Required.Field "font" Decode.string
-                      FontSize = get.Required.Field "size" Decode.int |> byte
-                      IsRightToLeft = get.Required.Field "rtl" Decode.bool
-                      Ordinal = get.Required.Field "ord" Decode.int |> byte
-                      IsSticky = get.Required.Field "sticky" Decode.bool })
-                    |> Decode.list )
-              CardTemplates =
-                get.Required.Field "tmpls" (Decode.object(fun g ->
-                    { Name = g.Required.Field "name" Decode.string
-                      QuestionTemplate = g.Required.Field "qfmt" Decode.string
-                      AnswerTemplate = g.Required.Field "afmt" Decode.string
-                      ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
-                      ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
-                      Ordinal = g.Required.Field "ord" Decode.int |> byte
-                      DefaultCardOptionId = get.Required.Field "did" Decode.int * -1 }) // temp value that will be overwritten later highTODO actually do this
-                      |> Decode.list )
-              Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
-              IsCloze = get.Required.Field "type" ankiIntToBool
-              DefaultPublicTags = []
-              DefaultPrivateTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
-              LatexPre = get.Required.Field "latexPre" Decode.string
-              LatexPost = get.Required.Field "latexPost" Decode.string })
-        |> Decode.keyValuePairs
-        |> Decode.fromString
-    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags conceptsByNoteId =
-        function
-        | (note: NoteEntity) :: tail ->
-            let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
-            let allTags =
-                Set.difference
-                    notesTags
-                    (tags |> List.map (fun (x: PrivateTagEntity) -> x.Name) |> Set.ofSeq)
-                |> List.ofSeq
-                |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
-                |> List.append tags
-            let concept =
-                { Title = ""
-                  Description = ""
-                  ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
-                  Fields = MappingTools.splitByUnitSeparator note.Flds
-                  Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime }.CopyToNew
-                  (allTags.Where(fun x -> notesTags.Contains x.Name))
-            parseNotes conceptTemplatesByModelId allTags ((note.Id, concept)::conceptsByNoteId) tail
-        | _ -> conceptsByNoteId
-
-    let mapCard (getCardOption: int -> CardOption * CardOptionEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
-        let cardOption, cardOptionEntity = int ankiCard.Did |> getCardOption
-        match ankiCard.Type with
-        | 0L -> Ok MemorizationState.New
-        | 1L -> Ok MemorizationState.Learning
-        | 2L -> Ok MemorizationState.Mature
-        | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
-        | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
-        |> Result.map (fun memorizationState ->
-            { Card.Id = 0
-              ConceptId = conceptsByAnkiId.[ankiCard.Nid].Id
-              MemorizationState = memorizationState
-              CardState =
-                match ankiCard.Queue with
-                | -3L -> CardState.UserBuried
-                | -2L -> CardState.SchedulerBuried
-                | -1L -> CardState.Suspended
-                | _ -> CardState.Normal
-              LapseCount = ankiCard.Lapses |> byte // medTODO validate these, eg 9999 will yield 15
-              EaseFactorInPermille = ankiCard.Factor |> int16
-              IntervalNegativeIsMinutesPositiveIsDays =
-                if ankiCard.Ivl > 0L
-                then ankiCard.Ivl |> int16
-                else float ankiCard.Ivl * -1.0 / 60.0 |> Math.Round |> int16
-              StepsIndex =
-                match memorizationState with
-                | MemorizationState.New
-                | MemorizationState.Learning ->
-                    if ankiCard.Left = 0L
-                    then 0
-                    else cardOption.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
-                    |> byte |> Some // medTODO handle importing of lapsed cards, this assumes it's a new card
-                | MemorizationState.Mature -> None
-              Due =
-                match memorizationState with
-                | MemorizationState.New -> DateTime.UtcNow.Date
-                | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
-              TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = cardOptionEntity.Id }.CopyToNew, ankiCard)
-
     member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
         let col = ankiDb.Cols.Single()
         ResultBuilder() {
             let! cardOptionByDeckConfigurationId =
-                parseDconf col.Dconf
+                AnkiMap.parseDconf col.Dconf
                 |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, (cardOption, cardOption.CopyToNew userId))) >> Map.ofList >> Ok )
             let! nameAndDeckConfigurationIdByDeckId =
-                parseDecks col.Decks
+                AnkiMap.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
                     let names = tuples |> List.map(fun (_, (_, name, _)) -> name)
                     if names |> List.distinct |> List.length = names.Count()
@@ -196,57 +37,28 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
                 let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
                 cardOptionByDeckConfigurationId.[string deckConfigurationId]
             let! conceptTemplatesByModelId =
-                parseModels col.Models
+                AnkiMap.parseModels col.Models
                 |> Result.map (Seq.map(fun (key, value) -> (key, value.CopyToNew userId)) >> Map.ofSeq )
             let conceptsByAnkiId =
-                parseNotes
+                AnkiMap.parseNotes
                     conceptTemplatesByModelId
                     (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId).ToList()) |> Seq.toList)
+                    userId
                     []
                     (ankiDb.Notes)
                 |> Map.ofList
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let getCardEntities() =
                 ankiDb.Cards
-                |> List.map (mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
+                |> List.map (AnkiMap.mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let! _ = getCardEntities() // checking if there are any errors
-            let toHistory (cardIdByAnkiId: Map<int64, int>) (revLog: RevlogEntity) =
-                HistoryEntity(
-                    CardId = cardIdByAnkiId.[revLog.Cid],
-                    EaseFactorInPermille = int16 revLog.Factor,
-                    IntervalNegativeIsMinutesPositiveIsDays = (
-                        match revLog.Ivl with
-                        | p when p > 0L -> int16 p // positive is days
-                        | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
-                    ),
-                    ScoreAndMemorizationState =
-                        (ScoreAndMemorizationState.from
-                        <| match revLog.Ease with
-                            | 1L -> Score.Again
-                            | 2L -> Score.Hard
-                            | 3L -> Score.Good
-                            | 4L -> Score.Easy
-                            | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
-                        <| match revLog.Type with
-                            |0L -> MemorizationState.New
-                            | 1L -> MemorizationState.Learning
-                            | 2L -> MemorizationState.Mature
-                            | 3L -> MemorizationState.Mature
-                            | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type
-                        |> byte),
-                    TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
-                        (revLog.Time / 1000L - 32768L |> int16),
-                    Timestamp =
-                        DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime,
-                    UserId = userId
-                )
-
+            
             dbService.Command(fun db -> conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange)
             dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the options' Ids
             let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
             dbService.Command(fun db -> cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange)
             let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
-            dbService.Command (fun db -> ankiDb.Revlogs |> Seq.map (toHistory cardIdByAnkiId) |> db.Histories.AddRange)
+            dbService.Command (fun x -> ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId) |> x.Histories.AddRange)
             return ()
         }

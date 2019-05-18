@@ -13,6 +13,7 @@
     <Compile Include="Repository\DbFactory.fs" />
     <Compile Include="Repository\Repositories.fs" />
     <Compile Include="Scheduler.fs" />
+    <Compile Include="AnkiPure.fs" />
     <Compile Include="AnkiImporter.fs" />
     <Compile Include="WeatherForecast.fs" />
     <Compile Include="ContainerExtensions.fs" />
