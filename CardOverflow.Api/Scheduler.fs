@@ -9,9 +9,9 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
     let equals a b threshold = abs(a-b) < threshold
 
     let interval (card: QuizCard) score =
-        let intervalOfNewOrLearning card = 
+        let intervalOfNewLearningOrLapsed card = 
             function
-            | Again -> card.Options.NewCardsSteps.Head
+            | Again -> card.Options.LapsedCardsSteps.Head
             | Hard ->
                 match card.StepsIndex with
                 | Some index -> 
@@ -42,8 +42,9 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
             | Good -> good
             | Easy -> easy
         match card.MemorizationState with
-        | New 
-        | Learning -> intervalOfNewOrLearning card score
+        | New
+        | Lapsed
+        | Learning -> intervalOfNewLearningOrLapsed card score
         | Mature -> intervalOfMature card score
 
     let fuzz(interval: TimeSpan) =

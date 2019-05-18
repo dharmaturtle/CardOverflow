@@ -186,12 +186,18 @@ module AnkiMap =
                     if ankiCard.Left = 0L
                     then 0
                     else cardOption.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
-                    |> byte |> Some // medTODO handle importing of lapsed cards, this assumes it's a new card
+                    |> byte |> Some
+                | MemorizationState.Lapsed ->
+                    if ankiCard.Left = 0L
+                    then 0
+                    else cardOption.LapsedCardsSteps.Count() - (int ankiCard.Left % 1000)
+                    |> byte |> Some
                 | MemorizationState.Mature -> None
               Due =
                 match memorizationState with
                 | MemorizationState.New -> DateTime.UtcNow.Date
                 | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
+                | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
               CardOptionId = cardOptionEntity.Id }.CopyToNew, ankiCard)

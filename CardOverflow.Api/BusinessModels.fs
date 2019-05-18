@@ -5,7 +5,7 @@ open System
 
 type Score = | Again | Hard | Good | Easy // medTODO offer more options
 
-type MemorizationState = | New | Learning | Mature // highTODO make Lapsed, also consider renaming Learning to Young or something clearer
+type MemorizationState = | New | Learning | Mature | Lapsed
     with
     static member Load enum =
         match enum with
@@ -56,6 +56,10 @@ module ScoreAndMemorizationState =
         | (Hard, Mature) -> ScoreAndMemorizationStateEnum.HardMature
         | (Good, Mature) -> ScoreAndMemorizationStateEnum.GoodMature
         | (Easy, Mature) -> ScoreAndMemorizationStateEnum.EasyMature
+        | (Again, Lapsed) -> ScoreAndMemorizationStateEnum.AgainLapsed
+        | (Hard, Lapsed) -> ScoreAndMemorizationStateEnum.HardLapsed
+        | (Good, Lapsed) -> ScoreAndMemorizationStateEnum.GoodLapsed
+        | (Easy, Lapsed) -> ScoreAndMemorizationStateEnum.EasyLapsed
 
 module MemorizationStateAndCardStateEnum =
     let from memorizationState cardState =
@@ -71,7 +75,11 @@ module MemorizationStateAndCardStateEnum =
         | (Mature, Normal) -> MemorizationStateAndCardStateEnum.MatureNormal
         | (Mature, SchedulerBuried) -> MemorizationStateAndCardStateEnum.MatureSchedulerBuried
         | (Mature, UserBuried) -> MemorizationStateAndCardStateEnum.MatureUserBuried
-        | (Mature, Suspended) -> MemorizationStateAndCardStateEnum.MatureSuspended    
+        | (Mature, Suspended) -> MemorizationStateAndCardStateEnum.MatureSuspended
+        | (Lapsed, Normal) -> MemorizationStateAndCardStateEnum.LapsedNormal
+        | (Lapsed, SchedulerBuried) -> MemorizationStateAndCardStateEnum.LapsedSchedulerBuried
+        | (Lapsed, UserBuried) -> MemorizationStateAndCardStateEnum.LapsedUserBuried
+        | (Lapsed, Suspended) -> MemorizationStateAndCardStateEnum.LapsedSuspended
 
 type CardOption = {
     Id: int
