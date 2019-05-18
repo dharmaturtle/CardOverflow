@@ -172,7 +172,7 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
                 | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = cardOptionEntity.Id }.CopyToNew)
+              CardOptionId = cardOptionEntity.Id }.CopyToNew, ankiCard)
 
     member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
         let col = ankiDb.Cols.Single()
@@ -211,10 +211,42 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
                 |> List.map (mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let! _ = getCardEntities() // checking if there are any errors
+            let toHistory (cardIdByAnkiId: Map<int64, int>) (revLog: RevlogEntity) =
+                HistoryEntity(
+                    CardId = cardIdByAnkiId.[revLog.Cid],
+                    EaseFactorInPermille = int16 revLog.Factor,
+                    IntervalNegativeIsMinutesPositiveIsDays = (
+                        match revLog.Ivl with
+                        | p when p > 0L -> int16 p // positive is days
+                        | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
+                    ),
+                    ScoreAndMemorizationState =
+                        (ScoreAndMemorizationState.from
+                        <| match revLog.Ease with
+                            | 1L -> Score.Again
+                            | 2L -> Score.Hard
+                            | 3L -> Score.Good
+                            | 4L -> Score.Easy
+                            | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
+                        <| match revLog.Type with
+                            |0L -> MemorizationState.New
+                            | 1L -> MemorizationState.Learning
+                            | 2L -> MemorizationState.Mature
+                            | 3L -> MemorizationState.Mature
+                            | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type
+                        |> byte),
+                    TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
+                        (revLog.Time / 1000L - 32768L |> int16),
+                    Timestamp =
+                        DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime,
+                    UserId = userId
+                )
 
             dbService.Command(fun db -> conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange)
             dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the options' Ids
-            let! cardEntities = getCardEntities() // called again to update the Card's Option Id (from the line above)
-            dbService.Command(fun db -> cardEntities |> db.Cards.AddRange)
+            let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
+            dbService.Command(fun db -> cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange)
+            let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
+            dbService.Command (fun db -> ankiDb.Revlogs |> Seq.map (toHistory cardIdByAnkiId) |> db.Histories.AddRange)
             return ()
         }

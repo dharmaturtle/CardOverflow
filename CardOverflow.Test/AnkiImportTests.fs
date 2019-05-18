@@ -5,8 +5,6 @@ open CardOverflow.Entity
 open CardOverflow.Test
 open Microsoft.EntityFrameworkCore
 open Microsoft.FSharp.Quotations
-open System.IO
-open System.IO.Compression
 open System.Linq
 open Xunit
 
@@ -45,3 +43,24 @@ let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
     use p = new SqlTempDbProvider()
     AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| p.DbService
+
+let assertHasHistory ankiService dbService =
+    let userId = 3
+    AnkiImporter(ankiService, dbService, userId).run()
+    |> Result.isOk
+    |> Assert.True
+    Assert.NotNull(dbService.Query(fun x -> x.Histories.FirstOrDefault()))
+
+[<Fact>]
+let ``AnkiImporter can import RandomReviews.colpkg``() =
+    use p = new SqlTempDbProvider()
+    AnkiImportTestData.getAnki2 "RandomReviews.colpkg"
+    |> AnkiImporter.getSimpleAnkiDb
+    |> assertHasHistory <| p.DbService
+
+[<Fact>]
+let ``AnkiImporter can import RandomReviews.apkg``() =
+    use p = new SqlTempDbProvider()
+    AnkiImportTestData.getAnki2 "RandomReviews.apkg"
+    |> AnkiImporter.getSimpleAnkiDb
+    |> assertHasHistory <| p.DbService

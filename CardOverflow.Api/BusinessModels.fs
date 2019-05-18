@@ -3,6 +3,8 @@
 open CardOverflow.Entity
 open System
 
+type Score = | Again | Hard | Good | Easy // medTODO offer more options
+
 type MemorizationState = | New | Learning | Mature // highTODO make Lapsed, also consider renaming Learning to Young or something clearer
     with
     static member Load enum =
@@ -39,9 +41,25 @@ type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
         | MemorizationStateAndCardStateEnum.MatureSuspended -> Suspended
         | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
 
+module ScoreAndMemorizationState =
+    let from score memorizationState =
+        match (score, memorizationState) with
+        | (Again, New) -> ScoreAndMemorizationStateEnum.AgainNew
+        | (Hard, New) -> ScoreAndMemorizationStateEnum.HardNew
+        | (Good, New) -> ScoreAndMemorizationStateEnum.GoodNew
+        | (Easy, New) -> ScoreAndMemorizationStateEnum.EasyNew
+        | (Again, Learning) -> ScoreAndMemorizationStateEnum.AgainLearning
+        | (Hard, Learning) -> ScoreAndMemorizationStateEnum.HardLearning
+        | (Good, Learning) -> ScoreAndMemorizationStateEnum.GoodLearning
+        | (Easy, Learning) -> ScoreAndMemorizationStateEnum.EasyLearning
+        | (Again, Mature) -> ScoreAndMemorizationStateEnum.AgainMature
+        | (Hard, Mature) -> ScoreAndMemorizationStateEnum.HardMature
+        | (Good, Mature) -> ScoreAndMemorizationStateEnum.GoodMature
+        | (Easy, Mature) -> ScoreAndMemorizationStateEnum.EasyMature
+
 module MemorizationStateAndCardStateEnum =
-    let from cardState memorizationState =
-        match (cardState, memorizationState) with
+    let from memorizationState cardState =
+        match (memorizationState, cardState) with
         | (New, Normal) -> MemorizationStateAndCardStateEnum.NewNormal
         | (New, SchedulerBuried) -> MemorizationStateAndCardStateEnum.NewSchedulerBuried
         | (New, UserBuried) -> MemorizationStateAndCardStateEnum.NewUserBuried
@@ -53,7 +71,7 @@ module MemorizationStateAndCardStateEnum =
         | (Mature, Normal) -> MemorizationStateAndCardStateEnum.MatureNormal
         | (Mature, SchedulerBuried) -> MemorizationStateAndCardStateEnum.MatureSchedulerBuried
         | (Mature, UserBuried) -> MemorizationStateAndCardStateEnum.MatureUserBuried
-        | (Mature, Suspended) -> MemorizationStateAndCardStateEnum.MatureSuspended
+        | (Mature, Suspended) -> MemorizationStateAndCardStateEnum.MatureSuspended    
 
 type CardOption = {
     Id: int
@@ -287,8 +305,6 @@ type QuizCard = {
               then Some entity.StepsIndex.Value
               else None
           Options = CardOption.Load entity.CardOption }
-
-type Score = | Again | Hard | Good | Easy
 
 type Concept = {
     Id: int
