@@ -6,6 +6,7 @@ open CardOverflow.Entity.Anki
 open System
 open System.Linq
 open Thoth.Json.Net
+open FsToolkit.ErrorHandling
 
 module AnkiImporter =
     let getSimpleAnkiDb (ankiDbService: AnkiDbService) =
@@ -13,9 +14,9 @@ module AnkiImporter =
           Cols = ankiDbService.Query(fun db -> db.Cols.ToList() ) |> List.ofSeq
           Notes = ankiDbService.Query(fun db -> db.Notes.ToList() ) |> List.ofSeq
           Revlogs = ankiDbService.Query(fun db -> db.Revlogs.ToList() ) |> List.ofSeq }
-    let run (ankiDb: SimpleAnkiDb) (dbService: IDbService) (userId: int) = // medTODO it should be possible to present to the user import errors *before* importing anything.
+    let load ankiDb usersTags (userId: int) =
         let col = ankiDb.Cols.Single()
-        ResultBuilder() {
+        result {
             let! cardOptionByDeckConfigurationId =
                 AnkiMap.parseDconf col.Dconf
                 |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, (cardOption, cardOption.CopyToNew userId))) >> Map.ofList >> Ok )
@@ -40,7 +41,7 @@ module AnkiImporter =
             let conceptsByAnkiId =
                 AnkiMap.parseNotes
                     conceptTemplatesByModelId
-                    (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList))
+                    usersTags
                     userId
                     []
                     ankiDb.Notes
@@ -51,7 +52,13 @@ module AnkiImporter =
                 |> List.map (AnkiMap.mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let! _ = getCardEntities() // checking if there are any errors
-            
+            return (conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption)
+        }
+
+    let save (dbService: IDbService) ankiDb userId =
+        result {
+            let usersTags = dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList)
+            let! conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption = load ankiDb usersTags userId
             dbService.Command(fun db -> conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange)
             dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the options' Ids
             let updatedTemplates =
@@ -74,5 +81,4 @@ module AnkiImporter =
             dbService.Command(fun db -> cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange)
             let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
             dbService.Command (fun x -> ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId) |> x.Histories.AddRange)
-            return ()
         }

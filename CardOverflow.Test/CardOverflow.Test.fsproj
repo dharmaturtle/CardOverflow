@@ -29,7 +29,6 @@
     <Compile Include="InitializeDatabase.fs" />
     <Compile Include="TestDbServices.fs" />
     <Compile Include="MergeTests.fs" />
-    <Compile Include="ResultBuilderTests.fs" />
     <Compile Include="DbServiceTests.fs" />
     <Compile Include="CardServiceTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />

@@ -16,9 +16,9 @@ let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
     | _ -> failwith "Unexpected format"
 let any<'R> : 'R = failwith "!"
 
-let assertHasBasicInfo ankiService dbService =
+let assertHasBasicInfo ankiDb dbService =
     let userId = 3
-    AnkiImporter.run ankiService dbService userId
+    AnkiImporter.save dbService ankiDb userId
     |> Result.isOk
     |> Assert.True
     Assert.Equal(7, dbService.Query(fun db -> db.Concepts.Count()))
@@ -49,9 +49,9 @@ let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
     use p = new SqlTempDbProvider()
     AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| p.DbService
 
-let assertHasHistory ankiService dbService =
+let assertHasHistory ankiDb dbService =
     let userId = 3
-    AnkiImporter.run ankiService dbService userId
+    AnkiImporter.save dbService ankiDb userId
     |> Result.isOk
     |> Assert.True
     Assert.NotNull(dbService.Query(fun x -> x.Histories.FirstOrDefault()))
