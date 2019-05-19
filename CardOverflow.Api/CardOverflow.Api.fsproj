@@ -9,7 +9,8 @@
     <Compile Include="Core\Core.fs" />
     <Compile Include="Core\Extensions.fs" />
     <Compile Include="Core\ResultBuilder.fs" />
-    <Compile Include="Core\MappingTools.fs" />
+    <Compile Include="Providers.fs" />
+    <Compile Include="MappingTools.fs" />
     <Compile Include="BusinessModels.fs" />
     <Compile Include="Repository\DbFactory.fs" />
     <Compile Include="Repository\Repositories.fs" />
