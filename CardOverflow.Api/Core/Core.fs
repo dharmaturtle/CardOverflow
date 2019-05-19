@@ -13,3 +13,7 @@ module RandomProvider =
     let r = Random()
     let randomFloat(minInclusive, maxExclusive) = // https://stackoverflow.com/questions/1064901
         r.NextDouble() * (maxExclusive - minInclusive) + minInclusive
+
+module Map =
+    let overValue f =
+        Seq.map (fun (KeyValue(_, v)) -> f v)

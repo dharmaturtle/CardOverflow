@@ -21,11 +21,12 @@ let assertHasBasicInfo ankiService dbService =
     AnkiImporter(ankiService, dbService, userId).run()
     |> Result.isOk
     |> Assert.True
-    Assert.Equal(7, dbService.Query(fun x -> x.Concepts.Count()))
-    Assert.Single(dbService.Query(fun x -> x.CardOptions.Where(fun x -> x.UserId = userId).ToList())) |> ignore
+    Assert.Equal(7, dbService.Query(fun db -> db.Concepts.Count()))
+    Assert.Equal(9, dbService.Query(fun db -> db.Cards.Count()))
+    Assert.Single(dbService.Query(fun db -> db.CardOptions.Where(fun db -> db.UserId = userId).ToList())) |> ignore
     Assert.Equal<string>(
         [ "Basic"; "OtherTag"; "Tag" ],
-        dbService.Query(fun x -> x.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
+        dbService.Query(fun db -> db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
     Assert.Equal<string>(
         [ "OtherTag" ],
         dbService.Query(fun db ->
@@ -33,6 +34,10 @@ let assertHasBasicInfo ankiService dbService =
                 .Include(nameof <@ any<ConceptEntity>.PrivateTagConcepts @> + "." + nameof <@ any<PrivateTagConceptEntity>.PrivateTag @>)
                 .Single(fun c -> c.Fields.Contains("mp3"))
                 .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name)))
+    dbService.Query(fun db -> db.ConceptTemplates.ToList())
+    |> Seq.collect (fun x -> x.CardTemplates |> CardTemplate.LoadMany |> Seq.map (fun x -> x.DefaultCardOptionId))
+    |> Seq.filter (fun id -> id <= 0)
+    |> Assert.Empty // invalidDefaultCardOptionIds is empty
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =

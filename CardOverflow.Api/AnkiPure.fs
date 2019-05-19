@@ -125,7 +125,7 @@ module AnkiMap =
                       ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
                       ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
                       Ordinal = g.Required.Field "ord" Decode.int |> byte
-                      DefaultCardOptionId = get.Required.Field "did" Decode.int * -1 }) // temp value that will be overwritten later highTODO actually do this
+                      DefaultCardOptionId = get.Required.Field "did" Decode.int * -1 })
                       |> Decode.list )
               Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
               IsCloze = get.Required.Field "type" ankiIntToBool

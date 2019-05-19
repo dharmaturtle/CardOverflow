@@ -24,13 +24,13 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
             let! nameAndDeckConfigurationIdByDeckId =
                 AnkiMap.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
-                    let names = tuples |> List.map(fun (_, (_, name, _)) -> name)
-                    if names |> List.distinct |> List.length = names.Count()
+                    let names = tuples |> List.map (fun (_, (_, name, _)) -> name)
+                    if names |> List.distinct |> List.length = names.Length
                     then tuples |> List.map snd |> Ok
                     else Error "Cannot import decks with the same name. Please give your decks distinct names." ) // lowTODO list the decks with the same names
                 |> Result.bind (fun tuples ->
                     let filtered = tuples |> List.filter (fun (_, _, i) -> i.IsSome)
-                    if filtered |> List.length = tuples.Count()
+                    if filtered.Length = tuples.Length
                     then filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
             let getCardOption deckId =
@@ -38,14 +38,14 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
                 cardOptionByDeckConfigurationId.[string deckConfigurationId]
             let! conceptTemplatesByModelId =
                 AnkiMap.parseModels col.Models
-                |> Result.map (Seq.map(fun (key, value) -> (key, value.CopyToNew userId)) >> Map.ofSeq )
+                |> Result.map (Seq.map(fun (modelId, conceptTemplate) -> (modelId, conceptTemplate.CopyToNew userId)) >> Map.ofSeq )
             let conceptsByAnkiId =
                 AnkiMap.parseNotes
                     conceptTemplatesByModelId
-                    (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId).ToList()) |> Seq.toList)
+                    (dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList))
                     userId
                     []
-                    (ankiDb.Notes)
+                    ankiDb.Notes
                 |> Map.ofList
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let getCardEntities() =
@@ -56,6 +56,22 @@ type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
             
             dbService.Command(fun db -> conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange)
             dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the options' Ids
+            let updatedTemplates =
+                conceptsByAnkiId
+                |> Map.overValue (fun c ->
+                    let conceptEntity = c.ConceptTemplate
+                    conceptEntity.CardTemplates <-
+                        CardTemplate.LoadMany conceptEntity.CardTemplates
+                        |> List.map (fun cardTemplate ->
+                            if cardTemplate.DefaultCardOptionId > 0
+                            then cardTemplate
+                            else { cardTemplate with
+                                     DefaultCardOptionId =
+                                        cardTemplate.DefaultCardOptionId * -1 |> getCardOption |> fun (_, entity) -> entity.Id }
+                        ) |> CardTemplate.ManyToEntityString
+                    conceptEntity
+                )
+            dbService.Command(fun db -> db.ConceptTemplates.UpdateRange updatedTemplates)
             let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
             dbService.Command(fun db -> cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange)
             let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
