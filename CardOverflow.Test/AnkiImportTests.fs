@@ -18,7 +18,7 @@ let any<'R> : 'R = failwith "!"
 
 let assertHasBasicInfo ankiService dbService =
     let userId = 3
-    AnkiImporter(ankiService, dbService, userId).run()
+    AnkiImporter.run ankiService dbService userId
     |> Result.isOk
     |> Assert.True
     Assert.Equal(7, dbService.Query(fun db -> db.Concepts.Count()))
@@ -51,7 +51,7 @@ let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
 
 let assertHasHistory ankiService dbService =
     let userId = 3
-    AnkiImporter(ankiService, dbService, userId).run()
+    AnkiImporter.run ankiService dbService userId
     |> Result.isOk
     |> Assert.True
     Assert.NotNull(dbService.Query(fun x -> x.Histories.FirstOrDefault()))

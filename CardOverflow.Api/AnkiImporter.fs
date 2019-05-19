@@ -13,9 +13,7 @@ module AnkiImporter =
           Cols = ankiDbService.Query(fun db -> db.Cols.ToList() ) |> List.ofSeq
           Notes = ankiDbService.Query(fun db -> db.Notes.ToList() ) |> List.ofSeq
           Revlogs = ankiDbService.Query(fun db -> db.Revlogs.ToList() ) |> List.ofSeq }
-
-type AnkiImporter(ankiDb: SimpleAnkiDb, dbService: IDbService, userId: int) =
-    member __.run() = // medTODO it should be possible to present to the user import errors *before* importing anything.
+    let run (ankiDb: SimpleAnkiDb) (dbService: IDbService) (userId: int) = // medTODO it should be possible to present to the user import errors *before* importing anything.
         let col = ankiDb.Cols.Single()
         ResultBuilder() {
             let! cardOptionByDeckConfigurationId =
