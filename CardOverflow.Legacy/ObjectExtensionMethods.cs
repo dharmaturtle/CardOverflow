@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace CardOverflow.Legacy {
+namespace CardOverflow.Debug {
   public static class ObjectExtensionMethods {
 
     public static TInput Dump<TInput>(this TInput input, string id = "") {

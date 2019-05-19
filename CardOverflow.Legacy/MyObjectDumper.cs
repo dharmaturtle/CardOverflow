@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace CardOverflow.Legacy {
+namespace CardOverflow.Debug {
   public class MyObjectDumper {
     private int _currentIndent;
     private readonly int _indentSize;

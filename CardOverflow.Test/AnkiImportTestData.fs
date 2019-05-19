@@ -3,7 +3,7 @@ module AnkiImportTestData
 open CardOverflow.Api
 open CardOverflow.Entity.Anki
 open CardOverflow.Test
-open CardOverflow.Legacy
+open CardOverflow.Debug
 open Microsoft.EntityFrameworkCore
 open Microsoft.FSharp.Quotations
 open System.IO
