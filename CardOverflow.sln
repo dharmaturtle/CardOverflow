@@ -19,6 +19,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Stuff", "Stuff", "{7F59CD36
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{3D064BDE-6336-49C1-AE6C-6DCAC7DE61B0}"
+	ProjectSection(SolutionItems) = preProject
+		Config\environment.json = Config\environment.json
+		Config\appsettings.json = Config\appsettings.json
+		Config\appsettings.Development.json = Config\appsettings.Development.json
+		Config\appsettings.Local.json = Config\appsettings.Local.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

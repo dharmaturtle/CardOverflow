@@ -190,7 +190,7 @@ let deleteAndRecreateDatabase(dbService: IDbService) =
 //[<Fact>]
 let ``Delete and Recreate "official" Database``() =
     use c = new Container()
-    c.RegisterNonView
+    c.RegisterStuff
     c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
 
 let deleteAndRecreateDb dbName =

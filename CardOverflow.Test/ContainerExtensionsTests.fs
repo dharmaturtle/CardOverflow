@@ -6,9 +6,9 @@ open SimpleInjector
 open ContainerExtensions
 
 [<Fact>]
-let ``RegisterNonView verifies``() =
+let ``RegisterStuff verifies``() =
     use c = new Container()
     
-    c.RegisterNonView
+    c.RegisterStuff
     
     c.Verify()
