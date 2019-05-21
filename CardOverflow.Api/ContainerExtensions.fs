@@ -43,7 +43,6 @@ type Container with
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
 
-        container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection") |> ConnectionString)
         container.RegisterInstance<CreateCardOverflowDb>(fun () -> container.GetInstance<ConnectionString>() |> CreateCardOverflowDb.create)
         container.RegisterSingleton<IDbService, DbService>()
         container.RegisterSingleton<DbContextOptions<CardOverflowDb>>(fun () ->
@@ -52,3 +51,9 @@ type Container with
                 .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
                 .Options)
         container.Register<CardOverflowDb> Lifestyle.Scoped
+    
+    member container.RegisterStandardConnectionString =
+        container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection") |> ConnectionString)
+
+    member container.RegisterTestConnectionString dbName =
+        container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)

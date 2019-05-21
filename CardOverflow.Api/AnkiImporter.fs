@@ -7,6 +7,7 @@ open System
 open System.Linq
 open Thoth.Json.Net
 open FsToolkit.ErrorHandling
+open Helpers
 
 module AnkiImporter =
     let getSimpleAnkiDb (ankiDbService: AnkiDbService) =
@@ -55,12 +56,13 @@ module AnkiImporter =
             return (conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption)
         }
 
-    let save (dbService: IDbService) ankiDb userId =
+    let save (db: CardOverflowDb) ankiDb userId =
         result {
-            let usersTags = dbService.Query(fun db -> db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList)
+            let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
             let! conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption = load ankiDb usersTags userId
-            dbService.Command(fun db -> conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange)
-            dbService.Command(fun db -> cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange) // EF updates the options' Ids
+            conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange
+            cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange // EF updates the options' Ids
+            db.SaveChangesI
             let updatedTemplates =
                 conceptsByAnkiId
                 |> Map.overValue (fun c ->
@@ -76,9 +78,12 @@ module AnkiImporter =
                         ) |> CardTemplate.ManyToEntityString
                     conceptEntity
                 )
-            dbService.Command(fun db -> db.ConceptTemplates.UpdateRange updatedTemplates)
+            db.ConceptTemplates.UpdateRange updatedTemplates
+            db.SaveChangesI
             let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
-            dbService.Command(fun db -> cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange)
+            cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange
+            db.SaveChangesI
             let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
-            dbService.Command (fun x -> ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId) |> x.Histories.AddRange)
+            ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId) |> db.Histories.AddRange
+            db.SaveChangesI
         }

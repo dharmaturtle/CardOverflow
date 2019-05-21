@@ -10,5 +10,6 @@ let ``RegisterStuff verifies``() =
     use c = new Container()
     
     c.RegisterStuff
+    c.RegisterStandardConnectionString
     
     c.Verify()

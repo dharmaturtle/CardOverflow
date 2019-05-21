@@ -8,6 +8,9 @@ open Xunit
 open CardOverflow.Entity
 open Microsoft.EntityFrameworkCore
 open Microsoft.EntityFrameworkCore.Diagnostics
+open SimpleInjector
+open ContainerExtensions
+open SimpleInjector.Lifestyles
 
 type TestDbFactory(connectionString: string) =
     member __.Create() =
@@ -16,6 +19,26 @@ type TestDbFactory(connectionString: string) =
             .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options
         |> fun o -> new CardOverflowDb(o)
+
+type TestContainer( [<CallerMemberName>] ?memberName: string) =
+    let container = new Container()
+    let scope = AsyncScopedLifestyle.BeginScope container
+    do 
+        let dbName =
+            Regex.Replace(memberName.Value, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
+            |> sprintf "CardOverflow_%s"
+        container.RegisterStuff
+        container.RegisterTestConnectionString dbName
+        dbName |> InitializeDatabase.deleteAndRecreateDb
+
+    interface IDisposable with
+        member this.Dispose() =
+            this.Db.Database.EnsureDeleted() |> ignore
+            container.Dispose()
+            scope.Dispose()
+
+    member __.Db =
+        container.GetInstance<CardOverflowDb>()
 
 type SqlTempDbProvider( [<CallerMemberName>] ?memberName: string) =
     let dbName =
