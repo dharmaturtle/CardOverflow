@@ -8,21 +8,19 @@ open Xunit
 
 [<Fact>]
 let ``PrivateTagRepository can add a new tag``() =
-    use p = new SqlTempDbProvider()
+    use c = new TestContainer()
     let tagName = Guid.NewGuid().ToString()
-    let repository = PrivateTagRepository(p.DbService, 1)
 
-    tagName |> List.singleton |> repository.Add
+    tagName |> List.singleton |> PrivateTagRepository.Add c.Db 1
 
-    p.DbService.Query(fun x -> x.PrivateTags.Single(fun x -> x.Name = tagName)) |> ignore
+    Assert.Single(c.Db.PrivateTags.Where(fun x -> x.Name = tagName).ToList())
 
 [<Fact>]
 let ``When PrivateTagRepository adds a tag twice, only one is added``() =
-    use p = new SqlTempDbProvider()
+    use c = new TestContainer()
     let tagName = Guid.NewGuid().ToString()
-    let repository = PrivateTagRepository(p.DbService, 1)
 
-    tagName |> List.singleton |> repository.Add
-    tagName |> List.singleton |> repository.Add
+    tagName |> List.singleton |> PrivateTagRepository.Add c.Db 1
+    tagName |> List.singleton |> PrivateTagRepository.Add c.Db 1
 
-    p.DbService.Query(fun x -> x.PrivateTags.Single(fun x -> x.Name = tagName)) |> ignore
+    Assert.Single(c.Db.PrivateTags.Where(fun x -> x.Name = tagName).ToList())

@@ -207,7 +207,7 @@ let deleteAndRecreateDb dbName =
         END
         GO
         """
-        File.ReadAllText(@"..\netcoreapp3.0\Stuff\InitializeDatabase.sql")
+        File.ReadAllText @"..\netcoreapp3.0\Stuff\InitializeDatabase.sql"
     ]
     |> String.concat "\r\n"
     |> fun s -> s.Replace("[CardOverflow]", sprintf "[%s]" dbName)
