@@ -60,16 +60,6 @@ module MappingTools =
     let joinByUnitSeparator =
         join '\x1f'
 
-module Option =
-    let fromNullable (n: _ Nullable) =
-        if n.HasValue
-        then Some n.Value
-        else None
-    let toNullable =
-        function
-        | None -> Nullable()
-        | Some x -> Nullable x
-
 module Result =
     let isOk = function
         | Ok _ -> true
