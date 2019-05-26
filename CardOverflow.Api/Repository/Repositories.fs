@@ -16,7 +16,7 @@ module CardRepository =
 
     let SaveCard (db: CardOverflowDb) card =
         db.Cards.AddI card
-        db.SaveChangesI
+        db.SaveChangesI ()
 
 module ConceptRepository =
     let GetConcepts (db: CardOverflowDb) =
@@ -24,7 +24,7 @@ module ConceptRepository =
 
     let AddConcept (db: CardOverflowDb) concept =
         db.Concepts.AddI concept
-        db.SaveChangesI
+        db.SaveChangesI ()
 
     // member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
     //                 this.GetConcepts().Merge concepts
@@ -57,31 +57,31 @@ module PrivateTagRepository =
         |> newTags.Where
         |> Seq.map (fun x -> PrivateTagEntity(Name = x, UserId = userId ))
         |> db.PrivateTags.AddRange
-        db.SaveChangesI
+        db.SaveChangesI ()
 
     let Search (db: CardOverflowDb) (input: string) =
         db.PrivateTags.Where(fun t -> t.Name.ToLower().Contains(input.ToLower()))
         
     let Update (db: CardOverflowDb) tag =
         db.PrivateTags.UpdateI tag
-        db.SaveChangesI
+        db.SaveChangesI ()
 
     let Delete (db: CardOverflowDb) tag =
         db.PrivateTags.RemoveI tag
-        db.SaveChangesI
+        db.SaveChangesI ()
 
 module DeckRepository =
     let Create (db: CardOverflowDb) deck =
         db.Decks.AddI deck
-        db.SaveChangesI
+        db.SaveChangesI ()
 
     let Get (db: CardOverflowDb) userId =
         db.Decks.Where(fun d -> d.UserId = userId).ToList()
         
     let Update (db: CardOverflowDb) deck =
         db.Decks.UpdateI deck
-        db.SaveChangesI
+        db.SaveChangesI ()
 
     let Delete (db: CardOverflowDb) deck =
         db.Decks.RemoveI deck
-        db.SaveChangesI
+        db.SaveChangesI ()

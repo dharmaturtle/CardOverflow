@@ -3,8 +3,8 @@ module Helpers
 open Microsoft.EntityFrameworkCore
 
 type DbContext with
-    member dbContext.SaveChangesI =
-        dbContext.SaveChanges() |> ignore
+    member dbContext.SaveChangesI () =
+        dbContext.SaveChanges () |> ignore
 
 type DbSet<'TEntity when 'TEntity : not struct> with
     member dbSet.AddI entity =

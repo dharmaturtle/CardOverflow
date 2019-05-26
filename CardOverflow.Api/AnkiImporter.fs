@@ -62,7 +62,7 @@ module AnkiImporter =
             let! conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption = load ankiDb usersTags userId
             conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange
             cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange // EF updates the options' Ids
-            db.SaveChangesI
+            db.SaveChangesI ()
             let updatedTemplates =
                 conceptsByAnkiId
                 |> Map.overValue (fun c ->
@@ -79,11 +79,11 @@ module AnkiImporter =
                     conceptEntity
                 )
             db.ConceptTemplates.UpdateRange updatedTemplates
-            db.SaveChangesI
+            db.SaveChangesI ()
             let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
             cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange
-            db.SaveChangesI
+            db.SaveChangesI ()
             let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
             ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId) |> db.Histories.AddRange
-            db.SaveChangesI
+            db.SaveChangesI ()
         }
