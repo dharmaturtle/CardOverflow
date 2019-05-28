@@ -20,7 +20,7 @@ module AnkiImporter =
         result {
             let! cardOptionByDeckConfigurationId =
                 AnkiMap.parseDconf col.Dconf
-                |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, (cardOption, cardOption.CopyToNew userId))) >> Map.ofList >> Ok )
+                |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, cardOption.CopyToNew userId)) >> Map.ofList >> Ok )
             let! nameAndDeckConfigurationIdByDeckId =
                 AnkiMap.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
@@ -33,7 +33,7 @@ module AnkiImporter =
                     if filtered.Length = tuples.Length
                     then filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
-            let getCardOption deckId =
+            let cardOptionByDeckId deckId =
                 let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
                 cardOptionByDeckConfigurationId.[string deckConfigurationId]
             let! conceptTemplatesByModelId =
@@ -50,10 +50,10 @@ module AnkiImporter =
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let getCardEntities() =
                 ankiDb.Cards
-                |> List.map (AnkiMap.mapCard getCardOption conceptsByAnkiId collectionCreationTimeStamp)
+                |> List.map (AnkiMap.mapCard cardOptionByDeckId conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let! _ = getCardEntities() // checking if there are any errors
-            return (conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption)
+            return (conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, cardOptionByDeckId)
         }
 
     let save (db: CardOverflowDb) ankiDb userId =
@@ -61,7 +61,7 @@ module AnkiImporter =
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
             let! conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption = load ankiDb usersTags userId
             conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange
-            cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> Seq.map snd |> db.CardOptions.AddRange // EF updates the options' Ids
+            cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> db.CardOptions.AddRange // EF updates the options' Ids
             db.SaveChangesI ()
             let updatedTemplates =
                 conceptsByAnkiId
@@ -74,7 +74,7 @@ module AnkiImporter =
                             then cardTemplate
                             else { cardTemplate with
                                      DefaultCardOptionId =
-                                        cardTemplate.DefaultCardOptionId * -1 |> getCardOption |> fun (_, entity) -> entity.Id }
+                                        cardTemplate.DefaultCardOptionId * -1 |> getCardOption |> fun e -> e.Id }
                         ) |> CardTemplate.ManyToEntityString
                     conceptEntity
                 )

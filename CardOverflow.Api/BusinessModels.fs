@@ -1,4 +1,4 @@
-﻿namespace CardOverflow.Api
+namespace CardOverflow.Api
 
 open CardOverflow.Entity
 open System
@@ -357,7 +357,8 @@ type Card = {
         entity.Due <- this.Due
         entity.TemplateIndex <- this.TemplateIndex
         entity.CardOptionId <- this.CardOptionId
-    member this.CopyToNew =
+    member this.CopyToNew cardOption =
         let entity = CardEntity()
         this.CopyTo entity
+        entity.CardOption <- cardOption
         entity

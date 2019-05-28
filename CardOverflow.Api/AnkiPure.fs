@@ -156,8 +156,8 @@ module AnkiMap =
                   (allTags.Where(fun x -> notesTags.Contains x.Name))
             parseNotes conceptTemplatesByModelId allTags userId ((note.Id, concept)::conceptsByNoteId) tail
         | _ -> conceptsByNoteId
-    let mapCard (getCardOption: int -> CardOption * CardOptionEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
-        let cardOption, cardOptionEntity = int ankiCard.Did |> getCardOption
+    let mapCard (cardOptionByDeckId: int -> CardOptionEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
+        let cardOption = int ankiCard.Did |> cardOptionByDeckId
         match ankiCard.Type with
         | 0L -> Ok MemorizationState.New
         | 1L -> Ok MemorizationState.Learning
@@ -186,12 +186,12 @@ module AnkiMap =
                 | MemorizationState.Learning ->
                     if ankiCard.Left = 0L
                     then 0
-                    else cardOption.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
+                    else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
                     |> byte |> Some
                 | MemorizationState.Lapsed ->
                     if ankiCard.Left = 0L
                     then 0
-                    else cardOption.LapsedCardsSteps.Count() - (int ankiCard.Left % 1000)
+                    else cardOption.LapsedCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
                     |> byte |> Some
                 | MemorizationState.Mature -> None
               Due =
@@ -201,4 +201,4 @@ module AnkiMap =
                 | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = cardOptionEntity.Id }.CopyToNew, ankiCard)
+              CardOptionId = 0 }.CopyToNew cardOption, ankiCard)
