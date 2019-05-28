@@ -10,6 +10,8 @@ open System.Data.SqlClient
 open System.IO
 open System.Linq
 
+let importedDate = DateTime(2020, 1, 1)
+
 let defaultCardOptions =
     { Id = 1
       Name = "Default"
@@ -31,7 +33,8 @@ let defaultCardOptions =
       LapsedCardsLeechThreshold = byte 8
       ShowAnswerTimer = false
       AutomaticallyPlayAudio = false
-      ReplayQuestionAudioOnAnswer = false }
+      ReplayQuestionAudioOnAnswer = false
+      AnkiId = None }
 let defaultAnkiCardOptions =
     { Id = 2
       Name = "Default Anki Options"
@@ -53,7 +56,8 @@ let defaultAnkiCardOptions =
       LapsedCardsLeechThreshold = byte 8
       ShowAnswerTimer = false
       AutomaticallyPlayAudio = false
-      ReplayQuestionAudioOnAnswer = false }
+      ReplayQuestionAudioOnAnswer = false
+      AnkiId = None }
 
 let frontField =
     { Name = "Front"
@@ -86,7 +90,7 @@ let basicConceptTemplate =
                 Name = "Back"
                 Ordinal = byte 1 }]
       CardTemplates = [ basicFrontBackCardTemplate ]
-      Modified = DateTime.UtcNow
+      Modified = importedDate
       IsCloze = false
       DefaultPublicTags = []
       DefaultPrivateTags = []
@@ -188,9 +192,10 @@ let deleteAndRecreateDatabase(dbService: IDbService) =
     )
 
 //[<Fact>]
-let ``Delete and Recreate "official" Database``() =
+let ``Delete and Recreate localhost's CardOverflow Database via EF``() =
     use c = new Container()
     c.RegisterStuff
+    c.RegisterStandardConnectionString
     c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
 
 let deleteAndRecreateDb dbName =
@@ -220,5 +225,5 @@ let deleteAndRecreateDb dbName =
     conn.Close()
 
 //[<Fact>]
-let ``Delete and recreate localhost's CardOverflow database``() =
+let ``Delete and Recreate localhost's CardOverflow Database via SqlScript``() =
     deleteAndRecreateDb "CardOverflow"

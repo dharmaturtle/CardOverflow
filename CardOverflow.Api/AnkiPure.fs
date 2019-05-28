@@ -74,6 +74,7 @@ module AnkiMap =
     let parseDconf =
         Decode.object(fun get -> // medTODO input validation
             { Id = 0
+              AnkiId = get.Required.Field "id" Decode.int |> Some
               Name = get.Required.Field "name" Decode.string
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16

@@ -142,6 +142,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<PrivateTagEntity>(entity =>
             {
+                entity.HasIndex(e => e.UserId);
+
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.PrivateTags)
                     .HasForeignKey(d => d.UserId)

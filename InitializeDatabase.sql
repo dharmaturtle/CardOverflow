@@ -142,6 +142,7 @@ CREATE TABLE [dbo].[CardOption](
 	[ShowAnswerTimer] [bit] NOT NULL,
 	[AutomaticallyPlayAudio] [bit] NOT NULL,
 	[ReplayQuestionAudioOnAnswer] [bit] NOT NULL,
+	[AnkiId] [int] NULL,
  CONSTRAINT [PK_CardOption] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -316,8 +317,8 @@ CREATE TABLE [dbo].[User](
 GO
 SET IDENTITY_INSERT [dbo].[CardOption] ON 
 
-INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (1, 2, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, -29036, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
-INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (2, 2, N'Default Anki Options', N'1 10', 20, 1, 4, 2500, 0, 200, 1300, 1000, -29036, 1200, 0, N'10', 0, 1, 8, 0, 0, 0)
+INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer], [AnkiId]) VALUES (1, 2, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, -29036, 1200, 1, N'10', 0, 1, 8, 0, 0, 0, NULL)
+INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer], [AnkiId]) VALUES (2, 2, N'Default Anki Options', N'1 10', 20, 1, 4, 2500, 0, 200, 1300, 1000, -29036, 1200, 0, N'10', 0, 1, 8, 0, 0, 0, NULL)
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
@@ -331,7 +332,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Back}}01', CAST(N'2019-05-12T00:27:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Back}}01', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -352,7 +353,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Front}}11', CAST(N'2019-05-12T00:27:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Front}}11', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -373,7 +374,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Front}}11', CAST(N'2019-05-12T00:27:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Front}}11', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -391,7 +392,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Back}}01', CAST(N'2019-05-12T00:27:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Back}}01', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -413,7 +414,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 .nightMode .cloze {
     color: lightblue;
 }', N'TextArial20000ExtraArial20010', N'Basic Cloze{{cloze:Text}}{{cloze:Text}}<br>
-{{Extra}}01', CAST(N'2019-05-12T00:27:00' AS SmallDateTime), 1, N'\documentclass[12pt]{article}
+{{Extra}}01', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 1, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}

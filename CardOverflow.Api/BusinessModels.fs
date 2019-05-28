@@ -103,6 +103,7 @@ type CardOption = {
     ShowAnswerTimer: bool
     AutomaticallyPlayAudio: bool
     ReplayQuestionAudioOnAnswer: bool
+    AnkiId: int option
 } with
     static member Load(entity: CardOptionEntity) =
         { Id = entity.Id
@@ -125,7 +126,8 @@ type CardOption = {
           LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
           ShowAnswerTimer = entity.ShowAnswerTimer
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
-          ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
+          ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer
+          AnkiId = Option.ofNullable entity.AnkiId }
     member this.CopyTo(entity: CardOptionEntity) =
         entity.Name <- this.Name
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
@@ -147,6 +149,7 @@ type CardOption = {
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
         entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAudioOnAnswer
+        entity.AnkiId <- Option.toNullable this.AnkiId
     member this.CopyToNew user =
         let entity = CardOptionEntity()
         this.CopyTo entity
