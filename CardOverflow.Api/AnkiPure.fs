@@ -104,7 +104,7 @@ module AnkiMap =
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let parseModels =
+    let parseModels userId cardOptionByDeckId =
         Decode.object(fun get ->
             { Id = 0
               Name = get.Required.Field "name" Decode.string
@@ -125,15 +125,18 @@ module AnkiMap =
                       AnswerTemplate = g.Required.Field "afmt" Decode.string
                       ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
                       ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
-                      Ordinal = g.Required.Field "ord" Decode.int |> byte
-                      DefaultCardOptionId = get.Required.Field "did" Decode.int * -1 })
+                      Ordinal = g.Required.Field "ord" Decode.int |> byte })
                       |> Decode.list )
               Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
               IsCloze = get.Required.Field "type" ankiIntToBool
               DefaultPublicTags = []
               DefaultPrivateTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
+              DefaultCardOptionId = 0
               LatexPre = get.Required.Field "latexPre" Decode.string
-              LatexPost = get.Required.Field "latexPost" Decode.string })
+              LatexPost = get.Required.Field "latexPost" Decode.string }
+                .CopyToNew2
+                    userId
+                    (get.Required.Field "did" Decode.int |> cardOptionByDeckId))
         |> Decode.keyValuePairs
         |> Decode.fromString
     let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsByNoteId = // medTODO use tail recursion

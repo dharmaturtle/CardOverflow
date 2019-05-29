@@ -72,8 +72,7 @@ let basicFrontBackCardTemplate =
       QuestionTemplate = "{{Front}}"
       AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
       ShortQuestionTemplate = ""
-      ShortAnswerTemplate = "" 
-      DefaultCardOptionId = 1 }
+      ShortAnswerTemplate = "" }
 let basicConceptTemplate =
     { Id = 0
       Name = "Basic"
@@ -94,6 +93,7 @@ let basicConceptTemplate =
       IsCloze = false
       DefaultPublicTags = []
       DefaultPrivateTags = []
+      DefaultCardOptionId = 1
       LatexPre = @"\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
@@ -156,7 +156,7 @@ let basicClozeConceptTemplate =
 .nightMode .cloze {
     color: lightblue;
 }"
-        Fields = 
+        Fields =
             [{ frontField with
                  Name = "Text" }
              { frontField with

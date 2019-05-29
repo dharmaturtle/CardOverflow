@@ -42,7 +42,11 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(100)]
         public string DefaultPrivateTags { get; set; }
+        public int DefaultCardOptionId { get; set; }
 
+        [ForeignKey("DefaultCardOptionId")]
+        [InverseProperty("ConceptTemplates")]
+        public virtual CardOptionEntity DefaultCardOption { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("ConceptTemplates")]
         public virtual UserEntity User { get; set; }

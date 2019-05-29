@@ -84,6 +84,12 @@ namespace CardOverflow.Entity
 
                 entity.Property(e => e.Css).IsUnicode(false);
 
+                entity.HasOne(d => d.DefaultCardOption)
+                    .WithMany(p => p.ConceptTemplates)
+                    .HasForeignKey(d => d.DefaultCardOptionId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ConceptTemplate_CardOption");
+
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.ConceptTemplates)
                     .HasForeignKey(d => d.UserId)

@@ -33,10 +33,6 @@ let assertHasBasicInfo ankiDb db =
             .Include(nameof <@ any<ConceptEntity>.PrivateTagConcepts @> + "." + nameof <@ any<PrivateTagConceptEntity>.PrivateTag @>)
             .Single(fun c -> c.Fields.Contains("mp3"))
             .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name))
-    db.ConceptTemplates.ToList()
-    |> Seq.collect (fun x -> x.CardTemplates |> CardTemplate.LoadMany |> Seq.map (fun x -> x.DefaultCardOptionId))
-    |> Seq.filter (fun id -> id <= 0)
-    |> Assert.Empty // invalidDefaultCardOptionIds is empty
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =

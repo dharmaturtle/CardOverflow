@@ -201,7 +201,6 @@ type CardTemplate = {
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
     Ordinal: byte
-    DefaultCardOptionId: int
 } with
     static member Load =
         MappingTools.splitByUnitSeparator >> fun parsed ->
@@ -210,8 +209,7 @@ type CardTemplate = {
               AnswerTemplate = parsed.[2]
               ShortQuestionTemplate = parsed.[3]
               ShortAnswerTemplate = parsed.[4]
-              Ordinal = Byte.Parse parsed.[5]
-              DefaultCardOptionId = parsed.[6] |> int }
+              Ordinal = Byte.Parse parsed.[5] }
     static member LoadMany =
         MappingTools.splitByRecordSeparator >> List.map CardTemplate.Load
     member this.ToEntityString =
@@ -221,7 +219,6 @@ type CardTemplate = {
           this.ShortQuestionTemplate
           this.ShortAnswerTemplate
           this.Ordinal |> string
-          this.DefaultCardOptionId |> string
         ] |> MappingTools.joinByUnitSeparator
     static member ManyToEntityString =
         List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
@@ -236,6 +233,7 @@ type ConceptTemplate = {
     IsCloze: bool
     DefaultPublicTags: int list
     DefaultPrivateTags: int list
+    DefaultCardOptionId: int
     LatexPre: string
     LatexPost: string
 } with
@@ -249,6 +247,7 @@ type ConceptTemplate = {
           IsCloze = entity.IsCloze
           DefaultPublicTags = entity.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
           DefaultPrivateTags = entity.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          DefaultCardOptionId = entity.DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
@@ -261,6 +260,7 @@ type ConceptTemplate = {
         entity.IsCloze <- this.IsCloze
         entity.DefaultPublicTags <- this.DefaultPublicTags |> MappingTools.intsListToStringOfInts
         entity.DefaultPrivateTags <- this.DefaultPrivateTags |> MappingTools.intsListToStringOfInts
+        entity.DefaultCardOptionId <- this.DefaultCardOptionId
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew user =
@@ -268,10 +268,11 @@ type ConceptTemplate = {
         this.CopyTo entity
         entity.User <- user
         entity
-    member this.CopyToNew userId =
+    member this.CopyToNew2 userId defaultCardOption =
         let entity = ConceptTemplateEntity()
         this.CopyTo entity
         entity.UserId <- userId
+        entity.DefaultCardOption <- defaultCardOption
         entity
 
 type QuizCard = {

@@ -37,8 +37,8 @@ module AnkiImporter =
                 let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
                 cardOptionByDeckConfigurationId.[string deckConfigurationId]
             let! conceptTemplatesByModelId =
-                AnkiMap.parseModels col.Models
-                |> Result.map (Seq.map(fun (modelId, conceptTemplate) -> (modelId, conceptTemplate.CopyToNew userId)) >> Map.ofSeq )
+                AnkiMap.parseModels userId cardOptionByDeckId col.Models
+                |> Result.map Map.ofSeq
             let conceptsByAnkiId =
                 AnkiMap.parseNotes
                     conceptTemplatesByModelId
@@ -62,23 +62,6 @@ module AnkiImporter =
             let! conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption = load ankiDb usersTags userId
             conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange
             cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> db.CardOptions.AddRange // EF updates the options' Ids
-            db.SaveChangesI ()
-            let updatedTemplates =
-                conceptsByAnkiId
-                |> Map.overValue (fun c ->
-                    let conceptEntity = c.ConceptTemplate
-                    conceptEntity.CardTemplates <-
-                        CardTemplate.LoadMany conceptEntity.CardTemplates
-                        |> List.map (fun cardTemplate ->
-                            if cardTemplate.DefaultCardOptionId > 0
-                            then cardTemplate
-                            else { cardTemplate with
-                                     DefaultCardOptionId =
-                                        cardTemplate.DefaultCardOptionId * -1 |> getCardOption |> fun e -> e.Id }
-                        ) |> CardTemplate.ManyToEntityString
-                    conceptEntity
-                )
-            db.ConceptTemplates.UpdateRange updatedTemplates
             db.SaveChangesI ()
             let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
             cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange

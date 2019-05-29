@@ -185,6 +185,7 @@ CREATE TABLE [dbo].[ConceptTemplate](
 	[LatexPost] [nvarchar](500) NOT NULL,
 	[DefaultPublicTags] [nvarchar](100) NOT NULL,
 	[DefaultPrivateTags] [nvarchar](100) NOT NULL,
+	[DefaultCardOptionId] [int] NOT NULL,
  CONSTRAINT [PK_ConceptTemplate] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -322,7 +323,7 @@ INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [Ne
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
-INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags]) VALUES (1, 2, N'Basic', N'.card {
+INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (1, 2, N'Basic', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -332,14 +333,14 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Back}}01', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Back}}0', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'')
-INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags]) VALUES (2, 2, N'Basic with reversed card', N'.card {
+\begin{document}', N'\end{document}', N'', N'', 1)
+INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (2, 2, N'Basic with reversed card', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -349,18 +350,18 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Back}}01Reversed Card Template{{Back}}{{FrontSide}}
+{{Back}}0Reversed Card Template{{Back}}{{FrontSide}}
 
 <hr id=answer>
 
-{{Front}}11', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Front}}1', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'')
-INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags]) VALUES (3, 2, N'Basic with optional reversed card', N'.card {
+\begin{document}', N'\end{document}', N'', N'', 1)
+INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (3, 2, N'Basic with optional reversed card', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -370,18 +371,18 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Back}}01Optional Reversed Card Template{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}{{FrontSide}}
+{{Back}}0Optional Reversed Card Template{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}{{FrontSide}}
 
 <hr id=answer>
 
-{{Front}}11', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Front}}1', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'')
-INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags]) VALUES (4, 2, N'Basic type in the answer', N'.card {
+\begin{document}', N'\end{document}', N'', N'', 1)
+INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (4, 2, N'Basic type in the answer', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -392,14 +393,14 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 
 <hr id=answer>
 
-{{Back}}01', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+{{Back}}0', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'')
-INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags]) VALUES (5, 2, N'Basic Cloze', N'.card {
+\begin{document}', N'\end{document}', N'', N'', 1)
+INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (5, 2, N'Basic Cloze', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -414,13 +415,13 @@ INSERT [dbo].[ConceptTemplate] ([Id], [UserId], [Name], [Css], [Fields], [CardTe
 .nightMode .cloze {
     color: lightblue;
 }', N'TextArial20000ExtraArial20010', N'Basic Cloze{{cloze:Text}}{{cloze:Text}}<br>
-{{Extra}}01', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 1, N'\documentclass[12pt]{article}
+{{Extra}}0', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), 1, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'')
+\begin{document}', N'\end{document}', N'', N'', 1)
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
@@ -450,6 +451,12 @@ GO
 CREATE NONCLUSTERED INDEX [IX_Concept_ConceptTemplateId] ON [dbo].[Concept]
 (
 	[ConceptTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplate_DefaultCardOptionId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_DefaultCardOptionId] ON [dbo].[ConceptTemplate]
+(
+	[DefaultCardOptionId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_ConceptTemplate_UserId] ******/
@@ -545,6 +552,11 @@ ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_ConceptTempl
 REFERENCES [dbo].[ConceptTemplate] ([Id])
 GO
 ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_ConceptTemplate]
+GO
+ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_CardOption] FOREIGN KEY([DefaultCardOptionId])
+REFERENCES [dbo].[CardOption] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_CardOption]
 GO
 ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
