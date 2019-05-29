@@ -34,9 +34,9 @@ type AnkiConceptWrite = {
         entity
 
 module AnkiMap =
-    let toHistory (cardIdByAnkiId: Map<int64, int>) userId (revLog: RevlogEntity) =
+    let toHistory (cardByAnkiId: Map<int64, CardOverflow.Entity.CardEntity>) userId (revLog: RevlogEntity) =
         HistoryEntity(
-            CardId = cardIdByAnkiId.[revLog.Cid],
+            Card = cardByAnkiId.[revLog.Cid],
             EaseFactorInPermille = int16 revLog.Factor,
             IntervalNegativeIsMinutesPositiveIsDays = (
                 match revLog.Ivl with
@@ -169,7 +169,7 @@ module AnkiMap =
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
             { Card.Id = 0
-              ConceptId = conceptsByAnkiId.[ankiCard.Nid].Id
+              ConceptId = 0
               MemorizationState = memorizationState
               CardState =
                 match ankiCard.Queue with
@@ -204,4 +204,4 @@ module AnkiMap =
                 | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = 0 }.CopyToNew cardOption, ankiCard)
+              CardOptionId = 0 }.CopyToNew conceptsByAnkiId.[ankiCard.Nid] cardOption, ankiCard)

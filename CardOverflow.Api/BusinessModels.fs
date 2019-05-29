@@ -358,8 +358,9 @@ type Card = {
         entity.Due <- this.Due
         entity.TemplateIndex <- this.TemplateIndex
         entity.CardOptionId <- this.CardOptionId
-    member this.CopyToNew cardOption =
+    member this.CopyToNew concept cardOption =
         let entity = CardEntity()
         this.CopyTo entity
+        entity.Concept <- concept
         entity.CardOption <- cardOption
         entity

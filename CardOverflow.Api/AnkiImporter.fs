@@ -48,25 +48,20 @@ module AnkiImporter =
                     ankiDb.Notes
                 |> Map.ofList
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
-            let getCardEntities() =
+            let! cardEntities =
                 ankiDb.Cards
                 |> List.map (AnkiMap.mapCard cardOptionByDeckId conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
-            let! _ = getCardEntities() // checking if there are any errors
-            return (conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, cardOptionByDeckId)
+            let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
+            let histories = ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId)
+            return (cardEntities |> Seq.map fst, histories)
         }
 
     let save (db: CardOverflowDb) ankiDb userId =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
-            let! conceptsByAnkiId, cardOptionByDeckConfigurationId, getCardEntities, getCardOption = load ankiDb usersTags userId
-            conceptsByAnkiId |> Map.toSeq |> Seq.map snd |> db.Concepts.AddRange
-            cardOptionByDeckConfigurationId |> Map.toSeq |> Seq.map snd |> db.CardOptions.AddRange // EF updates the options' Ids
-            db.SaveChangesI ()
-            let! cardAndAnkiCards = getCardEntities() // called again to update the Card's Option Id (from the line above)
-            cardAndAnkiCards |> Seq.map fst |> db.Cards.AddRange
-            db.SaveChangesI ()
-            let cardIdByAnkiId = cardAndAnkiCards |> Seq.map (fun (card, anki) -> anki.Id, card.Id) |> Map.ofSeq
-            ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId) |> db.Histories.AddRange
+            let! cardEntities, histories = load ankiDb usersTags userId
+            cardEntities |> db.Cards.AddRange
+            histories |> db.Histories.AddRange
             db.SaveChangesI ()
         }
