@@ -42,7 +42,6 @@ namespace CardOverflow.Entity
         public bool ShowAnswerTimer { get; set; }
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAudioOnAnswer { get; set; }
-        public int? AnkiId { get; set; }
 
         [ForeignKey("UserId")]
         [InverseProperty("CardOptions")]

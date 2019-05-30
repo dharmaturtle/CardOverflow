@@ -34,7 +34,6 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
             ShowAnswerTimer = false
             AutomaticallyPlayAudio = true
             ReplayQuestionAudioOnAnswer = true
-            AnkiId = Some 1
         }
     let col = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg.Cols.Head
 
