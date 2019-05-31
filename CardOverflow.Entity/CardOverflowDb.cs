@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<ConceptTemplateEntity> ConceptTemplates { get; set; }
         public virtual DbSet<DeckEntity> Decks { get; set; }
         public virtual DbSet<DeckCardEntity> DeckCards { get; set; }
+        public virtual DbSet<FileEntity> Files { get; set; }
         public virtual DbSet<HistoryEntity> Histories { get; set; }
         public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
         public virtual DbSet<PrivateTagConceptEntity> PrivateTagConcepts { get; set; }
@@ -80,6 +81,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>
             {
+                entity.HasIndex(e => e.DefaultCardOptionId);
+
                 entity.HasIndex(e => e.UserId);
 
                 entity.Property(e => e.Css).IsUnicode(false);
@@ -125,6 +128,19 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.DeckId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deck_Card_Deck");
+            });
+
+            modelBuilder.Entity<FileEntity>(entity =>
+            {
+                entity.HasIndex(e => new { e.UserId, e.FileName })
+                    .HasName("AK_Media__UserId_FileName")
+                    .IsUnique();
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Files)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Media_User");
             });
 
             modelBuilder.Entity<HistoryEntity>(entity =>
