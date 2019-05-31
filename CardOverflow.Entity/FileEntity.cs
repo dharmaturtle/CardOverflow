@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public byte MediaType { get; set; }
+        public MediaTypeEnum MediaType { get; set; }
         [Required]
         [StringLength(100)]
         public string FileName { get; set; }
