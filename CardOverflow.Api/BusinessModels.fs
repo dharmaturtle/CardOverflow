@@ -111,16 +111,16 @@ type CardOption = {
           NewCardsMaxPerDay = entity.NewCardsMaxPerDay
           NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
           NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> TimeSpan.FromDays
-          NewCardsStartingEaseFactor = float entity.NewCardsStartingEaseFactorInPermille / 1000.0
+          NewCardsStartingEaseFactor = float entity.NewCardsStartingEaseFactorInPermille / 1000.
           NewCardsBuryRelated = entity.NewCardsBuryRelated
           MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
-          MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.0
-          MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.0
+          MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.
+          MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.
           MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpan.FromDays
-          MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.0
+          MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.
           MatureCardsBuryRelated = entity.MatureCardsBuryRelated
           LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
-          LapsedCardsNewIntervalFactor = float entity.LapsedCardsNewIntervalFactorInPermille / 1000.0
+          LapsedCardsNewIntervalFactor = float entity.LapsedCardsNewIntervalFactorInPermille / 1000.
           LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> TimeSpan.FromDays
           LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
           ShowAnswerTimer = entity.ShowAnswerTimer
@@ -132,16 +132,16 @@ type CardOption = {
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
         entity.NewCardsGraduatingIntervalInDays <- this.NewCardsGraduatingInterval.TotalDays |> Math.Round |> byte
         entity.NewCardsEasyIntervalInDays <- this.NewCardsEasyInterval.TotalDays |> Math.Round |> byte
-        entity.NewCardsStartingEaseFactorInPermille <- this.NewCardsStartingEaseFactor * 1000.0 |> Math.Round |> int16
+        entity.NewCardsStartingEaseFactorInPermille <- this.NewCardsStartingEaseFactor * 1000. |> Math.Round |> int16
         entity.NewCardsBuryRelated <- this.NewCardsBuryRelated
         entity.MatureCardsMaxPerDay <- this.MatureCardsMaxPerDay
-        entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000.0 |> Math.Round |> int16
-        entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000.0 |> Math.Round |> int16
+        entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int16
+        entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsMaximumIntervalInDays <- this.MatureCardsMaximumInterval.TotalDays |> Math.Round |> int16
-        entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000.0 |> Math.Round |> int16
+        entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000. |> Math.Round |> int16
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
         entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
-        entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000.0 |> Math.Round |> int16
+        entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000. |> Math.Round |> int16
         entity.LapsedCardsMinimumIntervalInDays <- this.LapsedCardsMinimumInterval.TotalDays |> Math.Round |> byte
         entity.LapsedCardsLeechThreshold <- this.LapsedCardsLeechThreshold
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
@@ -304,7 +304,7 @@ type QuizCard = {
           MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
           CardState = CardState.Load entity.MemorizationStateAndCardState
           LapseCount = entity.LapseCount
-          EaseFactor = float entity.EaseFactorInPermille / 1000.0
+          EaseFactor = float entity.EaseFactorInPermille / 1000.
           Interval =
               if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
               then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes

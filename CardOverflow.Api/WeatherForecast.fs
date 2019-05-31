@@ -7,8 +7,8 @@ module Temperature =
     [<Measure>] type degF
 
     let convFactor = 1.8<degF/degC>
-    let convertDegCToF c = c * convFactor + 32.0<degF>
-    let convertDegFToC f = (f - 32.0<degF>) * (1.0 / convFactor)
+    let convertDegCToF c = c * convFactor + 32.<degF>
+    let convertDegFToC f = (f - 32.<degF>) * (1. / convFactor)
 
 open Temperature
 
@@ -28,6 +28,6 @@ type WeatherService() =
         let rng = Random()
         Enumerable.Range(1, 5).Select(fun index -> {
             Date = DateTime.Now.AddDays(float index)
-            TemperatureC = rng.Next(-20, 55) |> float |> (*) 1.0<degC>
+            TemperatureC = rng.Next(-20, 55) |> float |> (*) 1.<degC>
             Summary = summaries.[rng.Next summaries.Length]
         })

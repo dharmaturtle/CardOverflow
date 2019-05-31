@@ -30,12 +30,12 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
         let intervalOfMature card =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
                 max (rawInterval * card.Options.MatureCardsIntervalFactor)
-                    (TimeSpan.FromDays 1.0 |> previousInterval.Add)
+                    (TimeSpan.FromDays 1. |> previousInterval.Add)
                 |> min card.Options.MatureCardsMaximumInterval
             let delta = time - card.Due |> max TimeSpan.Zero
             let hard = interval card.Interval (card.Interval * card.Options.MatureCardsHardInterval)
             let good = interval hard (delta * 0.5 |> (+) card.Interval |> (*) card.EaseFactor)
-            let easy = interval good (delta * 1.0 |> (+) card.Interval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
+            let easy = interval good (delta * 1.  |> (+) card.Interval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
             function
             | Again -> card.Options.NewCardsSteps.Head
             | Hard -> hard
@@ -50,12 +50,12 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
     let fuzz(interval: TimeSpan) =
         let fuzzRangeInDaysInclusive =
             let days = interval.TotalDays
-            let atLeastOneDay = max 1.0
+            let atLeastOneDay = max 1.
             let buildFuzzierInterval = atLeastOneDay >> fun x -> (days - x, days + x)
-            if days < 2.0              then (1.0, 1.0)
-            elif equals days 2.0 0.001 then (2.0, 3.0)
-            elif days < 7.00 then         (days * 0.25) |> buildFuzzierInterval
-            elif days < 30.0 then max 2.0 (days * 0.15) |> buildFuzzierInterval
-            else                  max 4.0 (days * 0.05) |> buildFuzzierInterval
+            if days < 2.              then (1., 1.)
+            elif equals days 2. 0.001 then (2., 3.)
+            elif days < 7.  then        (days * 0.25) |> buildFuzzierInterval
+            elif days < 30. then max 2. (days * 0.15) |> buildFuzzierInterval
+            else                 max 4. (days * 0.05) |> buildFuzzierInterval
         // lowTODO find an implementation that is max inclusive
         randomFloatProvider fuzzRangeInDaysInclusive |> TimeSpan.FromDays

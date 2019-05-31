@@ -79,7 +79,7 @@ module AnkiMap =
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16
               NewCardsGraduatingInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 0
               NewCardsEasyInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 1
-              NewCardsStartingEaseFactor = (get.Required.At ["new"; "initialFactor"] Decode.float) / 1000.0
+              NewCardsStartingEaseFactor = (get.Required.At ["new"; "initialFactor"] Decode.float) / 1000.
               NewCardsBuryRelated = get.Required.At ["new"; "bury"] Decode.bool
               MatureCardsMaxPerDay = get.Required.At ["rev"; "perDay"] Decode.int |> int16
               MatureCardsEaseFactorEasyBonusFactor = get.Required.At ["rev"; "ease4"] Decode.float
@@ -181,7 +181,7 @@ module AnkiMap =
               IntervalNegativeIsMinutesPositiveIsDays =
                 if ankiCard.Ivl > 0L
                 then ankiCard.Ivl |> int16
-                else float ankiCard.Ivl * -1.0 / 60.0 |> Math.Round |> int16
+                else float ankiCard.Ivl * -1. / 60. |> Math.Round |> int16
               StepsIndex =
                 match memorizationState with
                 | MemorizationState.New
