@@ -11,6 +11,7 @@ open System.IO
 open System.IO.Compression
 open System.Linq
 open Xunit
+open CardOverflow.Sanitation
 
 let allDefaultTemplatesAndImageAndMp3_apkg =
     {
@@ -573,19 +574,13 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
         Revlogs = []
     }
 
-let unzipToRandom zipFile entry destination =
-    let zippedEntry = ZipFile.Open(zipFile, ZipArchiveMode.Read).Entries.First(fun x -> x.Name = entry)
-    let destination = destination +/ Random.cryptographicString 64
-    destination |> zippedEntry.ExtractToFile
-    destination
-
 let unzipTest ankiFileName entry =
     let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
     let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName // Need to isolate ankiDb otherwise tests run in parallel fail
     if Directory.Exists unzipDir
     then Directory.Delete(unzipDir, true)
     Directory.CreateDirectory unzipDir |> ignore
-    unzipToRandom (ankiExportsDir +/ ankiFileName) entry unzipDir
+    Anki.unzipToRandom (ankiExportsDir +/ ankiFileName) entry unzipDir
 
 let getAnki2 ankiFileName =
     unzipTest ankiFileName "collection.anki2" |> AnkiDbFactory |> AnkiDbService

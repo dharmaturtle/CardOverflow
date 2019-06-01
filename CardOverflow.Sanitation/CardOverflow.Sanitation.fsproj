@@ -5,7 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="Anki.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
+    <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
   </ItemGroup>
 
 </Project>

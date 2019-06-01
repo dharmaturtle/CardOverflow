@@ -4,8 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
-    <ProjectReference Include="..\CardOverflow.Entity\CardOverflow.Entity.csproj" />
     <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
+    <ProjectReference Include="..\CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Config\appsettings.Test.json">
