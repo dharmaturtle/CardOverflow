@@ -572,19 +572,19 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
         Revlogs = []
     }
 
-let unzipAndGetAnkiDbService collection ankiFileName =
+let unzip ankiFileName =
     let baseDir = @"..\netcoreapp3.0\AnkiExports\"
     let tempDir = baseDir + @"Temp\" + ankiFileName + @"\" // Need to isolate ankiDb otherwise tests run in parallel fail
     if Directory.Exists tempDir
     then Directory.Delete(tempDir, true)
     ZipFile.Open(baseDir + ankiFileName, ZipArchiveMode.Read).ExtractToDirectory tempDir
-    tempDir + collection |> AnkiDbFactory |> AnkiDbService
+    tempDir
 
-let getAnki2 =
-    unzipAndGetAnkiDbService "collection.anki2"
+let getAnki2 ankiFileName =
+    unzip ankiFileName + "collection.anki2" |> AnkiDbFactory |> AnkiDbService
 
-let getAnki21 =
-    unzipAndGetAnkiDbService "collection.anki21"
+let getAnki21 ankiFileName =
+    unzip ankiFileName + "collection.anki21" |> AnkiDbFactory |> AnkiDbService
 
 let serialize x =
     ObjectDumper.Dump(x, DumpOptions(DumpStyle = DumpStyle.CSharp,
