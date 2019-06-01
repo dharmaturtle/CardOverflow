@@ -21,11 +21,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Stuff", "Stuff", "{7F59CD36
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{3D064BDE-6336-49C1-AE6C-6DCAC7DE61B0}"
 	ProjectSection(SolutionItems) = preProject
-		Config\environment.json = Config\environment.json
-		Config\appsettings.json = Config\appsettings.json
 		Config\appsettings.Development.json = Config\appsettings.Development.json
+		Config\appsettings.json = Config\appsettings.json
 		Config\appsettings.Local.json = Config\appsettings.Local.json
+		Config\environment.json = Config\environment.json
 	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CardOverflow.Sanitation", "CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj", "{BB69ACF5-5F63-404D-A019-3A9A919851BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{7673B222-B67D-4652-A47F-3F08630BEC3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7673B222-B67D-4652-A47F-3F08630BEC3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7673B222-B67D-4652-A47F-3F08630BEC3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB69ACF5-5F63-404D-A019-3A9A919851BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
