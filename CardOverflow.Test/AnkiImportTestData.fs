@@ -574,8 +574,9 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
         Revlogs = []
     }
 
+let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
+
 let unzipTest ankiFileName entry =
-    let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
     let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName // Need to isolate ankiDb otherwise tests run in parallel fail
     if Directory.Exists unzipDir
     then Directory.Delete(unzipDir, true)
@@ -620,3 +621,24 @@ let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg matches AllDefau
     serialize actualDb.Cols = serialize mock.Cols |> Assert.True
     serialize actualDb.Notes = serialize mock.Notes |> Assert.True
     serialize actualDb.Cards = serialize mock.Cards |> Assert.True
+
+let emptyDb = {
+        Cards = []
+        Cols = allDefaultTemplatesAndImageAndMp3_colpkg.Cols
+        Notes = []
+        Revlogs = []
+    }
+
+[<Theory>]
+[<InlineData("AllDefaultTemplatesAndImageAndMp3.apkg")>]
+[<InlineData("AllDefaultTemplatesAndImageAndMp3.colpkg")>]
+let ``AnkiImporter.save saves two files``(ankiFileName) =
+    let userId = 3
+    use c = new TestContainer()
+    
+    ankiExportsDir +/ ankiFileName
+    |> AnkiImporter.loadFiles
+    |> Result.bind(AnkiImporter.save c.Db emptyDb userId)
+    |> Result.getOk
+
+    Assert.Equal(2, c.Db.Files.Count())

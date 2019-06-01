@@ -8,6 +8,8 @@ open System.Linq
 open Thoth.Json.Net
 open FsToolkit.ErrorHandling
 open Helpers
+open System.IO
+open System.IO.Compression
 
 module AnkiImporter =
     let getSimpleAnkiDb (ankiDbService: AnkiDbService) =
@@ -15,6 +17,23 @@ module AnkiImporter =
           Cols = ankiDbService.Query(fun db -> db.Cols.ToList() ) |> List.ofSeq
           Notes = ankiDbService.Query(fun db -> db.Notes.ToList() ) |> List.ofSeq
           Revlogs = ankiDbService.Query(fun db -> db.Revlogs.ToList() ) |> List.ofSeq }
+    let loadFiles zipPath =
+        let zipFile = ZipFile.Open(zipPath, ZipArchiveMode.Read)
+        use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open()
+        use mediaReader = new StreamReader(mediaStream)
+        Decode.string
+        |> Decode.keyValuePairs
+        |> Decode.fromString
+        <| mediaReader.ReadToEnd()
+        |> Result.map(List.map(fun (index, fileName) ->
+            use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
+            use m = new MemoryStream()
+            fileStream.CopyTo m
+            CardOverflow.Entity.FileEntity(
+                UserId = 3,
+                FileName = fileName,
+                Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
+            )))
     let load ankiDb usersTags (userId: int) =
         let col = ankiDb.Cols.Single()
         result {
@@ -57,11 +76,12 @@ module AnkiImporter =
             return (cardEntities |> Seq.map fst, histories)
         }
 
-    let save (db: CardOverflowDb) ankiDb userId =
+    let save (db: CardOverflowDb) ankiDb userId (files: FileEntity seq) =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
             let! cardEntities, histories = load ankiDb usersTags userId
             cardEntities |> db.Cards.AddRange
             histories |> db.Histories.AddRange
+            files |> db.Files.AddRange
             db.SaveChangesI ()
         }

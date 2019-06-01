@@ -18,7 +18,7 @@ let any<'R> : 'R = failwith "!"
 
 let assertHasBasicInfo ankiDb db =
     let userId = 3
-    AnkiImporter.save db ankiDb userId
+    AnkiImporter.save db ankiDb userId []
     |> Result.isOk
     |> Assert.True
     Assert.Equal(7, db.Concepts.Count())
@@ -46,7 +46,7 @@ let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
 
 let assertHasHistory ankiDb db =
     let userId = 3
-    AnkiImporter.save db ankiDb userId
+    AnkiImporter.save db ankiDb userId []
     |> Result.isOk
     |> Assert.True
     Assert.NotNull(db.Histories.FirstOrDefault())
