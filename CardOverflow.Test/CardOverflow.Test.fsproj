@@ -39,6 +39,7 @@
     <None Include="AnkiExports\RandomReviews-21.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="CoreTests.fs" />
     <Compile Include="InitializeDatabase.fs" />
     <Compile Include="TestDbServices.fs" />
     <Compile Include="MergeTests.fs" />
