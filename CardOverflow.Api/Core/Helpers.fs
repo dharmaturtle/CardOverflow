@@ -1,6 +1,9 @@
 module Helpers
 
 open Microsoft.EntityFrameworkCore
+open System.IO
+
+let (+/) path1 path2 = Path.Combine(path1, path2)
 
 type DbContext with
     member dbContext.SaveChangesI () =

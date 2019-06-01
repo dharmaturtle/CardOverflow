@@ -6,6 +6,7 @@ open CardOverflow.Test
 open CardOverflow.Debug
 open Microsoft.EntityFrameworkCore
 open Microsoft.FSharp.Quotations
+open Helpers
 open System.IO
 open System.IO.Compression
 open System.Linq
@@ -572,19 +573,25 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
         Revlogs = []
     }
 
-let unzip ankiFileName =
-    let baseDir = @"..\netcoreapp3.0\AnkiExports\"
-    let tempDir = baseDir + @"Temp\" + ankiFileName + @"\" // Need to isolate ankiDb otherwise tests run in parallel fail
-    if Directory.Exists tempDir
-    then Directory.Delete(tempDir, true)
-    ZipFile.Open(baseDir + ankiFileName, ZipArchiveMode.Read).ExtractToDirectory tempDir
-    tempDir
+let unzipToRandom zipFile entry destination =
+    let zippedEntry = ZipFile.Open(zipFile, ZipArchiveMode.Read).Entries.First(fun x -> x.Name = entry)
+    let destination = destination +/ Random.cryptographicString 64
+    destination |> zippedEntry.ExtractToFile
+    destination
+
+let unzipTest ankiFileName entry =
+    let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
+    let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName // Need to isolate ankiDb otherwise tests run in parallel fail
+    if Directory.Exists unzipDir
+    then Directory.Delete(unzipDir, true)
+    Directory.CreateDirectory unzipDir |> ignore
+    unzipToRandom (ankiExportsDir +/ ankiFileName) entry unzipDir
 
 let getAnki2 ankiFileName =
-    unzip ankiFileName + "collection.anki2" |> AnkiDbFactory |> AnkiDbService
+    unzipTest ankiFileName "collection.anki2" |> AnkiDbFactory |> AnkiDbService
 
 let getAnki21 ankiFileName =
-    unzip ankiFileName + "collection.anki21" |> AnkiDbFactory |> AnkiDbService
+    unzipTest ankiFileName "collection.anki21" |> AnkiDbFactory |> AnkiDbService
 
 let serialize x =
     ObjectDumper.Dump(x, DumpOptions(DumpStyle = DumpStyle.CSharp,
