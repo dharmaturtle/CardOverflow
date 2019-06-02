@@ -9,6 +9,7 @@ open SimpleInjector
 open System.Data.SqlClient
 open System.IO
 open System.Linq
+open SimpleInjector.Lifestyles
 
 let importedDate = DateTime(2020, 1, 1)
 
@@ -167,34 +168,34 @@ let basicClozeConceptTemplate =
                  AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
 
 // This should be a function because each user needs to be a new instance. Otherwise, tests run in parallel by Ncrunch fail.
-let deleteAndRecreateDatabase(dbService: IDbService) =
+let deleteAndRecreateDatabase(db: CardOverflowDb) =
     let admin = UserEntity(DisplayName = "Admin", Email = "admin@cardoverflow.io")
     let theCollective = UserEntity(DisplayName = "The Collective", Email = "theCollective@cardoverflow.io")
     let roboturtle = UserEntity(DisplayName = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
-    dbService.Command(fun db ->
-        db.Database.EnsureDeleted() |> ignore
-        db.Database.EnsureCreated() |> ignore
-        db.Users.AddRange
-            [ admin
-              theCollective
-              roboturtle ]
-        db.CardOptions.AddRange
-            [ defaultCardOptions.CopyToNew theCollective
-              defaultAnkiCardOptions.CopyToNew theCollective ]
-        db.ConceptTemplates.AddRange 
-            [ basicConceptTemplate.CopyToNew theCollective
-              basicWithReversedCardConceptTemplate.CopyToNew theCollective
-              basicWithOptionalReversedCardConceptTemplate.CopyToNew theCollective
-              basicTypeInAnswerConceptTemplate.CopyToNew theCollective
-              basicClozeConceptTemplate.CopyToNew theCollective ]
-    )
+    db.Database.EnsureDeleted() |> ignore
+    db.Database.EnsureCreated() |> ignore
+    db.Users.AddRange
+        [ admin
+          theCollective
+          roboturtle ]
+    db.CardOptions.AddRange
+        [ defaultCardOptions.CopyToNew theCollective
+          defaultAnkiCardOptions.CopyToNew theCollective ]
+    db.ConceptTemplates.AddRange 
+        [ basicConceptTemplate.CopyToNew theCollective
+          basicWithReversedCardConceptTemplate.CopyToNew theCollective
+          basicWithOptionalReversedCardConceptTemplate.CopyToNew theCollective
+          basicTypeInAnswerConceptTemplate.CopyToNew theCollective
+          basicClozeConceptTemplate.CopyToNew theCollective ]
+    db.SaveChanges()
 
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via EF``() =
     use c = new Container()
     c.RegisterStuff
     c.RegisterStandardConnectionString
-    c.GetInstance<IDbService>() |> deleteAndRecreateDatabase
+    use __ = AsyncScopedLifestyle.BeginScope c
+    c.GetInstance<CardOverflowDb>() |> deleteAndRecreateDatabase
 
 let deleteAndRecreateDb dbName =
     let conn = new SqlConnection "Server=localhost;Trusted_Connection=True;"
