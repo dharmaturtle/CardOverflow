@@ -2,6 +2,7 @@ module InitializeDatabase
 
 open CardOverflow.Api
 open CardOverflow.Entity
+open CardOverflow.Pure
 open ContainerExtensions
 open System
 open Xunit

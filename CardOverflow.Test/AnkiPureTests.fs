@@ -2,6 +2,7 @@ module AnkiPureTests
 
 open CardOverflow.Api
 open CardOverflow.Entity
+open CardOverflow.Pure
 open CardOverflow.Test
 open Microsoft.EntityFrameworkCore
 open Microsoft.FSharp.Quotations

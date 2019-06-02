@@ -1,6 +1,7 @@
 ﻿namespace CardOverflow.Api
 
 open CardOverflow.Api
+open CardOverflow.Pure
 open System
 
 type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =

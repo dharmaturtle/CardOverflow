@@ -1,6 +1,7 @@
 namespace CardOverflow.Api
 
 open CardOverflow.Api
+open CardOverflow.Pure
 open CardOverflow.Entity
 open CardOverflow.Entity.Anki
 open System
