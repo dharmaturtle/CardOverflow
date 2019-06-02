@@ -3,6 +3,7 @@
 open CardOverflow.Api
 open CardOverflow.Pure
 open System
+open Serilog
 
 type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
     let max a b = if a > b then a else b
@@ -18,15 +19,21 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
                 | Some index -> 
                     match card.Options.NewCardsSteps |> List.tryItem (int32 index) with
                     | Some step -> step
-                    | None -> card.Options.NewCardsSteps.Head // medTODO log this, this branch should never be reached
-                | None -> card.Options.NewCardsSteps.Head // medTODO log this, this branch should never be reached
+                    | None ->
+                        sprintf "Hard was chosen for QuizCard %A and it had None as its NewCardsSteps - an illegal value." card |> Log.Error
+                        card.Options.NewCardsSteps.Head
+                | None ->
+                    sprintf "Hard was chosen for QuizCard %A and it had None as its StepsIndex - an illegal value." card |> Log.Error
+                    card.Options.NewCardsSteps.Head
             | Good ->
                 match card.StepsIndex with
                 | Some index ->
                     match card.Options.NewCardsSteps |> List.tryItem (int32 index + 1) with
                     | Some step -> step
                     | None -> card.Options.NewCardsGraduatingInterval
-                | None -> card.Options.NewCardsGraduatingInterval // medTODO log this, this branch should never be reached
+                | None ->
+                    sprintf "Good was chosen for QuizCard %A and it had None as its StepsIndex - an illegal value." card |> Log.Error
+                    card.Options.NewCardsGraduatingInterval
             | Easy -> card.Options.NewCardsEasyInterval
         let intervalOfMature card =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
