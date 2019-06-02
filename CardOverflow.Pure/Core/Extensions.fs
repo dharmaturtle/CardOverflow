@@ -1,4 +1,4 @@
-namespace CardOverflow.Api
+namespace CardOverflow.Pure
 
 open System.Collections.Generic
 open System.Linq

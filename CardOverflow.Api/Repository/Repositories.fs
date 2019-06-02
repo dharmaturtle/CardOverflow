@@ -1,6 +1,6 @@
 namespace CardOverflow.Api
 
-open CardOverflow.Api.Extensions
+open CardOverflow.Pure
 open CardOverflow.Entity
 open Microsoft.EntityFrameworkCore
 open System.Linq

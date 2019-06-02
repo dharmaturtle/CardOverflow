@@ -1,6 +1,6 @@
 module MergeTests
 
-open CardOverflow.Api.Extensions
+open CardOverflow.Pure.Extensions
 open Xunit
 
 type Person = { mutable id: int; mutable name: string }

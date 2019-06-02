@@ -1,6 +1,7 @@
 module CoreTests
 
 open CardOverflow.Api
+open CardOverflow.Pure
 open Xunit
 open System
 

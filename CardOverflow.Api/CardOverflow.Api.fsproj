@@ -5,10 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Helpers.fs" />
     <Compile Include="Debug.fs" />
-    <Compile Include="Core\Core.fs" />
-    <Compile Include="Core\Helpers.fs" />
-    <Compile Include="Core\Extensions.fs" />
     <Compile Include="Providers.fs" />
     <Compile Include="MappingTools.fs" />
     <Compile Include="BusinessModels.fs" />
@@ -36,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Entity\CardOverflow.Entity.csproj" />
     <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
+    <ProjectReference Include="..\CardOverflow.Pure\CardOverflow.Pure.fsproj" />
   </ItemGroup>
 
 </Project>

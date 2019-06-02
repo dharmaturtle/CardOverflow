@@ -6,6 +6,7 @@ open System.IO.Compression
 open Helpers
 open System
 open CardOverflow.Debug
+open CardOverflow.Pure
 open CardOverflow.Api
 
 module Anki =
