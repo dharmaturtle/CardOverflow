@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open LoadersAndCopiers
 open CardOverflow.Api
 open CardOverflow.Pure
 open CardOverflow.Entity
@@ -39,10 +40,10 @@ module AnkiImporter =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
-                AnkiMap.parseDconf col.Dconf
+                Anki.parseDconf col.Dconf
                 |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, cardOption.CopyToNew userId)) >> Map.ofList >> Ok )
             let! nameAndDeckConfigurationIdByDeckId =
-                AnkiMap.parseDecks col.Decks
+                Anki.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
                     let names = tuples |> List.map (fun (_, (_, name, _)) -> name)
                     if names |> List.distinct |> List.length = names.Length
@@ -57,10 +58,10 @@ module AnkiImporter =
                 let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
                 cardOptionByDeckConfigurationId.[string deckConfigurationId]
             let! conceptTemplatesByModelId =
-                AnkiMap.parseModels userId cardOptionByDeckId col.Models
+                Anki.parseModels userId cardOptionByDeckId col.Models
                 |> Result.map Map.ofSeq
             let conceptsByAnkiId =
-                AnkiMap.parseNotes
+                Anki.parseNotes
                     conceptTemplatesByModelId
                     usersTags
                     userId
@@ -70,10 +71,10 @@ module AnkiImporter =
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let! cardEntities =
                 ankiDb.Cards
-                |> List.map (AnkiMap.mapCard cardOptionByDeckId conceptsByAnkiId collectionCreationTimeStamp)
+                |> List.map (Anki.mapCard cardOptionByDeckId conceptsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
-            let histories = ankiDb.Revlogs |> Seq.map (AnkiMap.toHistory cardIdByAnkiId userId)
+            let histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardIdByAnkiId userId)
             return (cardEntities |> Seq.map fst, histories)
         }
 

@@ -10,15 +10,10 @@
     <Compile Include="Core\Extensions.fs" />
     <Compile Include="MappingTools.fs" />
     <Compile Include="BusinessModels.fs" />
-    <Compile Include="Anki.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Thoth.Json.Net" Version="3.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\CardOverflow.Entity\CardOverflow.Entity.csproj" />
   </ItemGroup>
 
 </Project>

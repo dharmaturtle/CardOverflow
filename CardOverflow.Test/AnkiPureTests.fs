@@ -38,7 +38,7 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
         }
     let col = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg.Cols.Head
 
-    let dconf = AnkiMap.parseDconf col.Dconf
+    let dconf = Anki.parseDconf col.Dconf
     
     dconf |> Result.isOk |> Assert.True
     let id, actual = Result.getOk dconf |> Assert.Single

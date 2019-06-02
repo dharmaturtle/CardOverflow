@@ -1,5 +1,6 @@
 module InitializeDatabase
 
+open LoadersAndCopiers
 open CardOverflow.Api
 open CardOverflow.Entity
 open CardOverflow.Pure

@@ -1,13 +1,15 @@
-namespace CardOverflow.Pure
+namespace CardOverflow.Api
 
-open CardOverflow.Entity
 open CardOverflow.Entity.Anki
+open CardOverflow.Entity
+open CardOverflow.Pure
 open System
 open System.Linq
+open LoadersAndCopiers
 open Thoth.Json.Net
 
 type SimpleAnkiDb = {
-    Cards: CardEntity list
+    Cards: CardOverflow.Entity.Anki.CardEntity list
     Cols: ColEntity list
     Notes: NoteEntity list
     Revlogs: RevlogEntity list
@@ -32,7 +34,7 @@ type AnkiConceptWrite = {
         entity.PrivateTagConcepts <- privateTagConcepts.Select(fun x -> PrivateTagConceptEntity(Concept = entity, PrivateTag = x)).ToList()
         entity
 
-module AnkiMap =
+module Anki =
     let toHistory (cardByAnkiId: Map<int64, CardOverflow.Entity.CardEntity>) userId (revLog: RevlogEntity) =
         HistoryEntity(
             Card = cardByAnkiId.[revLog.Cid],
@@ -63,6 +65,7 @@ module AnkiMap =
                 DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime,
             UserId = userId
         )
+
     let ankiIntToBool =
         Decode.int
         |> Decode.andThen (fun i ->
