@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -15,9 +15,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<FileEntity> Files { get; set; }
         public virtual DbSet<HistoryEntity> Histories { get; set; }
         public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
-        public virtual DbSet<PrivateTagConceptEntity> PrivateTagConcepts { get; set; }
+        public virtual DbSet<PrivateTagCardEntity> PrivateTagCards { get; set; }
         public virtual DbSet<PublicTagEntity> PublicTags { get; set; }
-        public virtual DbSet<PublicTagConceptEntity> PublicTagConcepts { get; set; }
+        public virtual DbSet<PublicTagCardEntity> PublicTagCards { get; set; }
         public virtual DbSet<UserEntity> Users { get; set; }
 
         public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options)
@@ -164,7 +164,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<PrivateTagEntity>(entity =>
             {
-                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => new { e.UserId, e.Name })
+                    .HasName("AK_PrivateTag__UserId_Name")
+                    .IsUnique();
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.PrivateTags)
@@ -173,25 +175,25 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_PrivateTag_User");
             });
 
-            modelBuilder.Entity<PrivateTagConceptEntity>(entity =>
+            modelBuilder.Entity<PrivateTagCardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.ConceptId, e.PrivateTagId });
+                entity.HasKey(e => new { e.PrivateTagId, e.CardId });
 
-                entity.HasIndex(e => new { e.PrivateTagId, e.ConceptId })
-                    .HasName("UK_PrivateTag_Concept_PrivateTagId_ConceptId")
+                entity.HasIndex(e => new { e.CardId, e.PrivateTagId })
+                    .HasName("AK_PrivateTag_Card")
                     .IsUnique();
 
-                entity.HasOne(d => d.Concept)
-                    .WithMany(p => p.PrivateTagConcepts)
-                    .HasForeignKey(d => d.ConceptId)
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.PrivateTagCards)
+                    .HasForeignKey(d => d.CardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PrivateTag_Concept_Concept");
+                    .HasConstraintName("FK_PrivateTag_Card_Card");
 
                 entity.HasOne(d => d.PrivateTag)
-                    .WithMany(p => p.PrivateTagConcepts)
+                    .WithMany(p => p.PrivateTagCards)
                     .HasForeignKey(d => d.PrivateTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PrivateTag_Concept__PrivateTag");
+                    .HasConstraintName("FK_PrivateTag_Card_PrivateTag");
             });
 
             modelBuilder.Entity<PublicTagEntity>(entity =>
@@ -201,25 +203,25 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<PublicTagConceptEntity>(entity =>
+            modelBuilder.Entity<PublicTagCardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.ConceptId, e.PublicTagId });
+                entity.HasKey(e => new { e.PublicTagId, e.CardId });
 
-                entity.HasIndex(e => new { e.PublicTagId, e.ConceptId })
-                    .HasName("UK_PublicTag_Concept_PublicTagId_ConceptId")
+                entity.HasIndex(e => new { e.CardId, e.PublicTagId })
+                    .HasName("AK_PublicTag_Card")
                     .IsUnique();
 
-                entity.HasOne(d => d.Concept)
-                    .WithMany(p => p.PublicTagConcepts)
-                    .HasForeignKey(d => d.ConceptId)
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.PublicTagCards)
+                    .HasForeignKey(d => d.CardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PublicTag_Concept_Concept");
+                    .HasConstraintName("FK_PublicTag_Card_Card");
 
                 entity.HasOne(d => d.PublicTag)
-                    .WithMany(p => p.PublicTagConcepts)
+                    .WithMany(p => p.PublicTagCards)
                     .HasForeignKey(d => d.PublicTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PublicTag_Concept_PublicTag");
+                    .HasConstraintName("FK_PublicTag_Card_PublicTag");
             });
 
             modelBuilder.Entity<UserEntity>(entity =>

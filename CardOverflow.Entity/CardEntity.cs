@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -12,6 +12,8 @@ namespace CardOverflow.Entity
         {
             DeckCards = new HashSet<DeckCardEntity>();
             Histories = new HashSet<HistoryEntity>();
+            PrivateTagCards = new HashSet<PrivateTagCardEntity>();
+            PublicTagCards = new HashSet<PublicTagCardEntity>();
         }
 
         public int Id { get; set; }
@@ -36,5 +38,9 @@ namespace CardOverflow.Entity
         public virtual ICollection<DeckCardEntity> DeckCards { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("Card")]
+        public virtual ICollection<PrivateTagCardEntity> PrivateTagCards { get; set; }
+        [InverseProperty("Card")]
+        public virtual ICollection<PublicTagCardEntity> PublicTagCards { get; set; }
     }
 }

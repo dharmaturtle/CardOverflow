@@ -231,7 +231,7 @@ CREATE TABLE [dbo].[File](
 	[UserId] [int] NOT NULL,
 	[FileName] [nvarchar](100) NOT NULL,
 	[Data] [varbinary](max) NOT NULL,
- CONSTRAINT [PK_Media] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_File] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -272,18 +272,18 @@ CREATE TABLE [dbo].[PrivateTag](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PrivateTag_Concept] ******/
+/****** Object:  Table [dbo].[PrivateTag_Card] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[PrivateTag_Concept](
-	[ConceptId] [int] NOT NULL,
+CREATE TABLE [dbo].[PrivateTag_Card](
 	[PrivateTagId] [int] NOT NULL,
- CONSTRAINT [PK_PrivateTag_Concept] PRIMARY KEY CLUSTERED 
+	[CardId] [int] NOT NULL,
+ CONSTRAINT [PK_PrivateTag_Card] PRIMARY KEY CLUSTERED 
 (
-	[ConceptId] ASC,
-	[PrivateTagId] ASC
+	[PrivateTagId] ASC,
+	[CardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -301,18 +301,18 @@ CREATE TABLE [dbo].[PublicTag](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PublicTag_Concept] ******/
+/****** Object:  Table [dbo].[PublicTag_Card] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[PublicTag_Concept](
-	[ConceptId] [int] NOT NULL,
+CREATE TABLE [dbo].[PublicTag_Card](
 	[PublicTagId] [int] NOT NULL,
- CONSTRAINT [PK_PublicTag_Concept] PRIMARY KEY CLUSTERED 
+	[CardId] [int] NOT NULL,
+ CONSTRAINT [PK_PublicTag_Card] PRIMARY KEY CLUSTERED 
 (
-	[ConceptId] ASC,
-	[PublicTagId] ASC
+	[PublicTagId] ASC,
+	[CardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -495,11 +495,11 @@ GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [AK_Media__UserId_FileName] ******/
-ALTER TABLE [dbo].[File] ADD  CONSTRAINT [AK_Media__UserId_FileName] UNIQUE NONCLUSTERED 
+CREATE UNIQUE NONCLUSTERED INDEX [AK_Media__UserId_FileName] ON [dbo].[File]
 (
 	[UserId] ASC,
 	[FileName] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_History_CardId] ******/
 CREATE NONCLUSTERED INDEX [IX_History_CardId] ON [dbo].[History]
@@ -513,18 +513,21 @@ CREATE NONCLUSTERED INDEX [IX_History_UserId] ON [dbo].[History]
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_PrivateTag_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_PrivateTag_UserId] ON [dbo].[PrivateTag]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UK_PrivateTag_Concept_PrivateTagId_ConceptId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [UK_PrivateTag_Concept_PrivateTagId_ConceptId] ON [dbo].[PrivateTag_Concept]
+/****** Object:  Index [AK_PrivateTag__UserId_Name] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag__UserId_Name] ON [dbo].[PrivateTag]
 (
-	[PrivateTagId] ASC,
-	[ConceptId] ASC
+	[UserId] ASC,
+	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [AK_PrivateTag_Card] ******/
+ALTER TABLE [dbo].[PrivateTag_Card] ADD  CONSTRAINT [AK_PrivateTag_Card] UNIQUE NONCLUSTERED 
+(
+	[CardId] ASC,
+	[PrivateTagId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
 GO
@@ -534,12 +537,12 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_PublicTag__Name] ON [dbo].[PublicTag]
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [UK_PublicTag_Concept_PublicTagId_ConceptId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [UK_PublicTag_Concept_PublicTagId_ConceptId] ON [dbo].[PublicTag_Concept]
+/****** Object:  Index [AK_PublicTag_Card] ******/
+ALTER TABLE [dbo].[PublicTag_Card] ADD  CONSTRAINT [AK_PublicTag_Card] UNIQUE NONCLUSTERED 
 (
-	[PublicTagId] ASC,
-	[ConceptId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	[CardId] ASC,
+	[PublicTagId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
 GO
@@ -622,25 +625,25 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[PrivateTag] CHECK CONSTRAINT [FK_PrivateTag_User]
 GO
-ALTER TABLE [dbo].[PrivateTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_Concept__PrivateTag] FOREIGN KEY([PrivateTagId])
+ALTER TABLE [dbo].[PrivateTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_Card_Card] FOREIGN KEY([CardId])
+REFERENCES [dbo].[Card] ([Id])
+GO
+ALTER TABLE [dbo].[PrivateTag_Card] CHECK CONSTRAINT [FK_PrivateTag_Card_Card]
+GO
+ALTER TABLE [dbo].[PrivateTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_Card_PrivateTag] FOREIGN KEY([PrivateTagId])
 REFERENCES [dbo].[PrivateTag] ([Id])
 GO
-ALTER TABLE [dbo].[PrivateTag_Concept] CHECK CONSTRAINT [FK_PrivateTag_Concept__PrivateTag]
+ALTER TABLE [dbo].[PrivateTag_Card] CHECK CONSTRAINT [FK_PrivateTag_Card_PrivateTag]
 GO
-ALTER TABLE [dbo].[PrivateTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_Concept_Concept] FOREIGN KEY([ConceptId])
-REFERENCES [dbo].[Concept] ([Id])
+ALTER TABLE [dbo].[PublicTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Card_Card] FOREIGN KEY([CardId])
+REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[PrivateTag_Concept] CHECK CONSTRAINT [FK_PrivateTag_Concept_Concept]
+ALTER TABLE [dbo].[PublicTag_Card] CHECK CONSTRAINT [FK_PublicTag_Card_Card]
 GO
-ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Concept_Concept] FOREIGN KEY([ConceptId])
-REFERENCES [dbo].[Concept] ([Id])
-GO
-ALTER TABLE [dbo].[PublicTag_Concept] CHECK CONSTRAINT [FK_PublicTag_Concept_Concept]
-GO
-ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Concept_PublicTag] FOREIGN KEY([PublicTagId])
+ALTER TABLE [dbo].[PublicTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Card_PublicTag] FOREIGN KEY([PublicTagId])
 REFERENCES [dbo].[PublicTag] ([Id])
 GO
-ALTER TABLE [dbo].[PublicTag_Concept] CHECK CONSTRAINT [FK_PublicTag_Concept_PublicTag]
+ALTER TABLE [dbo].[PublicTag_Card] CHECK CONSTRAINT [FK_PublicTag_Card_PublicTag]
 GO
 USE [master]
 GO
