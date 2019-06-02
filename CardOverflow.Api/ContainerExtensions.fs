@@ -43,7 +43,6 @@ type Container with
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
 
-        container.RegisterInstance<CreateCardOverflowDb>(fun () -> container.GetInstance<ConnectionString>() |> CreateCardOverflowDb.create)
         container.RegisterSingleton<DbContextOptions<CardOverflowDb>>(fun () ->
             DbContextOptionsBuilder<CardOverflowDb>()
                 .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value )

@@ -12,11 +12,11 @@ open System.IO
 open System.IO.Compression
 
 module AnkiImporter =
-    let getSimpleAnkiDb (ankiDbService: AnkiDbService) =
-        { Cards = ankiDbService.Query(fun db -> db.Cards.ToList() ) |> List.ofSeq
-          Cols = ankiDbService.Query(fun db -> db.Cols.ToList() ) |> List.ofSeq
-          Notes = ankiDbService.Query(fun db -> db.Notes.ToList() ) |> List.ofSeq
-          Revlogs = ankiDbService.Query(fun db -> db.Revlogs.ToList() ) |> List.ofSeq }
+    let getSimpleAnkiDb (db: AnkiDb) =
+        { Cards = db.Cards.ToList() |> List.ofSeq
+          Cols = db.Cols.ToList() |> List.ofSeq
+          Notes = db.Notes.ToList() |> List.ofSeq
+          Revlogs = db.Revlogs.ToList() |> List.ofSeq }
     let loadFiles zipPath =
         let zipFile = ZipFile.Open(zipPath, ZipArchiveMode.Read)
         use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open()
