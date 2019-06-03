@@ -30,10 +30,11 @@ let assertHasBasicInfo ankiDb db =
         (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
     Assert.Equal<string>(
         [ "OtherTag" ],
-        db.Concepts
-            .Include(nameof <@ any<ConceptEntity>.PrivateTagConcepts @> + "." + nameof <@ any<PrivateTagConceptEntity>.PrivateTag @>)
-            .Single(fun c -> c.Fields.Contains("mp3"))
-            .PrivateTagConcepts.Select(fun t -> t.PrivateTag.Name))
+        db.Cards
+            .Include(nameof <@ any<CardEntity>.PrivateTagCards @> + "." + nameof <@ any<PrivateTagCardEntity>.PrivateTag @>)
+            .Include(fun x -> x.Concept)
+            .Single(fun c -> c.Concept.Fields.Contains("mp3"))
+            .PrivateTagCards.Select(fun t -> t.PrivateTag.Name))
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =

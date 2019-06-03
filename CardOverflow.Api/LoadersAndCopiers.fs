@@ -3,6 +3,7 @@ module LoadersAndCopiers
 open CardOverflow.Entity
 open CardOverflow.Pure
 open System
+open System.Linq
 
 type MemorizationState with
     static member Load enum =
@@ -272,9 +273,10 @@ type Card with
        entity.Due <- this.Due
        entity.TemplateIndex <- this.TemplateIndex
        entity.CardOptionId <- this.CardOptionId
-   member this.CopyToNew concept cardOption =
+   member this.CopyToNew concept cardOption (privateTags: PrivateTagEntity seq) =
        let entity = CardEntity()
        this.CopyTo entity
        entity.Concept <- concept
        entity.CardOption <- cardOption
+       entity.PrivateTagCards <- privateTags.Select(fun x -> PrivateTagCardEntity(Card = entity, PrivateTag = x)).ToList()
        entity

@@ -60,7 +60,7 @@ module AnkiImporter =
             let! conceptTemplatesByModelId =
                 Anki.parseModels userId cardOptionByDeckId col.Models
                 |> Result.map Map.ofSeq
-            let conceptsByAnkiId =
+            let conceptsAndTagsByAnkiId =
                 Anki.parseNotes
                     conceptTemplatesByModelId
                     usersTags
@@ -71,7 +71,7 @@ module AnkiImporter =
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let! cardEntities =
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardOptionByDeckId conceptsByAnkiId collectionCreationTimeStamp)
+                |> List.map (Anki.mapCard cardOptionByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
             let histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardIdByAnkiId userId)

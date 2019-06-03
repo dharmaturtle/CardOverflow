@@ -7,6 +7,7 @@ open System
 open System.Linq
 open LoadersAndCopiers
 open Thoth.Json.Net
+open System.Collections.Generic
 
 type SimpleAnkiDb = {
     Cards: CardOverflow.Entity.Anki.CardEntity list
@@ -28,10 +29,9 @@ type AnkiConceptWrite = {
         entity.ConceptTemplate <- this.ConceptTemplate
         entity.Fields <- this.Fields |> MappingTools.joinByUnitSeparator
         entity.Modified <- this.Modified
-    member this.CopyToNew (privateTagConcepts: seq<PrivateTagEntity>) =
+    member this.CopyToNew =
         let entity = ConceptEntity()
         this.CopyTo entity
-        entity.PrivateTagConcepts <- privateTagConcepts.Select(fun x -> PrivateTagConceptEntity(Concept = entity, PrivateTag = x)).ToList()
         entity
 
 module Anki =
@@ -140,7 +140,7 @@ module Anki =
                     (get.Required.Field "did" Decode.int |> cardOptionByDeckId))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsByNoteId = // medTODO use tail recursion
+    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsAndTagsByNoteId = // medTODO use tail recursion
         function
         | (note: NoteEntity) :: tail ->
             let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
@@ -157,11 +157,11 @@ module Anki =
                   ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                   Fields = MappingTools.splitByUnitSeparator note.Flds
                   Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime }.CopyToNew
-                  (allTags.Where(fun x -> notesTags.Contains x.Name))
-            parseNotes conceptTemplatesByModelId allTags userId ((note.Id, concept)::conceptsByNoteId) tail
-        | _ -> conceptsByNoteId
-    let mapCard (cardOptionByDeckId: int -> CardOptionEntity) (conceptsByAnkiId: Map<int64, ConceptEntity>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
+            parseNotes conceptTemplatesByModelId allTags userId ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
+        | _ -> conceptsAndTagsByNoteId
+    let mapCard (cardOptionByDeckId: int -> CardOptionEntity) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
         let cardOption = int ankiCard.Did |> cardOptionByDeckId
+        let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
         match ankiCard.Type with
         | 0L -> Ok MemorizationState.New
         | 1L -> Ok MemorizationState.Learning
@@ -205,4 +205,4 @@ module Anki =
                 | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = 0 }.CopyToNew conceptsByAnkiId.[ankiCard.Nid] cardOption, ankiCard)
+              CardOptionId = 0 }.CopyToNew concept cardOption tags, ankiCard)
