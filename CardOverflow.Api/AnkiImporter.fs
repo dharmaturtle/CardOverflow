@@ -54,11 +54,12 @@ module AnkiImporter =
                     if filtered.Length = tuples.Length
                     then filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
-            let cardOptionByDeckId deckId =
-                let (_, deckConfigurationId) = nameAndDeckConfigurationIdByDeckId.[deckId] // medTODO tag imported cards with the name of the deck they're in
-                cardOptionByDeckConfigurationId.[string deckConfigurationId]
+            let cardOptionAndDeckNameByDeckId =
+                nameAndDeckConfigurationIdByDeckId
+                |> Map.map (fun _ (deckName, deckConfigurationId) ->
+                    cardOptionByDeckConfigurationId.[string deckConfigurationId], PrivateTagEntity(Name = "Deck:" + deckName, UserId = userId))
             let! conceptTemplatesByModelId =
-                Anki.parseModels userId cardOptionByDeckId col.Models
+                Anki.parseModels userId cardOptionAndDeckNameByDeckId col.Models
                 |> Result.map Map.ofSeq
             let conceptsAndTagsByAnkiId =
                 Anki.parseNotes
@@ -71,7 +72,7 @@ module AnkiImporter =
             let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let! cardEntities =
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardOptionByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp)
+                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
             let histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardIdByAnkiId userId)

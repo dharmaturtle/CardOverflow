@@ -105,7 +105,7 @@ module Anki =
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let parseModels userId cardOptionByDeckId =
+    let parseModels userId (cardOptionAndDeckNameByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) =
         Decode.object(fun get ->
             { Id = 0
               Name = get.Required.Field "name" Decode.string
@@ -137,7 +137,7 @@ module Anki =
               LatexPost = get.Required.Field "latexPost" Decode.string }
                 .CopyToNew2
                     userId
-                    (get.Required.Field "did" Decode.int |> cardOptionByDeckId))
+                    (cardOptionAndDeckNameByDeckId.[get.Required.Field "did" Decode.int] |> fst))
         |> Decode.keyValuePairs
         |> Decode.fromString
     let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsAndTagsByNoteId = // medTODO use tail recursion
@@ -159,8 +159,8 @@ module Anki =
                   Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime }.CopyToNew
             parseNotes conceptTemplatesByModelId allTags userId ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
         | _ -> conceptsAndTagsByNoteId
-    let mapCard (cardOptionByDeckId: int -> CardOptionEntity) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
-        let cardOption = int ankiCard.Did |> cardOptionByDeckId
+    let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
+        let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
         match ankiCard.Type with
         | 0L -> Ok MemorizationState.New
@@ -205,4 +205,4 @@ module Anki =
                 | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = 0 }.CopyToNew concept cardOption tags, ankiCard)
+              CardOptionId = 0 }.CopyToNew concept cardOption (deckTag :: List.ofSeq tags), ankiCard)
