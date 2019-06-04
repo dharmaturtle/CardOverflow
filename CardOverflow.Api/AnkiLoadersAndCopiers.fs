@@ -7,6 +7,7 @@ open System
 open System.Linq
 open LoadersAndCopiers
 open Thoth.Json.Net
+open Microsoft.FSharp.Core.Operators.Checked
 open System.Collections.Generic
 
 type SimpleAnkiDb = {
@@ -74,7 +75,7 @@ module Anki =
             | 1 -> Decode.succeed true
             | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
     let parseDconf =
-        Decode.object(fun get -> // medTODO input validation
+        Decode.object(fun get ->
             { Id = 0
               Name = get.Required.Field "name" Decode.string
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
@@ -178,7 +179,7 @@ module Anki =
                 | -2L -> CardState.SchedulerBuried
                 | -1L -> CardState.Suspended
                 | _ -> CardState.Normal
-              LapseCount = ankiCard.Lapses |> byte // medTODO validate these, eg 9999 will yield 15
+              LapseCount = ankiCard.Lapses |> byte // lowTODO This will throw an exception from `Microsoft.FSharp.Core.Operators.Checked` if Lapses is too big; should be a Result somehow
               EaseFactorInPermille = ankiCard.Factor |> int16
               IntervalNegativeIsMinutesPositiveIsDays =
                 if ankiCard.Ivl > 0L
