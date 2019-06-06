@@ -160,6 +160,8 @@ CREATE TABLE [dbo].[Concept](
 	[ConceptTemplateId] [int] NOT NULL,
 	[Fields] [nvarchar](max) NOT NULL,
 	[Modified] [smalldatetime] NOT NULL,
+	[MaintainerId] [int] NOT NULL,
+	[IsPublic] [bit] NOT NULL,
  CONSTRAINT [PK_Concept] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -574,6 +576,11 @@ ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_ConceptTempl
 REFERENCES [dbo].[ConceptTemplate] ([Id])
 GO
 ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_ConceptTemplate]
+GO
+ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User] FOREIGN KEY([MaintainerId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_User]
 GO
 ALTER TABLE [dbo].[Concept_User]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User_Concept] FOREIGN KEY([ConceptId])
 REFERENCES [dbo].[Concept] ([Id])

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -77,6 +77,12 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.ConceptTemplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Concept_ConceptTemplate");
+
+                entity.HasOne(d => d.Maintainer)
+                    .WithMany(p => p.Concepts)
+                    .HasForeignKey(d => d.MaintainerId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Concept_User");
             });
 
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>

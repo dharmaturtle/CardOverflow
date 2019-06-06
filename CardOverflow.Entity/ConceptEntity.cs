@@ -26,10 +26,15 @@ namespace CardOverflow.Entity
         public string Fields { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Modified { get; set; }
+        public int MaintainerId { get; set; }
+        public bool IsPublic { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("Concepts")]
         public virtual ConceptTemplateEntity ConceptTemplate { get; set; }
+        [ForeignKey("MaintainerId")]
+        [InverseProperty("Concepts")]
+        public virtual UserEntity Maintainer { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Concept")]
