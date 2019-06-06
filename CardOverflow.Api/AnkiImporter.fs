@@ -69,20 +69,23 @@ module AnkiImporter =
                     []
                     ankiDb.Notes
                 |> Map.ofList
-            let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
             let! cardEntities =
+                let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
                 |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp)
                 |> Result.consolidate
             let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
-            let histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardIdByAnkiId userId)
-            return (cardEntities |> Seq.map fst, histories)
+            return (cardEntities |> Seq.map fst,
+                    ankiDb.Revlogs |> Seq.map (Anki.toHistory cardIdByAnkiId userId),
+                    conceptsAndTagsByAnkiId |> Map.overValue (fun (concept, _) -> ConceptUserEntity(Concept = concept, UserId = userId))
+                   )
         }
 
     let save (db: CardOverflowDb) ankiDb userId (files: FileEntity seq) =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
-            let! cardEntities, histories = load ankiDb usersTags userId
+            let! cardEntities, histories, conceptUsers = load ankiDb usersTags userId
+            conceptUsers |> db.ConceptUsers.AddRange
             cardEntities |> db.Cards.AddRange
             histories |> db.Histories.AddRange
             files |> db.Files.AddRange
