@@ -86,6 +86,8 @@ type Concept = {
     ConceptTemplate: ConceptTemplate
     Fields: string list
     Modified: DateTime
+    MaintainerId: int
+    IsPublic: bool
 }
 
 type Card = {

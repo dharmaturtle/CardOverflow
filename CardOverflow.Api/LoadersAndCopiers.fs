@@ -259,7 +259,9 @@ type Concept with
          Description = entity.Description
          ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
          Fields = MappingTools.splitByUnitSeparator entity.Fields
-         Modified = entity.Modified }
+         Modified = entity.Modified
+         IsPublic = entity.IsPublic
+         MaintainerId = entity.MaintainerId }
 
 type Card with
    member this.CopyTo(entity: CardEntity) =

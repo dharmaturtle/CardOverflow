@@ -17,7 +17,9 @@ let ``ConceptRepository can add and retreive a Concept``() =
             Description = "",
             Fields = "",
             ConceptTemplateId = 1,
-            Modified = DateTime.UtcNow)
+            Modified = DateTime.UtcNow,
+            IsPublic = true,
+            MaintainerId = 3)
 
     ConceptRepository.AddConcept c.Db concept
 

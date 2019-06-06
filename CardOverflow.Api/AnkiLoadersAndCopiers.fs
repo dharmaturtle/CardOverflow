@@ -23,6 +23,8 @@ type AnkiConceptWrite = {
     ConceptTemplate: ConceptTemplateEntity
     Fields: string list
     Modified: DateTime
+    MaintainerId: int
+    IsPublic: bool
 } with
     member this.CopyTo(entity: ConceptEntity) =
         entity.Title <- this.Title
@@ -30,6 +32,8 @@ type AnkiConceptWrite = {
         entity.ConceptTemplate <- this.ConceptTemplate
         entity.Fields <- this.Fields |> MappingTools.joinByUnitSeparator
         entity.Modified <- this.Modified
+        entity.MaintainerId <- this.MaintainerId
+        entity.IsPublic <- this.IsPublic
     member this.CopyToNew =
         let entity = ConceptEntity()
         this.CopyTo entity
@@ -157,7 +161,9 @@ module Anki =
                   Description = ""
                   ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                   Fields = MappingTools.splitByUnitSeparator note.Flds
-                  Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime }.CopyToNew
+                  Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
+                  MaintainerId = userId
+                  IsPublic = false }.CopyToNew
             parseNotes conceptTemplatesByModelId allTags userId ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
         | _ -> conceptsAndTagsByNoteId
     let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =

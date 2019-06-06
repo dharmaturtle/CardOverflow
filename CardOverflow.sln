@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Stuff", "Stuff", "{7F59CD36
 	ProjectSection(SolutionItems) = preProject
 		InitializeDatabase.sql = InitializeDatabase.sql
 		README.md = README.md
+		ScaffoldAndGenerateInitializeDatabase.sql.ps1 = ScaffoldAndGenerateInitializeDatabase.sql.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{3D064BDE-6336-49C1-AE6C-6DCAC7DE61B0}"
@@ -29,7 +30,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{3D064B
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Sanitation", "CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj", "{BB69ACF5-5F63-404D-A019-3A9A919851BF}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CardOverflow.Pure", "CardOverflow.Pure\CardOverflow.Pure.fsproj", "{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Pure", "CardOverflow.Pure\CardOverflow.Pure.fsproj", "{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
