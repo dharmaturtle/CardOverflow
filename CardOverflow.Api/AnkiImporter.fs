@@ -31,7 +31,7 @@ module AnkiImporter =
             use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
             use m = new MemoryStream()
             fileStream.CopyTo m
-            CardOverflow.Entity.FileEntity(
+            FileEntity(
                 UserId = 3,
                 FileName = fileName,
                 Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner

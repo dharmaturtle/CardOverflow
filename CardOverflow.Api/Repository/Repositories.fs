@@ -20,6 +20,9 @@ module CardRepository =
         db.SaveChangesI ()
 
 module ConceptRepository =
+    let GetConcept (db: CardOverflowDb) userId conceptId =
+        ConceptUserEntity(UserId = userId, ConceptId = conceptId) |> db.ConceptUsers.AddI
+
     let GetConcepts (db: CardOverflowDb) =
         db.Concepts.Include(fun x -> x.Cards).ToList()
 
