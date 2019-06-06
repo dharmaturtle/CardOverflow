@@ -8,21 +8,17 @@ namespace CardOverflow.Entity
 [Table("Deck")]
     public partial class DeckEntity
     {
-        public DeckEntity()
-        {
-            DeckCards = new HashSet<DeckCardEntity>();
-        }
-
         public int Id { get; set; }
         [Required]
         [StringLength(128)]
         public string Name { get; set; }
         public int UserId { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Query { get; set; }
 
         [ForeignKey("UserId")]
         [InverseProperty("Decks")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("Deck")]
-        public virtual ICollection<DeckCardEntity> DeckCards { get; set; }
     }
 }

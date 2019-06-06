@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -11,7 +11,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<ConceptEntity> Concepts { get; set; }
         public virtual DbSet<ConceptTemplateEntity> ConceptTemplates { get; set; }
         public virtual DbSet<DeckEntity> Decks { get; set; }
-        public virtual DbSet<DeckCardEntity> DeckCards { get; set; }
         public virtual DbSet<FileEntity> Files { get; set; }
         public virtual DbSet<HistoryEntity> Histories { get; set; }
         public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
@@ -109,25 +108,6 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deck_User");
-            });
-
-            modelBuilder.Entity<DeckCardEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.DeckId, e.CardId });
-
-                entity.HasIndex(e => e.CardId);
-
-                entity.HasOne(d => d.Card)
-                    .WithMany(p => p.DeckCards)
-                    .HasForeignKey(d => d.CardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Deck_Card_Card");
-
-                entity.HasOne(d => d.Deck)
-                    .WithMany(p => p.DeckCards)
-                    .HasForeignKey(d => d.DeckId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Deck_Card_Deck");
             });
 
             modelBuilder.Entity<FileEntity>(entity =>
