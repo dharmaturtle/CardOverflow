@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
-        public int UserId { get; set; }
+        public int MaintainerId { get; set; }
         [Required]
         [StringLength(50)]
         public string Name { get; set; }
@@ -47,9 +47,9 @@ namespace CardOverflow.Entity
         [ForeignKey("DefaultCardOptionId")]
         [InverseProperty("ConceptTemplates")]
         public virtual CardOptionEntity DefaultCardOption { get; set; }
-        [ForeignKey("UserId")]
+        [ForeignKey("MaintainerId")]
         [InverseProperty("ConceptTemplates")]
-        public virtual UserEntity User { get; set; }
+        public virtual UserEntity Maintainer { get; set; }
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<ConceptEntity> Concepts { get; set; }
     }

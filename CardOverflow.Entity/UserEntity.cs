@@ -30,7 +30,7 @@ namespace CardOverflow.Entity
 
         [InverseProperty("User")]
         public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
-        [InverseProperty("User")]
+        [InverseProperty("Maintainer")]
         public virtual ICollection<ConceptTemplateEntity> ConceptTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<ConceptUserEntity> ConceptUsers { get; set; }

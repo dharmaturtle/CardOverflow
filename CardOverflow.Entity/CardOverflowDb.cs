@@ -89,7 +89,7 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.DefaultCardOptionId);
 
-                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.MaintainerId);
 
                 entity.Property(e => e.Css).IsUnicode(false);
 
@@ -99,11 +99,11 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ConceptTemplate_CardOption");
 
-                entity.HasOne(d => d.User)
+                entity.HasOne(d => d.Maintainer)
                     .WithMany(p => p.ConceptTemplates)
-                    .HasForeignKey(d => d.UserId)
+                    .HasForeignKey(d => d.MaintainerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_ConceptTemplate_User");
+                    .HasConstraintName("FK_ConceptTemplate_Maintainer");
             });
 
             modelBuilder.Entity<ConceptUserEntity>(entity =>

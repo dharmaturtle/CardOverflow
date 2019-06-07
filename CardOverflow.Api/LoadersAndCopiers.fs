@@ -209,15 +209,15 @@ type ConceptTemplate with
        entity.DefaultCardOptionId <- this.DefaultCardOptionId
        entity.LatexPre <- this.LatexPre
        entity.LatexPost <- this.LatexPost
-   member this.CopyToNew user =
+   member this.CopyToNew maintainer =
        let entity = ConceptTemplateEntity()
        this.CopyTo entity
-       entity.User <- user
+       entity.Maintainer <- maintainer
        entity
-   member this.CopyToNew2 userId defaultCardOption =
+   member this.CopyToNew2 maintainerId defaultCardOption =
        let entity = ConceptTemplateEntity()
        this.CopyTo entity
-       entity.UserId <- userId
+       entity.MaintainerId <- maintainerId
        entity.DefaultCardOption <- defaultCardOption
        entity
 
