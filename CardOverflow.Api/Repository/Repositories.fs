@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open System
 open LoadersAndCopiers
 open CardOverflow.Pure
 open CardOverflow.Entity
@@ -21,7 +22,24 @@ module CardRepository =
 
 module ConceptRepository =
     let GetConcept (db: CardOverflowDb) userId conceptId =
-        ConceptUserEntity(UserId = userId, ConceptId = conceptId) |> db.ConceptUsers.AddI
+        db.Concepts.First(fun x -> x.Id = conceptId).ConceptTemplate.CardTemplates
+        |> CardTemplate.LoadMany
+        |> List.indexed
+        |> List.map (fun (i, _) -> 
+            CardEntity(
+                ConceptId = conceptId,
+                MemorizationStateAndCardState = MemorizationStateAndCardStateEnum.NewNormal,
+                LapseCount = 0uy,
+                EaseFactorInPermille = 0s,
+                IntervalNegativeIsMinutesPositiveIsDays = 0s,
+                StepsIndex = Nullable 0uy,
+                Due = DateTime.UtcNow,
+                TemplateIndex = byte i,
+                CardOptionId = 0, // medTODO, I think each user needs a DefaultCardOptionId
+                UserId = userId
+            ))
+        |> db.Cards.AddRange
+        db.SaveChangesI ()
 
     let GetConcepts (db: CardOverflowDb) =
         db.Concepts.Include(fun x -> x.Cards).ToList()

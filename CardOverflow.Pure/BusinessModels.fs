@@ -92,6 +92,7 @@ type Concept = {
 
 type Card = {
     Id: int
+    UserId: int
     ConceptId: int
     MemorizationState: MemorizationState
     CardState: CardState

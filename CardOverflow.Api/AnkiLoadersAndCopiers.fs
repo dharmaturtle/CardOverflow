@@ -165,7 +165,7 @@ module Anki =
                   IsPublic = false }.CopyToNew
             parseNotes conceptTemplatesByModelId allTags userId ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
         | _ -> conceptsAndTagsByNoteId
-    let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) (ankiCard: Anki.CardEntity) =
+    let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
         match ankiCard.Type with
@@ -176,6 +176,7 @@ module Anki =
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
             { Card.Id = 0
+              UserId = userId
               ConceptId = 0
               MemorizationState = memorizationState
               CardState =

@@ -278,8 +278,9 @@ type Concept with
           MaintainerId = entity.MaintainerId }
 
 type Card with
-    member this.CopyTo(entity: CardEntity) =
+    member this.CopyTo (entity: CardEntity) =
         entity.Id <- this.Id
+        entity.UserId <- this.UserId
         entity.ConceptId <- this.ConceptId
         entity.MemorizationStateAndCardState <- MemorizationStateAndCardStateEnum.from this.MemorizationState this.CardState
         entity.LapseCount <- this.LapseCount
@@ -290,7 +291,7 @@ type Card with
         entity.TemplateIndex <- this.TemplateIndex
         entity.CardOptionId <- this.CardOptionId
     member this.CopyToNew concept cardOption (privateTags: PrivateTagEntity seq) =
-        let entity = CardEntity()
+        let entity = CardEntity ()
         this.CopyTo entity
         entity.Concept <- concept
         entity.CardOption <- cardOption
