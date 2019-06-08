@@ -11,7 +11,6 @@ namespace CardOverflow.Entity
         public ConceptEntity()
         {
             Cards = new HashSet<CardEntity>();
-            ConceptUsers = new HashSet<ConceptUserEntity>();
         }
 
         public int Id { get; set; }
@@ -37,7 +36,5 @@ namespace CardOverflow.Entity
         public virtual UserEntity Maintainer { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
-        [InverseProperty("Concept")]
-        public virtual ICollection<ConceptUserEntity> ConceptUsers { get; set; }
     }
 }

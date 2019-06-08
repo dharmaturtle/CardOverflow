@@ -108,6 +108,7 @@ CREATE TABLE [dbo].[Card](
 	[Due] [smalldatetime] NOT NULL,
 	[TemplateIndex] [tinyint] NOT NULL,
 	[CardOptionId] [int] NOT NULL,
+	[UserId] [int] NOT NULL,
  CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -167,21 +168,6 @@ CREATE TABLE [dbo].[Concept](
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Concept_User] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Concept_User](
-	[UserId] [int] NOT NULL,
-	[ConceptId] [int] NOT NULL,
- CONSTRAINT [PK_Concept_User] PRIMARY KEY CLUSTERED 
-(
-	[UserId] ASC,
-	[ConceptId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[ConceptTemplate] ******/
 SET ANSI_NULLS ON
@@ -519,12 +505,6 @@ CREATE NONCLUSTERED INDEX [IX_Concept_MaintainerId] ON [dbo].[Concept]
 	[MaintainerId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Concept_User_ConceptId] ******/
-CREATE NONCLUSTERED INDEX [IX_Concept_User_ConceptId] ON [dbo].[Concept_User]
-(
-	[ConceptId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
 /****** Object:  Index [IX_ConceptTemplate_MaintainerId] ******/
 CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_MaintainerId] ON [dbo].[ConceptTemplate]
 (
@@ -627,6 +607,11 @@ REFERENCES [dbo].[Concept] ([Id])
 GO
 ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_Concept]
 GO
+ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_User]
+GO
 ALTER TABLE [dbo].[CardOption]  WITH CHECK ADD  CONSTRAINT [FK_CardOption_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
@@ -641,16 +626,6 @@ ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User] FOREIG
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_User]
-GO
-ALTER TABLE [dbo].[Concept_User]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User_Concept] FOREIGN KEY([ConceptId])
-REFERENCES [dbo].[Concept] ([Id])
-GO
-ALTER TABLE [dbo].[Concept_User] CHECK CONSTRAINT [FK_Concept_User_Concept]
-GO
-ALTER TABLE [dbo].[Concept_User]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User_User] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Concept_User] CHECK CONSTRAINT [FK_Concept_User_User]
 GO
 ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_Maintainer] FOREIGN KEY([MaintainerId])
 REFERENCES [dbo].[User] ([Id])

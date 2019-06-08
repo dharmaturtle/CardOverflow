@@ -26,6 +26,7 @@ namespace CardOverflow.Entity
         public DateTime Due { get; set; }
         public byte TemplateIndex { get; set; }
         public int CardOptionId { get; set; }
+        public int UserId { get; set; }
 
         [ForeignKey("CardOptionId")]
         [InverseProperty("Cards")]
@@ -33,6 +34,9 @@ namespace CardOverflow.Entity
         [ForeignKey("ConceptId")]
         [InverseProperty("Cards")]
         public virtual ConceptEntity Concept { get; set; }
+        [ForeignKey("UserId")]
+        [InverseProperty("Cards")]
+        public virtual UserEntity User { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
         [InverseProperty("Card")]
