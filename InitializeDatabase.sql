@@ -277,7 +277,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[History](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
 	[CardId] [int] NOT NULL,
 	[ScoreAndMemorizationState] [tinyint] NOT NULL,
 	[Timestamp] [smalldatetime] NOT NULL,
@@ -571,12 +570,6 @@ CREATE NONCLUSTERED INDEX [IX_History_CardId] ON [dbo].[History]
 	[CardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_History_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_History_UserId] ON [dbo].[History]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [AK_PrivateTag__UserId_Name] ******/
@@ -698,11 +691,6 @@ ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_Card] FOREIG
 REFERENCES [dbo].[Card] ([Id])
 GO
 ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_Card]
-GO
-ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_User] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_User]
 GO
 ALTER TABLE [dbo].[PrivateTag]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])

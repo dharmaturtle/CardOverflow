@@ -67,8 +67,7 @@ module Anki =
             TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
                 (revLog.Time / 1000L - 32768L |> int16),
             Timestamp =
-                DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime,
-            UserId = userId
+                DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
         )
 
     let ankiIntToBool =

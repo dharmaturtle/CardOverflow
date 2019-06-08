@@ -191,19 +191,11 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.CardId);
 
-                entity.HasIndex(e => e.UserId);
-
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.Histories)
                     .HasForeignKey(d => d.CardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_History_Card");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Histories)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_History_User");
             });
 
             modelBuilder.Entity<PrivateTagEntity>(entity =>

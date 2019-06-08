@@ -9,7 +9,6 @@ namespace CardOverflow.Entity
     public partial class HistoryEntity
     {
         public int Id { get; set; }
-        public int UserId { get; set; }
         public int CardId { get; set; }
         public byte ScoreAndMemorizationState { get; set; }
         [Column(TypeName = "smalldatetime")]
@@ -21,8 +20,5 @@ namespace CardOverflow.Entity
         [ForeignKey("CardId")]
         [InverseProperty("Histories")]
         public virtual CardEntity Card { get; set; }
-        [ForeignKey("UserId")]
-        [InverseProperty("Histories")]
-        public virtual UserEntity User { get; set; }
     }
 }
