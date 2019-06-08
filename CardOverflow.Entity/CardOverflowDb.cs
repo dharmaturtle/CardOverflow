@@ -38,7 +38,11 @@ namespace CardOverflow.Entity
         {
             modelBuilder.Entity<AcquiredCardEntity>(entity =>
             {
+                entity.HasIndex(e => e.CardId);
+
                 entity.HasIndex(e => e.CardOptionId);
+
+                entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.AcquiredCards)
@@ -61,6 +65,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptId);
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.Cards)
                     .HasForeignKey(d => d.ConceptId)
