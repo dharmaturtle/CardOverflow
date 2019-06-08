@@ -25,18 +25,16 @@ let assertHasBasicInfo ankiDb db =
     Assert.Equal(7, db.Concepts.Count())
     Assert.Equal(9, db.Cards.Count())
     Assert.Single(db.CardOptions.Where(fun db -> db.UserId = userId).ToList()) |> ignore
-    Assert.Equal(9, db.Users.First(fun x -> x.Id = userId).Cards.Count)
-    Assert.Equal(7, db.Users.First(fun x -> x.Id = userId).Cards.Select(fun x -> x.ConceptId).Distinct().Count())
+    Assert.Equal(9, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Count)
+    Assert.Equal(7, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptId).Distinct().Count())
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
         (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
     Assert.Equal<string>(
         [ "Deck:Default"; "OtherTag" ],
-        db.Cards
-            .Include(nameof <@ any<CardEntity>.PrivateTagCards @> + "." + nameof <@ any<PrivateTagCardEntity>.PrivateTag @>)
-            .Include(fun x -> x.Concept)
-            .Single(fun c -> c.Concept.Fields.Contains("mp3"))
-            .PrivateTagCards.Select(fun t -> t.PrivateTag.Name)
+        db.AcquiredCards
+            .Single(fun c -> c.Card.Concept.Fields.Contains("mp3"))
+            .PrivateTagAcquiredCards.Select(fun t -> t.PrivateTag.Name)
             |> Seq.sortBy id)
 
 [<Fact>]

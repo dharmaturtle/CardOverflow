@@ -83,8 +83,8 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId (files: FileEntity seq) =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
-            let! cardEntities, histories = load ankiDb usersTags userId
-            cardEntities |> db.Cards.AddRange
+            let! acquiredCardEntities, histories = load ankiDb usersTags userId
+            acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
             files |> db.Files.AddRange
             db.SaveChangesI ()

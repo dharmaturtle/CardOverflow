@@ -90,7 +90,7 @@ type Concept = {
     IsPublic: bool
 }
 
-type Card = {
+type AcquiredCard = {
     Id: int
     UserId: int
     ConceptId: int

@@ -40,9 +40,9 @@ type AnkiConceptWrite = {
         entity
 
 module Anki =
-    let toHistory (cardByAnkiId: Map<int64, CardOverflow.Entity.CardEntity>) userId (revLog: RevlogEntity) =
+    let toHistory (cardByAnkiId: Map<int64, CardOverflow.Entity.AcquiredCardEntity>) userId (revLog: RevlogEntity) =
         HistoryEntity(
-            Card = cardByAnkiId.[revLog.Cid],
+            AcquiredCard = cardByAnkiId.[revLog.Cid],
             EaseFactorInPermille = int16 revLog.Factor,
             IntervalNegativeIsMinutesPositiveIsDays = (
                 match revLog.Ivl with
@@ -175,7 +175,7 @@ module Anki =
         | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
-            { Card.Id = 0
+            { AcquiredCard.Id = 0
               UserId = userId
               ConceptId = 0
               MemorizationState = memorizationState

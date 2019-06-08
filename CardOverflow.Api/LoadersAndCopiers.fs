@@ -236,17 +236,17 @@ type ConceptTemplate with
         entity
 
 type QuizCard with
-    static member Load(entity: CardEntity) =
+    static member Load(entity: AcquiredCardEntity) =
         let fieldNameValueMap =
             Seq.zip
-                (entity.Concept.ConceptTemplate.Fields |> Field.GetNames)
-                (entity.Concept.Fields |> MappingTools.splitByUnitSeparator)
+                (entity.Card.Concept.ConceptTemplate.Fields |> Field.GetNames)
+                (entity.Card.Concept.Fields |> MappingTools.splitByUnitSeparator)
         let replaceFields template =
             fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
         let cardTemplate =
-            entity.Concept.ConceptTemplate.CardTemplates
+            entity.Card.Concept.ConceptTemplate.CardTemplates
             |> MappingTools.splitByRecordSeparator
-            |> List.item (int entity.TemplateIndex)
+            |> List.item (int entity.Card.TemplateIndex)
             |> CardTemplate.Load
         { Id = entity.Id
           Due = entity.Due
@@ -277,23 +277,25 @@ type Concept with
           IsPublic = entity.IsPublic
           MaintainerId = entity.MaintainerId }
 
-type Card with
-    member this.CopyTo (entity: CardEntity) =
+type AcquiredCard with
+    member this.CopyTo (entity: AcquiredCardEntity) =
         entity.Id <- this.Id
         entity.UserId <- this.UserId
-        entity.ConceptId <- this.ConceptId
         entity.MemorizationStateAndCardState <- MemorizationStateAndCardStateEnum.from this.MemorizationState this.CardState
         entity.LapseCount <- this.LapseCount
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
         entity.StepsIndex <- Option.toNullable this.StepsIndex
         entity.Due <- this.Due
-        entity.TemplateIndex <- this.TemplateIndex
         entity.CardOptionId <- this.CardOptionId
+        entity.Card <- CardEntity (
+            TemplateIndex = this.TemplateIndex,
+            ConceptId = this.ConceptId
+        )
     member this.CopyToNew concept cardOption (privateTags: PrivateTagEntity seq) =
-        let entity = CardEntity ()
+        let entity = AcquiredCardEntity ()
         this.CopyTo entity
-        entity.Concept <- concept
+        entity.Card.Concept <- concept
         entity.CardOption <- cardOption
-        entity.PrivateTagCards <- privateTags.Select(fun x -> PrivateTagCardEntity(Card = entity, PrivateTag = x)).ToList()
+        entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
         entity

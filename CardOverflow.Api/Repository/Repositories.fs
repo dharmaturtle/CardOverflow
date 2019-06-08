@@ -13,34 +13,31 @@ module CardRepository =
         db.Cards.ToList()
     
     let GetCardsForQuiz (db: CardOverflowDb) =
-        db.Cards.Include(fun x -> x.CardOption).ToList() 
+        db.AcquiredCards.Include(fun x -> x.CardOption).ToList() 
         |> Seq.map QuizCard.Load
 
     let SaveCard (db: CardOverflowDb) card =
         db.Cards.AddI card
         db.SaveChangesI ()
 
-module ConceptRepository =
-    let GetConcept (db: CardOverflowDb) userId conceptId =
-        db.Concepts.First(fun x -> x.Id = conceptId).ConceptTemplate.CardTemplates
-        |> CardTemplate.LoadMany
-        |> List.indexed
-        |> List.map (fun (i, _) -> 
-            CardEntity(
-                ConceptId = conceptId,
+    let AcquireCards (db: CardOverflowDb) userId cardIds =
+        cardIds
+        |> List.map (fun i ->
+            AcquiredCardEntity(
+                CardId = i,
                 MemorizationStateAndCardState = MemorizationStateAndCardStateEnum.NewNormal,
                 LapseCount = 0uy,
                 EaseFactorInPermille = 0s,
                 IntervalNegativeIsMinutesPositiveIsDays = 0s,
                 StepsIndex = Nullable 0uy,
                 Due = DateTime.UtcNow,
-                TemplateIndex = byte i,
                 CardOptionId = 0, // medTODO, I think each user needs a DefaultCardOptionId
                 UserId = userId
             ))
-        |> db.Cards.AddRange
+        |> db.AcquiredCards.AddRange
         db.SaveChangesI ()
 
+module ConceptRepository =
     let GetConcepts (db: CardOverflowDb) =
         db.Concepts.Include(fun x -> x.Cards).ToList()
 
