@@ -633,7 +633,7 @@ let emptyDb = {
 [<InlineData("AllDefaultTemplatesAndImageAndMp3.colpkg")>]
 let ``AnkiImporter.save saves two files``(ankiFileName) =
     let userId = 3
-    use c = new TestContainer()
+    use c = new TestContainer(ankiFileName)
     
     ankiExportsDir +/ ankiFileName
     |> AnkiImporter.loadFiles
