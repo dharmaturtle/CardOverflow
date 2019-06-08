@@ -10,8 +10,8 @@ namespace CardOverflow.Entity
     {
         public UserEntity()
         {
+            AcquiredCards = new HashSet<AcquiredCardEntity>();
             CardOptions = new HashSet<CardOptionEntity>();
-            Cards = new HashSet<CardEntity>();
             ConceptTemplateConceptTemplateDefaultUsers = new HashSet<ConceptTemplateConceptTemplateDefaultUserEntity>();
             ConceptTemplates = new HashSet<ConceptTemplateEntity>();
             Concepts = new HashSet<ConceptEntity>();
@@ -29,9 +29,9 @@ namespace CardOverflow.Entity
         public string Email { get; set; }
 
         [InverseProperty("User")]
-        public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
+        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CardEntity> Cards { get; set; }
+        public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<ConceptTemplateConceptTemplateDefaultUserEntity> ConceptTemplateConceptTemplateDefaultUsers { get; set; }
         [InverseProperty("Maintainer")]

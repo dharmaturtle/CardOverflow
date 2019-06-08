@@ -92,6 +92,28 @@ ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET QUERY_OPTIMIZER_HOTFIXES =
 GO
 USE [CardOverflow]
 GO
+/****** Object:  Table [dbo].[AcquiredCard] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AcquiredCard](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[MemorizationStateAndCardState] [tinyint] NOT NULL,
+	[LapseCount] [tinyint] NOT NULL,
+	[EaseFactorInPermille] [smallint] NOT NULL,
+	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
+	[StepsIndex] [tinyint] NULL,
+	[Due] [smalldatetime] NOT NULL,
+	[CardOptionId] [int] NOT NULL,
+	[UserId] [int] NOT NULL,
+	[CardId] [int] NOT NULL,
+ CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[Card] ******/
 SET ANSI_NULLS ON
 GO
@@ -100,15 +122,7 @@ GO
 CREATE TABLE [dbo].[Card](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[ConceptId] [int] NOT NULL,
-	[MemorizationStateAndCardState] [tinyint] NOT NULL,
-	[LapseCount] [tinyint] NOT NULL,
-	[EaseFactorInPermille] [smallint] NOT NULL,
-	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
-	[StepsIndex] [tinyint] NULL,
-	[Due] [smalldatetime] NOT NULL,
 	[TemplateIndex] [tinyint] NOT NULL,
-	[CardOptionId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
  CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -263,7 +277,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[History](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[CardId] [int] NOT NULL,
+	[AcquiredCardId] [int] NOT NULL,
 	[ScoreAndMemorizationState] [tinyint] NOT NULL,
 	[Timestamp] [smalldatetime] NOT NULL,
 	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
@@ -290,18 +304,18 @@ CREATE TABLE [dbo].[PrivateTag](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PrivateTag_Card] ******/
+/****** Object:  Table [dbo].[PrivateTag_AcquiredCard] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[PrivateTag_Card](
+CREATE TABLE [dbo].[PrivateTag_AcquiredCard](
 	[PrivateTagId] [int] NOT NULL,
-	[CardId] [int] NOT NULL,
- CONSTRAINT [PK_PrivateTag_Card] PRIMARY KEY CLUSTERED 
+	[AcquiredCardId] [int] NOT NULL,
+ CONSTRAINT [PK_PrivateTag_AcquiredCard] PRIMARY KEY CLUSTERED 
 (
 	[PrivateTagId] ASC,
-	[CardId] ASC
+	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -475,16 +489,10 @@ INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (1, N'Admin', N'admin@
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (2, N'The Collective', N'theCollective@cardoverflow.io')
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (3, N'RoboTurtle', N'roboturtle@cardoverflow.io')
 SET IDENTITY_INSERT [dbo].[User] OFF
-/****** Object:  Index [IX_Card_CardOptionId] ******/
-CREATE NONCLUSTERED INDEX [IX_Card_CardOptionId] ON [dbo].[Card]
+/****** Object:  Index [IX_AcquiredCard_CardOptionId] ******/
+CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardOptionId] ON [dbo].[AcquiredCard]
 (
 	[CardOptionId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Card_ConceptId] ******/
-CREATE NONCLUSTERED INDEX [IX_Card_ConceptId] ON [dbo].[Card]
-(
-	[ConceptId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CardOption_UserId] ******/
@@ -544,10 +552,10 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_Media__UserId_FileName] ON [dbo].[File]
 	[FileName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_History_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_History_CardId] ON [dbo].[History]
+/****** Object:  Index [IX_History_AcquiredCardId] ******/
+CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]
 (
-	[CardId] ASC
+	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
@@ -559,10 +567,10 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag__UserId_Name] ON [dbo].[PrivateT
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [AK_PrivateTag_Card] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag_Card] ON [dbo].[PrivateTag_Card]
+/****** Object:  Index [AK_PrivateTag_AcquiredCard] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag_AcquiredCard] ON [dbo].[PrivateTag_AcquiredCard]
 (
-	[CardId] ASC,
+	[AcquiredCardId] ASC,
 	[PrivateTagId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
@@ -597,20 +605,25 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_User__Email] ON [dbo].[User]
 	[Email] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_CardOption] FOREIGN KEY([CardOptionId])
+ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_Card] FOREIGN KEY([CardId])
+REFERENCES [dbo].[Card] ([Id])
+GO
+ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_Card]
+GO
+ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardOption] FOREIGN KEY([CardOptionId])
 REFERENCES [dbo].[CardOption] ([Id])
 GO
-ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_CardOption]
+ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardOption]
+GO
+ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_User] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_User]
 GO
 ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_Concept] FOREIGN KEY([ConceptId])
 REFERENCES [dbo].[Concept] ([Id])
 GO
 ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_Concept]
-GO
-ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_User]
 GO
 ALTER TABLE [dbo].[CardOption]  WITH CHECK ADD  CONSTRAINT [FK_CardOption_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
@@ -662,25 +675,25 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[File] CHECK CONSTRAINT [FK_Media_User]
 GO
-ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_Card] FOREIGN KEY([CardId])
-REFERENCES [dbo].[Card] ([Id])
+ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard] FOREIGN KEY([AcquiredCardId])
+REFERENCES [dbo].[AcquiredCard] ([Id])
 GO
-ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_Card]
+ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard]
 GO
 ALTER TABLE [dbo].[PrivateTag]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[PrivateTag] CHECK CONSTRAINT [FK_PrivateTag_User]
 GO
-ALTER TABLE [dbo].[PrivateTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_Card_Card] FOREIGN KEY([CardId])
-REFERENCES [dbo].[Card] ([Id])
+ALTER TABLE [dbo].[PrivateTag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_AcquiredCard_AcquiredCard] FOREIGN KEY([AcquiredCardId])
+REFERENCES [dbo].[AcquiredCard] ([Id])
 GO
-ALTER TABLE [dbo].[PrivateTag_Card] CHECK CONSTRAINT [FK_PrivateTag_Card_Card]
+ALTER TABLE [dbo].[PrivateTag_AcquiredCard] CHECK CONSTRAINT [FK_PrivateTag_AcquiredCard_AcquiredCard]
 GO
-ALTER TABLE [dbo].[PrivateTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_Card_PrivateTag] FOREIGN KEY([PrivateTagId])
+ALTER TABLE [dbo].[PrivateTag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_AcquiredCard_PrivateTag] FOREIGN KEY([PrivateTagId])
 REFERENCES [dbo].[PrivateTag] ([Id])
 GO
-ALTER TABLE [dbo].[PrivateTag_Card] CHECK CONSTRAINT [FK_PrivateTag_Card_PrivateTag]
+ALTER TABLE [dbo].[PrivateTag_AcquiredCard] CHECK CONSTRAINT [FK_PrivateTag_AcquiredCard_PrivateTag]
 GO
 ALTER TABLE [dbo].[PublicTag_Card]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Card_Card] FOREIGN KEY([CardId])
 REFERENCES [dbo].[Card] ([Id])
