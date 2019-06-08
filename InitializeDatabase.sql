@@ -199,10 +199,40 @@ CREATE TABLE [dbo].[ConceptTemplate](
 	[IsCloze] [bit] NOT NULL,
 	[LatexPre] [nvarchar](500) NOT NULL,
 	[LatexPost] [nvarchar](500) NOT NULL,
-	[DefaultPublicTags] [nvarchar](100) NOT NULL,
-	[DefaultPrivateTags] [nvarchar](100) NOT NULL,
-	[DefaultCardOptionId] [int] NOT NULL,
  CONSTRAINT [PK_ConceptTemplate] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User](
+	[ConceptTemplateId] [int] NOT NULL,
+	[ConceptTemplateDefaultId] [int] NOT NULL,
+	[UserId] [int] NOT NULL,
+ CONSTRAINT [PK_ConceptTemplate_ConceptTemplateDefault_User] PRIMARY KEY CLUSTERED 
+(
+	[ConceptTemplateId] ASC,
+	[ConceptTemplateDefaultId] ASC,
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[ConceptTemplateDefault] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ConceptTemplateDefault](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[DefaultCardOptionId] [int] NOT NULL,
+	[DefaultPrivateTags] [varchar](150) NOT NULL,
+	[DefaultPublicTags] [varchar](150) NOT NULL,
+ CONSTRAINT [PK_ConceptTemplateDefault] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -341,7 +371,7 @@ INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [Ne
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (1, 2, N'Basic', N'.card {
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (1, 2, N'Basic', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -357,8 +387,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'', 1)
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (2, 2, N'Basic with reversed card', N'.card {
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (2, 2, N'Basic with reversed card', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -378,8 +408,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'', 1)
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (3, 2, N'Basic with optional reversed card', N'.card {
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (3, 2, N'Basic with optional reversed card', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -399,8 +429,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'', 1)
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (4, 2, N'Basic type in the answer', N'.card {
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (4, 2, N'Basic type in the answer', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -417,8 +447,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'', 1)
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [DefaultPublicTags], [DefaultPrivateTags], [DefaultCardOptionId]) VALUES (5, 2, N'Basic Cloze', N'.card {
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (5, 2, N'Basic Cloze', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -439,7 +469,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', N'', N'', 1)
+\begin{document}', N'\end{document}')
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
@@ -469,12 +499,6 @@ GO
 CREATE NONCLUSTERED INDEX [IX_Concept_ConceptTemplateId] ON [dbo].[Concept]
 (
 	[ConceptTemplateId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_ConceptTemplate_DefaultCardOptionId] ******/
-CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_DefaultCardOptionId] ON [dbo].[ConceptTemplate]
-(
-	[DefaultCardOptionId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_ConceptTemplate_MaintainerId] ******/
@@ -592,15 +616,30 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Concept_User] CHECK CONSTRAINT [FK_Concept_User_User]
 GO
-ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_CardOption] FOREIGN KEY([DefaultCardOptionId])
-REFERENCES [dbo].[CardOption] ([Id])
-GO
-ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_CardOption]
-GO
 ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_Maintainer] FOREIGN KEY([MaintainerId])
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_Maintainer]
+GO
+ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplate] FOREIGN KEY([ConceptTemplateId])
+REFERENCES [dbo].[ConceptTemplate] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User] CHECK CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplate]
+GO
+ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefault] FOREIGN KEY([ConceptTemplateDefaultId])
+REFERENCES [dbo].[ConceptTemplateDefault] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User] CHECK CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefault]
+GO
+ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_User] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User] CHECK CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_User]
+GO
+ALTER TABLE [dbo].[ConceptTemplateDefault]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplateDefault_CardOption] FOREIGN KEY([DefaultCardOptionId])
+REFERENCES [dbo].[CardOption] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplateDefault] CHECK CONSTRAINT [FK_ConceptTemplateDefault_CardOption]
 GO
 ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])

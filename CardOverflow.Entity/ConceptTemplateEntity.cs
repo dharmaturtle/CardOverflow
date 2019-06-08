@@ -10,6 +10,7 @@ namespace CardOverflow.Entity
     {
         public ConceptTemplateEntity()
         {
+            ConceptTemplateConceptTemplateDefaultUsers = new HashSet<ConceptTemplateConceptTemplateDefaultUserEntity>();
             Concepts = new HashSet<ConceptEntity>();
         }
 
@@ -36,20 +37,12 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(500)]
         public string LatexPost { get; set; }
-        [Required]
-        [StringLength(100)]
-        public string DefaultPublicTags { get; set; }
-        [Required]
-        [StringLength(100)]
-        public string DefaultPrivateTags { get; set; }
-        public int DefaultCardOptionId { get; set; }
 
-        [ForeignKey("DefaultCardOptionId")]
-        [InverseProperty("ConceptTemplates")]
-        public virtual CardOptionEntity DefaultCardOption { get; set; }
         [ForeignKey("MaintainerId")]
         [InverseProperty("ConceptTemplates")]
         public virtual UserEntity Maintainer { get; set; }
+        [InverseProperty("ConceptTemplate")]
+        public virtual ICollection<ConceptTemplateConceptTemplateDefaultUserEntity> ConceptTemplateConceptTemplateDefaultUsers { get; set; }
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<ConceptEntity> Concepts { get; set; }
     }
