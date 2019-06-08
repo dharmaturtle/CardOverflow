@@ -183,102 +183,116 @@ type CardTemplate with
         List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
 
 type ConceptTemplate with
-   static member Load(entity: ConceptTemplateEntity) =
-       { Id = entity.Id
-         Name = entity.Name
-         Css = entity.Css
-         Fields = entity.Fields |> Field.LoadMany
-         CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
-         Modified = entity.Modified
-         IsCloze = entity.IsCloze
-         DefaultPublicTags = entity.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
-         DefaultPrivateTags = entity.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
-         DefaultCardOptionId = entity.DefaultCardOptionId
-         LatexPre = entity.LatexPre
-         LatexPost = entity.LatexPost }
-   member this.CopyTo(entity: ConceptTemplateEntity) =
-       entity.Id <- this.Id
-       entity.Name <- this.Name
-       entity.Css <- this.Css
-       entity.Fields <- this.Fields |> Field.ManyToEntityString
-       entity.CardTemplates <- this.CardTemplates |> CardTemplate.ManyToEntityString
-       entity.Modified <- this.Modified
-       entity.IsCloze <- this.IsCloze
-       entity.DefaultPublicTags <- this.DefaultPublicTags |> MappingTools.intsListToStringOfInts
-       entity.DefaultPrivateTags <- this.DefaultPrivateTags |> MappingTools.intsListToStringOfInts
-       entity.DefaultCardOptionId <- this.DefaultCardOptionId
-       entity.LatexPre <- this.LatexPre
-       entity.LatexPost <- this.LatexPost
-   member this.CopyToNew maintainer =
-       let entity = ConceptTemplateEntity()
-       this.CopyTo entity
-       entity.Maintainer <- maintainer
-       entity
-   member this.CopyToNew2 maintainerId defaultCardOption =
-       let entity = ConceptTemplateEntity()
-       this.CopyTo entity
-       entity.MaintainerId <- maintainerId
-       entity.DefaultCardOption <- defaultCardOption
-       entity
+    static member Load(entity: ConceptTemplateEntity) =
+        { Id = entity.Id
+          Name = entity.Name
+          Css = entity.Css
+          Fields = entity.Fields |> Field.LoadMany
+          CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
+          Modified = entity.Modified
+          IsCloze = entity.IsCloze
+          DefaultPublicTags = entity.ConceptTemplateConceptTemplateDefaultUsers.Single().ConceptTemplateDefault.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
+          DefaultPrivateTags = entity.ConceptTemplateConceptTemplateDefaultUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          DefaultCardOptionId = entity.ConceptTemplateConceptTemplateDefaultUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
+          LatexPre = entity.LatexPre
+          LatexPost = entity.LatexPost }
+    member this.CopyTo(entity: ConceptTemplateEntity) =
+        entity.Id <- this.Id
+        entity.Name <- this.Name
+        entity.Css <- this.Css
+        entity.Fields <- this.Fields |> Field.ManyToEntityString
+        entity.CardTemplates <- this.CardTemplates |> CardTemplate.ManyToEntityString
+        entity.Modified <- this.Modified
+        entity.IsCloze <- this.IsCloze
+        entity.LatexPre <- this.LatexPre
+        entity.LatexPost <- this.LatexPost
+    member this.CopyToNew maintainer defaultCardOption =
+        let entity = ConceptTemplateEntity()
+        ConceptTemplateConceptTemplateDefaultUserEntity(
+            User = maintainer,
+            ConceptTemplate = entity,
+            ConceptTemplateDefault = ConceptTemplateDefaultEntity(
+                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags,
+                DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+                DefaultCardOption = defaultCardOption
+            )
+        ) |> entity.ConceptTemplateConceptTemplateDefaultUsers.Add
+        this.CopyTo entity
+        entity.Maintainer <- maintainer
+        entity
+    member this.CopyToNew2 maintainerId defaultCardOption =
+        let entity = ConceptTemplateEntity()
+        ConceptTemplateConceptTemplateDefaultUserEntity(
+            UserId = maintainerId,
+            ConceptTemplate = entity,
+            ConceptTemplateDefault = ConceptTemplateDefaultEntity(
+                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags,
+                DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+                DefaultCardOption = defaultCardOption
+            )
+        ) |> entity.ConceptTemplateConceptTemplateDefaultUsers.Add
+        this.CopyTo entity
+        entity.MaintainerId <- maintainerId
+        entity
 
 type QuizCard with
-   static member Load(entity: CardEntity) =
-       let fieldNameValueMap =
-           Seq.zip
-               (entity.Concept.ConceptTemplate.Fields |> Field.GetNames)
-               (entity.Concept.Fields |> MappingTools.splitByUnitSeparator)
-       let replaceFields template =
-           fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
-       let cardTemplate =
-           entity.Concept.ConceptTemplate.CardTemplates
-           |> MappingTools.splitByRecordSeparator
-           |> List.item (int entity.TemplateIndex)
-           |> CardTemplate.Load
-       { Id = entity.Id
-         Due = entity.Due
-         Question = replaceFields cardTemplate.QuestionTemplate
-         Answer = replaceFields cardTemplate.AnswerTemplate
-         MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
-         CardState = CardState.Load entity.MemorizationStateAndCardState
-         LapseCount = entity.LapseCount
-         EaseFactor = float entity.EaseFactorInPermille / 1000.
-         Interval =
-             if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
-             then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
-             else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
-         StepsIndex =
-             if entity.StepsIndex.HasValue
-             then Some entity.StepsIndex.Value
-             else None
-         Options = CardOption.Load entity.CardOption }
+    static member Load(entity: CardEntity) =
+        let fieldNameValueMap =
+            Seq.zip
+                (entity.Concept.ConceptTemplate.Fields |> Field.GetNames)
+                (entity.Concept.Fields |> MappingTools.splitByUnitSeparator)
+        let replaceFields template =
+            fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
+        let cardTemplate =
+            entity.Concept.ConceptTemplate.CardTemplates
+            |> MappingTools.splitByRecordSeparator
+            |> List.item (int entity.TemplateIndex)
+            |> CardTemplate.Load
+        { Id = entity.Id
+          Due = entity.Due
+          Question = replaceFields cardTemplate.QuestionTemplate
+          Answer = replaceFields cardTemplate.AnswerTemplate
+          MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
+          CardState = CardState.Load entity.MemorizationStateAndCardState
+          LapseCount = entity.LapseCount
+          EaseFactor = float entity.EaseFactorInPermille / 1000.
+          Interval =
+              if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
+              then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
+              else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
+          StepsIndex =
+              if entity.StepsIndex.HasValue
+              then Some entity.StepsIndex.Value
+              else None
+          Options = CardOption.Load entity.CardOption }
 
 type Concept with
-   static member Load(entity: ConceptEntity) =
-       { Id = entity.Id
-         Title = entity.Title
-         Description = entity.Description
-         ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
-         Fields = MappingTools.splitByUnitSeparator entity.Fields
-         Modified = entity.Modified
-         IsPublic = entity.IsPublic
-         MaintainerId = entity.MaintainerId }
+    static member Load(entity: ConceptEntity) =
+        { Id = entity.Id
+          Title = entity.Title
+          Description = entity.Description
+          ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
+          Fields = MappingTools.splitByUnitSeparator entity.Fields
+          Modified = entity.Modified
+          IsPublic = entity.IsPublic
+          MaintainerId = entity.MaintainerId }
 
 type Card with
-   member this.CopyTo(entity: CardEntity) =
-       entity.Id <- this.Id
-       entity.ConceptId <- this.ConceptId
-       entity.MemorizationStateAndCardState <- MemorizationStateAndCardStateEnum.from this.MemorizationState this.CardState
-       entity.LapseCount <- this.LapseCount
-       entity.EaseFactorInPermille <- this.EaseFactorInPermille
-       entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
-       entity.StepsIndex <- Option.toNullable this.StepsIndex
-       entity.Due <- this.Due
-       entity.TemplateIndex <- this.TemplateIndex
-       entity.CardOptionId <- this.CardOptionId
-   member this.CopyToNew concept cardOption (privateTags: PrivateTagEntity seq) =
-       let entity = CardEntity()
-       this.CopyTo entity
-       entity.Concept <- concept
-       entity.CardOption <- cardOption
-       entity.PrivateTagCards <- privateTags.Select(fun x -> PrivateTagCardEntity(Card = entity, PrivateTag = x)).ToList()
-       entity
+    member this.CopyTo(entity: CardEntity) =
+        entity.Id <- this.Id
+        entity.ConceptId <- this.ConceptId
+        entity.MemorizationStateAndCardState <- MemorizationStateAndCardStateEnum.from this.MemorizationState this.CardState
+        entity.LapseCount <- this.LapseCount
+        entity.EaseFactorInPermille <- this.EaseFactorInPermille
+        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
+        entity.StepsIndex <- Option.toNullable this.StepsIndex
+        entity.Due <- this.Due
+        entity.TemplateIndex <- this.TemplateIndex
+        entity.CardOptionId <- this.CardOptionId
+    member this.CopyToNew concept cardOption (privateTags: PrivateTagEntity seq) =
+        let entity = CardEntity()
+        this.CopyTo entity
+        entity.Concept <- concept
+        entity.CardOption <- cardOption
+        entity.PrivateTagCards <- privateTags.Select(fun x -> PrivateTagCardEntity(Card = entity, PrivateTag = x)).ToList()
+        entity

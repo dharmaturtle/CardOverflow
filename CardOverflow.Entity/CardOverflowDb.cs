@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -74,6 +74,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.ConceptTemplateId);
 
+                entity.HasIndex(e => e.MaintainerId);
+
                 entity.HasOne(d => d.ConceptTemplate)
                     .WithMany(p => p.Concepts)
                     .HasForeignKey(d => d.ConceptTemplateId)
@@ -104,6 +106,10 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.ConceptTemplateId, e.ConceptTemplateDefaultId, e.UserId });
 
+                entity.HasIndex(e => e.ConceptTemplateDefaultId);
+
+                entity.HasIndex(e => e.UserId);
+
                 entity.HasOne(d => d.ConceptTemplateDefault)
                     .WithMany(p => p.ConceptTemplateConceptTemplateDefaultUsers)
                     .HasForeignKey(d => d.ConceptTemplateDefaultId)
@@ -125,6 +131,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptTemplateDefaultEntity>(entity =>
             {
+                entity.HasIndex(e => e.DefaultCardOptionId);
+
                 entity.Property(e => e.DefaultPrivateTags).IsUnicode(false);
 
                 entity.Property(e => e.DefaultPublicTags).IsUnicode(false);
@@ -139,6 +147,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<ConceptUserEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptId });
+
+                entity.HasIndex(e => e.ConceptId);
 
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.ConceptUsers)

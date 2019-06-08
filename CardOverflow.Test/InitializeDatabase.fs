@@ -174,6 +174,7 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     let admin = UserEntity(DisplayName = "Admin", Email = "admin@cardoverflow.io")
     let theCollective = UserEntity(DisplayName = "The Collective", Email = "theCollective@cardoverflow.io")
     let roboturtle = UserEntity(DisplayName = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
+    let cardOptions = defaultCardOptions.CopyToNew theCollective
     db.Database.EnsureDeleted() |> ignore
     db.Database.EnsureCreated() |> ignore
     db.Users.AddRange
@@ -181,14 +182,14 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
           theCollective
           roboturtle ]
     db.CardOptions.AddRange
-        [ defaultCardOptions.CopyToNew theCollective
+        [ cardOptions
           defaultAnkiCardOptions.CopyToNew theCollective ]
     db.ConceptTemplates.AddRange 
-        [ basicConceptTemplate.CopyToNew theCollective
-          basicWithReversedCardConceptTemplate.CopyToNew theCollective
-          basicWithOptionalReversedCardConceptTemplate.CopyToNew theCollective
-          basicTypeInAnswerConceptTemplate.CopyToNew theCollective
-          basicClozeConceptTemplate.CopyToNew theCollective ]
+        [ basicConceptTemplate.CopyToNew theCollective cardOptions
+          basicWithReversedCardConceptTemplate.CopyToNew theCollective cardOptions
+          basicWithOptionalReversedCardConceptTemplate.CopyToNew theCollective cardOptions
+          basicTypeInAnswerConceptTemplate.CopyToNew theCollective cardOptions
+          basicClozeConceptTemplate.CopyToNew theCollective cardOptions]
     db.SaveChanges()
 
 //[<Fact>]

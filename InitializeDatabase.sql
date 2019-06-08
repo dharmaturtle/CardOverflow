@@ -471,6 +471,19 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \setlength{\parindent}{0in}
 \begin{document}', N'\end{document}')
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
+INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (1, 1, 2)
+INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (2, 2, 2)
+INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (3, 3, 2)
+INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (4, 4, 2)
+INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (5, 5, 2)
+SET IDENTITY_INSERT [dbo].[ConceptTemplateDefault] ON 
+
+INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (1, 1, N'', N'')
+INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 1, N'', N'')
+INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (3, 1, N'', N'')
+INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (4, 1, N'', N'')
+INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (5, 1, N'', N'')
+SET IDENTITY_INSERT [dbo].[ConceptTemplateDefault] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (1, N'Admin', N'admin@cardoverflow.io')
@@ -501,10 +514,40 @@ CREATE NONCLUSTERED INDEX [IX_Concept_ConceptTemplateId] ON [dbo].[Concept]
 	[ConceptTemplateId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Concept_MaintainerId] ******/
+CREATE NONCLUSTERED INDEX [IX_Concept_MaintainerId] ON [dbo].[Concept]
+(
+	[MaintainerId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Concept_User_ConceptId] ******/
+CREATE NONCLUSTERED INDEX [IX_Concept_User_ConceptId] ON [dbo].[Concept_User]
+(
+	[ConceptId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_ConceptTemplate_MaintainerId] ******/
 CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_MaintainerId] ON [dbo].[ConceptTemplate]
 (
 	[MaintainerId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefaultId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefaultId] ON [dbo].[ConceptTemplate_ConceptTemplateDefault_User]
+(
+	[ConceptTemplateDefaultId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplate_ConceptTemplateDefault_User_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_ConceptTemplateDefault_User_UserId] ON [dbo].[ConceptTemplate_ConceptTemplateDefault_User]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplateDefault_DefaultCardOptionId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplateDefault_DefaultCardOptionId] ON [dbo].[ConceptTemplateDefault]
+(
+	[DefaultCardOptionId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Deck_UserId] ******/
