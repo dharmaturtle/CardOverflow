@@ -215,6 +215,23 @@ let deleteAndRecreateDb dbName =
         GO
         """
         File.ReadAllText @"..\netcoreapp3.0\Stuff\InitializeDatabase.sql"
+        // https://stackoverflow.com/questions/25845836/could-not-obtain-information-about-windows-nt-group-user
+        """
+        USE [CardOverflow]
+        GO 
+        ALTER DATABASE [CardOverflow] set TRUSTWORTHY ON; 
+        GO 
+        EXEC dbo.sp_changedbowner @loginame = N'sa', @map = false 
+        GO 
+        sp_configure 'show advanced options', 1; 
+        GO 
+        RECONFIGURE; 
+        GO 
+        sp_configure 'clr enabled', 1; 
+        GO 
+        RECONFIGURE; 
+        GO
+        """
     ]
     |> String.concat "\r\n"
     |> fun s -> s.Replace("[CardOverflow]", sprintf "[%s]" dbName)
