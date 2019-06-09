@@ -1,7 +1,8 @@
-module MappingToolsTests
+module ResultTests
 
 open CardOverflow.Api
 open Xunit
+open CardOverflow.Pure
 
 [<Fact>]
 let ``Consolidating list of Ok ints is Ok``() =
