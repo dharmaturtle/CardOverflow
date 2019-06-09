@@ -6,11 +6,23 @@ mssql-scripter --connection-string $connectionString --schema-and-data --file-pa
 
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations
 
-$csFiles = Get-ChildItem -Path "CardOverflow.Entity" *.cs
-foreach ($file in $csFiles)
-{
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
     (Get-Content $file.PSPath) |
     Foreach-Object { $_ -replace "InverseParent", "Children" } |
+    Set-Content $file.PSPath
+}
+
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\AcquiredCardEntity.cs") {
+    (Get-Content $file.PSPath) |
+    Foreach-Object { $_ -replace "byte MemorizationStateAndCardState", "MemorizationStateAndCardStateEnum MemorizationStateAndCardState" } |
+    Set-Content $file.PSPath
+}
+
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
+    (Get-Content $file.PSPath -Raw) `
+    -replace [regex] "(?m)#warning.*?\n", "" `
+    -replace [regex] "optionsBuilder.Use.*", "throw new ArgumentOutOfRangeException();" `
+    -replace [regex] "(?sm)modelBuilder\.HasAnnotation\(\`"ProductVersion.*?  +", "" |
     Set-Content $file.PSPath
 }
 

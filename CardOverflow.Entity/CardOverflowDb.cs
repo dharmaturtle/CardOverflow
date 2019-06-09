@@ -282,3 +282,4 @@ namespace CardOverflow.Entity
         partial void OnModelCreatingExt(ModelBuilder modelBuilder);
     }
 }
+
