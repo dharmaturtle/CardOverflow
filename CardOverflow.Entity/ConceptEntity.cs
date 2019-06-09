@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
         public ConceptEntity()
         {
             Cards = new HashSet<CardEntity>();
-            InverseParent = new HashSet<ConceptEntity>();
+            Children = new HashSet<ConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -37,11 +37,11 @@ namespace CardOverflow.Entity
         [InverseProperty("Concepts")]
         public virtual UserEntity Maintainer { get; set; }
         [ForeignKey("ParentId")]
-        [InverseProperty("InverseParent")]
+        [InverseProperty("Children")]
         public virtual ConceptEntity Parent { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Parent")]
-        public virtual ICollection<ConceptEntity> InverseParent { get; set; }
+        public virtual ICollection<ConceptEntity> Children { get; set; }
     }
 }

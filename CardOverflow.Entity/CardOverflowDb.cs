@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -108,7 +108,7 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_Concept_User");
 
                 entity.HasOne(d => d.Parent)
-                    .WithMany(p => p.InverseParent)
+                    .WithMany(p => p.Children)
                     .HasForeignKey(d => d.ParentId)
                     .HasConstraintName("FK_Concept_Parent");
             });

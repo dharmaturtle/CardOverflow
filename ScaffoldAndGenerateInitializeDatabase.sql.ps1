@@ -6,4 +6,12 @@ mssql-scripter --connection-string $connectionString --schema-and-data --file-pa
 
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations
 
+$csFiles = Get-ChildItem -Path "CardOverflow.Entity" *.cs
+foreach ($file in $csFiles)
+{
+    (Get-Content $file.PSPath) |
+    Foreach-Object { $_ -replace "InverseParent", "Children" } |
+    Set-Content $file.PSPath
+}
+
 Read-Host -Prompt “Press Enter to exit”

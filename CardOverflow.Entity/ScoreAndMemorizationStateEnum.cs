@@ -1,4 +1,4 @@
-﻿namespace CardOverflow.Entity {
+namespace CardOverflow.Entity {
   public enum ScoreAndMemorizationStateEnum : byte {
     AgainNew,
     HardNew,

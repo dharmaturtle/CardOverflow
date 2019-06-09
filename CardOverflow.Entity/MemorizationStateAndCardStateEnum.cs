@@ -1,4 +1,4 @@
-﻿namespace CardOverflow.Entity {
+namespace CardOverflow.Entity {
   public enum MemorizationStateAndCardStateEnum : byte {
     NewNormal,
     NewSchedulerBuried,
