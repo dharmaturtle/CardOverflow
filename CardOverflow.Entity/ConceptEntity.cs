@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
         {
             Cards = new HashSet<CardEntity>();
             Children = new HashSet<ConceptEntity>();
+            InversePrimaryChild_UseParentInstead = new HashSet<ConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -29,6 +30,7 @@ namespace CardOverflow.Entity
         public int MaintainerId { get; set; }
         public bool IsPublic { get; set; }
         public int? ParentId { get; set; }
+        public int? PrimaryChildId { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("Concepts")]
@@ -39,9 +41,14 @@ namespace CardOverflow.Entity
         [ForeignKey("ParentId")]
         [InverseProperty("Children")]
         public virtual ConceptEntity Parent { get; set; }
+        [ForeignKey("PrimaryChildId")]
+        [InverseProperty("InversePrimaryChild_UseParentInstead")]
+        public virtual ConceptEntity PrimaryChild { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Parent")]
         public virtual ICollection<ConceptEntity> Children { get; set; }
+        [InverseProperty("PrimaryChild")]
+        public virtual ICollection<ConceptEntity> InversePrimaryChild_UseParentInstead { get; set; }
     }
 }

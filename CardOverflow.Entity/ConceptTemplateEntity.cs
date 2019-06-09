@@ -12,6 +12,8 @@ namespace CardOverflow.Entity
         {
             ConceptTemplateConceptTemplateDefaultUsers = new HashSet<ConceptTemplateConceptTemplateDefaultUserEntity>();
             Concepts = new HashSet<ConceptEntity>();
+            Children = new HashSet<ConceptTemplateEntity>();
+            InversePrimaryChild_UseParentInstead = new HashSet<ConceptTemplateEntity>();
         }
 
         public int Id { get; set; }
@@ -37,13 +39,25 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(500)]
         public string LatexPost { get; set; }
+        public int? ParentId { get; set; }
+        public int? PrimaryChildId { get; set; }
 
         [ForeignKey("MaintainerId")]
         [InverseProperty("ConceptTemplates")]
         public virtual UserEntity Maintainer { get; set; }
+        [ForeignKey("ParentId")]
+        [InverseProperty("Children")]
+        public virtual ConceptTemplateEntity Parent { get; set; }
+        [ForeignKey("PrimaryChildId")]
+        [InverseProperty("InversePrimaryChild_UseParentInstead")]
+        public virtual ConceptTemplateEntity PrimaryChild { get; set; }
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<ConceptTemplateConceptTemplateDefaultUserEntity> ConceptTemplateConceptTemplateDefaultUsers { get; set; }
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<ConceptEntity> Concepts { get; set; }
+        [InverseProperty("Parent")]
+        public virtual ICollection<ConceptTemplateEntity> Children { get; set; }
+        [InverseProperty("PrimaryChild")]
+        public virtual ICollection<ConceptTemplateEntity> InversePrimaryChild_UseParentInstead { get; set; }
     }
 }

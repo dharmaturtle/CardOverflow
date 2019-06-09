@@ -26,4 +26,21 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     Set-Content $file.PSPath
 }
 
+function Replace-TextInFile {
+    Param(
+        [string]$FilePath,
+        [string]$Pattern,
+        [string]$Replacement
+    )
+
+    [System.IO.File]::WriteAllText(
+        $FilePath,
+        ([System.IO.File]::ReadAllText($FilePath) -replace $Pattern, $Replacement)
+    )
+}
+
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
+    Replace-TextInFile $file.FullName "InversePrimaryChild" "InversePrimaryChild_UseParentInstead"
+}
+
 Read-Host -Prompt “Press Enter to exit”

@@ -178,6 +178,7 @@ CREATE TABLE [dbo].[Concept](
 	[MaintainerId] [int] NOT NULL,
 	[IsPublic] [bit] NOT NULL,
 	[ParentId] [int] NULL,
+	[PrimaryChildId] [int] NULL,
  CONSTRAINT [PK_Concept] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -200,6 +201,8 @@ CREATE TABLE [dbo].[ConceptTemplate](
 	[IsCloze] [bit] NOT NULL,
 	[LatexPre] [nvarchar](500) NOT NULL,
 	[LatexPost] [nvarchar](500) NOT NULL,
+	[ParentId] [int] NULL,
+	[PrimaryChildId] [int] NULL,
  CONSTRAINT [PK_ConceptTemplate] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -371,7 +374,7 @@ INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [Ne
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (1, 2, N'Basic', N'.card {
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [ParentId], [PrimaryChildId]) VALUES (1, 2, N'Basic', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -387,8 +390,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (2, 2, N'Basic with reversed card', N'.card {
+\begin{document}', N'\end{document}', NULL, NULL)
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [ParentId], [PrimaryChildId]) VALUES (2, 2, N'Basic with reversed card', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -408,8 +411,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (3, 2, N'Basic with optional reversed card', N'.card {
+\begin{document}', N'\end{document}', NULL, NULL)
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [ParentId], [PrimaryChildId]) VALUES (3, 2, N'Basic with optional reversed card', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -429,8 +432,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (4, 2, N'Basic type in the answer', N'.card {
+\begin{document}', N'\end{document}', NULL, NULL)
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [ParentId], [PrimaryChildId]) VALUES (4, 2, N'Basic type in the answer', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -447,8 +450,8 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (5, 2, N'Basic Cloze', N'.card {
+\begin{document}', N'\end{document}', NULL, NULL)
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [CardTemplates], [Modified], [IsCloze], [LatexPre], [LatexPost], [ParentId], [PrimaryChildId]) VALUES (5, 2, N'Basic Cloze', N'.card {
     font-family: arial;
     font-size: 20px;
     text-align: center;
@@ -469,7 +472,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name], [Css], [Fields], [
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}')
+\begin{document}', N'\end{document}', NULL, NULL)
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
 INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (1, 1, 2)
 INSERT [dbo].[ConceptTemplate_ConceptTemplateDefault_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (2, 2, 2)
@@ -659,6 +662,11 @@ REFERENCES [dbo].[Concept] ([Id])
 GO
 ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_Parent]
 GO
+ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_PrimaryChild] FOREIGN KEY([PrimaryChildId])
+REFERENCES [dbo].[Concept] ([Id])
+GO
+ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_PrimaryChild]
+GO
 ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User] FOREIGN KEY([MaintainerId])
 REFERENCES [dbo].[User] ([Id])
 GO
@@ -668,6 +676,16 @@ ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTempl
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_Maintainer]
+GO
+ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_Parent] FOREIGN KEY([ParentId])
+REFERENCES [dbo].[ConceptTemplate] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_Parent]
+GO
+ALTER TABLE [dbo].[ConceptTemplate]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_PrimaryChild] FOREIGN KEY([PrimaryChildId])
+REFERENCES [dbo].[ConceptTemplate] ([Id])
+GO
+ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_PrimaryChild]
 GO
 ALTER TABLE [dbo].[ConceptTemplate_ConceptTemplateDefault_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplate] FOREIGN KEY([ConceptTemplateId])
 REFERENCES [dbo].[ConceptTemplate] ([Id])

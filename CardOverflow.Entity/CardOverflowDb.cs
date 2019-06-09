@@ -111,6 +111,11 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.Children)
                     .HasForeignKey(d => d.ParentId)
                     .HasConstraintName("FK_Concept_Parent");
+
+                entity.HasOne(d => d.PrimaryChild)
+                    .WithMany(p => p.InversePrimaryChild_UseParentInstead)
+                    .HasForeignKey(d => d.PrimaryChildId)
+                    .HasConstraintName("FK_Concept_PrimaryChild");
             });
 
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>
@@ -124,6 +129,16 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.MaintainerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ConceptTemplate_Maintainer");
+
+                entity.HasOne(d => d.Parent)
+                    .WithMany(p => p.Children)
+                    .HasForeignKey(d => d.ParentId)
+                    .HasConstraintName("FK_ConceptTemplate_Parent");
+
+                entity.HasOne(d => d.PrimaryChild)
+                    .WithMany(p => p.InversePrimaryChild_UseParentInstead)
+                    .HasForeignKey(d => d.PrimaryChildId)
+                    .HasConstraintName("FK_ConceptTemplate_PrimaryChild");
             });
 
             modelBuilder.Entity<ConceptTemplateConceptTemplateDefaultUserEntity>(entity =>
