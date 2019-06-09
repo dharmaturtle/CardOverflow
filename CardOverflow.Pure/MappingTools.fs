@@ -5,7 +5,7 @@ open System
 let delimiter = ' '
 
 let stringOfIntsToIntList (string: string) =
-    string.Split [| delimiter |] |> Seq.map int |> Seq.toList
+    string.Split [| delimiter |] |> Seq.filter ((<>) "") |> Seq.map int |> Seq.toList
 
 let intsListToStringOfInts (ints: int list) =
     ints |> List.map string |> fun x -> String.Join(delimiter, x)
