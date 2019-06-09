@@ -11,6 +11,7 @@ namespace CardOverflow.Entity
         public ConceptEntity()
         {
             Cards = new HashSet<CardEntity>();
+            InverseParent = new HashSet<ConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -27,6 +28,7 @@ namespace CardOverflow.Entity
         public DateTime Modified { get; set; }
         public int MaintainerId { get; set; }
         public bool IsPublic { get; set; }
+        public int? ParentId { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("Concepts")]
@@ -34,7 +36,12 @@ namespace CardOverflow.Entity
         [ForeignKey("MaintainerId")]
         [InverseProperty("Concepts")]
         public virtual UserEntity Maintainer { get; set; }
+        [ForeignKey("ParentId")]
+        [InverseProperty("InverseParent")]
+        public virtual ConceptEntity Parent { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
+        [InverseProperty("Parent")]
+        public virtual ICollection<ConceptEntity> InverseParent { get; set; }
     }
 }

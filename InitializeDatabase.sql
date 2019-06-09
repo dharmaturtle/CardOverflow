@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -177,6 +177,7 @@ CREATE TABLE [dbo].[Concept](
 	[Modified] [smalldatetime] NOT NULL,
 	[MaintainerId] [int] NOT NULL,
 	[IsPublic] [bit] NOT NULL,
+	[ParentId] [int] NULL,
  CONSTRAINT [PK_Concept] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -652,6 +653,11 @@ ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_ConceptTempl
 REFERENCES [dbo].[ConceptTemplate] ([Id])
 GO
 ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_ConceptTemplate]
+GO
+ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_Parent] FOREIGN KEY([ParentId])
+REFERENCES [dbo].[Concept] ([Id])
+GO
+ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_Parent]
 GO
 ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User] FOREIGN KEY([MaintainerId])
 REFERENCES [dbo].[User] ([Id])

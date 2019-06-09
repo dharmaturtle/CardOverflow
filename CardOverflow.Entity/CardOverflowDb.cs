@@ -106,6 +106,11 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.MaintainerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Concept_User");
+
+                entity.HasOne(d => d.Parent)
+                    .WithMany(p => p.InverseParent)
+                    .HasForeignKey(d => d.ParentId)
+                    .HasConstraintName("FK_Concept_Parent");
             });
 
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>
