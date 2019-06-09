@@ -1,6 +1,7 @@
 module InitializeDatabase
 
 open LoadersAndCopiers
+open Helpers
 open CardOverflow.Api
 open CardOverflow.Entity
 open CardOverflow.Pure
@@ -184,12 +185,13 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     db.CardOptions.AddRange
         [ cardOptions
           defaultAnkiCardOptions.CopyToNew theCollective ]
-    db.ConceptTemplates.AddRange 
-        [ basicConceptTemplate.CopyToNew theCollective cardOptions
-          basicWithReversedCardConceptTemplate.CopyToNew theCollective cardOptions
-          basicWithOptionalReversedCardConceptTemplate.CopyToNew theCollective cardOptions
-          basicTypeInAnswerConceptTemplate.CopyToNew theCollective cardOptions
-          basicClozeConceptTemplate.CopyToNew theCollective cardOptions]
+    [ basicConceptTemplate
+      basicWithReversedCardConceptTemplate
+      basicWithOptionalReversedCardConceptTemplate
+      basicTypeInAnswerConceptTemplate
+      basicClozeConceptTemplate ]
+    |> List.map (fun x -> x.CopyToNew theCollective cardOptions)
+    |> db.ConceptTemplates.AddRange
     db.SaveChanges()
 
 //[<Fact>]
