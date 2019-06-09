@@ -95,6 +95,10 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.MaintainerId);
 
+                entity.HasIndex(e => e.ParentId);
+
+                entity.HasIndex(e => e.PrimaryChildId);
+
                 entity.HasOne(d => d.ConceptTemplate)
                     .WithMany(p => p.Concepts)
                     .HasForeignKey(d => d.ConceptTemplateId)
@@ -121,6 +125,10 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<ConceptTemplateEntity>(entity =>
             {
                 entity.HasIndex(e => e.MaintainerId);
+
+                entity.HasIndex(e => e.ParentId);
+
+                entity.HasIndex(e => e.PrimaryChildId);
 
                 entity.Property(e => e.Css).IsUnicode(false);
 

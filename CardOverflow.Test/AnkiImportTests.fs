@@ -24,7 +24,7 @@ let assertHasBasicInfo ankiDb db =
     |> Assert.True
     Assert.Equal(7, db.Concepts.Count())
     Assert.Equal(9, db.Cards.Count())
-    Assert.Single(db.CardOptions.Where(fun db -> db.UserId = userId).ToList()) |> ignore
+    Assert.Equal(2, db.CardOptions.Count(fun db -> db.UserId = userId))
     Assert.Equal(9, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Count)
     Assert.Equal(7, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptId).Distinct().Count())
     Assert.Equal<string>(

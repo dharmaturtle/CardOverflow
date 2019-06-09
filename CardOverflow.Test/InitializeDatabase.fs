@@ -184,7 +184,8 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
           roboturtle ]
     db.CardOptions.AddRange
         [ cardOptions
-          defaultAnkiCardOptions.CopyToNew theCollective ]
+          defaultAnkiCardOptions.CopyToNew theCollective
+          defaultCardOptions.CopyToNew roboturtle ]
     [ basicConceptTemplate
       basicWithReversedCardConceptTemplate
       basicWithOptionalReversedCardConceptTemplate

@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -371,6 +371,7 @@ SET IDENTITY_INSERT [dbo].[CardOption] ON
 
 INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (1, 2, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, -29036, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
 INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (2, 2, N'Default Anki Options', N'1 10', 20, 1, 4, 2500, 0, 200, 1300, 1000, -29036, 1200, 0, N'10', 0, 1, 8, 0, 0, 0)
+INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (3, 3, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, -29036, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
@@ -535,10 +536,34 @@ CREATE NONCLUSTERED INDEX [IX_Concept_MaintainerId] ON [dbo].[Concept]
 	[MaintainerId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Concept_ParentId] ******/
+CREATE NONCLUSTERED INDEX [IX_Concept_ParentId] ON [dbo].[Concept]
+(
+	[ParentId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Concept_PrimaryChildId] ******/
+CREATE NONCLUSTERED INDEX [IX_Concept_PrimaryChildId] ON [dbo].[Concept]
+(
+	[PrimaryChildId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_ConceptTemplate_MaintainerId] ******/
 CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_MaintainerId] ON [dbo].[ConceptTemplate]
 (
 	[MaintainerId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplate_ParentId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_ParentId] ON [dbo].[ConceptTemplate]
+(
+	[ParentId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplate_PrimaryChildId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_PrimaryChildId] ON [dbo].[ConceptTemplate]
+(
+	[PrimaryChildId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefaultId] ******/
