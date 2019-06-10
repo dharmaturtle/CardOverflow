@@ -276,6 +276,19 @@ type Concept with
           Modified = entity.Modified
           IsPublic = entity.IsPublic
           MaintainerId = entity.MaintainerId }
+    member this.CopyTo (entity: ConceptEntity) =
+        entity.Id <- this.Id
+        entity.Title <- this.Title
+        entity.Description <- this.Description
+        entity.ConceptTemplateId <- this.ConceptTemplate.Id
+        entity.Fields <- MappingTools.joinByUnitSeparator this.Fields
+        entity.Modified <- this.Modified
+        entity.IsPublic <- this.IsPublic
+        entity.MaintainerId <- this.MaintainerId
+    member this.CopyToNew =
+        let entity = ConceptEntity()
+        this.CopyTo entity
+        entity
 
 type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
@@ -299,3 +312,15 @@ type AcquiredCard with
         entity.CardOption <- cardOption
         entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
         entity
+    static member NewlyAcquired userId cardOptionId (card: CardEntity) =
+        AcquiredCardEntity(
+            Card = card,
+            MemorizationStateAndCardState = MemorizationStateAndCardStateEnum.NewNormal,
+            LapseCount = 0uy,
+            EaseFactorInPermille = 0s,
+            IntervalNegativeIsMinutesPositiveIsDays = 0s,
+            StepsIndex = Nullable 0uy,
+            Due = DateTime.UtcNow,
+            CardOptionId = cardOptionId,
+            UserId = userId
+        )

@@ -1,31 +1,45 @@
 module ConceptRepositoryTests
 
+open LoadersAndCopiers
+open Helpers
 open CardOverflow.Api
+open CardOverflow.Debug
 open CardOverflow.Entity
+open Microsoft.EntityFrameworkCore
 open CardOverflow.Test
 open System
 open System.Linq
 open Xunit
+open CardOverflow.Pure
+open System.Collections.Generic
 
 [<Fact>]
-let ``ConceptRepository can add and retreive a Concept``() =
+let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept``() =
     use c = new TestContainer()
-    let title = Guid.NewGuid().ToString()
-    let concept = 
-        ConceptEntity(
-            Title = title,
-            Description = "",
-            Fields = "",
-            ConceptTemplateId = 1,
-            Modified = DateTime.UtcNow,
-            IsPublic = true,
-            MaintainerId = 3)
+    let userId = 3
+    let conceptTemplate =
+        c.Db.ConceptTemplates
+            .Include(fun x -> x.ConceptTemplateConceptTemplateDefaultUsers :> IEnumerable<_>)
+                .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
+            .First(fun x -> x.Name = "Basic")
+            |> ConceptTemplate.Load
+    let basicConcept = {
+        Id = 0
+        Title = "Title"
+        Description = "Description"
+        ConceptTemplate = conceptTemplate
+        Fields = ["Front"; "Back"]
+        Modified = DateTime.UtcNow
+        MaintainerId = userId
+        IsPublic = true
+    }
+    
+    ConceptRepository.CreateConcept c.Db basicConcept userId
 
-    ConceptRepository.AddConcept c.Db concept
-
-    ConceptRepository.GetConcepts c.Db
-    |> Seq.filter(fun x -> x.Title = title)
-    |> Assert.Single
+    Assert.SingleI <| c.Db.Concepts
+    Assert.SingleI <| c.Db.Cards
+    Assert.SingleI <| c.Db.AcquiredCards
+    Assert.SingleI <| CardRepository.GetQuizCards c.Db userId
 
 // fuck merge
 //[<Fact>]

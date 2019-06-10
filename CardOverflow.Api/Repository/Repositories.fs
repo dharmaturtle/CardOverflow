@@ -3,17 +3,18 @@ namespace CardOverflow.Api
 open System
 open LoadersAndCopiers
 open CardOverflow.Pure
+open CardOverflow.Debug
 open CardOverflow.Entity
 open Microsoft.EntityFrameworkCore
 open System.Linq
 open Helpers
 
 module CardRepository =
-    let GetCards (db: CardOverflowDb) =
-        db.Cards.ToList()
-    
-    let GetCardsForQuiz (db: CardOverflowDb) =
-        db.AcquiredCards.Include(fun x -> x.CardOption).ToList() 
+    let GetQuizCards (db: CardOverflowDb) userId =
+        db.AcquiredCards
+            .Include(fun x -> x.CardOption)
+            .Where(fun x -> x.UserId = userId)
+            .AsEnumerable()
         |> Seq.map QuizCard.Load
 
     let SaveCard (db: CardOverflowDb) card =
@@ -38,11 +39,15 @@ module CardRepository =
         db.SaveChangesI ()
 
 module ConceptRepository =
-    let GetConcepts (db: CardOverflowDb) =
-        db.Concepts.Include(fun x -> x.Cards).ToList()
-
-    let AddConcept (db: CardOverflowDb) concept =
-        db.Concepts.AddI concept
+    let CreateConcept (db: CardOverflowDb) (concept: Concept) userId =
+        let ce = concept.CopyToNew |> db.Concepts.Add
+        [0..concept.ConceptTemplate.CardTemplates.Length - 1]
+        |> Seq.map (fun x ->
+            CardEntity(
+                Concept = ce.Entity,
+                TemplateIndex = byte x))
+        |> Seq.map (AcquiredCard.NewlyAcquired userId concept.ConceptTemplate.DefaultCardOptionId)
+        |> db.AcquiredCards.AddRange
         db.SaveChangesI ()
 
     // member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
