@@ -1,5 +1,7 @@
 module LoadersAndCopiers
 
+open CardOverflow.Debug
+open MappingTools
 open CardOverflow.Entity
 open CardOverflow.Pure
 open System
@@ -103,6 +105,7 @@ type CardOption with
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
           ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
     member this.CopyTo(entity: CardOptionEntity) =
+        entity.Id <- this.Id
         entity.Name <- this.Name
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
@@ -113,7 +116,7 @@ type CardOption with
         entity.MatureCardsMaxPerDay <- this.MatureCardsMaxPerDay
         entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int16
-        entity.MatureCardsMaximumIntervalInDays <- this.MatureCardsMaximumInterval.TotalDays |> Math.Round |> int16
+        entity.MatureCardsMaximumIntervalInDays <- this.MatureCardsMaximumInterval.TotalDays |> Math.Round |> cutOffInt16
         entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000. |> Math.Round |> int16
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
         entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes

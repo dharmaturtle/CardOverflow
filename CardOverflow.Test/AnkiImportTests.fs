@@ -1,6 +1,7 @@
 module AnkiImportTests
 
 open CardOverflow.Api
+open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
 open CardOverflow.Test
@@ -8,6 +9,7 @@ open Microsoft.EntityFrameworkCore
 open Microsoft.FSharp.Quotations
 open System.Linq
 open Xunit
+open System
 
 let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
     match q with

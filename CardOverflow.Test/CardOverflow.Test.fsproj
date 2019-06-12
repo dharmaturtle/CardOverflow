@@ -44,6 +44,7 @@
     <Compile Include="ResultTests.fs" />
     <Compile Include="MappingToolsTests.fs" />
     <Compile Include="InitializeDatabase.fs" />
+    <Compile Include="LoadersAndCopiersTests.fs" />
     <Compile Include="TestDbServices.fs" />
     <Compile Include="MergeTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />

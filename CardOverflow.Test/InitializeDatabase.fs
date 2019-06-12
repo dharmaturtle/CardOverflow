@@ -3,6 +3,7 @@ module InitializeDatabase
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Api
+open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
 open ContainerExtensions
@@ -28,7 +29,7 @@ let defaultCardOptions =
       MatureCardsMaxPerDay = int16 200
       MatureCardsEaseFactorEasyBonusFactor = 1.3
       MatureCardsIntervalFactor = 1.
-      MatureCardsMaximumInterval = TimeSpan.FromDays 36500.
+      MatureCardsMaximumInterval = Int16.MaxValue |> float |> TimeSpan.FromDays
       MatureCardsHardInterval = 1.2
       MatureCardsBuryRelated = true
       LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
@@ -50,7 +51,7 @@ let defaultAnkiCardOptions =
       MatureCardsMaxPerDay = int16 200
       MatureCardsEaseFactorEasyBonusFactor = 1.3
       MatureCardsIntervalFactor = 1.
-      MatureCardsMaximumInterval = TimeSpan.FromDays 36500.
+      MatureCardsMaximumInterval = Int16.MaxValue |> float |> TimeSpan.FromDays
       MatureCardsHardInterval = 1.2
       MatureCardsBuryRelated = false
       LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]

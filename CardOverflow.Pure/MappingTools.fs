@@ -57,3 +57,8 @@ let joinByRecordSeparator =
 
 let joinByUnitSeparator =
     join '\x1f'
+
+let cutOffInt16 x =
+    if x > float Int16.MaxValue
+    then Int16.MaxValue
+    else int16 x
