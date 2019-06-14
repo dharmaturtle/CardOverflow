@@ -3,6 +3,7 @@ namespace CardOverflow.Api
 open LoadersAndCopiers
 open CardOverflow.Api
 open CardOverflow.Pure
+open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Entity.Anki
 open System
@@ -36,13 +37,21 @@ module AnkiImporter =
                 FileName = fileName,
                 Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
             )))
-    let load ankiDb usersTags (userId: int) =
+    let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) (cardOptions: CardOption seq) =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
+                let toEntity _ (cardOption: CardOption) =
+                    cardOptions
+                    |> Seq.filter (fun x -> x.AcquireEquality cardOption)
+                    |> Seq.tryHead
+                    |> function
+                    | Some x -> x
+                    | None -> cardOption
+                    |> fun co -> co.CopyToNew userId
                 Anki.parseDconf col.Dconf
-                |> Result.bind (List.map (fun (deckConfigurationId, cardOption) -> (deckConfigurationId, cardOption.CopyToNew userId)) >> Map.ofList >> Ok )
-            let! nameAndDeckConfigurationIdByDeckId =
+                |> Result.bind (Map.ofList >> Map.map toEntity >> Ok )
+            let! deckNameAndDeckConfigurationIdByDeckId =
                 Anki.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
                     let names = tuples |> List.map (fun (_, (_, name, _)) -> name)
@@ -55,12 +64,25 @@ module AnkiImporter =
                     then filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
             let cardOptionAndDeckNameByDeckId =
-                nameAndDeckConfigurationIdByDeckId
+                deckNameAndDeckConfigurationIdByDeckId
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
-                    cardOptionByDeckConfigurationId.[string deckConfigurationId], PrivateTagEntity(Name = "Deck:" + deckName, UserId = userId))
+                    cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! conceptTemplatesByModelId =
                 Anki.parseModels userId cardOptionAndDeckNameByDeckId col.Models
                 |> Result.map Map.ofSeq
+            let usersTags =
+                deckNameAndDeckConfigurationIdByDeckId
+                |> Map.overValue fst
+                |> Seq.distinct
+                |> Seq.map ((+) "Deck:")
+                |> Seq.map (fun deckTag -> 
+                    usersTags.Where(fun x -> x.Name = deckTag)
+                    |> Seq.tryHead
+                    |> function
+                    | Some e -> e
+                    | None -> PrivateTagEntity(Name = deckTag, UserId = userId))
+                |> Seq.append usersTags
+                |> Seq.toList
             let conceptsAndTagsByAnkiId =
                 Anki.parseNotes
                     conceptTemplatesByModelId
@@ -72,7 +94,7 @@ module AnkiImporter =
             let! cardEntities =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp userId)
+                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags)
                 |> Result.consolidate
             let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
             return (cardEntities |> Seq.map fst,
@@ -83,7 +105,7 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId (files: FileEntity seq) =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
-            let! acquiredCardEntities, histories = load ankiDb usersTags userId
+            let! acquiredCardEntities, histories = load ankiDb usersTags userId (db.CardOptions.Where(fun x -> x.UserId = userId).ToList() |> Seq.map CardOption.Load)
             acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
             files |> db.Files.AddRange

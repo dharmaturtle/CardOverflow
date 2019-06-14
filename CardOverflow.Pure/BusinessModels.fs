@@ -8,7 +8,13 @@ type MemorizationState = | New | Learning | Mature | Lapsed
 
 type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
 
-type CardOption = {
+type TimeSpanInt16 = private TimeSpanInt16 of TimeSpan
+module TimeSpanInt16 =
+    let fromDays days = min (float Int16.MaxValue) days |> TimeSpan.FromDays |> TimeSpanInt16
+    let value (TimeSpanInt16 t) = t
+    let totalDays t = (value t).TotalDays |> int16
+
+type CardOption = { // medTODO consider using getters and setters to guard the max/min values
     Id: int
     Name: string
     NewCardsSteps: list<TimeSpan>
@@ -20,10 +26,10 @@ type CardOption = {
     MatureCardsMaxPerDay: int16
     MatureCardsEaseFactorEasyBonusFactor: float
     MatureCardsIntervalFactor: float
-    MatureCardsMaximumInterval: TimeSpan
+    MatureCardsMaximumInterval: TimeSpanInt16
     MatureCardsHardInterval: float
     MatureCardsBuryRelated: bool
-    LapsedCardsSteps: list<TimeSpan>
+    LapsedCardsSteps: TimeSpan list
     LapsedCardsNewIntervalFactor: float // percent by which to multiply the current interval when a card goes has lapsed, called "new interval" in anki gui
     LapsedCardsMinimumInterval: TimeSpan
     LapsedCardsLeechThreshold: byte

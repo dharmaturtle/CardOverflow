@@ -39,7 +39,7 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
                 max (rawInterval * card.Options.MatureCardsIntervalFactor)
                     (TimeSpan.FromDays 1. |> previousInterval.Add)
-                |> min card.Options.MatureCardsMaximumInterval
+                |> min (TimeSpanInt16.value card.Options.MatureCardsMaximumInterval)
             let delta = time - card.Due |> max TimeSpan.Zero
             let hard = interval card.Interval (card.Interval * card.Options.MatureCardsHardInterval)
             let good = interval hard (delta * 0.5 |> (+) card.Interval |> (*) card.EaseFactor)

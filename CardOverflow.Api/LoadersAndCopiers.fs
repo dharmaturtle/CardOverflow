@@ -82,6 +82,27 @@ module MemorizationStateAndCardStateEnum =
         | (Lapsed, Suspended) -> MemorizationStateAndCardStateEnum.LapsedSuspended
 
 type CardOption with
+    member this.AcquireEquality (that: CardOption) =
+        this.Name = that.Name &&
+        this.NewCardsSteps = that.NewCardsSteps &&
+        this.NewCardsMaxPerDay = that.NewCardsMaxPerDay &&
+        this.NewCardsGraduatingInterval = that.NewCardsGraduatingInterval &&
+        this.NewCardsEasyInterval = that.NewCardsEasyInterval &&
+        this.NewCardsStartingEaseFactor = that.NewCardsStartingEaseFactor &&
+        this.NewCardsBuryRelated = that.NewCardsBuryRelated &&
+        this.MatureCardsMaxPerDay = that.MatureCardsMaxPerDay &&
+        this.MatureCardsEaseFactorEasyBonusFactor = that.MatureCardsEaseFactorEasyBonusFactor &&
+        this.MatureCardsIntervalFactor = that.MatureCardsIntervalFactor &&
+        this.MatureCardsMaximumInterval = that.MatureCardsMaximumInterval &&
+        this.MatureCardsHardInterval = that.MatureCardsHardInterval &&
+        this.MatureCardsBuryRelated = that.MatureCardsBuryRelated &&
+        this.LapsedCardsSteps = that.LapsedCardsSteps &&
+        this.LapsedCardsNewIntervalFactor = that.LapsedCardsNewIntervalFactor &&
+        this.LapsedCardsMinimumInterval = that.LapsedCardsMinimumInterval &&
+        this.LapsedCardsLeechThreshold = that.LapsedCardsLeechThreshold &&
+        this.ShowAnswerTimer = that.ShowAnswerTimer &&
+        this.AutomaticallyPlayAudio = that.AutomaticallyPlayAudio &&
+        this.ReplayQuestionAudioOnAnswer = that.ReplayQuestionAudioOnAnswer
     static member Load(entity: CardOptionEntity) =
         { Id = entity.Id
           Name = entity.Name
@@ -94,7 +115,7 @@ type CardOption with
           MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
           MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.
           MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.
-          MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpan.FromDays
+          MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpanInt16.fromDays
           MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.
           MatureCardsBuryRelated = entity.MatureCardsBuryRelated
           LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
@@ -116,7 +137,7 @@ type CardOption with
         entity.MatureCardsMaxPerDay <- this.MatureCardsMaxPerDay
         entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int16
-        entity.MatureCardsMaximumIntervalInDays <- this.MatureCardsMaximumInterval.TotalDays |> Math.Round |> cutOffInt16
+        entity.MatureCardsMaximumIntervalInDays <- TimeSpanInt16.totalDays this.MatureCardsMaximumInterval
         entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000. |> Math.Round |> int16
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
         entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes

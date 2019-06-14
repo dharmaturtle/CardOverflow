@@ -10,6 +10,7 @@ open System.Linq
 open System
 open Xunit
 open CardOverflow.Entity
+open MappingTools
 
 [<Fact>]
 let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expected``() =
@@ -25,7 +26,7 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
             MatureCardsMaxPerDay = 200s
             MatureCardsEaseFactorEasyBonusFactor = 1.3
             MatureCardsIntervalFactor = 1.
-            MatureCardsMaximumInterval = TimeSpan.FromDays 36500.
+            MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
             MatureCardsHardInterval = 1.2
             MatureCardsBuryRelated = false
             LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]

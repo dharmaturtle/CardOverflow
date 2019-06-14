@@ -1,6 +1,7 @@
 module AnkiImportTests
 
 open CardOverflow.Api
+open LoadersAndCopiers
 open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
@@ -38,6 +39,7 @@ let assertHasBasicInfo ankiDb db =
             .Single(fun c -> c.Card.Concept.Fields.Contains("mp3"))
             .PrivateTagAcquiredCards.Select(fun t -> t.PrivateTag.Name)
             |> Seq.sortBy id)
+    db.Concepts.ToList().Select(fun x -> x.Fields).ToList().Dump()
 
 [<Fact>]
 let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
@@ -69,3 +71,14 @@ let ``AnkiImporter can import RandomReviews.apkg``() =
     AnkiImportTestData.getAnki2 "RandomReviews.apkg"
     |> AnkiImporter.getSimpleAnkiDb
     |> assertHasHistory <| c.Db
+
+[<Fact>]
+let ``Importing AllDefaultTemplatesAndImageAndMp3.apkg reuses previous CardOption``() =
+    use c = new TestContainer()
+    let userId = 3
+    for _ in [1..5] do
+        AnkiImporter.save c.Db AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg userId []
+        |> Result.isOk
+        |> Assert.True
+
+    Assert.Equal(2, c.Db.CardOptions.Count(fun x -> x.UserId = userId))

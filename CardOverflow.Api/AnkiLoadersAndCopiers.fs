@@ -9,6 +9,8 @@ open LoadersAndCopiers
 open Thoth.Json.Net
 open Microsoft.FSharp.Core.Operators.Checked
 open System.Collections.Generic
+open CardOverflow.Debug
+open MappingTools
 
 type SimpleAnkiDb = {
     Cards: CardOverflow.Entity.Anki.CardEntity list
@@ -79,7 +81,7 @@ module Anki =
             | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
     let parseDconf =
         Decode.object(fun get ->
-            { Id = 0
+            { Id = 0 // medTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16
@@ -90,7 +92,7 @@ module Anki =
               MatureCardsMaxPerDay = get.Required.At ["rev"; "perDay"] Decode.int |> int16
               MatureCardsEaseFactorEasyBonusFactor = get.Required.At ["rev"; "ease4"] Decode.float
               MatureCardsIntervalFactor = get.Required.At ["rev"; "ivlFct"] Decode.float
-              MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> TimeSpan.FromDays
+              MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> TimeSpanInt16.fromDays
               MatureCardsHardInterval = get.Required.At ["rev"; "hardFactor"] Decode.float
               MatureCardsBuryRelated = get.Required.At ["rev"; "bury"] Decode.bool
               LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
@@ -109,7 +111,7 @@ module Anki =
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let parseModels userId (cardOptionAndDeckNameByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) =
+    let parseModels userId (cardOptionAndDeckNameByDeckId: Map<int, CardOptionEntity * string>) =
         Decode.object(fun get ->
             { Id = 0
               Name = get.Required.Field "name" Decode.string
@@ -165,8 +167,9 @@ module Anki =
                   IsPublic = false }.CopyToNew
             parseNotes conceptTemplatesByModelId allTags userId ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
         | _ -> conceptsAndTagsByNoteId
-    let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * PrivateTagEntity>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (ankiCard: Anki.CardEntity) =
+    let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (usersTags: PrivateTagEntity list) (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]
+        let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
         match ankiCard.Type with
         | 0L -> Ok MemorizationState.New
