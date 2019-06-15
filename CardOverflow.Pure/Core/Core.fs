@@ -24,7 +24,7 @@ module Result =
         let errors = results |> List.filter (not << isOk)
         if errors.IsEmpty
         then results |> List.map getOk |> Ok
-        else errors |> List.map getError |> String.concat "\n" |> Error
+        else errors |> List.map getError |> String.concat "\r\n" |> Error
 
 
 module Random =

@@ -35,7 +35,7 @@ let ``Consolidating list of Errors yields concatenated errors``() =
         |> List.map Error
         |> Result.consolidate
 
-    Assert.Equal("A\nB", actual |> Result.getError)
+    Assert.Equal("A\r\nB", actual |> Result.getError)
 
 [<Fact>]
 let ``Consolidating list of int and Error is not Ok``() =
@@ -53,4 +53,4 @@ let ``Consolidating list of int and Errors yields concatenated errors``() =
           Error "C" ]
         |> Result.consolidate
 
-    Assert.Equal("B\nC", actual |> Result.getError)
+    Assert.Equal("B\r\nC", actual |> Result.getError)

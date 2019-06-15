@@ -646,8 +646,29 @@ let ``AnkiImporter.save saves two files``(ankiFileName) =
     use c = new TestContainer(ankiFileName)
     
     ankiExportsDir +/ ankiFileName
-    |> AnkiImporter.loadFiles
-    |> Result.bind(AnkiImporter.save c.Db emptyDb userId)
+    |> AnkiImporter.loadFiles userId (c.Db.Files.Where(fun x -> x.UserId = userId))
+    |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
     |> Result.getOk
 
     Assert.Equal(2, c.Db.Files.Count())
+
+[<Theory>]
+[<InlineData("AllDefaultTemplatesAndImageAndMp3.apkg")>]
+[<InlineData("AllDefaultTemplatesAndImageAndMp3.colpkg")>]
+let ``Running AnkiImporter.save 2x yields error about already existing files``(ankiFileName) =
+    let userId = 3
+    use c = new TestContainer(ankiFileName)
+    
+    let actual =
+        [1..2]
+        |> List.map (fun _ ->
+            ankiExportsDir +/ ankiFileName
+            |> AnkiImporter.loadFiles userId (c.Db.Files.Where(fun x -> x.UserId = userId))
+            |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
+        )
+
+    let expected =
+        [ Ok ()
+          Error "You already have a file called 'bloop.wav'.
+You already have a file called 'favicon.ico'." ]
+    Assert.Equal<Result<unit, string> list>(expected, actual)

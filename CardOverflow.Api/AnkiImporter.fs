@@ -13,7 +13,6 @@ open FsToolkit.ErrorHandling
 open Helpers
 open System.IO
 open System.IO.Compression
-open Microsoft.EntityFrameworkCore
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -21,7 +20,7 @@ module AnkiImporter =
           Cols = db.Cols.ToList() |> List.ofSeq
           Notes = db.Notes.ToList() |> List.ofSeq
           Revlogs = db.Revlogs.ToList() |> List.ofSeq }
-    let loadFiles zipPath =
+    let loadFiles userId (previousFiles: FileEntity seq) zipPath = // lowTODO we probably don't need the whole FileEntity, just the filename and hash
         let zipFile = ZipFile.Open(zipPath, ZipArchiveMode.Read)
         use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open()
         use mediaReader = new StreamReader(mediaStream)
@@ -29,15 +28,20 @@ module AnkiImporter =
         |> Decode.keyValuePairs
         |> Decode.fromString
         <| mediaReader.ReadToEnd()
-        |> Result.map(List.map(fun (index, fileName) ->
-            use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
-            use m = new MemoryStream()
-            fileStream.CopyTo m
-            FileEntity(
-                UserId = 3,
-                FileName = fileName,
-                Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
-            )))
+        |> Result.map(List.sortBy (fun (_, fileName) -> fileName) >> List.map(fun (index, fileName) ->
+            if previousFiles.Any(fun x -> x.FileName = fileName)
+            then sprintf "You already have a file called '%s'." fileName |> Error
+            else
+                use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
+                use m = new MemoryStream()
+                fileStream.CopyTo m
+                FileEntity(
+                    UserId = userId,
+                    FileName = fileName,
+                    Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
+                ) |> Ok
+            ))
+        |> Result.bind Result.consolidate
     let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
         let col = ankiDb.Cols.Single()
         result {
@@ -77,7 +81,7 @@ module AnkiImporter =
                     | Some x -> x
                     | None -> conceptTemplate.ConceptTemplate
                     |> fun co -> co.CopyToNew (cardOptionAndDeckNameByDeckId.[conceptTemplate.DeckId] |> fst)
-                Anki.parseModels userId cardOptionAndDeckNameByDeckId col.Models
+                Anki.parseModels userId col.Models
                 |> Result.map (Map.ofSeq >> Map.map toEntity)
             let usersTags =
                 deckNameAndDeckConfigurationIdByDeckId

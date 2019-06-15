@@ -116,7 +116,7 @@ module Anki =
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let parseModels userId (cardOptionAndDeckNameByDeckId: Map<int, CardOptionEntity * string>) =
+    let parseModels userId =
         Decode.object(fun get ->
             { DeckId = get.Required.Field "did" Decode.int
               ConceptTemplate =
