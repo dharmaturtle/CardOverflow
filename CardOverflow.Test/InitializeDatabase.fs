@@ -18,7 +18,7 @@ open SimpleInjector.Lifestyles
 let importedDate = DateTime(2020, 1, 1)
 
 let defaultCardOptions =
-    { Id = 1
+    { Id = 0
       Name = "Default"
       NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
       NewCardsMaxPerDay = int16 20
@@ -40,7 +40,7 @@ let defaultCardOptions =
       AutomaticallyPlayAudio = false
       ReplayQuestionAudioOnAnswer = false }
 let defaultAnkiCardOptions =
-    { Id = 2
+    { Id = 0
       Name = "Default Anki Options"
       NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
       NewCardsMaxPerDay = int16 20
@@ -177,25 +177,27 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     let admin = UserEntity(DisplayName = "Admin", Email = "admin@cardoverflow.io")
     let theCollective = UserEntity(DisplayName = "The Collective", Email = "theCollective@cardoverflow.io")
     let roboturtle = UserEntity(DisplayName = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
-    let cardOptions = defaultCardOptions.CopyToNew theCollective
     db.Database.EnsureDeleted() |> ignore
     db.Database.EnsureCreated() |> ignore
     db.Users.AddRange
         [ admin
           theCollective
           roboturtle ]
+    db.SaveChangesI ()
+    
+    let cardOptions = defaultCardOptions.CopyToNew theCollective.Id
     db.CardOptions.AddRange
         [ cardOptions
-          defaultAnkiCardOptions.CopyToNew theCollective
-          defaultCardOptions.CopyToNew roboturtle ]
+          defaultAnkiCardOptions.CopyToNew theCollective.Id
+          defaultCardOptions.CopyToNew roboturtle.Id ]
     [ basicConceptTemplate
       basicWithReversedCardConceptTemplate
       basicWithOptionalReversedCardConceptTemplate
       basicTypeInAnswerConceptTemplate
       basicClozeConceptTemplate ]
-    |> List.map (fun x -> x.CopyToNew theCollective cardOptions)
+    |> List.map (fun x -> { x with MaintainerId = theCollective.Id }.CopyToNew cardOptions)
     |> db.ConceptTemplates.AddRange
-    db.SaveChanges()
+    db.SaveChangesI ()
 
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via EF``() =

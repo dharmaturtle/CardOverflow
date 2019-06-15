@@ -147,11 +147,6 @@ type CardOption with
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
         entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAudioOnAnswer
-    member this.CopyToNew user =
-        let entity = CardOptionEntity()
-        this.CopyTo entity
-        entity.User <- user
-        entity
     member this.CopyToNew userId =
         let entity = CardOptionEntity()
         this.CopyTo entity
@@ -240,21 +235,7 @@ type ConceptTemplate with
         entity.IsCloze <- this.IsCloze
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-    member this.CopyToNew maintainer defaultCardOption =
-        let entity = ConceptTemplateEntity()
-        ConceptTemplateConceptTemplateDefaultUserEntity(
-            User = maintainer,
-            ConceptTemplate = entity,
-            ConceptTemplateDefault = ConceptTemplateDefaultEntity(
-                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags,
-                DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
-                DefaultCardOption = defaultCardOption
-            )
-        ) |> entity.ConceptTemplateConceptTemplateDefaultUsers.Add
-        this.CopyTo entity
-        entity.Maintainer <- maintainer // medTODO SaveChanges after creating the users so you don't have to pass this around
-        entity
-    member this.CopyToNew2 defaultCardOption =
+    member this.CopyToNew defaultCardOption =
         let entity = ConceptTemplateEntity()
         ConceptTemplateConceptTemplateDefaultUserEntity(
             UserId = this.MaintainerId,

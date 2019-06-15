@@ -76,7 +76,7 @@ module AnkiImporter =
                     |> function
                     | Some x -> x
                     | None -> conceptTemplate.ConceptTemplate
-                    |> fun co -> co.CopyToNew2 (cardOptionAndDeckNameByDeckId.[conceptTemplate.DeckId] |> fst)
+                    |> fun co -> co.CopyToNew (cardOptionAndDeckNameByDeckId.[conceptTemplate.DeckId] |> fst)
                 Anki.parseModels userId cardOptionAndDeckNameByDeckId col.Models
                 |> Result.map (Map.ofSeq >> Map.map toEntity)
             let usersTags =
