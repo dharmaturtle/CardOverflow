@@ -72,12 +72,13 @@ let ``AnkiImporter can import RandomReviews.apkg``() =
     |> AnkiImporter.getSimpleAnkiDb
     |> assertHasHistory <| c.Db
 
-[<Fact>]
-let ``Importing AllDefaultTemplatesAndImageAndMp3.apkg reuses previous CardOption``() =
+[<Theory>]
+[<ClassData(typeof<AnkiImportTestData.All>)>]
+let ``Importing AnkiDb reuses previous CardOption`` simpleAnkiDb =
     use c = new TestContainer()
     let userId = 3
     for _ in [1..5] do
-        AnkiImporter.save c.Db AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg userId []
+        AnkiImporter.save c.Db simpleAnkiDb userId []
         |> Result.isOk
         |> Assert.True
 

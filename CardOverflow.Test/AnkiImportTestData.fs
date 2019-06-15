@@ -294,7 +294,6 @@ let allDefaultTemplatesAndImageAndMp3_apkg =
         Revlogs = []
     }
 
-
 let allDefaultTemplatesAndImageAndMp3_colpkg =
     {
         Cards = [
@@ -574,6 +573,17 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
             ]
         Revlogs = []
     }
+
+type All () = // https://stackoverflow.com/questions/35026735/
+    let values : seq<obj[]>  =
+        seq {
+            yield [|allDefaultTemplatesAndImageAndMp3_apkg |]
+            yield [|allDefaultTemplatesAndImageAndMp3_colpkg |]
+        }
+    interface seq<obj[]> with
+        member __.GetEnumerator () = values.GetEnumerator()
+        member __.GetEnumerator () =
+            values.GetEnumerator() :> System.Collections.IEnumerator
 
 let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
 
