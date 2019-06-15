@@ -268,6 +268,7 @@ CREATE TABLE [dbo].[File](
 	[UserId] [int] NOT NULL,
 	[FileName] [nvarchar](100) NOT NULL,
 	[Data] [varbinary](max) NOT NULL,
+	[Sha256] [binary](32) NOT NULL,
  CONSTRAINT [PK_File] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -592,11 +593,12 @@ CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_Media__UserId_FileName] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_Media__UserId_FileName] ON [dbo].[File]
+/****** Object:  Index [AK_Media__UserId_FileName_Sha256] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [AK_Media__UserId_FileName_Sha256] ON [dbo].[File]
 (
 	[UserId] ASC,
-	[FileName] ASC
+	[FileName] ASC,
+	[Sha256] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_History_AcquiredCardId] ******/

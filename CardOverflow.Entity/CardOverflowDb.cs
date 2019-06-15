@@ -204,8 +204,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<FileEntity>(entity =>
             {
-                entity.HasIndex(e => new { e.UserId, e.FileName })
-                    .HasName("AK_Media__UserId_FileName")
+                entity.HasIndex(e => new { e.UserId, e.FileName, e.Sha256 })
+                    .HasName("AK_Media__UserId_FileName_Sha256")
                     .IsUnique();
 
                 entity.HasOne(d => d.User)

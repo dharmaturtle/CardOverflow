@@ -15,6 +15,9 @@ namespace CardOverflow.Entity
         public string FileName { get; set; }
         [Required]
         public byte[] Data { get; set; }
+        [Required]
+        [MaxLength(32)]
+        public byte[] Sha256 { get; set; }
 
         [ForeignKey("UserId")]
         [InverseProperty("Files")]
