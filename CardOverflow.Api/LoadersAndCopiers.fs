@@ -207,6 +207,14 @@ type CardTemplate with
         List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
 
 type ConceptTemplate with
+    member this.AcquireEquality(that: ConceptTemplate) =
+        this.Name = that.Name &&
+        this.Css = that.Css &&
+        this.Fields = that.Fields &&
+        this.CardTemplates = that.CardTemplates &&
+        this.IsCloze = that.IsCloze &&
+        this.LatexPre = that.LatexPre &&
+        this.LatexPost = that.LatexPost
     static member Load(entity: ConceptTemplateEntity) =
         { Id = entity.Id
           MaintainerId = entity.MaintainerId

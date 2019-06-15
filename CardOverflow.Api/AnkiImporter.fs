@@ -13,6 +13,7 @@ open FsToolkit.ErrorHandling
 open Helpers
 open System.IO
 open System.IO.Compression
+open Microsoft.EntityFrameworkCore
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -37,7 +38,7 @@ module AnkiImporter =
                 FileName = fileName,
                 Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
             )))
-    let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) (cardOptions: CardOption seq) =
+    let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -50,7 +51,7 @@ module AnkiImporter =
                     | None -> cardOption
                     |> fun co -> co.CopyToNew userId
                 Anki.parseCardOptions col.Dconf
-                |> Result.bind (Map.ofList >> Map.map toEntity >> Ok )
+                |> Result.map (Map.ofList >> Map.map toEntity)
             let! deckNameAndDeckConfigurationIdByDeckId =
                 Anki.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
@@ -68,8 +69,16 @@ module AnkiImporter =
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
                     cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! conceptTemplatesByModelId =
+                let toEntity _ (conceptTemplate: AnkiConceptTemplate) =
+                    conceptTemplates
+                    |> Seq.filter (fun x -> x.AcquireEquality conceptTemplate.ConceptTemplate)
+                    |> Seq.tryHead
+                    |> function
+                    | Some x -> x
+                    | None -> conceptTemplate.ConceptTemplate
+                    |> fun co -> co.CopyToNew2 (cardOptionAndDeckNameByDeckId.[conceptTemplate.DeckId] |> fst)
                 Anki.parseModels userId cardOptionAndDeckNameByDeckId col.Models
-                |> Result.map Map.ofSeq
+                |> Result.map (Map.ofSeq >> Map.map toEntity)
             let usersTags =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.overValue fst
@@ -105,7 +114,20 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId (files: FileEntity seq) =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
-            let! acquiredCardEntities, histories = load ankiDb usersTags userId (db.CardOptions.Where(fun x -> x.UserId = userId).ToList() |> Seq.map CardOption.Load)
+            let! acquiredCardEntities, histories =
+                load
+                    ankiDb
+                    usersTags
+                    userId
+                    (db.CardOptions
+                        .Where(fun x -> x.UserId = userId)
+                        .ToList()
+                        |> Seq.map CardOption.Load)
+                    (db.ConceptTemplateConceptTemplateDefaultUsers
+                        .Where(fun x -> x.UserId = userId)
+                        .Select(fun x -> x.ConceptTemplate)
+                        .ToList()
+                        |> Seq.map ConceptTemplate.Load)
             acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
             files |> db.Files.AddRange

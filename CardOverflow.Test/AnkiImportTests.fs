@@ -30,6 +30,7 @@ let assertHasBasicInfo ankiDb db =
     Assert.Equal(2, db.CardOptions.Count(fun db -> db.UserId = userId))
     Assert.Equal(9, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Count)
     Assert.Equal(7, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptId).Distinct().Count())
+    Assert.Equal(5, db.ConceptTemplateConceptTemplateDefaultUsers.Where(fun x -> x.UserId = userId).Count())
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
         (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
@@ -74,7 +75,7 @@ let ``AnkiImporter can import RandomReviews.apkg``() =
 
 [<Theory>]
 [<ClassData(typeof<AnkiImportTestData.All>)>]
-let ``Importing AnkiDb reuses previous CardOption`` simpleAnkiDb =
+let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemplates`` simpleAnkiDb =
     use c = new TestContainer()
     let userId = 3
     for _ in [1..5] do
@@ -83,3 +84,5 @@ let ``Importing AnkiDb reuses previous CardOption`` simpleAnkiDb =
         |> Assert.True
 
     Assert.Equal(2, c.Db.CardOptions.Count(fun x -> x.UserId = userId))
+    Assert.Equal(4, c.Db.PrivateTags.Count(fun x -> x.UserId = userId))
+    Assert.Equal(5, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = userId))

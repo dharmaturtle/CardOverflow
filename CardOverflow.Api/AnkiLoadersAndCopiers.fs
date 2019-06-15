@@ -19,6 +19,11 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
+type AnkiConceptTemplate = {
+    ConceptTemplate: ConceptTemplate
+    DeckId: int
+}
+
 type AnkiConceptWrite = {
     Title: string
     Description: string
@@ -113,36 +118,39 @@ module Anki =
         |> Decode.fromString
     let parseModels userId (cardOptionAndDeckNameByDeckId: Map<int, CardOptionEntity * string>) =
         Decode.object(fun get ->
-            { Id = 0
-              MaintainerId = userId
-              Name = get.Required.Field "name" Decode.string
-              Css = get.Required.Field "css" Decode.string
-              Fields =
-                get.Required.Field "flds" (Decode.object(fun get ->
-                    { Name = get.Required.Field "name" Decode.string
-                      Font = get.Required.Field "font" Decode.string
-                      FontSize = get.Required.Field "size" Decode.int |> byte
-                      IsRightToLeft = get.Required.Field "rtl" Decode.bool
-                      Ordinal = get.Required.Field "ord" Decode.int |> byte
-                      IsSticky = get.Required.Field "sticky" Decode.bool })
-                    |> Decode.list )
-              CardTemplates =
-                get.Required.Field "tmpls" (Decode.object(fun g ->
-                    { Name = g.Required.Field "name" Decode.string
-                      QuestionTemplate = g.Required.Field "qfmt" Decode.string
-                      AnswerTemplate = g.Required.Field "afmt" Decode.string
-                      ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
-                      ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
-                      Ordinal = g.Required.Field "ord" Decode.int |> byte })
-                      |> Decode.list )
-              Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
-              IsCloze = get.Required.Field "type" ankiIntToBool
-              DefaultPublicTags = []
-              DefaultPrivateTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
-              DefaultCardOptionId = 0
-              LatexPre = get.Required.Field "latexPre" Decode.string
-              LatexPost = get.Required.Field "latexPost" Decode.string }
-                .CopyToNew2 (cardOptionAndDeckNameByDeckId.[get.Required.Field "did" Decode.int] |> fst))
+            { DeckId = get.Required.Field "did" Decode.int
+              ConceptTemplate =
+                { Id = 0
+                  MaintainerId = userId
+                  Name = get.Required.Field "name" Decode.string
+                  Css = get.Required.Field "css" Decode.string
+                  Fields =
+                    get.Required.Field "flds" (Decode.object(fun get ->
+                        { Name = get.Required.Field "name" Decode.string
+                          Font = get.Required.Field "font" Decode.string
+                          FontSize = get.Required.Field "size" Decode.int |> byte
+                          IsRightToLeft = get.Required.Field "rtl" Decode.bool
+                          Ordinal = get.Required.Field "ord" Decode.int |> byte
+                          IsSticky = get.Required.Field "sticky" Decode.bool })
+                        |> Decode.list )
+                  CardTemplates =
+                    get.Required.Field "tmpls" (Decode.object(fun g ->
+                        { Name = g.Required.Field "name" Decode.string
+                          QuestionTemplate = g.Required.Field "qfmt" Decode.string
+                          AnswerTemplate = g.Required.Field "afmt" Decode.string
+                          ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
+                          ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
+                          Ordinal = g.Required.Field "ord" Decode.int |> byte })
+                          |> Decode.list )
+                  Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
+                  IsCloze = get.Required.Field "type" ankiIntToBool
+                  DefaultPublicTags = []
+                  DefaultPrivateTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
+                  DefaultCardOptionId = 0
+                  LatexPre = get.Required.Field "latexPre" Decode.string
+                  LatexPost = get.Required.Field "latexPost" Decode.string
+                }
+            })
         |> Decode.keyValuePairs
         |> Decode.fromString
     let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsAndTagsByNoteId = // medTODO use tail recursion
