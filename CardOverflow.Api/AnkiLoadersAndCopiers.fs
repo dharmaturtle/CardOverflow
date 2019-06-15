@@ -114,6 +114,7 @@ module Anki =
     let parseModels userId (cardOptionAndDeckNameByDeckId: Map<int, CardOptionEntity * string>) =
         Decode.object(fun get ->
             { Id = 0
+              MaintainerId = userId
               Name = get.Required.Field "name" Decode.string
               Css = get.Required.Field "css" Decode.string
               Fields =
@@ -141,9 +142,7 @@ module Anki =
               DefaultCardOptionId = 0
               LatexPre = get.Required.Field "latexPre" Decode.string
               LatexPost = get.Required.Field "latexPost" Decode.string }
-                .CopyToNew2
-                    userId
-                    (cardOptionAndDeckNameByDeckId.[get.Required.Field "did" Decode.int] |> fst))
+                .CopyToNew2 (cardOptionAndDeckNameByDeckId.[get.Required.Field "did" Decode.int] |> fst))
         |> Decode.keyValuePairs
         |> Decode.fromString
     let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsAndTagsByNoteId = // medTODO use tail recursion

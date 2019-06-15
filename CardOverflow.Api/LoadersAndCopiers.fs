@@ -209,6 +209,7 @@ type CardTemplate with
 type ConceptTemplate with
     static member Load(entity: ConceptTemplateEntity) =
         { Id = entity.Id
+          MaintainerId = entity.MaintainerId
           Name = entity.Name
           Css = entity.Css
           Fields = entity.Fields |> Field.LoadMany
@@ -222,6 +223,7 @@ type ConceptTemplate with
           LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
         entity.Id <- this.Id
+        entity.MaintainerId <- this.MaintainerId
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- this.Fields |> Field.ManyToEntityString
@@ -242,12 +244,12 @@ type ConceptTemplate with
             )
         ) |> entity.ConceptTemplateConceptTemplateDefaultUsers.Add
         this.CopyTo entity
-        entity.Maintainer <- maintainer
+        entity.Maintainer <- maintainer // medTODO SaveChanges after creating the users so you don't have to pass this around
         entity
-    member this.CopyToNew2 maintainerId defaultCardOption =
+    member this.CopyToNew2 defaultCardOption =
         let entity = ConceptTemplateEntity()
         ConceptTemplateConceptTemplateDefaultUserEntity(
-            UserId = maintainerId,
+            UserId = this.MaintainerId,
             ConceptTemplate = entity,
             ConceptTemplateDefault = ConceptTemplateDefaultEntity(
                 DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags,
@@ -256,7 +258,6 @@ type ConceptTemplate with
             )
         ) |> entity.ConceptTemplateConceptTemplateDefaultUsers.Add
         this.CopyTo entity
-        entity.MaintainerId <- maintainerId
         entity
 
 type QuizCard with

@@ -78,6 +78,7 @@ let basicFrontBackCardTemplate =
       ShortAnswerTemplate = "" }
 let basicConceptTemplate =
     { Id = 0
+      MaintainerId = 0
       Name = "Basic"
       Css = ".card {
     font-family: arial;

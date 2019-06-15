@@ -58,6 +58,7 @@ type CardTemplate = {
 
 type ConceptTemplate = {
     Id: int
+    MaintainerId: int
     Name: string
     Css: string
     Fields: Field list
