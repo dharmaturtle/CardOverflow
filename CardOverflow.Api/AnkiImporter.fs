@@ -49,7 +49,7 @@ module AnkiImporter =
                     | Some x -> x
                     | None -> cardOption
                     |> fun co -> co.CopyToNew userId
-                Anki.parseDconf col.Dconf
+                Anki.parseCardOptions col.Dconf
                 |> Result.bind (Map.ofList >> Map.map toEntity >> Ok )
             let! deckNameAndDeckConfigurationIdByDeckId =
                 Anki.parseDecks col.Decks

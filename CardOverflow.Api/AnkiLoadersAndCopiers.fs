@@ -79,7 +79,7 @@ module Anki =
             | 0 -> Decode.succeed false
             | 1 -> Decode.succeed true
             | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
-    let parseDconf =
+    let parseCardOptions =
         Decode.object(fun get ->
             { Id = 0 // medTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string

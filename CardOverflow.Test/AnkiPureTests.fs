@@ -39,9 +39,9 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
         }
     let col = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg.Cols.Head
 
-    let dconf = Anki.parseDconf col.Dconf
+    let cardOptions = Anki.parseCardOptions col.Dconf
     
-    dconf |> Result.isOk |> Assert.True
-    let id, actual = Result.getOk dconf |> Assert.Single
+    cardOptions |> Result.isOk |> Assert.True
+    let id, actual = Result.getOk cardOptions |> Assert.Single
     Assert.Equal("1", id)
     Assert.Equal(expected, actual)
