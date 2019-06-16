@@ -56,24 +56,17 @@ let assertHasHistory ankiDb db =
     |> Assert.True
     Assert.NotNull(db.Histories.FirstOrDefault())
 
-[<Fact>]
-let ``AnkiImporter can import RandomReviews.colpkg``() =
-    use c = new TestContainer()
-    AnkiImportTestData.getAnkiDb "RandomReviews.colpkg"
-    |> AnkiImporter.getSimpleAnkiDb
-    |> assertHasHistory <| c.Db
+type AllRandomReviews () =
+    inherit XunitClassDataBase
+        ([  [|"RandomReviews.colpkg" |]
+            [|"RandomReviews-21.colpkg" |]
+            [|"RandomReviews.apkg" |] ])
 
-[<Fact>]
-let ``AnkiImporter can import RandomReviews-21.colpkg``() =
-    use c = new TestContainer()
-    AnkiImportTestData.getAnkiDb "RandomReviews-21.colpkg"
-    |> AnkiImporter.getSimpleAnkiDb
-    |> assertHasHistory <| c.Db
-
-[<Fact>]
-let ``AnkiImporter can import RandomReviews.apkg``() =
-    use c = new TestContainer()
-    AnkiImportTestData.getAnkiDb "RandomReviews.apkg"
+[<Theory>]
+[<ClassData(typeof<AllRandomReviews>)>]
+let ``AnkiImporter can import RandomReviews`` randomReviews =
+    use c = new TestContainer(randomReviews)
+    AnkiImportTestData.getAnkiDb randomReviews
     |> AnkiImporter.getSimpleAnkiDb
     |> assertHasHistory <| c.Db
 
