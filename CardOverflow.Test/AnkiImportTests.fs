@@ -52,6 +52,11 @@ let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
     use c = new TestContainer()
     AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| c.Db
 
+[<Fact>]
+let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3-21.colpkg``() =
+    use c = new TestContainer()
+    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_21_colpkg |> assertHasBasicInfo <| c.Db
+
 let assertHasHistory ankiDb db =
     let userId = 3
     AnkiImporter.save db ankiDb userId []
