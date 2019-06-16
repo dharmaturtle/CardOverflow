@@ -30,6 +30,9 @@
     <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3-21.colpkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="AnkiExports\RandomReviews.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
