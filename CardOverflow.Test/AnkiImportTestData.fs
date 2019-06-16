@@ -995,7 +995,7 @@ let ``AnkiImporter.save saves two files`` ankiFileName _ =
     use c = new TestContainer(ankiFileName)
     
     ankiExportsDir +/ ankiFileName
-    |> AnkiImporter.loadFiles userId (c.Db.Files.Where(fun x -> x.UserId = userId))
+    |> AnkiImporter.loadFiles (c.Db.Files)
     |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
     |> Result.getOk
 
@@ -1011,7 +1011,7 @@ let ``Running AnkiImporter.save 2x yields errors due to duplicate filenames`` an
         [1..2]
         |> List.map (fun _ ->
             ankiExportsDir +/ ankiFileName
-            |> AnkiImporter.loadFiles userId (c.Db.Files.Where(fun x -> x.UserId = userId))
+            |> AnkiImporter.loadFiles (c.Db.Files)
             |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
         )
 
