@@ -947,11 +947,11 @@ let allDefaultTemplatesAndImageAndMp3_colpkg =
         Revlogs = []
     }
 
-type All () =
+type AllDefaultTemplatesAndImageAndMp3 () =
     inherit XunitClassDataBase
-        ([  [|allDefaultTemplatesAndImageAndMp3_apkg |]
-            [|allDefaultTemplatesAndImageAndMp3_colpkg |]
-            [|allDefaultTemplatesAndImageAndMp3_21_colpkg |] ])
+        ([  [|"AllDefaultTemplatesAndImageAndMp3-21.colpkg" ; allDefaultTemplatesAndImageAndMp3_21_colpkg |]
+            [|"AllDefaultTemplatesAndImageAndMp3.colpkg" ; allDefaultTemplatesAndImageAndMp3_colpkg |]
+            [|"AllDefaultTemplatesAndImageAndMp3.apkg" ; allDefaultTemplatesAndImageAndMp3_apkg |] ])
 
 let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
 
@@ -968,44 +968,18 @@ let serialize x =
                                      LineBreakChar = "",
                                      IndentSize = 0))
 
-[<Fact>]
-let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_21_colpkg matches AllDefaultTemplatesAndImageAndMp3-21.colpkg``() =
+[<Theory>]
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``Actual AllDefaultTemplatesAndImageAndMp3 matches mock`` fileName mock =
     let actualDb = 
         AnkiImporter.getSimpleAnkiDb
-        |> using(getAnkiDb "AllDefaultTemplatesAndImageAndMp3-21.colpkg")
+        |> using(getAnkiDb fileName)
     
-    let mock = allDefaultTemplatesAndImageAndMp3_21_colpkg
-
     serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
     serialize actualDb.Cols = serialize mock.Cols |> Assert.True
     serialize actualDb.Notes = serialize mock.Notes |> Assert.True
     serialize actualDb.Cards = serialize mock.Cards |> Assert.True
 
-[<Fact>]
-let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg matches AllDefaultTemplatesAndImageAndMp3.colpkg``() =
-    let actualDb = 
-        AnkiImporter.getSimpleAnkiDb
-        |> using(getAnkiDb "AllDefaultTemplatesAndImageAndMp3.colpkg")
-    
-    let mock = allDefaultTemplatesAndImageAndMp3_colpkg
-
-    serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
-    serialize actualDb.Cols = serialize mock.Cols |> Assert.True
-    serialize actualDb.Notes = serialize mock.Notes |> Assert.True
-    serialize actualDb.Cards = serialize mock.Cards |> Assert.True
-
-[<Fact>]
-let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg matches AllDefaultTemplatesAndImageAndMp3.apkg``() =
-    let actualDb =
-        AnkiImporter.getSimpleAnkiDb
-        |> using(getAnkiDb "AllDefaultTemplatesAndImageAndMp3.apkg")
-    
-    let mock = allDefaultTemplatesAndImageAndMp3_apkg
-
-    serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
-    serialize actualDb.Cols = serialize mock.Cols |> Assert.True
-    serialize actualDb.Notes = serialize mock.Notes |> Assert.True
-    serialize actualDb.Cards = serialize mock.Cards |> Assert.True
 
 let emptyDb = {
         Cards = []
@@ -1015,10 +989,8 @@ let emptyDb = {
     }
 
 [<Theory>]
-[<InlineData("AllDefaultTemplatesAndImageAndMp3.apkg")>]
-[<InlineData("AllDefaultTemplatesAndImageAndMp3.colpkg")>]
-[<InlineData("AllDefaultTemplatesAndImageAndMp3-21.colpkg")>]
-let ``AnkiImporter.save saves two files``(ankiFileName) =
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``AnkiImporter.save saves two files`` ankiFileName _ =
     let userId = 3
     use c = new TestContainer(ankiFileName)
     
@@ -1030,10 +1002,8 @@ let ``AnkiImporter.save saves two files``(ankiFileName) =
     Assert.Equal(4, c.Db.Files.Count()) // medTODO use hash to dedupe png.png; this value really should be 3
 
 [<Theory>]
-[<InlineData("AllDefaultTemplatesAndImageAndMp3.apkg")>]
-[<InlineData("AllDefaultTemplatesAndImageAndMp3.colpkg")>]
-[<InlineData("AllDefaultTemplatesAndImageAndMp3-21.colpkg")>]
-let ``Running AnkiImporter.save 2x yields errors due to duplicate filenames``(ankiFileName) =
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``Running AnkiImporter.save 2x yields errors due to duplicate filenames`` ankiFileName _ =
     let userId = 3
     use c = new TestContainer(ankiFileName)
     

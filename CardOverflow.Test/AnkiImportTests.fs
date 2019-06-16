@@ -11,6 +11,7 @@ open Microsoft.FSharp.Quotations
 open System.Linq
 open Xunit
 open System
+open AnkiImportTestData
 
 let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
     match q with
@@ -43,8 +44,8 @@ let assertHasBasicInfo ankiDb db =
     db.Concepts.ToList().Select(fun x -> x.Fields).ToList().Dump() // medTODO dedupe png1/2
 
 [<Theory>]
-[<ClassData(typeof<AnkiImportTestData.All>)>]
-let ``AnkiImporter can import AnkiImportTestData.All`` ankiDb =
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb =
     use c = new TestContainer()
     ankiDb |> assertHasBasicInfo <| c.Db
 
@@ -77,8 +78,8 @@ let ``AnkiImporter can import RandomReviews.apkg``() =
     |> assertHasHistory <| c.Db
 
 [<Theory>]
-[<ClassData(typeof<AnkiImportTestData.All>)>]
-let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemplates`` simpleAnkiDb =
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemplates`` _ simpleAnkiDb =
     use c = new TestContainer()
     let userId = 3
     for _ in [1..5] do
