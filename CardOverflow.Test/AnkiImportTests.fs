@@ -25,12 +25,12 @@ let assertHasBasicInfo ankiDb db =
     AnkiImporter.save db ankiDb userId []
     |> Result.isOk
     |> Assert.True
-    Assert.Equal(7, db.Concepts.Count())
-    Assert.Equal(9, db.Cards.Count())
+    Assert.Equal(8, db.Concepts.Count())
+    Assert.Equal(10, db.Cards.Count())
+    Assert.Equal(10, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Count)
+    Assert.Equal(8, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptId).Distinct().Count())
     Assert.Equal(2, db.CardOptions.Count(fun db -> db.UserId = userId))
-    Assert.Equal(9, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Count)
-    Assert.Equal(7, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptId).Distinct().Count())
-    Assert.Equal(5, db.ConceptTemplateConceptTemplateDefaultUsers.Where(fun x -> x.UserId = userId).Count())
+    Assert.Equal(5, db.ConceptTemplateConceptTemplateDefaultUsers.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
         (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
