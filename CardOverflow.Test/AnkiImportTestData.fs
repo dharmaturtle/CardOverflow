@@ -955,18 +955,13 @@ type All () =
 
 let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
 
-let unzipTest ankiFileName entry =
+let getAnkiDb ankiFileName =
     let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName // Need to isolate ankiDb otherwise tests run in parallel fail
     if Directory.Exists unzipDir
     then Directory.Delete(unzipDir, true)
     Directory.CreateDirectory unzipDir |> ignore
-    Anki.unzipToRandom (ankiExportsDir +/ ankiFileName) entry unzipDir
-
-let getAnki2 ankiFileName =
-    unzipTest ankiFileName "collection.anki2" |> AnkiDbFactory.Create
-
-let getAnki21 ankiFileName =
-    unzipTest ankiFileName "collection.anki21" |> AnkiDbFactory.Create
+    Anki.unzipCollectionToRandom (ankiExportsDir +/ ankiFileName) unzipDir
+    |> AnkiDbFactory.Create
 
 let serialize x =
     ObjectDumper.Dump(x, DumpOptions(DumpStyle = DumpStyle.CSharp,
@@ -977,7 +972,7 @@ let serialize x =
 let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_21_colpkg matches AllDefaultTemplatesAndImageAndMp3-21.colpkg``() =
     let actualDb = 
         AnkiImporter.getSimpleAnkiDb
-        |> using(getAnki21 "AllDefaultTemplatesAndImageAndMp3-21.colpkg")
+        |> using(getAnkiDb "AllDefaultTemplatesAndImageAndMp3-21.colpkg")
     
     let mock = allDefaultTemplatesAndImageAndMp3_21_colpkg
 
@@ -990,7 +985,7 @@ let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_21_colpkg matches All
 let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg matches AllDefaultTemplatesAndImageAndMp3.colpkg``() =
     let actualDb = 
         AnkiImporter.getSimpleAnkiDb
-        |> using(getAnki2 "AllDefaultTemplatesAndImageAndMp3.colpkg")
+        |> using(getAnkiDb "AllDefaultTemplatesAndImageAndMp3.colpkg")
     
     let mock = allDefaultTemplatesAndImageAndMp3_colpkg
 
@@ -1003,7 +998,7 @@ let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg matches AllDef
 let ``AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg matches AllDefaultTemplatesAndImageAndMp3.apkg``() =
     let actualDb =
         AnkiImporter.getSimpleAnkiDb
-        |> using(getAnki2 "AllDefaultTemplatesAndImageAndMp3.apkg")
+        |> using(getAnkiDb "AllDefaultTemplatesAndImageAndMp3.apkg")
     
     let mock = allDefaultTemplatesAndImageAndMp3_apkg
 

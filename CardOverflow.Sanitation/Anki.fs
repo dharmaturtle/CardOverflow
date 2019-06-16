@@ -10,8 +10,12 @@ open CardOverflow.Pure
 open CardOverflow.Api
 
 module Anki =
-    let unzipToRandom zipFile entry destination =
-        let zippedEntry = ZipFile.Open(zipFile, ZipArchiveMode.Read).Entries.First(fun x -> x.Name = entry)
+    let unzipCollectionToRandom zipFile destination =
+        let entries = ZipFile.Open(zipFile, ZipArchiveMode.Read).Entries
+        let collection =
+            if entries.Any(fun x -> x.Name = "collection.anki21")
+            then entries.First(fun x -> x.Name = "collection.anki21")
+            else entries.First(fun x -> x.Name = "collection.anki2")
         let destination = destination +/ Random.cryptographicString 64
-        destination |> zippedEntry.ExtractToFile
+        destination |> collection.ExtractToFile
         destination

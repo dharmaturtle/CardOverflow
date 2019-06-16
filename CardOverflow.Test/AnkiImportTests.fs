@@ -58,14 +58,21 @@ let assertHasHistory ankiDb db =
 [<Fact>]
 let ``AnkiImporter can import RandomReviews.colpkg``() =
     use c = new TestContainer()
-    AnkiImportTestData.getAnki2 "RandomReviews.colpkg"
+    AnkiImportTestData.getAnkiDb "RandomReviews.colpkg"
+    |> AnkiImporter.getSimpleAnkiDb
+    |> assertHasHistory <| c.Db
+
+[<Fact>]
+let ``AnkiImporter can import RandomReviews-21.colpkg``() =
+    use c = new TestContainer()
+    AnkiImportTestData.getAnkiDb "RandomReviews-21.colpkg"
     |> AnkiImporter.getSimpleAnkiDb
     |> assertHasHistory <| c.Db
 
 [<Fact>]
 let ``AnkiImporter can import RandomReviews.apkg``() =
     use c = new TestContainer()
-    AnkiImportTestData.getAnki2 "RandomReviews.apkg"
+    AnkiImportTestData.getAnkiDb "RandomReviews.apkg"
     |> AnkiImporter.getSimpleAnkiDb
     |> assertHasHistory <| c.Db
 
