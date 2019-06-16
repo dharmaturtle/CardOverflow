@@ -40,22 +40,13 @@ let assertHasBasicInfo ankiDb db =
             .Single(fun c -> c.Card.Concept.Fields.Contains("mp3"))
             .PrivateTagAcquiredCards.Select(fun t -> t.PrivateTag.Name)
             |> Seq.sortBy id)
-    db.Concepts.ToList().Select(fun x -> x.Fields).ToList().Dump()
+    db.Concepts.ToList().Select(fun x -> x.Fields).ToList().Dump() // medTODO dedupe png1/2
 
-[<Fact>]
-let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.apkg``() =
+[<Theory>]
+[<ClassData(typeof<AnkiImportTestData.All>)>]
+let ``AnkiImporter can import AnkiImportTestData.All`` ankiDb =
     use c = new TestContainer()
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg |> assertHasBasicInfo <| c.Db
-
-[<Fact>]
-let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3.colpkg``() =
-    use c = new TestContainer()
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg |> assertHasBasicInfo <| c.Db
-
-[<Fact>]
-let ``AnkiImporter can import AllDefaultTemplatesAndImageAndMp3-21.colpkg``() =
-    use c = new TestContainer()
-    AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_21_colpkg |> assertHasBasicInfo <| c.Db
+    ankiDb |> assertHasBasicInfo <| c.Db
 
 let assertHasHistory ankiDb db =
     let userId = 3

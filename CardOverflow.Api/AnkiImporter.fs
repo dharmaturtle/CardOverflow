@@ -22,9 +22,10 @@ module AnkiImporter =
           Notes = db.Notes.ToList() |> List.ofSeq
           Revlogs = db.Revlogs.ToList() |> List.ofSeq }
     let loadFiles userId (previousFiles: FileEntity seq) zipPath = // lowTODO we probably don't need the whole FileEntity, just the filename and hash
-        let zipFile = ZipFile.Open(zipPath, ZipArchiveMode.Read)
-        use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open()
-        use mediaReader = new StreamReader(mediaStream)
+        let zipFile = ZipFile.Open (zipPath, ZipArchiveMode.Read)
+        use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open ()
+        use mediaReader = new StreamReader (mediaStream)
+        use sha256 = SHA256.Create ()
         Decode.string
         |> Decode.keyValuePairs
         |> Decode.fromString
@@ -35,7 +36,6 @@ module AnkiImporter =
             else
                 use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
                 use m = new MemoryStream()
-                use sha256 = SHA256.Create()
                 fileStream.CopyTo m
                 let array = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
                 FileEntity(

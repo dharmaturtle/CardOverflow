@@ -17,3 +17,9 @@ open SimpleInjector.Lifestyles
 module Assert =
     let SingleI x =
         Assert.Single x |> ignore
+
+type XunitClassDataBase(generator : obj [] seq) = // https://stackoverflow.com/questions/35026735/
+    interface seq<obj []> with
+        member __.GetEnumerator() = generator.GetEnumerator()
+        member __.GetEnumerator() = 
+            generator.GetEnumerator() :> System.Collections.IEnumerator
