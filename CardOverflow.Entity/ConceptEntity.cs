@@ -11,6 +11,7 @@ namespace CardOverflow.Entity
         public ConceptEntity()
         {
             Cards = new HashSet<CardEntity>();
+            FileConcepts = new HashSet<FileConceptEntity>();
             Children = new HashSet<ConceptEntity>();
             InversePrimaryChild_UseParentInstead = new HashSet<ConceptEntity>();
         }
@@ -46,6 +47,8 @@ namespace CardOverflow.Entity
         public virtual ConceptEntity PrimaryChild { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
+        [InverseProperty("Concept")]
+        public virtual ICollection<FileConceptEntity> FileConcepts { get; set; }
         [InverseProperty("Parent")]
         public virtual ICollection<ConceptEntity> Children { get; set; }
         [InverseProperty("PrimaryChild")]

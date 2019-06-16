@@ -15,6 +15,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<ConceptTemplateDefaultEntity> ConceptTemplateDefaults { get; set; }
         public virtual DbSet<DeckEntity> Decks { get; set; }
         public virtual DbSet<FileEntity> Files { get; set; }
+        public virtual DbSet<FileConceptEntity> FileConcepts { get; set; }
         public virtual DbSet<HistoryEntity> Histories { get; set; }
         public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
         public virtual DbSet<PrivateTagAcquiredCardEntity> PrivateTagAcquiredCards { get; set; }
@@ -204,15 +205,26 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<FileEntity>(entity =>
             {
-                entity.HasIndex(e => new { e.UserId, e.FileName, e.Sha256 })
-                    .HasName("AK_Media__UserId_FileName_Sha256")
+                entity.HasIndex(e => e.Sha256)
+                    .HasName("AK_File_Sha256")
                     .IsUnique();
+            });
 
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Files)
-                    .HasForeignKey(d => d.UserId)
+            modelBuilder.Entity<FileConceptEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.ConceptId, e.FileId });
+
+                entity.HasOne(d => d.Concept)
+                    .WithMany(p => p.FileConcepts)
+                    .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Media_User");
+                    .HasConstraintName("FK_File_Concept_Concept");
+
+                entity.HasOne(d => d.File)
+                    .WithMany(p => p.FileConcepts)
+                    .HasForeignKey(d => d.FileId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_File_Concept_File");
             });
 
             modelBuilder.Entity<HistoryEntity>(entity =>

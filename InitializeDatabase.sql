@@ -265,7 +265,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[File](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
 	[FileName] [nvarchar](100) NOT NULL,
 	[Data] [varbinary](max) NOT NULL,
 	[Sha256] [binary](32) NOT NULL,
@@ -274,6 +273,21 @@ CREATE TABLE [dbo].[File](
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[File_Concept] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[File_Concept](
+	[ConceptId] [int] NOT NULL,
+	[FileId] [int] NOT NULL,
+ CONSTRAINT [PK_File_Concept] PRIMARY KEY CLUSTERED 
+(
+	[ConceptId] ASC,
+	[FileId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[History] ******/
 SET ANSI_NULLS ON
@@ -593,13 +607,11 @@ CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_Media__UserId_FileName_Sha256] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_Media__UserId_FileName_Sha256] ON [dbo].[File]
+/****** Object:  Index [AK_File_Sha256] ******/
+ALTER TABLE [dbo].[File] ADD  CONSTRAINT [AK_File_Sha256] UNIQUE NONCLUSTERED 
 (
-	[UserId] ASC,
-	[FileName] ASC,
 	[Sha256] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_History_AcquiredCardId] ******/
 CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]
@@ -739,10 +751,15 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User]
 GO
-ALTER TABLE [dbo].[File]  WITH CHECK ADD  CONSTRAINT [FK_Media_User] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
+ALTER TABLE [dbo].[File_Concept]  WITH CHECK ADD  CONSTRAINT [FK_File_Concept_Concept] FOREIGN KEY([ConceptId])
+REFERENCES [dbo].[Concept] ([Id])
 GO
-ALTER TABLE [dbo].[File] CHECK CONSTRAINT [FK_Media_User]
+ALTER TABLE [dbo].[File_Concept] CHECK CONSTRAINT [FK_File_Concept_Concept]
+GO
+ALTER TABLE [dbo].[File_Concept]  WITH CHECK ADD  CONSTRAINT [FK_File_Concept_File] FOREIGN KEY([FileId])
+REFERENCES [dbo].[File] ([Id])
+GO
+ALTER TABLE [dbo].[File_Concept] CHECK CONSTRAINT [FK_File_Concept_File]
 GO
 ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard] FOREIGN KEY([AcquiredCardId])
 REFERENCES [dbo].[AcquiredCard] ([Id])

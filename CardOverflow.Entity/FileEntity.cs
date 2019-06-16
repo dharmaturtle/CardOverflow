@@ -8,8 +8,12 @@ namespace CardOverflow.Entity
 [Table("File")]
     public partial class FileEntity
     {
+        public FileEntity()
+        {
+            FileConcepts = new HashSet<FileConceptEntity>();
+        }
+
         public int Id { get; set; }
-        public int UserId { get; set; }
         [Required]
         [StringLength(100)]
         public string FileName { get; set; }
@@ -19,8 +23,7 @@ namespace CardOverflow.Entity
         [MaxLength(32)]
         public byte[] Sha256 { get; set; }
 
-        [ForeignKey("UserId")]
-        [InverseProperty("Files")]
-        public virtual UserEntity User { get; set; }
+        [InverseProperty("File")]
+        public virtual ICollection<FileConceptEntity> FileConcepts { get; set; }
     }
 }
