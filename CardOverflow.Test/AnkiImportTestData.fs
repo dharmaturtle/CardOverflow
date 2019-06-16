@@ -995,30 +995,23 @@ let ``AnkiImporter.save saves two files`` ankiFileName _ =
     use c = new TestContainer(ankiFileName)
     
     ankiExportsDir +/ ankiFileName
-    |> AnkiImporter.loadFiles (c.Db.Files)
+    |> AnkiImporter.loadFiles (fun sha256 -> c.Db.Files.Any(fun f -> f.Sha256 = sha256))
     |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
     |> Result.getOk
 
-    Assert.Equal(4, c.Db.Files.Count()) // medTODO use hash to dedupe png.png; this value really should be 3
+    Assert.Equal(3, c.Db.Files.Count())
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Running AnkiImporter.save 2x yields errors due to duplicate filenames`` ankiFileName _ =
+let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName _ =
     let userId = 3
     use c = new TestContainer(ankiFileName)
-    
-    let actual =
-        [1..2]
-        |> List.map (fun _ ->
-            ankiExportsDir +/ ankiFileName
-            |> AnkiImporter.loadFiles (c.Db.Files)
-            |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
-        )
 
-    let expected =
-        [ Ok ()
-          Error "You already have a file called 'bloop.wav'.
-You already have a file called 'favicon.ico'.
-You already have a file called 'png1.png'.
-You already have a file called 'png2.png'." ]
-    Assert.Equal<Result<unit, string> list>(expected, actual)  // medTODO use hash to dedupe
+    for _ in [1..3] do
+        ankiExportsDir +/ ankiFileName
+        |> AnkiImporter.loadFiles (fun sha256 -> c.Db.Files.Any(fun f -> f.Sha256 = sha256))
+        |> Result.bind (AnkiImporter.save c.Db emptyDb userId)
+        |> Result.isOk
+        |> Assert.True
+
+    Assert.Equal(3, c.Db.Files.Count())

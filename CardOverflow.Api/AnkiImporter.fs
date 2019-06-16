@@ -14,6 +14,7 @@ open Helpers
 open System.IO
 open System.IO.Compression
 open System.Security.Cryptography
+open System.Collections.Generic
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -21,30 +22,33 @@ module AnkiImporter =
           Cols = db.Cols.ToList() |> List.ofSeq
           Notes = db.Notes.ToList() |> List.ofSeq
           Revlogs = db.Revlogs.ToList() |> List.ofSeq }
-    let loadFiles (previousFiles: FileEntity seq) zipPath = // lowTODO we probably don't need the whole FileEntity, just the filename and hash
+    let loadFiles (isCollision: byte[] -> bool) zipPath =
+        let newHashes = HashSet<byte[]>()
         let zipFile = ZipFile.Open (zipPath, ZipArchiveMode.Read)
         use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open ()
         use mediaReader = new StreamReader (mediaStream)
-        use sha256 = SHA256.Create ()
+        use hasher = SHA256.Create ()
         Decode.string
         |> Decode.keyValuePairs
         |> Decode.fromString
         <| mediaReader.ReadToEnd()
-        |> Result.map(List.sortBy (fun (_, fileName) -> fileName) >> List.map(fun (index, fileName) ->
-            if previousFiles.Any(fun x -> x.FileName = fileName)
-            then sprintf "You already have a file called '%s'." fileName |> Error
-            else
+        |> Result.map(
+            List.map(fun (index, fileName) ->
                 use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
                 use m = new MemoryStream()
                 fileStream.CopyTo m
                 let array = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
-                FileEntity(
-                    FileName = fileName,
-                    Data = array,
-                    Sha256 = sha256.ComputeHash array
-                ) |> Ok
-            ))
-        |> Result.bind Result.consolidate
+                let sha256 = hasher.ComputeHash array
+                if newHashes.Any(fun x -> x = sha256) || isCollision sha256 // .Contains doesn't work for some reason
+                then None
+                else
+                    newHashes.Add sha256 |> ignore
+                    FileEntity (
+                        FileName = fileName,
+                        Data = array,
+                        Sha256 = sha256
+                    ) |> Some )
+            >> List.choose id )
     let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
         let col = ankiDb.Cols.Single()
         result {
