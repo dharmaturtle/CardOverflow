@@ -13,6 +13,7 @@ open FsToolkit.ErrorHandling
 open Helpers
 open System.IO
 open System.IO.Compression
+open System.Security.Cryptography
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -34,11 +35,14 @@ module AnkiImporter =
             else
                 use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
                 use m = new MemoryStream()
+                use sha256 = SHA256.Create()
                 fileStream.CopyTo m
+                let array = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
                 FileEntity(
                     UserId = userId,
                     FileName = fileName,
-                    Data = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
+                    Data = array,
+                    Sha256 = sha256.ComputeHash array
                 ) |> Ok
             ))
         |> Result.bind Result.consolidate
