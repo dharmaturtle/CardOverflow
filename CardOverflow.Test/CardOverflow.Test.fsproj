@@ -54,6 +54,7 @@
     <Compile Include="PrivateTagRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />
     <Compile Include="AnkiImportTests.fs" />
+    <Compile Include="AnkiImportFileTests.fs" />
     <Compile Include="AnkiPureTests.fs" />
     <Compile Include="ContainerExtensionsTests.fs" />
   </ItemGroup>
