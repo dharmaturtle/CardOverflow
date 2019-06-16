@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace CardOverflow.Debug {
   public static class ObjectExtensionMethods {
 
-    public static TInput Dump<TInput>(this TInput input, string id = "") {
+    public static TInput D<TInput>(this TInput input, string id = "") {
 #if DEBUG
       if (string.IsNullOrWhiteSpace(id)) {
         Console.WriteLine(MyObjectDumper.Dump(input));
@@ -15,8 +15,8 @@ namespace CardOverflow.Debug {
       return input;
     }
 
-    public static TInput Dump<TInput, TDump>(this TInput input, Func<TInput, TDump> getValue, string id = "") {
-      getValue(input).Dump(id);
+    public static TInput D<TInput, TDump>(this TInput input, Func<TInput, TDump> getValue, string id = "") {
+      getValue(input).D(id);
       return input;
     }
 

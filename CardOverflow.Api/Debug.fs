@@ -1,18 +1,21 @@
-module Dump
+module D
 
 open CardOverflow.Debug
 
-let dump x =
-    x.Dump()
+let d x =
+    x.D()
 
-let dump2 label x =
-    x.Dump label
+let dA x =
+    sprintf "%A" x
 
-let dumpI x =
-    x.Dump() |> ignore
+let d2 label x =
+    x.D label
 
-let dump2I label x =
-    x.Dump label |> ignore
+let dI x =
+    x.D() |> ignore
+
+let d2I label x =
+    x.D label |> ignore
 
 let c x =
     x.CDump()
@@ -21,7 +24,7 @@ let f x =
     x.FDump()
 
 let seq s =
-    s |> Seq.toList |> List.map (fun x -> x.Dump())
+    s |> Seq.toList |> List.map (fun x -> x.D())
 
 let seq2 label s =
-    s |> Seq.toList |> List.map (fun x -> x.Dump label)
+    s |> Seq.toList |> List.map (fun x -> x.D label)
