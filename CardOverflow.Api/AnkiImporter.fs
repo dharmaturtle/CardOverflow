@@ -15,6 +15,7 @@ open System.IO
 open System.IO.Compression
 open System.Security.Cryptography
 open System.Collections.Generic
+open Microsoft.EntityFrameworkCore
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -22,8 +23,12 @@ module AnkiImporter =
           Cols = db.Cols.ToList() |> List.ofSeq
           Notes = db.Notes.ToList() |> List.ofSeq
           Revlogs = db.Revlogs.ToList() |> List.ofSeq }
-    let loadFiles (isCollision: byte[] -> bool) zipPath =
-        let newHashes = HashSet<byte[]>()
+    let loadFiles (getFromDb: byte[] -> FileEntity option) zipPath =
+        let fileNameAndFileByHash = Dictionary<byte[], (string * FileEntity)>()
+        let getFile hash =
+            if fileNameAndFileByHash.Keys.Any(fun x -> x = hash) // I don't think .Contains and its friends work with hashes/byte[] for some reason
+            then fileNameAndFileByHash.First(fun (KeyValue(h, _)) -> h = hash) |> fun (KeyValue (_, (_, file))) -> file |> Some
+            else getFromDb hash
         let zipFile = ZipFile.Open (zipPath, ZipArchiveMode.Read)
         use mediaStream = zipFile.Entries.First(fun x -> x.Name = "media").Open ()
         use mediaReader = new StreamReader (mediaStream)
@@ -33,23 +38,24 @@ module AnkiImporter =
         |> Decode.fromString
         <| mediaReader.ReadToEnd()
         |> Result.map(
-            List.map(fun (index, fileName) ->
+            List.iter(fun (index, fileName) ->
                 use fileStream = zipFile.Entries.First(fun x -> x.Name = index).Open()
                 use m = new MemoryStream()
                 fileStream.CopyTo m
                 let array = m.ToArray() // lowTODO investigate if there are memory issues if someone uploads gigs, we might need to persist to the DB sooner
                 let sha256 = hasher.ComputeHash array
-                if newHashes.Any(fun x -> x = sha256) || isCollision sha256 // .Contains doesn't work for some reason
-                then None
-                else
-                    newHashes.Add sha256 |> ignore
+                getFile sha256
+                |> function
+                | Some e -> e
+                | None ->
                     FileEntity (
                         FileName = fileName,
                         Data = array,
                         Sha256 = sha256
-                    ) |> Some )
-            >> List.choose id )
-    let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
+                    )
+                |> fun e -> fileNameAndFileByHash.Add(sha256, (fileName, e)))
+            >> fun () -> fileNameAndFileByHash |> Map.overValue id |> Map.ofSeq)
+    let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) fileEntityByAnkiFileName (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -108,6 +114,7 @@ module AnkiImporter =
                     conceptTemplatesByModelId
                     usersTags
                     userId
+                    fileEntityByAnkiFileName
                     []
                     ankiDb.Notes
                 |> Map.ofList
@@ -122,7 +129,7 @@ module AnkiImporter =
                    )
         }
 
-    let save (db: CardOverflowDb) ankiDb userId (files: FileEntity seq) =
+    let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         result {
             let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
             let! acquiredCardEntities, histories =
@@ -130,6 +137,7 @@ module AnkiImporter =
                     ankiDb
                     usersTags
                     userId
+                    fileEntityByAnkiFileName
                     (db.CardOptions
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
@@ -137,10 +145,11 @@ module AnkiImporter =
                     (db.ConceptTemplateConceptTemplateDefaultUsers
                         .Where(fun x -> x.UserId = userId)
                         .Select(fun x -> x.ConceptTemplate)
+                        //.Include(fun x -> x.ConceptTemplateConceptTemplateDefaultUsers :> IEnumerable<_>)
+                        //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
                         .ToList()
                         |> Seq.map ConceptTemplate.Load)
             acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
-            files |> db.Files.AddRange
             db.SaveChangesI ()
         }

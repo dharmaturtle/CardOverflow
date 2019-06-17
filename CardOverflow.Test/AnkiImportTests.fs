@@ -12,6 +12,7 @@ open System.Linq
 open Xunit
 open System
 open AnkiImportTestData
+open System.Collections.Generic
 
 let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
     match q with
@@ -23,12 +24,12 @@ let any<'R> : 'R = failwith "!"
 
 let assertHasBasicInfo ankiDb db =
     let userId = 3
-    AnkiImporter.save db ankiDb userId []
+    AnkiImporter.save db ankiDb userId Map.empty
     |> Result.isOk
     |> Assert.True
     Assert.Equal(8, db.Concepts.Count())
     Assert.Equal(10, db.Cards.Count())
-    Assert.Equal(10, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Count)
+    Assert.Equal(10, db.AcquiredCards.Count(fun x -> x.UserId = userId))
     Assert.Equal(8, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptId).Distinct().Count())
     Assert.Equal(2, db.CardOptions.Count(fun db -> db.UserId = userId))
     Assert.Equal(5, db.ConceptTemplateConceptTemplateDefaultUsers.Count(fun x -> x.UserId = userId))
@@ -51,7 +52,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb =
 
 let assertHasHistory ankiDb db =
     let userId = 3
-    AnkiImporter.save db ankiDb userId []
+    AnkiImporter.save db ankiDb userId Map.empty
     |> Result.isOk
     |> Assert.True
     Assert.NotNull(db.Histories.FirstOrDefault())
@@ -76,7 +77,7 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
     use c = new TestContainer()
     let userId = 3
     for _ in [1..5] do
-        AnkiImporter.save c.Db simpleAnkiDb userId []
+        AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
         |> Result.isOk
         |> Assert.True
 

@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open FSharp.Text.RegexProvider
 open CardOverflow.Entity.Anki
 open CardOverflow.Entity
 open CardOverflow.Pure
@@ -41,10 +42,18 @@ type AnkiConceptWrite = {
         entity.Modified <- this.Modified
         entity.MaintainerId <- this.MaintainerId
         entity.IsPublic <- this.IsPublic
-    member this.CopyToNew =
+    member this.CopyToNew (files: FileEntity seq) =
         let entity = ConceptEntity()
         this.CopyTo entity
+        entity.FileConcepts <-
+            files.Select(fun x ->
+                FileConceptEntity(
+                    Concept = entity,
+                    File = x
+                )
+            ).ToList()
         entity
+
 
 module Anki =
     let toHistory (cardByAnkiId: Map<int64, CardOverflow.Entity.AcquiredCardEntity>) userId (revLog: RevlogEntity) =
@@ -153,7 +162,27 @@ module Anki =
             })
         |> Decode.keyValuePairs
         |> Decode.fromString
-    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId conceptsAndTagsByNoteId = // medTODO use tail recursion
+    type ImgRegex = Regex< """<img src="(?<ankiFileName>.+?)">""" >
+    type SoundRegex = Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
+    let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
+        let img =
+            ImgRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missing) m -> 
+                let value = m.ankiFileName.Value
+                if fileEntityByAnkiFileName |> Map.containsKey value
+                then
+                    let file = fileEntityByAnkiFileName.[value]
+                    (file :: files, field.Replace(value, file.Sha256 |> Convert.ToBase64String), missing)
+                else (files, field, value :: missing)
+            ) ([], field, [])
+        SoundRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missing) m -> 
+            let value = m.ankiFileName.Value
+            if fileEntityByAnkiFileName |> Map.containsKey value
+            then
+                let file = fileEntityByAnkiFileName.[value]
+                (file :: files, field.Replace(value, file.Sha256 |> Convert.ToBase64String), missing)
+            else (files, field, value :: missing)
+        ) img
+    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId fileEntityByAnkiFileName conceptsAndTagsByNoteId = // medTODO use tail recursion
         function
         | (note: NoteEntity) :: tail ->
             let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
@@ -164,15 +193,16 @@ module Anki =
                 |> List.ofSeq
                 |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
                 |> List.append tags
+            let files, fields, errors = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName // medTODO report these errors
             let concept =
                 { Title = ""
                   Description = ""
                   ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
-                  Fields = MappingTools.splitByUnitSeparator note.Flds
+                  Fields = MappingTools.splitByUnitSeparator fields
                   Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
                   MaintainerId = userId
-                  IsPublic = false }.CopyToNew
-            parseNotes conceptTemplatesByModelId allTags userId ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
+                  IsPublic = false }.CopyToNew (files |> Seq.distinctBy (fun x -> x.Sha256))
+            parseNotes conceptTemplatesByModelId allTags userId fileEntityByAnkiFileName ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
         | _ -> conceptsAndTagsByNoteId
     let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (usersTags: PrivateTagEntity list) (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]

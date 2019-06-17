@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Text.RegexProvider" Version="2.0.1" />
     <PackageReference Include="Thoth.Json.Net" Version="3.2.0" />
   </ItemGroup>
 

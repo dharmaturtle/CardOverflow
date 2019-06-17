@@ -13,6 +13,9 @@ module CardRepository =
     let GetQuizCards (db: CardOverflowDb) userId =
         db.AcquiredCards
             .Include(fun x -> x.CardOption)
+            //.Include(fun x -> x.Card)
+            //    .ThenInclude(fun x -> x.Concept)
+            //    .ThenInclude(fun x -> x.ConceptTemplate)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
         |> Seq.map QuizCard.Load

@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Debug.fs" />
     <Compile Include="LoadersAndCopiers.fs" />
     <Compile Include="AnkiLoadersAndCopiers.fs" />
     <Compile Include="Helpers.fs" />
-    <Compile Include="Debug.fs" />
     <Compile Include="Providers.fs" />
     <Compile Include="Repository\DbFactory.fs" />
     <Compile Include="Repository\Repositories.fs" />

@@ -47,6 +47,8 @@ type Container with
             DbContextOptionsBuilder<CardOverflowDb>()
                 .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value )
                 .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
+                //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
+                //.EnableSensitiveDataLogging(true)
                 .Options)
         container.Register<CardOverflowDb> Lifestyle.Scoped
     
