@@ -179,6 +179,12 @@ module Anki =
             if fileEntityByAnkiFileName |> Map.containsKey value
             then
                 let file = fileEntityByAnkiFileName.[value]
+                let field = SoundRegex().Replace(field, """
+<audio controls autoplay>
+    <source src="${ankiFileName}" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+"""             )
                 (file :: files, field.Replace(value, file.Sha256 |> Convert.ToBase64String), missing)
             else (files, field, value :: missing)
         ) img

@@ -5,8 +5,11 @@ open CardOverflow.Debug
 let d x =
     x.D()
 
-let dA x =
-    sprintf "%A" x
+let dA (x: obj) =
+    match x with
+    | :? seq<obj> as x -> x |> Seq.toList :> obj
+    | x -> x
+    |> printfn "%A"
 
 let d2 label x =
     x.D label
