@@ -188,28 +188,30 @@ module Anki =
                 (file :: files, field.Replace(value, file.Sha256 |> Convert.ToBase64String), missing)
             else (files, field, value :: missing)
         ) img
-    let rec parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) tags userId fileEntityByAnkiFileName conceptsAndTagsByNoteId = // medTODO use tail recursion
-        function
-        | (note: NoteEntity) :: tail ->
-            let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
-            let allTags =
-                Set.difference
-                    notesTags
-                    (tags |> List.map (fun (x: PrivateTagEntity) -> x.Name) |> Set.ofSeq)
-                |> List.ofSeq
-                |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
-                |> List.append tags
-            let files, fields, errors = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName // medTODO report these errors
-            let concept =
-                { Title = ""
-                  Description = ""
-                  ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
-                  Fields = MappingTools.splitByUnitSeparator fields
-                  Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
-                  MaintainerId = userId
-                  IsPublic = false }.CopyToNew (files |> Seq.distinctBy (fun x -> x.Sha256))
-            parseNotes conceptTemplatesByModelId allTags userId fileEntityByAnkiFileName ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
-        | _ -> conceptsAndTagsByNoteId
+    let parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) initialTags userId fileEntityByAnkiFileName initialConceptsAndTagsByNoteId = // medTODO use tail recursion
+        let rec parseNotesRec tags conceptsAndTagsByNoteId =
+            function
+            | (note: NoteEntity) :: tail ->
+                let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
+                let allTags =
+                    Set.difference
+                        notesTags
+                        (tags |> List.map (fun (x: PrivateTagEntity) -> x.Name) |> Set.ofSeq)
+                    |> List.ofSeq
+                    |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
+                    |> List.append tags
+                let files, fields, errors = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName // medTODO report these errors
+                let concept =
+                    { Title = ""
+                      Description = ""
+                      ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
+                      Fields = MappingTools.splitByUnitSeparator fields
+                      Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
+                      MaintainerId = userId
+                      IsPublic = false }.CopyToNew (files |> Seq.distinctBy (fun x -> x.Sha256))
+                parseNotesRec allTags ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
+            | _ -> conceptsAndTagsByNoteId
+        parseNotesRec initialTags initialConceptsAndTagsByNoteId
     let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (usersTags: PrivateTagEntity list) (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
