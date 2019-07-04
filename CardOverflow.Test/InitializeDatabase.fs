@@ -207,8 +207,8 @@ let ``Delete and Recreate localhost's CardOverflow Database via EF``() =
     use __ = AsyncScopedLifestyle.BeginScope c
     c.GetInstance<CardOverflowDb>() |> deleteAndRecreateDatabase
 
-let deleteAndRecreateDb dbName =
-    let conn = new SqlConnection "Server=localhost;Trusted_Connection=True;"
+let deleteAndRecreateDb dbName baseConnectionString =
+    let conn = new SqlConnection(ConnectionString.value baseConnectionString)
     conn.Open()
     [
         """
@@ -252,4 +252,7 @@ let deleteAndRecreateDb dbName =
 
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via SqlScript``() =
-    deleteAndRecreateDb "CardOverflow"
+    use c = new Container()
+    c.RegisterStuff
+    c.RegisterStandardConnectionString
+    c.GetInstance<ConnectionString>() |> deleteAndRecreateDb "CardOverflow"

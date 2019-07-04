@@ -9,6 +9,7 @@ open CardOverflow.Entity
 open SimpleInjector
 open ContainerExtensions
 open SimpleInjector.Lifestyles
+open Microsoft.Extensions.Configuration
 
 type TestContainer(?args: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
@@ -23,7 +24,7 @@ type TestContainer(?args: string, [<CallerMemberName>] ?memberName: string) =
             |> sprintf "CardOverflow_%s"
         container.RegisterStuff
         container.RegisterTestConnectionString dbName
-        dbName |> InitializeDatabase.deleteAndRecreateDb
+        container.GetInstance<IConfiguration>().GetConnectionString "BaseTestConnection" |> ConnectionString |> InitializeDatabase.deleteAndRecreateDb dbName
 
     interface IDisposable with
         member this.Dispose() =
