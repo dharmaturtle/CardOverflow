@@ -22,7 +22,7 @@ let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
     | _ -> failwith "Unexpected format"
 let any<'R> : 'R = failwith "!"
 
-let assertHasBasicInfo ankiDb db =
+let assertHasBasicInfo db ankiDb =
     let userId = 3
     AnkiImporter.save db ankiDb userId Map.empty
     |> Result.isOk
@@ -48,9 +48,9 @@ let assertHasBasicInfo ankiDb db =
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb =
     use c = new TestContainer()
-    ankiDb |> assertHasBasicInfo <| c.Db
+    assertHasBasicInfo c.Db ankiDb
 
-let assertHasHistory ankiDb db =
+let assertHasHistory db ankiDb =
     let userId = 3
     AnkiImporter.save db ankiDb userId Map.empty
     |> Result.isOk
@@ -69,7 +69,7 @@ let ``AnkiImporter can import RandomReviews`` randomReviews =
     use c = new TestContainer(randomReviews)
     AnkiImportTestData.getAnkiDb randomReviews
     |> AnkiImporter.getSimpleAnkiDb
-    |> assertHasHistory <| c.Db
+    |> assertHasHistory c.Db
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]

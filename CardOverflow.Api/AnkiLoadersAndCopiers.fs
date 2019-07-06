@@ -166,27 +166,37 @@ module Anki =
     type SoundRegex = Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
     let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
         let img =
-            ImgRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missing) m -> 
-                let value = m.ankiFileName.Value
-                if fileEntityByAnkiFileName |> Map.containsKey value
+            ImgRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missingAnkiFileNames) m -> 
+                let ankiFileName = m.ankiFileName.Value
+                if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
                 then
-                    let file = fileEntityByAnkiFileName.[value]
-                    (file :: files, field.Replace(value, file.Sha256 |> Convert.ToBase64String), missing)
-                else (files, field, value :: missing)
+                    let file = fileEntityByAnkiFileName.[ankiFileName]
+                    ( file :: files,
+                      field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
+                      missingAnkiFileNames )
+                else
+                    ( files,
+                      field,
+                      ankiFileName :: missingAnkiFileNames )
             ) ([], field, [])
-        SoundRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missing) m -> 
-            let value = m.ankiFileName.Value
-            if fileEntityByAnkiFileName |> Map.containsKey value
+        SoundRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missingAnkiFileNames) m -> 
+            let ankiFileName = m.ankiFileName.Value
+            if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
-                let file = fileEntityByAnkiFileName.[value]
+                let file = fileEntityByAnkiFileName.[ankiFileName]
                 let field = SoundRegex().Replace(field, """
 <audio controls autoplay>
     <source src="${ankiFileName}" type="audio/mpeg">
     Your browser does not support the audio element.
 </audio>
 """             )
-                (file :: files, field.Replace(value, file.Sha256 |> Convert.ToBase64String), missing)
-            else (files, field, value :: missing)
+                ( file :: files,
+                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
+                  missingAnkiFileNames )
+            else
+                ( files,
+                  field,
+                  ankiFileName :: missingAnkiFileNames )
         ) img
     let parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) initialTags userId fileEntityByAnkiFileName initialConceptsAndTagsByNoteId = // medTODO use tail recursion
         let rec parseNotesRec tags conceptsAndTagsByNoteId =

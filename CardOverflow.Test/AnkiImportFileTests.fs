@@ -14,13 +14,6 @@ open Xunit
 open System
 open AnkiImportTestData
 
-let emptyDb = {
-        Cards = []
-        Cols = allDefaultTemplatesAndImageAndMp3_colpkg.Cols
-        Notes = []
-        Revlogs = []
-    }
-
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
