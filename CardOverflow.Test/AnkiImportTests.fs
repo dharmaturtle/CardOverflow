@@ -42,7 +42,6 @@ let assertHasBasicInfo db ankiDb =
             .Single(fun c -> c.Card.Concept.Fields.Contains("mp3"))
             .PrivateTagAcquiredCards.Select(fun t -> t.PrivateTag.Name)
             |> Seq.sortBy id)
-    db.Concepts.ToList().Select(fun x -> x.Fields).ToList().D() // medTODO dedupe png1/2
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
