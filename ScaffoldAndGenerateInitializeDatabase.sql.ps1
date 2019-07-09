@@ -1,4 +1,4 @@
-$connectionString = "Server=localhost;Database=CardOverflow;Trusted_Connection=True;"
+$connectionString = "Server=localhost;Database=CardOverflow;User Id=localsa;"
 
 mssql-scripter --connection-string $connectionString --schema-and-data --file-path ./InitializeDatabase.sql
 # If the above has problems, consider using --check-for-existence https://github.com/Microsoft/mssql-scripter
