@@ -55,7 +55,7 @@ module AnkiImporter =
                     )
                 |> fun e -> fileNameAndFileByHash.Add(sha256, (fileName, e)))
             >> fun () -> fileNameAndFileByHash |> Map.overValue id |> Map.ofSeq)
-    let load ankiDb (usersTags: PrivateTagEntity seq) (userId: int) fileEntityByAnkiFileName (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
+    let load ankiDb (userId: int) fileEntityByAnkiFileName (usersTags: PrivateTagEntity seq) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -131,24 +131,21 @@ module AnkiImporter =
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         result {
-            let usersTags = db.PrivateTags.Where(fun pt -> pt.UserId = userId) |> Seq.toList
             let! acquiredCardEntities, histories =
                 load
                     ankiDb
-                    usersTags
                     userId
                     fileEntityByAnkiFileName
-                    (db.CardOptions
+                    <| db.PrivateTags.Where(fun pt -> pt.UserId = userId)
+                    <| db.CardOptions
                         .Where(fun x -> x.UserId = userId)
-                        .ToList()
-                        |> Seq.map CardOption.Load)
-                    (db.ConceptTemplateConceptTemplateDefaultUsers
+                        .Select(CardOption.Load)
+                    <| db.ConceptTemplateConceptTemplateDefaultUsers
                         .Where(fun x -> x.UserId = userId)
                         .Select(fun x -> x.ConceptTemplate)
                         //.Include(fun x -> x.ConceptTemplateConceptTemplateDefaultUsers :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
-                        .ToList()
-                        |> Seq.map ConceptTemplate.Load)
+                        .Select(ConceptTemplate.Load)
             acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
             db.SaveChangesI ()

@@ -165,21 +165,22 @@ module Anki =
     type ImgRegex = Regex< """<img src="(?<ankiFileName>.+?)">""" >
     type SoundRegex = Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
     let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
-        let img =
-            ImgRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missingAnkiFileNames) m -> 
-                let ankiFileName = m.ankiFileName.Value
-                if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
-                then
+        (([], field, []), ImgRegex().TypedMatches field)
+        ||> Seq.fold (fun (files, field, missingAnkiFileNames) m -> 
+            let ankiFileName = m.ankiFileName.Value
+            if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
+            then
                     let file = fileEntityByAnkiFileName.[ankiFileName]
                     ( file :: files,
                       field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
                       missingAnkiFileNames )
                 else
-                    ( files,
-                      field,
-                      ankiFileName :: missingAnkiFileNames )
-            ) ([], field, [])
-        SoundRegex().TypedMatches(field) |> Seq.fold (fun (files, field: string, missingAnkiFileNames) m -> 
+                ( files,
+                  field,
+                  ankiFileName :: missingAnkiFileNames )
+        )
+        |> fun x -> (x, SoundRegex().TypedMatches field)
+        ||> Seq.fold (fun (files, field, missingAnkiFileNames) m -> 
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
@@ -197,7 +198,8 @@ module Anki =
                 ( files,
                   field,
                   ankiFileName :: missingAnkiFileNames )
-        ) img
+        )
+        |> fun (files, fields, errors) -> (files |> List.distinct, fields, errors)
     let parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) initialTags userId fileEntityByAnkiFileName initialConceptsAndTagsByNoteId = // medTODO use tail recursion
         let rec parseNotesRec tags conceptsAndTagsByNoteId =
             function
@@ -218,8 +220,9 @@ module Anki =
                       Fields = MappingTools.splitByUnitSeparator fields
                       Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
                       MaintainerId = userId
-                      IsPublic = false }.CopyToNew (files |> Seq.distinctBy (fun x -> x.Sha256))
-                parseNotesRec allTags ((note.Id, (concept, allTags.Where(fun x -> notesTags.Contains x.Name)))::conceptsAndTagsByNoteId) tail
+                      IsPublic = false }.CopyToNew files
+                let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
+                parseNotesRec allTags ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId) tail
             | _ -> conceptsAndTagsByNoteId
         parseNotesRec initialTags initialConceptsAndTagsByNoteId
     let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (usersTags: PrivateTagEntity list) (ankiCard: Anki.CardEntity) =
