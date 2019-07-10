@@ -17,6 +17,10 @@ let d2 label x =
 let dI x =
     x.D() |> ignore
 
+let df f x =
+    f x |> dI
+    x
+
 let d2I label x =
     x.D label |> ignore
 
