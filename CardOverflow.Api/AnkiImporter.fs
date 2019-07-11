@@ -139,13 +139,13 @@ module AnkiImporter =
                     <| db.PrivateTags.Where(fun pt -> pt.UserId = userId)
                     <| db.CardOptions
                         .Where(fun x -> x.UserId = userId)
-                        .Select(CardOption.Load)
+                        .Select CardOption.Load
                     <| db.ConceptTemplateConceptTemplateDefaultUsers
                         .Where(fun x -> x.UserId = userId)
                         .Select(fun x -> x.ConceptTemplate)
                         //.Include(fun x -> x.ConceptTemplateConceptTemplateDefaultUsers :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
-                        .Select(ConceptTemplate.Load)
+                        .Select ConceptTemplate.Load
             acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
             db.SaveChangesI ()
