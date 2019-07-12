@@ -56,7 +56,7 @@ type AnkiConceptWrite = {
 
 
 module Anki =
-    let toHistory (cardByAnkiId: Map<int64, CardOverflow.Entity.AcquiredCardEntity>) userId (revLog: RevlogEntity) =
+    let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) (revLog: RevlogEntity) =
         HistoryEntity(
             AcquiredCard = cardByAnkiId.[revLog.Cid],
             EaseFactorInPermille = int16 revLog.Factor,
@@ -225,7 +225,13 @@ module Anki =
                 parseNotesRec allTags ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId) tail
             | _ -> conceptsAndTagsByNoteId
         parseNotesRec initialTags initialConceptsAndTagsByNoteId
-    let mapCard (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>) (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>) (colCreateDate: DateTime) userId (usersTags: PrivateTagEntity list) (ankiCard: Anki.CardEntity) =
+    let mapCard
+        (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>)
+        (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>)
+        (colCreateDate: DateTime)
+        userId
+        (usersTags: PrivateTagEntity seq)
+        (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
@@ -236,6 +242,7 @@ module Anki =
         | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
+            ankiCard.Id,
             { AcquiredCard.Id = 0
               UserId = userId
               ConceptId = 0
@@ -273,4 +280,4 @@ module Anki =
                 | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                 | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
               TemplateIndex = ankiCard.Ord |> byte
-              CardOptionId = 0 }.CopyToNew concept cardOption (deckTag :: List.ofSeq tags), ankiCard)
+              CardOptionId = 0 }.CopyToNew concept cardOption (deckTag :: List.ofSeq tags))

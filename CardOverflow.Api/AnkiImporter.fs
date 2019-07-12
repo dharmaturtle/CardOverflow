@@ -55,7 +55,14 @@ module AnkiImporter =
                     )
                 |> fun e -> fileNameAndFileByHash.Add(sha256, (fileName, e)))
             >> fun () -> fileNameAndFileByHash |> Map.overValue id |> Map.ofSeq)
-    let load ankiDb (userId: int) fileEntityByAnkiFileName (usersTags: PrivateTagEntity seq) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) getConcept =
+    let load
+        ankiDb
+        userId
+        fileEntityByAnkiFileName
+        (usersTags: PrivateTagEntity seq)
+        (cardOptions: CardOption seq)
+        (conceptTemplates: ConceptTemplate seq)
+        getConcept =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -119,14 +126,14 @@ module AnkiImporter =
                     ankiDb.Notes
                 |> List.map(fun (key, ((concept,files), tags)) -> (key, (getConcept concept files, tags)))
                 |> Map.ofList
-            let! cardEntities =
+            let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
                 |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags)
                 |> Result.consolidate
-            let cardIdByAnkiId = cardEntities |> Seq.map (fun (card, anki) -> anki.Id, card) |> Map.ofSeq
-            return (cardEntities |> Seq.map fst,
-                    ankiDb.Revlogs |> Seq.map (Anki.toHistory cardIdByAnkiId userId)
+                |> Result.map Map.ofSeq
+            return (cardByAnkiId |> Map.overValue id,
+                    ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId)
                    )
         }
 
