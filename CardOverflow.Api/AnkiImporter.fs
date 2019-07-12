@@ -55,7 +55,7 @@ module AnkiImporter =
                     )
                 |> fun e -> fileNameAndFileByHash.Add(sha256, (fileName, e)))
             >> fun () -> fileNameAndFileByHash |> Map.overValue id |> Map.ofSeq)
-    let load ankiDb (userId: int) fileEntityByAnkiFileName (usersTags: PrivateTagEntity seq) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) =
+    let load ankiDb (userId: int) fileEntityByAnkiFileName (usersTags: PrivateTagEntity seq) (cardOptions: CardOption seq) (conceptTemplates: ConceptTemplate seq) getConcept =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -117,6 +117,7 @@ module AnkiImporter =
                     fileEntityByAnkiFileName
                     []
                     ankiDb.Notes
+                |> List.map(fun (key, ((concept,files), tags)) -> (key, (getConcept concept files, tags)))
                 |> Map.ofList
             let! cardEntities =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
@@ -130,6 +131,19 @@ module AnkiImporter =
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
+        let getConcept (concept: AnkiConceptWrite) files =
+            let fields = concept.Fields |> MappingTools.joinByUnitSeparator
+            db.Concepts.FirstOrDefault(fun c -> 
+                c.Title = concept.Title &&
+                c.Description = concept.Description &&
+                c.ConceptTemplate.Id = concept.ConceptTemplate.Id &&
+                c.Fields = fields &&
+                c.MaintainerId = concept.MaintainerId &&
+                c.IsPublic = concept.IsPublic // medTODO move this to a better place
+            ) |> Option.ofObj
+            |> function
+            | Some x -> x
+            | None -> concept.CopyToNew files
         result {
             let! acquiredCardEntities, histories =
                 load
@@ -146,6 +160,7 @@ module AnkiImporter =
                         //.Include(fun x -> x.ConceptTemplateConceptTemplateDefaultUsers :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
                         .Select ConceptTemplate.Load
+                    <| getConcept
             acquiredCardEntities |> db.AcquiredCards.AddRange
             histories |> db.Histories.AddRange
             db.SaveChangesI ()

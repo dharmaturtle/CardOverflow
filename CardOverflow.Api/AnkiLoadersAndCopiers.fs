@@ -170,11 +170,11 @@ module Anki =
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
-                    let file = fileEntityByAnkiFileName.[ankiFileName]
-                    ( file :: files,
-                      field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
-                      missingAnkiFileNames )
-                else
+                let file = fileEntityByAnkiFileName.[ankiFileName]
+                ( file :: files,
+                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
+                  missingAnkiFileNames )
+            else
                 ( files,
                   field,
                   ankiFileName :: missingAnkiFileNames )
@@ -214,13 +214,13 @@ module Anki =
                     |> List.append tags
                 let files, fields, errors = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName // medTODO report these errors
                 let concept =
-                    { Title = ""
+                    ({Title = ""
                       Description = ""
                       ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                       Fields = MappingTools.splitByUnitSeparator fields
                       Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
                       MaintainerId = userId
-                      IsPublic = false }.CopyToNew files
+                      IsPublic = false }, files)
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
                 parseNotesRec allTags ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId) tail
             | _ -> conceptsAndTagsByNoteId

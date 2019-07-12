@@ -83,3 +83,4 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
     Assert.Equal(2, c.Db.CardOptions.Count(fun x -> x.UserId = userId))
     Assert.Equal(4, c.Db.PrivateTags.Count(fun x -> x.UserId = userId))
     Assert.Equal(5, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = userId))
+    Assert.Equal(8, c.Db.Concepts.Count(fun x -> x.MaintainerId = userId))
