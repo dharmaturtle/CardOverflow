@@ -9,19 +9,15 @@
     <ProjectReference Include="..\CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Config\appsettings.Test.json">
+    <Content Include="..\Config\appsettings.json" Link="Config\appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Config\appsettings.*.json" DependentUpon="appsettings.json" Link="Config\%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\environment.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\Config\appsettings.json" Link="Config\appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Config\appsettings.Local.json" Link="Config\appsettings.Local.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Folder Include="Stuff\" />
     <None Include="..\InitializeDatabase.sql" Link="Stuff\InitializeDatabase.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
