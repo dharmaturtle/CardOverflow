@@ -65,21 +65,22 @@ module Anki =
                 | p when p > 0L -> int16 p // positive is days
                 | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
             ),
-            ScoreAndMemorizationState =
-                (ScoreAndMemorizationState.from
-                <| match revLog.Ease with
-                    | 1L -> Score.Again
-                    | 2L -> Score.Hard
-                    | 3L -> Score.Good
-                    | 4L -> Score.Easy
-                    | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
-                <| match revLog.Type with
-                    |0L -> MemorizationState.New
-                    | 1L -> MemorizationState.Learning
-                    | 2L -> MemorizationState.Mature
-                    | 3L -> MemorizationState.Mature
-                    | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type
-                |> byte),
+            Score = (
+                match revLog.Ease with
+                | 1L -> Again
+                | 2L -> Hard
+                | 3L -> Good
+                | 4L -> Easy
+                | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease // todoMED make this a result
+                |> Score.toDb),
+            MemorizationState = (
+                match revLog.Type with
+                | 0L -> New
+                | 1L -> Learning
+                | 2L -> Mature
+                | 3L -> Mature
+                | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type // todoMed make this a result
+                |> MemorizationState.toDb),
             TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
                 (revLog.Time / 1000L - 32768L |> int16),
             Timestamp =

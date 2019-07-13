@@ -99,7 +99,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[AcquiredCard](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[MemorizationStateAndCardState] [tinyint] NOT NULL,
+	[MemorizationState] [tinyint] NOT NULL,
+	[CardState] [tinyint] NOT NULL,
 	[LapseCount] [tinyint] NOT NULL,
 	[EaseFactorInPermille] [smallint] NOT NULL,
 	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
@@ -297,7 +298,8 @@ GO
 CREATE TABLE [dbo].[History](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[AcquiredCardId] [int] NOT NULL,
-	[ScoreAndMemorizationState] [tinyint] NOT NULL,
+	[Score] [tinyint] NOT NULL,
+	[MemorizationState] [tinyint] NOT NULL,
 	[Timestamp] [smalldatetime] NOT NULL,
 	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
 	[EaseFactorInPermille] [smallint] NOT NULL,
@@ -608,10 +610,16 @@ GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [AK_File_Sha256] ******/
-ALTER TABLE [dbo].[File] ADD  CONSTRAINT [AK_File_Sha256] UNIQUE NONCLUSTERED 
+CREATE UNIQUE NONCLUSTERED INDEX [AK_File_Sha256] ON [dbo].[File]
 (
 	[Sha256] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_File_Concept_FileId] ******/
+CREATE NONCLUSTERED INDEX [IX_File_Concept_FileId] ON [dbo].[File_Concept]
+(
+	[FileId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_History_AcquiredCardId] ******/
 CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]

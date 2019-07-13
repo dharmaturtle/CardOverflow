@@ -214,6 +214,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.ConceptId, e.FileId });
 
+                entity.HasIndex(e => e.FileId);
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.FileConcepts)
                     .HasForeignKey(d => d.ConceptId)

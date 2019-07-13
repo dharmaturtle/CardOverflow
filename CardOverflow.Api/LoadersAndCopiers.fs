@@ -6,80 +6,7 @@ open CardOverflow.Entity
 open CardOverflow.Pure
 open System
 open System.Linq
-
-type MemorizationState with
-    static member Load enum =
-        match enum with
-        | MemorizationStateAndCardStateEnum.NewNormal -> New
-        | MemorizationStateAndCardStateEnum.NewSchedulerBuried -> New
-        | MemorizationStateAndCardStateEnum.NewUserBuried -> New
-        | MemorizationStateAndCardStateEnum.NewSuspended -> New
-        | MemorizationStateAndCardStateEnum.LearningNormal -> Learning
-        | MemorizationStateAndCardStateEnum.LearningSchedulerBuried -> Learning
-        | MemorizationStateAndCardStateEnum.LearningUserBuried -> Learning
-        | MemorizationStateAndCardStateEnum.LearningSuspended -> Learning
-        | MemorizationStateAndCardStateEnum.MatureNormal -> Mature
-        | MemorizationStateAndCardStateEnum.MatureSchedulerBuried -> Mature
-        | MemorizationStateAndCardStateEnum.MatureUserBuried -> Mature
-        | MemorizationStateAndCardStateEnum.MatureSuspended -> Mature
-        | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
-
-type CardState with
-    static member Load enum =
-        match enum with
-        | MemorizationStateAndCardStateEnum.NewNormal -> Normal
-        | MemorizationStateAndCardStateEnum.NewSchedulerBuried -> SchedulerBuried
-        | MemorizationStateAndCardStateEnum.NewUserBuried -> UserBuried
-        | MemorizationStateAndCardStateEnum.NewSuspended -> Suspended
-        | MemorizationStateAndCardStateEnum.LearningNormal -> Normal
-        | MemorizationStateAndCardStateEnum.LearningSchedulerBuried -> SchedulerBuried
-        | MemorizationStateAndCardStateEnum.LearningUserBuried -> UserBuried
-        | MemorizationStateAndCardStateEnum.LearningSuspended -> Suspended
-        | MemorizationStateAndCardStateEnum.MatureNormal -> Normal
-        | MemorizationStateAndCardStateEnum.MatureSchedulerBuried -> SchedulerBuried
-        | MemorizationStateAndCardStateEnum.MatureUserBuried -> UserBuried
-        | MemorizationStateAndCardStateEnum.MatureSuspended -> Suspended
-        | _ -> "Unknown MemorizationStateAndCardStateEnum value: " + enum.ToString() |> failwith
-
-module ScoreAndMemorizationState =
-    let from score memorizationState =
-        match (score, memorizationState) with
-        | (Again, New) -> ScoreAndMemorizationStateEnum.AgainNew
-        | (Hard, New) -> ScoreAndMemorizationStateEnum.HardNew
-        | (Good, New) -> ScoreAndMemorizationStateEnum.GoodNew
-        | (Easy, New) -> ScoreAndMemorizationStateEnum.EasyNew
-        | (Again, Learning) -> ScoreAndMemorizationStateEnum.AgainLearning
-        | (Hard, Learning) -> ScoreAndMemorizationStateEnum.HardLearning
-        | (Good, Learning) -> ScoreAndMemorizationStateEnum.GoodLearning
-        | (Easy, Learning) -> ScoreAndMemorizationStateEnum.EasyLearning
-        | (Again, Mature) -> ScoreAndMemorizationStateEnum.AgainMature
-        | (Hard, Mature) -> ScoreAndMemorizationStateEnum.HardMature
-        | (Good, Mature) -> ScoreAndMemorizationStateEnum.GoodMature
-        | (Easy, Mature) -> ScoreAndMemorizationStateEnum.EasyMature
-        | (Again, Lapsed) -> ScoreAndMemorizationStateEnum.AgainLapsed
-        | (Hard, Lapsed) -> ScoreAndMemorizationStateEnum.HardLapsed
-        | (Good, Lapsed) -> ScoreAndMemorizationStateEnum.GoodLapsed
-        | (Easy, Lapsed) -> ScoreAndMemorizationStateEnum.EasyLapsed
-
-module MemorizationStateAndCardStateEnum =
-    let from memorizationState cardState =
-        match (memorizationState, cardState) with
-        | (New, Normal) -> MemorizationStateAndCardStateEnum.NewNormal
-        | (New, SchedulerBuried) -> MemorizationStateAndCardStateEnum.NewSchedulerBuried
-        | (New, UserBuried) -> MemorizationStateAndCardStateEnum.NewUserBuried
-        | (New, Suspended) -> MemorizationStateAndCardStateEnum.NewSuspended
-        | (Learning, Normal) -> MemorizationStateAndCardStateEnum.LearningNormal
-        | (Learning, SchedulerBuried) -> MemorizationStateAndCardStateEnum.LearningSchedulerBuried
-        | (Learning, UserBuried) -> MemorizationStateAndCardStateEnum.LearningUserBuried
-        | (Learning, Suspended) -> MemorizationStateAndCardStateEnum.LearningSuspended
-        | (Mature, Normal) -> MemorizationStateAndCardStateEnum.MatureNormal
-        | (Mature, SchedulerBuried) -> MemorizationStateAndCardStateEnum.MatureSchedulerBuried
-        | (Mature, UserBuried) -> MemorizationStateAndCardStateEnum.MatureUserBuried
-        | (Mature, Suspended) -> MemorizationStateAndCardStateEnum.MatureSuspended
-        | (Lapsed, Normal) -> MemorizationStateAndCardStateEnum.LapsedNormal
-        | (Lapsed, SchedulerBuried) -> MemorizationStateAndCardStateEnum.LapsedSchedulerBuried
-        | (Lapsed, UserBuried) -> MemorizationStateAndCardStateEnum.LapsedUserBuried
-        | (Lapsed, Suspended) -> MemorizationStateAndCardStateEnum.LapsedSuspended
+open FsToolkit.ErrorHandling
 
 type CardOption with
     member this.AcquireEquality (that: CardOption) =
@@ -262,23 +189,28 @@ type QuizCard with
             |> MappingTools.splitByRecordSeparator
             |> List.item (int entity.Card.TemplateIndex)
             |> CardTemplate.Load
-        { Id = entity.Id
-          Due = entity.Due
-          Question = replaceFields cardTemplate.QuestionTemplate
-          Answer = replaceFields cardTemplate.AnswerTemplate
-          MemorizationState = MemorizationState.Load entity.MemorizationStateAndCardState
-          CardState = CardState.Load entity.MemorizationStateAndCardState
-          LapseCount = entity.LapseCount
-          EaseFactor = float entity.EaseFactorInPermille / 1000.
-          Interval =
-              if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
-              then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
-              else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
-          StepsIndex =
-              if entity.StepsIndex.HasValue
-              then Some entity.StepsIndex.Value
-              else None
-          Options = CardOption.Load entity.CardOption }
+        result {
+            let! memorizationState = MemorizationState.create entity.MemorizationState
+            let! cardState = CardState.create entity.CardState
+            return
+                { Id = entity.Id
+                  Due = entity.Due
+                  Question = replaceFields cardTemplate.QuestionTemplate
+                  Answer = replaceFields cardTemplate.AnswerTemplate
+                  MemorizationState = memorizationState
+                  CardState = cardState
+                  LapseCount = entity.LapseCount
+                  EaseFactor = float entity.EaseFactorInPermille / 1000.
+                  Interval =
+                      if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
+                      then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
+                      else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
+                  StepsIndex =
+                      if entity.StepsIndex.HasValue
+                      then Some entity.StepsIndex.Value
+                      else None
+                  Options = CardOption.Load entity.CardOption }
+        }
 
 type Concept with
     static member Load(entity: ConceptEntity) =
@@ -308,7 +240,8 @@ type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
         entity.Id <- this.Id
         entity.UserId <- this.UserId
-        entity.MemorizationStateAndCardState <- MemorizationStateAndCardStateEnum.from this.MemorizationState this.CardState
+        entity.MemorizationState <- MemorizationState.toDb this.MemorizationState
+        entity.CardState <- CardState.toDb this.CardState
         entity.LapseCount <- this.LapseCount
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
@@ -329,7 +262,8 @@ type AcquiredCard with
     static member NewlyAcquired userId cardOptionId (card: CardEntity) =
         AcquiredCardEntity(
             Card = card,
-            MemorizationStateAndCardState = MemorizationStateAndCardStateEnum.NewNormal,
+            MemorizationState = MemorizationState.toDb New,
+            CardState = CardState.toDb Normal,
             LapseCount = 0uy,
             EaseFactorInPermille = 0s,
             IntervalNegativeIsMinutesPositiveIsDays = 0s,

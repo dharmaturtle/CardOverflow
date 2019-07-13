@@ -10,7 +10,8 @@ namespace CardOverflow.Entity
     {
         public int Id { get; set; }
         public int AcquiredCardId { get; set; }
-        public byte ScoreAndMemorizationState { get; set; }
+        public byte Score { get; set; }
+        public byte MemorizationState { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Timestamp { get; set; }
         public short IntervalNegativeIsMinutesPositiveIsDays { get; set; }

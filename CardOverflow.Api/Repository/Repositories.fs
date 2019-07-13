@@ -29,7 +29,8 @@ module CardRepository =
         |> List.map (fun i ->
             AcquiredCardEntity(
                 CardId = i,
-                MemorizationStateAndCardState = MemorizationStateAndCardStateEnum.NewNormal,
+                MemorizationState = MemorizationState.toDb New,
+                CardState = CardState.toDb Normal,
                 LapseCount = 0uy,
                 EaseFactorInPermille = 0s,
                 IntervalNegativeIsMinutesPositiveIsDays = 0s,

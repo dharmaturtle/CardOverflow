@@ -15,7 +15,8 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
-        public MemorizationStateAndCardStateEnum MemorizationStateAndCardState { get; set; }
+        public byte MemorizationState { get; set; }
+        public byte CardState { get; set; }
         public byte LapseCount { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalNegativeIsMinutesPositiveIsDays { get; set; }
