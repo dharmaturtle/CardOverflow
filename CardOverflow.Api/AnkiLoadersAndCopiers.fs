@@ -201,7 +201,13 @@ module Anki =
                   ankiFileName :: missingAnkiFileNames )
         )
         |> fun (files, fields, errors) -> (files |> List.distinct, fields, errors)
-    let parseNotes (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>) initialTags userId fileEntityByAnkiFileName initialConceptsAndTagsByNoteId = // medTODO use tail recursion
+    let parseNotes
+        (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>)
+        initialTags
+        userId
+        fileEntityByAnkiFileName
+        initialConceptsAndTagsByNoteId
+        getConcept = // medTODO use tail recursion
         let rec parseNotesRec tags conceptsAndTagsByNoteId =
             function
             | (note: NoteEntity) :: tail ->
@@ -215,13 +221,18 @@ module Anki =
                     |> List.append tags
                 let files, fields, errors = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName // medTODO report these errors
                 let concept =
-                    ({Title = ""
-                      Description = ""
-                      ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
-                      Fields = MappingTools.splitByUnitSeparator fields
-                      Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
-                      MaintainerId = userId
-                      IsPublic = false }, files)
+                    let c =
+                        { Title = ""
+                          Description = ""
+                          ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
+                          Fields = MappingTools.splitByUnitSeparator fields
+                          Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
+                          MaintainerId = userId
+                          IsPublic = false }
+                    getConcept c
+                    |> function
+                    | Some x -> x
+                    | None -> c.CopyToNew files
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
                 parseNotesRec allTags ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId) tail
             | _ -> conceptsAndTagsByNoteId

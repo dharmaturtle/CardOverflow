@@ -123,8 +123,8 @@ module AnkiImporter =
                     userId
                     fileEntityByAnkiFileName
                     []
+                    getConcept
                     ankiDb.Notes
-                |> List.map(fun (key, ((concept,files), tags)) -> (key, (getConcept concept files, tags)))
                 |> Map.ofList
             let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
@@ -138,7 +138,7 @@ module AnkiImporter =
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
-        let getConcept (concept: AnkiConceptWrite) files =
+        let getConcept (concept: AnkiConceptWrite) =
             let fields = concept.Fields |> MappingTools.joinByUnitSeparator
             db.Concepts.FirstOrDefault(fun c -> 
                 c.Title = concept.Title &&
@@ -148,9 +148,6 @@ module AnkiImporter =
                 c.MaintainerId = concept.MaintainerId &&
                 c.IsPublic = concept.IsPublic // medTODO move this to a better place
             ) |> Option.ofObj
-            |> function
-            | Some x -> x
-            | None -> concept.CopyToNew files
         result {
             let! acquiredCardEntities, histories =
                 load
