@@ -238,7 +238,6 @@ type Concept with
 
 type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
-        entity.Id <- this.Id
         entity.UserId <- this.UserId
         entity.MemorizationState <- MemorizationState.toDb this.MemorizationState
         entity.CardState <- CardState.toDb this.CardState
@@ -247,15 +246,13 @@ type AcquiredCard with
         entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
         entity.StepsIndex <- Option.toNullable this.StepsIndex
         entity.Due <- this.Due
-        entity.CardOptionId <- this.CardOptionId
-        entity.Card <- CardEntity (
-            TemplateIndex = this.TemplateIndex,
-            ConceptId = this.ConceptId
-        )
     member this.CopyToNew concept cardOption (privateTags: PrivateTagEntity seq) =
         let entity = AcquiredCardEntity ()
         this.CopyTo entity
-        entity.Card.Concept <- concept
+        entity.Card <- CardEntity (
+            TemplateIndex = this.TemplateIndex,
+            Concept = concept
+        )
         entity.CardOption <- cardOption
         entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
         entity

@@ -143,7 +143,6 @@ type Concept = {
 }
 
 type AcquiredCard = {
-    Id: int
     UserId: int
     ConceptId: int
     MemorizationState: MemorizationState
@@ -154,5 +153,4 @@ type AcquiredCard = {
     StepsIndex: option<byte>
     Due: DateTime
     TemplateIndex: byte
-    CardOptionId: int
 }

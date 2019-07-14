@@ -257,8 +257,7 @@ module Anki =
         |> Result.map (fun memorizationState ->
             let entity =
                 let c =
-                    { AcquiredCard.Id = 0
-                      UserId = userId
+                    { UserId = userId
                       ConceptId = concept.Id
                       MemorizationState = memorizationState
                       CardState =
@@ -293,11 +292,12 @@ module Anki =
                         | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
-                      TemplateIndex = ankiCard.Ord |> byte
-                      CardOptionId = 0 }
+                      TemplateIndex = ankiCard.Ord |> byte }
                 getCard c
                 |> function
-                | Some x -> x
+                | Some entity ->
+                    c.CopyTo entity
+                    entity
                 | None -> c.CopyToNew concept cardOption (deckTag :: List.ofSeq tags)
             (ankiCard.Id, entity)
         )

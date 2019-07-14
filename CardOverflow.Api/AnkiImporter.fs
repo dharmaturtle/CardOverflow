@@ -176,8 +176,10 @@ module AnkiImporter =
             acquiredCardEntities |> Seq.iter (fun x ->
                 if x.Id = 0
                 then db.AcquiredCards.AddI x
-                //else db.AcquiredCards.UpdateI x // medTODO write a test for this
+                //else db.AcquiredCards.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
             histories |> db.Histories.AddRange
             db.SaveChangesI ()
         }
+        
+// lowTODO consider just generating a temporary guid code side to serve as a lookupID for the record types, then build the entities at the very end.

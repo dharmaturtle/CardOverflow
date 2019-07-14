@@ -92,3 +92,24 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
     Assert.Equal(1, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptId = 1))
     Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptId = 5))
     Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptId = 6))
+
+[<Theory>]
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``Importing AnkiDb, then again with different card lapses, updates db`` _ simpleAnkiDb =
+    let lapseCountA = 13L
+    let lapseCountB = 45L
+    use c = new TestContainer()
+    let userId = 3
+    AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+    |> Result.isOk
+    |> Assert.True
+    Assert.Equal(10, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = 0uy))
+    simpleAnkiDb.Cards |> List.iter (fun x -> x.Lapses <- lapseCountA)
+    simpleAnkiDb.Cards.[0].Lapses <- lapseCountB
+
+    AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+    |> Result.isOk
+    |> Assert.True
+
+    Assert.Equal(9, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = byte lapseCountA))
+    Assert.Equal(1, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = byte lapseCountB))
