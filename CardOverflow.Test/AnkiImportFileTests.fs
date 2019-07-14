@@ -41,6 +41,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
         |> Result.isOk
         |> Assert.True
 
+    Assert.Equal(3, c.Db.FileConcepts.Count())
     Assert.Equal(3, c.Db.Files.Count())
 
 [<Fact>]
