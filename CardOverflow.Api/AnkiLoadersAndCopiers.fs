@@ -53,7 +53,15 @@ type AnkiConceptWrite = {
                 )
             ).ToList()
         entity
-
+    member this.AcquireEquality (db: CardOverflowDb) fields = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+        db.Concepts.FirstOrDefault(fun c -> 
+            this.Title = c.Title &&
+            this.Description = c.Description &&
+            this.ConceptTemplate.Id = c.ConceptTemplate.Id &&
+            fields = c.Fields &&
+            this.MaintainerId = c.MaintainerId &&
+            this.IsPublic = c.IsPublic
+        )
 
 module Anki =
     let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) (revLog: RevlogEntity) =

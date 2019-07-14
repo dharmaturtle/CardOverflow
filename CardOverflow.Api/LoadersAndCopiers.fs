@@ -269,3 +269,9 @@ type AcquiredCard with
             CardOptionId = cardOptionId,
             UserId = userId
         )
+    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+        db.AcquiredCards.FirstOrDefault(fun c -> 
+            this.UserId = c.UserId &&
+            this.ConceptId = c.Card.ConceptId &&
+            this.TemplateIndex = c.Card.TemplateIndex
+        )

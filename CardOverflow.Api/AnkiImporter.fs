@@ -140,28 +140,19 @@ module AnkiImporter =
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         let getConcept (concept: AnkiConceptWrite) =
-            let fields = concept.Fields |> MappingTools.joinByUnitSeparator
-            db.Concepts.FirstOrDefault(fun c -> 
-                c.Title = concept.Title &&
-                c.Description = concept.Description &&
-                c.ConceptTemplate.Id = concept.ConceptTemplate.Id &&
-                c.Fields = fields &&
-                c.MaintainerId = concept.MaintainerId &&
-                c.IsPublic = concept.IsPublic // medTODO move this to a better place
-            ) |> Option.ofObj
+            concept.Fields
+            |> MappingTools.joinByUnitSeparator
+            |> concept.AcquireEquality db
+            |> Option.ofObj
         let getCard (card: AcquiredCard) =
-            db.AcquiredCards.FirstOrDefault(fun c -> 
-                c.UserId = card.UserId &&
-                c.Card.ConceptId = card.ConceptId &&
-                c.Card.TemplateIndex = card.TemplateIndex // medTODO move this to a better place
-            ) |> Option.ofObj
+            card.AcquireEquality db |> Option.ofObj
         result {
             let! acquiredCardEntities, histories =
                 load
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| db.PrivateTags.Where(fun pt -> pt.UserId = userId)
+                    <| db.PrivateTags.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and concepttemplates is heavy
                     <| db.CardOptions
                         .Where(fun x -> x.UserId = userId)
                         .Select CardOption.Load
