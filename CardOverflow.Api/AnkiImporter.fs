@@ -62,7 +62,8 @@ module AnkiImporter =
         (usersTags: PrivateTagEntity seq)
         (cardOptions: CardOption seq)
         (conceptTemplates: ConceptTemplate seq)
-        getConcept =
+        getConcept 
+        getCard =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -129,7 +130,7 @@ module AnkiImporter =
             let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags)
+                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags getCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             return (cardByAnkiId |> Map.overValue id,
@@ -148,6 +149,12 @@ module AnkiImporter =
                 c.MaintainerId = concept.MaintainerId &&
                 c.IsPublic = concept.IsPublic // medTODO move this to a better place
             ) |> Option.ofObj
+        let getCard (card: AcquiredCard) =
+            db.AcquiredCards.FirstOrDefault(fun c -> 
+                c.UserId = card.UserId &&
+                c.Card.ConceptId = card.ConceptId &&
+                c.Card.TemplateIndex = card.TemplateIndex // medTODO move this to a better place
+            ) |> Option.ofObj
         result {
             let! acquiredCardEntities, histories =
                 load
@@ -165,7 +172,12 @@ module AnkiImporter =
                         //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
                         .Select ConceptTemplate.Load
                     <| getConcept
-            acquiredCardEntities |> db.AcquiredCards.AddRange
+                    <| getCard
+            acquiredCardEntities |> Seq.iter (fun x ->
+                if x.Id = 0
+                then db.AcquiredCards.AddI x
+                //else db.AcquiredCards.UpdateI x // medTODO write a test for this
+            )
             histories |> db.Histories.AddRange
             db.SaveChangesI ()
         }
