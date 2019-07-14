@@ -68,6 +68,10 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.ConceptId);
 
+                entity.HasIndex(e => new { e.ConceptId, e.TemplateIndex })
+                    .HasName("UQ_Card__ConceptId_TemplateIndex")
+                    .IsUnique();
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.Cards)
                     .HasForeignKey(d => d.ConceptId)

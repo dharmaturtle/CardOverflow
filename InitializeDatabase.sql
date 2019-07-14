@@ -529,6 +529,13 @@ CREATE NONCLUSTERED INDEX [IX_AcquiredCard_UserId] ON [dbo].[AcquiredCard]
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [UQ_Card__ConceptId_TemplateIndex] ******/
+ALTER TABLE [dbo].[Card] ADD  CONSTRAINT [UQ_Card__ConceptId_TemplateIndex] UNIQUE NONCLUSTERED 
+(
+	[ConceptId] ASC,
+	[TemplateIndex] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_Card_ConceptId] ******/
 CREATE NONCLUSTERED INDEX [IX_Card_ConceptId] ON [dbo].[Card]
 (
