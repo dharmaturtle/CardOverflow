@@ -249,9 +249,9 @@ module Anki =
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
         match ankiCard.Type with
-        | 0L -> Ok MemorizationState.New
-        | 1L -> Ok MemorizationState.Learning
-        | 2L -> Ok MemorizationState.Mature
+        | 0L -> Ok New
+        | 1L -> Ok Learning
+        | 2L -> Ok Mature
         | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
@@ -263,10 +263,10 @@ module Anki =
                       MemorizationState = memorizationState
                       CardState =
                         match ankiCard.Queue with
-                        | -3L -> CardState.UserBuried
-                        | -2L -> CardState.SchedulerBuried
-                        | -1L -> CardState.Suspended
-                        | _ -> CardState.Normal
+                        | -3L -> UserBuried
+                        | -2L -> SchedulerBuried
+                        | -1L -> Suspended
+                        | _ -> Normal
                       LapseCount = ankiCard.Lapses |> byte // lowTODO This will throw an exception from `Microsoft.FSharp.Core.Operators.Checked` if Lapses is too big; should be a Result somehow
                       EaseFactorInPermille = ankiCard.Factor |> int16
                       IntervalNegativeIsMinutesPositiveIsDays =
@@ -275,24 +275,24 @@ module Anki =
                         else float ankiCard.Ivl * -1. / 60. |> Math.Round |> int16
                       StepsIndex =
                         match memorizationState with
-                        | MemorizationState.New
-                        | MemorizationState.Learning ->
+                        | New
+                        | Learning ->
                             if ankiCard.Left = 0L
                             then 0
                             else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
                             |> byte |> Some
-                        | MemorizationState.Lapsed ->
+                        | Lapsed ->
                             if ankiCard.Left = 0L
                             then 0
                             else cardOption.LapsedCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
                             |> byte |> Some
-                        | MemorizationState.Mature -> None
+                        | Mature -> None
                       Due =
                         match memorizationState with
-                        | MemorizationState.New -> DateTime.UtcNow.Date
-                        | MemorizationState.Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                        | MemorizationState.Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                        | MemorizationState.Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
+                        | New -> DateTime.UtcNow.Date
+                        | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
+                        | Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
+                        | Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
                       TemplateIndex = ankiCard.Ord |> byte
                       CardOptionId = 0 }
                 getCard c
