@@ -117,16 +117,15 @@ module AnkiImporter =
                     | None -> PrivateTagEntity(Name = deckTag, UserId = userId))
                 |> Seq.append usersTags
                 |> Seq.toList
-            let conceptsAndTagsByAnkiId =
+            let! conceptsAndTagsByAnkiId =
                 Anki.parseNotes
                     conceptTemplatesByModelId
                     usersTags
                     userId
                     fileEntityByAnkiFileName
-                    []
                     getConcept
                     ankiDb.Notes
-                |> Map.ofList
+            let conceptsAndTagsByAnkiId = conceptsAndTagsByAnkiId |> Map.ofList
             let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards

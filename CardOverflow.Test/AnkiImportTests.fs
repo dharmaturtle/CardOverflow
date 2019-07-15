@@ -24,7 +24,7 @@ let any<'R> : 'R = failwith "!"
 
 let assertHasBasicInfo db ankiDb =
     let userId = 3
-    AnkiImporter.save db ankiDb userId Map.empty
+    AnkiImporter.save db ankiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
     |> Result.isOk
     |> Assert.True
     Assert.Equal(8, db.Concepts.Count())
@@ -76,7 +76,7 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
     use c = new TestContainer()
     let userId = 3
     for _ in [1..5] do
-        AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+        AnkiImporter.save c.Db simpleAnkiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
         |> Result.isOk
         |> Assert.True
 
@@ -100,14 +100,14 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` _ si
     let lapseCountB = 45L
     use c = new TestContainer()
     let userId = 3
-    AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+    AnkiImporter.save c.Db simpleAnkiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
     |> Result.isOk
     |> Assert.True
     Assert.Equal(10, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = 0uy))
     simpleAnkiDb.Cards |> List.iter (fun x -> x.Lapses <- lapseCountA)
     simpleAnkiDb.Cards.[0].Lapses <- lapseCountB
 
-    AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+    AnkiImporter.save c.Db simpleAnkiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
     |> Result.isOk
     |> Assert.True
 

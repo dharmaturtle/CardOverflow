@@ -208,15 +208,14 @@ module Anki =
                   field,
                   ankiFileName :: missingAnkiFileNames )
         )
-        |> fun (files, fields, errors) -> (files |> List.distinct, fields, errors)
+        |> fun (files, fields, missingAnkiFileNames) -> (files |> List.distinct, fields, missingAnkiFileNames)
     let parseNotes
         (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>)
         initialTags
         userId
         fileEntityByAnkiFileName
-        initialConceptsAndTagsByNoteId
         getConcept = // medTODO use tail recursion
-        let rec parseNotesRec tags conceptsAndTagsByNoteId =
+        let rec parseNotesRec tags conceptsAndTagsByNoteId missingAnkiFileNames =
             function
             | (note: NoteEntity) :: tail ->
                 let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
@@ -227,7 +226,7 @@ module Anki =
                     |> List.ofSeq
                     |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
                     |> List.append tags
-                let files, fields, errors = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName // medTODO report these errors
+                let files, fields, newMissingAnkiFileNames = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let concept =
                     let c =
                         { Title = ""
@@ -242,9 +241,16 @@ module Anki =
                     | Some x -> x
                     | None -> c.CopyToNew files
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
-                parseNotesRec allTags ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId) tail
-            | _ -> conceptsAndTagsByNoteId
-        parseNotesRec initialTags initialConceptsAndTagsByNoteId
+                parseNotesRec
+                    allTags
+                    ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId)
+                    (newMissingAnkiFileNames.Concat missingAnkiFileNames)
+                    tail
+            | _ ->
+                if missingAnkiFileNames.Any()
+                then Error <| "In Anki, click 'Tools', then 'Check Media', because your Anki notes refer to some missing files: \r\n" + String.Join(", ", missingAnkiFileNames)
+                else Ok conceptsAndTagsByNoteId
+        parseNotesRec initialTags [] []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>)
         (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>)

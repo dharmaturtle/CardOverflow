@@ -21,7 +21,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
     use c = new TestContainer(ankiFileName)
     
     ankiExportsDir +/ ankiFileName
-    |> AnkiImporter.loadFiles (fun sha256 -> c.Db.Files |> Seq.tryFind(fun f -> f.Sha256 = sha256))
+    |> AnkiImporter.loadFiles (fun _ -> None)
     |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
     |> Result.getOk
 
