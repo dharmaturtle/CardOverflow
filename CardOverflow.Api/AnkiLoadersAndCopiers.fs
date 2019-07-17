@@ -63,37 +63,73 @@ type AnkiConceptWrite = {
             this.IsPublic = c.IsPublic
         )
 
+type AnkiHistory = {
+    AcquiredCard: AcquiredCardEntity
+    Score: byte
+    MemorizationState: byte
+    Timestamp: DateTime
+    IntervalNegativeIsMinutesPositiveIsDays: int16
+    EaseFactorInPermille: int16
+    TimeFromSeeingQuestionToScoreInSecondsMinus32768: int16
+} with
+    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+        let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
+        db.Histories.FirstOrDefault(fun h -> 
+            this.AcquiredCard.Id = h.AcquiredCardId &&
+            this.Score = h.Score &&
+            this.MemorizationState = h.MemorizationState &&
+            roundedTimeStamp = h.Timestamp &&
+            this.IntervalNegativeIsMinutesPositiveIsDays = h.IntervalNegativeIsMinutesPositiveIsDays &&
+            this.EaseFactorInPermille = h.EaseFactorInPermille &&
+            this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsMinus32768
+        )
+    member this.CopyTo (entity: HistoryEntity) =
+        entity.AcquiredCard <- this.AcquiredCard
+        entity.Score <- this.Score
+        entity.MemorizationState <- this.MemorizationState
+        entity.Timestamp <- this.Timestamp
+        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
+        entity.EaseFactorInPermille <- this.EaseFactorInPermille
+        entity.TimeFromSeeingQuestionToScoreInSecondsMinus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
+    member this.CopyToNew =
+        let history = HistoryEntity()
+        this.CopyTo history
+        history
+
 module Anki =
-    let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) (revLog: RevlogEntity) =
-        HistoryEntity(
-            AcquiredCard = cardByAnkiId.[revLog.Cid],
-            EaseFactorInPermille = int16 revLog.Factor,
-            IntervalNegativeIsMinutesPositiveIsDays = (
+    let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) getHistory (revLog: RevlogEntity) =
+        let history = {
+            AcquiredCard = cardByAnkiId.[revLog.Cid]
+            EaseFactorInPermille = int16 revLog.Factor
+            IntervalNegativeIsMinutesPositiveIsDays =
                 match revLog.Ivl with
                 | p when p > 0L -> int16 p // positive is days
                 | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
-            ),
-            Score = (
+            Score =
                 match revLog.Ease with
                 | 1L -> Again
                 | 2L -> Hard
                 | 3L -> Good
                 | 4L -> Easy
-                | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease // todoMED make this a result
-                |> Score.toDb),
-            MemorizationState = (
+                | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease // medTODO make this a result
+                |> Score.toDb
+            MemorizationState =
                 match revLog.Type with
                 | 0L -> New
                 | 1L -> Learning
                 | 2L -> Mature
                 | 3L -> Mature
-                | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type // todoMed make this a result
-                |> MemorizationState.toDb),
+                | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type // medTODO make this a result
+                |> MemorizationState.toDb
             TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
-                (revLog.Time / 1000L - 32768L |> int16),
+                revLog.Time / 1000L - 32768L |> int16
             Timestamp =
                 DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
-        )
+        }
+        getHistory history
+        |> function
+        | Some x -> x
+        | None -> history.CopyToNew
 
     let ankiIntToBool =
         Decode.int

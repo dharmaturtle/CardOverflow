@@ -63,7 +63,8 @@ module AnkiImporter =
         (cardOptions: CardOption seq)
         (conceptTemplates: ConceptTemplate seq)
         getConcept 
-        getCard =
+        getCard
+        getHistory =
         let col = ankiDb.Cols.Single()
         result {
             let! cardOptionByDeckConfigurationId =
@@ -133,7 +134,7 @@ module AnkiImporter =
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             return (cardByAnkiId |> Map.overValue id,
-                    ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId)
+                    ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory)
                    )
         }
 
@@ -145,6 +146,8 @@ module AnkiImporter =
             |> Option.ofObj
         let getCard (card: AcquiredCard) =
             card.AcquireEquality db |> Option.ofObj
+        let getHistory (history: AnkiHistory) =
+            history.AcquireEquality db |> Option.ofObj
         result {
             let! acquiredCardEntities, histories =
                 load
@@ -163,12 +166,17 @@ module AnkiImporter =
                         .Select ConceptTemplate.Load
                     <| getConcept
                     <| getCard
+                    <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
                 if x.Id = 0
                 then db.AcquiredCards.AddI x
                 //else db.AcquiredCards.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
-            histories |> db.Histories.AddRange
+            histories |> Seq.iter (fun x ->
+                if x.Id = 0
+                then db.Histories.AddI x
+                //else db.Histories.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
+            )
             db.SaveChangesI ()
         }
         

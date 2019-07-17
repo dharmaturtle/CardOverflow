@@ -54,7 +54,7 @@ let assertHasHistory db ankiDb =
     AnkiImporter.save db ankiDb userId Map.empty
     |> Result.isOk
     |> Assert.True
-    Assert.NotNull(db.Histories.FirstOrDefault())
+    Assert.Equal(110, db.Histories.Count(fun x -> x.AcquiredCard.UserId = userId))
 
 type AllRandomReviews () =
     inherit XunitClassDataBase
@@ -64,11 +64,20 @@ type AllRandomReviews () =
 
 [<Theory>]
 [<ClassData(typeof<AllRandomReviews>)>]
-let ``AnkiImporter can import RandomReviews`` randomReviews =
-    use c = new TestContainer(randomReviews)
-    AnkiImportTestData.getAnkiDb randomReviews
+let ``AnkiImporter imports RandomReviews`` randomReviews =
+    use c = new AnkiTestContainer(randomReviews)
+    c.AnkiDb()
     |> AnkiImporter.getSimpleAnkiDb
     |> assertHasHistory c.Db
+
+[<Theory>]
+[<ClassData(typeof<AllRandomReviews>)>]
+let ``Importing AllRandomReviews reuses previous History`` randomReviews =
+    use c = new AnkiTestContainer(randomReviews)
+    for _ in [1..5] do
+        c.AnkiDb()
+        |> AnkiImporter.getSimpleAnkiDb
+        |> assertHasHistory c.Db
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]

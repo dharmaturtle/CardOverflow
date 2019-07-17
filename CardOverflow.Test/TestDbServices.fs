@@ -11,15 +11,15 @@ open ContainerExtensions
 open SimpleInjector.Lifestyles
 open Microsoft.Extensions.Configuration
 
-type TestContainer(?args: string, [<CallerMemberName>] ?memberName: string) =
+type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
     let scope = AsyncScopedLifestyle.BeginScope container
     do
-        let temp =
-            if args.IsSome
-            then memberName.Value + "_" + args.Value
-            else memberName.Value
         let dbName =
+            let temp =
+                if callerMembersArg.IsSome
+                then memberName.Value + "_" + callerMembersArg.Value
+                else memberName.Value
             Regex.Replace(temp, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
             |> sprintf "CardOverflow_%s"
         container.RegisterStuff

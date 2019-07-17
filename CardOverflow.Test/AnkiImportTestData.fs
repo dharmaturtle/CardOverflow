@@ -13,6 +13,8 @@ open System.IO.Compression
 open System.Linq
 open Xunit
 open CardOverflow.Sanitation
+open System
+open System.Runtime.CompilerServices
 
 let allDefaultTemplatesAndImageAndMp3_apkg =
     {
@@ -972,8 +974,8 @@ let fileEntityByAnkiFileName () =
 
 let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
 
-let getAnkiDb ankiFileName =
-    let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName // Need to isolate ankiDb otherwise tests run in parallel fail
+let ankiDb ankiFileName callerMemberName =
+    let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName + callerMemberName // Need to isolate each tests's ankiDb otherwise tests run in parallel fail
     if Directory.Exists unzipDir
     then Directory.Delete(unzipDir, true)
     Directory.CreateDirectory unzipDir |> ignore
@@ -990,9 +992,19 @@ let serialize x =
 let ``Actual AllDefaultTemplatesAndImageAndMp3 matches mock`` fileName mock =
     let actualDb = 
         AnkiImporter.getSimpleAnkiDb
-        |> using(getAnkiDb fileName)
+        |> using(ankiDb fileName "Actual testnametoolong matches mock")
     
     serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
     serialize actualDb.Cols = serialize mock.Cols |> Assert.True
     serialize actualDb.Notes = serialize mock.Notes |> Assert.True
     serialize actualDb.Cards = serialize mock.Cards |> Assert.True
+
+type AnkiTestContainer(ankiFileName: string, [<CallerMemberName>] ?memberName: string) =
+    let container = new TestContainer(ankiFileName, memberName.Value)
+    interface IDisposable with
+        member __.Dispose() =
+            (container :> IDisposable).Dispose()
+    member __.Db =
+        container.Db
+    member __.AnkiDb () =
+        ankiDb ankiFileName memberName.Value

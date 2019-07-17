@@ -62,3 +62,9 @@ let cutOffInt16 x =
     if x > float Int16.MaxValue
     then Int16.MaxValue
     else int16 x
+
+let round (dt: DateTime) (d: TimeSpan) = // https://stackoverflow.com/a/20046261/
+    let delta = dt.Ticks % d.Ticks
+    let roundUp = delta > d.Ticks / 2L
+    let offset = if roundUp then d.Ticks else 0L
+    DateTime(dt.Ticks + offset - delta, dt.Kind)

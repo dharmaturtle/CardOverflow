@@ -127,7 +127,7 @@ type QuizCard = {
     LapseCount: byte
     EaseFactor: float
     Interval: TimeSpan
-    StepsIndex: option<byte>
+    StepsIndex: byte option
     Options: CardOption
 }
 
@@ -150,7 +150,7 @@ type AcquiredCard = {
     LapseCount: byte
     EaseFactorInPermille: int16
     IntervalNegativeIsMinutesPositiveIsDays: int16
-    StepsIndex: option<byte>
+    StepsIndex: byte option
     Due: DateTime
     TemplateIndex: byte
 }
