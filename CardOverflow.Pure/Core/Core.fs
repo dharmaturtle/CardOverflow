@@ -21,10 +21,10 @@ module Result =
         | Error error -> error
 
     let consolidate results =
-        let errors = results |> List.filter (not << isOk)
-        if errors.IsEmpty
-        then results |> List.map getOk |> Ok
-        else errors |> List.map getError |> String.concat "\r\n" |> Error
+        let errors = results |> Seq.filter (not << isOk)
+        if Seq.isEmpty errors
+        then results |> Seq.map getOk |> Ok
+        else errors |> Seq.map getError |> String.concat "\r\n" |> Error
 
 
 module Random =

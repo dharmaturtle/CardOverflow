@@ -12,6 +12,7 @@ open Microsoft.FSharp.Core.Operators.Checked
 open System.Collections.Generic
 open CardOverflow.Debug
 open MappingTools
+open FsToolkit.ErrorHandling
 
 type SimpleAnkiDb = {
     Cards: CardOverflow.Entity.Anki.CardEntity list
@@ -98,38 +99,41 @@ type AnkiHistory = {
 
 module Anki =
     let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) getHistory (revLog: RevlogEntity) =
-        let history = {
-            AcquiredCard = cardByAnkiId.[revLog.Cid]
-            EaseFactorInPermille = int16 revLog.Factor
-            IntervalNegativeIsMinutesPositiveIsDays =
-                match revLog.Ivl with
-                | p when p > 0L -> int16 p // positive is days
-                | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
-            Score =
+        result {
+            let! score =
                 match revLog.Ease with
-                | 1L -> Again
-                | 2L -> Hard
-                | 3L -> Good
-                | 4L -> Easy
-                | _ -> failwith <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease // medTODO make this a result
-                |> Score.toDb
-            MemorizationState =
+                | 1L -> Ok Again
+                | 2L -> Ok Hard
+                | 3L -> Ok Good
+                | 4L -> Ok Easy
+                | _ -> Error <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
+            let! memorizationState =
                 match revLog.Type with
-                | 0L -> New
-                | 1L -> Learning
-                | 2L -> Mature
-                | 3L -> Mature
-                | _ -> failwith <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type // medTODO make this a result
-                |> MemorizationState.toDb
-            TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
-                revLog.Time / 1000L - 32768L |> int16
-            Timestamp =
-                DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
+                | 0L -> Ok New
+                | 1L -> Ok Learning
+                | 2L -> Ok Mature
+                | 3L -> Ok Mature
+                | _ -> Error <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type
+            let history = {
+                AcquiredCard = cardByAnkiId.[revLog.Cid]
+                EaseFactorInPermille = int16 revLog.Factor
+                IntervalNegativeIsMinutesPositiveIsDays =
+                    match revLog.Ivl with
+                    | p when p > 0L -> int16 p // positive is days
+                    | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
+                Score = score |> Score.toDb
+                MemorizationState =memorizationState |> MemorizationState.toDb
+                TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
+                    revLog.Time / 1000L - 32768L |> int16
+                Timestamp =
+                    DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
+            }
+            return
+                getHistory history
+                |> function
+                | Some x -> x
+                | None -> history.CopyToNew
         }
-        getHistory history
-        |> function
-        | Some x -> x
-        | None -> history.CopyToNew
 
     let ankiIntToBool =
         Decode.int

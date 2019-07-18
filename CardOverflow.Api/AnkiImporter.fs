@@ -133,9 +133,8 @@ module AnkiImporter =
                 |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId conceptsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags getCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
-            return (cardByAnkiId |> Map.overValue id,
-                    ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory)
-                   )
+            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory) |> Result.consolidate
+            return (cardByAnkiId |> Map.overValue id, histories)
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
