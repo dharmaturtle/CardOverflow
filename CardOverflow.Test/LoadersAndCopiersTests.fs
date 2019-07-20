@@ -17,6 +17,6 @@ open SimpleInjector.Lifestyles
 
 [<Fact>]
 let ``CardOptions load and copy defaultCardOptions are equal``() =
-    let record = InitializeDatabase.defaultCardOptions.CopyToNew 3 |> CardOption.Load
+    let record = UserRepository.defaultCardOptions.CopyToNew 3 |> CardOption.Load
 
-    Assert.Equal(InitializeDatabase.defaultCardOptions, record)
+    Assert.Equal(UserRepository.defaultCardOptions, record)

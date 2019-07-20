@@ -14,53 +14,9 @@ open System.Data.SqlClient
 open System.IO
 open System.Linq
 open SimpleInjector.Lifestyles
+open Microsoft.EntityFrameworkCore
 
 let importedDate = DateTime(2020, 1, 1)
-
-let defaultCardOptions =
-    { Id = 0
-      Name = "Default"
-      NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
-      NewCardsMaxPerDay = int16 20
-      NewCardsGraduatingInterval = TimeSpan.FromDays 1.
-      NewCardsEasyInterval = TimeSpan.FromDays 4.
-      NewCardsStartingEaseFactor = 2.5
-      NewCardsBuryRelated = true
-      MatureCardsMaxPerDay = int16 200
-      MatureCardsEaseFactorEasyBonusFactor = 1.3
-      MatureCardsIntervalFactor = 1.
-      MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
-      MatureCardsHardInterval = 1.2
-      MatureCardsBuryRelated = true
-      LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
-      LapsedCardsNewIntervalFactor = 0.
-      LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
-      LapsedCardsLeechThreshold = byte 8
-      ShowAnswerTimer = false
-      AutomaticallyPlayAudio = false
-      ReplayQuestionAudioOnAnswer = false }
-//let defaultAnkiCardOptions =
-//    { Id = 0
-//      Name = "Default Anki Options"
-//      NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
-//      NewCardsMaxPerDay = int16 20
-//      NewCardsGraduatingInterval = TimeSpan.FromDays 1.
-//      NewCardsEasyInterval = TimeSpan.FromDays 4.
-//      NewCardsStartingEaseFactor = 2.5
-//      NewCardsBuryRelated = false
-//      MatureCardsMaxPerDay = int16 200
-//      MatureCardsEaseFactorEasyBonusFactor = 1.3
-//      MatureCardsIntervalFactor = 1.
-//      MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
-//      MatureCardsHardInterval = 1.2
-//      MatureCardsBuryRelated = false
-//      LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
-//      LapsedCardsNewIntervalFactor = 0.
-//      LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
-//      LapsedCardsLeechThreshold = byte 8
-//      ShowAnswerTimer = false
-//      AutomaticallyPlayAudio = false
-//      ReplayQuestionAudioOnAnswer = false }
 
 let frontField =
     { Name = "Front"
@@ -172,28 +128,14 @@ let basicClozeConceptTemplate =
                  QuestionTemplate = "{{cloze:Text}}"
                  AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
 
-let newUser name email =
-    let cardOption = defaultCardOptions.CopyToNew 0
-    cardOption.IsDefault <- true
-    UserEntity(
-        DisplayName = name,
-        Email = email,
-        CardOptions = (cardOption |> Seq.singleton |> fun x -> x.ToList())
-    )
-
 // This should be a function because each user needs to be a new instance. Otherwise, tests run in parallel by Ncrunch fail.
 let deleteAndRecreateDatabase(db: CardOverflowDb) =
-    let admin = newUser "Admin" "admin@cardoverflow.io"
-    let theCollective = newUser "The Collective" "theCollective@cardoverflow.io"
-    let roboturtle = newUser "RoboTurtle" "roboturtle@cardoverflow.io"
     db.Database.EnsureDeleted() |> ignore
     db.Database.EnsureCreated() |> ignore
-    db.Users.AddRange
-        [ admin
-          theCollective
-          roboturtle ]
-    db.SaveChangesI ()
-    
+    UserRepository.add db "Admin" "admin@cardoverflow.io"
+    UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
+    UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
+    let theCollective = db.Users.AsNoTracking().Include(fun x -> x.CardOptions).First(fun x -> x.DisplayName = "The Collective")
     [ basicConceptTemplate
       basicWithReversedCardConceptTemplate
       basicWithOptionalReversedCardConceptTemplate

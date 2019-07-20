@@ -70,6 +70,59 @@ module ConceptRepository =
     //     )
 
 module UserRepository =
+    let defaultCardOptions =
+        { Id = 0
+          Name = "Default"
+          NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
+          NewCardsMaxPerDay = int16 20
+          NewCardsGraduatingInterval = TimeSpan.FromDays 1.
+          NewCardsEasyInterval = TimeSpan.FromDays 4.
+          NewCardsStartingEaseFactor = 2.5
+          NewCardsBuryRelated = true
+          MatureCardsMaxPerDay = int16 200
+          MatureCardsEaseFactorEasyBonusFactor = 1.3
+          MatureCardsIntervalFactor = 1.
+          MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
+          MatureCardsHardInterval = 1.2
+          MatureCardsBuryRelated = true
+          LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
+          LapsedCardsNewIntervalFactor = 0.
+          LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
+          LapsedCardsLeechThreshold = byte 8
+          ShowAnswerTimer = false
+          AutomaticallyPlayAudio = false
+          ReplayQuestionAudioOnAnswer = false }
+    //let defaultAnkiCardOptions =
+    //    { Id = 0
+    //      Name = "Default Anki Options"
+    //      NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
+    //      NewCardsMaxPerDay = int16 20
+    //      NewCardsGraduatingInterval = TimeSpan.FromDays 1.
+    //      NewCardsEasyInterval = TimeSpan.FromDays 4.
+    //      NewCardsStartingEaseFactor = 2.5
+    //      NewCardsBuryRelated = false
+    //      MatureCardsMaxPerDay = int16 200
+    //      MatureCardsEaseFactorEasyBonusFactor = 1.3
+    //      MatureCardsIntervalFactor = 1.
+    //      MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
+    //      MatureCardsHardInterval = 1.2
+    //      MatureCardsBuryRelated = false
+    //      LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
+    //      LapsedCardsNewIntervalFactor = 0.
+    //      LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
+    //      LapsedCardsLeechThreshold = byte 8
+    //      ShowAnswerTimer = false
+    //      AutomaticallyPlayAudio = false
+    //      ReplayQuestionAudioOnAnswer = false }
+    let add (db: CardOverflowDb) name email =
+        let cardOption = defaultCardOptions.CopyToNew 0
+        cardOption.IsDefault <- true
+        UserEntity(
+            DisplayName = name,
+            Email = email,
+            CardOptions = (cardOption |> Seq.singleton |> fun x -> x.ToList())
+        ) |> db.Users.AddI
+        db.SaveChangesI ()
     let GetUser (db: CardOverflowDb) email =
         db.Users.First(fun x -> x.Email = email)
 
