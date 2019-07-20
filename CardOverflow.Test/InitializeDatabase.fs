@@ -39,28 +39,28 @@ let defaultCardOptions =
       ShowAnswerTimer = false
       AutomaticallyPlayAudio = false
       ReplayQuestionAudioOnAnswer = false }
-let defaultAnkiCardOptions =
-    { Id = 0
-      Name = "Default Anki Options"
-      NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
-      NewCardsMaxPerDay = int16 20
-      NewCardsGraduatingInterval = TimeSpan.FromDays 1.
-      NewCardsEasyInterval = TimeSpan.FromDays 4.
-      NewCardsStartingEaseFactor = 2.5
-      NewCardsBuryRelated = false
-      MatureCardsMaxPerDay = int16 200
-      MatureCardsEaseFactorEasyBonusFactor = 1.3
-      MatureCardsIntervalFactor = 1.
-      MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
-      MatureCardsHardInterval = 1.2
-      MatureCardsBuryRelated = false
-      LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
-      LapsedCardsNewIntervalFactor = 0.
-      LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
-      LapsedCardsLeechThreshold = byte 8
-      ShowAnswerTimer = false
-      AutomaticallyPlayAudio = false
-      ReplayQuestionAudioOnAnswer = false }
+//let defaultAnkiCardOptions =
+//    { Id = 0
+//      Name = "Default Anki Options"
+//      NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
+//      NewCardsMaxPerDay = int16 20
+//      NewCardsGraduatingInterval = TimeSpan.FromDays 1.
+//      NewCardsEasyInterval = TimeSpan.FromDays 4.
+//      NewCardsStartingEaseFactor = 2.5
+//      NewCardsBuryRelated = false
+//      MatureCardsMaxPerDay = int16 200
+//      MatureCardsEaseFactorEasyBonusFactor = 1.3
+//      MatureCardsIntervalFactor = 1.
+//      MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
+//      MatureCardsHardInterval = 1.2
+//      MatureCardsBuryRelated = false
+//      LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
+//      LapsedCardsNewIntervalFactor = 0.
+//      LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
+//      LapsedCardsLeechThreshold = byte 8
+//      ShowAnswerTimer = false
+//      AutomaticallyPlayAudio = false
+//      ReplayQuestionAudioOnAnswer = false }
 
 let frontField =
     { Name = "Front"
@@ -172,11 +172,20 @@ let basicClozeConceptTemplate =
                  QuestionTemplate = "{{cloze:Text}}"
                  AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
 
+let newUser name email =
+    let cardOption = defaultCardOptions.CopyToNew 0
+    cardOption.IsDefault <- true
+    UserEntity(
+        DisplayName = name,
+        Email = email,
+        CardOptions = (cardOption |> Seq.singleton |> fun x -> x.ToList())
+    )
+
 // This should be a function because each user needs to be a new instance. Otherwise, tests run in parallel by Ncrunch fail.
 let deleteAndRecreateDatabase(db: CardOverflowDb) =
-    let admin = UserEntity(DisplayName = "Admin", Email = "admin@cardoverflow.io")
-    let theCollective = UserEntity(DisplayName = "The Collective", Email = "theCollective@cardoverflow.io")
-    let roboturtle = UserEntity(DisplayName = "RoboTurtle", Email = "roboturtle@cardoverflow.io")
+    let admin = newUser "Admin" "admin@cardoverflow.io"
+    let theCollective = newUser "The Collective" "theCollective@cardoverflow.io"
+    let roboturtle = newUser "RoboTurtle" "roboturtle@cardoverflow.io"
     db.Database.EnsureDeleted() |> ignore
     db.Database.EnsureCreated() |> ignore
     db.Users.AddRange
@@ -185,17 +194,12 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
           roboturtle ]
     db.SaveChangesI ()
     
-    let cardOptions = defaultCardOptions.CopyToNew theCollective.Id
-    db.CardOptions.AddRange
-        [ cardOptions
-          defaultAnkiCardOptions.CopyToNew theCollective.Id
-          defaultCardOptions.CopyToNew roboturtle.Id ]
     [ basicConceptTemplate
       basicWithReversedCardConceptTemplate
       basicWithOptionalReversedCardConceptTemplate
       basicTypeInAnswerConceptTemplate
       basicClozeConceptTemplate ]
-    |> List.map (fun x -> { x with MaintainerId = theCollective.Id }.CopyToNew cardOptions)
+    |> List.map (fun x -> { x with MaintainerId = theCollective.Id }.CopyToNew <| theCollective.CardOptions.First())
     |> db.ConceptTemplates.AddRange
     db.SaveChangesI ()
 
