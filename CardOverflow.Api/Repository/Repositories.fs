@@ -25,6 +25,7 @@ module CardRepository =
         db.SaveChangesI ()
 
     let AcquireCards (db: CardOverflowDb) userId cardIds =
+        let user = db.Users.First(fun x -> x.Id = userId)
         cardIds
         |> List.map (fun i ->
             AcquiredCardEntity(
@@ -36,7 +37,7 @@ module CardRepository =
                 IntervalNegativeIsMinutesPositiveIsDays = 0s,
                 StepsIndex = Nullable 0uy,
                 Due = DateTime.UtcNow,
-                CardOptionId = 0, // medTODO, I think each user needs a DefaultCardOptionId
+                CardOption = user.CardOptions.First(fun x -> x.IsDefault),
                 UserId = userId
             ))
         |> db.AcquiredCards.AddRange
