@@ -12,14 +12,22 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
     Set-Content $file.PSPath
 }
 
-foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\AcquiredCardEntity.cs") {
-    (Get-Content $file.PSPath) |
-    Foreach-Object { $_ -replace "byte MemorizationStateAndCardState", "MemorizationStateAndCardStateEnum MemorizationStateAndCardState" } |
+# https://github.com/aspnet/EntityFrameworkCore/issues/11298
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\UserEntity.cs") {
+    (Get-Content $file.PSPath) `
+    -replace "public virtual CardOptionEntity CardOption", "public virtual ICollection<CardOptionEntity> CardOptions" `
+    -replace [regex] "HashSet<AcquiredCardEntity>\(\)\;", "HashSet<AcquiredCardEntity>();`r`n            CardOptions = new HashSet<CardOptionEntity>();" |
+    Set-Content $file.PSPath
+}
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOptionEntity.cs") {
+    ([regex] 'InverseProperty\("CardOption"\)').Replace((Get-Content $file.PSPath -Raw), 'InverseProperty("CardOptions")', 1) |
     Set-Content $file.PSPath
 }
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     (Get-Content $file.PSPath -Raw) `
+    -replace [regex] ".WithOne\(p => p.CardOption\)", ".WithMany(p => p.CardOptions)" `
+    -replace [regex] ".HasForeignKey<CardOption>\(d => d.UserId\)", ".HasForeignKey(d => d.UserId)" `
     -replace [regex] "(?m)#warning.*?\n", "" `
     -replace [regex] "optionsBuilder.Use.*", "throw new ArgumentOutOfRangeException();" `
     -replace [regex] "(?sm)modelBuilder\.HasAnnotation\(\`"ProductVersion.*?  +", "" |

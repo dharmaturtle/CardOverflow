@@ -28,9 +28,9 @@ namespace CardOverflow.Entity
         public string Email { get; set; }
 
         [InverseProperty("User")]
-        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        [InverseProperty("User")]
         public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<ConceptTemplateConceptTemplateDefaultUserEntity> ConceptTemplateConceptTemplateDefaultUsers { get; set; }
         [InverseProperty("Maintainer")]

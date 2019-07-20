@@ -81,7 +81,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardOptionEntity>(entity =>
             {
-                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.UserId)
+                    .HasName("UQ_CardOption__UserId_IsDefault")
+                    .IsUnique()
+                    .HasFilter("([IsDefault]=(1))");
 
                 entity.Property(e => e.LapsedCardsStepsInMinutes).IsUnicode(false);
 
