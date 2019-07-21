@@ -157,10 +157,10 @@ module AnkiImporter =
                     <| db.CardOptions
                         .Where(fun x -> x.UserId = userId)
                         .Select CardOption.Load
-                    <| db.ConceptTemplateConceptTemplateDefaultUsers
+                    <| db.ConceptTemplateDefaultConceptTemplateUsers
                         .Where(fun x -> x.UserId = userId)
                         .Select(fun x -> x.ConceptTemplate)
-                        //.Include(fun x -> x.ConceptTemplateConceptTemplateDefaultUsers :> IEnumerable<_>)
+                        //.Include(fun x -> x.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
                         .Select ConceptTemplate.Load
                     <| getConcept

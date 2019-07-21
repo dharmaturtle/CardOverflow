@@ -146,9 +146,9 @@ type ConceptTemplate with
           CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
           Modified = entity.Modified
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.ConceptTemplateConceptTemplateDefaultUsers.Single().ConceptTemplateDefault.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
-          DefaultPrivateTags = entity.ConceptTemplateConceptTemplateDefaultUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
-          DefaultCardOptionId = entity.ConceptTemplateConceptTemplateDefaultUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
+          DefaultPublicTags = entity.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
+          DefaultPrivateTags = entity.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          DefaultCardOptionId = entity.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost }
     member this.CopyTo(entity: ConceptTemplateEntity) =
@@ -164,7 +164,7 @@ type ConceptTemplate with
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew defaultCardOption =
         let entity = ConceptTemplateEntity()
-        ConceptTemplateConceptTemplateDefaultUserEntity(
+        ConceptTemplateDefaultConceptTemplateUserEntity(
             UserId = this.MaintainerId,
             ConceptTemplate = entity,
             ConceptTemplateDefault = ConceptTemplateDefaultEntity(
@@ -172,7 +172,7 @@ type ConceptTemplate with
                 DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
                 DefaultCardOption = defaultCardOption
             )
-        ) |> entity.ConceptTemplateConceptTemplateDefaultUsers.Add
+        ) |> entity.ConceptTemplateDefaultConceptTemplateUsers.Add
         this.CopyTo entity
         entity
 
