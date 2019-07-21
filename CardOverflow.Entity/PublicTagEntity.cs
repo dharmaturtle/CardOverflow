@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public PublicTagEntity()
         {
-            PublicTagCards = new HashSet<PublicTagCardEntity>();
+            PublicTagConcepts = new HashSet<PublicTagConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -19,6 +19,6 @@ namespace CardOverflow.Entity
         public string Name { get; set; }
 
         [InverseProperty("PublicTag")]
-        public virtual ICollection<PublicTagCardEntity> PublicTagCards { get; set; }
+        public virtual ICollection<PublicTagConceptEntity> PublicTagConcepts { get; set; }
     }
 }

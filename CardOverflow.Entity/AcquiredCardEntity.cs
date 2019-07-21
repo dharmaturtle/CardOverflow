@@ -25,14 +25,15 @@ namespace CardOverflow.Entity
         public DateTime Due { get; set; }
         public int CardOptionId { get; set; }
         public int UserId { get; set; }
-        public int CardId { get; set; }
+        public int ConceptInstanceId { get; set; }
+        public int TemplateIndex { get; set; }
 
-        [ForeignKey("CardId")]
-        [InverseProperty("AcquiredCards")]
-        public virtual CardEntity Card { get; set; }
         [ForeignKey("CardOptionId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardOptionEntity CardOption { get; set; }
+        [ForeignKey("ConceptInstanceId")]
+        [InverseProperty("AcquiredCards")]
+        public virtual ConceptInstanceEntity ConceptInstance { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("AcquiredCards")]
         public virtual UserEntity User { get; set; }
