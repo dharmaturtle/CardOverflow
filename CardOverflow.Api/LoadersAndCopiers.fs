@@ -81,30 +81,30 @@ type CardOption with
         entity
 
 type Field with
-   static member Load =
-       MappingTools.splitByUnitSeparator >> fun parsed ->
-           { Name = parsed.[0]
-             Font = parsed.[1]
-             FontSize = Byte.Parse parsed.[2]
-             IsRightToLeft = MappingTools.stringIntToBool parsed.[3]
-             Ordinal = Byte.Parse parsed.[4]
-             IsSticky = MappingTools.stringIntToBool parsed.[5] }
-   static member GetName =
-       MappingTools.splitByUnitSeparator >> List.item 0
-   static member LoadMany =
-       MappingTools.splitByRecordSeparator >> List.map Field.Load
-   static member GetNames =
-       MappingTools.splitByRecordSeparator >> List.map Field.GetName
-   member this.ToEntityString =
-       [ this.Name
-         this.Font
-         this.FontSize |> string
-         this.IsRightToLeft |> MappingTools.boolToString
-         this.Ordinal |> string
-         this.IsSticky |> MappingTools.boolToString
-       ] |> MappingTools.joinByUnitSeparator
-   static member ManyToEntityString =
-       List.map (fun (x: Field) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
+    static member Load =
+        MappingTools.splitByUnitSeparator >> fun parsed ->
+            { Name = parsed.[0]
+              Font = parsed.[1]
+              FontSize = Byte.Parse parsed.[2]
+              IsRightToLeft = MappingTools.stringIntToBool parsed.[3]
+              Ordinal = Byte.Parse parsed.[4]
+              IsSticky = MappingTools.stringIntToBool parsed.[5] }
+    static member GetName =
+        MappingTools.splitByUnitSeparator >> List.item 0
+    static member LoadMany =
+        MappingTools.splitByRecordSeparator >> List.map Field.Load
+    static member GetNames =
+        MappingTools.splitByRecordSeparator >> List.map Field.GetName
+    member this.ToEntityString =
+        [ this.Name
+          this.Font
+          this.FontSize |> string
+          this.IsRightToLeft |> MappingTools.boolToString
+          this.Ordinal |> string
+          this.IsSticky |> MappingTools.boolToString
+        ] |> MappingTools.joinByUnitSeparator
+    static member ManyToEntityString =
+        List.map (fun (x: Field) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
 
 type CardTemplate with
     static member Load =
