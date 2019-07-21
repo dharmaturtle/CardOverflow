@@ -168,7 +168,7 @@ type ConceptTemplate with
             UserId = this.MaintainerId,
             ConceptTemplate = entity,
             ConceptTemplateDefault = ConceptTemplateDefaultEntity(
-                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags,
+                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
                 DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
                 DefaultCardOption = defaultCardOption
             )
