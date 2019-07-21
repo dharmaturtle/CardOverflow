@@ -5,21 +5,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("ConceptTemplate_ConceptTemplateDefault_User")]
-    public partial class ConceptTemplateConceptTemplateDefaultUserEntity
+[Table("ConceptTemplateDefault_ConceptTemplate_User")]
+    public partial class ConceptTemplateDefaultConceptTemplateUserEntity
     {
         public int ConceptTemplateId { get; set; }
         public int ConceptTemplateDefaultId { get; set; }
         public int UserId { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
-        [InverseProperty("ConceptTemplateConceptTemplateDefaultUsers")]
+        [InverseProperty("ConceptTemplateDefaultConceptTemplateUsers")]
         public virtual ConceptTemplateEntity ConceptTemplate { get; set; }
         [ForeignKey("ConceptTemplateDefaultId")]
-        [InverseProperty("ConceptTemplateConceptTemplateDefaultUsers")]
+        [InverseProperty("ConceptTemplateDefaultConceptTemplateUsers")]
         public virtual ConceptTemplateDefaultEntity ConceptTemplateDefault { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("ConceptTemplateConceptTemplateDefaultUsers")]
+        [InverseProperty("ConceptTemplateDefaultConceptTemplateUsers")]
         public virtual UserEntity User { get; set; }
     }
 }

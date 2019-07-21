@@ -5,12 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("ConceptTemplateComment")]
-    public partial class ConceptTemplateCommentEntity
+[Table("CommentConceptTemplate")]
+    public partial class CommentConceptTemplateEntity
     {
-        public ConceptTemplateCommentEntity()
+        public CommentConceptTemplateEntity()
         {
-            VoteConceptTemplateComments = new HashSet<VoteConceptTemplateCommentEntity>();
+            VoteCommentConceptTemplates = new HashSet<VoteCommentConceptTemplateEntity>();
         }
 
         public int Id { get; set; }
@@ -23,12 +23,12 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
-        [InverseProperty("ConceptTemplateComments")]
+        [InverseProperty("CommentConceptTemplates")]
         public virtual ConceptTemplateEntity ConceptTemplate { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("ConceptTemplateComments")]
+        [InverseProperty("CommentConceptTemplates")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("ConceptTemplateComment")]
-        public virtual ICollection<VoteConceptTemplateCommentEntity> VoteConceptTemplateComments { get; set; }
+        [InverseProperty("CommentConceptTemplate")]
+        public virtual ICollection<VoteCommentConceptTemplateEntity> VoteCommentConceptTemplates { get; set; }
     }
 }

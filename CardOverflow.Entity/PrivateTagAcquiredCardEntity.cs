@@ -9,9 +9,11 @@ namespace CardOverflow.Entity
     public partial class PrivateTagAcquiredCardEntity
     {
         public int PrivateTagId { get; set; }
-        public int AcquiredCardId { get; set; }
+        public int UserId { get; set; }
+        public int ConceptInstanceId { get; set; }
+        public int CardTemplateId { get; set; }
 
-        [ForeignKey("AcquiredCardId")]
+        [ForeignKey("UserId,ConceptInstanceId,CardTemplateId")]
         [InverseProperty("PrivateTagAcquiredCards")]
         public virtual AcquiredCardEntity AcquiredCard { get; set; }
         [ForeignKey("PrivateTagId")]

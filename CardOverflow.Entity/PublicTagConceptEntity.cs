@@ -9,7 +9,6 @@ namespace CardOverflow.Entity
     public partial class PublicTagConceptEntity
     {
         public int ConceptId { get; set; }
-        public byte TemplateIndex { get; set; }
         public int PublicTagId { get; set; }
 
         [ForeignKey("ConceptId")]

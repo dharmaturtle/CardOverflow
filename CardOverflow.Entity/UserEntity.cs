@@ -12,15 +12,15 @@ namespace CardOverflow.Entity
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             CardOptions = new HashSet<CardOptionEntity>();
-            ConceptComments = new HashSet<ConceptCommentEntity>();
-            ConceptTemplateComments = new HashSet<ConceptTemplateCommentEntity>();
-            ConceptTemplateConceptTemplateDefaultUsers = new HashSet<ConceptTemplateConceptTemplateDefaultUserEntity>();
+            CommentConceptTemplates = new HashSet<CommentConceptTemplateEntity>();
+            CommentConcepts = new HashSet<CommentConceptEntity>();
+            ConceptTemplateDefaultConceptTemplateUsers = new HashSet<ConceptTemplateDefaultConceptTemplateUserEntity>();
             ConceptTemplates = new HashSet<ConceptTemplateEntity>();
             Concepts = new HashSet<ConceptEntity>();
             Decks = new HashSet<DeckEntity>();
             PrivateTags = new HashSet<PrivateTagEntity>();
-            VoteConceptComments = new HashSet<VoteConceptCommentEntity>();
-            VoteConceptTemplateComments = new HashSet<VoteConceptTemplateCommentEntity>();
+            VoteCommentConceptTemplates = new HashSet<VoteCommentConceptTemplateEntity>();
+            VoteCommentConcepts = new HashSet<VoteCommentConceptEntity>();
             VoteConceptTemplates = new HashSet<VoteConceptTemplateEntity>();
             VoteConcepts = new HashSet<VoteConceptEntity>();
         }
@@ -38,11 +38,11 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<ConceptCommentEntity> ConceptComments { get; set; }
+        public virtual ICollection<CommentConceptTemplateEntity> CommentConceptTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<ConceptTemplateCommentEntity> ConceptTemplateComments { get; set; }
+        public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<ConceptTemplateConceptTemplateDefaultUserEntity> ConceptTemplateConceptTemplateDefaultUsers { get; set; }
+        public virtual ICollection<ConceptTemplateDefaultConceptTemplateUserEntity> ConceptTemplateDefaultConceptTemplateUsers { get; set; }
         [InverseProperty("Maintainer")]
         public virtual ICollection<ConceptTemplateEntity> ConceptTemplates { get; set; }
         [InverseProperty("Maintainer")]
@@ -52,9 +52,9 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<PrivateTagEntity> PrivateTags { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<VoteConceptCommentEntity> VoteConceptComments { get; set; }
+        public virtual ICollection<VoteCommentConceptTemplateEntity> VoteCommentConceptTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<VoteConceptTemplateCommentEntity> VoteConceptTemplateComments { get; set; }
+        public virtual ICollection<VoteCommentConceptEntity> VoteCommentConcepts { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<VoteConceptTemplateEntity> VoteConceptTemplates { get; set; }
         [InverseProperty("User")]

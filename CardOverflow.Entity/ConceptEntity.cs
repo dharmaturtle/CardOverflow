@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public ConceptEntity()
         {
-            ConceptComments = new HashSet<ConceptCommentEntity>();
+            CommentConcepts = new HashSet<CommentConceptEntity>();
             ConceptInstances = new HashSet<ConceptInstanceEntity>();
             PublicTagConcepts = new HashSet<PublicTagConceptEntity>();
             VoteConcepts = new HashSet<VoteConceptEntity>();
@@ -18,13 +18,15 @@ namespace CardOverflow.Entity
 
         public int Id { get; set; }
         public int MaintainerId { get; set; }
-        public bool IsPublic { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
 
         [ForeignKey("MaintainerId")]
         [InverseProperty("Concepts")]
         public virtual UserEntity Maintainer { get; set; }
         [InverseProperty("Concept")]
-        public virtual ICollection<ConceptCommentEntity> ConceptComments { get; set; }
+        public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<ConceptInstanceEntity> ConceptInstances { get; set; }
         [InverseProperty("Concept")]

@@ -10,7 +10,8 @@ namespace CardOverflow.Entity
     {
         public ConceptTemplateInstanceEntity()
         {
-            ConceptInstances = new HashSet<ConceptInstanceEntity>();
+            CardTemplates = new HashSet<CardTemplateEntity>();
+            Fields = new HashSet<FieldEntity>();
         }
 
         public int Id { get; set; }
@@ -18,12 +19,6 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(1000)]
         public string Css { get; set; }
-        [Required]
-        [StringLength(300)]
-        public string Fields { get; set; }
-        [Required]
-        [StringLength(1000)]
-        public string CardTemplates { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Created { get; set; }
         [Column(TypeName = "smalldatetime")]
@@ -40,6 +35,8 @@ namespace CardOverflow.Entity
         [InverseProperty("ConceptTemplateInstances")]
         public virtual ConceptTemplateEntity ConceptTemplate { get; set; }
         [InverseProperty("ConceptTemplateInstance")]
-        public virtual ICollection<ConceptInstanceEntity> ConceptInstances { get; set; }
+        public virtual ICollection<CardTemplateEntity> CardTemplates { get; set; }
+        [InverseProperty("ConceptTemplateInstance")]
+        public virtual ICollection<FieldEntity> Fields { get; set; }
     }
 }
