@@ -180,6 +180,7 @@ CREATE TABLE [dbo].[CardTemplate](
 	[ShortQuestionTemplate] [nvarchar](100) NOT NULL,
 	[ShortAnswerTemplate] [nvarchar](100) NOT NULL,
 	[ConceptTemplateInstanceId] [int] NOT NULL,
+	[Ordinal] [tinyint] NOT NULL,
  CONSTRAINT [PK_CardTemplate] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

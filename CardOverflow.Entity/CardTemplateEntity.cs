@@ -30,6 +30,7 @@ namespace CardOverflow.Entity
         [StringLength(100)]
         public string ShortAnswerTemplate { get; set; }
         public int ConceptTemplateInstanceId { get; set; }
+        public byte Ordinal { get; set; }
 
         [ForeignKey("ConceptTemplateInstanceId")]
         [InverseProperty("CardTemplates")]
