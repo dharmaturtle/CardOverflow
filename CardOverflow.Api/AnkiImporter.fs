@@ -157,17 +157,13 @@ module AnkiImporter =
                     <| db.CardOptions
                         .Where(fun x -> x.UserId = userId)
                         .Select CardOption.Load
-                    <| db.ConceptTemplateDefaultConceptTemplateUsers
-                        .Where(fun x -> x.UserId = userId)
-                        .Select(fun x -> x.ConceptTemplate)
-                        //.Include(fun x -> x.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
-                        //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
+                    <| db.ConceptTemplateInstances // lowToMedTODO need more of a filter
                         .Select ConceptTemplateInstance.Load
                     <| getConcept
                     <| getCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
-                if x.Id = 0
+                if x.CardTemplateId = 0 && x.ConceptInstanceId = 0
                 then db.AcquiredCards.AddI x
                 //else db.AcquiredCards.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )

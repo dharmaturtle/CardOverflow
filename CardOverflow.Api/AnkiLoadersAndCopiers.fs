@@ -27,7 +27,7 @@ type AnkiConceptTemplate = {
 }
 
 type AnkiConceptWrite = {
-    ConceptTemplate: ConceptTemplateEntity
+    ConceptTemplate: ConceptTemplateInstanceEntity
     Fields: string list
     Created: DateTime
     Modified: DateTime option
@@ -250,7 +250,7 @@ module Anki =
         )
         |> fun (files, fields, missingAnkiFileNames) -> (files |> List.distinct, fields, missingAnkiFileNames)
     let parseNotes
-        (conceptTemplatesByModelId: Map<string, ConceptTemplateEntity>)
+        (conceptTemplatesByModelId: Map<string, ConceptTemplateInstanceEntity>)
         initialTags
         userId
         fileEntityByAnkiFileName

@@ -155,6 +155,11 @@ type ConceptTemplateInstance with
         entity.IsCloze <- this.IsCloze
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
+    member this.CopyToNew defaultCardOption = // lowToMedTODO why are we taking defaultCardOption
+        let entity = ConceptTemplateInstanceEntity()
+        this.CopyTo entity
+        entity
+
     //member this.CopyToNew defaultCardOption = // medTODO this belongs on `ConceptTemplate`
     //    let entity = ConceptTemplateEntity()
     //    ConceptTemplateDefaultConceptTemplateUserEntity(
