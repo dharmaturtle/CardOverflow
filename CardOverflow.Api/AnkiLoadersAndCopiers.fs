@@ -27,40 +27,34 @@ type AnkiConceptTemplate = {
 }
 
 type AnkiConceptWrite = {
-    Title: string
-    Description: string
     ConceptTemplate: ConceptTemplateEntity
     Fields: string list
-    Modified: DateTime
+    Created: DateTime
+    Modified: DateTime option
     MaintainerId: int
     IsPublic: bool
 } with
-    member this.CopyTo(entity: ConceptEntity) =
-        entity.Title <- this.Title
-        entity.Description <- this.Description
-        entity.ConceptTemplate <- this.ConceptTemplate
-        entity.Fields <- this.Fields |> MappingTools.joinByUnitSeparator
-        entity.Modified <- this.Modified
-        entity.MaintainerId <- this.MaintainerId
+    member this.CopyTo(entity: ConceptInstanceEntity) =
+        entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
+        entity.Concept.MaintainerId <- this.MaintainerId
         entity.IsPublic <- this.IsPublic
     member this.CopyToNew (files: FileEntity seq) =
-        let entity = ConceptEntity()
+        let entity = ConceptInstanceEntity()
         this.CopyTo entity
-        entity.FileConcepts <-
+        entity.FileConceptInstances <-
             files.Select(fun x ->
-                FileConceptEntity(
-                    Concept = entity,
+                FileConceptInstanceEntity(
+                    ConceptInstance = entity,
                     File = x
                 )
             ).ToList()
         entity
     member this.AcquireEquality (db: CardOverflowDb) fields = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.Concepts.FirstOrDefault(fun c -> 
-            this.Title = c.Title &&
-            this.Description = c.Description &&
-            this.ConceptTemplate.Id = c.ConceptTemplate.Id &&
-            fields = c.Fields &&
-            this.MaintainerId = c.MaintainerId &&
+        db.ConceptInstances.FirstOrDefault(fun c -> 
+            //fields = c.Fields && // medtodo fix this equality check
+            this.MaintainerId = c.Concept.MaintainerId &&
             this.IsPublic = c.IsPublic
         )
 
@@ -76,7 +70,9 @@ type AnkiHistory = {
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
         db.Histories.FirstOrDefault(fun h -> 
-            this.AcquiredCard.Id = h.AcquiredCardId &&
+            this.AcquiredCard.UserId = h.UserId &&
+            this.AcquiredCard.ConceptInstanceId = h.ConceptInstanceId &&
+            this.AcquiredCard.CardTemplateId = h.CardTemplateId &&
             this.Score = h.Score &&
             this.MemorizationState = h.MemorizationState &&
             roundedTimeStamp = h.Timestamp &&
@@ -179,8 +175,11 @@ module Anki =
             { DeckId = get.Required.Field "did" Decode.int
               ConceptTemplate =
                 { Id = 0
-                  MaintainerId = userId
-                  Name = get.Required.Field "name" Decode.string
+                  ConceptTemplate = {
+                    Id = 0
+                    MaintainerId = userId
+                    Name = get.Required.Field "name" Decode.string
+                  }
                   Css = get.Required.Field "css" Decode.string
                   Fields =
                     get.Required.Field "flds" (Decode.object(fun get ->
@@ -200,7 +199,8 @@ module Anki =
                           ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
                           Ordinal = g.Required.Field "ord" Decode.int |> byte })
                           |> Decode.list )
-                  Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
+                  Created = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime // medTODO verify
+                  Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime |> Some
                   IsCloze = get.Required.Field "type" ankiIntToBool
                   DefaultPublicTags = []
                   DefaultPrivateTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
