@@ -171,22 +171,15 @@ type ConceptTemplateInstance with
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
         let fieldNameValueMap =
-            Seq.zip
-                (entity.Card.Concept.ConceptTemplate.Fields |> Field.GetNames)
-                (entity.Card.Concept.Fields |> MappingTools.splitByUnitSeparator)
+                entity.Card.ConceptInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value))
         let replaceFields template =
             fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
-        let cardTemplate =
-            entity.Card.Concept.ConceptTemplate.CardTemplates
-            |> MappingTools.splitByRecordSeparator
-            |> List.item (int entity.Card.TemplateIndex)
-            |> CardTemplate.Load
+        let cardTemplate = CardTemplate.Load entity.Card.CardTemplate
         result {
             let! memorizationState = MemorizationState.create entity.MemorizationState
             let! cardState = CardState.create entity.CardState
             return
-                { Id = entity.Id
-                  Due = entity.Due
+                { Due = entity.Due
                   Question = replaceFields cardTemplate.QuestionTemplate
                   Answer = replaceFields cardTemplate.AnswerTemplate
                   MemorizationState = memorizationState

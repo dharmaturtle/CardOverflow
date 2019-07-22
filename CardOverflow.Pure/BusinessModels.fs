@@ -123,7 +123,6 @@ type ConceptTemplateInstance = {
 }
 
 type QuizCard = {
-    Id: int
     Due: DateTime
     Question: string
     Answer: string
