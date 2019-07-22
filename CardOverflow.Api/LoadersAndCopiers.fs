@@ -105,7 +105,8 @@ type CardTemplate with
           QuestionTemplate = entity.QuestionTemplate
           AnswerTemplate = entity.AnswerTemplate
           ShortQuestionTemplate = entity.ShortQuestionTemplate
-          ShortAnswerTemplate = entity.ShortAnswerTemplate  }
+          ShortAnswerTemplate = entity.ShortAnswerTemplate
+          Ordinal = entity.Ordinal }
     member this.CopyToNew (conceptTemplateInstance: ConceptTemplateInstanceEntity)=
         let entity = CardTemplateEntity()
         entity.Name <- this.Name

@@ -269,11 +269,10 @@ module Anki =
                 let files, fields, newMissingAnkiFileNames = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let concept =
                     let c =
-                        { Title = ""
-                          Description = ""
-                          ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
+                        { ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                           Fields = MappingTools.splitByUnitSeparator fields
-                          Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime
+                          Created = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime // medTODO verify
+                          Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
                           MaintainerId = userId
                           IsPublic = false }
                     getConcept c
@@ -293,7 +292,7 @@ module Anki =
         parseNotesRec initialTags [] []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>)
-        (conceptsAndTagsByAnkiId: Map<int64, ConceptEntity * PrivateTagEntity seq>)
+        (conceptsAndTagsByAnkiId: Map<int64, ConceptInstanceEntity * PrivateTagEntity seq>)
         (colCreateDate: DateTime)
         userId
         (usersTags: PrivateTagEntity seq)
@@ -310,9 +309,10 @@ module Anki =
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
             let entity =
-                let c =
+                let c: AcquiredCard =
                     { UserId = userId
-                      ConceptId = concept.Id
+                      ConceptInstance = ConceptInstance.Load concept
+                      CardTemplateId = 0
                       MemorizationState = memorizationState
                       CardState =
                         match ankiCard.Queue with
@@ -346,12 +346,12 @@ module Anki =
                         | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
-                      TemplateIndex = ankiCard.Ord |> byte }
+                      CardOptionId = 0 }
                 getCard c
                 |> function
                 | Some entity ->
                     c.CopyTo entity
                     entity
-                | None -> c.CopyToNew concept cardOption (deckTag :: List.ofSeq tags)
+                | None -> c.CopyToNew concept (CardTemplateEntity()) cardOption (deckTag :: List.ofSeq tags) // highTODO fix CardTemplateEntity()
             (ankiCard.Id, entity)
         )

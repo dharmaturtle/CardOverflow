@@ -98,6 +98,7 @@ type CardTemplate = {
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
+    Ordinal: byte
 }
 
 type ConceptTemplate = {
@@ -153,7 +154,7 @@ type ConceptInstance = {
 type AcquiredCard = {
     UserId: int
     ConceptInstance: ConceptInstance
-    CardTemplateId: CardTemplate
+    CardTemplateId: int
     MemorizationState: MemorizationState
     CardState: CardState
     LapseCount: byte
