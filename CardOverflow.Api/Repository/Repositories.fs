@@ -29,7 +29,7 @@ module CardRepository =
         cardIds
         |> List.map (fun i ->
             AcquiredCardEntity(
-                CardId = i,
+                UserId = userId, // lowToMedTODO missing ConceptInstanceId and CardTemplateId
                 MemorizationState = MemorizationState.toDb New,
                 CardState = CardState.toDb Normal,
                 LapseCount = 0uy,
@@ -37,23 +37,22 @@ module CardRepository =
                 IntervalNegativeIsMinutesPositiveIsDays = 0s,
                 StepsIndex = Nullable 0uy,
                 Due = DateTime.UtcNow,
-                CardOption = user.CardOptions.First(fun x -> x.IsDefault),
-                UserId = userId
+                CardOption = user.CardOptions.First(fun x -> x.IsDefault)
             ))
         |> db.AcquiredCards.AddRange
         db.SaveChangesI ()
 
-module ConceptRepository =
-    let CreateConcept (db: CardOverflowDb) (concept: ConceptInstance) userId =
-        let ce = concept.CopyToNew |> db.Concepts.Add
-        [0..concept.ConceptTemplate.CardTemplates.Length - 1]
-        |> Seq.map (fun x ->
-            CardEntity(
-                Concept = ce.Entity,
-                TemplateIndex = byte x))
-        |> Seq.map (AcquiredCard.NewlyAcquired userId concept.ConceptTemplate.DefaultCardOptionId)
-        |> db.AcquiredCards.AddRange
-        db.SaveChangesI ()
+//module ConceptRepository = // lowToMedTODO
+//    let CreateConcept (db: CardOverflowDb) (concept: ConceptInstance) userId =
+//        let ce = concept.CopyToNew |> db.ConceptInstances.Add
+//        [0..concept.ConceptTemplate.CardTemplates.Length - 1]
+//        |> Seq.map (fun x ->
+//            CardEntity(
+//                Concept = ce.Entity,
+//                TemplateIndex = byte x))
+//        |> Seq.map (AcquiredCard.NewlyAcquired userId concept.ConceptTemplate.DefaultCardOptionId)
+//        |> db.AcquiredCards.AddRange
+//        db.SaveChangesI ()
 
     // member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
     //                 this.GetConcepts().Merge concepts
