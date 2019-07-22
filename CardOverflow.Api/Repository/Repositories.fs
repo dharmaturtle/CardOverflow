@@ -44,7 +44,7 @@ module CardRepository =
         db.SaveChangesI ()
 
 module ConceptRepository =
-    let CreateConcept (db: CardOverflowDb) (concept: Concept) userId =
+    let CreateConcept (db: CardOverflowDb) (concept: ConceptInstance) userId =
         let ce = concept.CopyToNew |> db.Concepts.Add
         [0..concept.ConceptTemplate.CardTemplates.Length - 1]
         |> Seq.map (fun x ->

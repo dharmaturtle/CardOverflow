@@ -137,13 +137,17 @@ type QuizCard = {
 
 type Concept = {
     Id: int
-    Title: string
-    Description: string
-    ConceptTemplate: ConceptTemplateInstance
-    Fields: string list
-    Modified: DateTime
     MaintainerId: int
+    Name: string
+}
+
+type ConceptInstance = {
+    Id: int
+    Created: DateTime
+    Modified: DateTime option
+    Concept: Concept
     IsPublic: bool
+    Fields: string seq
 }
 
 type AcquiredCard = {

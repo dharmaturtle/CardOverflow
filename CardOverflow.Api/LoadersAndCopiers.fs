@@ -197,28 +197,27 @@ type QuizCard with
                   Options = CardOption.Load entity.CardOption }
         }
 
-type Concept with
-    static member Load(entity: ConceptEntity) =
+type ConceptInstance with
+    static member Load(entity: ConceptInstanceEntity) =
         { Id = entity.Id
-          Title = entity.Title
-          Description = entity.Description
-          ConceptTemplate = ConceptTemplateInstance.Load entity.ConceptTemplate
-          Fields = MappingTools.splitByUnitSeparator entity.Fields
-          Modified = entity.Modified
-          IsPublic = entity.IsPublic
-          MaintainerId = entity.MaintainerId }
-    member this.CopyTo (entity: ConceptEntity) =
-        entity.Id <- this.Id
-        entity.Title <- this.Title
-        entity.Description <- this.Description
-        entity.ConceptTemplateId <- this.ConceptTemplate.Id
-        entity.Fields <- MappingTools.joinByUnitSeparator this.Fields
-        entity.Modified <- this.Modified
+          Fields = entity.FieldValues |> Seq.map (fun x -> x.Value)
+          Created = entity.Created
+          Modified = entity.Modified |> Option.ofNullable
+          Concept = {
+            Id = entity.ConceptId
+            MaintainerId = entity.Concept.MaintainerId
+            Name = entity.Concept.Name
+          }
+          IsPublic = entity.IsPublic }
+    member this.CopyTo (entity: ConceptInstanceEntity) =
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
         entity.IsPublic <- this.IsPublic
-        entity.MaintainerId <- this.MaintainerId
+        entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
     member this.CopyToNew =
-        let entity = ConceptEntity()
+        let entity = ConceptInstanceEntity()
         this.CopyTo entity
+        entity.Concept <- ConceptEntity()
         entity
 
 type AcquiredCard with
