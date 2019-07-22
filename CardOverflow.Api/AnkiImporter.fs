@@ -61,7 +61,7 @@ module AnkiImporter =
         fileEntityByAnkiFileName
         (usersTags: PrivateTagEntity seq)
         (cardOptions: CardOption seq)
-        (conceptTemplates: ConceptTemplate seq)
+        (conceptTemplates: ConceptTemplateInstance seq)
         getConcept 
         getCard
         getHistory =
@@ -162,7 +162,7 @@ module AnkiImporter =
                         .Select(fun x -> x.ConceptTemplate)
                         //.Include(fun x -> x.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: ConceptTemplateConceptTemplateDefaultUserEntity) -> x.ConceptTemplateDefault)
-                        .Select ConceptTemplate.Load
+                        .Select ConceptTemplateInstance.Load
                     <| getConcept
                     <| getCard
                     <| getHistory

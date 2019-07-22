@@ -22,7 +22,7 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
             .Include(fun x -> x.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
                 .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
             .First(fun x -> x.Name = "Basic")
-            |> ConceptTemplate.Load
+            |> ConceptTemplateInstance.Load
     let basicConcept = {
         Id = 0
         Title = "Title"

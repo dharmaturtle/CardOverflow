@@ -81,100 +81,92 @@ type CardOption with
         entity
 
 type Field with
-    static member Load =
-        MappingTools.splitByUnitSeparator >> fun parsed ->
-            { Name = parsed.[0]
-              Font = parsed.[1]
-              FontSize = Byte.Parse parsed.[2]
-              IsRightToLeft = MappingTools.stringIntToBool parsed.[3]
-              Ordinal = Byte.Parse parsed.[4]
-              IsSticky = MappingTools.stringIntToBool parsed.[5] }
-    static member GetName =
-        MappingTools.splitByUnitSeparator >> List.item 0
-    static member LoadMany =
-        MappingTools.splitByRecordSeparator >> List.map Field.Load
-    static member GetNames =
-        MappingTools.splitByRecordSeparator >> List.map Field.GetName
-    member this.ToEntityString =
-        [ this.Name
-          this.Font
-          this.FontSize |> string
-          this.IsRightToLeft |> MappingTools.boolToString
-          this.Ordinal |> string
-          this.IsSticky |> MappingTools.boolToString
-        ] |> MappingTools.joinByUnitSeparator
-    static member ManyToEntityString =
-        List.map (fun (x: Field) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
+    static member Load (entity: FieldEntity) =
+        { Name = entity.Name
+          Font = entity.Font
+          FontSize = entity.FontSize
+          IsRightToLeft = entity.IsRightToLeft
+          Ordinal = entity.Ordinal
+          IsSticky = entity.IsSticky }
+    member this.CopyToNew (conceptTemplateInstance: ConceptTemplateInstanceEntity) =
+        let entity = FieldEntity()
+        entity.Name <- this.Name
+        entity.Font <- this.Font
+        entity.FontSize <- this.FontSize
+        entity.IsRightToLeft <- this.IsRightToLeft
+        entity.Ordinal <- this.Ordinal
+        entity.IsSticky <- this.IsSticky
+        entity.ConceptTemplateInstance <- conceptTemplateInstance
+        entity
 
 type CardTemplate with
-    static member Load =
-        MappingTools.splitByUnitSeparator >> fun parsed ->
-            { Name = parsed.[0]
-              QuestionTemplate = parsed.[1]
-              AnswerTemplate = parsed.[2]
-              ShortQuestionTemplate = parsed.[3]
-              ShortAnswerTemplate = parsed.[4]
-              Ordinal = Byte.Parse parsed.[5] }
-    static member LoadMany =
-        MappingTools.splitByRecordSeparator >> List.map CardTemplate.Load
-    member this.ToEntityString =
-        [ this.Name
-          this.QuestionTemplate
-          this.AnswerTemplate
-          this.ShortQuestionTemplate
-          this.ShortAnswerTemplate
-          this.Ordinal |> string
-        ] |> MappingTools.joinByUnitSeparator
-    static member ManyToEntityString =
-        List.map (fun (x: CardTemplate) -> x.ToEntityString) >> MappingTools.joinByRecordSeparator
+    static member Load (entity: CardTemplateEntity) =
+        { Name = entity.Name
+          QuestionTemplate = entity.QuestionTemplate
+          AnswerTemplate = entity.AnswerTemplate
+          ShortQuestionTemplate = entity.ShortQuestionTemplate
+          ShortAnswerTemplate = entity.ShortAnswerTemplate  }
+    member this.CopyToNew (conceptTemplateInstance: ConceptTemplateInstanceEntity)=
+        let entity = CardTemplateEntity()
+        entity.Name <- this.Name
+        entity.QuestionTemplate <- this.QuestionTemplate
+        entity.AnswerTemplate <- this.AnswerTemplate
+        entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
+        entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
+        entity.ConceptTemplateInstance <- conceptTemplateInstance
+        entity
 
-type ConceptTemplate with
-    member this.AcquireEquality(that: ConceptTemplate) =
-        this.Name = that.Name &&
+type ConceptTemplateInstance with
+    member this.AcquireEquality(that: ConceptTemplateInstance) =
+        this.ConceptTemplate.Id = that.ConceptTemplate.Id &&
         this.Css = that.Css &&
         this.Fields = that.Fields &&
         this.CardTemplates = that.CardTemplates &&
         this.IsCloze = that.IsCloze &&
         this.LatexPre = that.LatexPre &&
         this.LatexPost = that.LatexPost
-    static member Load(entity: ConceptTemplateEntity) =
+    static member Load(entity: ConceptTemplateInstanceEntity) =
         { Id = entity.Id
-          MaintainerId = entity.MaintainerId
-          Name = entity.Name
+          ConceptTemplate = {
+            Id = entity.ConceptTemplate.Id
+            Name = entity.ConceptTemplate.Name
+            MaintainerId = entity.ConceptTemplate.MaintainerId
+          }
           Css = entity.Css
-          Fields = entity.Fields |> Field.LoadMany
-          CardTemplates = entity.CardTemplates |> CardTemplate.LoadMany
-          Modified = entity.Modified
+          Fields = entity.Fields |> Seq.map Field.Load
+          CardTemplates = entity.CardTemplates |> Seq.map CardTemplate.Load
+          Created = entity.Created
+          Modified = entity.Modified |> Option.ofNullable
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
-          DefaultPrivateTags = entity.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
-          DefaultCardOptionId = entity.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
+          DefaultPublicTags = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
+          DefaultPrivateTags = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          DefaultCardOptionId = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost }
-    member this.CopyTo(entity: ConceptTemplateEntity) =
-        entity.Id <- this.Id
-        entity.MaintainerId <- this.MaintainerId
-        entity.Name <- this.Name
+    member this.CopyTo (entity: ConceptTemplateInstanceEntity) =
+        entity.ConceptTemplate.MaintainerId <- this.ConceptTemplate.MaintainerId
+        entity.ConceptTemplate.Name <- this.ConceptTemplate.Name
         entity.Css <- this.Css
-        entity.Fields <- this.Fields |> Field.ManyToEntityString
-        entity.CardTemplates <- this.CardTemplates |> CardTemplate.ManyToEntityString
-        entity.Modified <- this.Modified
+        entity.Fields <- this.Fields |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
+        entity.CardTemplates <- this.CardTemplates |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
         entity.IsCloze <- this.IsCloze
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-    member this.CopyToNew defaultCardOption =
-        let entity = ConceptTemplateEntity()
-        ConceptTemplateDefaultConceptTemplateUserEntity(
-            UserId = this.MaintainerId,
-            ConceptTemplate = entity,
-            ConceptTemplateDefault = ConceptTemplateDefaultEntity(
-                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
-                DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
-                DefaultCardOption = defaultCardOption
-            )
-        ) |> entity.ConceptTemplateDefaultConceptTemplateUsers.Add
-        this.CopyTo entity
-        entity
+    //member this.CopyToNew defaultCardOption = // medTODO this belongs on `ConceptTemplate`
+    //    let entity = ConceptTemplateEntity()
+    //    ConceptTemplateDefaultConceptTemplateUserEntity(
+    //        UserId = this.ConceptTemplate.MaintainerId,
+    //        ConceptTemplate = entity,
+    //        ConceptTemplateDefault = ConceptTemplateDefaultEntity(
+    //            DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
+    //            DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+    //            DefaultCardOption = defaultCardOption
+    //        )
+    //    ) |> entity.ConceptTemplateDefaultConceptTemplateUsers.Add
+    //    this.CopyTo entity
+    //    entity
 
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
@@ -217,7 +209,7 @@ type Concept with
         { Id = entity.Id
           Title = entity.Title
           Description = entity.Description
-          ConceptTemplate = ConceptTemplate.Load entity.ConceptTemplate
+          ConceptTemplate = ConceptTemplateInstance.Load entity.ConceptTemplate
           Fields = MappingTools.splitByUnitSeparator entity.Fields
           Modified = entity.Modified
           IsPublic = entity.IsPublic

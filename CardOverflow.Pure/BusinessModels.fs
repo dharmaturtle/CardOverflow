@@ -98,17 +98,22 @@ type CardTemplate = {
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
-    Ordinal: byte
 }
 
 type ConceptTemplate = {
     Id: int
     MaintainerId: int
     Name: string
+}
+
+type ConceptTemplateInstance = {
+    Id: int
+    ConceptTemplate: ConceptTemplate
     Css: string
-    Fields: Field list
-    CardTemplates: CardTemplate list
-    Modified: DateTime
+    Fields: Field seq
+    CardTemplates: CardTemplate seq
+    Created: DateTime
+    Modified: DateTime option
     IsCloze: bool
     DefaultPublicTags: int list
     DefaultPrivateTags: int list
@@ -135,7 +140,7 @@ type Concept = {
     Id: int
     Title: string
     Description: string
-    ConceptTemplate: ConceptTemplate
+    ConceptTemplate: ConceptTemplateInstance
     Fields: string list
     Modified: DateTime
     MaintainerId: int

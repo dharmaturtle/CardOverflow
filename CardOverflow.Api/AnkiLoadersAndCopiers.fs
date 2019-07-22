@@ -22,7 +22,7 @@ type SimpleAnkiDb = {
 }
 
 type AnkiConceptTemplate = {
-    ConceptTemplate: ConceptTemplate
+    ConceptTemplate: ConceptTemplateInstance
     DeckId: int
 }
 
