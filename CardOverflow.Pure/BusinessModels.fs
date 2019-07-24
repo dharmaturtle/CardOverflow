@@ -156,7 +156,7 @@ type ConceptInstance = {
 type AcquiredCard = {
     UserId: int
     ConceptInstance: ConceptInstance
-    CardTemplateId: int
+    CardTemplate: CardTemplate
     MemorizationState: MemorizationState
     CardState: CardState
     LapseCount: byte

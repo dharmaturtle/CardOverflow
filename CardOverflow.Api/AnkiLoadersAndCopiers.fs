@@ -28,14 +28,14 @@ type AnkiConceptTemplate = {
 
 type AnkiConceptWrite = {
     ConceptTemplate: ConceptTemplateInstanceEntity
-    Fields: string list
+    FieldValues: FieldValueEntity seq
     Created: DateTime
     Modified: DateTime option
     MaintainerId: int
     IsPublic: bool
 } with
     member this.CopyTo(entity: ConceptInstanceEntity) =
-        entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
+        entity.FieldValues <- this.FieldValues.ToList()
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.IsPublic <- this.IsPublic
@@ -60,6 +60,44 @@ type AnkiConceptWrite = {
             //fields = c.Fields && // medtodo fix this equality check
             this.MaintainerId = c.Concept.MaintainerId &&
             this.IsPublic = c.IsPublic
+        )
+
+type AnkiAcquiredCard = {
+    UserId: int
+    ConceptInstance: ConceptInstanceEntity
+    CardTemplate: CardTemplateEntity
+    MemorizationState: MemorizationState
+    CardState: CardState
+    LapseCount: byte
+    EaseFactorInPermille: int16
+    IntervalNegativeIsMinutesPositiveIsDays: int16
+    StepsIndex: byte option
+    Due: DateTime
+    CardOption: CardOptionEntity
+} with
+    member this.CopyTo (entity: AcquiredCardEntity) =
+        entity.UserId <- this.UserId
+        entity.MemorizationState <- MemorizationState.toDb this.MemorizationState
+        entity.CardState <- CardState.toDb this.CardState
+        entity.LapseCount <- this.LapseCount
+        entity.EaseFactorInPermille <- this.EaseFactorInPermille
+        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
+        entity.StepsIndex <- Option.toNullable this.StepsIndex
+        entity.Due <- this.Due
+    member this.CopyToNew (privateTags: PrivateTagEntity seq) =
+        let entity = AcquiredCardEntity ()
+        this.CopyTo entity
+        entity.Card <- CardEntity (
+            ConceptInstance = this.ConceptInstance,
+            CardTemplate = this.CardTemplate
+        )
+        entity.CardOption <- this.CardOption
+        entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
+        entity
+    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+        db.AcquiredCards.FirstOrDefault(fun c -> 
+            this.UserId = c.UserId //&&
+            //this.ConceptInstance.Fields // medTODO finish this equality check
         )
 
 type AnkiHistory = {
@@ -273,10 +311,15 @@ module Anki =
                     |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
                     |> List.append tags
                 let files, fields, newMissingAnkiFileNames = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
+                let conceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                 let concept =
                     let c =
-                        { ConceptTemplate = conceptTemplatesByModelId.[string note.Mid]
-                          Fields = MappingTools.splitByUnitSeparator fields
+                        { ConceptTemplate = conceptTemplate
+                          FieldValues =
+                            Seq.zip
+                                conceptTemplate.Fields
+                                (MappingTools.splitByUnitSeparator fields)
+                            |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
                           Created = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime // medTODO verify
                           Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
                           MaintainerId = userId
@@ -315,10 +358,10 @@ module Anki =
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun memorizationState ->
             let entity =
-                let c: AcquiredCard =
+                let c: AnkiAcquiredCard =
                     { UserId = userId
-                      ConceptInstance = ConceptInstance.Load concept
-                      CardTemplateId = 0
+                      ConceptInstance = concept
+                      CardTemplate = concept.FieldValues.First().Field.ConceptTemplateInstance.CardTemplates.First(fun x -> x.Ordinal = byte ankiCard.Ord)
                       MemorizationState = memorizationState
                       CardState =
                         match ankiCard.Queue with
@@ -352,12 +395,12 @@ module Anki =
                         | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
-                      CardOptionId = 0 }
+                      CardOption = cardOption }
                 getCard c
                 |> function
                 | Some entity ->
                     c.CopyTo entity
                     entity
-                | None -> c.CopyToNew concept (CardTemplateEntity()) cardOption (deckTag :: List.ofSeq tags) // highTODO fix CardTemplateEntity()
+                | None -> c.CopyToNew (deckTag :: List.ofSeq tags)
             (ankiCard.Id, entity)
         )

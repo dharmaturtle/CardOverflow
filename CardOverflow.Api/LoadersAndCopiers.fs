@@ -117,6 +117,7 @@ type CardTemplate with
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
         entity.ConceptTemplateInstance <- conceptTemplateInstance
+        entity.Ordinal <- this.Ordinal
         entity
 
 type ConceptTemplateInstance with
@@ -241,16 +242,6 @@ type AcquiredCard with
         entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
         entity.StepsIndex <- Option.toNullable this.StepsIndex
         entity.Due <- this.Due
-    member this.CopyToNew conceptInstance cardTemplate cardOption (privateTags: PrivateTagEntity seq) =
-        let entity = AcquiredCardEntity ()
-        this.CopyTo entity
-        entity.Card <- CardEntity (
-            ConceptInstance = conceptInstance,
-            CardTemplate = cardTemplate
-        )
-        entity.CardOption <- cardOption
-        entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
-        entity
     static member InitialCopyTo userId cardOptionId =
         AcquiredCardEntity(
             MemorizationState = MemorizationState.toDb New,
@@ -262,11 +253,6 @@ type AcquiredCard with
             Due = DateTime.UtcNow,
             CardOptionId = cardOptionId,
             UserId = userId
-        )
-    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.AcquiredCards.FirstOrDefault(fun c -> 
-            this.UserId = c.UserId //&&
-            //this.ConceptInstance.Fields // medTODO finish this equality check
         )
 
 type InitialFieldValue = {
