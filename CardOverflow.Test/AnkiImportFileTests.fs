@@ -25,7 +25,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
     |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
     |> Result.getOk
 
-    Assert.Equal(3, c.Db.FileConcepts.Count())
+    Assert.Equal(3, c.Db.FileConceptInstances.Count())
     Assert.Equal(3, c.Db.Files.Count())
 
 [<Theory>]
@@ -41,7 +41,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
         |> Result.isOk
         |> Assert.True
 
-    Assert.Equal(3, c.Db.FileConcepts.Count())
+    Assert.Equal(3, c.Db.FileConceptInstances.Count())
     Assert.Equal(3, c.Db.Files.Count())
 
 [<Fact>]
