@@ -147,8 +147,6 @@ type ConceptTemplateInstance with
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost }
     member this.CopyTo (entity: ConceptTemplateInstanceEntity) =
-        entity.ConceptTemplate.MaintainerId <- this.ConceptTemplate.MaintainerId
-        entity.ConceptTemplate.Name <- this.ConceptTemplate.Name
         entity.Css <- this.Css
         entity.Fields <- this.Fields |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
         entity.CardTemplates <- this.CardTemplates |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
@@ -159,6 +157,11 @@ type ConceptTemplateInstance with
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew defaultCardOption = // lowToMedTODO why are we taking defaultCardOption
         let entity = ConceptTemplateInstanceEntity()
+        entity.ConceptTemplate <-
+            ConceptTemplateEntity(
+                MaintainerId = this.ConceptTemplate.MaintainerId,
+                Name = this.ConceptTemplate.Name
+            )
         this.CopyTo entity
         entity
 

@@ -38,11 +38,14 @@ type AnkiConceptWrite = {
         entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.Concept.MaintainerId <- this.MaintainerId
         entity.IsPublic <- this.IsPublic
     member this.CopyToNew (files: FileEntity seq) =
         let entity = ConceptInstanceEntity()
-        this.CopyTo entity
+        entity.Concept <-
+            ConceptEntity(
+                MaintainerId = this.MaintainerId,
+                Name = "Imported from Anki"
+            )
         entity.FileConceptInstances <-
             files.Select(fun x ->
                 FileConceptInstanceEntity(
@@ -50,6 +53,7 @@ type AnkiConceptWrite = {
                     File = x
                 )
             ).ToList()
+        this.CopyTo entity
         entity
     member this.AcquireEquality (db: CardOverflowDb) fields = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.ConceptInstances.FirstOrDefault(fun c -> 
