@@ -183,7 +183,8 @@ module Anki =
                   Css = get.Required.Field "css" Decode.string
                   Fields =
                     get.Required.Field "flds" (Decode.object(fun get ->
-                        { Name = get.Required.Field "name" Decode.string
+                        { Id = 0
+                          Name = get.Required.Field "name" Decode.string
                           Font = get.Required.Field "font" Decode.string
                           FontSize = get.Required.Field "size" Decode.int |> byte
                           IsRightToLeft = get.Required.Field "rtl" Decode.bool
@@ -192,7 +193,8 @@ module Anki =
                         |> Decode.list )
                   CardTemplates =
                     get.Required.Field "tmpls" (Decode.object(fun g ->
-                        { Name = g.Required.Field "name" Decode.string
+                        { Id = 0
+                          Name = g.Required.Field "name" Decode.string
                           QuestionTemplate = g.Required.Field "qfmt" Decode.string
                           AnswerTemplate = g.Required.Field "afmt" Decode.string
                           ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string

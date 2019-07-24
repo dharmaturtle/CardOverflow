@@ -19,14 +19,16 @@ open Microsoft.EntityFrameworkCore
 let importedDate = DateTime(2020, 1, 1)
 
 let frontField =
-    { Name = "Front"
+    { Id = 0
+      Name = "Front"
       Ordinal = byte 0
       Font = "Arial"
       FontSize = byte 20
       IsRightToLeft = false
       IsSticky = false }
 let basicFrontBackCardTemplate =
-    { Name = "Card Template"
+    { Id = 0
+      Name = "Card Template"
       Ordinal = byte 0
       QuestionTemplate = "{{Front}}"
       AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
@@ -34,8 +36,11 @@ let basicFrontBackCardTemplate =
       ShortAnswerTemplate = "" }
 let basicConceptTemplate =
     { Id = 0
-      MaintainerId = 0
-      Name = "Basic"
+      ConceptTemplate = {
+        Id = 0
+        MaintainerId = 0
+        Name = "Basic"
+      }
       Css = ".card {
     font-family: arial;
     font-size: 20px;
@@ -49,7 +54,8 @@ let basicConceptTemplate =
                 Name = "Back"
                 Ordinal = byte 1 }]
       CardTemplates = [ basicFrontBackCardTemplate ]
-      Modified = importedDate
+      Created = importedDate
+      Modified = None
       IsCloze = false
       DefaultPublicTags = []
       DefaultPrivateTags = []
@@ -64,7 +70,10 @@ let basicConceptTemplate =
       LatexPost = @"\end{document}" }
 let basicWithReversedCardConceptTemplate =
     { basicConceptTemplate with
-        Name = "Basic with reversed card"
+        ConceptTemplate = {
+          basicConceptTemplate.ConceptTemplate with
+            Name = "Basic with reversed card"
+        }
         CardTemplates = [
             basicFrontBackCardTemplate
             { basicFrontBackCardTemplate with
@@ -74,7 +83,10 @@ let basicWithReversedCardConceptTemplate =
                 AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Front}}" }]}
 let basicWithOptionalReversedCardConceptTemplate =
     { basicWithReversedCardConceptTemplate with
-        Name = "Basic with optional reversed card"
+        ConceptTemplate = {
+            basicConceptTemplate.ConceptTemplate with
+                Name = "Basic with optional reversed card"
+        }
         Fields = 
             [ frontField
               { frontField with
@@ -92,14 +104,20 @@ let basicWithOptionalReversedCardConceptTemplate =
                   AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Front}}" }]}
 let basicTypeInAnswerConceptTemplate =
     { basicConceptTemplate with
-        Name = "Basic type in the answer"
+        ConceptTemplate = {
+            basicConceptTemplate.ConceptTemplate with
+                Name = "Basic type in the answer"
+        }
         CardTemplates = 
             [{ basicFrontBackCardTemplate with
                  QuestionTemplate = "{{Front}}\n{{type:Back}}"
                  AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}" }]}
 let basicClozeConceptTemplate =
     { basicConceptTemplate with
-        Name = "Basic Cloze"
+        ConceptTemplate = {
+            basicConceptTemplate.ConceptTemplate with
+                Name = "Basic Cloze"
+        }
         IsCloze = true
         Css = ".card {
     font-family: arial;
@@ -141,8 +159,13 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
       basicWithOptionalReversedCardConceptTemplate
       basicTypeInAnswerConceptTemplate
       basicClozeConceptTemplate ]
-    |> List.map (fun x -> { x with MaintainerId = theCollective.Id }.CopyToNew <| theCollective.CardOptions.First())
-    |> db.ConceptTemplates.AddRange
+    |> List.map (fun x ->
+        { x with 
+            ConceptTemplate = {
+                x.ConceptTemplate with MaintainerId = theCollective.Id
+            }
+        }.CopyToNew <| theCollective.CardOptions.First())
+    |> db.ConceptTemplateInstances.AddRange
     db.SaveChangesI ()
 
 //[<Fact>]

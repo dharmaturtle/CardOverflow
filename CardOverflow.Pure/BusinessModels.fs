@@ -84,6 +84,7 @@ type CardOption = {
 }
 
 type Field = {
+    Id: int
     Name: string
     Font: string
     FontSize: byte
@@ -93,6 +94,7 @@ type Field = {
 }
 
 type CardTemplate = {
+    Id: int
     Name: string
     QuestionTemplate: string
     AnswerTemplate: string

@@ -82,7 +82,8 @@ type CardOption with
 
 type Field with
     static member Load (entity: FieldEntity) =
-        { Name = entity.Name
+        { Id = entity.Id
+          Name = entity.Name
           Font = entity.Font
           FontSize = entity.FontSize
           IsRightToLeft = entity.IsRightToLeft
@@ -101,7 +102,8 @@ type Field with
 
 type CardTemplate with
     static member Load (entity: CardTemplateEntity) =
-        { Name = entity.Name
+        { Id = entity.Id
+          Name = entity.Name
           QuestionTemplate = entity.QuestionTemplate
           AnswerTemplate = entity.AnswerTemplate
           ShortQuestionTemplate = entity.ShortQuestionTemplate
@@ -246,9 +248,8 @@ type AcquiredCard with
         entity.CardOption <- cardOption
         entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
         entity
-    static member NewlyAcquired userId cardOptionId (card: CardEntity) =
+    static member InitialCopyTo userId cardOptionId =
         AcquiredCardEntity(
-            Card = card,
             MemorizationState = MemorizationState.toDb New,
             CardState = CardState.toDb Normal,
             LapseCount = 0uy,
@@ -263,4 +264,41 @@ type AcquiredCard with
         db.AcquiredCards.FirstOrDefault(fun c -> 
             this.UserId = c.UserId //&&
             //this.ConceptInstance.Fields // medTODO finish this equality check
+        )
+
+type InitialFieldValue = {
+    FieldId: int
+    Value: string
+}
+
+type InitialConceptInstance = {
+    IsPublic: bool
+    FieldValues: InitialFieldValue seq
+    MaintainerId: int
+    DefaultCardOptionId: int
+    Name: string
+    CardTemplateIds: int seq
+} with
+    member this.CopyToNew =
+        ConceptInstanceEntity(
+            Created = DateTime.UtcNow,
+            IsPublic = this.IsPublic,
+            Concept = ConceptEntity (
+                MaintainerId = this.MaintainerId,
+                Name = this.Name),
+            Cards = (
+                this.CardTemplateIds
+                |> Seq.map (fun x -> 
+                    CardEntity (
+                        CardTemplateId = x,
+                        AcquiredCards = (
+                            AcquiredCard.InitialCopyTo this.MaintainerId this.DefaultCardOptionId
+                            |> Seq.singleton
+                            |> fun x -> x.ToList())))
+                |> fun x -> x.ToList()),
+            FieldValues = (
+                this.FieldValues
+                |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
+                |> fun x -> x.ToList())
+            //FileConceptInstances = [] // lowToMedTODO
         )

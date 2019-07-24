@@ -42,17 +42,10 @@ module CardRepository =
         |> db.AcquiredCards.AddRange
         db.SaveChangesI ()
 
-//module ConceptRepository = // lowToMedTODO
-//    let CreateConcept (db: CardOverflowDb) (concept: ConceptInstance) userId =
-//        let ce = concept.CopyToNew |> db.ConceptInstances.Add
-//        [0..concept.ConceptTemplate.CardTemplates.Length - 1]
-//        |> Seq.map (fun x ->
-//            CardEntity(
-//                Concept = ce.Entity,
-//                TemplateIndex = byte x))
-//        |> Seq.map (AcquiredCard.NewlyAcquired userId concept.ConceptTemplate.DefaultCardOptionId)
-//        |> db.AcquiredCards.AddRange
-//        db.SaveChangesI ()
+module ConceptRepository =
+    let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) =
+        concept.CopyToNew |> db.ConceptInstances.AddI
+        db.SaveChangesI ()
 
     // member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
     //                 this.GetConcepts().Merge concepts

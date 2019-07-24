@@ -18,23 +18,23 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
     use c = new TestContainer()
     let userId = 3
     let conceptTemplate =
-        c.Db.ConceptTemplates
-            .Include(fun x -> x.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
+        c.Db.ConceptTemplateInstances
+            .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
                 .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
-            .First(fun x -> x.Name = "Basic")
+            .First(fun x -> x.ConceptTemplate.Name = "Basic")
             |> ConceptTemplateInstance.Load
     let basicConcept = {
-        Id = 0
-        Title = "Title"
-        Description = "Description"
-        ConceptTemplate = conceptTemplate
-        Fields = ["Front"; "Back"]
-        Modified = DateTime.UtcNow
         MaintainerId = userId
+        Name = "Basic"
+        DefaultCardOptionId = conceptTemplate.DefaultCardOptionId
+        CardTemplateIds = conceptTemplate.CardTemplates |> Seq.map (fun x -> x.Id)
+        FieldValues =
+            conceptTemplate.Fields
+            |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
         IsPublic = true
     }
     
-    ConceptRepository.CreateConcept c.Db basicConcept userId
+    ConceptRepository.CreateConcept c.Db basicConcept
 
     Assert.SingleI <| c.Db.Concepts
     Assert.SingleI <| c.Db.Cards
