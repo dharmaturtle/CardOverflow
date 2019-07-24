@@ -158,6 +158,8 @@ module AnkiImporter =
                         .Where(fun x -> x.UserId = userId)
                         .Select CardOption.Load
                     <| db.ConceptTemplateInstances // lowToMedTODO need more of a filter
+                        .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
+                            .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
                         .Select ConceptTemplateInstance.Load
                     <| getConcept
                     <| getCard
