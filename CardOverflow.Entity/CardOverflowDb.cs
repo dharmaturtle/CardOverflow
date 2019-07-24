@@ -54,6 +54,8 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.CardOptionId);
 
+                entity.HasIndex(e => new { e.ConceptInstanceId, e.CardTemplateId });
+
                 entity.HasOne(d => d.CardOption)
                     .WithMany(p => p.AcquiredCards)
                     .HasForeignKey(d => d.CardOptionId)
@@ -76,6 +78,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<CardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptInstanceId, e.CardTemplateId });
+
+                entity.HasIndex(e => e.CardTemplateId);
 
                 entity.HasOne(d => d.CardTemplate)
                     .WithMany(p => p.Cards)
@@ -110,6 +114,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTemplateEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptTemplateInstanceId);
+
                 entity.HasOne(d => d.ConceptTemplateInstance)
                     .WithMany(p => p.CardTemplates)
                     .HasForeignKey(d => d.ConceptTemplateInstanceId)
@@ -119,6 +125,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CommentConceptEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptId);
+
+                entity.HasIndex(e => e.UserId);
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.CommentConcepts)
                     .HasForeignKey(d => d.ConceptId)
@@ -134,6 +144,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CommentConceptTemplateEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptTemplateId);
+
+                entity.HasIndex(e => e.UserId);
+
                 entity.HasOne(d => d.ConceptTemplate)
                     .WithMany(p => p.CommentConceptTemplates)
                     .HasForeignKey(d => d.ConceptTemplateId)
@@ -160,6 +174,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptId);
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.ConceptInstances)
                     .HasForeignKey(d => d.ConceptId)
@@ -224,6 +240,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptTemplateInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptTemplateId);
+
                 entity.Property(e => e.Css).IsUnicode(false);
 
                 entity.HasOne(d => d.ConceptTemplate)
@@ -246,6 +264,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<FieldEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptTemplateInstanceId);
+
                 entity.HasOne(d => d.ConceptTemplateInstance)
                     .WithMany(p => p.Fields)
                     .HasForeignKey(d => d.ConceptTemplateInstanceId)
@@ -256,6 +276,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<FieldValueEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptInstanceId, e.FieldId });
+
+                entity.HasIndex(e => e.FieldId);
 
                 entity.HasOne(d => d.ConceptInstance)
                     .WithMany(p => p.FieldValues)
@@ -300,6 +322,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
+                entity.HasIndex(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
+
                 entity.HasOne(d => d.AcquiredCard)
                     .WithMany(p => p.Histories)
                     .HasForeignKey(d => new { d.UserId, d.ConceptInstanceId, d.CardTemplateId })
@@ -324,6 +348,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.PrivateTagId, e.ConceptInstanceId, e.CardTemplateId, e.UserId });
 
+                entity.HasIndex(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
+
                 entity.HasOne(d => d.PrivateTag)
                     .WithMany(p => p.PrivateTagAcquiredCards)
                     .HasForeignKey(d => d.PrivateTagId)
@@ -347,6 +373,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<PublicTagConceptEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptId, e.PublicTagId });
+
+                entity.HasIndex(e => e.PublicTagId);
 
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.PublicTagConcepts)
@@ -376,6 +404,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.CommentConceptId, e.UserId });
 
+                entity.HasIndex(e => e.UserId);
+
                 entity.HasOne(d => d.CommentConcept)
                     .WithMany(p => p.VoteCommentConcepts)
                     .HasForeignKey(d => d.CommentConceptId)
@@ -392,6 +422,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<VoteCommentConceptTemplateEntity>(entity =>
             {
                 entity.HasKey(e => new { e.CommentConceptTemplateId, e.UserId });
+
+                entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.CommentConceptTemplate)
                     .WithMany(p => p.VoteCommentConceptTemplates)
@@ -410,6 +442,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptId });
 
+                entity.HasIndex(e => e.ConceptId);
+
                 entity.HasOne(d => d.Concept)
                     .WithMany(p => p.VoteConcepts)
                     .HasForeignKey(d => d.ConceptId)
@@ -426,6 +460,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<VoteConceptTemplateEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptTemplateId, e.UserId });
+
+                entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.ConceptTemplate)
                     .WithMany(p => p.VoteConceptTemplates)

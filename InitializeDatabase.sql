@@ -247,7 +247,7 @@ CREATE TABLE [dbo].[ConceptInstance](
 	[Modified] [smalldatetime] NULL,
 	[ConceptId] [int] NOT NULL,
 	[IsPublic] [bit] NOT NULL,
- CONSTRAINT [PK_ConceptVersion] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_ConceptInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -315,7 +315,7 @@ CREATE TABLE [dbo].[ConceptTemplateInstance](
 	[IsCloze] [bit] NOT NULL,
 	[LatexPre] [nvarchar](500) NOT NULL,
 	[LatexPost] [nvarchar](500) NOT NULL,
- CONSTRAINT [PK_ConceptTemplateVersion] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_ConceptTemplateInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -570,6 +570,42 @@ INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsIn
 INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (2, 2, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
 INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (3, 3, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
+SET IDENTITY_INSERT [dbo].[CardTemplate] ON 
+
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (1, N'Card Template', N'{{Front}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'', 1, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (2, N'Basic Cloze', N'{{cloze:Text}}', N'{{cloze:Text}}<br>
+{{Extra}}', N'', N'', 5, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (3, N'Card Template', N'{{Front}}
+{{type:Back}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'', 4, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (4, N'Card Template', N'{{Front}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'', 3, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (5, N'Optional Reversed Card Template', N'{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', N'', N'', 3, 1)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (6, N'Card Template', N'{{Front}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'', 2, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (7, N'Reversed Card Template', N'{{Back}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', N'', N'', 2, 1)
+SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
 INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (1, 2, N'Basic')
@@ -591,6 +627,96 @@ INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId],
 INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (3, 3, 2)
 INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (4, 4, 2)
 INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (5, 5, 2)
+SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] ON 
+
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (1, 1, N'.card {
+    font-family: arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (2, 2, N'.card {
+    font-family: arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (3, 3, N'.card {
+    font-family: arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (4, 4, N'.card {
+    font-family: arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}', N'\end{document}')
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost]) VALUES (5, 5, N'.card {
+    font-family: arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}
+
+.cloze {
+    font-weight: bold;
+    color: blue;
+}
+.nightMode .cloze {
+    color: lightblue;
+}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 1, N'\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}', N'\end{document}')
+SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] OFF
+SET IDENTITY_INSERT [dbo].[Field] ON 
+
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (1, N'Front', N'Arial', 20, 0, 0, 0, 2)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (2, N'Back', N'Arial', 20, 0, 1, 0, 2)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (3, N'Text', N'Arial', 20, 0, 0, 0, 5)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (4, N'Front', N'Arial', 20, 0, 0, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (5, N'Back', N'Arial', 20, 0, 1, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (6, N'Leave Nonempty to Generate Reversed Card', N'Arial', 20, 0, 2, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 1)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (8, N'Front', N'Arial', 20, 0, 0, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (9, N'Back', N'Arial', 20, 0, 1, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (10, N'Front', N'Arial', 20, 0, 0, 0, 1)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (11, N'Extra', N'Arial', 20, 0, 1, 0, 5)
+SET IDENTITY_INSERT [dbo].[Field] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (1, N'Admin', N'admin@cardoverflow.io')
@@ -603,6 +729,19 @@ CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardOptionId] ON [dbo].[AcquiredCard]
 	[CardOptionId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_AcquiredCard_ConceptInstanceId_CardTemplateId] ******/
+CREATE NONCLUSTERED INDEX [IX_AcquiredCard_ConceptInstanceId_CardTemplateId] ON [dbo].[AcquiredCard]
+(
+	[ConceptInstanceId] ASC,
+	[CardTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Card_CardTemplateId] ******/
+CREATE NONCLUSTERED INDEX [IX_Card_CardTemplateId] ON [dbo].[Card]
+(
+	[CardTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [UQ_CardOption__UserId_IsDefault] ******/
 CREATE UNIQUE NONCLUSTERED INDEX [UQ_CardOption__UserId_IsDefault] ON [dbo].[CardOption]
 (
@@ -611,10 +750,46 @@ CREATE UNIQUE NONCLUSTERED INDEX [UQ_CardOption__UserId_IsDefault] ON [dbo].[Car
 WHERE ([IsDefault]=(1))
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_CardTemplate_ConceptTemplateInstanceId] ******/
+CREATE NONCLUSTERED INDEX [IX_CardTemplate_ConceptTemplateInstanceId] ON [dbo].[CardTemplate]
+(
+	[ConceptTemplateInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_CommentConcept_ConceptId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommentConcept_ConceptId] ON [dbo].[CommentConcept]
+(
+	[ConceptId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_CommentConcept_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommentConcept_UserId] ON [dbo].[CommentConcept]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_CommentConceptTemplate_ConceptTemplateId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommentConceptTemplate_ConceptTemplateId] ON [dbo].[CommentConceptTemplate]
+(
+	[ConceptTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_CommentConceptTemplate_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommentConceptTemplate_UserId] ON [dbo].[CommentConceptTemplate]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_Concept_MaintainerId] ******/
 CREATE NONCLUSTERED INDEX [IX_Concept_MaintainerId] ON [dbo].[Concept]
 (
 	[MaintainerId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptInstance_ConceptId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptInstance_ConceptId] ON [dbo].[ConceptInstance]
+(
+	[ConceptId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_ConceptTemplate_MaintainerId] ******/
@@ -641,10 +816,28 @@ CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_ConceptTemplateDefault_User_UserId
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_ConceptTemplateInstance_ConceptTemplateId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplateInstance_ConceptTemplateId] ON [dbo].[ConceptTemplateInstance]
+(
+	[ConceptTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_Deck_UserId] ******/
 CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 (
 	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Field_ConceptTemplateInstanceId] ******/
+CREATE NONCLUSTERED INDEX [IX_Field_ConceptTemplateInstanceId] ON [dbo].[Field]
+(
+	[ConceptTemplateInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_FieldValue_FieldId] ******/
+CREATE NONCLUSTERED INDEX [IX_FieldValue_FieldId] ON [dbo].[FieldValue]
+(
+	[FieldId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
@@ -661,6 +854,14 @@ CREATE NONCLUSTERED INDEX [IX_File_Concept_FileId] ON [dbo].[File_ConceptInstanc
 	[FileId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_History_UserId_ConceptInstanceId_CardTemplateId] ******/
+CREATE NONCLUSTERED INDEX [IX_History_UserId_ConceptInstanceId_CardTemplateId] ON [dbo].[History]
+(
+	[UserId] ASC,
+	[ConceptInstanceId] ASC,
+	[CardTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [AK_PrivateTag__UserId_Name] ******/
@@ -670,6 +871,14 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag__UserId_Name] ON [dbo].[PrivateT
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_PrivateTag_AcquiredCard_UserId_ConceptInstanceId_CardTemplateId] ******/
+CREATE NONCLUSTERED INDEX [IX_PrivateTag_AcquiredCard_UserId_ConceptInstanceId_CardTemplateId] ON [dbo].[PrivateTag_AcquiredCard]
+(
+	[UserId] ASC,
+	[ConceptInstanceId] ASC,
+	[CardTemplateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [AK_PublicTag__Name] ******/
@@ -677,6 +886,12 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_PublicTag__Name] ON [dbo].[PublicTag]
 (
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_PublicTag_Concept_PublicTagId] ******/
+CREATE NONCLUSTERED INDEX [IX_PublicTag_Concept_PublicTagId] ON [dbo].[PublicTag_Concept]
+(
+	[PublicTagId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
 GO
@@ -693,6 +908,30 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_User__Email] ON [dbo].[User]
 (
 	[Email] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Vote_CommentConcept_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_Vote_CommentConcept_UserId] ON [dbo].[Vote_CommentConcept]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Vote_CommentConceptTemplate_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_Vote_CommentConceptTemplate_UserId] ON [dbo].[Vote_CommentConceptTemplate]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Vote_Concept_ConceptId] ******/
+CREATE NONCLUSTERED INDEX [IX_Vote_Concept_ConceptId] ON [dbo].[Vote_Concept]
+(
+	[ConceptId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Vote_ConceptTemplate_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_Vote_ConceptTemplate_UserId] ON [dbo].[Vote_ConceptTemplate]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_Card] FOREIGN KEY([ConceptInstanceId], [CardTemplateId])
 REFERENCES [dbo].[Card] ([ConceptInstanceId], [CardTemplateId])
