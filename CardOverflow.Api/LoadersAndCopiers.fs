@@ -161,24 +161,18 @@ type ConceptTemplateInstance with
         entity.ConceptTemplate <-
             ConceptTemplateEntity(
                 MaintainerId = this.ConceptTemplate.MaintainerId,
-                Name = this.ConceptTemplate.Name
-            )
+                Name = this.ConceptTemplate.Name,
+                ConceptTemplateDefaultConceptTemplateUsers = (
+                    ConceptTemplateDefaultConceptTemplateUserEntity(
+                        UserId = this.ConceptTemplate.MaintainerId,
+                        ConceptTemplateDefault = ConceptTemplateDefaultEntity (
+                            DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
+                            DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+                            DefaultCardOption = defaultCardOption ))
+                    |> Seq.singleton
+                    ).ToList())
         this.CopyTo entity
         entity
-
-    //member this.CopyToNew defaultCardOption = // medTODO this belongs on `ConceptTemplate`
-    //    let entity = ConceptTemplateEntity()
-    //    ConceptTemplateDefaultConceptTemplateUserEntity(
-    //        UserId = this.ConceptTemplate.MaintainerId,
-    //        ConceptTemplate = entity,
-    //        ConceptTemplateDefault = ConceptTemplateDefaultEntity(
-    //            DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
-    //            DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
-    //            DefaultCardOption = defaultCardOption
-    //        )
-    //    ) |> entity.ConceptTemplateDefaultConceptTemplateUsers.Add
-    //    this.CopyTo entity
-    //    entity
 
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
