@@ -55,12 +55,14 @@ type AnkiConceptWrite = {
             ).ToList()
         this.CopyTo entity
         entity
-    member this.AcquireEquality (db: CardOverflowDb) fields = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.ConceptInstances.FirstOrDefault(fun c -> 
-            //fields = c.Fields && // medtodo fix this equality check
-            this.MaintainerId = c.Concept.MaintainerId &&
-            this.IsPublic = c.IsPublic
-        )
+    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+        db.ConceptInstances
+            .FirstOrDefault(fun c ->
+                c.FieldValues.Select(fun x -> x.Value).All(fun x -> this.FieldValues.Select(fun x -> x.Value).Contains(x)) &&
+                //this.ConceptTemplate.Id = c.FieldValues.First().Field.ConceptTemplateInstanceId && // medtodo fix this equality check, use hashes
+                this.MaintainerId = c.Concept.MaintainerId &&
+                this.IsPublic = c.IsPublic
+            )
 
 type AnkiAcquiredCard = {
     UserId: int
@@ -96,8 +98,9 @@ type AnkiAcquiredCard = {
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCards.FirstOrDefault(fun c -> 
-            this.UserId = c.UserId //&&
-            //this.ConceptInstance.Fields // medTODO finish this equality check
+            this.UserId = c.UserId &&
+            this.ConceptInstance.Id = c.ConceptInstanceId &&
+            this.CardTemplate.Id = c.CardTemplateId
         )
 
 type AnkiHistory = {

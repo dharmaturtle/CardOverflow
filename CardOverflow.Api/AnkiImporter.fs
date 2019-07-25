@@ -139,9 +139,7 @@ module AnkiImporter =
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         let getConcept (concept: AnkiConceptWrite) =
-            concept.FieldValues.Select(fun x -> x.Value) |> Seq.toList
-            |> MappingTools.joinByUnitSeparator
-            |> concept.AcquireEquality db
+            concept.AcquireEquality db
             |> Option.ofObj
         let getCard (card: AnkiAcquiredCard) =
             card.AcquireEquality db |> Option.ofObj
