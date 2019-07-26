@@ -27,6 +27,58 @@ let assertHasBasicInfo db ankiDb =
     AnkiImporter.save db ankiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
     |> Result.isOk
     |> Assert.True
+    Assert.Equal<IEnumerable<string>>(
+        [   "1/1/2020 00:00:00"
+            "1/1/2020 00:00:00"
+            "1/1/2020 00:00:00"
+            "1/1/2020 00:00:00"
+            "1/1/2020 00:00:00"
+            "4/8/2019 02:14:29"
+            "4/8/2019 02:14:29"
+            "4/8/2019 02:14:29"
+            "4/8/2019 02:14:29"
+            "4/8/2019 02:14:29"
+        ].ToList(),
+        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Created.ToString())
+    )
+    Assert.Equal<IEnumerable<string>>(
+        [   ""
+            ""
+            ""
+            ""
+            ""
+            "6/16/2019 00:51:28"
+            "6/16/2019 00:53:30"
+            "6/16/2019 00:51:32"
+            "6/16/2019 00:51:46"
+            "6/16/2019 00:51:55"
+        ].ToList(),
+        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).ToList()
+    )
+    Assert.Equal<IEnumerable<string>>(
+        [   "4/8/2019 02:14:57"
+            "4/8/2019 02:18:20"
+            "4/8/2019 02:16:42"
+            "4/8/2019 02:16:27"
+            "4/8/2019 02:15:50"
+            "4/8/2019 02:21:11"
+            "6/16/2019 00:53:20"
+            "4/8/2019 02:14:32"
+        ].ToList(),
+        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Created.ToString())
+    )
+    Assert.Equal<IEnumerable<string>>(
+        [   "4/8/2019 02:15:44"
+            "4/8/2019 02:43:51"
+            "4/8/2019 02:18:05"
+            "4/8/2019 02:16:39"
+            "4/8/2019 02:16:22"
+            "4/8/2019 02:38:52"
+            "6/16/2019 00:56:27"
+            "4/8/2019 02:14:53"
+        ].ToList(),
+        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).ToList()
+    )
     Assert.Equal(8, db.Concepts.Count())
     Assert.Equal(10, db.Cards.Count())
     Assert.Equal(10, db.AcquiredCards.Count(fun x -> x.UserId = userId))

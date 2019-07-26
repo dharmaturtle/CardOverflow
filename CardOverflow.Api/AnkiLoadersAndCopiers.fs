@@ -246,8 +246,8 @@ module Anki =
                           ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
                           Ordinal = g.Required.Field "ord" Decode.int |> byte })
                           |> Decode.list )
-                  Created = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime // medTODO verify
-                  Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime |> Some
+                  Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
+                  Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
                   IsCloze = get.Required.Field "type" ankiIntToBool
                   DefaultPublicTags = []
                   DefaultPrivateTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
@@ -323,7 +323,7 @@ module Anki =
                                 conceptTemplate.Fields
                                 (MappingTools.splitByUnitSeparator fields)
                             |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
-                          Created = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime // medTODO verify
+                          Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                           Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
                           MaintainerId = userId
                           IsPublic = false }
