@@ -30,6 +30,9 @@ namespace CardOverflow.Entity
         [Required]
         [StringLength(500)]
         public string LatexPost { get; set; }
+        [Required]
+        [MaxLength(32)]
+        public byte[] AcquireHash { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("ConceptTemplateInstances")]
