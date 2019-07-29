@@ -7,6 +7,42 @@ open CardOverflow.Pure
 open System
 open System.Linq
 open FsToolkit.ErrorHandling
+open System.Security.Cryptography
+open System.Text
+open System.Collections.Generic
+
+module ConceptTemplateInstanceEntity =
+    let acquireHash (hasher: SHA256) (e: ConceptTemplateInstanceEntity) =
+        let hash (hasher: HashAlgorithm) (ct: CardTemplateEntity) =
+            [ ct.QuestionTemplate; ct.AnswerTemplate ]
+            |> MappingTools.joinByUnitSeparator
+            |> Encoding.Unicode.GetBytes
+            |> hasher.ComputeHash
+        let stringBytes =
+            [   e.Css
+                e.LatexPre
+                e.LatexPost
+            ].Concat <| e.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name)
+            |> Seq.toList
+            |> MappingTools.joinByUnitSeparator
+            |> Encoding.Unicode.GetBytes
+        e.CardTemplates
+            |> Seq.sortBy (fun x -> x.Ordinal)
+            |> Seq.collect (hash hasher)
+            |> Seq.append stringBytes
+            |> Seq.toArray
+            |> hasher.ComputeHash
+
+module ConceptInstanceEntity =
+    let acquireHash (e: ConceptInstanceEntity) (conceptTemplateHash: byte[]) (hasher: SHA256) =
+        e.FieldValues
+        |> Seq.map (fun x -> x.Value)
+        |> Seq.sort
+        |> MappingTools.joinByUnitSeparator
+        |> Encoding.Unicode.GetBytes
+        |> Seq.append conceptTemplateHash
+        |> Seq.toArray
+        |> hasher.ComputeHash
 
 type CardOption with
     member this.AcquireEquality (that: CardOption) =
@@ -172,6 +208,8 @@ type ConceptTemplateInstance with
                     |> Seq.singleton
                     ).ToList())
         this.CopyTo entity
+        use hasher = SHA256.Create() // lowTODO pull this out
+        entity.AcquireHash <- ConceptTemplateInstanceEntity.acquireHash hasher entity
         entity
 
 type QuizCard with
@@ -260,28 +298,33 @@ type InitialConceptInstance = {
     MaintainerId: int
     DefaultCardOptionId: int
     Name: string
+    ConceptTemplateHash: byte[]
     CardTemplateIds: int seq
 } with
     member this.CopyToNew =
-        ConceptInstanceEntity(
-            Created = DateTime.UtcNow,
-            IsPublic = this.IsPublic,
-            Concept = ConceptEntity (
-                MaintainerId = this.MaintainerId,
-                Name = this.Name),
-            Cards = (
-                this.CardTemplateIds
-                |> Seq.map (fun x -> 
-                    CardEntity (
-                        CardTemplateId = x,
-                        AcquiredCards = (
-                            AcquiredCard.InitialCopyTo this.MaintainerId this.DefaultCardOptionId
-                            |> Seq.singleton
-                            |> fun x -> x.ToList())))
-                |> fun x -> x.ToList()),
-            FieldValues = (
-                this.FieldValues
-                |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
-                |> fun x -> x.ToList())
-            //FileConceptInstances = [] // lowToMedTODO
-        )
+        let e =
+            ConceptInstanceEntity(
+                Created = DateTime.UtcNow,
+                IsPublic = this.IsPublic,
+                Concept = ConceptEntity (
+                    MaintainerId = this.MaintainerId,
+                    Name = this.Name),
+                Cards = (
+                    this.CardTemplateIds
+                    |> Seq.map (fun x -> 
+                        CardEntity (
+                            CardTemplateId = x,
+                            AcquiredCards = (
+                                AcquiredCard.InitialCopyTo this.MaintainerId this.DefaultCardOptionId
+                                |> Seq.singleton
+                                |> fun x -> x.ToList())))
+                    |> fun x -> x.ToList()),
+                FieldValues = (
+                    this.FieldValues
+                    |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
+                    |> fun x -> x.ToList())
+                //FileConceptInstances = [] // lowToMedTODO
+            )
+        use hasher = SHA256.Create() // lowTODO pull this out
+        e.AcquireHash <- ConceptInstanceEntity.acquireHash e this.ConceptTemplateHash hasher
+        e

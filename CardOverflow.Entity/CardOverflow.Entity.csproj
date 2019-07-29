@@ -16,4 +16,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Pure\CardOverflow.Pure.fsproj" />
+  </ItemGroup>
+
 </Project>

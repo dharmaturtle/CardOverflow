@@ -43,20 +43,20 @@ let splitByRecordSeparator =
 let splitByUnitSeparator =
     split '\x1f'
 
-let join separator (strings: string list) =
+let join separator (strings: string seq) =
     String.Join(string separator, strings)
 
-let joinByFileSeparator =
-    join '\x1c'
+let joinByFileSeparator x =
+    join '\x1c' x
 
-let joinByGroupSeparator =
-    join '\x1d'
+let joinByGroupSeparator x =
+    join '\x1d' x
 
-let joinByRecordSeparator =
-    join '\x1e'
+let joinByRecordSeparator x =
+    join '\x1e' x
 
-let joinByUnitSeparator =
-    join '\x1f'
+let joinByUnitSeparator x =
+    join '\x1f' x
 
 let cutOffInt16 x =
     if x > float Int16.MaxValue

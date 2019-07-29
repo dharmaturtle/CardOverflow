@@ -13,6 +13,7 @@ open System.Collections.Generic
 open CardOverflow.Debug
 open MappingTools
 open FsToolkit.ErrorHandling
+open System.Security.Cryptography
 
 type SimpleAnkiDb = {
     Cards: CardOverflow.Entity.Anki.CardEntity list
@@ -27,18 +28,20 @@ type AnkiConceptTemplate = {
 }
 
 type AnkiConceptWrite = {
-    ConceptTemplate: ConceptTemplateInstanceEntity
+    ConceptTemplateHash: byte[]
     FieldValues: FieldValueEntity seq
     Created: DateTime
     Modified: DateTime option
     MaintainerId: int
     IsPublic: bool
 } with
-    member this.CopyTo(entity: ConceptInstanceEntity) =
+    member this.CopyTo(entity: ConceptInstanceEntity, conceptTemplateHash: byte[]) =
         entity.FieldValues <- this.FieldValues.ToList()
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.IsPublic <- this.IsPublic
+        use hasher = SHA256.Create()
+        entity.AcquireHash <- ConceptInstanceEntity.acquireHash entity conceptTemplateHash hasher
     member this.CopyToNew (files: FileEntity seq) =
         let entity = ConceptInstanceEntity()
         entity.Concept <-
@@ -53,7 +56,7 @@ type AnkiConceptWrite = {
                     File = x
                 )
             ).ToList()
-        this.CopyTo entity
+        this.CopyTo(entity, this.ConceptTemplateHash)
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.ConceptInstances
@@ -317,7 +320,7 @@ module Anki =
                 let conceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                 let concept =
                     let c =
-                        { ConceptTemplate = conceptTemplate
+                        { ConceptTemplateHash = conceptTemplate.AcquireHash
                           FieldValues =
                             Seq.zip
                                 conceptTemplate.Fields
