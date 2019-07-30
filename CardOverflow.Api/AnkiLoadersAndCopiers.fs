@@ -104,12 +104,7 @@ type AnkiConceptWrite = {
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.ConceptInstances
-            .FirstOrDefault(fun c ->
-                c.FieldValues.Select(fun x -> x.Value).All(fun x -> this.FieldValues.Select(fun x -> x.Value).Contains(x)) &&
-                //this.ConceptTemplate.Id = c.FieldValues.First().Field.ConceptTemplateInstanceId && // medtodo fix this equality check, use hashes
-                this.MaintainerId = c.Concept.MaintainerId &&
-                this.IsPublic = c.IsPublic
-            )
+            .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
 
 type AnkiAcquiredCard = {
     UserId: int

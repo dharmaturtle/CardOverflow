@@ -146,13 +146,13 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
     Assert.Equal(5, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = userId))
     Assert.Equal(8, c.Db.Concepts.Count(fun x -> x.MaintainerId = userId))
     Assert.Equal(10, c.Db.Cards.Count())
-    Assert.Equal(1, c.Db.Cards.Count(fun x -> x.ConceptInstanceId = 1))
-    Assert.Equal(2, c.Db.Cards.Count(fun x -> x.ConceptInstanceId = 5))
-    Assert.Equal(2, c.Db.Cards.Count(fun x -> x.ConceptInstanceId = 6))
+    Assert.Equal(1, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
+    Assert.Equal(2, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
+    Assert.Equal(2, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
     Assert.Equal(10, c.Db.AcquiredCards.Count())
-    Assert.Equal(1, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstanceId = 1))
-    Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstanceId = 5))
-    Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstanceId = 6))
+    Assert.Equal(1, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
+    Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
+    Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
