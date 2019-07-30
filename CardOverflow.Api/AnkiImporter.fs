@@ -61,8 +61,8 @@ module AnkiImporter =
         fileEntityByAnkiFileName
         (usersTags: PrivateTagEntity seq)
         (cardOptions: CardOption seq)
-        (conceptTemplates: ConceptTemplateInstance seq)
-        getConcept 
+        (conceptTemplates: ConceptTemplateInstanceEntity seq)
+        getConcept
         getCard
         getHistory =
         let col = ankiDb.Cols.Single()
@@ -95,14 +95,14 @@ module AnkiImporter =
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
                     cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! conceptTemplatesByModelId =
-                let toEntity _ (conceptTemplate: AnkiConceptTemplate) =
+                let toEntity _ (x: AnkiConceptTemplateAndDeckId) =
+                    let entity = x.ConceptTemplate.CopyToNew (cardOptionAndDeckNameByDeckId.[x.DeckId] |> fst)
                     conceptTemplates
-                    |> Seq.filter (fun x -> x.AcquireEquality conceptTemplate.ConceptTemplate)
+                    |> Seq.filter (fun e -> e.AcquireHash = entity.AcquireHash)
                     |> Seq.tryHead
                     |> function
                     | Some x -> x
-                    | None -> conceptTemplate.ConceptTemplate
-                    |> fun co -> co.CopyToNew (cardOptionAndDeckNameByDeckId.[conceptTemplate.DeckId] |> fst)
+                    | None -> entity
                 Anki.parseModels userId col.Models
                 |> Result.map (Map.ofSeq >> Map.map toEntity)
             let usersTags =
@@ -158,7 +158,6 @@ module AnkiImporter =
                     <| db.ConceptTemplateInstances // lowToMedTODO need more of a filter
                         .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
                             .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
-                        .Select ConceptTemplateInstance.Load
                     <| getConcept
                     <| getCard
                     <| getHistory

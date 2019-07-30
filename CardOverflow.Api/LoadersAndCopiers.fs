@@ -182,35 +182,8 @@ type ConceptTemplateInstance with
           DefaultPrivateTags = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
           DefaultCardOptionId = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
           LatexPre = entity.LatexPre
-          LatexPost = entity.LatexPost }
-    member this.CopyTo (entity: ConceptTemplateInstanceEntity) =
-        entity.Css <- this.Css
-        entity.Fields <- this.Fields |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
-        entity.CardTemplates <- this.CardTemplates |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
-        entity.Created <- this.Created
-        entity.Modified <- this.Modified |> Option.toNullable
-        entity.IsCloze <- this.IsCloze
-        entity.LatexPre <- this.LatexPre
-        entity.LatexPost <- this.LatexPost
-    member this.CopyToNew defaultCardOption =
-        let entity = ConceptTemplateInstanceEntity()
-        entity.ConceptTemplate <-
-            ConceptTemplateEntity(
-                MaintainerId = this.ConceptTemplate.MaintainerId,
-                Name = this.ConceptTemplate.Name,
-                ConceptTemplateDefaultConceptTemplateUsers = (
-                    ConceptTemplateDefaultConceptTemplateUserEntity(
-                        UserId = this.ConceptTemplate.MaintainerId,
-                        ConceptTemplateDefault = ConceptTemplateDefaultEntity (
-                            DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
-                            DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
-                            DefaultCardOption = defaultCardOption ))
-                    |> Seq.singleton
-                    ).ToList())
-        this.CopyTo entity
-        use hasher = SHA256.Create() // lowTODO pull this out
-        entity.AcquireHash <- ConceptTemplateInstanceEntity.acquireHash hasher entity
-        entity
+          LatexPost = entity.LatexPost
+          AcquireHash = entity.AcquireHash }
 
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =

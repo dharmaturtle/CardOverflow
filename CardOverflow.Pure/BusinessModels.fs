@@ -123,6 +123,7 @@ type ConceptTemplateInstance = {
     DefaultCardOptionId: int
     LatexPre: string
     LatexPost: string
+    AcquireHash: byte[]
 }
 
 type QuizCard = {

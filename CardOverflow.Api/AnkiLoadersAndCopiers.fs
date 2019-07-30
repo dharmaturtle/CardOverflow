@@ -22,8 +22,52 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiConceptTemplate = {
-    ConceptTemplate: ConceptTemplateInstance
+type AnkiConceptTemplateInstance = {
+    ConceptTemplate: ConceptTemplate
+    Css: string
+    Fields: Field seq
+    CardTemplates: CardTemplate seq
+    Created: DateTime
+    Modified: DateTime option
+    IsCloze: bool
+    DefaultPublicTags: int list
+    DefaultPrivateTags: int list
+    DefaultCardOptionId: int
+    LatexPre: string
+    LatexPost: string
+} with
+    member this.CopyTo (entity: ConceptTemplateInstanceEntity) =
+        entity.Css <- this.Css
+        entity.Fields <- this.Fields |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
+        entity.CardTemplates <- this.CardTemplates |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
+        entity.IsCloze <- this.IsCloze
+        entity.LatexPre <- this.LatexPre
+        entity.LatexPost <- this.LatexPost
+    member this.CopyToNew defaultCardOption =
+        let entity = ConceptTemplateInstanceEntity()
+        entity.ConceptTemplate <-
+            ConceptTemplateEntity(
+                MaintainerId = this.ConceptTemplate.MaintainerId,
+                Name = this.ConceptTemplate.Name,
+                ConceptTemplateDefaultConceptTemplateUsers = (
+                    ConceptTemplateDefaultConceptTemplateUserEntity(
+                        UserId = this.ConceptTemplate.MaintainerId,
+                        ConceptTemplateDefault = ConceptTemplateDefaultEntity (
+                            DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
+                            DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+                            DefaultCardOption = defaultCardOption ))
+                    |> Seq.singleton
+                    ).ToList())
+        this.CopyTo entity
+        use hasher = SHA256.Create() // lowTODO pull this out
+        entity.AcquireHash <- ConceptTemplateInstanceEntity.acquireHash hasher entity
+        entity
+    
+
+type AnkiConceptTemplateAndDeckId = {
+    ConceptTemplate: AnkiConceptTemplateInstance
     DeckId: int
 }
 
@@ -222,8 +266,7 @@ module Anki =
         Decode.object(fun get ->
             { DeckId = get.Required.Field "did" Decode.int
               ConceptTemplate =
-                { Id = 0
-                  ConceptTemplate = {
+                { ConceptTemplate = {
                     Id = 0
                     MaintainerId = userId
                     Name = get.Required.Field "name" Decode.string
