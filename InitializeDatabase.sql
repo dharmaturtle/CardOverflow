@@ -643,7 +643,7 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x6BCA1E1DAA09C745310F8BF13FF3D5ACB62249A22C05271945C4DEEFB9211306)
+\begin{document}', N'\end{document}', 0xF702D725FBF59372BE98726083A08E02243B5DF2FF75471DE72612CCA6032C45)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (2, 2, N'.card {
     font-family: arial;
     font-size: 20px;
@@ -656,7 +656,7 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x6BCA1E1DAA09C745310F8BF13FF3D5ACB62249A22C05271945C4DEEFB9211306)
+\begin{document}', N'\end{document}', 0x7BED237E216B95DA7AA6C0604E4151CD90F09257928BCC2120E4EEAC9F140021)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (3, 3, N'.card {
     font-family: arial;
     font-size: 20px;
@@ -669,7 +669,7 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x6BCA1E1DAA09C745310F8BF13FF3D5ACB62249A22C05271945C4DEEFB9211306)
+\begin{document}', N'\end{document}', 0x143F7E105D9231BFC01E20949A4489AE530ECDC8A27C516603B7A7A54885380F)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (4, 4, N'.card {
     font-family: arial;
     font-size: 20px;
@@ -682,7 +682,7 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x6BCA1E1DAA09C745310F8BF13FF3D5ACB62249A22C05271945C4DEEFB9211306)
+\begin{document}', N'\end{document}', 0x329B22D2F14F019C55BF7FDA84ED4817A388FECE54FCA7FFC8BBB4C0EA25AA7F)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (5, 5, N'.card {
     font-family: arial;
     font-size: 20px;
@@ -703,7 +703,7 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x6BCA1E1DAA09C745310F8BF13FF3D5ACB62249A22C05271945C4DEEFB9211306)
+\begin{document}', N'\end{document}', 0x4CC9BA593B0725C9F6D5F633359E21FE0C9A4B94B782D80D1106CB997F58F2EB)
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[Field] ON 
 
