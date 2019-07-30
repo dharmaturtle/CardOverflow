@@ -96,12 +96,22 @@ module AnkiImporter =
                     cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! conceptTemplatesByModelId =
                 let toEntity _ (x: AnkiConceptTemplateAndDeckId) =
-                    let entity = x.ConceptTemplate.CopyToNew (cardOptionAndDeckNameByDeckId.[x.DeckId] |> fst)
+                    let defaultCardOption = cardOptionAndDeckNameByDeckId.[x.DeckId] |> fst
+                    let entity = x.ConceptTemplate.CopyToNew userId defaultCardOption
                     conceptTemplates
                     |> Seq.filter (fun e -> e.AcquireHash = entity.AcquireHash)
                     |> Seq.tryHead
                     |> function
-                    | Some x -> x
+                    | Some e ->
+                        ConceptTemplateDefaultConceptTemplateUserEntity(
+                            UserId = userId,
+                            ConceptTemplateDefault =
+                                ConceptTemplateDefaultEntity (
+                                    DefaultPublicTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPublicTags, // medTODO normalize this
+                                    DefaultPrivateTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPrivateTags,
+                                    DefaultCardOption = defaultCardOption ))
+                        |> e.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Add
+                        e
                     | None -> entity
                 Anki.parseModels userId col.Models
                 |> Result.map (Map.ofSeq >> Map.map toEntity)
@@ -138,6 +148,12 @@ module AnkiImporter =
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
+        let getConceptTemplateInstance =
+            db.ConceptTemplateInstances // lowToMedTODO need more of a filter
+                .Include(fun x -> x.Fields :> IEnumerable<_>)
+                    .ThenInclude(fun (x: FieldEntity) -> x.ConceptTemplateInstance.CardTemplates)
+                .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
+                    .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
         let getConcept (concept: AnkiConceptWrite) =
             concept.AcquireEquality db
             |> Option.ofObj
@@ -155,9 +171,7 @@ module AnkiImporter =
                     <| db.CardOptions
                         .Where(fun x -> x.UserId = userId)
                         .Select CardOption.Load
-                    <| db.ConceptTemplateInstances // lowToMedTODO need more of a filter
-                        .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
-                            .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
+                    <| getConceptTemplateInstance
                     <| getConcept
                     <| getCard
                     <| getHistory

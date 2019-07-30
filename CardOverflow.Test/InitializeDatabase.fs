@@ -18,132 +18,7 @@ open Microsoft.EntityFrameworkCore
 
 let importedDate = DateTime(2020, 1, 1)
 
-let frontField =
-    { Id = 0
-      Name = "Front"
-      Ordinal = byte 0
-      Font = "Arial"
-      FontSize = byte 20
-      IsRightToLeft = false
-      IsSticky = false }
-let basicFrontBackCardTemplate =
-    { Id = 0
-      Name = "Card Template"
-      Ordinal = byte 0
-      QuestionTemplate = "{{Front}}"
-      AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
-      ShortQuestionTemplate = ""
-      ShortAnswerTemplate = "" }
-let basicConceptTemplate =
-    { ConceptTemplate = {
-        Id = 0
-        MaintainerId = 0
-        Name = "Basic"
-      }
-      Css = ".card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
-}"
-      Fields = 
-          [ frontField
-            { frontField with
-                Name = "Back"
-                Ordinal = byte 1 }]
-      CardTemplates = [ basicFrontBackCardTemplate ]
-      Created = importedDate
-      Modified = None
-      IsCloze = false
-      DefaultPublicTags = []
-      DefaultPrivateTags = []
-      DefaultCardOptionId = 1
-      LatexPre = @"\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}"
-      LatexPost = @"\end{document}" }
-let basicWithReversedCardConceptTemplate =
-    { basicConceptTemplate with
-        ConceptTemplate = {
-          basicConceptTemplate.ConceptTemplate with
-            Name = "Basic with reversed card"
-        }
-        CardTemplates = [
-            basicFrontBackCardTemplate
-            { basicFrontBackCardTemplate with
-                Name = "Reversed Card Template"
-                Ordinal = byte 1
-                QuestionTemplate = "{{Back}}"
-                AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Front}}" }]}
-let basicWithOptionalReversedCardConceptTemplate =
-    { basicWithReversedCardConceptTemplate with
-        ConceptTemplate = {
-            basicConceptTemplate.ConceptTemplate with
-                Name = "Basic with optional reversed card"
-        }
-        Fields = 
-            [ frontField
-              { frontField with
-                  Name = "Back"
-                  Ordinal = byte 1 }
-              { frontField with
-                  Name = "Leave Nonempty to Generate Reversed Card"
-                  Ordinal = byte 2 }]
-        CardTemplates = 
-            [ basicFrontBackCardTemplate
-              { basicFrontBackCardTemplate with
-                  Name = "Optional Reversed Card Template"
-                  Ordinal = byte 1
-                  QuestionTemplate = "{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}"
-                  AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Front}}" }]}
-let basicTypeInAnswerConceptTemplate =
-    { basicConceptTemplate with
-        ConceptTemplate = {
-            basicConceptTemplate.ConceptTemplate with
-                Name = "Basic type in the answer"
-        }
-        CardTemplates = 
-            [{ basicFrontBackCardTemplate with
-                 QuestionTemplate = "{{Front}}\n{{type:Back}}"
-                 AnswerTemplate = "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}" }]}
-let basicClozeConceptTemplate =
-    { basicConceptTemplate with
-        ConceptTemplate = {
-            basicConceptTemplate.ConceptTemplate with
-                Name = "Basic Cloze"
-        }
-        IsCloze = true
-        Css = ".card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
-}
-
-.cloze {
-    font-weight: bold;
-    color: blue;
-}
-.nightMode .cloze {
-    color: lightblue;
-}"
-        Fields =
-            [{ frontField with
-                 Name = "Text" }
-             { frontField with
-                 Name = "Extra"
-                 Ordinal = byte 1 }]
-        CardTemplates = 
-            [{ basicFrontBackCardTemplate with
-                 Name = "Basic Cloze"
-                 QuestionTemplate = "{{cloze:Text}}"
-                 AnswerTemplate = "{{cloze:Text}}<br>\n{{Extra}}" }]}
+let ankiModels = "{\"1554689669581\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\begin{document}\\n\", \"latexPost\": \"\\\\end{document}\", \"mod\": 1560646410, \"usn\": -1, \"vers\": [], \"type\": 0, \"css\": \".card {\\n font-family: arial;\\n font-size: 20px;\\n text-align: center;\\n color: black;\\n background-color: white;\\n}\\n\", \"name\": \"Basic\", \"flds\": [{\"name\": \"Front\", \"ord\": 0, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}, {\"name\": \"Back\", \"ord\": 1, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}], \"tmpls\": [{\"name\": \"Card 1\", \"ord\": 0, \"qfmt\": \"{{Front}}\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Back}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}], \"tags\": [], \"id\": 1554689669581, \"req\": [[0, \"all\", [0]]]}, \"1554689669577\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\begin{document}\\n\", \"latexPost\": \"\\\\end{document}\", \"mod\": 1560646288, \"usn\": -1, \"vers\": [], \"type\": 0, \"css\": \".card {\\n font-family: arial;\\n font-size: 20px;\\n text-align: center;\\n color: black;\\n background-color: white;\\n}\\n\", \"name\": \"Basic (and reversed card)\", \"flds\": [{\"name\": \"Front\", \"ord\": 0, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}, {\"name\": \"Back\", \"ord\": 1, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}], \"tmpls\": [{\"name\": \"Card 1\", \"ord\": 0, \"qfmt\": \"{{Front}}\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Back}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}, {\"name\": \"Card 2\", \"ord\": 1, \"qfmt\": \"{{Back}}\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Front}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}], \"tags\": [\"OtherTag\"], \"id\": 1554689669577, \"req\": [[0, \"all\", [0]], [1, \"all\", [1]]]}, \"1554689669572\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\begin{document}\\n\", \"latexPost\": \"\\\\end{document}\", \"mod\": 1560646292, \"usn\": -1, \"vers\": [], \"type\": 0, \"css\": \".card {\\n font-family: arial;\\n font-size: 20px;\\n text-align: center;\\n color: black;\\n background-color: white;\\n}\\n\", \"name\": \"Basic (optional reversed card)\", \"flds\": [{\"name\": \"Front\", \"ord\": 0, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}, {\"name\": \"Back\", \"ord\": 1, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}, {\"name\": \"Add Reverse\", \"ord\": 2, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}], \"tmpls\": [{\"name\": \"Card 1\", \"ord\": 0, \"qfmt\": \"{{Front}}\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Back}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}, {\"name\": \"Card 2\", \"ord\": 1, \"qfmt\": \"{{#Add Reverse}}{{Back}}{{/Add Reverse}}\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Front}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}], \"tags\": [\"OtherTag\"], \"id\": 1554689669572, \"req\": [[0, \"all\", [0]], [1, \"all\", [1, 2]]]}, \"1554689669571\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\begin{document}\\n\", \"latexPost\": \"\\\\end{document}\", \"mod\": 1560646306, \"usn\": -1, \"vers\": [], \"type\": 0, \"css\": \".card {\\n font-family: arial;\\n font-size: 20px;\\n text-align: center;\\n color: black;\\n background-color: white;\\n}\\n\", \"name\": \"Basic (type in the answer)\", \"flds\": [{\"name\": \"Front\", \"ord\": 0, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}, {\"name\": \"Back\", \"ord\": 1, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}], \"tmpls\": [{\"name\": \"Card 1\", \"ord\": 0, \"qfmt\": \"{{Front}}\\n{{type:Back}}\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Back}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}], \"tags\": [\"OtherTag\"], \"id\": 1554689669571, \"req\": [[0, \"all\", [0]]]}, \"1554689669570\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\begin{document}\\n\", \"latexPost\": \"\\\\end{document}\", \"mod\": 1560646315, \"usn\": -1, \"vers\": [], \"type\": 1, \"css\": \".card {\\n font-family: arial;\\n font-size: 20px;\\n text-align: center;\\n color: black;\\n background-color: white;\\n}\\n\\n.cloze {\\n font-weight: bold;\\n color: blue;\\n}\\n.nightMode .cloze {\\n color: lightblue;\\n}\", \"name\": \"Cloze\", \"flds\": [{\"name\": \"Text\", \"ord\": 0, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}, {\"name\": \"Extra\", \"ord\": 1, \"sticky\": false, \"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}], \"tmpls\": [{\"name\": \"Cloze\", \"ord\": 0, \"qfmt\": \"{{cloze:Text}}\", \"afmt\": \"{{cloze:Text}}<br>\\n{{Extra}}\", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}], \"tags\": [\"OtherTag\"], \"id\": 1554689669570}}"
 
 // This should be a function because each user needs to be a new instance. Otherwise, tests run in parallel by Ncrunch fail.
 let deleteAndRecreateDatabase(db: CardOverflowDb) =
@@ -153,17 +28,7 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
     UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
     let theCollective = db.Users.AsNoTracking().Include(fun x -> x.CardOptions).First(fun x -> x.DisplayName = "The Collective")
-    [ basicConceptTemplate
-      basicWithReversedCardConceptTemplate
-      basicWithOptionalReversedCardConceptTemplate
-      basicTypeInAnswerConceptTemplate
-      basicClozeConceptTemplate ]
-    |> List.map (fun x ->
-        { x with 
-            ConceptTemplate = {
-                x.ConceptTemplate with MaintainerId = theCollective.Id
-            }
-        }.CopyToNew <| theCollective.CardOptions.First())
+    Anki.parseModels theCollective.Id ankiModels |> Result.getOk |> Seq.map (fun (_, x) -> x.ConceptTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First())
     |> db.ConceptTemplateInstances.AddRange
     db.SaveChangesI ()
 

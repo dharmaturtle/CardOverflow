@@ -28,56 +28,46 @@ let assertHasBasicInfo db ankiDb =
     |> Result.isOk
     |> Assert.True
     Assert.Equal<IEnumerable<string>>(
-        [   "1/1/2020 00:00:00"
-            "1/1/2020 00:00:00"
-            "1/1/2020 00:00:00"
-            "1/1/2020 00:00:00"
-            "1/1/2020 00:00:00"
-            "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
+        [   "4/8/2019 02:14:00"
+            "4/8/2019 02:14:00"
+            "4/8/2019 02:14:00"
+            "4/8/2019 02:14:00"
+            "4/8/2019 02:14:00"
         ].ToList(),
-        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Created.ToString())
+        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
-        [   ""
-            ""
-            ""
-            ""
-            ""
-            "6/16/2019 00:51:28"
-            "6/16/2019 00:53:30"
-            "6/16/2019 00:51:32"
-            "6/16/2019 00:51:46"
-            "6/16/2019 00:51:55"
+        [   "6/16/2019 00:51:00"
+            "6/16/2019 00:52:00"
+            "6/16/2019 00:52:00"
+            "6/16/2019 00:52:00"
+            "6/16/2019 00:54:00"
         ].ToList(),
-        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).ToList()
+        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
-        [   "4/8/2019 02:14:57"
-            "4/8/2019 02:18:20"
-            "4/8/2019 02:16:42"
-            "4/8/2019 02:16:27"
+        [   "4/8/2019 02:14:32" // lowTODO why do these have seconds when its a smalldatetime?
+            "4/8/2019 02:14:57"
             "4/8/2019 02:15:50"
+            "4/8/2019 02:16:27"
+            "4/8/2019 02:16:42"
+            "4/8/2019 02:18:20"
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
-            "4/8/2019 02:14:32"
         ].ToList(),
-        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Created.ToString())
+        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
-        [   "4/8/2019 02:15:44"
-            "4/8/2019 02:43:51"
-            "4/8/2019 02:18:05"
-            "4/8/2019 02:16:39"
+        [   "4/8/2019 02:14:53" // lowTODO why do these have seconds when its a smalldatetime?
+            "4/8/2019 02:15:44"
             "4/8/2019 02:16:22"
+            "4/8/2019 02:16:39"
+            "4/8/2019 02:18:05"
             "4/8/2019 02:38:52"
+            "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
-            "4/8/2019 02:14:53"
         ].ToList(),
-        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).ToList()
+        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal(8, db.Concepts.Count())
     Assert.Equal(10, db.Cards.Count())
@@ -135,6 +125,7 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews =
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemplates`` _ simpleAnkiDb =
     use c = new TestContainer()
+    let theCollectiveId = 2
     let userId = 3
     for _ in [1..5] do
         AnkiImporter.save c.Db simpleAnkiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
@@ -143,7 +134,12 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
 
     Assert.Equal(2, c.Db.CardOptions.Count(fun x -> x.UserId = userId))
     Assert.Equal(4, c.Db.PrivateTags.Count(fun x -> x.UserId = userId))
-    Assert.Equal(5, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = userId))
+    Assert.Equal(5, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = theCollectiveId))
+    Assert.Equal(5, c.Db.ConceptTemplateInstances.Count(fun x -> x.ConceptTemplate.MaintainerId = theCollectiveId))
+    Assert.Equal(7, c.Db.CardTemplates.Count(fun x -> x.ConceptTemplateInstance.ConceptTemplate.MaintainerId = theCollectiveId))
+    Assert.Equal(0, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = userId))
+    Assert.Equal(0, c.Db.ConceptTemplateInstances.Count(fun x -> x.ConceptTemplate.MaintainerId = userId))
+    Assert.Equal(0, c.Db.CardTemplates.Count(fun x -> x.ConceptTemplateInstance.ConceptTemplate.MaintainerId = userId))
     Assert.Equal(8, c.Db.Concepts.Count(fun x -> x.MaintainerId = userId))
     Assert.Equal(10, c.Db.Cards.Count())
     Assert.Equal(1, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))

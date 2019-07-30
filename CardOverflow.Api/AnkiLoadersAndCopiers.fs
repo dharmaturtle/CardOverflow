@@ -45,7 +45,7 @@ type AnkiConceptTemplateInstance = {
         entity.IsCloze <- this.IsCloze
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-    member this.CopyToNew defaultCardOption =
+    member this.CopyToNew userId defaultCardOption =
         let entity = ConceptTemplateInstanceEntity()
         entity.ConceptTemplate <-
             ConceptTemplateEntity(
@@ -53,7 +53,7 @@ type AnkiConceptTemplateInstance = {
                 Name = this.ConceptTemplate.Name,
                 ConceptTemplateDefaultConceptTemplateUsers = (
                     ConceptTemplateDefaultConceptTemplateUserEntity(
-                        UserId = this.ConceptTemplate.MaintainerId,
+                        UserId = userId,
                         ConceptTemplateDefault = ConceptTemplateDefaultEntity (
                             DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
                             DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,

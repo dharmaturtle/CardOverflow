@@ -574,35 +574,35 @@ INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsIn
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplate] ON 
 
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (1, N'Card Template', N'{{Front}}', N'{{FrontSide}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (1, N'Card 1', N'{{Front}}', N'{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}', N'', N'', 1, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (2, N'Basic Cloze', N'{{cloze:Text}}', N'{{cloze:Text}}<br>
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (2, N'Cloze', N'{{cloze:Text}}', N'{{cloze:Text}}<br>
 {{Extra}}', N'', N'', 5, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (3, N'Card Template', N'{{Front}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (3, N'Card 1', N'{{Front}}
 {{type:Back}}', N'{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}', N'', N'', 4, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (4, N'Card Template', N'{{Front}}', N'{{FrontSide}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (4, N'Card 1', N'{{Front}}', N'{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}', N'', N'', 3, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (5, N'Optional Reversed Card Template', N'{{#Leave Nonempty to Generate Reversed Card}}{{Back}}{{/Leave Nonempty to Generate Reversed Card}}', N'{{FrontSide}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (5, N'Card 2', N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
 
 <hr id=answer>
 
 {{Front}}', N'', N'', 3, 1)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (6, N'Card Template', N'{{Front}}', N'{{FrontSide}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (6, N'Card 1', N'{{Front}}', N'{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}', N'', N'', 2, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (7, N'Reversed Card Template', N'{{Back}}', N'{{FrontSide}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (7, N'Card 2', N'{{Back}}', N'{{FrontSide}}
 
 <hr id=answer>
 
@@ -611,10 +611,10 @@ SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
 INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (1, 2, N'Basic')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (2, 2, N'Basic with reversed card')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (3, 2, N'Basic with optional reversed card')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (4, 2, N'Basic type in the answer')
-INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (5, 2, N'Basic Cloze')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (2, 2, N'Basic (and reversed card)')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (3, 2, N'Basic (optional reversed card)')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (4, 2, N'Basic (type in the answer)')
+INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (5, 2, N'Cloze')
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplateDefault] ON 
 
@@ -632,78 +632,87 @@ INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId],
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] ON 
 
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (1, 1, N'.card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
-}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:54:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0xF702D725FBF59372BE98726083A08E02243B5DF2FF75471DE72612CCA6032C45)
+\begin{document}
+', N'\end{document}', 0x60493569DF91D284A8C43CF4FCA5DAC826BD7A98F778616298E2BB10ED95378A)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (2, 2, N'.card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
-}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:51:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x7BED237E216B95DA7AA6C0604E4151CD90F09257928BCC2120E4EEAC9F140021)
+\begin{document}
+', N'\end{document}', 0x4643599FEF0CECFBADB3DA654DA2B0587B89DE0DCAFBE04537768AAB0ECA3316)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (3, 3, N'.card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
-}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x143F7E105D9231BFC01E20949A4489AE530ECDC8A27C516603B7A7A54885380F)
+\begin{document}
+', N'\end{document}', 0x037F71E478A4286CA3CF5C50044B0CF5017BBF77C47CDA99F4FAB5873656B608)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (4, 4, N'.card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
-}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 0, N'\documentclass[12pt]{article}
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x329B22D2F14F019C55BF7FDA84ED4817A388FECE54FCA7FFC8BBB4C0EA25AA7F)
+\begin{document}
+', N'\end{document}', 0xA18D04E6E681021987B7BB9B6F4D2247A8CF479B2CFBA276C9E3E49D8EE253E8)
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (5, 5, N'.card {
-    font-family: arial;
-    font-size: 20px;
-    text-align: center;
-    color: black;
-    background-color: white;
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
 }
 
 .cloze {
-    font-weight: bold;
-    color: blue;
+ font-weight: bold;
+ color: blue;
 }
 .nightMode .cloze {
-    color: lightblue;
-}', CAST(N'2020-01-01T00:00:00' AS SmallDateTime), NULL, 1, N'\documentclass[12pt]{article}
+ color: lightblue;
+}', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), 1, N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
-\begin{document}', N'\end{document}', 0x4CC9BA593B0725C9F6D5F633359E21FE0C9A4B94B782D80D1106CB997F58F2EB)
+\begin{document}
+', N'\end{document}', 0x41F84217C80C0918F95729E8704B7C5288630B2217C6E1D7D4C7BB4933C8D5FC)
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[Field] ON 
 
@@ -712,7 +721,7 @@ INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordina
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (3, N'Text', N'Arial', 20, 0, 0, 0, 5)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (4, N'Front', N'Arial', 20, 0, 0, 0, 3)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (5, N'Back', N'Arial', 20, 0, 1, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (6, N'Leave Nonempty to Generate Reversed Card', N'Arial', 20, 0, 2, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (6, N'Add Reverse', N'Arial', 20, 0, 2, 0, 3)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 1)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (8, N'Front', N'Arial', 20, 0, 0, 0, 4)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (9, N'Back', N'Arial', 20, 0, 1, 0, 4)
