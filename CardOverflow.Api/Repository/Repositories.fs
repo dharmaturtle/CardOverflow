@@ -29,7 +29,7 @@ module CardRepository =
         cardIds
         |> List.map (fun i ->
             AcquiredCardEntity(
-                UserId = userId, // lowToMedTODO missing ConceptInstanceId and CardTemplateId
+                UserId = userId, // eventualTODO missing ConceptInstanceId and CardTemplateId
                 MemorizationState = MemorizationState.toDb New,
                 CardState = CardState.toDb Normal,
                 LapseCount = 0uy,
@@ -43,8 +43,8 @@ module CardRepository =
         db.SaveChangesI ()
 
 module ConceptRepository =
-    let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) =
-        concept.CopyToNew |> db.ConceptInstances.AddI
+    let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileConceptInstances =
+        fileConceptInstances |> concept.CopyToNew |> db.ConceptInstances.AddI
         db.SaveChangesI ()
 
     // member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =

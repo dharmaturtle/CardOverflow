@@ -36,7 +36,7 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
         IsPublic = true
     }
     
-    ConceptRepository.CreateConcept c.Db basicConcept
+    ConceptRepository.CreateConcept c.Db basicConcept <| Seq.empty.ToList()
 
     Assert.SingleI <| c.Db.Concepts
     Assert.SingleI <| c.Db.Cards

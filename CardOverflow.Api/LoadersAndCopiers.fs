@@ -274,7 +274,7 @@ type InitialConceptInstance = {
     ConceptTemplateHash: byte[]
     CardTemplateIds: int seq
 } with
-    member this.CopyToNew =
+    member this.CopyToNew fileConceptInstances =
         let e =
             ConceptInstanceEntity(
                 Created = DateTime.UtcNow,
@@ -295,8 +295,8 @@ type InitialConceptInstance = {
                 FieldValues = (
                     this.FieldValues
                     |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
-                    |> fun x -> x.ToList())
-                //FileConceptInstances = [] // lowToMedTODO
+                    |> fun x -> x.ToList()),
+                FileConceptInstances = fileConceptInstances
             )
         use hasher = SHA256.Create() // lowTODO pull this out
         e.AcquireHash <- ConceptInstanceEntity.acquireHash e this.ConceptTemplateHash hasher
