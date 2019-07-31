@@ -4,6 +4,8 @@ mssql-scripter --connection-string $connectionString --schema-and-data --file-pa
 # If the above has problems, consider using --check-for-existence https://github.com/Microsoft/mssql-scripter
 (((Get-Content -Raw InitializeDatabase.sql) -replace " +S[\w: \/]+\*{6}\/"," ******/") -replace " CONTAINMENT[^?]*?GO", "GO") -replace "\[varbinary\]\(32\)", "[binary](32)" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
 
+Remove-Item CardOverflow.Entity\* -Include *entity.cs
+Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {

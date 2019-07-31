@@ -11,7 +11,6 @@ namespace CardOverflow.Entity
         public ConceptTemplateEntity()
         {
             CommentConceptTemplates = new HashSet<CommentConceptTemplateEntity>();
-            ConceptTemplateDefaultConceptTemplateUsers = new HashSet<ConceptTemplateDefaultConceptTemplateUserEntity>();
             ConceptTemplateInstances = new HashSet<ConceptTemplateInstanceEntity>();
             VoteConceptTemplates = new HashSet<VoteConceptTemplateEntity>();
         }
@@ -27,8 +26,6 @@ namespace CardOverflow.Entity
         public virtual UserEntity Maintainer { get; set; }
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<CommentConceptTemplateEntity> CommentConceptTemplates { get; set; }
-        [InverseProperty("ConceptTemplate")]
-        public virtual ICollection<ConceptTemplateDefaultConceptTemplateUserEntity> ConceptTemplateDefaultConceptTemplateUsers { get; set; }
         [InverseProperty("ConceptTemplate")]
         public virtual ICollection<ConceptTemplateInstanceEntity> ConceptTemplateInstances { get; set; }
         [InverseProperty("ConceptTemplate")]

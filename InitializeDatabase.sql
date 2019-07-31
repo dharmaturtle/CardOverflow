@@ -269,39 +269,6 @@ CREATE TABLE [dbo].[ConceptTemplate](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ConceptTemplateDefault] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[ConceptTemplateDefault](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[DefaultCardOptionId] [int] NOT NULL,
-	[DefaultPrivateTags] [varchar](150) NOT NULL,
-	[DefaultPublicTags] [varchar](150) NOT NULL,
- CONSTRAINT [PK_ConceptTemplateDefault] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User](
-	[ConceptTemplateId] [int] NOT NULL,
-	[ConceptTemplateDefaultId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
- CONSTRAINT [PK_ConceptTemplateDefault_ConceptTemplate_User] PRIMARY KEY CLUSTERED 
-(
-	[ConceptTemplateId] ASC,
-	[ConceptTemplateDefaultId] ASC,
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
 /****** Object:  Table [dbo].[ConceptTemplateInstance] ******/
 SET ANSI_NULLS ON
 GO
@@ -506,6 +473,24 @@ CREATE TABLE [dbo].[User](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[User_ConceptTemplateInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[User_ConceptTemplateInstance](
+	[UserId] [int] NOT NULL,
+	[ConceptTemplateInstanceId] [int] NOT NULL,
+	[DefaultCardOptionId] [int] NOT NULL,
+	[DefaultPrivateTags] [varchar](150) NOT NULL,
+	[DefaultPublicTags] [varchar](150) NOT NULL,
+ CONSTRAINT [PK_User_ConceptTemplateInstance] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC,
+	[ConceptTemplateInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[Vote_CommentConcept] ******/
 SET ANSI_NULLS ON
 GO
@@ -616,19 +601,6 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (3, 2, N'Ba
 INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (4, 2, N'Basic (type in the answer)')
 INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (5, 2, N'Cloze')
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
-SET IDENTITY_INSERT [dbo].[ConceptTemplateDefault] ON 
-
-INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (1, 2, N'', N'')
-INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 2, N'', N'')
-INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (3, 2, N'', N'')
-INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (4, 2, N'', N'')
-INSERT [dbo].[ConceptTemplateDefault] ([Id], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (5, 2, N'', N'')
-SET IDENTITY_INSERT [dbo].[ConceptTemplateDefault] OFF
-INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (1, 1, 2)
-INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (2, 2, 2)
-INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (3, 3, 2)
-INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (4, 4, 2)
-INSERT [dbo].[ConceptTemplateDefault_ConceptTemplate_User] ([ConceptTemplateId], [ConceptTemplateDefaultId], [UserId]) VALUES (5, 5, 2)
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] ON 
 
 INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (1, 1, N'.card {
@@ -809,24 +781,6 @@ CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_MaintainerId] ON [dbo].[ConceptTem
 	[MaintainerId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_ConceptTemplateDefault_DefaultCardOptionId] ******/
-CREATE NONCLUSTERED INDEX [IX_ConceptTemplateDefault_DefaultCardOptionId] ON [dbo].[ConceptTemplateDefault]
-(
-	[DefaultCardOptionId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefaultId] ******/
-CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_ConceptTemplateDefault_User_ConceptTemplateDefaultId] ON [dbo].[ConceptTemplateDefault_ConceptTemplate_User]
-(
-	[ConceptTemplateDefaultId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_ConceptTemplate_ConceptTemplateDefault_User_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_ConceptTemplateDefault_User_UserId] ON [dbo].[ConceptTemplateDefault_ConceptTemplate_User]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
 /****** Object:  Index [IX_ConceptTemplateInstance_ConceptTemplateId] ******/
 CREATE NONCLUSTERED INDEX [IX_ConceptTemplateInstance_ConceptTemplateId] ON [dbo].[ConceptTemplateInstance]
 (
@@ -919,6 +873,12 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_User__Email] ON [dbo].[User]
 (
 	[Email] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConceptTemplateDefault_DefaultCardOptionId] ******/
+CREATE NONCLUSTERED INDEX [IX_ConceptTemplateDefault_DefaultCardOptionId] ON [dbo].[User_ConceptTemplateInstance]
+(
+	[DefaultCardOptionId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Vote_CommentConcept_UserId] ******/
 CREATE NONCLUSTERED INDEX [IX_Vote_CommentConcept_UserId] ON [dbo].[Vote_CommentConcept]
@@ -1014,26 +974,6 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[ConceptTemplate] CHECK CONSTRAINT [FK_ConceptTemplate_Maintainer]
 GO
-ALTER TABLE [dbo].[ConceptTemplateDefault]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplateDefault_CardOption] FOREIGN KEY([DefaultCardOptionId])
-REFERENCES [dbo].[CardOption] ([Id])
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault] CHECK CONSTRAINT [FK_ConceptTemplateDefault_CardOption]
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplateDefault_ConceptTemplate_User_ConceptTemplate] FOREIGN KEY([ConceptTemplateId])
-REFERENCES [dbo].[ConceptTemplate] ([Id])
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User] CHECK CONSTRAINT [FK_ConceptTemplateDefault_ConceptTemplate_User_ConceptTemplate]
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplateDefault_ConceptTemplate_User_ConceptTemplateDefault] FOREIGN KEY([ConceptTemplateDefaultId])
-REFERENCES [dbo].[ConceptTemplateDefault] ([Id])
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User] CHECK CONSTRAINT [FK_ConceptTemplateDefault_ConceptTemplate_User_ConceptTemplateDefault]
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplateDefault_ConceptTemplate_User_User] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[ConceptTemplateDefault_ConceptTemplate_User] CHECK CONSTRAINT [FK_ConceptTemplateDefault_ConceptTemplate_User_User]
-GO
 ALTER TABLE [dbo].[ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_ConceptTemplateInstance_ConceptTemplate] FOREIGN KEY([ConceptTemplateId])
 REFERENCES [dbo].[ConceptTemplate] ([Id])
 GO
@@ -1098,6 +1038,21 @@ ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_
 REFERENCES [dbo].[PublicTag] ([Id])
 GO
 ALTER TABLE [dbo].[PublicTag_Concept] CHECK CONSTRAINT [FK_PublicTag_Concept_PublicTag]
+GO
+ALTER TABLE [dbo].[User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_ConceptTemplateInstance_CardOption1] FOREIGN KEY([DefaultCardOptionId])
+REFERENCES [dbo].[CardOption] ([Id])
+GO
+ALTER TABLE [dbo].[User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_User_ConceptTemplateInstance_CardOption1]
+GO
+ALTER TABLE [dbo].[User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_ConceptTemplateInstance_ConceptTemplateInstance] FOREIGN KEY([ConceptTemplateInstanceId])
+REFERENCES [dbo].[ConceptTemplateInstance] ([Id])
+GO
+ALTER TABLE [dbo].[User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_User_ConceptTemplateInstance_ConceptTemplateInstance]
+GO
+ALTER TABLE [dbo].[User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_ConceptTemplateInstance_User] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_User_ConceptTemplateInstance_User]
 GO
 ALTER TABLE [dbo].[Vote_CommentConcept]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentConcept_CommentConcept] FOREIGN KEY([CommentConceptId])
 REFERENCES [dbo].[CommentConcept] ([Id])

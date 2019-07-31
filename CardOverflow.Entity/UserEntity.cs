@@ -14,11 +14,11 @@ namespace CardOverflow.Entity
             CardOptions = new HashSet<CardOptionEntity>();
             CommentConceptTemplates = new HashSet<CommentConceptTemplateEntity>();
             CommentConcepts = new HashSet<CommentConceptEntity>();
-            ConceptTemplateDefaultConceptTemplateUsers = new HashSet<ConceptTemplateDefaultConceptTemplateUserEntity>();
             ConceptTemplates = new HashSet<ConceptTemplateEntity>();
             Concepts = new HashSet<ConceptEntity>();
             Decks = new HashSet<DeckEntity>();
             PrivateTags = new HashSet<PrivateTagEntity>();
+            UserConceptTemplateInstances = new HashSet<UserConceptTemplateInstanceEntity>();
             VoteCommentConceptTemplates = new HashSet<VoteCommentConceptTemplateEntity>();
             VoteCommentConcepts = new HashSet<VoteCommentConceptEntity>();
             VoteConceptTemplates = new HashSet<VoteConceptTemplateEntity>();
@@ -41,8 +41,6 @@ namespace CardOverflow.Entity
         public virtual ICollection<CommentConceptTemplateEntity> CommentConceptTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
-        [InverseProperty("User")]
-        public virtual ICollection<ConceptTemplateDefaultConceptTemplateUserEntity> ConceptTemplateDefaultConceptTemplateUsers { get; set; }
         [InverseProperty("Maintainer")]
         public virtual ICollection<ConceptTemplateEntity> ConceptTemplates { get; set; }
         [InverseProperty("Maintainer")]
@@ -51,6 +49,8 @@ namespace CardOverflow.Entity
         public virtual ICollection<DeckEntity> Decks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<PrivateTagEntity> PrivateTags { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<UserConceptTemplateInstanceEntity> UserConceptTemplateInstances { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<VoteCommentConceptTemplateEntity> VoteCommentConceptTemplates { get; set; }
         [InverseProperty("User")]

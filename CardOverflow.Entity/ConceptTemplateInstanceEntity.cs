@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
         {
             CardTemplates = new HashSet<CardTemplateEntity>();
             Fields = new HashSet<FieldEntity>();
+            UserConceptTemplateInstances = new HashSet<UserConceptTemplateInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -41,5 +42,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<CardTemplateEntity> CardTemplates { get; set; }
         [InverseProperty("ConceptTemplateInstance")]
         public virtual ICollection<FieldEntity> Fields { get; set; }
+        [InverseProperty("ConceptTemplateInstance")]
+        public virtual ICollection<UserConceptTemplateInstanceEntity> UserConceptTemplateInstances { get; set; }
     }
 }
