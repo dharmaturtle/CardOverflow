@@ -20,8 +20,8 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
     let conceptTemplate =
         c.Db.ConceptTemplateInstances
             .Include(fun x -> x.CardTemplates)
-            .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
-                .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
+            .Include(fun x -> x.ConceptTemplate)
+            .Include(fun x -> x.UserConceptTemplateInstances)
             .First(fun x -> x.ConceptTemplate.Name = "Basic")
             |> ConceptTemplateInstance.Load
     let basicConcept = {

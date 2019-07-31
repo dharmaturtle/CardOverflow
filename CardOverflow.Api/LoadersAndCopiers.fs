@@ -178,9 +178,9 @@ type ConceptTemplateInstance with
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPublicTags |> MappingTools.stringOfIntsToIntList
-          DefaultPrivateTags = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
-          DefaultCardOptionId = entity.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Single().ConceptTemplateDefault.DefaultCardOptionId
+          DefaultPublicTags = entity.UserConceptTemplateInstances.Single().DefaultPublicTags |> MappingTools.stringOfIntsToIntList
+          DefaultPrivateTags = entity.UserConceptTemplateInstances.Single().DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          DefaultCardOptionId = entity.UserConceptTemplateInstances.Single().DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }

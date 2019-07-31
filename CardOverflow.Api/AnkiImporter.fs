@@ -103,14 +103,13 @@ module AnkiImporter =
                     |> Seq.tryHead
                     |> function
                     | Some e ->
-                        ConceptTemplateDefaultConceptTemplateUserEntity(
-                            UserId = userId,
-                            ConceptTemplateDefault =
-                                ConceptTemplateDefaultEntity (
-                                    DefaultPublicTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPublicTags, // medTODO normalize this
-                                    DefaultPrivateTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPrivateTags,
-                                    DefaultCardOption = defaultCardOption ))
-                        |> e.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers.Add
+                        if e.UserConceptTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
+                            UserConceptTemplateInstanceEntity(
+                                UserId = userId,
+                                DefaultPublicTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPublicTags, // medTODO normalize this
+                                DefaultPrivateTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPrivateTags,
+                                DefaultCardOption = defaultCardOption)
+                            |> e.UserConceptTemplateInstances.Add
                         e
                     | None -> entity
                 Anki.parseModels userId col.Models
@@ -152,8 +151,7 @@ module AnkiImporter =
             db.ConceptTemplateInstances // lowToMedTODO need more of a filter
                 .Include(fun x -> x.Fields :> IEnumerable<_>)
                     .ThenInclude(fun (x: FieldEntity) -> x.ConceptTemplateInstance.CardTemplates)
-                .Include(fun x -> x.ConceptTemplate.ConceptTemplateDefaultConceptTemplateUsers :> IEnumerable<_>)
-                    .ThenInclude(fun (x: ConceptTemplateDefaultConceptTemplateUserEntity) -> x.ConceptTemplateDefault)
+                .Include(fun x -> x.UserConceptTemplateInstances)
         let getConcept (concept: AnkiConceptWrite) =
             concept.AcquireEquality db
             |> Option.ofObj

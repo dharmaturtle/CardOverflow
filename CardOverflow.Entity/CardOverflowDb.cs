@@ -359,6 +359,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId });
 
+                entity.HasIndex(e => e.ConceptTemplateInstanceId);
+
                 entity.HasIndex(e => e.DefaultCardOptionId)
                     .HasName("IX_ConceptTemplateDefault_DefaultCardOptionId");
 

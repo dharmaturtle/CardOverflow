@@ -566,32 +566,32 @@ INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate],
 {{Back}}', N'', N'', 1, 0)
 INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (2, N'Cloze', N'{{cloze:Text}}', N'{{cloze:Text}}<br>
 {{Extra}}', N'', N'', 5, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (3, N'Card 1', N'{{Front}}
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (3, N'Card 1', N'{{Front}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'', 2, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (4, N'Card 2', N'{{Back}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', N'', N'', 2, 1)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (5, N'Card 1', N'{{Front}}
 {{type:Back}}', N'{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}', N'', N'', 4, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (4, N'Card 1', N'{{Front}}', N'{{FrontSide}}
-
-<hr id=answer>
-
-{{Back}}', N'', N'', 3, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (5, N'Card 2', N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
-
-<hr id=answer>
-
-{{Front}}', N'', N'', 3, 1)
 INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (6, N'Card 1', N'{{Front}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Back}}', N'', N'', 2, 0)
-INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (7, N'Card 2', N'{{Back}}', N'{{FrontSide}}
+{{Back}}', N'', N'', 3, 0)
+INSERT [dbo].[CardTemplate] ([Id], [Name], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [ConceptTemplateInstanceId], [Ordinal]) VALUES (7, N'Card 2', N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Front}}', N'', N'', 2, 1)
+{{Front}}', N'', N'', 3, 1)
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] ON 
 
@@ -688,15 +688,15 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[Field] ON 
 
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (1, N'Front', N'Arial', 20, 0, 0, 0, 2)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (2, N'Back', N'Arial', 20, 0, 1, 0, 2)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (3, N'Text', N'Arial', 20, 0, 0, 0, 5)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (4, N'Front', N'Arial', 20, 0, 0, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (1, N'Text', N'Arial', 20, 0, 0, 0, 5)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (2, N'Back', N'Arial', 20, 0, 1, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (3, N'Front', N'Arial', 20, 0, 0, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (4, N'Add Reverse', N'Arial', 20, 0, 2, 0, 3)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (5, N'Back', N'Arial', 20, 0, 1, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (6, N'Add Reverse', N'Arial', 20, 0, 2, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 1)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (8, N'Front', N'Arial', 20, 0, 0, 0, 4)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (9, N'Back', N'Arial', 20, 0, 1, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (6, N'Front', N'Arial', 20, 0, 0, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 2)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (8, N'Front', N'Arial', 20, 0, 0, 0, 2)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (9, N'Back', N'Arial', 20, 0, 1, 0, 1)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (10, N'Front', N'Arial', 20, 0, 0, 0, 1)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [ConceptTemplateInstanceId]) VALUES (11, N'Extra', N'Arial', 20, 0, 1, 0, 5)
 SET IDENTITY_INSERT [dbo].[Field] OFF
@@ -706,6 +706,11 @@ INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (1, N'Admin', N'admin@
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (2, N'The Collective', N'theCollective@cardoverflow.io')
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (3, N'RoboTurtle', N'roboturtle@cardoverflow.io')
 SET IDENTITY_INSERT [dbo].[User] OFF
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 1, 2, N'', N'')
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 2, 2, N'', N'')
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 3, 2, N'', N'')
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 4, 2, N'', N'')
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 5, 2, N'', N'')
 /****** Object:  Index [IX_AcquiredCard_CardOptionId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardOptionId] ON [dbo].[AcquiredCard]
 (
@@ -878,6 +883,12 @@ GO
 CREATE NONCLUSTERED INDEX [IX_ConceptTemplateDefault_DefaultCardOptionId] ON [dbo].[User_ConceptTemplateInstance]
 (
 	[DefaultCardOptionId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_User_ConceptTemplateInstance_ConceptTemplateInstanceId] ******/
+CREATE NONCLUSTERED INDEX [IX_User_ConceptTemplateInstance_ConceptTemplateInstanceId] ON [dbo].[User_ConceptTemplateInstance]
+(
+	[ConceptTemplateInstanceId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Vote_CommentConcept_UserId] ******/

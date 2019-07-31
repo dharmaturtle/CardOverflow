@@ -47,19 +47,18 @@ type AnkiConceptTemplateInstance = {
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew userId defaultCardOption =
         let entity = ConceptTemplateInstanceEntity()
+        entity.UserConceptTemplateInstances <-
+            UserConceptTemplateInstanceEntity(
+                UserId = userId,
+                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
+                DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+                DefaultCardOption = defaultCardOption)
+            |> Seq.singleton
+            |> fun x -> x.ToList()
         entity.ConceptTemplate <-
             ConceptTemplateEntity(
                 MaintainerId = this.ConceptTemplate.MaintainerId,
-                Name = this.ConceptTemplate.Name,
-                ConceptTemplateDefaultConceptTemplateUsers = (
-                    ConceptTemplateDefaultConceptTemplateUserEntity(
-                        UserId = userId,
-                        ConceptTemplateDefault = ConceptTemplateDefaultEntity (
-                            DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
-                            DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
-                            DefaultCardOption = defaultCardOption ))
-                    |> Seq.singleton
-                    ).ToList())
+                Name = this.ConceptTemplate.Name)
         this.CopyTo entity
         use hasher = SHA256.Create() // lowTODO pull this out
         entity.AcquireHash <- ConceptTemplateInstanceEntity.acquireHash hasher entity
