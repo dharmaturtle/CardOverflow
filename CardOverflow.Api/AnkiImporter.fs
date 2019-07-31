@@ -61,7 +61,7 @@ module AnkiImporter =
         fileEntityByAnkiFileName
         (usersTags: PrivateTagEntity seq)
         (cardOptions: CardOption seq)
-        (conceptTemplates: ConceptTemplateInstanceEntity seq)
+        getConceptTemplates
         getConcept
         getCard
         getHistory =
@@ -98,11 +98,9 @@ module AnkiImporter =
                 let toEntity _ (x: AnkiConceptTemplateAndDeckId) =
                     let defaultCardOption = cardOptionAndDeckNameByDeckId.[x.DeckId] |> fst
                     let entity = x.ConceptTemplate.CopyToNew userId defaultCardOption
-                    conceptTemplates
-                    |> Seq.filter (fun e -> e.AcquireHash = entity.AcquireHash)
-                    |> Seq.tryHead
+                    getConceptTemplates x.ConceptTemplate
                     |> function
-                    | Some e ->
+                    | Some (e: ConceptTemplateInstanceEntity) ->
                         if e.UserConceptTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
                             UserConceptTemplateInstanceEntity(
                                 UserId = userId,
@@ -147,11 +145,14 @@ module AnkiImporter =
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
-        let getConceptTemplateInstance =
-            db.ConceptTemplateInstances // lowToMedTODO need more of a filter
+        let getConceptTemplateInstance (templateInstance: AnkiConceptTemplateInstance) =
+            let ti = templateInstance.CopyToNew userId null
+            db.ConceptTemplateInstances // medTODO what happens when the hash matches a private template?
                 .Include(fun x -> x.Fields :> IEnumerable<_>)
                     .ThenInclude(fun (x: FieldEntity) -> x.ConceptTemplateInstance.CardTemplates)
                 .Include(fun x -> x.UserConceptTemplateInstances)
+                .FirstOrDefault(fun x -> x.AcquireHash = ti.AcquireHash)
+                |> Option.ofObj
         let getConcept (concept: AnkiConceptWrite) =
             concept.AcquireEquality db
             |> Option.ofObj
