@@ -8,15 +8,15 @@ namespace CardOverflow.Entity
 [Table("User_ConceptTemplateInstance")]
     public partial class UserConceptTemplateInstanceEntity
     {
+        public UserConceptTemplateInstanceEntity()
+        {
+            PrivateTagUserConceptTemplateInstances = new HashSet<PrivateTagUserConceptTemplateInstanceEntity>();
+            PublicTagUserConceptTemplateInstances = new HashSet<PublicTagUserConceptTemplateInstanceEntity>();
+        }
+
         public int UserId { get; set; }
         public int ConceptTemplateInstanceId { get; set; }
         public int DefaultCardOptionId { get; set; }
-        [Required]
-        [StringLength(150)]
-        public string DefaultPrivateTags { get; set; }
-        [Required]
-        [StringLength(150)]
-        public string DefaultPublicTags { get; set; }
 
         [ForeignKey("ConceptTemplateInstanceId")]
         [InverseProperty("UserConceptTemplateInstances")]
@@ -27,5 +27,9 @@ namespace CardOverflow.Entity
         [ForeignKey("UserId")]
         [InverseProperty("UserConceptTemplateInstances")]
         public virtual UserEntity User { get; set; }
+        [InverseProperty("UserConceptTemplateInstance")]
+        public virtual ICollection<PrivateTagUserConceptTemplateInstanceEntity> PrivateTagUserConceptTemplateInstances { get; set; }
+        [InverseProperty("UserConceptTemplateInstance")]
+        public virtual ICollection<PublicTagUserConceptTemplateInstanceEntity> PublicTagUserConceptTemplateInstances { get; set; }
     }
 }

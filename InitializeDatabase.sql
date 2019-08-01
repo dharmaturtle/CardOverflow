@@ -428,6 +428,23 @@ CREATE TABLE [dbo].[PrivateTag_AcquiredCard](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[PrivateTag_User_ConceptTemplateInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[PrivateTag_User_ConceptTemplateInstance](
+	[UserId] [int] NOT NULL,
+	[ConceptTemplateInstanceId] [int] NOT NULL,
+	[DefaultPrivateTagId] [int] NOT NULL,
+ CONSTRAINT [PK_PrivateTag_User_ConceptTemplateInstance] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC,
+	[ConceptTemplateInstanceId] ASC,
+	[DefaultPrivateTagId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[PublicTag] ******/
 SET ANSI_NULLS ON
 GO
@@ -457,6 +474,23 @@ CREATE TABLE [dbo].[PublicTag_Concept](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[PublicTag_User_ConceptTemplateInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[PublicTag_User_ConceptTemplateInstance](
+	[UserId] [int] NOT NULL,
+	[ConceptTemplateInstanceId] [int] NOT NULL,
+	[DefaultPublicTagId] [int] NOT NULL,
+ CONSTRAINT [PK_PublicTag_User_ConceptTemplateInstance] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC,
+	[ConceptTemplateInstanceId] ASC,
+	[DefaultPublicTagId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[User] ******/
 SET ANSI_NULLS ON
 GO
@@ -481,8 +515,6 @@ CREATE TABLE [dbo].[User_ConceptTemplateInstance](
 	[UserId] [int] NOT NULL,
 	[ConceptTemplateInstanceId] [int] NOT NULL,
 	[DefaultCardOptionId] [int] NOT NULL,
-	[DefaultPrivateTags] [varchar](150) NOT NULL,
-	[DefaultPublicTags] [varchar](150) NOT NULL,
  CONSTRAINT [PK_User_ConceptTemplateInstance] PRIMARY KEY CLUSTERED 
 (
 	[UserId] ASC,
@@ -705,11 +737,11 @@ INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (1, N'Admin', N'admin@
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (2, N'The Collective', N'theCollective@cardoverflow.io')
 INSERT [dbo].[User] ([Id], [DisplayName], [Email]) VALUES (3, N'RoboTurtle', N'roboturtle@cardoverflow.io')
 SET IDENTITY_INSERT [dbo].[User] OFF
-INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 1, 2, N'', N'')
-INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 2, 2, N'', N'')
-INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 3, 2, N'', N'')
-INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 4, 2, N'', N'')
-INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId], [DefaultPrivateTags], [DefaultPublicTags]) VALUES (2, 5, 2, N'', N'')
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 1, 2)
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 2, 2)
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 3, 2)
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 4, 2)
+INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 5, 2)
 /****** Object:  Index [IX_AcquiredCard_CardOptionId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardOptionId] ON [dbo].[AcquiredCard]
 (
@@ -1055,6 +1087,16 @@ REFERENCES [dbo].[PrivateTag] ([Id])
 GO
 ALTER TABLE [dbo].[PrivateTag_AcquiredCard] CHECK CONSTRAINT [FK_PrivateTag_AcquiredCard_PrivateTag]
 GO
+ALTER TABLE [dbo].[PrivateTag_User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_User_ConceptTemplateInstance_PrivateTag] FOREIGN KEY([DefaultPrivateTagId])
+REFERENCES [dbo].[PrivateTag] ([Id])
+GO
+ALTER TABLE [dbo].[PrivateTag_User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_PrivateTag_User_ConceptTemplateInstance_PrivateTag]
+GO
+ALTER TABLE [dbo].[PrivateTag_User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance] FOREIGN KEY([UserId], [ConceptTemplateInstanceId])
+REFERENCES [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId])
+GO
+ALTER TABLE [dbo].[PrivateTag_User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_PrivateTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance]
+GO
 ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Concept_Concept] FOREIGN KEY([ConceptId])
 REFERENCES [dbo].[Concept] ([Id])
 GO
@@ -1064,6 +1106,16 @@ ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_
 REFERENCES [dbo].[PublicTag] ([Id])
 GO
 ALTER TABLE [dbo].[PublicTag_Concept] CHECK CONSTRAINT [FK_PublicTag_Concept_PublicTag]
+GO
+ALTER TABLE [dbo].[PublicTag_User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_User_ConceptTemplateInstance_PublicTag] FOREIGN KEY([DefaultPublicTagId])
+REFERENCES [dbo].[PublicTag] ([Id])
+GO
+ALTER TABLE [dbo].[PublicTag_User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_PublicTag_User_ConceptTemplateInstance_PublicTag]
+GO
+ALTER TABLE [dbo].[PublicTag_User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance] FOREIGN KEY([UserId], [ConceptTemplateInstanceId])
+REFERENCES [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId])
+GO
+ALTER TABLE [dbo].[PublicTag_User_ConceptTemplateInstance] CHECK CONSTRAINT [FK_PublicTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance]
 GO
 ALTER TABLE [dbo].[User_ConceptTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_ConceptTemplateInstance_CardOption1] FOREIGN KEY([DefaultCardOptionId])
 REFERENCES [dbo].[CardOption] ([Id])

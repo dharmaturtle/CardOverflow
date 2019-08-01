@@ -11,6 +11,7 @@ namespace CardOverflow.Entity
         public PublicTagEntity()
         {
             PublicTagConcepts = new HashSet<PublicTagConceptEntity>();
+            PublicTagUserConceptTemplateInstances = new HashSet<PublicTagUserConceptTemplateInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -20,5 +21,7 @@ namespace CardOverflow.Entity
 
         [InverseProperty("PublicTag")]
         public virtual ICollection<PublicTagConceptEntity> PublicTagConcepts { get; set; }
+        [InverseProperty("DefaultPublicTag")]
+        public virtual ICollection<PublicTagUserConceptTemplateInstanceEntity> PublicTagUserConceptTemplateInstances { get; set; }
     }
 }

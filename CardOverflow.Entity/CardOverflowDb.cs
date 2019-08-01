@@ -24,8 +24,10 @@ namespace CardOverflow.Entity
         public virtual DbSet<HistoryEntity> Histories { get; set; }
         public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
         public virtual DbSet<PrivateTagAcquiredCardEntity> PrivateTagAcquiredCards { get; set; }
+        public virtual DbSet<PrivateTagUserConceptTemplateInstanceEntity> PrivateTagUserConceptTemplateInstances { get; set; }
         public virtual DbSet<PublicTagEntity> PublicTags { get; set; }
         public virtual DbSet<PublicTagConceptEntity> PublicTagConcepts { get; set; }
+        public virtual DbSet<PublicTagUserConceptTemplateInstanceEntity> PublicTagUserConceptTemplateInstances { get; set; }
         public virtual DbSet<UserEntity> Users { get; set; }
         public virtual DbSet<UserConceptTemplateInstanceEntity> UserConceptTemplateInstances { get; set; }
         public virtual DbSet<VoteCommentConceptEntity> VoteCommentConcepts { get; set; }
@@ -326,6 +328,23 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_PrivateTag_AcquiredCard_AcquiredCard");
             });
 
+            modelBuilder.Entity<PrivateTagUserConceptTemplateInstanceEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId, e.DefaultPrivateTagId });
+
+                entity.HasOne(d => d.DefaultPrivateTag)
+                    .WithMany(p => p.PrivateTagUserConceptTemplateInstances)
+                    .HasForeignKey(d => d.DefaultPrivateTagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PrivateTag_User_ConceptTemplateInstance_PrivateTag");
+
+                entity.HasOne(d => d.UserConceptTemplateInstance)
+                    .WithMany(p => p.PrivateTagUserConceptTemplateInstances)
+                    .HasForeignKey(d => new { d.UserId, d.ConceptTemplateInstanceId })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PrivateTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance");
+            });
+
             modelBuilder.Entity<PublicTagEntity>(entity =>
             {
                 entity.HasIndex(e => e.Name)
@@ -352,6 +371,23 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_PublicTag_Concept_PublicTag");
             });
 
+            modelBuilder.Entity<PublicTagUserConceptTemplateInstanceEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId, e.DefaultPublicTagId });
+
+                entity.HasOne(d => d.DefaultPublicTag)
+                    .WithMany(p => p.PublicTagUserConceptTemplateInstances)
+                    .HasForeignKey(d => d.DefaultPublicTagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PublicTag_User_ConceptTemplateInstance_PublicTag");
+
+                entity.HasOne(d => d.UserConceptTemplateInstance)
+                    .WithMany(p => p.PublicTagUserConceptTemplateInstances)
+                    .HasForeignKey(d => new { d.UserId, d.ConceptTemplateInstanceId })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PublicTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance");
+            });
+
             modelBuilder.Entity<UserEntity>(entity =>
             {
                 entity.HasIndex(e => e.DisplayName)
@@ -371,10 +407,6 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.DefaultCardOptionId)
                     .HasName("IX_ConceptTemplateDefault_DefaultCardOptionId");
-
-                entity.Property(e => e.DefaultPrivateTags).IsUnicode(false);
-
-                entity.Property(e => e.DefaultPublicTags).IsUnicode(false);
 
                 entity.HasOne(d => d.ConceptTemplateInstance)
                     .WithMany(p => p.UserConceptTemplateInstances)
