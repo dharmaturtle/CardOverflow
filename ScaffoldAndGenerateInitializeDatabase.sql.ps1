@@ -6,7 +6,7 @@ mssql-scripter --connection-string $connectionString --schema-and-data --file-pa
 
 Remove-Item CardOverflow.Entity\* -Include *entity.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
-dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations
+dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
     (Get-Content $file.PSPath) |

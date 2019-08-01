@@ -5,13 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("AcquiredCard")]
     public partial class AcquiredCardEntity
     {
         public AcquiredCardEntity()
         {
             Histories = new HashSet<HistoryEntity>();
-            PrivateTagAcquiredCards = new HashSet<PrivateTagAcquiredCardEntity>();
+            PrivateTag_AcquiredCards = new HashSet<PrivateTag_AcquiredCardEntity>();
         }
 
         public int UserId { get; set; }
@@ -39,6 +38,6 @@ namespace CardOverflow.Entity
         [InverseProperty("AcquiredCard")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
         [InverseProperty("AcquiredCard")]
-        public virtual ICollection<PrivateTagAcquiredCardEntity> PrivateTagAcquiredCards { get; set; }
+        public virtual ICollection<PrivateTag_AcquiredCardEntity> PrivateTag_AcquiredCards { get; set; }
     }
 }

@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("User")]
     public partial class UserEntity
     {
         public UserEntity()
@@ -18,11 +17,11 @@ namespace CardOverflow.Entity
             Concepts = new HashSet<ConceptEntity>();
             Decks = new HashSet<DeckEntity>();
             PrivateTags = new HashSet<PrivateTagEntity>();
-            UserConceptTemplateInstances = new HashSet<UserConceptTemplateInstanceEntity>();
-            VoteCommentConceptTemplates = new HashSet<VoteCommentConceptTemplateEntity>();
-            VoteCommentConcepts = new HashSet<VoteCommentConceptEntity>();
-            VoteConceptTemplates = new HashSet<VoteConceptTemplateEntity>();
-            VoteConcepts = new HashSet<VoteConceptEntity>();
+            User_ConceptTemplateInstances = new HashSet<User_ConceptTemplateInstanceEntity>();
+            Vote_CommentConceptTemplates = new HashSet<Vote_CommentConceptTemplateEntity>();
+            Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
+            Vote_ConceptTemplates = new HashSet<Vote_ConceptTemplateEntity>();
+            Vote_Concepts = new HashSet<Vote_ConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -50,14 +49,14 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<PrivateTagEntity> PrivateTags { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<UserConceptTemplateInstanceEntity> UserConceptTemplateInstances { get; set; }
+        public virtual ICollection<User_ConceptTemplateInstanceEntity> User_ConceptTemplateInstances { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<VoteCommentConceptTemplateEntity> VoteCommentConceptTemplates { get; set; }
+        public virtual ICollection<Vote_CommentConceptTemplateEntity> Vote_CommentConceptTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<VoteCommentConceptEntity> VoteCommentConcepts { get; set; }
+        public virtual ICollection<Vote_CommentConceptEntity> Vote_CommentConcepts { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<VoteConceptTemplateEntity> VoteConceptTemplates { get; set; }
+        public virtual ICollection<Vote_ConceptTemplateEntity> Vote_ConceptTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<VoteConceptEntity> VoteConcepts { get; set; }
+        public virtual ICollection<Vote_ConceptEntity> Vote_Concepts { get; set; }
     }
 }

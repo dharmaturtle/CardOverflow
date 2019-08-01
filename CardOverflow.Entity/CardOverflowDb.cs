@@ -6,34 +6,34 @@ namespace CardOverflow.Entity
 {
     public partial class CardOverflowDb : DbContext
     {
-        public virtual DbSet<AcquiredCardEntity> AcquiredCards { get; set; }
-        public virtual DbSet<CardEntity> Cards { get; set; }
-        public virtual DbSet<CardOptionEntity> CardOptions { get; set; }
-        public virtual DbSet<CardTemplateEntity> CardTemplates { get; set; }
-        public virtual DbSet<CommentConceptEntity> CommentConcepts { get; set; }
-        public virtual DbSet<CommentConceptTemplateEntity> CommentConceptTemplates { get; set; }
-        public virtual DbSet<ConceptEntity> Concepts { get; set; }
-        public virtual DbSet<ConceptInstanceEntity> ConceptInstances { get; set; }
-        public virtual DbSet<ConceptTemplateEntity> ConceptTemplates { get; set; }
-        public virtual DbSet<ConceptTemplateInstanceEntity> ConceptTemplateInstances { get; set; }
-        public virtual DbSet<DeckEntity> Decks { get; set; }
-        public virtual DbSet<FieldEntity> Fields { get; set; }
-        public virtual DbSet<FieldValueEntity> FieldValues { get; set; }
-        public virtual DbSet<FileEntity> Files { get; set; }
-        public virtual DbSet<FileConceptInstanceEntity> FileConceptInstances { get; set; }
-        public virtual DbSet<HistoryEntity> Histories { get; set; }
-        public virtual DbSet<PrivateTagEntity> PrivateTags { get; set; }
-        public virtual DbSet<PrivateTagAcquiredCardEntity> PrivateTagAcquiredCards { get; set; }
-        public virtual DbSet<PrivateTagUserConceptTemplateInstanceEntity> PrivateTagUserConceptTemplateInstances { get; set; }
-        public virtual DbSet<PublicTagEntity> PublicTags { get; set; }
-        public virtual DbSet<PublicTagConceptEntity> PublicTagConcepts { get; set; }
-        public virtual DbSet<PublicTagUserConceptTemplateInstanceEntity> PublicTagUserConceptTemplateInstances { get; set; }
-        public virtual DbSet<UserEntity> Users { get; set; }
-        public virtual DbSet<UserConceptTemplateInstanceEntity> UserConceptTemplateInstances { get; set; }
-        public virtual DbSet<VoteCommentConceptEntity> VoteCommentConcepts { get; set; }
-        public virtual DbSet<VoteCommentConceptTemplateEntity> VoteCommentConceptTemplates { get; set; }
-        public virtual DbSet<VoteConceptEntity> VoteConcepts { get; set; }
-        public virtual DbSet<VoteConceptTemplateEntity> VoteConceptTemplates { get; set; }
+        public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
+        public virtual DbSet<CardEntity> Card { get; set; }
+        public virtual DbSet<CardOptionEntity> CardOption { get; set; }
+        public virtual DbSet<CardTemplateEntity> CardTemplate { get; set; }
+        public virtual DbSet<CommentConceptEntity> CommentConcept { get; set; }
+        public virtual DbSet<CommentConceptTemplateEntity> CommentConceptTemplate { get; set; }
+        public virtual DbSet<ConceptEntity> Concept { get; set; }
+        public virtual DbSet<ConceptInstanceEntity> ConceptInstance { get; set; }
+        public virtual DbSet<ConceptTemplateEntity> ConceptTemplate { get; set; }
+        public virtual DbSet<ConceptTemplateInstanceEntity> ConceptTemplateInstance { get; set; }
+        public virtual DbSet<DeckEntity> Deck { get; set; }
+        public virtual DbSet<FieldEntity> Field { get; set; }
+        public virtual DbSet<FieldValueEntity> FieldValue { get; set; }
+        public virtual DbSet<FileEntity> File { get; set; }
+        public virtual DbSet<File_ConceptInstanceEntity> File_ConceptInstance { get; set; }
+        public virtual DbSet<HistoryEntity> History { get; set; }
+        public virtual DbSet<PrivateTagEntity> PrivateTag { get; set; }
+        public virtual DbSet<PrivateTag_AcquiredCardEntity> PrivateTag_AcquiredCard { get; set; }
+        public virtual DbSet<PrivateTag_User_ConceptTemplateInstanceEntity> PrivateTag_User_ConceptTemplateInstance { get; set; }
+        public virtual DbSet<PublicTagEntity> PublicTag { get; set; }
+        public virtual DbSet<PublicTag_ConceptEntity> PublicTag_Concept { get; set; }
+        public virtual DbSet<PublicTag_User_ConceptTemplateInstanceEntity> PublicTag_User_ConceptTemplateInstance { get; set; }
+        public virtual DbSet<UserEntity> User { get; set; }
+        public virtual DbSet<User_ConceptTemplateInstanceEntity> User_ConceptTemplateInstance { get; set; }
+        public virtual DbSet<Vote_CommentConceptEntity> Vote_CommentConcept { get; set; }
+        public virtual DbSet<Vote_CommentConceptTemplateEntity> Vote_CommentConceptTemplate { get; set; }
+        public virtual DbSet<Vote_ConceptEntity> Vote_Concept { get; set; }
+        public virtual DbSet<Vote_ConceptTemplateEntity> Vote_ConceptTemplate { get; set; }
 
         public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options)
         {
@@ -264,7 +264,7 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<FileConceptInstanceEntity>(entity =>
+            modelBuilder.Entity<File_ConceptInstanceEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptInstanceId, e.FileId })
                     .HasName("PK_File_Concept");
@@ -273,13 +273,13 @@ namespace CardOverflow.Entity
                     .HasName("IX_File_Concept_FileId");
 
                 entity.HasOne(d => d.ConceptInstance)
-                    .WithMany(p => p.FileConceptInstances)
+                    .WithMany(p => p.File_ConceptInstances)
                     .HasForeignKey(d => d.ConceptInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_File_ConceptInstance_ConceptInstance");
 
                 entity.HasOne(d => d.File)
-                    .WithMany(p => p.FileConceptInstances)
+                    .WithMany(p => p.File_ConceptInstances)
                     .HasForeignKey(d => d.FileId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_File_ConceptInstance_File");
@@ -309,37 +309,37 @@ namespace CardOverflow.Entity
                     .HasConstraintName("FK_PrivateTag_User");
             });
 
-            modelBuilder.Entity<PrivateTagAcquiredCardEntity>(entity =>
+            modelBuilder.Entity<PrivateTag_AcquiredCardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.PrivateTagId, e.ConceptInstanceId, e.CardTemplateId, e.UserId });
 
                 entity.HasIndex(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
 
                 entity.HasOne(d => d.PrivateTag)
-                    .WithMany(p => p.PrivateTagAcquiredCards)
+                    .WithMany(p => p.PrivateTag_AcquiredCards)
                     .HasForeignKey(d => d.PrivateTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PrivateTag_AcquiredCard_PrivateTag");
 
                 entity.HasOne(d => d.AcquiredCard)
-                    .WithMany(p => p.PrivateTagAcquiredCards)
+                    .WithMany(p => p.PrivateTag_AcquiredCards)
                     .HasForeignKey(d => new { d.UserId, d.ConceptInstanceId, d.CardTemplateId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PrivateTag_AcquiredCard_AcquiredCard");
             });
 
-            modelBuilder.Entity<PrivateTagUserConceptTemplateInstanceEntity>(entity =>
+            modelBuilder.Entity<PrivateTag_User_ConceptTemplateInstanceEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId, e.DefaultPrivateTagId });
 
                 entity.HasOne(d => d.DefaultPrivateTag)
-                    .WithMany(p => p.PrivateTagUserConceptTemplateInstances)
+                    .WithMany(p => p.PrivateTag_User_ConceptTemplateInstances)
                     .HasForeignKey(d => d.DefaultPrivateTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PrivateTag_User_ConceptTemplateInstance_PrivateTag");
 
-                entity.HasOne(d => d.UserConceptTemplateInstance)
-                    .WithMany(p => p.PrivateTagUserConceptTemplateInstances)
+                entity.HasOne(d => d.User_ConceptTemplateInstance)
+                    .WithMany(p => p.PrivateTag_User_ConceptTemplateInstances)
                     .HasForeignKey(d => new { d.UserId, d.ConceptTemplateInstanceId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PrivateTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance");
@@ -352,37 +352,37 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<PublicTagConceptEntity>(entity =>
+            modelBuilder.Entity<PublicTag_ConceptEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptId, e.PublicTagId });
 
                 entity.HasIndex(e => e.PublicTagId);
 
                 entity.HasOne(d => d.Concept)
-                    .WithMany(p => p.PublicTagConcepts)
+                    .WithMany(p => p.PublicTag_Concepts)
                     .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PublicTag_Concept_Concept");
 
                 entity.HasOne(d => d.PublicTag)
-                    .WithMany(p => p.PublicTagConcepts)
+                    .WithMany(p => p.PublicTag_Concepts)
                     .HasForeignKey(d => d.PublicTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PublicTag_Concept_PublicTag");
             });
 
-            modelBuilder.Entity<PublicTagUserConceptTemplateInstanceEntity>(entity =>
+            modelBuilder.Entity<PublicTag_User_ConceptTemplateInstanceEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId, e.DefaultPublicTagId });
 
                 entity.HasOne(d => d.DefaultPublicTag)
-                    .WithMany(p => p.PublicTagUserConceptTemplateInstances)
+                    .WithMany(p => p.PublicTag_User_ConceptTemplateInstances)
                     .HasForeignKey(d => d.DefaultPublicTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PublicTag_User_ConceptTemplateInstance_PublicTag");
 
-                entity.HasOne(d => d.UserConceptTemplateInstance)
-                    .WithMany(p => p.PublicTagUserConceptTemplateInstances)
+                entity.HasOne(d => d.User_ConceptTemplateInstance)
+                    .WithMany(p => p.PublicTag_User_ConceptTemplateInstances)
                     .HasForeignKey(d => new { d.UserId, d.ConceptTemplateInstanceId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PublicTag_User_ConceptTemplateInstance_User_ConceptTemplateInstance");
@@ -399,7 +399,7 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<UserConceptTemplateInstanceEntity>(entity =>
+            modelBuilder.Entity<User_ConceptTemplateInstanceEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId });
 
@@ -409,95 +409,95 @@ namespace CardOverflow.Entity
                     .HasName("IX_ConceptTemplateDefault_DefaultCardOptionId");
 
                 entity.HasOne(d => d.ConceptTemplateInstance)
-                    .WithMany(p => p.UserConceptTemplateInstances)
+                    .WithMany(p => p.User_ConceptTemplateInstances)
                     .HasForeignKey(d => d.ConceptTemplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_ConceptTemplateInstance_ConceptTemplateInstance");
 
                 entity.HasOne(d => d.DefaultCardOption)
-                    .WithMany(p => p.UserConceptTemplateInstances)
+                    .WithMany(p => p.User_ConceptTemplateInstances)
                     .HasForeignKey(d => d.DefaultCardOptionId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_ConceptTemplateInstance_CardOption1");
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.UserConceptTemplateInstances)
+                    .WithMany(p => p.User_ConceptTemplateInstances)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_ConceptTemplateInstance_User");
             });
 
-            modelBuilder.Entity<VoteCommentConceptEntity>(entity =>
+            modelBuilder.Entity<Vote_CommentConceptEntity>(entity =>
             {
                 entity.HasKey(e => new { e.CommentConceptId, e.UserId });
 
                 entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.CommentConcept)
-                    .WithMany(p => p.VoteCommentConcepts)
+                    .WithMany(p => p.Vote_CommentConcepts)
                     .HasForeignKey(d => d.CommentConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_CommentConcept_CommentConcept");
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.VoteCommentConcepts)
+                    .WithMany(p => p.Vote_CommentConcepts)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_CommentConcept_User");
             });
 
-            modelBuilder.Entity<VoteCommentConceptTemplateEntity>(entity =>
+            modelBuilder.Entity<Vote_CommentConceptTemplateEntity>(entity =>
             {
                 entity.HasKey(e => new { e.CommentConceptTemplateId, e.UserId });
 
                 entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.CommentConceptTemplate)
-                    .WithMany(p => p.VoteCommentConceptTemplates)
+                    .WithMany(p => p.Vote_CommentConceptTemplates)
                     .HasForeignKey(d => d.CommentConceptTemplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_CommentConceptTemplate_CommentConceptTemplate");
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.VoteCommentConceptTemplates)
+                    .WithMany(p => p.Vote_CommentConceptTemplates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_CommentConceptTemplate_User");
             });
 
-            modelBuilder.Entity<VoteConceptEntity>(entity =>
+            modelBuilder.Entity<Vote_ConceptEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptId });
 
                 entity.HasIndex(e => e.ConceptId);
 
                 entity.HasOne(d => d.Concept)
-                    .WithMany(p => p.VoteConcepts)
+                    .WithMany(p => p.Vote_Concepts)
                     .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_Concept_Concept");
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.VoteConcepts)
+                    .WithMany(p => p.Vote_Concepts)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_Concept_User");
             });
 
-            modelBuilder.Entity<VoteConceptTemplateEntity>(entity =>
+            modelBuilder.Entity<Vote_ConceptTemplateEntity>(entity =>
             {
                 entity.HasKey(e => new { e.ConceptTemplateId, e.UserId });
 
                 entity.HasIndex(e => e.UserId);
 
                 entity.HasOne(d => d.ConceptTemplate)
-                    .WithMany(p => p.VoteConceptTemplates)
+                    .WithMany(p => p.Vote_ConceptTemplates)
                     .HasForeignKey(d => d.ConceptTemplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_ConceptTemplate_ConceptTemplate");
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.VoteConceptTemplates)
+                    .WithMany(p => p.Vote_ConceptTemplates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Vote_ConceptTemplate_User");

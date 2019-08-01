@@ -5,8 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("PrivateTag_AcquiredCard")]
-    public partial class PrivateTagAcquiredCardEntity
+    public partial class PrivateTag_AcquiredCardEntity
     {
         public int PrivateTagId { get; set; }
         public int UserId { get; set; }
@@ -14,10 +13,10 @@ namespace CardOverflow.Entity
         public int CardTemplateId { get; set; }
 
         [ForeignKey("UserId,ConceptInstanceId,CardTemplateId")]
-        [InverseProperty("PrivateTagAcquiredCards")]
+        [InverseProperty("PrivateTag_AcquiredCards")]
         public virtual AcquiredCardEntity AcquiredCard { get; set; }
         [ForeignKey("PrivateTagId")]
-        [InverseProperty("PrivateTagAcquiredCards")]
+        [InverseProperty("PrivateTag_AcquiredCards")]
         public virtual PrivateTagEntity PrivateTag { get; set; }
     }
 }

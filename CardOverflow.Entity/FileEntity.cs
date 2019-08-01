@@ -5,12 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("File")]
     public partial class FileEntity
     {
         public FileEntity()
         {
-            FileConceptInstances = new HashSet<FileConceptInstanceEntity>();
+            File_ConceptInstances = new HashSet<File_ConceptInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -24,6 +23,6 @@ namespace CardOverflow.Entity
         public byte[] Sha256 { get; set; }
 
         [InverseProperty("File")]
-        public virtual ICollection<FileConceptInstanceEntity> FileConceptInstances { get; set; }
+        public virtual ICollection<File_ConceptInstanceEntity> File_ConceptInstances { get; set; }
     }
 }

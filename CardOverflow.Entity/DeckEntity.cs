@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("Deck")]
     public partial class DeckEntity
     {
         public int Id { get; set; }

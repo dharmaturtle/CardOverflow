@@ -5,12 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("CommentConcept")]
     public partial class CommentConceptEntity
     {
         public CommentConceptEntity()
         {
-            VoteCommentConcepts = new HashSet<VoteCommentConceptEntity>();
+            Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -29,6 +28,6 @@ namespace CardOverflow.Entity
         [InverseProperty("CommentConcepts")]
         public virtual UserEntity User { get; set; }
         [InverseProperty("CommentConcept")]
-        public virtual ICollection<VoteCommentConceptEntity> VoteCommentConcepts { get; set; }
+        public virtual ICollection<Vote_CommentConceptEntity> Vote_CommentConcepts { get; set; }
     }
 }

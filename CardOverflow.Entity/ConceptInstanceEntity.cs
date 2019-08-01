@@ -5,14 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("ConceptInstance")]
     public partial class ConceptInstanceEntity
     {
         public ConceptInstanceEntity()
         {
             Cards = new HashSet<CardEntity>();
             FieldValues = new HashSet<FieldValueEntity>();
-            FileConceptInstances = new HashSet<FileConceptInstanceEntity>();
+            File_ConceptInstances = new HashSet<File_ConceptInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -33,6 +32,6 @@ namespace CardOverflow.Entity
         [InverseProperty("ConceptInstance")]
         public virtual ICollection<FieldValueEntity> FieldValues { get; set; }
         [InverseProperty("ConceptInstance")]
-        public virtual ICollection<FileConceptInstanceEntity> FileConceptInstances { get; set; }
+        public virtual ICollection<File_ConceptInstanceEntity> File_ConceptInstances { get; set; }
     }
 }

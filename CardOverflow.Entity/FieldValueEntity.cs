@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-[Table("FieldValue")]
     public partial class FieldValueEntity
     {
         public int ConceptInstanceId { get; set; }
