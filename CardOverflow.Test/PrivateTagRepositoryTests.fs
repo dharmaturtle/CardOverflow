@@ -13,7 +13,7 @@ let ``PrivateTagRepository can add a new tag``() =
 
     tagName |> List.singleton |> PrivateTagRepository.Add c.Db 1
 
-    Assert.Single(c.Db.PrivateTags.Where(fun x -> x.Name = tagName).ToList())
+    Assert.Single(c.Db.PrivateTag.Where(fun x -> x.Name = tagName).ToList())
 
 [<Fact>]
 let ``When PrivateTagRepository adds a tag twice, only one is added``() =
@@ -23,4 +23,4 @@ let ``When PrivateTagRepository adds a tag twice, only one is added``() =
     tagName |> List.singleton |> PrivateTagRepository.Add c.Db 1
     tagName |> List.singleton |> PrivateTagRepository.Add c.Db 1
 
-    Assert.Single(c.Db.PrivateTags.Where(fun x -> x.Name = tagName).ToList())
+    Assert.Single(c.Db.PrivateTag.Where(fun x -> x.Name = tagName).ToList())

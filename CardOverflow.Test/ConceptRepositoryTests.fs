@@ -18,10 +18,10 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
     use c = new TestContainer()
     let userId = 3
     let conceptTemplate =
-        c.Db.ConceptTemplateInstances
+        c.Db.ConceptTemplateInstance
             .Include(fun x -> x.CardTemplates)
             .Include(fun x -> x.ConceptTemplate)
-            .Include(fun x -> x.UserConceptTemplateInstances)
+            .Include(fun x -> x.User_ConceptTemplateInstances)
             .First(fun x -> x.ConceptTemplate.Name = "Basic")
             |> ConceptTemplateInstance.Load
     let basicConcept = {
@@ -37,9 +37,9 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
     
     ConceptRepository.CreateConcept c.Db basicConcept <| Seq.empty.ToList()
 
-    Assert.SingleI <| c.Db.Concepts
-    Assert.SingleI <| c.Db.Cards
-    Assert.SingleI <| c.Db.AcquiredCards
+    Assert.SingleI <| c.Db.Concept
+    Assert.SingleI <| c.Db.Card
+    Assert.SingleI <| c.Db.AcquiredCard
     Assert.SingleI <| CardRepository.GetQuizCards c.Db userId
 
 // fuck merge

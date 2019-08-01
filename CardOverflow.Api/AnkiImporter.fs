@@ -101,19 +101,19 @@ module AnkiImporter =
                     getConceptTemplates x.ConceptTemplate
                     |> function
                     | Some (e: ConceptTemplateInstanceEntity) ->
-                        if e.UserConceptTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
-                            UserConceptTemplateInstanceEntity(
+                        if e.User_ConceptTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
+                            User_ConceptTemplateInstanceEntity(
                                 UserId = userId,
-                                PublicTagUserConceptTemplateInstances =
+                                PublicTag_User_ConceptTemplateInstances =
                                     (x.ConceptTemplate.DefaultPublicTags.ToList()
-                                    |> Seq.map (fun x -> PublicTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
+                                    |> Seq.map (fun x -> PublicTag_User_ConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
                                     |> fun x -> x.ToList()),
-                                PrivateTagUserConceptTemplateInstances =
+                                PrivateTag_User_ConceptTemplateInstances =
                                     (x.ConceptTemplate.DefaultPrivateTags.ToList()
-                                    |> Seq.map (fun x -> PrivateTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
+                                    |> Seq.map (fun x -> PrivateTag_User_ConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
                                     |> fun x -> x.ToList()),
                                 DefaultCardOption = defaultCardOption)
-                            |> e.UserConceptTemplateInstances.Add
+                            |> e.User_ConceptTemplateInstances.Add
                         e
                     | None -> entity
                 Anki.parseModels userId col.Models
@@ -153,10 +153,10 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         let getConceptTemplateInstance (templateInstance: AnkiConceptTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null
-            db.ConceptTemplateInstances
+            db.ConceptTemplateInstance
                 .Include(fun x -> x.Fields :> IEnumerable<_>)
                     .ThenInclude(fun (x: FieldEntity) -> x.ConceptTemplateInstance.CardTemplates)
-                .Include(fun x -> x.UserConceptTemplateInstances)
+                .Include(fun x -> x.User_ConceptTemplateInstances)
                 .FirstOrDefault(fun x -> x.AcquireHash = ti.AcquireHash)
                 |> Option.ofObj
         let getConcept (concept: AnkiConceptWrite) =
@@ -172,8 +172,8 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| db.PrivateTags.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and concepttemplates is heavy
-                    <| db.CardOptions
+                    <| db.PrivateTag.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and concepttemplates is heavy
+                    <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
                         .Select CardOption.Load
                     <| getConceptTemplateInstance
@@ -182,12 +182,12 @@ module AnkiImporter =
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
                 if x.CardTemplateId = 0 && x.ConceptInstanceId = 0
-                then db.AcquiredCards.AddI x
+                then db.AcquiredCard.AddI x
                 //else db.AcquiredCards.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
             histories |> Seq.iter (fun x ->
                 if x.Id = 0
-                then db.Histories.AddI x
+                then db.History.AddI x
                 //else db.Histories.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
             db.SaveChangesI ()

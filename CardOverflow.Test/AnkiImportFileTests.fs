@@ -25,8 +25,8 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
     |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
     |> Result.getOk
 
-    Assert.Equal(3, c.Db.FileConceptInstances.Count())
-    Assert.Equal(3, c.Db.Files.Count())
+    Assert.Equal(3, c.Db.File_ConceptInstance.Count())
+    Assert.Equal(3, c.Db.File.Count())
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -36,13 +36,13 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
 
     for _ in [1..3] do
         ankiExportsDir +/ ankiFileName
-        |> AnkiImporter.loadFiles (fun sha256 -> c.Db.Files |> Seq.tryFind(fun f -> f.Sha256 = sha256))
+        |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
         |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
         |> Result.isOk
         |> Assert.True
 
-    Assert.Equal(3, c.Db.FileConceptInstances.Count())
-    Assert.Equal(3, c.Db.Files.Count())
+    Assert.Equal(3, c.Db.File_ConceptInstance.Count())
+    Assert.Equal(3, c.Db.File.Count())
 
 [<Fact>]
 let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` () =

@@ -34,7 +34,7 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:14:00"
             "4/8/2019 02:14:00"
         ].ToList(),
-        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
+        db.ConceptTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "6/16/2019 00:51:00"
@@ -43,7 +43,7 @@ let assertHasBasicInfo db ankiDb =
             "6/16/2019 00:52:00"
             "6/16/2019 00:54:00"
         ].ToList(),
-        db.ConceptTemplateInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
+        db.ConceptTemplateInstance.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32" // lowTODO why do these have seconds when its a smalldatetime?
@@ -55,7 +55,7 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
         ].ToList(),
-        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
+        db.ConceptInstance.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53" // lowTODO why do these have seconds when its a smalldatetime?
@@ -67,22 +67,22 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
         ].ToList(),
-        db.ConceptInstances.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
+        db.ConceptInstance.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
     )
-    Assert.Equal(8, db.Concepts.Count())
-    Assert.Equal(10, db.Cards.Count())
-    Assert.Equal(10, db.AcquiredCards.Count(fun x -> x.UserId = userId))
-    Assert.Equal(8, db.Users.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptInstanceId).Distinct().Count())
-    Assert.Equal(2, db.CardOptions.Count(fun db -> db.UserId = userId))
-    Assert.Equal(5, db.UserConceptTemplateInstances.Count(fun x -> x.UserId = userId))
+    Assert.Equal(8, db.Concept.Count())
+    Assert.Equal(10, db.Card.Count())
+    Assert.Equal(10, db.AcquiredCard.Count(fun x -> x.UserId = userId))
+    Assert.Equal(8, db.User.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.Card.ConceptInstanceId).Distinct().Count())
+    Assert.Equal(2, db.CardOption.Count(fun db -> db.UserId = userId))
+    Assert.Equal(5, db.User_ConceptTemplateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
-        (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sort)
+        (db.PrivateTag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string>(
         [ "Deck:Default"; "OtherTag" ],
-        db.AcquiredCards
+        db.AcquiredCard
             .Single(fun c -> c.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value.Contains("mp3")))
-            .PrivateTagAcquiredCards.Select(fun t -> t.PrivateTag.Name)
+            .PrivateTag_AcquiredCards.Select(fun t -> t.PrivateTag.Name)
             |> Seq.sortBy id)
 
 [<Theory>]
@@ -96,7 +96,7 @@ let assertHasHistory db ankiDb =
     AnkiImporter.save db ankiDb userId Map.empty
     |> Result.isOk
     |> Assert.True
-    Assert.Equal(110, db.Histories.Count(fun x -> x.AcquiredCard.UserId = userId))
+    Assert.Equal(110, db.History.Count(fun x -> x.AcquiredCard.UserId = userId))
 
 type AllRandomReviews () =
     inherit XunitClassDataBase
@@ -132,23 +132,23 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and ConceptTemp
         |> Result.isOk
         |> Assert.True
 
-    Assert.Equal(2, c.Db.CardOptions.Count(fun x -> x.UserId = userId))
-    Assert.Equal(4, c.Db.PrivateTags.Count(fun x -> x.UserId = userId))
-    Assert.Equal(5, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = theCollectiveId))
-    Assert.Equal(5, c.Db.ConceptTemplateInstances.Count(fun x -> x.ConceptTemplate.MaintainerId = theCollectiveId))
-    Assert.Equal(7, c.Db.CardTemplates.Count(fun x -> x.ConceptTemplateInstance.ConceptTemplate.MaintainerId = theCollectiveId))
-    Assert.Equal(0, c.Db.ConceptTemplates.Count(fun x -> x.MaintainerId = userId))
-    Assert.Equal(0, c.Db.ConceptTemplateInstances.Count(fun x -> x.ConceptTemplate.MaintainerId = userId))
-    Assert.Equal(0, c.Db.CardTemplates.Count(fun x -> x.ConceptTemplateInstance.ConceptTemplate.MaintainerId = userId))
-    Assert.Equal(8, c.Db.Concepts.Count(fun x -> x.MaintainerId = userId))
-    Assert.Equal(10, c.Db.Cards.Count())
-    Assert.Equal(1, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
-    Assert.Equal(2, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
-    Assert.Equal(2, c.Db.Cards.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
-    Assert.Equal(10, c.Db.AcquiredCards.Count())
-    Assert.Equal(1, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
-    Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
-    Assert.Equal(2, c.Db.AcquiredCards.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
+    Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
+    Assert.Equal(4, c.Db.PrivateTag.Count(fun x -> x.UserId = userId))
+    Assert.Equal(5, c.Db.ConceptTemplate.Count(fun x -> x.MaintainerId = theCollectiveId))
+    Assert.Equal(5, c.Db.ConceptTemplateInstance.Count(fun x -> x.ConceptTemplate.MaintainerId = theCollectiveId))
+    Assert.Equal(7, c.Db.CardTemplate.Count(fun x -> x.ConceptTemplateInstance.ConceptTemplate.MaintainerId = theCollectiveId))
+    Assert.Equal(0, c.Db.ConceptTemplate.Count(fun x -> x.MaintainerId = userId))
+    Assert.Equal(0, c.Db.ConceptTemplateInstance.Count(fun x -> x.ConceptTemplate.MaintainerId = userId))
+    Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.ConceptTemplateInstance.ConceptTemplate.MaintainerId = userId))
+    Assert.Equal(8, c.Db.Concept.Count(fun x -> x.MaintainerId = userId))
+    Assert.Equal(10, c.Db.Card.Count())
+    Assert.Equal(1, c.Db.Card.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
+    Assert.Equal(2, c.Db.Card.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
+    Assert.Equal(2, c.Db.Card.Count(fun x -> x.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
+    Assert.Equal(10, c.Db.AcquiredCard.Count())
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.Card.ConceptInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -160,7 +160,7 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` _ si
     AnkiImporter.save c.Db simpleAnkiDb userId <| AnkiImportTestData.fileEntityByAnkiFileName()
     |> Result.isOk
     |> Assert.True
-    Assert.Equal(10, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = 0uy))
+    Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.LapseCount = 0uy))
     simpleAnkiDb.Cards |> List.iter (fun x -> x.Lapses <- lapseCountA)
     simpleAnkiDb.Cards.[0].Lapses <- lapseCountB
 
@@ -168,5 +168,5 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` _ si
     |> Result.isOk
     |> Assert.True
 
-    Assert.Equal(9, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = byte lapseCountA))
-    Assert.Equal(1, c.Db.AcquiredCards.Count(fun x -> x.LapseCount = byte lapseCountB))
+    Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.LapseCount = byte lapseCountA))
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.LapseCount = byte lapseCountB))

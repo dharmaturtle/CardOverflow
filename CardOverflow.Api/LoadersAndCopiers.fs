@@ -178,9 +178,9 @@ type ConceptTemplateInstance with
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.UserConceptTemplateInstances.Single().PublicTagUserConceptTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
-          DefaultPrivateTags = entity.UserConceptTemplateInstances.Single().PrivateTagUserConceptTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
-          DefaultCardOptionId = entity.UserConceptTemplateInstances.Single().DefaultCardOptionId
+          DefaultPublicTags = entity.User_ConceptTemplateInstances.Single().PublicTag_User_ConceptTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
+          DefaultPrivateTags = entity.User_ConceptTemplateInstances.Single().PrivateTag_User_ConceptTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
+          DefaultCardOptionId = entity.User_ConceptTemplateInstances.Single().DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }
@@ -292,7 +292,7 @@ type InitialConceptInstance = {
                     this.FieldValues
                     |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
                     |> fun x -> x.ToList()),
-                FileConceptInstances = fileConceptInstances
+                File_ConceptInstances = fileConceptInstances
             )
         use hasher = SHA256.Create() // lowTODO pull this out
         e.AcquireHash <- ConceptInstanceEntity.acquireHash e this.ConceptTemplateHash hasher

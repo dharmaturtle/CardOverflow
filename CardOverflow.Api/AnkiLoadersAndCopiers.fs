@@ -47,16 +47,16 @@ type AnkiConceptTemplateInstance = {
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew userId defaultCardOption =
         let entity = ConceptTemplateInstanceEntity()
-        entity.UserConceptTemplateInstances <-
-            UserConceptTemplateInstanceEntity(
+        entity.User_ConceptTemplateInstances <-
+            User_ConceptTemplateInstanceEntity(
                 UserId = userId,
-                PublicTagUserConceptTemplateInstances =
+                PublicTag_User_ConceptTemplateInstances =
                     (this.DefaultPublicTags.ToList()
-                    |> Seq.map (fun x -> PublicTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
+                    |> Seq.map (fun x -> PublicTag_User_ConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
                     |> fun x -> x.ToList()),
-                PrivateTagUserConceptTemplateInstances =
+                PrivateTag_User_ConceptTemplateInstances =
                     (this.DefaultPrivateTags.ToList()
-                    |> Seq.map (fun x -> PrivateTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
+                    |> Seq.map (fun x -> PrivateTag_User_ConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
                     |> fun x -> x.ToList()),
                 DefaultCardOption = defaultCardOption)
             |> Seq.singleton
@@ -96,9 +96,9 @@ type AnkiConceptWrite = {
                 MaintainerId = this.MaintainerId,
                 Name = "Imported from Anki"
             )
-        entity.FileConceptInstances <-
+        entity.File_ConceptInstances <-
             files.Select(fun x ->
-                FileConceptInstanceEntity(
+                File_ConceptInstanceEntity(
                     ConceptInstance = entity,
                     File = x
                 )
@@ -106,7 +106,7 @@ type AnkiConceptWrite = {
         this.CopyTo(entity, this.ConceptTemplateHash)
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.ConceptInstances
+        db.ConceptInstance
             .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
 
 type AnkiAcquiredCard = {
@@ -139,10 +139,10 @@ type AnkiAcquiredCard = {
             CardTemplate = this.CardTemplate
         )
         entity.CardOption <- this.CardOption
-        entity.PrivateTagAcquiredCards <- privateTags.Select(fun x -> PrivateTagAcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
+        entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.AcquiredCards.FirstOrDefault(fun c -> 
+        db.AcquiredCard.FirstOrDefault(fun c -> 
             this.UserId = c.UserId &&
             this.ConceptInstance.Id = c.ConceptInstanceId &&
             this.CardTemplate.Id = c.CardTemplateId
@@ -159,7 +159,7 @@ type AnkiHistory = {
 } with
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
-        db.Histories.FirstOrDefault(fun h -> 
+        db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.UserId &&
             this.AcquiredCard.ConceptInstanceId = h.ConceptInstanceId &&
             this.AcquiredCard.CardTemplateId = h.CardTemplateId &&
