@@ -173,6 +173,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.AcquireHash)
+                    .HasName("AK_ConceptInstance_AcquireHash")
+                    .IsUnique();
+
                 entity.HasIndex(e => e.ConceptId);
 
                 entity.HasOne(d => d.Concept)
@@ -195,6 +199,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptTemplateInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.AcquireHash)
+                    .HasName("AK_ConceptTemplateInstance_AcquireHash")
+                    .IsUnique();
+
                 entity.HasIndex(e => e.ConceptTemplateId);
 
                 entity.Property(e => e.Css).IsUnicode(false);

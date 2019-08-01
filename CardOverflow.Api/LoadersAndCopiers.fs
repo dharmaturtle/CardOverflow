@@ -224,12 +224,10 @@ type ConceptInstance with
             Id = entity.ConceptId
             MaintainerId = entity.Concept.MaintainerId
             Name = entity.Concept.Name
-          }
-          IsPublic = entity.IsPublic }
+          }}
     member this.CopyTo (entity: ConceptInstanceEntity) =
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.IsPublic <- this.IsPublic
         entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
     member this.CopyToNew =
         let entity = ConceptInstanceEntity()
@@ -266,7 +264,6 @@ type InitialFieldValue = {
 }
 
 type InitialConceptInstance = {
-    IsPublic: bool
     FieldValues: InitialFieldValue seq
     MaintainerId: int
     DefaultCardOptionId: int
@@ -278,7 +275,6 @@ type InitialConceptInstance = {
         let e =
             ConceptInstanceEntity(
                 Created = DateTime.UtcNow,
-                IsPublic = this.IsPublic,
                 Concept = ConceptEntity (
                     MaintainerId = this.MaintainerId,
                     Name = this.Name),

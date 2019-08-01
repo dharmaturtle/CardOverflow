@@ -246,7 +246,6 @@ CREATE TABLE [dbo].[ConceptInstance](
 	[Created] [smalldatetime] NOT NULL,
 	[Modified] [smalldatetime] NULL,
 	[ConceptId] [int] NOT NULL,
-	[IsPublic] [bit] NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
  CONSTRAINT [PK_ConceptInstance] PRIMARY KEY CLUSTERED 
 (
@@ -774,6 +773,14 @@ CREATE NONCLUSTERED INDEX [IX_Concept_MaintainerId] ON [dbo].[Concept]
 	[MaintainerId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [AK_ConceptInstance_AcquireHash] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [AK_ConceptInstance_AcquireHash] ON [dbo].[ConceptInstance]
+(
+	[AcquireHash] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_ConceptInstance_ConceptId] ******/
 CREATE NONCLUSTERED INDEX [IX_ConceptInstance_ConceptId] ON [dbo].[ConceptInstance]
 (
@@ -785,6 +792,14 @@ CREATE NONCLUSTERED INDEX [IX_ConceptTemplate_MaintainerId] ON [dbo].[ConceptTem
 (
 	[MaintainerId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [AK_ConceptTemplateInstance_AcquireHash] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [AK_ConceptTemplateInstance_AcquireHash] ON [dbo].[ConceptTemplateInstance]
+(
+	[AcquireHash] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_ConceptTemplateInstance_ConceptTemplateId] ******/
 CREATE NONCLUSTERED INDEX [IX_ConceptTemplateInstance_ConceptTemplateId] ON [dbo].[ConceptTemplateInstance]

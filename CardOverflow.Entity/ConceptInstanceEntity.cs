@@ -21,7 +21,6 @@ namespace CardOverflow.Entity
         [Column(TypeName = "smalldatetime")]
         public DateTime? Modified { get; set; }
         public int ConceptId { get; set; }
-        public bool IsPublic { get; set; }
         [Required]
         [MaxLength(32)]
         public byte[] AcquireHash { get; set; }

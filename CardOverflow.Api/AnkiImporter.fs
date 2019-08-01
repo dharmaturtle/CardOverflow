@@ -147,7 +147,7 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         let getConceptTemplateInstance (templateInstance: AnkiConceptTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null
-            db.ConceptTemplateInstances // medTODO what happens when the hash matches a private template?
+            db.ConceptTemplateInstances
                 .Include(fun x -> x.Fields :> IEnumerable<_>)
                     .ThenInclude(fun (x: FieldEntity) -> x.ConceptTemplateInstance.CardTemplates)
                 .Include(fun x -> x.UserConceptTemplateInstances)

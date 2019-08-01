@@ -33,7 +33,6 @@ let ``ConceptRepository.CreateConcept on a basic concept acquires 1 card/concept
         FieldValues =
             conceptTemplate.Fields
             |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
-        IsPublic = true
     }
     
     ConceptRepository.CreateConcept c.Db basicConcept <| Seq.empty.ToList()

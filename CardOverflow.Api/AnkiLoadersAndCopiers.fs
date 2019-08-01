@@ -76,13 +76,11 @@ type AnkiConceptWrite = {
     Created: DateTime
     Modified: DateTime option
     MaintainerId: int
-    IsPublic: bool
 } with
     member this.CopyTo(entity: ConceptInstanceEntity, conceptTemplateHash: byte[]) =
         entity.FieldValues <- this.FieldValues.ToList()
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.IsPublic <- this.IsPublic
         use hasher = SHA256.Create()
         entity.AcquireHash <- ConceptInstanceEntity.acquireHash entity conceptTemplateHash hasher
     member this.CopyToNew (files: FileEntity seq) =
@@ -365,8 +363,7 @@ module Anki =
                             |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
                           Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                           Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
-                          MaintainerId = userId
-                          IsPublic = false }
+                          MaintainerId = userId }
                     getConcept c
                     |> function
                     | Some x -> x

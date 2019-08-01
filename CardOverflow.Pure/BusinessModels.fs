@@ -150,7 +150,6 @@ type ConceptInstance = {
     Created: DateTime
     Modified: DateTime option
     Concept: Concept
-    IsPublic: bool
     Fields: string seq
 }
 
