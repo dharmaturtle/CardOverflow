@@ -230,7 +230,7 @@ module Anki =
             | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
     let parseCardOptions =
         Decode.object(fun get ->
-            { Id = 0 // medTODO this entire record needs to be validated for out of range values
+            { Id = 0 // lowTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16
@@ -345,7 +345,7 @@ module Anki =
         initialTags
         userId
         fileEntityByAnkiFileName
-        getConcept = // medTODO use tail recursion
+        getConcept = // lowTODO use tail recursion
         let rec parseNotesRec tags conceptsAndTagsByNoteId missingAnkiFileNames =
             function
             | (note: NoteEntity) :: tail ->
