@@ -118,8 +118,8 @@ type ConceptTemplateInstance = {
     Created: DateTime
     Modified: DateTime option
     IsCloze: bool
-    DefaultPublicTags: int list
-    DefaultPrivateTags: int list
+    DefaultPublicTags: int seq
+    DefaultPrivateTags: int seq
     DefaultCardOptionId: int
     LatexPre: string
     LatexPost: string

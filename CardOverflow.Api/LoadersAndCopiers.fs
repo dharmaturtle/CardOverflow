@@ -178,8 +178,8 @@ type ConceptTemplateInstance with
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.UserConceptTemplateInstances.Single().DefaultPublicTags |> MappingTools.stringOfIntsToIntList
-          DefaultPrivateTags = entity.UserConceptTemplateInstances.Single().DefaultPrivateTags |> MappingTools.stringOfIntsToIntList
+          DefaultPublicTags = entity.UserConceptTemplateInstances.Single().PublicTagUserConceptTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
+          DefaultPrivateTags = entity.UserConceptTemplateInstances.Single().PrivateTagUserConceptTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
           DefaultCardOptionId = entity.UserConceptTemplateInstances.Single().DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost

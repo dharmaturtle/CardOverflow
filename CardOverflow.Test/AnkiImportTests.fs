@@ -77,7 +77,7 @@ let assertHasBasicInfo db ankiDb =
     Assert.Equal(5, db.UserConceptTemplateInstances.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
-        (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sortBy id)
+        (db.PrivateTags.ToList()).Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string>(
         [ "Deck:Default"; "OtherTag" ],
         db.AcquiredCards

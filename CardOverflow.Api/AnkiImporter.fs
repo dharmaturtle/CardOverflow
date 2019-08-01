@@ -104,8 +104,14 @@ module AnkiImporter =
                         if e.UserConceptTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
                             UserConceptTemplateInstanceEntity(
                                 UserId = userId,
-                                DefaultPublicTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPublicTags, // medTODO normalize this
-                                DefaultPrivateTags = MappingTools.intsListToStringOfInts x.ConceptTemplate.DefaultPrivateTags,
+                                PublicTagUserConceptTemplateInstances =
+                                    (x.ConceptTemplate.DefaultPublicTags.ToList()
+                                    |> Seq.map (fun x -> PublicTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
+                                    |> fun x -> x.ToList()),
+                                PrivateTagUserConceptTemplateInstances =
+                                    (x.ConceptTemplate.DefaultPrivateTags.ToList()
+                                    |> Seq.map (fun x -> PrivateTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
+                                    |> fun x -> x.ToList()),
                                 DefaultCardOption = defaultCardOption)
                             |> e.UserConceptTemplateInstances.Add
                         e

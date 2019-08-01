@@ -50,8 +50,14 @@ type AnkiConceptTemplateInstance = {
         entity.UserConceptTemplateInstances <-
             UserConceptTemplateInstanceEntity(
                 UserId = userId,
-                DefaultPublicTags = MappingTools.intsListToStringOfInts this.DefaultPublicTags, // medTODO normalize this
-                DefaultPrivateTags = MappingTools.intsListToStringOfInts this.DefaultPrivateTags,
+                PublicTagUserConceptTemplateInstances =
+                    (this.DefaultPublicTags.ToList()
+                    |> Seq.map (fun x -> PublicTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
+                    |> fun x -> x.ToList()),
+                PrivateTagUserConceptTemplateInstances =
+                    (this.DefaultPrivateTags.ToList()
+                    |> Seq.map (fun x -> PrivateTagUserConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
+                    |> fun x -> x.ToList()),
                 DefaultCardOption = defaultCardOption)
             |> Seq.singleton
             |> fun x -> x.ToList()
