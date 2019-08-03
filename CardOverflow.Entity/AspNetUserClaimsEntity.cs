@@ -2,16 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
 namespace CardOverflow.Entity
 {
-    public partial class AspNetUserClaimsEntity
+    public partial class AspNetUserClaimsEntity : IdentityUserClaim<int>
     {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public string ClaimType { get; set; }
-        public string ClaimValue { get; set; }
-
         [ForeignKey("UserId")]
         [InverseProperty("AspNetUserClaims")]
         public virtual AspNetUsersEntity User { get; set; }

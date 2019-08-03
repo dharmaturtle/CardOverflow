@@ -1,10 +1,12 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardOverflowDb : DbContext
+    public partial class CardOverflowDb : IdentityDbContext<AspNetUsersEntity, AspNetRolesEntity, int>
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
         public virtual DbSet<AspNetRoleClaimsEntity> AspNetRoleClaims { get; set; }
@@ -56,6 +58,8 @@ namespace CardOverflow.Entity
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<AcquiredCardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
@@ -81,50 +85,6 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => new { d.ConceptInstanceId, d.CardTemplateId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_AcquiredCard_Card");
-            });
-
-            modelBuilder.Entity<AspNetRoleClaimsEntity>(entity =>
-            {
-                entity.HasIndex(e => e.RoleId);
-            });
-
-            modelBuilder.Entity<AspNetRolesEntity>(entity =>
-            {
-                entity.HasIndex(e => e.NormalizedName)
-                    .IsUnique();
-            });
-
-            modelBuilder.Entity<AspNetUserClaimsEntity>(entity =>
-            {
-                entity.HasIndex(e => e.UserId);
-            });
-
-            modelBuilder.Entity<AspNetUserLoginsEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
-
-                entity.HasIndex(e => e.UserId);
-            });
-
-            modelBuilder.Entity<AspNetUserRolesEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.UserId, e.RoleId });
-
-                entity.HasIndex(e => e.RoleId);
-            });
-
-            modelBuilder.Entity<AspNetUserTokensEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
-            });
-
-            modelBuilder.Entity<AspNetUsersEntity>(entity =>
-            {
-                entity.HasIndex(e => e.NormalizedEmail)
-                    .IsUnique();
-
-                entity.HasIndex(e => e.NormalizedUserName)
-                    .IsUnique();
             });
 
             modelBuilder.Entity<CardEntity>(entity =>
