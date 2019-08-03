@@ -9,12 +9,7 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : IdentityDbContext<AspNetUsersEntity, AspNetRolesEntity, int>
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
-        public virtual DbSet<AspNetRoleClaimsEntity> AspNetRoleClaims { get; set; }
         public virtual DbSet<AspNetRolesEntity> AspNetRoles { get; set; }
-        public virtual DbSet<AspNetUserClaimsEntity> AspNetUserClaims { get; set; }
-        public virtual DbSet<AspNetUserLoginsEntity> AspNetUserLogins { get; set; }
-        public virtual DbSet<AspNetUserRolesEntity> AspNetUserRoles { get; set; }
-        public virtual DbSet<AspNetUserTokensEntity> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsersEntity> AspNetUsers { get; set; }
         public virtual DbSet<CardEntity> Card { get; set; }
         public virtual DbSet<CardOptionEntity> CardOption { get; set; }

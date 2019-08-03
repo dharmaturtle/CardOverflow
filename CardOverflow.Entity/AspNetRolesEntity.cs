@@ -8,15 +8,6 @@ namespace CardOverflow.Entity
 {
     public partial class AspNetRolesEntity : IdentityRole<int>
     {
-        public AspNetRolesEntity()
-        {
-            AspNetRoleClaims = new HashSet<AspNetRoleClaimsEntity>();
-            AspNetUserRoles = new HashSet<AspNetUserRolesEntity>();
-        }
-
-        [InverseProperty("Role")]
-        public virtual ICollection<AspNetRoleClaimsEntity> AspNetRoleClaims { get; set; }
-        [InverseProperty("Role")]
-        public virtual ICollection<AspNetUserRolesEntity> AspNetUserRoles { get; set; }
+        
     }
 }
