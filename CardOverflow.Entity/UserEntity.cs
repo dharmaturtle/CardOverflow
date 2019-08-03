@@ -25,7 +25,7 @@ namespace CardOverflow.Entity
             Vote_Concepts = new HashSet<Vote_ConceptEntity>();
         }
 
-        //[Required] // medTODO
+        //[Required] // medTODO make this not nullable
         [StringLength(32)]
         public string DisplayName { get; set; }
 
@@ -57,3 +57,4 @@ namespace CardOverflow.Entity
         public virtual ICollection<Vote_ConceptEntity> Vote_Concepts { get; set; }
     }
 }
+

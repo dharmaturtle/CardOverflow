@@ -8,6 +8,8 @@ Remove-Item CardOverflow.Entity\* -Include *entity.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
 
+Remove-Item CardOverflow.Entity\* -Include AspNet*entity.cs
+
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
     (Get-Content $file.PSPath) |
     Foreach-Object { $_ -replace "InverseParent", "Children" } |
@@ -28,6 +30,14 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOptionEntity.cs")
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     (Get-Content $file.PSPath -Raw) `
+    -replace [regex] "(?sm)using Microsoft.EntityFrameworkCore.Metadata;", "using Microsoft.EntityFrameworkCore.Metadata;`r`nusing Microsoft.AspNetCore.Identity;`r`nusing Microsoft.AspNetCore.Identity.EntityFrameworkCore;" `
+    -replace [regex] "public partial class CardOverflowDb : DbContext", "public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int>" `
+    -replace [regex] "(?sm)\s+public virtual DbSet<AspNetRoleClaimsEntity>.*?AspNetUserTokens.*?\}", "" `
+    -replace [regex] "modelBuilder.Entity<AcquiredCardEntity>", "base.OnModelCreating(modelBuilder);`r`n`r`n            modelBuilder.Entity<AcquiredCardEntity>" `
+    -replace [regex] "(?sm)modelBuilder.Entity<AspNetRoleClaimsEntity>.*?e\.Name\W+", "" `
+    -replace [regex] "entity.HasIndex\(e => e.DisplayName\)", "entity.ToTable(`"User`");`r`n`r`n                entity.HasIndex(e => e.DisplayName)" `
+    -replace [regex] '\s+\.HasFilter\("\(\[DisplayName\] IS NOT NULL\)"\)', '' `
+    -replace [regex] '(?sm)\s+.HasFilter\("\(\[Email\] IS NOT NULL\)"\);.*?NULL\S+', ";" `
     -replace [regex] ".WithOne\(p => p.CardOption\)", ".WithMany(p => p.CardOptions)" `
     -replace [regex] ".HasForeignKey<CardOption>\(d => d.UserId\)", ".HasForeignKey(d => d.UserId)" `
     -replace [regex] "(?m)#warning.*?\n", "" `
@@ -56,5 +66,16 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
 
 Replace-TextInFile (Get-Item "CardOverflow.Entity\AcquiredCardEntity.cs").FullName "public virtual CardEntity C" "public virtual CardEntity Card"
 Replace-TextInFile (Get-Item "CardOverflow.Entity\CardEntity.cs").FullName 'InverseProperty\("C"\)' 'InverseProperty("Card")'
+
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\UserEntity.cs") {
+    (Get-Content $file.PSPath -Raw) `
+    -replace [regex] "public partial class UserEntity", "public partial class UserEntity : IdentityUser<int>" `
+    -replace [regex] "using System.ComponentModel.DataAnnotations.Schema;", "using System.ComponentModel.DataAnnotations.Schema;`r`nusing Microsoft.AspNetCore.Identity;" `
+    -replace [regex] "(?sm)\s+AspNetUserClaims =.*AspNetUserTokensEntity>\(\);", "" `
+    -replace [regex] "(?sm)public int Id.*AccessFailedCount { get; set; }", "//[Required] // medTODO make this not nullable" `
+    -replace [regex] "(?sm)\s+\S+\W+public virtual ICollection<AspNetUserClaimsEntity> AspNetUserClaims.*?AspNetUserTokens .*?\}", "" `
+    -replace [regex] "(?sm)modelBuilder\.HasAnnotation\(\`"ProductVersion.*?  +", "" |
+    Set-Content $file.PSPath
+}
 
 Read-Host -Prompt “Press Enter to exit”
