@@ -7,6 +7,13 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : DbContext
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
+        public virtual DbSet<AspNetRoleClaimsEntity> AspNetRoleClaims { get; set; }
+        public virtual DbSet<AspNetRolesEntity> AspNetRoles { get; set; }
+        public virtual DbSet<AspNetUserClaimsEntity> AspNetUserClaims { get; set; }
+        public virtual DbSet<AspNetUserLoginsEntity> AspNetUserLogins { get; set; }
+        public virtual DbSet<AspNetUserRolesEntity> AspNetUserRoles { get; set; }
+        public virtual DbSet<AspNetUserTokensEntity> AspNetUserTokens { get; set; }
+        public virtual DbSet<AspNetUsersEntity> AspNetUsers { get; set; }
         public virtual DbSet<CardEntity> Card { get; set; }
         public virtual DbSet<CardOptionEntity> CardOption { get; set; }
         public virtual DbSet<CardTemplateEntity> CardTemplate { get; set; }
@@ -74,6 +81,50 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => new { d.ConceptInstanceId, d.CardTemplateId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_AcquiredCard_Card");
+            });
+
+            modelBuilder.Entity<AspNetRoleClaimsEntity>(entity =>
+            {
+                entity.HasIndex(e => e.RoleId);
+            });
+
+            modelBuilder.Entity<AspNetRolesEntity>(entity =>
+            {
+                entity.HasIndex(e => e.NormalizedName)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<AspNetUserClaimsEntity>(entity =>
+            {
+                entity.HasIndex(e => e.UserId);
+            });
+
+            modelBuilder.Entity<AspNetUserLoginsEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
+
+                entity.HasIndex(e => e.UserId);
+            });
+
+            modelBuilder.Entity<AspNetUserRolesEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.RoleId });
+
+                entity.HasIndex(e => e.RoleId);
+            });
+
+            modelBuilder.Entity<AspNetUserTokensEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
+            });
+
+            modelBuilder.Entity<AspNetUsersEntity>(entity =>
+            {
+                entity.HasIndex(e => e.NormalizedEmail)
+                    .IsUnique();
+
+                entity.HasIndex(e => e.NormalizedUserName)
+                    .IsUnique();
             });
 
             modelBuilder.Entity<CardEntity>(entity =>
@@ -332,6 +383,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId, e.DefaultPrivateTagId });
 
+                entity.HasIndex(e => e.DefaultPrivateTagId);
+
                 entity.HasOne(d => d.DefaultPrivateTag)
                     .WithMany(p => p.PrivateTag_User_ConceptTemplateInstances)
                     .HasForeignKey(d => d.DefaultPrivateTagId)
@@ -374,6 +427,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<PublicTag_User_ConceptTemplateInstanceEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.ConceptTemplateInstanceId, e.DefaultPublicTagId });
+
+                entity.HasIndex(e => e.DefaultPublicTagId);
 
                 entity.HasOne(d => d.DefaultPublicTag)
                     .WithMany(p => p.PublicTag_User_ConceptTemplateInstances)
