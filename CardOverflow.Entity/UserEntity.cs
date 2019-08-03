@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
 namespace CardOverflow.Entity
 {
-    public partial class UserEntity
+    public partial class UserEntity : IdentityUser<int>
     {
         public UserEntity()
         {
@@ -24,13 +25,9 @@ namespace CardOverflow.Entity
             Vote_Concepts = new HashSet<Vote_ConceptEntity>();
         }
 
-        public int Id { get; set; }
-        [Required]
+        //[Required] // medTODO
         [StringLength(32)]
         public string DisplayName { get; set; }
-        [Required]
-        [StringLength(254)]
-        public string Email { get; set; }
 
         [InverseProperty("User")]
         public virtual ICollection<CardOptionEntity> CardOptions { get; set; }

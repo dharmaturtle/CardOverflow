@@ -23,14 +23,14 @@ namespace CardOverflow.Server {
     public void ConfigureServices(IServiceCollection services) {
       services.AddDbContext<CardOverflowDb>(options => options
         .UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-      services.AddDefaultIdentity<AspNetUsersEntity>(options => {
+      services.AddDefaultIdentity<UserEntity>(options => {
         options.User.RequireUniqueEmail = true;
         options.Password.RequireNonAlphanumeric = false;
         //options.SignIn.RequireConfirmedEmail = true; // medTODO
       }).AddEntityFrameworkStores<CardOverflowDb>();
       services.AddRazorPages();
       services.AddServerSideBlazor();
-      services.AddScoped<AuthenticationStateProvider, RevalidatingAuthenticationStateProvider<AspNetUsersEntity>>();
+      services.AddScoped<AuthenticationStateProvider, RevalidatingAuthenticationStateProvider<UserEntity>>();
       services.AddSingleton<WeatherForecastService>();
     }
 
