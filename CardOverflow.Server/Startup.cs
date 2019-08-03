@@ -1,25 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using CardOverflow.Server.Areas.Identity;
+using CardOverflow.Server.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using CardOverflow.Server.Areas.Identity;
-using CardOverflow.Server.Data;
 
 namespace CardOverflow.Server {
   public class Startup {
-    public Startup(IConfiguration configuration) {
-      Configuration = configuration;
-    }
+
+    public Startup() =>
+      Configuration =
+        ContainerExtensions.Configuration.get(ContainerExtensions.Environment.get);
 
     public IConfiguration Configuration { get; }
 
@@ -62,5 +57,6 @@ namespace CardOverflow.Server {
         endpoints.MapFallbackToPage("/_Host");
       });
     }
+
   }
 }

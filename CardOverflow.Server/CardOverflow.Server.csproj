@@ -14,4 +14,28 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.0.0-preview7.19362.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Watch Include="**\*.cshtml" />
+    <Watch Include="**\*.razor" />
+    <Watch Include="**\(!*\obj)*.json" />
+    <Watch Include="**\(!.g.)*.cs" />
+    <Watch Include="..\**\*.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Config\appsettings.Development.json" Link="Config\appsettings.Development.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Config\appsettings.json" Link="Config\appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Config\environment.json" Link="Config\environment.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
+  </ItemGroup>
+
 </Project>
