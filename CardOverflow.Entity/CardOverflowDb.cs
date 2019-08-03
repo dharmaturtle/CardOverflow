@@ -398,6 +398,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<UserEntity>(entity =>
             {
+                entity.ToTable("User");
+
                 entity.HasIndex(e => e.DisplayName)
                     .HasName("AK_User__DisplayName")
                     .IsUnique();
