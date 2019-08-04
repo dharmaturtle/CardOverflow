@@ -65,6 +65,7 @@ module UserRepository =
     let defaultCardOptions =
         { Id = 0
           Name = "Default"
+          IsDefault = true
           NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
           NewCardsMaxPerDay = int16 20
           NewCardsGraduatingInterval = TimeSpan.FromDays 1.

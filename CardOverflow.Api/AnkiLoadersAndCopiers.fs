@@ -73,7 +73,7 @@ type AnkiConceptTemplateInstance = {
 
 type AnkiConceptTemplateAndDeckId = {
     ConceptTemplate: AnkiConceptTemplateInstance
-    DeckId: int
+    DeckId: int64
 }
 
 type AnkiConceptWrite = {
@@ -232,6 +232,7 @@ module Anki =
         Decode.object(fun get ->
             { Id = 0 // lowTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
+              IsDefault = false
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16
               NewCardsGraduatingInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 0
@@ -255,14 +256,14 @@ module Anki =
         |> Decode.fromString
     let parseDecks =
         Decode.object(fun get ->
-            (get.Required.Field "id" Decode.int,
+            (get.Required.Field "id" Decode.int64,
              get.Required.Field "name" Decode.string,
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
     let parseModels userId =
         Decode.object(fun get ->
-            { DeckId = get.Required.Field "did" Decode.int
+            { DeckId = get.Required.Field "did" Decode.int64
               ConceptTemplate =
                 { ConceptTemplate = {
                     Id = 0
@@ -386,14 +387,14 @@ module Anki =
                 else Ok conceptsAndTagsByNoteId
         parseNotesRec initialTags [] []
     let mapCard
-        (cardOptionAndDeckTagByDeckId: Map<int, CardOptionEntity * string>)
+        (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
         (conceptsAndTagsByAnkiId: Map<int64, ConceptInstanceEntity * PrivateTagEntity seq>)
         (colCreateDate: DateTime)
         userId
         (usersTags: PrivateTagEntity seq)
         getCard
         (ankiCard: Anki.CardEntity) =
-        let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[int ankiCard.Did]
+        let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
         match ankiCard.Type with

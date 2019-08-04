@@ -62,6 +62,7 @@ module TimeSpanInt16 =
 type CardOption = {
     Id: int
     Name: string
+    IsDefault: bool
     NewCardsSteps: list<TimeSpan>
     NewCardsMaxPerDay: int16
     NewCardsGraduatingInterval: TimeSpan

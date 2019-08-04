@@ -69,6 +69,7 @@ type CardOption with
     static member Load(entity: CardOptionEntity) =
         { Id = entity.Id
           Name = entity.Name
+          IsDefault = entity.IsDefault
           NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
           NewCardsMaxPerDay = entity.NewCardsMaxPerDay
           NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
@@ -91,6 +92,7 @@ type CardOption with
     member this.CopyTo(entity: CardOptionEntity) =
         entity.Id <- this.Id
         entity.Name <- this.Name
+        entity.IsDefault <- this.IsDefault
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
         entity.NewCardsGraduatingIntervalInDays <- this.NewCardsGraduatingInterval.TotalDays |> Math.Round |> byte

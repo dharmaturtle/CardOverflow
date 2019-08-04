@@ -990,7 +990,7 @@ let serialize x =
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Actual AllDefaultTemplatesAndImageAndMp3 matches mock`` fileName mock =
-    let actualDb = 
+    let actualDb =
         AnkiImporter.getSimpleAnkiDb
         |> using(ankiDb fileName "Actual testnametoolong matches mock")
     

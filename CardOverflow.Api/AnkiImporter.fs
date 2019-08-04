@@ -60,7 +60,7 @@ module AnkiImporter =
         userId
         fileEntityByAnkiFileName
         (usersTags: PrivateTagEntity seq)
-        (cardOptions: CardOption seq)
+        (cardOptions: CardOptionEntity seq)
         getConceptTemplates
         getConcept
         getCard
@@ -70,6 +70,7 @@ module AnkiImporter =
             let! cardOptionByDeckConfigurationId =
                 let toEntity _ (cardOption: CardOption) =
                     cardOptions
+                    |> Seq.map CardOption.Load
                     |> Seq.filter (fun x -> x.AcquireEquality cardOption)
                     |> Seq.tryHead
                     |> function
@@ -96,7 +97,11 @@ module AnkiImporter =
                     cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! conceptTemplatesByModelId =
                 let toEntity _ (x: AnkiConceptTemplateAndDeckId) =
-                    let defaultCardOption = cardOptionAndDeckNameByDeckId.[x.DeckId] |> fst
+                    let defaultCardOption =
+                        cardOptionAndDeckNameByDeckId.TryFind x.DeckId
+                        |> function
+                        | Some (cardOption, _) -> cardOption
+                        | None -> cardOptions.First(fun x -> x.IsDefault) // veryLowTODO some anki models have invalid deck ids. Perhaps log this
                     let entity = x.ConceptTemplate.CopyToNew userId defaultCardOption
                     getConceptTemplates x.ConceptTemplate
                     |> function
@@ -175,7 +180,6 @@ module AnkiImporter =
                     <| db.PrivateTag.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and concepttemplates is heavy
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
-                        .Select CardOption.Load
                     <| getConceptTemplateInstance
                     <| getConcept
                     <| getCard
