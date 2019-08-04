@@ -1,3 +1,4 @@
+using Blazor.FileReader;
 using CardOverflow.Entity;
 using CardOverflow.Server.Areas.Identity;
 using CardOverflow.Server.Data;
@@ -28,6 +29,7 @@ namespace CardOverflow.Server {
         options.Password.RequireNonAlphanumeric = false;
         //options.SignIn.RequireConfirmedEmail = true; // medTODO
       }).AddEntityFrameworkStores<CardOverflowDb>();
+      services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
       services.AddServerSideBlazor();
       services.AddScoped<AuthenticationStateProvider, RevalidatingAuthenticationStateProvider<UserEntity>>();
