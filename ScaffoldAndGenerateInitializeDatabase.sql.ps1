@@ -4,9 +4,25 @@ mssql-scripter --connection-string $connectionString --schema-and-data --file-pa
 # If the above has problems, consider using --check-for-existence https://github.com/Microsoft/mssql-scripter
 (((Get-Content -Raw InitializeDatabase.sql) -replace " +S[\w: \/]+\*{6}\/"," ******/") -replace " CONTAINMENT[^?]*?GO", "GO") -replace "\[varbinary\]\(32\)", "[binary](32)" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
 
+function Replace-TextInFile {
+    Param(
+        [string]$FilePath,
+        [string]$Pattern,
+        [string]$Replacement
+    )
+
+    [System.IO.File]::WriteAllText(
+        $FilePath,
+        ([System.IO.File]::ReadAllText($FilePath) -replace $Pattern, $Replacement)
+    )
+}
+
+Replace-TextInFile (Get-Item "CardOverflow.Entity\CardOverflow.Entity.csproj").FullName "3\.0\.0-[\w.]+" "2.2.0"
+
 Remove-Item CardOverflow.Entity\* -Include *entity.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
+git checkout "CardOverflow.Entity\CardOverflow.Entity.csproj"
 
 Remove-Item CardOverflow.Entity\* -Include AspNet*entity.cs
 
@@ -45,19 +61,6 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     -replace [regex] "entity.HasOne\(d => d.C\)", "entity.HasOne(d => d.Card)" `
     -replace [regex] "(?sm)modelBuilder\.HasAnnotation\(\`"ProductVersion.*?  +", "" |
     Set-Content $file.PSPath
-}
-
-function Replace-TextInFile {
-    Param(
-        [string]$FilePath,
-        [string]$Pattern,
-        [string]$Replacement
-    )
-
-    [System.IO.File]::WriteAllText(
-        $FilePath,
-        ([System.IO.File]::ReadAllText($FilePath) -replace $Pattern, $Replacement)
-    )
 }
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
