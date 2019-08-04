@@ -13,6 +13,5 @@ module AnkiDbFactory =
     let Create (dbPath: string) =
         DbContextOptionsBuilder()
             .UseSqlite("DataSource=" + dbPath)
-            .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
             .Options
         |> fun o -> new AnkiDb(o)

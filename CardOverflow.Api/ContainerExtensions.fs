@@ -46,7 +46,7 @@ type Container with
         container.RegisterSingleton<DbContextOptions<CardOverflowDb>>(fun () ->
             DbContextOptionsBuilder<CardOverflowDb>()
                 .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value )
-                .ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore)
+                //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3
                 //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                 //.EnableSensitiveDataLogging(true)
                 .Options)
