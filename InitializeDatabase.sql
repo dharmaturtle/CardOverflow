@@ -840,15 +840,21 @@ INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordina
 SET IDENTITY_INSERT [dbo].[Field] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'7918d067-8152-4764-9a23-4743ffaffb37', NULL, 0, 0, NULL, 0, 0, N'Admin')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'3085cabf-2eb7-4960-bd4c-efb3b7c23ae7', NULL, 0, 0, NULL, 0, 0, N'The Collective')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'3ffacb25-ff3f-42d3-a2d6-96469aa13725', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'6536d110-4a5b-4e57-8b26-dae826475b48', NULL, 0, 0, NULL, 0, 0, N'Admin')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'33ba9998-5406-442b-ba3f-a3c289e9e5dd', NULL, 0, 0, NULL, 0, 0, N'The Collective')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'5544676f-588a-45ac-af02-6f100c61ac10', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
 SET IDENTITY_INSERT [dbo].[User] OFF
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 1, 2)
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 2, 2)
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 3, 2)
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 4, 2)
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 5, 2)
+/****** Object:  Index [IX_AcquiredCard_CardId] ******/
+CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardId] ON [dbo].[AcquiredCard]
+(
+	[CardId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_AcquiredCard_CardOptionId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardOptionId] ON [dbo].[AcquiredCard]
 (
@@ -890,12 +896,13 @@ CREATE NONCLUSTERED INDEX [IX_AspNetUserRoles_RoleId] ON [dbo].[AspNetUserRoles]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [AK_Card] ******/
-ALTER TABLE [dbo].[Card] ADD  CONSTRAINT [AK_Card] UNIQUE NONCLUSTERED 
+CREATE UNIQUE NONCLUSTERED INDEX [AK_Card] ON [dbo].[Card]
 (
 	[ConceptInstanceId] ASC,
 	[CardTemplateId] ASC,
 	[ClozeIndex] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Card_CardTemplateId] ******/
 CREATE NONCLUSTERED INDEX [IX_Card_CardTemplateId] ON [dbo].[Card]
@@ -1013,6 +1020,13 @@ CREATE NONCLUSTERED INDEX [IX_File_Concept_FileId] ON [dbo].[File_ConceptInstanc
 	[FileId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_History_UserId_CardId] ******/
+CREATE NONCLUSTERED INDEX [IX_History_UserId_CardId] ON [dbo].[History]
+(
+	[UserId] ASC,
+	[CardId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [AK_PrivateTag__UserId_Name] ******/
@@ -1021,6 +1035,13 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag__UserId_Name] ON [dbo].[PrivateT
 	[UserId] ASC,
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_PrivateTag_AcquiredCard_UserId_CardId] ******/
+CREATE NONCLUSTERED INDEX [IX_PrivateTag_AcquiredCard_UserId_CardId] ON [dbo].[PrivateTag_AcquiredCard]
+(
+	[UserId] ASC,
+	[CardId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_PrivateTag_User_ConceptTemplateInstance_DefaultPrivateTagId] ******/
 CREATE NONCLUSTERED INDEX [IX_PrivateTag_User_ConceptTemplateInstance_DefaultPrivateTagId] ON [dbo].[PrivateTag_User_ConceptTemplateInstance]

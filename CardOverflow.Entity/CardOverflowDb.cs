@@ -57,6 +57,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.UserId, e.CardId });
 
+                entity.HasIndex(e => e.CardId);
+
                 entity.HasIndex(e => e.CardOptionId);
 
                 entity.HasOne(d => d.Card)
@@ -291,6 +293,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
+                entity.HasIndex(e => new { e.UserId, e.CardId });
+
                 entity.HasOne(d => d.AcquiredCard)
                     .WithMany(p => p.Histories)
                     .HasForeignKey(d => new { d.UserId, d.CardId })
@@ -314,6 +318,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<PrivateTag_AcquiredCardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.PrivateTagId, e.UserId, e.CardId });
+
+                entity.HasIndex(e => new { e.UserId, e.CardId });
 
                 entity.HasOne(d => d.PrivateTag)
                     .WithMany(p => p.PrivateTag_AcquiredCards)
