@@ -185,7 +185,7 @@ module AnkiImporter =
                     <| getCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
-                if x.CardTemplateId = 0 && x.ConceptInstanceId = 0
+                if x.Card.CardTemplateId = 0 && x.Card.ConceptInstanceId = 0
                 then db.AcquiredCard.AddI x
                 //else db.AcquiredCards.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )

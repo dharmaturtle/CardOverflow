@@ -144,8 +144,8 @@ type AnkiAcquiredCard = {
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCard.FirstOrDefault(fun c -> 
             this.UserId = c.UserId &&
-            this.ConceptInstance.Id = c.ConceptInstanceId &&
-            this.CardTemplate.Id = c.CardTemplateId
+            this.ConceptInstance.Id = c.Card.ConceptInstanceId &&
+            this.CardTemplate.Id = c.Card.CardTemplateId
         )
 
 type AnkiHistory = {
@@ -161,8 +161,8 @@ type AnkiHistory = {
         let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.UserId &&
-            this.AcquiredCard.ConceptInstanceId = h.ConceptInstanceId &&
-            this.AcquiredCard.CardTemplateId = h.CardTemplateId &&
+            this.AcquiredCard.Card.ConceptInstanceId = h.AcquiredCard.Card.ConceptInstanceId &&
+            this.AcquiredCard.Card.CardTemplateId = h.AcquiredCard.Card.CardTemplateId &&
             this.Score = h.Score &&
             this.MemorizationState = h.MemorizationState &&
             roundedTimeStamp = h.Timestamp &&
