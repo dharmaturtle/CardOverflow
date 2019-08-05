@@ -9,8 +9,7 @@ namespace CardOverflow.Entity
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int ConceptInstanceId { get; set; }
-        public int CardTemplateId { get; set; }
+        public int CardId { get; set; }
         public byte Score { get; set; }
         public byte MemorizationState { get; set; }
         [Column(TypeName = "smalldatetime")]
@@ -19,7 +18,7 @@ namespace CardOverflow.Entity
         public short EaseFactorInPermille { get; set; }
         public short TimeFromSeeingQuestionToScoreInSecondsMinus32768 { get; set; }
 
-        [ForeignKey("UserId,ConceptInstanceId,CardTemplateId")]
+        [ForeignKey("UserId,CardId")]
         [InverseProperty("Histories")]
         public virtual AcquiredCardEntity AcquiredCard { get; set; }
     }

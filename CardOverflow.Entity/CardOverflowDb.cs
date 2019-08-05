@@ -55,11 +55,15 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<AcquiredCardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
+                entity.HasKey(e => new { e.UserId, e.CardId });
 
                 entity.HasIndex(e => e.CardOptionId);
 
-                entity.HasIndex(e => new { e.ConceptInstanceId, e.CardTemplateId });
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.AcquiredCards)
+                    .HasForeignKey(d => d.CardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_AcquiredCard_Card");
 
                 entity.HasOne(d => d.CardOption)
                     .WithMany(p => p.AcquiredCards)
@@ -72,19 +76,15 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_AcquiredCard_User");
-
-                entity.HasOne(d => d.Card)
-                    .WithMany(p => p.AcquiredCards)
-                    .HasForeignKey(d => new { d.ConceptInstanceId, d.CardTemplateId })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_AcquiredCard_Card");
             });
 
             modelBuilder.Entity<CardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.ConceptInstanceId, e.CardTemplateId });
-
                 entity.HasIndex(e => e.CardTemplateId);
+
+                entity.HasIndex(e => new { e.ConceptInstanceId, e.CardTemplateId, e.ClozeIndex })
+                    .HasName("AK_Card")
+                    .IsUnique();
 
                 entity.HasOne(d => d.CardTemplate)
                     .WithMany(p => p.Cards)
@@ -291,11 +291,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
-                entity.HasIndex(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
-
                 entity.HasOne(d => d.AcquiredCard)
                     .WithMany(p => p.Histories)
-                    .HasForeignKey(d => new { d.UserId, d.ConceptInstanceId, d.CardTemplateId })
+                    .HasForeignKey(d => new { d.UserId, d.CardId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_History_AcquiredCard");
             });
@@ -315,9 +313,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<PrivateTag_AcquiredCardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.PrivateTagId, e.ConceptInstanceId, e.CardTemplateId, e.UserId });
-
-                entity.HasIndex(e => new { e.UserId, e.ConceptInstanceId, e.CardTemplateId });
+                entity.HasKey(e => new { e.PrivateTagId, e.UserId, e.CardId });
 
                 entity.HasOne(d => d.PrivateTag)
                     .WithMany(p => p.PrivateTag_AcquiredCards)
@@ -327,7 +323,7 @@ namespace CardOverflow.Entity
 
                 entity.HasOne(d => d.AcquiredCard)
                     .WithMany(p => p.PrivateTag_AcquiredCards)
-                    .HasForeignKey(d => new { d.UserId, d.ConceptInstanceId, d.CardTemplateId })
+                    .HasForeignKey(d => new { d.UserId, d.CardId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PrivateTag_AcquiredCard_AcquiredCard");
             });

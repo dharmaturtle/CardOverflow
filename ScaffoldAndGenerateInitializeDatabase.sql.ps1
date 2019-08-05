@@ -59,7 +59,6 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     -replace [regex] ".HasForeignKey<CardOption>\(d => d.UserId\)", ".HasForeignKey(d => d.UserId)" `
     -replace [regex] "(?m)#warning.*?\n", "" `
     -replace [regex] "optionsBuilder.Use.*", "throw new ArgumentOutOfRangeException();" `
-    -replace [regex] "entity.HasOne\(d => d.C\)", "entity.HasOne(d => d.Card)" `
     -replace [regex] "(?sm)modelBuilder\.HasAnnotation\(\`"ProductVersion.*?  +", "" |
     Set-Content $file.PSPath
 }
@@ -67,9 +66,6 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
     Replace-TextInFile $file.FullName "InversePrimaryChild" "InversePrimaryChild_UseParentInstead"
 }
-
-Replace-TextInFile (Get-Item "CardOverflow.Entity\AcquiredCardEntity.cs").FullName "public virtual CardEntity C" "public virtual CardEntity Card"
-Replace-TextInFile (Get-Item "CardOverflow.Entity\CardEntity.cs").FullName 'InverseProperty\("C"\)' 'InverseProperty("Card")'
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\UserEntity.cs") {
     (Get-Content $file.PSPath -Raw) `

@@ -12,8 +12,10 @@ namespace CardOverflow.Entity
             AcquiredCards = new HashSet<AcquiredCardEntity>();
         }
 
+        public int Id { get; set; }
         public int ConceptInstanceId { get; set; }
         public int CardTemplateId { get; set; }
+        public byte? ClozeIndex { get; set; }
 
         [ForeignKey("CardTemplateId")]
         [InverseProperty("Cards")]

@@ -14,8 +14,7 @@ namespace CardOverflow.Entity
         }
 
         public int UserId { get; set; }
-        public int ConceptInstanceId { get; set; }
-        public int CardTemplateId { get; set; }
+        public int CardId { get; set; }
         public byte MemorizationState { get; set; }
         public byte CardState { get; set; }
         public byte LapseCount { get; set; }
@@ -26,7 +25,7 @@ namespace CardOverflow.Entity
         public DateTime Due { get; set; }
         public int CardOptionId { get; set; }
 
-        [ForeignKey("ConceptInstanceId,CardTemplateId")]
+        [ForeignKey("CardId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardEntity Card { get; set; }
         [ForeignKey("CardOptionId")]
