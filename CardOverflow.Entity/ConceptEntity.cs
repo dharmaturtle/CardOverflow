@@ -19,7 +19,14 @@ namespace CardOverflow.Entity
         public int MaintainerId { get; set; }
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string Name {
+            get => _Name;
+            set {
+                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Name has a maximum length of 100. Attempted value: {value}");
+                _Name = value;
+            }
+        }
+        private string _Name;
 
         [ForeignKey("MaintainerId")]
         [InverseProperty("Concepts")]

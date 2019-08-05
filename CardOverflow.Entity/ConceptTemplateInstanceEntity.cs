@@ -18,7 +18,14 @@ namespace CardOverflow.Entity
         public int ConceptTemplateId { get; set; }
         [Required]
         [StringLength(1000)]
-        public string Css { get; set; }
+        public string Css {
+            get => _Css;
+            set {
+                if (value.Length > 1000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Css has a maximum length of 1000. Attempted value: {value}");
+                _Css = value;
+            }
+        }
+        private string _Css;
         [Column(TypeName = "smalldatetime")]
         public DateTime Created { get; set; }
         [Column(TypeName = "smalldatetime")]
@@ -26,10 +33,24 @@ namespace CardOverflow.Entity
         public bool IsCloze { get; set; }
         [Required]
         [StringLength(500)]
-        public string LatexPre { get; set; }
+        public string LatexPre {
+            get => _LatexPre;
+            set {
+                if (value.Length > 500) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and LatexPre has a maximum length of 500. Attempted value: {value}");
+                _LatexPre = value;
+            }
+        }
+        private string _LatexPre;
         [Required]
         [StringLength(500)]
-        public string LatexPost { get; set; }
+        public string LatexPost {
+            get => _LatexPost;
+            set {
+                if (value.Length > 500) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and LatexPost has a maximum length of 500. Attempted value: {value}");
+                _LatexPost = value;
+            }
+        }
+        private string _LatexPost;
         [Required]
         [MaxLength(32)]
         public byte[] AcquireHash { get; set; }

@@ -18,10 +18,24 @@ namespace CardOverflow.Entity
         public bool IsDefault { get; set; }
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string Name {
+            get => _Name;
+            set {
+                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Name has a maximum length of 100. Attempted value: {value}");
+                _Name = value;
+            }
+        }
+        private string _Name;
         [Required]
         [StringLength(100)]
-        public string NewCardsStepsInMinutes { get; set; }
+        public string NewCardsStepsInMinutes {
+            get => _NewCardsStepsInMinutes;
+            set {
+                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and NewCardsStepsInMinutes has a maximum length of 100. Attempted value: {value}");
+                _NewCardsStepsInMinutes = value;
+            }
+        }
+        private string _NewCardsStepsInMinutes;
         public short NewCardsMaxPerDay { get; set; }
         public byte NewCardsGraduatingIntervalInDays { get; set; }
         public byte NewCardsEasyIntervalInDays { get; set; }
@@ -35,7 +49,14 @@ namespace CardOverflow.Entity
         public bool MatureCardsBuryRelated { get; set; }
         [Required]
         [StringLength(100)]
-        public string LapsedCardsStepsInMinutes { get; set; }
+        public string LapsedCardsStepsInMinutes {
+            get => _LapsedCardsStepsInMinutes;
+            set {
+                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and LapsedCardsStepsInMinutes has a maximum length of 100. Attempted value: {value}");
+                _LapsedCardsStepsInMinutes = value;
+            }
+        }
+        private string _LapsedCardsStepsInMinutes;
         public short LapsedCardsNewIntervalFactorInPermille { get; set; }
         public byte LapsedCardsMinimumIntervalInDays { get; set; }
         public byte LapsedCardsLeechThreshold { get; set; }

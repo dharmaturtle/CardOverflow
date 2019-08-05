@@ -11,7 +11,14 @@ namespace CardOverflow.Entity
         public int FieldId { get; set; }
         [Required]
         [StringLength(500)]
-        public string Value { get; set; }
+        public string Value {
+            get => _Value;
+            set {
+                if (value.Length > 500) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Value has a maximum length of 500. Attempted value: {value}");
+                _Value = value;
+            }
+        }
+        private string _Value;
 
         [ForeignKey("ConceptInstanceId")]
         [InverseProperty("FieldValues")]

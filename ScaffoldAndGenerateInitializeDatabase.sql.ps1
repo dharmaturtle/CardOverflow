@@ -79,4 +79,16 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\UserEntity.cs") {
     Set-Content $file.PSPath
 }
 
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
+    Replace-TextInFile $file.FullName "\[StringLength\((\d+)\)\]\s+public string (\S+) { get; set; }" '[StringLength($1)]
+        public string $2 {
+            get => _$2;
+            set {
+                if (value.Length > $1) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and $2 has a maximum length of $1. Attempted value: {value}");
+                _$2 = value;
+            }
+        }
+        private string _$2;'
+}
+
 Read-Host -Prompt “Press Enter to exit”

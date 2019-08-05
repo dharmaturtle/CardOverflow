@@ -27,7 +27,14 @@ namespace CardOverflow.Entity
 
         //[Required] // medTODO make this not nullable
         [StringLength(32)]
-        public string DisplayName { get; set; }
+        public string DisplayName {
+            get => _DisplayName;
+            set {
+                if (value.Length > 32) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and DisplayName has a maximum length of 32. Attempted value: {value}");
+                _DisplayName = value;
+            }
+        }
+        private string _DisplayName;
 
         [InverseProperty("User")]
         public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
