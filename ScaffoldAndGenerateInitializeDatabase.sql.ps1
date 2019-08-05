@@ -2,7 +2,7 @@ $connectionString = "Server=localhost;Database=CardOverflow;User Id=localsa;"
 
 mssql-scripter --connection-string $connectionString --schema-and-data --file-path ./InitializeDatabase.sql
 # If the above has problems, consider using --check-for-existence https://github.com/Microsoft/mssql-scripter
-(((Get-Content -Raw InitializeDatabase.sql) -replace " +S[\w: \/]+\*{6}\/"," ******/") -replace " CONTAINMENT[^?]*?GO", "GO") -replace "\[varbinary\]\(32\)", "[binary](32)" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
+((((Get-Content -Raw InitializeDatabase.sql) -replace " +S[\w: \/]+\*{6}\/"," ******/") -replace " CONTAINMENT[^?]*?GO", "GO") -replace "\[varbinary\]\(32\)", "[binary](32)") -replace "WHERE \(\[ClozeIndex\] IS NOT NULL\)", "" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
 
 function Replace-TextInFile {
     Param(
@@ -47,6 +47,7 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOptionEntity.cs")
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     (Get-Content $file.PSPath -Raw) `
+    -replace [regex] '\s+.HasFilter\("\(\[ClozeIndex\] IS NOT NULL\)"\)', "" `
     -replace [regex] "(?sm)using Microsoft.EntityFrameworkCore.Metadata;", "using Microsoft.EntityFrameworkCore.Metadata;`r`nusing Microsoft.AspNetCore.Identity;`r`nusing Microsoft.AspNetCore.Identity.EntityFrameworkCore;" `
     -replace [regex] "public partial class CardOverflowDb : DbContext", "public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int>" `
     -replace [regex] "(?sm)\s+public virtual DbSet<AspNetRoleClaimsEntity>.*?AspNetUserTokens.*?\}", "" `

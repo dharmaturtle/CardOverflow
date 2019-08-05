@@ -840,9 +840,9 @@ INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordina
 SET IDENTITY_INSERT [dbo].[Field] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'6536d110-4a5b-4e57-8b26-dae826475b48', NULL, 0, 0, NULL, 0, 0, N'Admin')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'33ba9998-5406-442b-ba3f-a3c289e9e5dd', NULL, 0, 0, NULL, 0, 0, N'The Collective')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'5544676f-588a-45ac-af02-6f100c61ac10', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'3cb002ab-17d6-453f-860a-f86feb7e08d5', NULL, 0, 0, NULL, 0, 0, N'Admin')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'79d35774-8255-4459-a7b2-76c6d28682f6', NULL, 0, 0, NULL, 0, 0, N'The Collective')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'61eebfe3-e552-4f00-9e3f-877d8dade807', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
 SET IDENTITY_INSERT [dbo].[User] OFF
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 1, 2)
 INSERT [dbo].[User_ConceptTemplateInstance] ([UserId], [ConceptTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 2, 2)
@@ -902,6 +902,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_Card] ON [dbo].[Card]
 	[CardTemplateId] ASC,
 	[ClozeIndex] ASC
 )
+
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Card_CardTemplateId] ******/
