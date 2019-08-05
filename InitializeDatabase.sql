@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -272,10 +272,10 @@ GO
 CREATE TABLE [dbo].[CardTemplate](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [nvarchar](100) NOT NULL,
-	[QuestionTemplate] [nvarchar](500) NOT NULL,
-	[AnswerTemplate] [nvarchar](500) NOT NULL,
-	[ShortQuestionTemplate] [nvarchar](100) NOT NULL,
-	[ShortAnswerTemplate] [nvarchar](100) NOT NULL,
+	[QuestionTemplate] [nvarchar](2000) NOT NULL,
+	[AnswerTemplate] [nvarchar](2000) NOT NULL,
+	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
+	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
 	[ConceptTemplateInstanceId] [int] NOT NULL,
 	[Ordinal] [tinyint] NOT NULL,
  CONSTRAINT [PK_CardTemplate] PRIMARY KEY CLUSTERED 
@@ -430,13 +430,13 @@ GO
 CREATE TABLE [dbo].[FieldValue](
 	[ConceptInstanceId] [int] NOT NULL,
 	[FieldId] [int] NOT NULL,
-	[Value] [nvarchar](500) NOT NULL,
+	[Value] [nvarchar](max) NOT NULL,
  CONSTRAINT [PK_FieldValue] PRIMARY KEY CLUSTERED 
 (
 	[ConceptInstanceId] ASC,
 	[FieldId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[File] ******/
 SET ANSI_NULLS ON

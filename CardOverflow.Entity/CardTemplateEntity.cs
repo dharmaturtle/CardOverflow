@@ -24,41 +24,41 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         [Required]
-        [StringLength(500)]
+        [StringLength(2000)]
         public string QuestionTemplate {
             get => _QuestionTemplate;
             set {
-                if (value.Length > 500) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionTemplate has a maximum length of 500. Attempted value: {value}");
+                if (value.Length > 2000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionTemplate has a maximum length of 2000. Attempted value: {value}");
                 _QuestionTemplate = value;
             }
         }
         private string _QuestionTemplate;
         [Required]
-        [StringLength(500)]
+        [StringLength(2000)]
         public string AnswerTemplate {
             get => _AnswerTemplate;
             set {
-                if (value.Length > 500) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerTemplate has a maximum length of 500. Attempted value: {value}");
+                if (value.Length > 2000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerTemplate has a maximum length of 2000. Attempted value: {value}");
                 _AnswerTemplate = value;
             }
         }
         private string _AnswerTemplate;
         [Required]
-        [StringLength(100)]
+        [StringLength(200)]
         public string ShortQuestionTemplate {
             get => _ShortQuestionTemplate;
             set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortQuestionTemplate has a maximum length of 100. Attempted value: {value}");
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortQuestionTemplate has a maximum length of 200. Attempted value: {value}");
                 _ShortQuestionTemplate = value;
             }
         }
         private string _ShortQuestionTemplate;
         [Required]
-        [StringLength(100)]
+        [StringLength(200)]
         public string ShortAnswerTemplate {
             get => _ShortAnswerTemplate;
             set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortAnswerTemplate has a maximum length of 100. Attempted value: {value}");
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortAnswerTemplate has a maximum length of 200. Attempted value: {value}");
                 _ShortAnswerTemplate = value;
             }
         }
