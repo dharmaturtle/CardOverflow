@@ -87,3 +87,27 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     Seq.zip expected actual
     |> Seq.iter Assert.Equal
     Assert.Equal<string list> (expected, actual)
+
+//[<Fact>]
+let ``Manual Anki import`` () =
+    let userId = 3
+    let pathToCollection = @""
+    
+    use c = new TestContainer()
+    let db = c.Db
+    
+    //use c = new Container()
+    //c.RegisterStuff
+    //c.RegisterStandardConnectionString
+    //use __ = AsyncScopedLifestyle.BeginScope c
+    //let db = c.GetInstance<CardOverflowDb>()
+    
+    let ankiDb =
+        AnkiImporter.getSimpleAnkiDb
+        |> using(ankiDb pathToCollection "Manual Anki import")
+    pathToCollection
+    |> AnkiImporter.loadFiles (fun sha256 -> db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
+    |> Result.bind (AnkiImporter.save db ankiDb userId)
+    |> function
+    | Ok () -> ()
+    | Error x -> failwith x

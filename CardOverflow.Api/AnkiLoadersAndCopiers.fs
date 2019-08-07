@@ -131,12 +131,13 @@ type AnkiAcquiredCard = {
         entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
         entity.StepsIndex <- Option.toNullable this.StepsIndex
         entity.Due <- this.Due
-    member this.CopyToNew (privateTags: PrivateTagEntity seq) =
+    member this.CopyToNew (privateTags: PrivateTagEntity seq) clozeIndex =
         let entity = AcquiredCardEntity ()
         this.CopyTo entity
         entity.Card <- CardEntity (
             ConceptInstance = this.ConceptInstance,
-            CardTemplate = this.CardTemplate
+            CardTemplate = this.CardTemplate,
+            ClozeIndex = clozeIndex
         )
         entity.CardOption <- this.CardOption
         entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
@@ -200,25 +201,29 @@ module Anki =
                 | 2L -> Ok Mature
                 | 3L -> Ok Mature
                 | _ -> Error <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type
-            let history = {
-                AcquiredCard = cardByAnkiId.[revLog.Cid]
-                EaseFactorInPermille = int16 revLog.Factor
-                IntervalNegativeIsMinutesPositiveIsDays =
-                    match revLog.Ivl with
-                    | p when p > 0L -> int16 p // positive is days
-                    | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
-                Score = score |> Score.toDb
-                MemorizationState =memorizationState |> MemorizationState.toDb
-                TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
-                    revLog.Time / 1000L - 32768L |> int16
-                Timestamp =
-                    DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
-            }
             return
-                getHistory history
-                |> function
-                | Some x -> x
-                | None -> history.CopyToNew
+                if cardByAnkiId.ContainsKey revLog.Cid // veryLowTODO report/log this, sometimes a user reviews a card then deletes it, but Anki keeps the orphaned revlog
+                then
+                    let history = {
+                        AcquiredCard = cardByAnkiId.[revLog.Cid]
+                        EaseFactorInPermille = int16 revLog.Factor
+                        IntervalNegativeIsMinutesPositiveIsDays =
+                            match revLog.Ivl with
+                            | p when p > 0L -> int16 p // positive is days
+                            | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
+                        Score = score |> Score.toDb
+                        MemorizationState = memorizationState |> MemorizationState.toDb
+                        TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
+                            revLog.Time / 1000L - 32768L |> int16
+                        Timestamp =
+                            DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
+                    }
+                    getHistory history
+                    |> function
+                    | Some x -> x
+                    | None -> history.CopyToNew
+                    |> Some
+                else None
         }
 
     let ankiIntToBool =
@@ -303,7 +308,7 @@ module Anki =
             })
         |> Decode.keyValuePairs
         |> Decode.fromString
-    type ImgRegex = Regex< """<img src="(?<ankiFileName>.+?)">""" >
+    type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
     type SoundRegex = Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
     let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
         (([], field, []), ImgRegex().TypedMatches field)
@@ -397,6 +402,15 @@ module Anki =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
+        let cti = concept.FieldValues.First().Field.ConceptTemplateInstance
+        let cardTemplate, clozeIndex =
+            if cti.IsCloze
+            then
+                cti.CardTemplates.Single() // medTODO test the case of multiple clozes; it should create a separate card for each cloze
+                , ankiCard.Ord |> byte |> Nullable
+            else
+                cti.CardTemplates.First(fun x -> x.Ordinal = byte ankiCard.Ord)
+                , Nullable()
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
@@ -408,7 +422,7 @@ module Anki =
                 let c: AnkiAcquiredCard =
                     { UserId = userId
                       ConceptInstance = concept
-                      CardTemplate = concept.FieldValues.First().Field.ConceptTemplateInstance.CardTemplates.First(fun x -> x.Ordinal = byte ankiCard.Ord)
+                      CardTemplate = cardTemplate
                       MemorizationState = memorizationState
                       CardState =
                         match ankiCard.Queue with
@@ -441,13 +455,19 @@ module Anki =
                         | New -> DateTime.UtcNow.Date
                         | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
                         | Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                        | Mature -> colCreateDate + TimeSpan.FromDays(float ankiCard.Due)
+                        | Mature ->
+                            if ankiCard.Odue = 0L
+                            then ankiCard.Due
+                            else ankiCard.Odue
+                            |> float
+                            |> TimeSpan.FromDays
+                            |> (+) colCreateDate
                       CardOption = cardOption }
                 getCard c
                 |> function
                 | Some entity ->
                     c.CopyTo entity
                     entity
-                | None -> c.CopyToNew (deckTag :: List.ofSeq tags)
+                | None -> c.CopyToNew (deckTag :: List.ofSeq tags) clozeIndex
             (ankiCard.Id, entity)
         )

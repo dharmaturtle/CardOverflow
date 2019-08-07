@@ -152,7 +152,7 @@ module AnkiImporter =
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory) |> Result.consolidate
-            return (cardByAnkiId |> Map.overValue id, histories)
+            return (cardByAnkiId |> Map.overValue id, histories |> Seq.choose id)
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
