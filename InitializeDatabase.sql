@@ -445,7 +445,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[File](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[FileName] [nvarchar](100) NOT NULL,
+	[FileName] [nvarchar](200) NOT NULL,
 	[Data] [varbinary](max) NOT NULL,
 	[Sha256] [binary](32) NOT NULL,
  CONSTRAINT [PK_File] PRIMARY KEY CLUSTERED 

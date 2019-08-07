@@ -14,11 +14,11 @@ namespace CardOverflow.Entity
 
         public int Id { get; set; }
         [Required]
-        [StringLength(100)]
+        [StringLength(200)]
         public string FileName {
             get => _FileName;
             set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and FileName has a maximum length of 100. Attempted value: {value}");
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and FileName has a maximum length of 200. Attempted value: {value}");
                 _FileName = value;
             }
         }
