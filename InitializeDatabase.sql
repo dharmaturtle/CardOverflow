@@ -295,6 +295,7 @@ CREATE TABLE [dbo].[CommentConcept](
 	[UserId] [int] NOT NULL,
 	[Text] [nvarchar](500) NOT NULL,
 	[Created] [smalldatetime] NOT NULL,
+	[IsDmca] [bit] NOT NULL,
  CONSTRAINT [PK_CommentConcept] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -312,6 +313,7 @@ CREATE TABLE [dbo].[CommentConceptTemplate](
 	[UserId] [int] NOT NULL,
 	[Text] [nvarchar](500) NOT NULL,
 	[Created] [smalldatetime] NOT NULL,
+	[IsDmca] [bit] NOT NULL,
  CONSTRAINT [PK_CommentConceptTemplate] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -344,6 +346,7 @@ CREATE TABLE [dbo].[ConceptInstance](
 	[Modified] [smalldatetime] NULL,
 	[ConceptId] [int] NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
+	[IsDmca] [bit] NOT NULL,
  CONSTRAINT [PK_ConceptInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -373,13 +376,14 @@ GO
 CREATE TABLE [dbo].[ConceptTemplateInstance](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[ConceptTemplateId] [int] NOT NULL,
-	[Css] [varchar](1000) NOT NULL,
+	[Css] [varchar](2000) NOT NULL,
 	[Created] [smalldatetime] NOT NULL,
 	[Modified] [smalldatetime] NULL,
 	[IsCloze] [bit] NOT NULL,
 	[LatexPre] [nvarchar](500) NOT NULL,
 	[LatexPost] [nvarchar](500) NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
+	[IsDmca] [bit] NOT NULL,
  CONSTRAINT [PK_ConceptTemplateInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -741,7 +745,7 @@ INSERT [dbo].[ConceptTemplate] ([Id], [MaintainerId], [Name]) VALUES (5, 2, N'Cl
 SET IDENTITY_INSERT [dbo].[ConceptTemplate] OFF
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] ON 
 
-INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (1, 1, N'.card {
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca]) VALUES (1, 1, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -755,8 +759,8 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x60493569DF91D284A8C43CF4FCA5DAC826BD7A98F778616298E2BB10ED95378A)
-INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (2, 2, N'.card {
+', N'\end{document}', 0x60493569DF91D284A8C43CF4FCA5DAC826BD7A98F778616298E2BB10ED95378A, 0)
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca]) VALUES (2, 2, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -770,8 +774,8 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x4643599FEF0CECFBADB3DA654DA2B0587B89DE0DCAFBE04537768AAB0ECA3316)
-INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (3, 3, N'.card {
+', N'\end{document}', 0x4643599FEF0CECFBADB3DA654DA2B0587B89DE0DCAFBE04537768AAB0ECA3316, 0)
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca]) VALUES (3, 3, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -785,8 +789,8 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x037F71E478A4286CA3CF5C50044B0CF5017BBF77C47CDA99F4FAB5873656B608)
-INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (4, 4, N'.card {
+', N'\end{document}', 0x037F71E478A4286CA3CF5C50044B0CF5017BBF77C47CDA99F4FAB5873656B608, 0)
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca]) VALUES (4, 4, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -800,8 +804,8 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0xA18D04E6E681021987B7BB9B6F4D2247A8CF479B2CFBA276C9E3E49D8EE253E8)
-INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash]) VALUES (5, 5, N'.card {
+', N'\end{document}', 0xA18D04E6E681021987B7BB9B6F4D2247A8CF479B2CFBA276C9E3E49D8EE253E8, 0)
+INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca]) VALUES (5, 5, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -822,7 +826,7 @@ INSERT [dbo].[ConceptTemplateInstance] ([Id], [ConceptTemplateId], [Css], [Creat
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x41F84217C80C0918F95729E8704B7C5288630B2217C6E1D7D4C7BB4933C8D5FC)
+', N'\end{document}', 0x41F84217C80C0918F95729E8704B7C5288630B2217C6E1D7D4C7BB4933C8D5FC, 0)
 SET IDENTITY_INSERT [dbo].[ConceptTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[Field] ON 
 
@@ -1143,6 +1147,14 @@ CREATE NONCLUSTERED INDEX [IX_Vote_ConceptTemplate_UserId] ON [dbo].[Vote_Concep
 (
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[CommentConcept] ADD  CONSTRAINT [DF_CommentConcept_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
+GO
+ALTER TABLE [dbo].[CommentConceptTemplate] ADD  CONSTRAINT [DF_CommentConceptTemplate_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
+GO
+ALTER TABLE [dbo].[ConceptInstance] ADD  CONSTRAINT [DF_ConceptInstance_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
+GO
+ALTER TABLE [dbo].[ConceptTemplateInstance] ADD  CONSTRAINT [DF_ConceptTemplateInstance_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
 GO
 ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_Card] FOREIGN KEY([CardId])
 REFERENCES [dbo].[Card] ([Id])

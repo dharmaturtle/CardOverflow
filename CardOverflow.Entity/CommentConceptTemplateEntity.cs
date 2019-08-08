@@ -27,6 +27,7 @@ namespace CardOverflow.Entity
         private string _Text;
         [Column(TypeName = "smalldatetime")]
         public DateTime Created { get; set; }
+        public bool IsDmca { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("CommentConceptTemplates")]

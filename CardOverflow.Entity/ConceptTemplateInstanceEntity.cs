@@ -17,11 +17,11 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public int ConceptTemplateId { get; set; }
         [Required]
-        [StringLength(1000)]
+        [StringLength(2000)]
         public string Css {
             get => _Css;
             set {
-                if (value.Length > 1000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Css has a maximum length of 1000. Attempted value: {value}");
+                if (value.Length > 2000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Css has a maximum length of 2000. Attempted value: {value}");
                 _Css = value;
             }
         }
@@ -54,6 +54,7 @@ namespace CardOverflow.Entity
         [Required]
         [MaxLength(32)]
         public byte[] AcquireHash { get; set; }
+        public bool IsDmca { get; set; }
 
         [ForeignKey("ConceptTemplateId")]
         [InverseProperty("ConceptTemplateInstances")]

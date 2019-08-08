@@ -23,6 +23,7 @@ namespace CardOverflow.Entity
         [Required]
         [MaxLength(32)]
         public byte[] AcquireHash { get; set; }
+        public bool IsDmca { get; set; }
 
         [ForeignKey("ConceptId")]
         [InverseProperty("ConceptInstances")]
