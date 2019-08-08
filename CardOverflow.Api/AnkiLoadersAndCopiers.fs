@@ -10,8 +10,7 @@ open LoadersAndCopiers
 open Thoth.Json.Net
 open Microsoft.FSharp.Core.Operators.Checked
 open System.Collections.Generic
-open CardOverflow.Debug
-open MappingTools
+open Helpers
 open FsToolkit.ErrorHandling
 open System.Security.Cryptography
 
@@ -248,7 +247,7 @@ module Anki =
               MatureCardsEaseFactorEasyBonusFactor = get.Required.At ["rev"; "ease4"] Decode.float
               MatureCardsIntervalFactor = get.Required.At ["rev"; "ivlFct"] Decode.float
               MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> TimeSpanInt16.fromDays
-              MatureCardsHardInterval = get.Required.At ["rev"; "hardFactor"] Decode.float
+              MatureCardsHardInterval = get.Optional.At ["rev"; "hardFactor"] Decode.float |? 1.2
               MatureCardsBuryRelated = get.Required.At ["rev"; "bury"] Decode.bool
               LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
               LapsedCardsNewIntervalFactor = get.Required.At ["lapse"; "mult"] Decode.float

@@ -1008,3 +1008,15 @@ type AnkiTestContainer(ankiFileName: string, [<CallerMemberName>] ?memberName: s
         container.Db
     member __.AnkiDb () =
         ankiDb ankiFileName memberName.Value
+
+type AllAnkiCols () =
+    inherit XunitClassDataBase
+        ([  [|"basic"; """{"1": {"name": "Default", "replayq": true, "lapse": {"leechFails": 8, "minInt": 1, "delays": [10], "leechAction": 0, "mult": 0.0}, "rev": {"ivlFct": 1.0, "perDay": 200, "hardFactor": 1.2, "maxIvl": 36500, "minSpace": 1, "ease4": 1.3, "bury": false, "fuzz": 0.05}, "timer": 0, "dyn": false, "maxTaken": 60, "usn": 2207, "new": {"separate": true, "delays": [1, 10], "perDay": 20, "ints": [1, 4, 7], "initialFactor": 2500, "bury": true, "order": 1}, "autoplay": true, "id": 1, "mod": 1556388151}}""" |]
+            [|"lightyear"; """{"1": {"name": "Default", "replayq": true, "lapse": {"leechFails": 8, "minInt": 1, "delays": [10], "leechAction": 0, "mult": 0}, "rev": {"perDay": 100, "fuzz": 0.05, "ivlFct": 1, "maxIvl": 36500, "ease4": 1.3, "bury": true, "minSpace": 1}, "timer": 0, "maxTaken": 60, "usn": 0, "new": {"perDay": 20, "delays": [1, 10], "separate": true, "ints": [1, 4, 7], "initialFactor": 2500, "bury": true, "order": 1}, "mod": 0, "id": 1, "autoplay": true}}""" |] ])
+
+[<Theory>]
+[<ClassData(typeof<AllAnkiCols>)>]
+let ``parseCardOptions`` title col =
+    Anki.parseCardOptions col
+    |> Result.isOk
+    |> Assert.True
