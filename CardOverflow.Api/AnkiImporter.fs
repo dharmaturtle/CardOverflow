@@ -144,7 +144,25 @@ module AnkiImporter =
                     fileEntityByAnkiFileName
                     getConcept
                     ankiDb.Notes
-            let conceptsAndTagsByAnkiId = conceptsAndTagsByAnkiId |> Map.ofList
+            let conceptsAndTagsByAnkiId =
+                let duplicates =
+                    conceptsAndTagsByAnkiId
+                    |> Seq.groupBy(fun (_, (c, _)) -> c.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
+                    |> Seq.filter(fun (_, x) -> x.Count() > 1)
+                    |> Seq.collect(fun (_, x) -> 
+                        let tags = x.SelectMany(fun (_, (_, tags)) -> tags)
+                        let ankiIds = x.Select(fun (ankiId, _) -> ankiId)
+                        let (_, (concept, _)) = x.First()
+                        concept.Created <- x.Select(fun (_, (c, _)) -> c.Created).Min()
+                        concept.Modified <- x.Select(fun (_, (c, _)) -> c.Modified).Max()
+                        ankiIds |> Seq.map (fun x -> (x, (concept, tags)))
+                    ) |> Map.ofSeq
+                conceptsAndTagsByAnkiId
+                |> Seq.map (fun (ankiId, tuple) ->
+                    if duplicates.ContainsKey ankiId
+                    then (ankiId, duplicates.[ankiId])
+                    else (ankiId, tuple)
+                ) |> Map.ofSeq
             let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards

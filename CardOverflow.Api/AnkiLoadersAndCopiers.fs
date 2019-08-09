@@ -133,14 +133,25 @@ type AnkiAcquiredCard = {
     member this.CopyToNew (privateTags: PrivateTagEntity seq) clozeIndex =
         let entity = AcquiredCardEntity ()
         this.CopyTo entity
-        entity.Card <- CardEntity (
-            ConceptInstance = this.ConceptInstance,
-            CardTemplate = this.CardTemplate,
-            ClozeIndex = clozeIndex
-        )
-        entity.CardOption <- this.CardOption
-        entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
-        entity
+        this.ConceptInstance.Cards
+        |> Seq.filter (fun c -> c.CardTemplate = this.CardTemplate && c.ClozeIndex = clozeIndex)
+        |> Seq.tryExactlyOne
+        |> function
+        | Some card ->
+            card.AcquiredCards.Single()
+        | None ->
+            let card =
+                CardEntity (
+                    ConceptInstance = this.ConceptInstance,
+                    CardTemplate = this.CardTemplate,
+                    ClozeIndex = clozeIndex,
+                    AcquiredCards = [entity].ToList()
+                )
+            this.ConceptInstance.Cards.Add card
+            entity.Card <- card
+            entity.CardOption <- this.CardOption
+            entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
+            entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCard.FirstOrDefault(fun c -> 
             this.UserId = c.UserId &&
@@ -408,7 +419,7 @@ module Anki =
                 cti.CardTemplates.Single() // medTODO test the case of multiple clozes; it should create a separate card for each cloze
                 , ankiCard.Ord |> byte |> Nullable
             else
-                cti.CardTemplates.First(fun x -> x.Ordinal = byte ankiCard.Ord)
+                cti.CardTemplates.Single(fun x -> x.Ordinal = byte ankiCard.Ord)
                 , Nullable()
         match ankiCard.Type with
         | 0L -> Ok New

@@ -88,6 +88,15 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     |> Seq.iter Assert.Equal
     Assert.Equal<string list> (expected, actual)
 
+[<Fact>]
+let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
+    let userId = 3
+    use c = new TestContainer()
+    AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
+    |> function
+    | Ok () -> ()
+    | Error x -> failwith x
+
 //[<Fact>]
 let ``Manual Anki import`` () =
     let userId = 3

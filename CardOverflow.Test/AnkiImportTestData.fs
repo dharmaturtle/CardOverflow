@@ -1020,3 +1020,118 @@ let ``parseCardOptions`` title col =
     Anki.parseCardOptions col
     |> Result.isOk
     |> Assert.True
+
+let duplicatesFromLightyear =
+    {
+        Cards = [
+            CardEntity(
+                Id = 1520552885002L,
+                Nid = 1520552858412L,
+                Did = 1565233621290L,
+                Ord = 0L,
+                Mod = 1565233621L,
+                Usn = -1L,
+                Type = 0L,
+                Queue = 0L,
+                Due = 11526L,
+                Ivl = 0L,
+                Factor = 2500L,
+                Reps = 0L,
+                Lapses = 0L,
+                Left = 1001L,
+                Odue = 0L,
+                Odid = 0L,
+                Flags = 0L,
+                Data = "")
+            CardEntity(
+                Id = 1521639929120L,
+                Nid = 1521639926507L,
+                Did = 1565233621290L,
+                Ord = 0L,
+                Mod = 1565233621L,
+                Usn = -1L,
+                Type = 0L,
+                Queue = 0L,
+                Due = 12585L,
+                Ivl = 0L,
+                Factor = 2500L,
+                Reps = 0L,
+                Lapses = 0L,
+                Left = 1001L,
+                Odue = 0L,
+                Odid = 0L,
+                Flags = 0L,
+                Data = "")
+            CardEntity(
+                Id = 1522269365967L,
+                Nid = 1522269363931L,
+                Did = 1565233621290L,
+                Ord = 0L,
+                Mod = 1565233621L,
+                Usn = -1L,
+                Type = 0L,
+                Queue = 0L,
+                Due = 13327L,
+                Ivl = 0L,
+                Factor = 2500L,
+                Reps = 0L,
+                Lapses = 0L,
+                Left = 1001L,
+                Odue = 0L,
+                Odid = 0L,
+                Flags = 0L,
+                Data = "")]
+        Cols = [
+            ColEntity(
+                Id = 1L,
+                Crt = 1558170000L,
+                Mod = 1565233639633L,
+                Scm = 1565233639306L,
+                Ver = 11L,
+                Dty = 0L,
+                Usn = 0L,
+                Ls = 0L,
+                Conf = "{\"nextPos\": 1, \"estTimes\": true, \"activeDecks\": [1], \"sortType\": \"noteFld\", \"timeLim\": 0, \"sortBackwards\": false, \"addToCur\": true, \"curDeck\": 1, \"newBury\": true, \"newSpread\": 0, \"dueCounts\": true, \"curModel\": \"1565233639307\", \"collapseTime\": 1200}",
+                Models = "{\"1481327979421\": {\"vers\": [], \"name\": \"Basic-95fd5\", \"tags\": [], \"did\": 1529062737991, \"usn\": -1, \"req\": [[0, \"all\", [0]]], \"flds\": [{\"name\": \"Front\", \"media\": [], \"sticky\": false, \"rtl\": false, \"ord\": 0, \"font\": \"Arial\", \"size\": 20}, {\"name\": \"Back\", \"media\": [], \"sticky\": false, \"rtl\": false, \"ord\": 1, \"font\": \"Arial\", \"size\": 20}], \"sortf\": 0, \"tmpls\": [{\"name\": \"Card 1\", \"qfmt\": \"{{Front}}\", \"did\": null, \"bafmt\": \"\", \"afmt\": \"{{FrontSide}}\\n\\n<hr id=answer>\\n\\n{{Back}}\", \"ord\": 0, \"bqfmt\": \"\"}], \"mod\": 1565231941, \"latexPost\": \"\\\\end{document}\", \"type\": 0, \"id\": 1481327979421, \"css\": \".card {\\n font-family:Arial;\\n font-size: 20px;\\n text-align: center;\\n color: black;\\n background-color:#F2F6FF;\\n}\\n\\n.cloze {\\n font-weight: bold;\\n color: blue;\\n}\\n\\n.card:after {\\n    content: \\\"\\\";\\n    background: url(Logo.png);\\n    background-size: 80px;\\n    background-position: right bottom;\\n    background-repeat: no-repeat;\\n    background-color: ;\\n    opacity: 0.7;\\n    top: 0;\\n    left: 0;\\n    bottom: 0;\\n    right: 0;\\n    position: absolute;\\n    z-index: -1;     \\n}\", \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\begin{document}\\n\"}}",
+                Decks = "{\"1\": {\"desc\": \"\", \"name\": \"Default\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": false, \"newToday\": [0, 0], \"timeToday\": [0, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [0, 0], \"lrnToday\": [0, 0], \"id\": 1, \"mod\": 1565233638}, \"1565233621290\": {\"name\": \"duplicate cards\", \"extendRev\": 50, \"usn\": -1, \"collapsed\": false, \"browserCollapsed\": true, \"newToday\": [81, 0], \"timeToday\": [81, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [81, 0], \"lrnToday\": [81, 0], \"id\": 1565233621290, \"mod\": 1565233621, \"desc\": \"\"}}",
+                Dconf = "{\"1\": {\"name\": \"Default\", \"replayq\": true, \"lapse\": {\"leechFails\": 8, \"minInt\": 1, \"delays\": [10], \"leechAction\": 0, \"mult\": 0}, \"rev\": {\"perDay\": 200, \"fuzz\": 0.05, \"ivlFct\": 1, \"maxIvl\": 36500, \"ease4\": 1.3, \"bury\": false, \"minSpace\": 1}, \"timer\": 0, \"maxTaken\": 60, \"usn\": 0, \"new\": {\"perDay\": 20, \"delays\": [1, 10], \"separate\": true, \"ints\": [1, 4, 7], \"initialFactor\": 2500, \"bury\": false, \"order\": 1}, \"mod\": 0, \"id\": 1, \"autoplay\": true}}",
+                Tags = "{}")]
+        Notes = [
+            NoteEntity(
+                Id = 1520552858412L,
+                Guid = "PR(e2Y+qaE",
+                Mid = 1481327979421L,
+                Mod = 1521640339L,
+                Usn = -1L,
+                Tags = " Pathoma::Neoplasia::Tumor_Progression ",
+                Flds = "Which carcinomas spread hematogenously?<div>Follicular thyroid carcinoma</div><div>Choriocarcinoma</div><div>Renal cell carcinoma</div><div>Hepatocellular carcinoma</div><div><br /></div><div>Image here</div>",
+                Sfld = 0L,
+                Csum = 819872869L,
+                Flags = 0L,
+                Data = "")
+            NoteEntity(
+                Id = 1521639926507L,
+                Guid = "BO<KxLp7;%",
+                Mid = 1481327979421L,
+                Mod = 1524534523L,
+                Usn = -1L,
+                Tags = " bab::gastroenterology::clinical::livertumors ",
+                Flds = "Which carcinomas spread hematogenously?<div>Follicular thyroid carcinoma</div><div>Choriocarcinoma</div><div>Renal cell carcinoma</div><div>Hepatocellular carcinoma</div><div><br /></div><div>Image here</div>",
+                Sfld = 0L,
+                Csum = 819872869L,
+                Flags = 0L,
+                Data = "")
+            NoteEntity(
+                Id = 1522269363931L,
+                Guid = "oAIozlbsaq",
+                Mid = 1481327979421L,
+                Mod = 1524711255L,
+                Usn = -1L,
+                Tags = " bab::endocrinology::thyroid::thyroidcancer ",
+                Flds = "Which carcinomas spread hematogenously?<div>Follicular thyroid carcinoma</div><div>Choriocarcinoma</div><div>Renal cell carcinoma</div><div>Hepatocellular carcinoma</div><div><br /></div><div>Image here</div>",
+                Sfld = 0L,
+                Csum = 819872869L,
+                Flags = 0L,
+                Data = "")]
+        Revlogs = []
+    }
