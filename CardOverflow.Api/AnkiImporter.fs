@@ -151,11 +151,10 @@ module AnkiImporter =
                     |> Seq.filter(fun (_, x) -> x.Count() > 1)
                     |> Seq.collect(fun (_, x) -> 
                         let tags = x.SelectMany(fun (_, (_, tags)) -> tags)
-                        let ankiIds = x.Select(fun (ankiId, _) -> ankiId)
                         let (_, (concept, _)) = x.First()
-                        concept.Created <- x.Select(fun (_, (c, _)) -> c.Created).Min()
-                        concept.Modified <- x.Select(fun (_, (c, _)) -> c.Modified).Max()
-                        ankiIds |> Seq.map (fun x -> (x, (concept, tags)))
+                        concept.Created <- x.Min(fun (_, (c, _)) -> c.Created)
+                        concept.Modified <- x.Max(fun (_, (c, _)) -> c.Modified)
+                        x |> Seq.map (fun (ankiId, _) -> (ankiId, (concept, tags)))
                     ) |> Map.ofSeq
                 conceptsAndTagsByAnkiId
                 |> Seq.map (fun (ankiId, tuple) ->
