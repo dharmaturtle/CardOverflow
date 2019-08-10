@@ -32,7 +32,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Sanitation", "
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Pure", "CardOverflow.Pure\CardOverflow.Pure.fsproj", "{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardOverflow.Server", "CardOverflow.Server\CardOverflow.Server.csproj", "{C3FC9C5C-7EF8-4517-9D51-34E39E3A02B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardOverflow.Server", "CardOverflow.Server\CardOverflow.Server.csproj", "{C3FC9C5C-7EF8-4517-9D51-34E39E3A02B4}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CardOverflow.TestConsole", "CardOverflow.TestConsole\CardOverflow.TestConsole.fsproj", "{948D2E7C-E88D-4F30-8A0A-2B0CDD10FDDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -72,6 +74,10 @@ Global
 		{C3FC9C5C-7EF8-4517-9D51-34E39E3A02B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3FC9C5C-7EF8-4517-9D51-34E39E3A02B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3FC9C5C-7EF8-4517-9D51-34E39E3A02B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{948D2E7C-E88D-4F30-8A0A-2B0CDD10FDDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{948D2E7C-E88D-4F30-8A0A-2B0CDD10FDDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{948D2E7C-E88D-4F30-8A0A-2B0CDD10FDDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{948D2E7C-E88D-4F30-8A0A-2B0CDD10FDDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
