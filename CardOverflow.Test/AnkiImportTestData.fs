@@ -955,23 +955,6 @@ type AllDefaultTemplatesAndImageAndMp3 () =
             [|"AllDefaultTemplatesAndImageAndMp3.colpkg" ; allDefaultTemplatesAndImageAndMp3_colpkg |]
             [|"AllDefaultTemplatesAndImageAndMp3.apkg" ; allDefaultTemplatesAndImageAndMp3_apkg |] ])
 
-let fileEntityByAnkiFileName () =
-    [ ("png1.png", Array.init 32 (fun index -> index + index |> byte))
-      ("favicon.ico", Array.init 32 (fun index -> index * index |> byte))
-      ("bloop.wav", Array.init 32 (fun index -> index * index + index |> byte))
-    ] |> List.map (fun (name, hash) ->
-    (   name,
-        CardOverflow.Entity.FileEntity(
-            Sha256 = hash,
-            Data = Array.zeroCreate 0,
-            FileName = name
-        )
-    ))
-    |> fun files ->
-        let _, png1entity = files.[0]
-        ("png2.png", png1entity) :: files
-    |> Map.ofList
-
 let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
 
 let ankiDb ankiFileName callerMemberName =
