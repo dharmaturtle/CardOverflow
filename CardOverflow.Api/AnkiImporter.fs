@@ -211,7 +211,7 @@ module AnkiImporter =
                 then db.History.AddI x
                 //else db.Histories.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
-            db.SaveChangesI ()
+            db.SaveChangesI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
         }
         
 // lowTODO consider just generating a temporary guid code side to serve as a lookupID for the record types, then build the entities at the very end.
