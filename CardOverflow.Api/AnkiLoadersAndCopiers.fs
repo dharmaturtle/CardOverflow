@@ -416,7 +416,7 @@ module Anki =
         let cardTemplate, clozeIndex =
             if cti.IsCloze
             then
-                cti.CardTemplates.Single() // medTODO test the case of multiple clozes; it should create a separate card for each cloze
+                cti.CardTemplates.Single()
                 , ankiCard.Ord |> byte |> Nullable
             else
                 cti.CardTemplates.Single(fun x -> x.Ordinal = byte ankiCard.Ord)

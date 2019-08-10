@@ -102,6 +102,24 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     Assert.Equal("3/8/2018 23:47:38", c.Db.Card.Single().ConceptInstance.Created.ToString())
     Assert.Equal("4/26/2018 02:54:15", c.Db.Card.Single().ConceptInstance.Modified.ToString())
 
+[<Fact>]
+let ``MultipleClozeAndSingleClozeAndNoCloze has the right cloze indexes`` () =
+    let userId = 3
+    use c = new TestContainer()
+    AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoCloze userId Map.empty
+    |> function
+    | Ok () -> ()
+    | Error x -> failwith x
+    Assert.Equal<byte Nullable seq>(
+        [ 0uy; 1uy; 2uy; 3uy; 4uy] |> Seq.map Nullable,
+        c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "c5")).Cards.Select(fun x -> x.ClozeIndex).OrderBy(fun x -> x))
+    Assert.Equal(
+        Nullable 0uy,
+        c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis")).Cards.Single().ClozeIndex)
+    Assert.Equal(
+        Nullable(),
+        c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute")).Cards.Single().ClozeIndex)
+
 //[<Fact>]
 let ``Manual Anki import`` () =
     let userId = 3
