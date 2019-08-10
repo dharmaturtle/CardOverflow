@@ -150,7 +150,7 @@ module AnkiImporter =
                     |> Seq.groupBy(fun (_, (c, _)) -> c.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
                     |> Seq.filter(fun (_, x) -> x.Count() > 1)
                     |> Seq.collect(fun (_, x) -> 
-                        let tags = x.SelectMany(fun (_, (_, tags)) -> tags)
+                        let tags = x.SelectMany(fun (_, (_, tags)) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
                         let (_, (concept, _)) = x.First()
                         concept.Created <- x.Min(fun (_, (c, _)) -> c.Created)
                         concept.Modified <- x.Max(fun (_, (c, _)) -> c.Modified)
