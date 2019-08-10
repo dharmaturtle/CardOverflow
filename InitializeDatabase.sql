@@ -272,8 +272,8 @@ GO
 CREATE TABLE [dbo].[CardTemplate](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [nvarchar](100) NOT NULL,
-	[QuestionTemplate] [nvarchar](2000) NOT NULL,
-	[AnswerTemplate] [nvarchar](2000) NOT NULL,
+	[QuestionTemplate] [nvarchar](4000) NOT NULL,
+	[AnswerTemplate] [nvarchar](4000) NOT NULL,
 	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
 	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
 	[ConceptTemplateInstanceId] [int] NOT NULL,
@@ -376,7 +376,7 @@ GO
 CREATE TABLE [dbo].[ConceptTemplateInstance](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[ConceptTemplateId] [int] NOT NULL,
-	[Css] [varchar](2000) NOT NULL,
+	[Css] [varchar](4000) NOT NULL,
 	[Created] [smalldatetime] NOT NULL,
 	[Modified] [smalldatetime] NULL,
 	[IsCloze] [bit] NOT NULL,

@@ -17,11 +17,11 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public int ConceptTemplateId { get; set; }
         [Required]
-        [StringLength(2000)]
+        [StringLength(4000)]
         public string Css {
             get => _Css;
             set {
-                if (value.Length > 2000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Css has a maximum length of 2000. Attempted value: {value}");
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Css has a maximum length of 4000. Attempted value: {value}");
                 _Css = value;
             }
         }

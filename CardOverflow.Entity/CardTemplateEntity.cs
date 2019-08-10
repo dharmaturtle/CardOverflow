@@ -24,21 +24,21 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         [Required]
-        [StringLength(2000)]
+        [StringLength(4000)]
         public string QuestionTemplate {
             get => _QuestionTemplate;
             set {
-                if (value.Length > 2000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionTemplate has a maximum length of 2000. Attempted value: {value}");
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionTemplate has a maximum length of 4000. Attempted value: {value}");
                 _QuestionTemplate = value;
             }
         }
         private string _QuestionTemplate;
         [Required]
-        [StringLength(2000)]
+        [StringLength(4000)]
         public string AnswerTemplate {
             get => _AnswerTemplate;
             set {
-                if (value.Length > 2000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerTemplate has a maximum length of 2000. Attempted value: {value}");
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerTemplate has a maximum length of 4000. Attempted value: {value}");
                 _AnswerTemplate = value;
             }
         }
