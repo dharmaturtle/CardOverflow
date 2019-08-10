@@ -2,6 +2,7 @@ namespace CardOverflow.Api
 
 open FSharp.Text.RegexProvider
 open CardOverflow.Entity.Anki
+open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
 open System
@@ -321,22 +322,20 @@ module Anki =
     type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
     type SoundRegex = Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
     let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
-        (([], field, []), ImgRegex().TypedMatches field)
-        ||> Seq.fold (fun (files, field, missingAnkiFileNames) m -> 
+        (([], field), ImgRegex().TypedMatches field)
+        ||> Seq.fold (fun (files, field) m -> 
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
                 let file = fileEntityByAnkiFileName.[ankiFileName]
                 ( file :: files,
-                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
-                  missingAnkiFileNames )
+                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256))
             else
                 ( files,
-                  field,
-                  ankiFileName :: missingAnkiFileNames )
+                  field.Replace(ankiFileName, "missingImage.jpg"))
         )
         |> fun x -> (x, SoundRegex().TypedMatches field)
-        ||> Seq.fold (fun (files, field, missingAnkiFileNames) m -> 
+        ||> Seq.fold (fun (files, field) m -> 
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
@@ -348,21 +347,19 @@ module Anki =
 </audio>
 """             )
                 ( file :: files,
-                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256),
-                  missingAnkiFileNames )
+                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256))
             else
                 ( files,
-                  field,
-                  ankiFileName :: missingAnkiFileNames )
+                  field.Replace(ankiFileName, "[MISSING SOUND]")) // medTODO uh, what does this look/sound like? Write a test lol
         )
-        |> fun (files, fields, missingAnkiFileNames) -> (files |> List.distinct, fields, missingAnkiFileNames)
+        |> fun (files, fields) -> (files |> List.distinct, fields)
     let parseNotes
         (conceptTemplatesByModelId: Map<string, ConceptTemplateInstanceEntity>)
         initialTags
         userId
         fileEntityByAnkiFileName
         getConcept = // lowTODO use tail recursion
-        let rec parseNotesRec tags conceptsAndTagsByNoteId missingAnkiFileNames =
+        let rec parseNotesRec tags conceptsAndTagsByNoteId =
             function
             | (note: NoteEntity) :: tail ->
                 let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
@@ -373,7 +370,7 @@ module Anki =
                     |> List.ofSeq
                     |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
                     |> List.append tags
-                let files, fields, newMissingAnkiFileNames = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
+                let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let conceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                 let concept =
                     let c =
@@ -394,13 +391,10 @@ module Anki =
                 parseNotesRec
                     allTags
                     ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId)
-                    (newMissingAnkiFileNames.Concat missingAnkiFileNames)
                     tail
             | _ ->
-                if missingAnkiFileNames.Any()
-                then Error <| "In Anki, click 'Tools', then 'Check Media', because your Anki notes refer to some missing files: \r\n" + String.Join(", ", missingAnkiFileNames)
-                else Ok conceptsAndTagsByNoteId
-        parseNotesRec initialTags [] []
+                conceptsAndTagsByNoteId
+        parseNotesRec initialTags []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
         (conceptsAndTagsByAnkiId: Map<int64, ConceptInstanceEntity * PrivateTagEntity seq>)

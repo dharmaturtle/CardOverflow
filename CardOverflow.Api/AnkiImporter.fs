@@ -136,7 +136,7 @@ module AnkiImporter =
                     | None -> PrivateTagEntity(Name = deckTag, UserId = userId))
                 |> Seq.append usersTags
                 |> Seq.toList
-            let! conceptsAndTagsByAnkiId =
+            let conceptsAndTagsByAnkiId =
                 Anki.parseNotes
                     conceptTemplatesByModelId
                     usersTags

@@ -1136,7 +1136,7 @@ let duplicatesFromLightyear =
         Revlogs = []
     }
 
-let multipleClozeAndSingleClozeAndNoCloze =
+let multipleClozeAndSingleClozeAndNoClozeWithMissingImage =
     {
         Cards = [
             CardEntity(
@@ -1319,7 +1319,7 @@ let multipleClozeAndSingleClozeAndNoCloze =
                 Mod = 1526696721L,
                 Usn = -1L,
                 Tags = " Pathoma::Kidney::Acute_Renal_Failure ",
-                Flds = "↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia",
+                Flds = "↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia<img src=\"missingImage.png\">",
                 Sfld = 0L,
                 Csum = 1602079430L,
                 Flags = 0L,

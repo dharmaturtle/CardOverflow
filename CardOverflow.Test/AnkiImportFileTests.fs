@@ -76,12 +76,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
           ))
         ] |> Map.ofList
     
-    let actual =
-        fields |> List.map(fun x ->
-            let _, fields, errors = Anki.replaceAnkiFilenames x map
-            Assert.Empty errors
-            fields
-        ) |> List.ofSeq
+    let actual = fields |> List.map(fun x -> Anki.replaceAnkiFilenames x map |> snd)
 
     Assert.Equal (expected.Length, actual.Length)
     Seq.zip expected actual
@@ -103,10 +98,10 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     Assert.Equal("4/26/2018 02:54:15", c.Db.Card.Single().ConceptInstance.Modified.ToString())
 
 [<Fact>]
-let ``MultipleClozeAndSingleClozeAndNoCloze has the right cloze indexes`` () =
+let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` () =
     let userId = 3
     use c = new TestContainer()
-    AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoCloze userId Map.empty
+    AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
     |> function
     | Ok () -> ()
     | Error x -> failwith x
@@ -119,6 +114,7 @@ let ``MultipleClozeAndSingleClozeAndNoCloze has the right cloze indexes`` () =
     Assert.Equal(
         Nullable(),
         c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute")).Cards.Single().ClozeIndex)
+    Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.D().Contains """<img src="missingImage.jpg">""")
 
 //[<Fact>]
 let ``Manual Anki import`` () =
