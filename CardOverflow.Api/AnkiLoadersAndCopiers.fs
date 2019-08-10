@@ -370,6 +370,8 @@ module Anki =
                     |> List.ofSeq
                     |> List.map (fun x -> PrivateTagEntity(Name = x,  UserId = userId))
                     |> List.append tags
+                    |> List.groupBy (fun x -> x.Name.ToLower())
+                    |> List.map (fun (_, x) -> x.First())
                 let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let conceptTemplate = conceptTemplatesByModelId.[string note.Mid]
                 let concept =

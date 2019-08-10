@@ -92,7 +92,7 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     | Ok () -> ()
     | Error x -> failwith x
     Assert.Equal<string seq>(
-        ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
+        ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
         c.Db.PrivateTag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal("3/8/2018 23:47:38", c.Db.Card.Single().ConceptInstance.Created.ToString())
     Assert.Equal("4/26/2018 02:54:15", c.Db.Card.Single().ConceptInstance.Modified.ToString())
