@@ -5,17 +5,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class ConceptTemplateInstanceEntity
+    public partial class FacetTemplateInstanceEntity
     {
-        public ConceptTemplateInstanceEntity()
+        public FacetTemplateInstanceEntity()
         {
             CardTemplates = new HashSet<CardTemplateEntity>();
             Fields = new HashSet<FieldEntity>();
-            User_ConceptTemplateInstances = new HashSet<User_ConceptTemplateInstanceEntity>();
+            User_FacetTemplateInstances = new HashSet<User_FacetTemplateInstanceEntity>();
         }
 
         public int Id { get; set; }
-        public int ConceptTemplateId { get; set; }
+        public int FacetTemplateId { get; set; }
         [Required]
         [StringLength(4000)]
         public string Css {
@@ -56,14 +56,14 @@ namespace CardOverflow.Entity
         public byte[] AcquireHash { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("ConceptTemplateId")]
-        [InverseProperty("ConceptTemplateInstances")]
-        public virtual ConceptTemplateEntity ConceptTemplate { get; set; }
-        [InverseProperty("ConceptTemplateInstance")]
+        [ForeignKey("FacetTemplateId")]
+        [InverseProperty("FacetTemplateInstances")]
+        public virtual FacetTemplateEntity FacetTemplate { get; set; }
+        [InverseProperty("FacetTemplateInstance")]
         public virtual ICollection<CardTemplateEntity> CardTemplates { get; set; }
-        [InverseProperty("ConceptTemplateInstance")]
+        [InverseProperty("FacetTemplateInstance")]
         public virtual ICollection<FieldEntity> Fields { get; set; }
-        [InverseProperty("ConceptTemplateInstance")]
-        public virtual ICollection<User_ConceptTemplateInstanceEntity> User_ConceptTemplateInstances { get; set; }
+        [InverseProperty("FacetTemplateInstance")]
+        public virtual ICollection<User_FacetTemplateInstanceEntity> User_FacetTemplateInstances { get; set; }
     }
 }

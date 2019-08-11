@@ -11,8 +11,8 @@ open System.Security.Cryptography
 open System.Text
 open System.Collections.Generic
 
-module ConceptTemplateInstanceEntity =
-    let acquireHash (hasher: SHA256) (e: ConceptTemplateInstanceEntity) =
+module FacetTemplateInstanceEntity =
+    let acquireHash (hasher: SHA256) (e: FacetTemplateInstanceEntity) =
         let hash (hasher: HashAlgorithm) (ct: CardTemplateEntity) =
             [ ct.QuestionTemplate; ct.AnswerTemplate ]
             |> MappingTools.joinByUnitSeparator
@@ -33,14 +33,14 @@ module ConceptTemplateInstanceEntity =
             |> Seq.toArray
             |> hasher.ComputeHash
 
-module ConceptInstanceEntity =
-    let acquireHash (e: ConceptInstanceEntity) (conceptTemplateHash: byte[]) (hasher: SHA256) =
+module FacetInstanceEntity =
+    let acquireHash (e: FacetInstanceEntity) (facetTemplateHash: byte[]) (hasher: SHA256) =
         e.FieldValues
         |> Seq.map (fun x -> x.Value)
         |> Seq.sort
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Seq.append conceptTemplateHash
+        |> Seq.append facetTemplateHash
         |> Seq.toArray
         |> hasher.ComputeHash
 
@@ -127,7 +127,7 @@ type Field with
           IsRightToLeft = entity.IsRightToLeft
           Ordinal = entity.Ordinal
           IsSticky = entity.IsSticky }
-    member this.CopyToNew (conceptTemplateInstance: ConceptTemplateInstanceEntity) =
+    member this.CopyToNew (facetTemplateInstance: FacetTemplateInstanceEntity) =
         let entity = FieldEntity()
         entity.Name <- this.Name
         entity.Font <- this.Font
@@ -135,7 +135,7 @@ type Field with
         entity.IsRightToLeft <- this.IsRightToLeft
         entity.Ordinal <- this.Ordinal
         entity.IsSticky <- this.IsSticky
-        entity.ConceptTemplateInstance <- conceptTemplateInstance
+        entity.FacetTemplateInstance <- facetTemplateInstance
         entity
 
 type CardTemplate with
@@ -147,32 +147,32 @@ type CardTemplate with
           ShortQuestionTemplate = entity.ShortQuestionTemplate
           ShortAnswerTemplate = entity.ShortAnswerTemplate
           Ordinal = entity.Ordinal }
-    member this.CopyToNew (conceptTemplateInstance: ConceptTemplateInstanceEntity)=
+    member this.CopyToNew (facetTemplateInstance: FacetTemplateInstanceEntity)=
         let entity = CardTemplateEntity()
         entity.Name <- this.Name
         entity.QuestionTemplate <- this.QuestionTemplate
         entity.AnswerTemplate <- this.AnswerTemplate
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
-        entity.ConceptTemplateInstance <- conceptTemplateInstance
+        entity.FacetTemplateInstance <- facetTemplateInstance
         entity.Ordinal <- this.Ordinal
         entity
 
-type ConceptTemplateInstance with
-    member this.AcquireEquality(that: ConceptTemplateInstance) =
-        this.ConceptTemplate.Id = that.ConceptTemplate.Id &&
+type FacetTemplateInstance with
+    member this.AcquireEquality(that: FacetTemplateInstance) =
+        this.FacetTemplate.Id = that.FacetTemplate.Id &&
         this.Css = that.Css &&
         this.Fields = that.Fields &&
         this.CardTemplates = that.CardTemplates &&
         this.IsCloze = that.IsCloze &&
         this.LatexPre = that.LatexPre &&
         this.LatexPost = that.LatexPost
-    static member Load(entity: ConceptTemplateInstanceEntity) =
+    static member Load(entity: FacetTemplateInstanceEntity) =
         { Id = entity.Id
-          ConceptTemplate = {
-            Id = entity.ConceptTemplate.Id
-            Name = entity.ConceptTemplate.Name
-            MaintainerId = entity.ConceptTemplate.MaintainerId
+          FacetTemplate = {
+            Id = entity.FacetTemplate.Id
+            Name = entity.FacetTemplate.Name
+            MaintainerId = entity.FacetTemplate.MaintainerId
           }
           Css = entity.Css
           Fields = entity.Fields |> Seq.map Field.Load
@@ -180,9 +180,9 @@ type ConceptTemplateInstance with
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.User_ConceptTemplateInstances.Single().PublicTag_User_ConceptTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
-          DefaultPrivateTags = entity.User_ConceptTemplateInstances.Single().PrivateTag_User_ConceptTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
-          DefaultCardOptionId = entity.User_ConceptTemplateInstances.Single().DefaultCardOptionId
+          DefaultPublicTags = entity.User_FacetTemplateInstances.Single().PublicTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
+          DefaultPrivateTags = entity.User_FacetTemplateInstances.Single().PrivateTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
+          DefaultCardOptionId = entity.User_FacetTemplateInstances.Single().DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }
@@ -190,7 +190,7 @@ type ConceptTemplateInstance with
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
         let fieldNameValueMap =
-                entity.Card.ConceptInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value))
+                entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value))
         let replaceFields template =
             fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
         let cardTemplate = CardTemplate.Load entity.Card.CardTemplate
@@ -216,25 +216,25 @@ type QuizCard with
                   Options = CardOption.Load entity.CardOption }
         }
 
-type ConceptInstance with
-    static member Load(entity: ConceptInstanceEntity) =
+type FacetInstance with
+    static member Load(entity: FacetInstanceEntity) =
         { Id = entity.Id
           Fields = entity.FieldValues |> Seq.map (fun x -> x.Value)
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
-          Concept = {
-            Id = entity.ConceptId
-            MaintainerId = entity.Concept.MaintainerId
-            Name = entity.Concept.Name
+          Facet = {
+            Id = entity.FacetId
+            MaintainerId = entity.Facet.MaintainerId
+            Description = entity.Facet.Description
           }}
-    member this.CopyTo (entity: ConceptInstanceEntity) =
+    member this.CopyTo (entity: FacetInstanceEntity) =
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
     member this.CopyToNew =
-        let entity = ConceptInstanceEntity()
+        let entity = FacetInstanceEntity()
         this.CopyTo entity
-        entity.Concept <- ConceptEntity()
+        entity.Facet <- FacetEntity()
         entity
 
 type AcquiredCard with
@@ -265,21 +265,21 @@ type InitialFieldValue = {
     Value: string
 }
 
-type InitialConceptInstance = {
+type InitialFacetInstance = {
     FieldValues: InitialFieldValue seq
     MaintainerId: int
     DefaultCardOptionId: int
-    Name: string
-    ConceptTemplateHash: byte[]
+    Description: string
+    FacetTemplateHash: byte[]
     CardTemplateIds: int seq
 } with
-    member this.CopyToNew fileConceptInstances =
+    member this.CopyToNew fileFacetInstances =
         let e =
-            ConceptInstanceEntity(
+            FacetInstanceEntity(
                 Created = DateTime.UtcNow,
-                Concept = ConceptEntity (
+                Facet = FacetEntity (
                     MaintainerId = this.MaintainerId,
-                    Name = this.Name),
+                    Description = this.Description),
                 Cards = (
                     this.CardTemplateIds
                     |> Seq.map (fun x -> 
@@ -294,8 +294,8 @@ type InitialConceptInstance = {
                     this.FieldValues
                     |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
                     |> fun x -> x.ToList()),
-                File_ConceptInstances = fileConceptInstances
+                File_FacetInstances = fileFacetInstances
             )
         use hasher = SHA256.Create() // lowTODO pull this out
-        e.AcquireHash <- ConceptInstanceEntity.acquireHash e this.ConceptTemplateHash hasher
+        e.AcquireHash <- FacetInstanceEntity.acquireHash e this.FacetTemplateHash hasher
         e

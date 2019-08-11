@@ -25,7 +25,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
     |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
     |> Result.getOk
 
-    Assert.Equal(3, c.Db.File_ConceptInstance.Count())
+    Assert.Equal(3, c.Db.File_FacetInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
 
 [<Theory>]
@@ -41,7 +41,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
         |> Result.isOk
         |> Assert.True
 
-    Assert.Equal(3, c.Db.File_ConceptInstance.Count())
+    Assert.Equal(3, c.Db.File_FacetInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
 
 [<Fact>]
@@ -94,8 +94,8 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     Assert.Equal<string seq>(
         ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
         c.Db.PrivateTag.Select(fun x -> x.Name).OrderBy(fun x -> x))
-    Assert.Equal("3/8/2018 23:47:38", c.Db.Card.Single().ConceptInstance.Created.ToString())
-    Assert.Equal("4/26/2018 02:54:15", c.Db.Card.Single().ConceptInstance.Modified.ToString())
+    Assert.Equal("3/8/2018 23:47:38", c.Db.Card.Single().FacetInstance.Created.ToString())
+    Assert.Equal("4/26/2018 02:54:15", c.Db.Card.Single().FacetInstance.Modified.ToString())
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` () =
@@ -107,13 +107,13 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     | Error x -> failwith x
     Assert.Equal<byte Nullable seq>(
         [ 0uy; 1uy; 2uy; 3uy; 4uy] |> Seq.map Nullable,
-        c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "c5")).Cards.Select(fun x -> x.ClozeIndex).OrderBy(fun x -> x))
+        c.Db.FacetInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "c5")).Cards.Select(fun x -> x.ClozeIndex).OrderBy(fun x -> x))
     Assert.Equal(
         Nullable 0uy,
-        c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis")).Cards.Single().ClozeIndex)
+        c.Db.FacetInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis")).Cards.Single().ClozeIndex)
     Assert.Equal(
         Nullable(),
-        c.Db.ConceptInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute")).Cards.Single().ClozeIndex)
+        c.Db.FacetInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute")).Cards.Single().ClozeIndex)
     Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.D().Contains """<img src="missingImage.jpg">""")
 
 //[<Fact>]

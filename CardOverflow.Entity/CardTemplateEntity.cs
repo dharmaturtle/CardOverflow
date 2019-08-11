@@ -63,12 +63,12 @@ namespace CardOverflow.Entity
             }
         }
         private string _ShortAnswerTemplate;
-        public int ConceptTemplateInstanceId { get; set; }
+        public int FacetTemplateInstanceId { get; set; }
         public byte Ordinal { get; set; }
 
-        [ForeignKey("ConceptTemplateInstanceId")]
+        [ForeignKey("FacetTemplateInstanceId")]
         [InverseProperty("CardTemplates")]
-        public virtual ConceptTemplateInstanceEntity ConceptTemplateInstance { get; set; }
+        public virtual FacetTemplateInstanceEntity FacetTemplateInstance { get; set; }
         [InverseProperty("CardTemplate")]
         public virtual ICollection<CardEntity> Cards { get; set; }
     }

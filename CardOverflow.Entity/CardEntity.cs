@@ -13,16 +13,16 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
-        public int ConceptInstanceId { get; set; }
+        public int FacetInstanceId { get; set; }
         public int CardTemplateId { get; set; }
         public byte? ClozeIndex { get; set; }
 
         [ForeignKey("CardTemplateId")]
         [InverseProperty("Cards")]
         public virtual CardTemplateEntity CardTemplate { get; set; }
-        [ForeignKey("ConceptInstanceId")]
+        [ForeignKey("FacetInstanceId")]
         [InverseProperty("Cards")]
-        public virtual ConceptInstanceEntity ConceptInstance { get; set; }
+        public virtual FacetInstanceEntity FacetInstance { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
     }

@@ -1,4 +1,4 @@
-USE [master]
+﻿USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -320,6 +320,37 @@ CREATE TABLE [dbo].[CommentFacetTemplate](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[Concept] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Concept](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](100) NOT NULL,
+	[MaintainerId] [int] NOT NULL,
+ CONSTRAINT [PK_Concept] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Deck] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Deck](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](128) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[Query] [nvarchar](100) NOT NULL,
+ CONSTRAINT [PK_Deck] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[Facet] ******/
 SET ANSI_NULLS ON
 GO
@@ -328,7 +359,8 @@ GO
 CREATE TABLE [dbo].[Facet](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[MaintainerId] [int] NOT NULL,
-	[Name] [nvarchar](100) NOT NULL,
+	[Description] [nvarchar](100) NOT NULL,
+	[ConceptId] [int] NOT NULL,
  CONSTRAINT [PK_Facet] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -385,22 +417,6 @@ CREATE TABLE [dbo].[FacetTemplateInstance](
 	[AcquireHash] [binary](32) NOT NULL,
 	[IsDmca] [bit] NOT NULL,
  CONSTRAINT [PK_FacetTemplateInstance] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Deck] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Deck](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](128) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[Query] [nvarchar](100) NOT NULL,
- CONSTRAINT [PK_Deck] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -905,9 +921,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_Card] ON [dbo].[Card]
 	[FacetInstanceId] ASC,
 	[CardTemplateId] ASC,
 	[ClozeIndex] ASC
-)
-
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Card_CardTemplateId] ******/
 CREATE NONCLUSTERED INDEX [IX_Card_CardTemplateId] ON [dbo].[Card]
@@ -953,6 +967,12 @@ CREATE NONCLUSTERED INDEX [IX_CommentFacetTemplate_UserId] ON [dbo].[CommentFace
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Deck_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_Facet_MaintainerId] ******/
 CREATE NONCLUSTERED INDEX [IX_Facet_MaintainerId] ON [dbo].[Facet]
 (
@@ -991,12 +1011,6 @@ GO
 CREATE NONCLUSTERED INDEX [IX_FacetTemplateInstance_FacetTemplateId] ON [dbo].[FacetTemplateInstance]
 (
 	[FacetTemplateId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Deck_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
-(
-	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Field_FacetTemplateInstanceId] ******/
@@ -1247,6 +1261,21 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[CommentFacetTemplate] CHECK CONSTRAINT [FK_CommentFacetTemplate_User]
 GO
+ALTER TABLE [dbo].[Concept]  WITH CHECK ADD  CONSTRAINT [FK_Concept_User] FOREIGN KEY([MaintainerId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[Concept] CHECK CONSTRAINT [FK_Concept_User]
+GO
+ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User]
+GO
+ALTER TABLE [dbo].[Facet]  WITH CHECK ADD  CONSTRAINT [FK_Facet_Concept] FOREIGN KEY([ConceptId])
+REFERENCES [dbo].[Concept] ([Id])
+GO
+ALTER TABLE [dbo].[Facet] CHECK CONSTRAINT [FK_Facet_Concept]
+GO
 ALTER TABLE [dbo].[Facet]  WITH CHECK ADD  CONSTRAINT [FK_Facet_User] FOREIGN KEY([MaintainerId])
 REFERENCES [dbo].[User] ([Id])
 GO
@@ -1266,11 +1295,6 @@ ALTER TABLE [dbo].[FacetTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_FacetT
 REFERENCES [dbo].[FacetTemplate] ([Id])
 GO
 ALTER TABLE [dbo].[FacetTemplateInstance] CHECK CONSTRAINT [FK_FacetTemplateInstance_FacetTemplate]
-GO
-ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User]
 GO
 ALTER TABLE [dbo].[Field]  WITH CHECK ADD  CONSTRAINT [FK_Field_FacetTemplateInstance] FOREIGN KEY([FacetTemplateInstanceId])
 REFERENCES [dbo].[FacetTemplateInstance] ([Id])

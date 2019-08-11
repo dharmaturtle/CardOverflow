@@ -104,15 +104,15 @@ type CardTemplate = {
     Ordinal: byte
 }
 
-type ConceptTemplate = {
+type FacetTemplate = {
     Id: int
     MaintainerId: int
     Name: string
 }
 
-type ConceptTemplateInstance = {
+type FacetTemplateInstance = {
     Id: int
-    ConceptTemplate: ConceptTemplate
+    FacetTemplate: FacetTemplate
     Css: string
     Fields: Field seq
     CardTemplates: CardTemplate seq
@@ -140,23 +140,23 @@ type QuizCard = {
     Options: CardOption
 }
 
-type Concept = {
+type Facet = {
     Id: int
     MaintainerId: int
-    Name: string
+    Description: string
 }
 
-type ConceptInstance = {
+type FacetInstance = {
     Id: int
     Created: DateTime
     Modified: DateTime option
-    Concept: Concept
+    Facet: Facet
     Fields: string seq
 }
 
 type AcquiredCard = {
     UserId: int
-    ConceptInstance: ConceptInstance
+    FacetInstance: FacetInstance
     CardTemplate: CardTemplate
     MemorizationState: MemorizationState
     CardState: CardState

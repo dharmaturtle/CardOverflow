@@ -14,8 +14,8 @@ module CardRepository =
         db.AcquiredCard
             .Include(fun x -> x.CardOption)
             //.Include(fun x -> x.Card)
-            //    .ThenInclude(fun x -> x.Concept)
-            //    .ThenInclude(fun x -> x.ConceptTemplate)
+            //    .ThenInclude(fun x -> x.Facet)
+            //    .ThenInclude(fun x -> x.FacetTemplate)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
         |> Seq.map QuizCard.Load
@@ -29,7 +29,7 @@ module CardRepository =
         cardIds
         |> List.map (fun i ->
             AcquiredCardEntity(
-                UserId = userId, // eventualTODO missing ConceptInstanceId and CardTemplateId
+                UserId = userId, // eventualTODO missing FacetInstanceId and CardTemplateId
                 MemorizationState = MemorizationState.toDb New,
                 CardState = CardState.toDb Normal,
                 LapseCount = 0uy,
@@ -42,13 +42,13 @@ module CardRepository =
         |> db.AcquiredCard.AddRange
         db.SaveChangesI ()
 
-module ConceptRepository =
-    let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileConceptInstances =
-        fileConceptInstances |> concept.CopyToNew |> db.ConceptInstance.AddI
+module FacetRepository =
+    let CreateFacet (db: CardOverflowDb) (facet: InitialFacetInstance) fileFacetInstances =
+        fileFacetInstances |> facet.CopyToNew |> db.FacetInstance.AddI
         db.SaveChangesI ()
 
-    // member this.SaveConcepts(concepts: ResizeArray<ConceptEntity>) =
-    //                 this.GetConcepts().Merge concepts
+    // member this.SaveFacets(facets: ResizeArray<FacetEntity>) =
+    //                 this.GetFacets().Merge facets
     //             (fun (x, y) -> x.Id = y.Id)
     //             id
     //             (db.Remove >> ignore)
@@ -57,7 +57,7 @@ module ConceptRepository =
     //                 d.Title <- s.Title
     //                 d.Description <- s.Description
     //                 d.Fields <- s.Fields
-    //                 d.ConceptTemplate <- s.ConceptTemplate
+    //                 d.FacetTemplate <- s.FacetTemplate
     //                 db.Update d |> ignore)
     //     )
 

@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public FileEntity()
         {
-            File_ConceptInstances = new HashSet<File_ConceptInstanceEntity>();
+            File_FacetInstances = new HashSet<File_FacetInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -30,6 +30,6 @@ namespace CardOverflow.Entity
         public byte[] Sha256 { get; set; }
 
         [InverseProperty("File")]
-        public virtual ICollection<File_ConceptInstanceEntity> File_ConceptInstances { get; set; }
+        public virtual ICollection<File_FacetInstanceEntity> File_FacetInstances { get; set; }
     }
 }

@@ -12,17 +12,18 @@ namespace CardOverflow.Entity
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             CardOptions = new HashSet<CardOptionEntity>();
-            CommentConceptTemplates = new HashSet<CommentConceptTemplateEntity>();
-            CommentConcepts = new HashSet<CommentConceptEntity>();
-            ConceptTemplates = new HashSet<ConceptTemplateEntity>();
+            CommentFacetTemplates = new HashSet<CommentFacetTemplateEntity>();
+            CommentFacets = new HashSet<CommentFacetEntity>();
             Concepts = new HashSet<ConceptEntity>();
             Decks = new HashSet<DeckEntity>();
+            FacetTemplates = new HashSet<FacetTemplateEntity>();
+            Facets = new HashSet<FacetEntity>();
             PrivateTags = new HashSet<PrivateTagEntity>();
-            User_ConceptTemplateInstances = new HashSet<User_ConceptTemplateInstanceEntity>();
-            Vote_CommentConceptTemplates = new HashSet<Vote_CommentConceptTemplateEntity>();
-            Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
-            Vote_ConceptTemplates = new HashSet<Vote_ConceptTemplateEntity>();
-            Vote_Concepts = new HashSet<Vote_ConceptEntity>();
+            User_FacetTemplateInstances = new HashSet<User_FacetTemplateInstanceEntity>();
+            Vote_CommentFacetTemplates = new HashSet<Vote_CommentFacetTemplateEntity>();
+            Vote_CommentFacets = new HashSet<Vote_CommentFacetEntity>();
+            Vote_FacetTemplates = new HashSet<Vote_FacetTemplateEntity>();
+            Vote_Facets = new HashSet<Vote_FacetEntity>();
         }
 
         //[Required] // medTODO make this not nullable
@@ -41,27 +42,29 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentConceptTemplateEntity> CommentConceptTemplates { get; set; }
+        public virtual ICollection<CommentFacetTemplateEntity> CommentFacetTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
-        [InverseProperty("Maintainer")]
-        public virtual ICollection<ConceptTemplateEntity> ConceptTemplates { get; set; }
+        public virtual ICollection<CommentFacetEntity> CommentFacets { get; set; }
         [InverseProperty("Maintainer")]
         public virtual ICollection<ConceptEntity> Concepts { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<DeckEntity> Decks { get; set; }
+        [InverseProperty("Maintainer")]
+        public virtual ICollection<FacetTemplateEntity> FacetTemplates { get; set; }
+        [InverseProperty("Maintainer")]
+        public virtual ICollection<FacetEntity> Facets { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<PrivateTagEntity> PrivateTags { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<User_ConceptTemplateInstanceEntity> User_ConceptTemplateInstances { get; set; }
+        public virtual ICollection<User_FacetTemplateInstanceEntity> User_FacetTemplateInstances { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentConceptTemplateEntity> Vote_CommentConceptTemplates { get; set; }
+        public virtual ICollection<Vote_CommentFacetTemplateEntity> Vote_CommentFacetTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentConceptEntity> Vote_CommentConcepts { get; set; }
+        public virtual ICollection<Vote_CommentFacetEntity> Vote_CommentFacets { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_ConceptTemplateEntity> Vote_ConceptTemplates { get; set; }
+        public virtual ICollection<Vote_FacetTemplateEntity> Vote_FacetTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_ConceptEntity> Vote_Concepts { get; set; }
+        public virtual ICollection<Vote_FacetEntity> Vote_Facets { get; set; }
     }
 }
 

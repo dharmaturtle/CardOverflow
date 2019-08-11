@@ -22,8 +22,8 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiConceptTemplateInstance = {
-    ConceptTemplate: ConceptTemplate
+type AnkiFacetTemplateInstance = {
+    FacetTemplate: FacetTemplate
     Css: string
     Fields: Field seq
     CardTemplates: CardTemplate seq
@@ -36,7 +36,7 @@ type AnkiConceptTemplateInstance = {
     LatexPre: string
     LatexPost: string
 } with
-    member this.CopyTo (entity: ConceptTemplateInstanceEntity) =
+    member this.CopyTo (entity: FacetTemplateInstanceEntity) =
         entity.Css <- this.Css
         entity.Fields <- this.Fields |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
         entity.CardTemplates <- this.CardTemplates |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
@@ -46,72 +46,72 @@ type AnkiConceptTemplateInstance = {
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
     member this.CopyToNew userId defaultCardOption =
-        let entity = ConceptTemplateInstanceEntity()
-        entity.User_ConceptTemplateInstances <-
-            User_ConceptTemplateInstanceEntity(
+        let entity = FacetTemplateInstanceEntity()
+        entity.User_FacetTemplateInstances <-
+            User_FacetTemplateInstanceEntity(
                 UserId = userId,
-                PublicTag_User_ConceptTemplateInstances =
+                PublicTag_User_FacetTemplateInstances =
                     (this.DefaultPublicTags.ToList()
-                    |> Seq.map (fun x -> PublicTag_User_ConceptTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
+                    |> Seq.map (fun x -> PublicTag_User_FacetTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
                     |> fun x -> x.ToList()),
-                PrivateTag_User_ConceptTemplateInstances =
+                PrivateTag_User_FacetTemplateInstances =
                     (this.DefaultPrivateTags.ToList()
-                    |> Seq.map (fun x -> PrivateTag_User_ConceptTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
+                    |> Seq.map (fun x -> PrivateTag_User_FacetTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
                     |> fun x -> x.ToList()),
                 DefaultCardOption = defaultCardOption)
             |> Seq.singleton
             |> fun x -> x.ToList()
-        entity.ConceptTemplate <-
-            ConceptTemplateEntity(
-                MaintainerId = this.ConceptTemplate.MaintainerId,
-                Name = this.ConceptTemplate.Name)
+        entity.FacetTemplate <-
+            FacetTemplateEntity(
+                MaintainerId = this.FacetTemplate.MaintainerId,
+                Name = this.FacetTemplate.Name)
         this.CopyTo entity
         use hasher = SHA256.Create() // lowTODO pull this out
-        entity.AcquireHash <- ConceptTemplateInstanceEntity.acquireHash hasher entity
+        entity.AcquireHash <- FacetTemplateInstanceEntity.acquireHash hasher entity
         entity
     
 
-type AnkiConceptTemplateAndDeckId = {
-    ConceptTemplate: AnkiConceptTemplateInstance
+type AnkiFacetTemplateAndDeckId = {
+    FacetTemplate: AnkiFacetTemplateInstance
     DeckId: int64
 }
 
-type AnkiConceptWrite = {
-    ConceptTemplateHash: byte[]
+type AnkiFacetWrite = {
+    FacetTemplateHash: byte[]
     FieldValues: FieldValueEntity seq
     Created: DateTime
     Modified: DateTime option
     MaintainerId: int
 } with
-    member this.CopyTo(entity: ConceptInstanceEntity, conceptTemplateHash: byte[]) =
+    member this.CopyTo(entity: FacetInstanceEntity, facetTemplateHash: byte[]) =
         entity.FieldValues <- this.FieldValues.ToList()
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         use hasher = SHA256.Create()
-        entity.AcquireHash <- ConceptInstanceEntity.acquireHash entity conceptTemplateHash hasher
+        entity.AcquireHash <- FacetInstanceEntity.acquireHash entity facetTemplateHash hasher
     member this.CopyToNew (files: FileEntity seq) =
-        let entity = ConceptInstanceEntity()
-        entity.Concept <-
-            ConceptEntity(
+        let entity = FacetInstanceEntity()
+        entity.Facet <-
+            FacetEntity(
                 MaintainerId = this.MaintainerId,
-                Name = "Imported from Anki"
+                Description = "Imported from Anki"
             )
-        entity.File_ConceptInstances <-
+        entity.File_FacetInstances <-
             files.Select(fun x ->
-                File_ConceptInstanceEntity(
-                    ConceptInstance = entity,
+                File_FacetInstanceEntity(
+                    FacetInstance = entity,
                     File = x
                 )
             ).ToList()
-        this.CopyTo(entity, this.ConceptTemplateHash)
+        this.CopyTo(entity, this.FacetTemplateHash)
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.ConceptInstance
+        db.FacetInstance
             .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
 
 type AnkiAcquiredCard = {
     UserId: int
-    ConceptInstance: ConceptInstanceEntity
+    FacetInstance: FacetInstanceEntity
     CardTemplate: CardTemplateEntity
     MemorizationState: MemorizationState
     CardState: CardState
@@ -134,7 +134,7 @@ type AnkiAcquiredCard = {
     member this.CopyToNew (privateTags: PrivateTagEntity seq) clozeIndex =
         let entity = AcquiredCardEntity ()
         this.CopyTo entity
-        this.ConceptInstance.Cards
+        this.FacetInstance.Cards
         |> Seq.filter (fun c -> c.CardTemplate = this.CardTemplate && c.ClozeIndex = clozeIndex)
         |> Seq.tryExactlyOne
         |> function
@@ -143,12 +143,12 @@ type AnkiAcquiredCard = {
         | None ->
             let card =
                 CardEntity (
-                    ConceptInstance = this.ConceptInstance,
+                    FacetInstance = this.FacetInstance,
                     CardTemplate = this.CardTemplate,
                     ClozeIndex = clozeIndex,
                     AcquiredCards = [entity].ToList()
                 )
-            this.ConceptInstance.Cards.Add card
+            this.FacetInstance.Cards.Add card
             entity.Card <- card
             entity.CardOption <- this.CardOption
             entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
@@ -156,7 +156,7 @@ type AnkiAcquiredCard = {
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCard.FirstOrDefault(fun c -> 
             this.UserId = c.UserId &&
-            this.ConceptInstance.Id = c.Card.ConceptInstanceId &&
+            this.FacetInstance.Id = c.Card.FacetInstanceId &&
             this.CardTemplate.Id = c.Card.CardTemplateId
         )
 
@@ -173,7 +173,7 @@ type AnkiHistory = {
         let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.UserId &&
-            this.AcquiredCard.Card.ConceptInstanceId = h.AcquiredCard.Card.ConceptInstanceId &&
+            this.AcquiredCard.Card.FacetInstanceId = h.AcquiredCard.Card.FacetInstanceId &&
             this.AcquiredCard.Card.CardTemplateId = h.AcquiredCard.Card.CardTemplateId &&
             this.Score = h.Score &&
             this.MemorizationState = h.MemorizationState &&
@@ -280,8 +280,8 @@ module Anki =
     let parseModels userId =
         Decode.object(fun get ->
             { DeckId = get.Required.Field "did" Decode.int64
-              ConceptTemplate =
-                { ConceptTemplate = {
+              FacetTemplate =
+                { FacetTemplate = {
                     Id = 0
                     MaintainerId = userId
                     Name = get.Required.Field "name" Decode.string
@@ -354,12 +354,12 @@ module Anki =
         )
         |> fun (files, fields) -> (files |> List.distinct, fields)
     let parseNotes
-        (conceptTemplatesByModelId: Map<string, ConceptTemplateInstanceEntity>)
+        (facetTemplatesByModelId: Map<string, FacetTemplateInstanceEntity>)
         initialTags
         userId
         fileEntityByAnkiFileName
-        getConcept = // lowTODO use tail recursion
-        let rec parseNotesRec tags conceptsAndTagsByNoteId =
+        getFacet = // lowTODO use tail recursion
+        let rec parseNotesRec tags facetsAndTagsByNoteId =
             function
             | (note: NoteEntity) :: tail ->
                 let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
@@ -373,33 +373,33 @@ module Anki =
                     |> List.groupBy (fun x -> x.Name.ToLower())
                     |> List.map (fun (_, x) -> x.First())
                 let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
-                let conceptTemplate = conceptTemplatesByModelId.[string note.Mid]
-                let concept =
+                let facetTemplate = facetTemplatesByModelId.[string note.Mid]
+                let facet =
                     let c =
-                        { ConceptTemplateHash = conceptTemplate.AcquireHash
+                        { FacetTemplateHash = facetTemplate.AcquireHash
                           FieldValues =
                             Seq.zip
-                                conceptTemplate.Fields
+                                facetTemplate.Fields
                                 (MappingTools.splitByUnitSeparator fields)
                             |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
                           Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                           Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
                           MaintainerId = userId }
-                    getConcept c
+                    getFacet c
                     |> function
                     | Some x -> x
                     | None -> c.CopyToNew files
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
                 parseNotesRec
                     allTags
-                    ((note.Id, (concept, relevantTags))::conceptsAndTagsByNoteId)
+                    ((note.Id, (facet, relevantTags))::facetsAndTagsByNoteId)
                     tail
             | _ ->
-                conceptsAndTagsByNoteId
+                facetsAndTagsByNoteId
         parseNotesRec initialTags []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
-        (conceptsAndTagsByAnkiId: Map<int64, ConceptInstanceEntity * PrivateTagEntity seq>)
+        (facetsAndTagsByAnkiId: Map<int64, FacetInstanceEntity * PrivateTagEntity seq>)
         (colCreateDate: DateTime)
         userId
         (usersTags: PrivateTagEntity seq)
@@ -407,8 +407,8 @@ module Anki =
         (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
-        let concept, tags = conceptsAndTagsByAnkiId.[ankiCard.Nid]
-        let cti = concept.FieldValues.First().Field.ConceptTemplateInstance
+        let facet, tags = facetsAndTagsByAnkiId.[ankiCard.Nid]
+        let cti = facet.FieldValues.First().Field.FacetTemplateInstance
         let cardTemplate, clozeIndex =
             if cti.IsCloze
             then
@@ -427,7 +427,7 @@ module Anki =
             let entity =
                 let c: AnkiAcquiredCard =
                     { UserId = userId
-                      ConceptInstance = concept
+                      FacetInstance = facet
                       CardTemplate = cardTemplate
                       MemorizationState = memorizationState
                       CardState =

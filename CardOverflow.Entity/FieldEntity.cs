@@ -37,11 +37,11 @@ namespace CardOverflow.Entity
         public bool IsRightToLeft { get; set; }
         public byte Ordinal { get; set; }
         public bool IsSticky { get; set; }
-        public int ConceptTemplateInstanceId { get; set; }
+        public int FacetTemplateInstanceId { get; set; }
 
-        [ForeignKey("ConceptTemplateInstanceId")]
+        [ForeignKey("FacetTemplateInstanceId")]
         [InverseProperty("Fields")]
-        public virtual ConceptTemplateInstanceEntity ConceptTemplateInstance { get; set; }
+        public virtual FacetTemplateInstanceEntity FacetTemplateInstance { get; set; }
         [InverseProperty("Field")]
         public virtual ICollection<FieldValueEntity> FieldValues { get; set; }
     }
