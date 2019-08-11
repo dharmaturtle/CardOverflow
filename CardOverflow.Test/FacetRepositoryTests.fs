@@ -20,11 +20,12 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
     let facetTemplate =
         c.Db.FacetTemplateInstance
             .Include(fun x -> x.CardTemplates)
+            .Include(fun x -> x.Fields)
             .Include(fun x -> x.FacetTemplate)
             .Include(fun x -> x.User_FacetTemplateInstances)
             .First(fun x -> x.FacetTemplate.Name = "Basic")
             |> FacetTemplateInstance.Load
-    let basicFacet = {
+    let initialConcept = {
         FacetTemplateHash = facetTemplate.AcquireHash
         MaintainerId = userId
         Description = "Basic"
@@ -35,7 +36,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
     }
     
-    FacetRepository.CreateFacet c.Db basicFacet <| Seq.empty.ToList()
+    ConceptRepository.CreateConcept c.Db initialConcept <| Seq.empty.ToList()
 
     Assert.SingleI <| c.Db.Facet
     Assert.SingleI <| c.Db.Card

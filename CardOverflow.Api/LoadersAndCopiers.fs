@@ -265,7 +265,7 @@ type InitialFieldValue = {
     Value: string
 }
 
-type InitialFacetInstance = {
+type InitialConceptInstance = {
     FieldValues: InitialFieldValue seq
     MaintainerId: int
     DefaultCardOptionId: int
@@ -277,9 +277,6 @@ type InitialFacetInstance = {
         let e =
             FacetInstanceEntity(
                 Created = DateTime.UtcNow,
-                Facet = FacetEntity (
-                    MaintainerId = this.MaintainerId,
-                    Description = this.Description),
                 Cards = (
                     this.CardTemplateIds
                     |> Seq.map (fun x -> 
@@ -298,4 +295,14 @@ type InitialFacetInstance = {
             )
         use hasher = SHA256.Create() // lowTODO pull this out
         e.AcquireHash <- FacetInstanceEntity.acquireHash e this.FacetTemplateHash hasher
-        e
+        ConceptEntity(
+            Name = this.FieldValues.First().Value,
+            MaintainerId = this.MaintainerId,
+            Facets = [
+                FacetEntity (
+                    MaintainerId = this.MaintainerId,
+                    Description = this.Description,
+                    FacetInstances = [e].ToList()
+                )
+            ].ToList()
+        )

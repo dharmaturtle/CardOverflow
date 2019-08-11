@@ -42,9 +42,9 @@ module CardRepository =
         |> db.AcquiredCard.AddRange
         db.SaveChangesI ()
 
-module FacetRepository =
-    let CreateFacet (db: CardOverflowDb) (facet: InitialFacetInstance) fileFacetInstances =
-        fileFacetInstances |> facet.CopyToNew |> db.FacetInstance.AddI
+module ConceptRepository =
+    let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
+        fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
 
     // member this.SaveFacets(facets: ResizeArray<FacetEntity>) =
