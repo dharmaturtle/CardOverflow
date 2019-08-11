@@ -36,7 +36,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
 
     for _ in [1..3] do
         ankiExportsDir +/ ankiFileName
-        |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
+        |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File.FirstOrDefault(fun f -> f.Sha256 = sha256) |> Option.ofObj)
         |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
         |> Result.isOk
         |> Assert.True
