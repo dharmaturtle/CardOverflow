@@ -1,6 +1,7 @@
 module AnkiImportFileTests
 
 open CardOverflow.Api
+open ContainerExtensions
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Debug
@@ -13,6 +14,8 @@ open System.Linq
 open Xunit
 open System
 open AnkiImportTestData
+open SimpleInjector
+open SimpleInjector.Lifestyles
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
