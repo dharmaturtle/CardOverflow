@@ -217,16 +217,12 @@ type QuizCard with
         }
 
 type FacetInstance with
-    static member Load(entity: FacetInstanceEntity) =
-        { Id = entity.Id
-          Fields = entity.FieldValues |> Seq.map (fun x -> x.Value)
-          Created = entity.Created
-          Modified = entity.Modified |> Option.ofNullable
-          Facet = {
-            Id = entity.FacetId
-            MaintainerId = entity.Facet.MaintainerId
-            Description = entity.Facet.Description
-          }}
+    static member Load(entity: FacetInstanceEntity) = {
+        Id = entity.Id
+        Fields = entity.FieldValues |> Seq.map (fun x -> x.Value)
+        Created = entity.Created
+        Modified = entity.Modified |> Option.ofNullable
+    }
     member this.CopyTo (entity: FacetInstanceEntity) =
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
@@ -306,3 +302,19 @@ type InitialConceptInstance = {
                 )
             ].ToList()
         )
+
+type Facet with
+    static member Load (e: FacetEntity) = {
+        Id = e.Id
+        MaintainerId = e.MaintainerId
+        Description = e.Description
+        FacetInstances = e.FacetInstances |> Seq.map FacetInstance.Load
+    }
+
+type Concept with
+    static member Load (e: ConceptEntity) = {
+        Id = e.Id
+        Name = e.Name
+        MaintainerId = e.MaintainerId
+        Facets = e.Facets |> Seq.map Facet.Load
+    }

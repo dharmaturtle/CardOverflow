@@ -33,6 +33,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
         CardTemplateIds = facetTemplate.CardTemplates |> Seq.map (fun x -> x.Id)
         FieldValues =
             facetTemplate.Fields
+            |> Seq.sortBy (fun x -> x.Ordinal)
             |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
     }
     
@@ -42,6 +43,12 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.AcquiredCard
     Assert.SingleI <| CardRepository.GetQuizCards c.Db userId
+
+    let actual = ConceptRepository.GetConcept c.Db userId
+    Assert.Equal<string seq>(
+        ["Front"; "Back"],
+        actual.Single().Facets.Single().FacetInstances.Single().Fields
+    )
 
 // fuck merge
 //[<Fact>]

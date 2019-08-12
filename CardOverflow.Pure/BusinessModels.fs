@@ -140,18 +140,18 @@ type QuizCard = {
     Options: CardOption
 }
 
-type Facet = {
-    Id: int
-    MaintainerId: int
-    Description: string
-}
-
 type FacetInstance = {
     Id: int
     Created: DateTime
     Modified: DateTime option
-    Facet: Facet
     Fields: string seq
+}
+
+type Facet = {
+    Id: int
+    MaintainerId: int
+    Description: string
+    FacetInstances: FacetInstance seq
 }
 
 type AcquiredCard = {
@@ -166,4 +166,11 @@ type AcquiredCard = {
     StepsIndex: byte option
     Due: DateTime
     CardOptionId: int
+}
+
+type Concept = {
+    Id: int
+    Name: string
+    MaintainerId: int
+    Facets: Facet seq
 }

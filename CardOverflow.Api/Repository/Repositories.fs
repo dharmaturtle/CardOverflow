@@ -46,6 +46,11 @@ module ConceptRepository =
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
+    let GetConcept (db: CardOverflowDb) userId =
+        db.Concept
+            .Where(fun x -> x.Facets.Any(fun x -> x.FacetInstances.Any(fun x -> x.Cards.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))))
+            .AsEnumerable()
+        |> Seq.map Concept.Load
 
     // member this.SaveFacets(facets: ResizeArray<FacetEntity>) =
     //                 this.GetFacets().Merge facets
