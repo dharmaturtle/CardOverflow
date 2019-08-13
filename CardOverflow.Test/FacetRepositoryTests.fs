@@ -43,11 +43,16 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.AcquiredCard
     Assert.SingleI <| CardRepository.GetQuizCards c.Db userId
-
-    let actual = ConceptRepository.GetConcept c.Db userId
+    Assert.Equal(
+        "{{Front}}", // medTODO should actually be "Front"
+        (CardRepository.GetNextCard c.Db userId).GetAwaiter().GetResult()
+        |> Result.getOk
+        |> fun x -> x.Question
+    )
     Assert.Equal<string seq>(
         ["Front"; "Back"],
-        actual.Single().Facets.Single().FacetInstances.Single().Fields
+        (ConceptRepository.GetConcepts c.Db userId)
+            .Single().Facets.Single().FacetInstances.Single().Fields.OrderByDescending(fun x -> x)
     )
 
 // fuck merge

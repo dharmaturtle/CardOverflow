@@ -8,14 +8,35 @@ open CardOverflow.Entity
 open Microsoft.EntityFrameworkCore
 open System.Linq
 open Helpers
+open FSharp.Control.Tasks
+open System.Collections.Generic
 
 module CardRepository =
+    let GetNextCard (db: CardOverflowDb) userId =
+        task {
+            let! card =
+                db.AcquiredCard
+                    .Include(fun x -> x.CardOption)
+                    .Include(fun x -> x.Card)
+                        .ThenInclude(fun x -> x.FacetInstance)
+                    .Include(fun x -> x.Card)
+                        .ThenInclude(fun x -> x.CardTemplate)
+                    .Where(fun x -> x.UserId = userId)
+                    .OrderBy(fun x -> x.Due)
+                    .FirstOrDefaultAsync()
+            return
+                match Option.ofObj card with
+                | Some x -> QuizCard.Load x
+                | None -> Error "You have no cards!"
+        }
+
     let GetQuizCards (db: CardOverflowDb) userId =
         db.AcquiredCard
             .Include(fun x -> x.CardOption)
-            //.Include(fun x -> x.Card)
-            //    .ThenInclude(fun x -> x.Facet)
-            //    .ThenInclude(fun x -> x.FacetTemplate)
+            .Include(fun x -> x.Card)
+                .ThenInclude(fun x -> x.FacetInstance)
+            .Include(fun x -> x.Card)
+                .ThenInclude(fun x -> x.CardTemplate)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
         |> Seq.map QuizCard.Load
@@ -46,9 +67,12 @@ module ConceptRepository =
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
-    let GetConcept (db: CardOverflowDb) userId =
+    let GetConcepts (db: CardOverflowDb) userId =
         db.Concept
             .Where(fun x -> x.Facets.Any(fun x -> x.FacetInstances.Any(fun x -> x.Cards.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))))
+            .Include(fun x -> x.Facets :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues)
             .AsEnumerable()
         |> Seq.map Concept.Load
 
