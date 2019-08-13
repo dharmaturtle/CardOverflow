@@ -12,27 +12,7 @@ open FSharp.Control.Tasks
 open System.Collections.Generic
 
 module CardRepository =
-    let GetNextCard (db: CardOverflowDb) userId =
-        task {
-            let! card =
-                db.AcquiredCard
-                    .Include(fun x -> x.CardOption)
-                    .Include(fun x -> x.Card)
-                        .ThenInclude(fun x -> x.FacetInstance)
-                        .ThenInclude(fun x -> x.FieldValues :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
-                    .Include(fun x -> x.Card)
-                        .ThenInclude(fun x -> x.CardTemplate)
-                    .Where(fun x -> x.UserId = userId)
-                    .OrderBy(fun x -> x.Due)
-                    .FirstOrDefaultAsync()
-            return
-                match Option.ofObj card with
-                | Some x -> QuizCard.Load x
-                | None -> Error "You have no cards!"
-        }
-
-    let GetQuizCards (db: CardOverflowDb) userId =
+    let private getCompleteCards (db: CardOverflowDb) =
         db.AcquiredCard
             .Include(fun x -> x.CardOption)
             .Include(fun x -> x.Card)
@@ -41,14 +21,27 @@ module CardRepository =
                 .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
             .Include(fun x -> x.Card)
                 .ThenInclude(fun x -> x.CardTemplate)
+    
+    let GetNextCard (db: CardOverflowDb) userId =
+        task {
+            let! card =
+                (getCompleteCards db)
+                    .Where(fun x -> x.UserId = userId)
+                    .OrderBy(fun x -> x.Due)
+                    .FirstOrDefaultAsync()
+            return
+                match Option.ofObj card with
+                | Some x -> QuizCard.Load x
+                | None -> Error "You have no cards!"
+        }
+    let GetQuizCards (db: CardOverflowDb) userId =
+        (getCompleteCards db)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
         |> Seq.map QuizCard.Load
-
     let SaveCard (db: CardOverflowDb) card =
         db.Card.AddI card
         db.SaveChangesI ()
-
     let AcquireCards (db: CardOverflowDb) userId cardIds =
         let user = db.User.First(fun x -> x.Id = userId)
         cardIds
