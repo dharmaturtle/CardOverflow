@@ -14,6 +14,7 @@ open System.Collections.Generic
 open Helpers
 open FsToolkit.ErrorHandling
 open System.Security.Cryptography
+open Microsoft.EntityFrameworkCore
 
 type SimpleAnkiDb = {
     Cards: CardOverflow.Entity.Anki.CardEntity list
@@ -115,6 +116,7 @@ type AnkiFacetWrite = {
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.FacetInstance
+            .Include(fun x -> x.FieldValues)
             .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
 
 type AnkiAcquiredCard = {
