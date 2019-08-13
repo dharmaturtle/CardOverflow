@@ -44,7 +44,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
     Assert.SingleI <| c.Db.AcquiredCard
     Assert.SingleI <| CardRepository.GetQuizCards c.Db userId
     Assert.Equal(
-        "{{Front}}", // medTODO should actually be "Front"
+        "Front",
         (CardRepository.GetNextCard c.Db userId).GetAwaiter().GetResult()
         |> Result.getOk
         |> fun x -> x.Question

@@ -189,6 +189,9 @@ type FacetTemplateInstance with
 
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
+#if DEBUG
+        entity.Card.FacetInstance.FieldValues |> Seq.head |> ignore
+#endif
         let fieldNameValueMap =
                 entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value))
         let replaceFields template =
