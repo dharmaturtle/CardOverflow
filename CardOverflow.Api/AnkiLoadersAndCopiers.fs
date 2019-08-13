@@ -164,11 +164,13 @@ type AnkiAcquiredCard = {
             entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
             entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.AcquiredCard.FirstOrDefault(fun c -> 
-            this.UserId = c.UserId &&
-            this.FacetInstance.Id = c.Card.FacetInstanceId &&
-            this.CardTemplate.Id = c.Card.CardTemplateId
-        )
+        db.AcquiredCard
+            .Include(fun x -> x.Card)
+            .FirstOrDefault(fun c -> 
+                this.UserId = c.UserId &&
+                this.FacetInstance.Id = c.Card.FacetInstanceId &&
+                this.CardTemplate.Id = c.Card.CardTemplateId
+            )
 
 type AnkiHistory = {
     AcquiredCard: AcquiredCardEntity
