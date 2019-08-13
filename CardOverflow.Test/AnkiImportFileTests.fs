@@ -110,14 +110,23 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     | Error x -> failwith x
     Assert.Equal<byte Nullable seq>(
         [ 0uy; 1uy; 2uy; 3uy; 4uy] |> Seq.map Nullable,
-        c.Db.FacetInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "c5")).Cards.Select(fun x -> x.ClozeIndex).OrderBy(fun x -> x))
+        c.Db.FacetInstance
+            .Include(fun x -> x.Cards)
+            .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "c5"))
+            .Cards.Select(fun x -> x.ClozeIndex).OrderBy(fun x -> x))
     Assert.Equal(
         Nullable 0uy,
-        c.Db.FacetInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis")).Cards.Single().ClozeIndex)
+        c.Db.FacetInstance
+            .Include(fun x -> x.Cards)
+            .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis"))
+            .Cards.Single().ClozeIndex)
     Assert.Equal(
         Nullable(),
-        c.Db.FacetInstance.Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute")).Cards.Single().ClozeIndex)
-    Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.D().Contains """<img src="missingImage.jpg">""")
+        c.Db.FacetInstance
+            .Include(fun x -> x.Cards)
+            .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute"))
+            .Cards.Single().ClozeIndex)
+    Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.Contains """<img src="missingImage.jpg">""")
 
 //[<Fact>]
 let ``Manual Anki import`` () =
