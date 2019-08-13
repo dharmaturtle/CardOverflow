@@ -13,7 +13,7 @@ open Microsoft.Extensions.Configuration
 
 type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
-    let scope = AsyncScopedLifestyle.BeginScope container
+    let mutable scope = AsyncScopedLifestyle.BeginScope container
     do
         let dbName =
             let temp =
@@ -32,7 +32,9 @@ type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: 
             container.Dispose()
             scope.Dispose()
 
-    member __.Db =
+    member __.Db = // medTODO this should take unit
+        scope.Dispose()
+        scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<CardOverflowDb>()
 
 // Sqlite
