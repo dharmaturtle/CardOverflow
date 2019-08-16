@@ -195,15 +195,32 @@ type QuizCard with
         let fieldNameValueMap =
                 entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value))
         let replaceFields template =
-            fieldNameValueMap |> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value)) template
+            (template, fieldNameValueMap) ||> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value))
         let cardTemplate = CardTemplate.Load entity.Card.CardTemplate
+        let frontSide =
+            replaceFields cardTemplate.QuestionTemplate
+        let backSide =
+            (replaceFields cardTemplate.AnswerTemplate).Replace("{{FrontSide}}", frontSide)
+        let htmlBase =
+            sprintf """<html>
+    <head>
+        <style>
+            %s
+        </style>
+    </head>
+    <body>
+        %s
+    </body>
+</html>"""      
+                entity.Card.CardTemplate.FacetTemplateInstance.Css
+
         result {
             let! memorizationState = MemorizationState.create entity.MemorizationState
             let! cardState = CardState.create entity.CardState
             return
                 { Due = entity.Due
-                  Question = replaceFields cardTemplate.QuestionTemplate
-                  Answer = replaceFields cardTemplate.AnswerTemplate
+                  Question = htmlBase frontSide
+                  Answer = htmlBase backSide
                   MemorizationState = memorizationState
                   CardState = cardState
                   LapseCount = entity.LapseCount

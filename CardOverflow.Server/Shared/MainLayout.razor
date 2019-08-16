@@ -1,16 +1,12 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="sidebar">
-    <NavMenu />
+  <NavMenu />
 </div>
 
 <div class="main">
-    <div class="top-row px-4">
-        <LoginDisplay />
-        <a href="https://docs.microsoft.com/en-us/aspnet/" target="_blank">About</a>
-    </div>
-
-    <div class="content px-4">
-        @Body
-    </div>
+  @* Keep this div to make the Study page look ok. *@
+  <div class="content px-4">
+    @Body
+  </div>
 </div>

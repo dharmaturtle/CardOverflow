@@ -21,20 +21,19 @@ module CardRepository =
                 .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
             .Include(fun x -> x.Card)
                 .ThenInclude(fun x -> x.CardTemplate)
-    
-    let GetNextCard (db: CardOverflowDb) userId =
+                .ThenInclude(fun x -> x.FacetTemplateInstance)
+    let GetTodaysCards (db: CardOverflowDb) userId =
+        let tomorrow = DateTime.UtcNow.AddDays 1.
         task {
-            let! card =
+            let! cards =
                 (getCompleteCards db)
-                    .Where(fun x -> x.UserId = userId)
+                    .Where(fun x -> x.UserId = userId && x.Due < tomorrow)
                     .OrderBy(fun x -> x.Due)
-                    .FirstOrDefaultAsync()
+                    .ToListAsync()
             return
-                match Option.ofObj card with
-                | Some x -> QuizCard.Load x
-                | None -> Error "You have no cards!"
+                cards |> Seq.map QuizCard.Load
         }
-    let GetQuizCards (db: CardOverflowDb) userId =
+    let GetAllCards (db: CardOverflowDb) userId =
         (getCompleteCards db)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
