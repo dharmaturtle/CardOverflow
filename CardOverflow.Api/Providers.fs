@@ -2,14 +2,10 @@ namespace CardOverflow.Api
 
 open System
 
-type TimeProvider = DateTime
+type TimeProvider () =
+    member __.utcNow = DateTime.UtcNow
 
-module TimeProvider =
-    let utcNow = DateTime.UtcNow
-
-type RandomFloatProvider = float * float -> float
-
-module RandomProvider =
+type RandomProvider () =
     let r = Random()
-    let randomFloat(minInclusive, maxExclusive) = // https://stackoverflow.com/questions/1064901
+    member __.float(minInclusive, maxExclusive) = // https://stackoverflow.com/questions/1064901
         r.NextDouble() * (maxExclusive - minInclusive) + minInclusive

@@ -1,4 +1,5 @@
 using Blazor.FileReader;
+using CardOverflow.Api;
 using CardOverflow.Entity;
 using CardOverflow.Server.Areas.Identity;
 using CardOverflow.Server.Data;
@@ -22,6 +23,9 @@ namespace CardOverflow.Server {
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
+      services.AddSingleton<RandomProvider>();
+      services.AddSingleton<TimeProvider>();
+      services.AddSingleton<Scheduler>();
       services.AddDbContext<CardOverflowDb>(options => options
         .UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
       services.AddDefaultIdentity<UserEntity>(options => {

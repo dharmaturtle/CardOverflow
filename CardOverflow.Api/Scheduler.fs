@@ -1,16 +1,16 @@
-﻿namespace CardOverflow.Api
+namespace CardOverflow.Api
 
 open CardOverflow.Api
 open CardOverflow.Pure
 open System
 open Serilog
 
-type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
+type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
     let max a b = if a > b then a else b
     let min a b = if a < b then a else b
     let equals a b threshold = abs(a-b) < threshold
 
-    let interval (card: QuizCard) score =
+    let rawInterval (card: QuizCard) score =
         let intervalOfNewLearningOrLapsed card = 
             function
             | Again -> card.Options.LapsedCardsSteps.Head
@@ -40,7 +40,7 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
                 max (rawInterval * card.Options.MatureCardsIntervalFactor)
                     (TimeSpan.FromDays 1. |> previousInterval.Add)
                 |> min (TimeSpanInt16.value card.Options.MatureCardsMaximumInterval)
-            let delta = time - card.Due |> max TimeSpan.Zero
+            let delta = time.utcNow - card.Due |> max TimeSpan.Zero
             let hard = interval card.Interval (card.Interval * card.Options.MatureCardsHardInterval)
             let good = interval hard (delta * 0.5 |> (+) card.Interval |> (*) card.EaseFactor)
             let easy = interval good (delta * 1.  |> (+) card.Interval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
@@ -66,4 +66,7 @@ type Scheduler(randomFloatProvider: RandomFloatProvider, time: TimeProvider) =
             elif days < 30. then max 2. (days * 0.15) |> buildFuzzierInterval
             else                 max 4. (days * 0.05) |> buildFuzzierInterval
         // lowTODO find an implementation that is max inclusive
-        randomFloatProvider fuzzRangeInDaysInclusive |> TimeSpan.FromDays
+        randomProvider.float fuzzRangeInDaysInclusive |> TimeSpan.FromDays
+
+    member __.interval (card: QuizCard) score =
+        rawInterval card score |> fuzz
