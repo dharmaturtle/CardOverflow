@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @inject CardOverflowDb Db
+@inject Scheduler Scheduler
 
 @if (todaysCards == null) {
   <p><em>Loading...</em></p>
@@ -25,10 +26,10 @@
     @if (isFront == true) {
       <button class="btn btn-primary" onclick="@ShowBack">Show answer</button>
     } else if (isFront == false) {
-      <button class="btn btn-primary" onclick="@(() => SaveScore(0))">Again</button> @*medTODO show how long until this card comes back*@
-      <button class="btn btn-primary" onclick="@(() => SaveScore(1))">Hard</button>
-      <button class="btn btn-primary" onclick="@(() => SaveScore(2))">Good</button>
-      <button class="btn btn-primary" onclick="@(() => SaveScore(3))">Easy</button>
+      <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Again))">Again</button> @*medTODO show how long until this card comes back*@
+      <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Hard))">Hard</button>
+      <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Good))">Good</button>
+      <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Easy))">Easy</button>
     } else {
       <button class="btn btn-primary" onclick="@ShowNextCard">Show next card</button>
     }
@@ -46,7 +47,8 @@
     ShowFront();
   }
 
-  void SaveScore(int difficulty) {
+  void SaveScore(Score score) {
+    Scheduler.interval(todaysCards.First().ResultValue, score);
     // medTODO actually save
     todaysCards.RemoveAt(0);
     ShowFront();
