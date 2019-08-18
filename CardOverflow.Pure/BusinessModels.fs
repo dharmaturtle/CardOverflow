@@ -128,6 +128,7 @@ type FacetTemplateInstance = {
 }
 
 type QuizCard = {
+    CardId: int
     Due: DateTime
     Question: string
     Answer: string

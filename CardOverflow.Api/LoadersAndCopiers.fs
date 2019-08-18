@@ -218,7 +218,8 @@ type QuizCard with
             let! memorizationState = MemorizationState.create entity.MemorizationState
             let! cardState = CardState.create entity.CardState
             return
-                { Due = entity.Due
+                { CardId = entity.CardId
+                  Due = entity.Due
                   Question = htmlBase frontSide
                   Answer = htmlBase backSide
                   MemorizationState = memorizationState
