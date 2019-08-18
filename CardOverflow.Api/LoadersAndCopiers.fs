@@ -215,14 +215,12 @@ type QuizCard with
                 entity.Card.CardTemplate.FacetTemplateInstance.Css
 
         result {
-            let! memorizationState = MemorizationState.create entity.MemorizationState
             let! cardState = CardState.create entity.CardState
             return
                 { CardId = entity.CardId
                   Due = entity.Due
                   Question = htmlBase frontSide
                   Answer = htmlBase backSide
-                  MemorizationState = memorizationState
                   CardState = cardState
                   LapseCount = entity.LapseCount
                   EaseFactor = float entity.EaseFactorInPermille / 1000.
@@ -257,7 +255,6 @@ type FacetInstance with
 type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
         entity.UserId <- this.UserId
-        entity.MemorizationState <- MemorizationState.toDb this.MemorizationState
         entity.CardState <- CardState.toDb this.CardState
         entity.LapseCount <- this.LapseCount
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
@@ -266,7 +263,6 @@ type AcquiredCard with
         entity.Due <- this.Due
     static member InitialCopyTo userId cardOptionId =
         AcquiredCardEntity(
-            MemorizationState = MemorizationState.toDb New,
             CardState = CardState.toDb Normal,
             LapseCount = 0uy,
             EaseFactorInPermille = 0s,

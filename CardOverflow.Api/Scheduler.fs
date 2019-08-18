@@ -49,11 +49,9 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             | Hard -> hard
             | Good -> good
             | Easy -> easy
-        match card.MemorizationState with
-        | New
-        | Lapsed
-        | Learning -> intervalOfNewLearningOrLapsed card score
-        | Mature -> intervalOfMature card score
+        match card.StepsIndex with
+        | Some x -> intervalOfNewLearningOrLapsed card score // medTODO use the x!
+        | None -> intervalOfMature card score
 
     let fuzz(interval: TimeSpan) =
         let fuzzRangeInDaysInclusive =

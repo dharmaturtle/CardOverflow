@@ -123,7 +123,6 @@ type AnkiAcquiredCard = {
     UserId: int
     FacetInstance: FacetInstanceEntity
     CardTemplate: CardTemplateEntity
-    MemorizationState: MemorizationState
     CardState: CardState
     LapseCount: byte
     EaseFactorInPermille: int16
@@ -134,7 +133,6 @@ type AnkiAcquiredCard = {
 } with
     member this.CopyTo (entity: AcquiredCardEntity) =
         entity.UserId <- this.UserId
-        entity.MemorizationState <- MemorizationState.toDb this.MemorizationState
         entity.CardState <- CardState.toDb this.CardState
         entity.LapseCount <- this.LapseCount
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
@@ -175,7 +173,6 @@ type AnkiAcquiredCard = {
 type AnkiHistory = {
     AcquiredCard: AcquiredCardEntity
     Score: byte
-    MemorizationState: byte
     Timestamp: DateTime
     IntervalNegativeIsMinutesPositiveIsDays: int16
     EaseFactorInPermille: int16
@@ -188,7 +185,6 @@ type AnkiHistory = {
             this.AcquiredCard.Card.FacetInstanceId = h.AcquiredCard.Card.FacetInstanceId &&
             this.AcquiredCard.Card.CardTemplateId = h.AcquiredCard.Card.CardTemplateId &&
             this.Score = h.Score &&
-            this.MemorizationState = h.MemorizationState &&
             roundedTimeStamp = h.Timestamp &&
             this.IntervalNegativeIsMinutesPositiveIsDays = h.IntervalNegativeIsMinutesPositiveIsDays &&
             this.EaseFactorInPermille = h.EaseFactorInPermille &&
@@ -197,7 +193,6 @@ type AnkiHistory = {
     member this.CopyTo (entity: HistoryEntity) =
         entity.AcquiredCard <- this.AcquiredCard
         entity.Score <- this.Score
-        entity.MemorizationState <- this.MemorizationState
         entity.Timestamp <- this.Timestamp
         entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
@@ -206,6 +201,8 @@ type AnkiHistory = {
         let history = HistoryEntity()
         this.CopyTo history
         history
+
+type AnkiCardType = | New | Learning | Due // | Filtered
 
 module Anki =
     let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) getHistory (revLog: RevlogEntity) =
@@ -217,13 +214,6 @@ module Anki =
                 | 3L -> Ok Good
                 | 4L -> Ok Easy
                 | _ -> Error <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
-            let! memorizationState =
-                match revLog.Type with
-                | 0L -> Ok New
-                | 1L -> Ok Learning
-                | 2L -> Ok Mature
-                | 3L -> Ok Mature
-                | _ -> Error <| sprintf "Unrecognized Anki revlog type: %i" revLog.Type
             return
                 if cardByAnkiId.ContainsKey revLog.Cid // veryLowTODO report/log this, sometimes a user reviews a card then deletes it, but Anki keeps the orphaned revlog
                 then
@@ -235,7 +225,6 @@ module Anki =
                             | p when p > 0L -> int16 p // positive is days
                             | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
                         Score = score |> Score.toDb
-                        MemorizationState = memorizationState |> MemorizationState.toDb
                         TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
                             revLog.Time / 1000L - 32768L |> int16
                         Timestamp =
@@ -432,16 +421,15 @@ module Anki =
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
-        | 2L -> Ok Mature
+        | 2L -> Ok Due
         | 3L -> Error "Filtered decks are not supported. Please delete the filtered decks and upload the new export."
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
-        |> Result.map (fun memorizationState ->
+        |> Result.map (fun cardType ->
             let entity =
                 let c: AnkiAcquiredCard =
                     { UserId = userId
                       FacetInstance = facet
                       CardTemplate = cardTemplate
-                      MemorizationState = memorizationState
                       CardState =
                         match ankiCard.Queue with
                         | -3L -> UserBuried
@@ -455,25 +443,19 @@ module Anki =
                         then ankiCard.Ivl |> int16
                         else float ankiCard.Ivl * -1. / 60. |> Math.Round |> int16
                       StepsIndex =
-                        match memorizationState with
+                        match cardType with
                         | New
                         | Learning ->
                             if ankiCard.Left = 0L
                             then 0
                             else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
                             |> byte |> Some
-                        | Lapsed ->
-                            if ankiCard.Left = 0L
-                            then 0
-                            else cardOption.LapsedCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
-                            |> byte |> Some
-                        | Mature -> None
+                        | Due -> None
                       Due =
-                        match memorizationState with
+                        match cardType with
                         | New -> DateTime.UtcNow.Date
                         | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                        | Lapsed -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
-                        | Mature ->
+                        | Due ->
                             if ankiCard.Odue = 0L
                             then ankiCard.Due
                             else ankiCard.Odue

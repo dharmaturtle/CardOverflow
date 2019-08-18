@@ -47,7 +47,6 @@ module CardRepository =
         |> List.map (fun i ->
             AcquiredCardEntity(
                 UserId = userId, // eventualTODO missing FacetInstanceId and CardTemplateId
-                MemorizationState = MemorizationState.toDb New,
                 CardState = CardState.toDb Normal,
                 LapseCount = 0uy,
                 EaseFactorInPermille = 0s,

@@ -19,23 +19,6 @@ module Score =
         | Easy -> 3
         >> byte
 
-type MemorizationState = | New | Learning | Mature | Lapsed
-module MemorizationState =
-    let create =
-        function
-        | 0uy -> Ok New 
-        | 1uy -> Ok Learning
-        | 2uy -> Ok Mature
-        | 3uy -> Ok Lapsed
-        | x -> sprintf "Invalid MemorizationState in database: %A" x |> Error
-    let toDb =
-        function
-        | New -> 0
-        | Learning -> 1
-        | Mature -> 2
-        | Lapsed -> 3
-        >> byte
-
 type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
 module CardState =
     let create =
@@ -132,7 +115,6 @@ type QuizCard = {
     Due: DateTime
     Question: string
     Answer: string
-    MemorizationState: MemorizationState
     CardState: CardState
     LapseCount: byte
     EaseFactor: float
@@ -159,7 +141,6 @@ type AcquiredCard = {
     UserId: int
     FacetInstance: FacetInstance
     CardTemplate: CardTemplate
-    MemorizationState: MemorizationState
     CardState: CardState
     LapseCount: byte
     EaseFactorInPermille: int16
