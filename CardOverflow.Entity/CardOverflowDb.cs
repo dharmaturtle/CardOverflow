@@ -171,6 +171,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<ConceptEntity>(entity =>
             {
+                entity.HasIndex(e => e.MaintainerId);
+
                 entity.HasOne(d => d.Maintainer)
                     .WithMany(p => p.Concepts)
                     .HasForeignKey(d => d.MaintainerId)
@@ -191,6 +193,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<FacetEntity>(entity =>
             {
+                entity.HasIndex(e => e.ConceptId);
+
                 entity.HasIndex(e => e.MaintainerId);
 
                 entity.HasOne(d => d.Concept)

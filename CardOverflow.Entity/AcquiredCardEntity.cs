@@ -15,12 +15,10 @@ namespace CardOverflow.Entity
 
         public int UserId { get; set; }
         public int CardId { get; set; }
-        public byte MemorizationState { get; set; }
         public byte CardState { get; set; }
         public byte LapseCount { get; set; }
         public short EaseFactorInPermille { get; set; }
-        public short IntervalNegativeIsMinutesPositiveIsDays { get; set; }
-        public byte? StepsIndex { get; set; }
+        public short Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
         public int CardOptionId { get; set; }

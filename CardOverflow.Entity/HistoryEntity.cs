@@ -11,12 +11,11 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         public int CardId { get; set; }
         public byte Score { get; set; }
-        public byte MemorizationState { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Timestamp { get; set; }
-        public short IntervalNegativeIsMinutesPositiveIsDays { get; set; }
+        public short Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 { get; set; }
         public short EaseFactorInPermille { get; set; }
-        public short TimeFromSeeingQuestionToScoreInSecondsMinus32768 { get; set; }
+        public short TimeFromSeeingQuestionToScoreInSecondsPlus32768 { get; set; }
 
         [ForeignKey("UserId,CardId")]
         [InverseProperty("Histories")]

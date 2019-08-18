@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -100,12 +100,10 @@ GO
 CREATE TABLE [dbo].[AcquiredCard](
 	[UserId] [int] NOT NULL,
 	[CardId] [int] NOT NULL,
-	[MemorizationState] [tinyint] NOT NULL,
 	[CardState] [tinyint] NOT NULL,
 	[LapseCount] [tinyint] NOT NULL,
 	[EaseFactorInPermille] [smallint] NOT NULL,
-	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
-	[StepsIndex] [tinyint] NULL,
+	[Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767] [smallint] NOT NULL,
 	[Due] [smalldatetime] NOT NULL,
 	[CardOptionId] [int] NOT NULL,
  CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
@@ -499,11 +497,10 @@ CREATE TABLE [dbo].[History](
 	[UserId] [int] NOT NULL,
 	[CardId] [int] NOT NULL,
 	[Score] [tinyint] NOT NULL,
-	[MemorizationState] [tinyint] NOT NULL,
 	[Timestamp] [smalldatetime] NOT NULL,
-	[IntervalNegativeIsMinutesPositiveIsDays] [smallint] NOT NULL,
+	[Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767] [smallint] NOT NULL,
 	[EaseFactorInPermille] [smallint] NOT NULL,
-	[TimeFromSeeingQuestionToScoreInSecondsMinus32768] [smallint] NOT NULL,
+	[TimeFromSeeingQuestionToScoreInSecondsPlus32768] [smallint] NOT NULL,
  CONSTRAINT [PK_History] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -921,7 +918,9 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_Card] ON [dbo].[Card]
 	[FacetInstanceId] ASC,
 	[CardTemplateId] ASC,
 	[ClozeIndex] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)
+
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Card_CardTemplateId] ******/
 CREATE NONCLUSTERED INDEX [IX_Card_CardTemplateId] ON [dbo].[Card]
@@ -967,10 +966,22 @@ CREATE NONCLUSTERED INDEX [IX_CommentFacetTemplate_UserId] ON [dbo].[CommentFace
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Concept_MaintainerId] ******/
+CREATE NONCLUSTERED INDEX [IX_Concept_MaintainerId] ON [dbo].[Concept]
+(
+	[MaintainerId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_Deck_UserId] ******/
 CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 (
 	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Facet_ConceptId] ******/
+CREATE NONCLUSTERED INDEX [IX_Facet_ConceptId] ON [dbo].[Facet]
+(
+	[ConceptId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Facet_MaintainerId] ******/
