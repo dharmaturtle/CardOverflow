@@ -224,14 +224,7 @@ type QuizCard with
                   CardState = cardState
                   LapseCount = entity.LapseCount
                   EaseFactor = float entity.EaseFactorInPermille / 1000.
-                  Interval =
-                      if int32 entity.IntervalNegativeIsMinutesPositiveIsDays < 0
-                      then int16 -1 * entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromMinutes
-                      else entity.IntervalNegativeIsMinutesPositiveIsDays |> float |> TimeSpan.FromDays
-                  StepsIndex =
-                      if entity.StepsIndex.HasValue
-                      then Some entity.StepsIndex.Value
-                      else None
+                  Interval = AcquiredCard.intervalFromDb entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767
                   Options = CardOption.Load entity.CardOption }
         }
 
@@ -258,16 +251,14 @@ type AcquiredCard with
         entity.CardState <- CardState.toDb this.CardState
         entity.LapseCount <- this.LapseCount
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
-        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
-        entity.StepsIndex <- Option.toNullable this.StepsIndex
+        entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 <- AcquiredCard.intervalToDb this.Interval
         entity.Due <- this.Due
     static member InitialCopyTo userId cardOptionId =
         AcquiredCardEntity(
             CardState = CardState.toDb Normal,
             LapseCount = 0uy,
             EaseFactorInPermille = 0s,
-            IntervalNegativeIsMinutesPositiveIsDays = 0s,
-            StepsIndex = Nullable 0uy,
+            Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 = Int16.MinValue,
             Due = DateTime.UtcNow,
             CardOptionId = cardOptionId,
             UserId = userId

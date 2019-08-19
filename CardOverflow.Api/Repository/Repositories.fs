@@ -50,8 +50,7 @@ module CardRepository =
                 CardState = CardState.toDb Normal,
                 LapseCount = 0uy,
                 EaseFactorInPermille = 0s,
-                IntervalNegativeIsMinutesPositiveIsDays = 0s,
-                StepsIndex = Nullable 0uy,
+                Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 = Int16.MinValue,
                 Due = DateTime.UtcNow,
                 CardOption = user.CardOptions.First(fun x -> x.IsDefault)
             ))

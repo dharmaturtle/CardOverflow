@@ -1,6 +1,7 @@
 namespace CardOverflow.Pure
 
 open System
+open Microsoft.FSharp.Core.Operators.Checked
 
 type Score = | Again | Hard | Good | Easy
 module Score =
@@ -118,8 +119,7 @@ type QuizCard = {
     CardState: CardState
     LapseCount: byte
     EaseFactor: float
-    Interval: TimeSpan
-    StepsIndex: byte option
+    Interval: Choice<byte, TimeSpan>
     Options: CardOption
 }
 
@@ -144,11 +144,35 @@ type AcquiredCard = {
     CardState: CardState
     LapseCount: byte
     EaseFactorInPermille: int16
-    IntervalNegativeIsMinutesPositiveIsDays: int16
-    StepsIndex: byte option
+    Interval: Choice<byte, TimeSpan>
     Due: DateTime
     CardOptionId: int
 }
+
+module AcquiredCard =
+    //    -32768     255       -32513|-32512      1439         | <- The value of this is 1, not 0, cause 0 days is 0 minutes
+    //       |-----------------------|-------------------------|-----------------|
+    //              Step Indexes   s1|m0         Minutes       |d0      Days
+    let minutesInADay = TimeSpan.FromDays(1.).TotalMinutes
+    let s1 = Int16.MinValue + int16 Byte.MaxValue |> float
+    let m0 = s1 + 1.
+    let d0 = Int16.MinValue + int16 Byte.MaxValue + int16 minutesInADay |> float
+    let intervalFromDb (x: int16) =
+        let x = float x
+        if x <= s1
+        then x - float Int16.MinValue |> byte |> Choice1Of2
+        elif x > d0 // exclusive because we start counting at 1
+        then x - d0 |> float |> TimeSpan.FromDays |> Choice2Of2
+        else x - m0 |> float |> TimeSpan.FromMinutes |> Choice2Of2
+    let intervalToDb =
+        function
+        | Choice1Of2 (x: byte) ->
+            int16 x + Int16.MinValue
+        | Choice2Of2 (x: TimeSpan) ->
+            if x.TotalMinutes >= minutesInADay
+            then x.TotalDays + d0
+            else x.TotalMinutes + m0
+            |> int16
 
 type Concept = {
     Id: int

@@ -126,8 +126,7 @@ type AnkiAcquiredCard = {
     CardState: CardState
     LapseCount: byte
     EaseFactorInPermille: int16
-    IntervalNegativeIsMinutesPositiveIsDays: int16
-    StepsIndex: byte option
+    Interval: Choice<byte, TimeSpan>
     Due: DateTime
     CardOption: CardOptionEntity
 } with
@@ -136,8 +135,7 @@ type AnkiAcquiredCard = {
         entity.CardState <- CardState.toDb this.CardState
         entity.LapseCount <- this.LapseCount
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
-        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
-        entity.StepsIndex <- Option.toNullable this.StepsIndex
+        entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 <- AcquiredCard.intervalToDb this.Interval
         entity.Due <- this.Due
     member this.CopyToNew (privateTags: PrivateTagEntity seq) clozeIndex =
         let entity = AcquiredCardEntity ()
@@ -174,7 +172,7 @@ type AnkiHistory = {
     AcquiredCard: AcquiredCardEntity
     Score: byte
     Timestamp: DateTime
-    IntervalNegativeIsMinutesPositiveIsDays: int16
+    Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767: int16
     EaseFactorInPermille: int16
     TimeFromSeeingQuestionToScoreInSecondsMinus32768: int16
 } with
@@ -186,17 +184,17 @@ type AnkiHistory = {
             this.AcquiredCard.Card.CardTemplateId = h.AcquiredCard.Card.CardTemplateId &&
             this.Score = h.Score &&
             roundedTimeStamp = h.Timestamp &&
-            this.IntervalNegativeIsMinutesPositiveIsDays = h.IntervalNegativeIsMinutesPositiveIsDays &&
+            this.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 = h.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 &&
             this.EaseFactorInPermille = h.EaseFactorInPermille &&
-            this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsMinus32768
+            this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
         )
     member this.CopyTo (entity: HistoryEntity) =
         entity.AcquiredCard <- this.AcquiredCard
         entity.Score <- this.Score
         entity.Timestamp <- this.Timestamp
-        entity.IntervalNegativeIsMinutesPositiveIsDays <- this.IntervalNegativeIsMinutesPositiveIsDays
+        entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 <- this.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
-        entity.TimeFromSeeingQuestionToScoreInSecondsMinus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
+        entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
     member this.CopyToNew =
         let history = HistoryEntity()
         this.CopyTo history
@@ -220,7 +218,7 @@ module Anki =
                     let history = {
                         AcquiredCard = cardByAnkiId.[revLog.Cid]
                         EaseFactorInPermille = int16 revLog.Factor
-                        IntervalNegativeIsMinutesPositiveIsDays =
+                        Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 =
                             match revLog.Ivl with
                             | p when p > 0L -> int16 p // positive is days
                             | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
@@ -438,19 +436,18 @@ module Anki =
                         | _ -> Normal
                       LapseCount = ankiCard.Lapses |> byte // lowTODO This will throw an exception from `Microsoft.FSharp.Core.Operators.Checked` if Lapses is too big; should be a Result somehow
                       EaseFactorInPermille = ankiCard.Factor |> int16
-                      IntervalNegativeIsMinutesPositiveIsDays =
-                        if ankiCard.Ivl > 0L
-                        then ankiCard.Ivl |> int16
-                        else float ankiCard.Ivl * -1. / 60. |> Math.Round |> int16
-                      StepsIndex =
+                      Interval =
                         match cardType with
                         | New
                         | Learning ->
                             if ankiCard.Left = 0L
                             then 0
                             else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
-                            |> byte |> Some
-                        | Due -> None
+                            |> byte |> Choice1Of2
+                        | Due ->
+                            if ankiCard.Ivl > 0L
+                            then ankiCard.Ivl |> float |> TimeSpan.FromDays |> Choice2Of2
+                            else float ankiCard.Ivl * -1. / 60. |> Math.Round |> float |> TimeSpan.FromMinutes |> Choice2Of2
                       Due =
                         match cardType with
                         | New -> DateTime.UtcNow.Date
