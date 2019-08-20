@@ -101,11 +101,11 @@ CREATE TABLE [dbo].[AcquiredCard](
 	[UserId] [int] NOT NULL,
 	[CardId] [int] NOT NULL,
 	[CardState] [tinyint] NOT NULL,
-	[LapseCount] [tinyint] NOT NULL,
 	[EaseFactorInPermille] [smallint] NOT NULL,
-	[Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767] [smallint] NOT NULL,
+	[IntervalOrStepsIndex] [smallint] NOT NULL,
 	[Due] [smalldatetime] NOT NULL,
 	[CardOptionId] [int] NOT NULL,
+	[IsLapsed] [bit] NOT NULL,
  CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
 (
 	[UserId] ASC,
