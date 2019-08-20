@@ -40,8 +40,8 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             | Good -> good
             | Easy -> easy
         match card.Interval with
-        | Choice1Of2 stepIndex -> intervalOfNewLearningOrLapsed card stepIndex score
-        | Choice2Of2 interval -> intervalOfMature card interval score
+        | StepsIndex stepIndex -> intervalOfNewLearningOrLapsed card stepIndex score
+        | Interval interval -> intervalOfMature card interval score
 
     let fuzz(interval: TimeSpan) =
         let fuzzRangeInDaysInclusive =

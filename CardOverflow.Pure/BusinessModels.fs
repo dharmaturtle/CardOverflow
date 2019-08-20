@@ -47,7 +47,7 @@ type CardOption = {
     Id: int
     Name: string
     IsDefault: bool
-    NewCardsSteps: list<TimeSpan>
+    NewCardsSteps: TimeSpan list
     NewCardsMaxPerDay: int16
     NewCardsGraduatingInterval: TimeSpan
     NewCardsEasyInterval: TimeSpan
@@ -111,6 +111,8 @@ type FacetTemplateInstance = {
     AcquireHash: byte[]
 }
 
+type IntervalChoice = StepsIndex of byte | Interval of TimeSpan
+
 type QuizCard = {
     CardId: int
     Due: DateTime
@@ -119,7 +121,7 @@ type QuizCard = {
     CardState: CardState
     LapseCount: byte
     EaseFactor: float
-    Interval: Choice<byte, TimeSpan>
+    Interval: IntervalChoice
     Options: CardOption
 }
 
@@ -144,7 +146,7 @@ type AcquiredCard = {
     CardState: CardState
     LapseCount: byte
     EaseFactorInPermille: int16
-    Interval: Choice<byte, TimeSpan>
+    Interval: IntervalChoice
     Due: DateTime
     CardOptionId: int
 }
@@ -160,15 +162,15 @@ module AcquiredCard =
     let intervalFromDb (x: int16) =
         let x = float x
         if x <= s1
-        then x - float Int16.MinValue |> byte |> Choice1Of2
+        then x - float Int16.MinValue |> byte |> StepsIndex
         elif x > d0 // exclusive because we start counting at 1
-        then x - d0 |> float |> TimeSpan.FromDays |> Choice2Of2
-        else x - m0 |> float |> TimeSpan.FromMinutes |> Choice2Of2
+        then x - d0 |> float |> TimeSpan.FromDays |> Interval
+        else x - m0 |> float |> TimeSpan.FromMinutes |> Interval
     let intervalToDb =
         function
-        | Choice1Of2 (x: byte) ->
+        | StepsIndex x ->
             int16 x + Int16.MinValue
-        | Choice2Of2 (x: TimeSpan) ->
+        | Interval x ->
             if x.TotalMinutes >= minutesInADay
             then x.TotalDays + d0
             else x.TotalMinutes + m0

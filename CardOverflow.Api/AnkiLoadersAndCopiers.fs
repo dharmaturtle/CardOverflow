@@ -126,7 +126,7 @@ type AnkiAcquiredCard = {
     CardState: CardState
     LapseCount: byte
     EaseFactorInPermille: int16
-    Interval: Choice<byte, TimeSpan>
+    Interval: IntervalChoice
     Due: DateTime
     CardOption: CardOptionEntity
 } with
@@ -443,11 +443,12 @@ module Anki =
                             if ankiCard.Left = 0L
                             then 0
                             else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
-                            |> byte |> Choice1Of2
+                            |> byte |> StepsIndex
                         | Due ->
                             if ankiCard.Ivl > 0L
-                            then ankiCard.Ivl |> float |> TimeSpan.FromDays |> Choice2Of2
-                            else float ankiCard.Ivl * -1. / 60. |> Math.Round |> float |> TimeSpan.FromMinutes |> Choice2Of2
+                            then ankiCard.Ivl |> float |> TimeSpan.FromDays
+                            else float ankiCard.Ivl * -1. / 60. |> Math.Round |> float |> TimeSpan.FromMinutes
+                            |> Interval
                       Due =
                         match cardType with
                         | New -> DateTime.UtcNow.Date
