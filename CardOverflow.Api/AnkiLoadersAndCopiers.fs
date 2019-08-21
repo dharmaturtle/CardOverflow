@@ -173,19 +173,20 @@ type AnkiHistory = {
     AcquiredCard: AcquiredCardEntity
     Score: byte
     Timestamp: DateTime
-    Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767: int16
+    IntervalWithUnusedStepsIndex: IntervalOrStepsIndex
     EaseFactorInPermille: int16
     TimeFromSeeingQuestionToScoreInSecondsMinus32768: int16
 } with
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
+        let interval = this.IntervalWithUnusedStepsIndex |> AcquiredCard.intervalToDb
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.UserId &&
             this.AcquiredCard.Card.FacetInstanceId = h.AcquiredCard.Card.FacetInstanceId &&
             this.AcquiredCard.Card.CardTemplateId = h.AcquiredCard.Card.CardTemplateId &&
             this.Score = h.Score &&
             roundedTimeStamp = h.Timestamp &&
-            this.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 = h.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 &&
+            interval = h.IntervalWithUnusedStepsIndex &&
             this.EaseFactorInPermille = h.EaseFactorInPermille &&
             this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
         )
@@ -193,7 +194,7 @@ type AnkiHistory = {
         entity.AcquiredCard <- this.AcquiredCard
         entity.Score <- this.Score
         entity.Timestamp <- this.Timestamp
-        entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 <- this.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767
+        entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> AcquiredCard.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
     member this.CopyToNew =
@@ -219,10 +220,11 @@ module Anki =
                     let history = {
                         AcquiredCard = cardByAnkiId.[revLog.Cid]
                         EaseFactorInPermille = int16 revLog.Factor
-                        Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 =
+                        IntervalWithUnusedStepsIndex =
                             match revLog.Ivl with
-                            | p when p > 0L -> int16 p // positive is days
-                            | _ -> revLog.Ivl / 60L |> int16 // In Anki, negative is seconds, and we want minutes
+                            | p when p > 0L -> p |> float |> TimeSpan.FromDays    // In Anki, positive is days
+                            | n             -> n |> float |> TimeSpan.FromSeconds // In Anki, negative is seconds
+                            |> Interval
                         Score = score |> Score.toDb
                         TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
                             revLog.Time / 1000L - 32768L |> int16

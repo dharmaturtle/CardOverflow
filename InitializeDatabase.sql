@@ -498,7 +498,7 @@ CREATE TABLE [dbo].[History](
 	[CardId] [int] NOT NULL,
 	[Score] [tinyint] NOT NULL,
 	[Timestamp] [smalldatetime] NOT NULL,
-	[Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767] [smallint] NOT NULL,
+	[IntervalWithUnusedStepsIndex] [smallint] NOT NULL,
 	[EaseFactorInPermille] [smallint] NOT NULL,
 	[TimeFromSeeingQuestionToScoreInSecondsPlus32768] [smallint] NOT NULL,
  CONSTRAINT [PK_History] PRIMARY KEY CLUSTERED 
