@@ -48,9 +48,9 @@ module CardRepository =
             AcquiredCardEntity(
                 UserId = userId, // eventualTODO missing FacetInstanceId and CardTemplateId
                 CardState = CardState.toDb Normal,
-                LapseCount = 0uy,
+                IsLapsed = false,
                 EaseFactorInPermille = 0s,
-                Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 = Int16.MinValue,
+                IntervalOrStepsIndex = Int16.MinValue,
                 Due = DateTime.UtcNow,
                 CardOption = user.CardOptions.First(fun x -> x.IsDefault)
             ))

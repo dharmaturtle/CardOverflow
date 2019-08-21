@@ -124,18 +124,19 @@ type AnkiAcquiredCard = {
     FacetInstance: FacetInstanceEntity
     CardTemplate: CardTemplateEntity
     CardState: CardState
+    IsLapsed: bool
     LapseCount: byte
     EaseFactorInPermille: int16
-    Interval: IntervalChoice
+    IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
     CardOption: CardOptionEntity
 } with
     member this.CopyTo (entity: AcquiredCardEntity) =
         entity.UserId <- this.UserId
         entity.CardState <- CardState.toDb this.CardState
-        entity.LapseCount <- this.LapseCount
+        entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
-        entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 <- AcquiredCard.intervalToDb this.Interval
+        entity.IntervalOrStepsIndex <- AcquiredCard.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
     member this.CopyToNew (privateTags: PrivateTagEntity seq) clozeIndex =
         let entity = AcquiredCardEntity ()
@@ -436,7 +437,8 @@ module Anki =
                         | _ -> Normal
                       LapseCount = ankiCard.Lapses |> byte // lowTODO This will throw an exception from `Microsoft.FSharp.Core.Operators.Checked` if Lapses is too big; should be a Result somehow
                       EaseFactorInPermille = ankiCard.Factor |> int16
-                      Interval =
+                      IsLapsed = false // lowTODO not the real value, need to find a way to get it from Anki, but it doesn't look like its in the ankiDb, and looking at sched.py is just infuriating
+                      IntervalOrStepsIndex =
                         match cardType with
                         | New
                         | Learning ->

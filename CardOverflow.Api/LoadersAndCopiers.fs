@@ -222,9 +222,9 @@ type QuizCard with
                   Question = htmlBase frontSide
                   Answer = htmlBase backSide
                   CardState = cardState
-                  LapseCount = entity.LapseCount
+                  IsLapsed = entity.IsLapsed
                   EaseFactor = float entity.EaseFactorInPermille / 1000.
-                  Interval = AcquiredCard.intervalFromDb entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767
+                  IntervalOrStepsIndex = AcquiredCard.intervalFromDb entity.IntervalOrStepsIndex
                   Options = CardOption.Load entity.CardOption }
         }
 
@@ -249,16 +249,16 @@ type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
         entity.UserId <- this.UserId
         entity.CardState <- CardState.toDb this.CardState
-        entity.LapseCount <- this.LapseCount
+        entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
-        entity.Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 <- AcquiredCard.intervalToDb this.Interval
+        entity.IntervalOrStepsIndex <- AcquiredCard.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
     static member InitialCopyTo userId cardOptionId =
         AcquiredCardEntity(
             CardState = CardState.toDb Normal,
-            LapseCount = 0uy,
+            IsLapsed = false,
             EaseFactorInPermille = 0s,
-            Interval__StepsIndexAre_32768to_32513__MinutesAre_32512to_31173__DaysAre_31172to32767 = Int16.MinValue,
+            IntervalOrStepsIndex = Int16.MinValue,
             Due = DateTime.UtcNow,
             CardOptionId = cardOptionId,
             UserId = userId

@@ -153,20 +153,20 @@ let ``Importing AnkiDb reuses previous CardOptions, PrivateTags, and FacetTempla
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb, then again with different card lapses, updates db`` _ simpleAnkiDb =
-    let lapseCountA = 13L
-    let lapseCountB = 45L
+    let easeFactorA = 13s
+    let easeFactorB = 45s
     use c = new TestContainer()
     let userId = 3
     AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
     |> Result.isOk
     |> Assert.True
-    Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.LapseCount = 0uy))
-    simpleAnkiDb.Cards |> List.iter (fun x -> x.Lapses <- lapseCountA)
-    simpleAnkiDb.Cards.[0].Lapses <- lapseCountB
+    Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = 0s))
+    simpleAnkiDb.Cards |> List.iter (fun x -> x.Factor <- int64 easeFactorA)
+    simpleAnkiDb.Cards.[0].Factor <- int64 easeFactorB
 
     AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
     |> Result.isOk
     |> Assert.True
 
-    Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.LapseCount = byte lapseCountA))
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.LapseCount = byte lapseCountB))
+    Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))

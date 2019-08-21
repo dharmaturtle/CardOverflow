@@ -111,7 +111,7 @@ type FacetTemplateInstance = {
     AcquireHash: byte[]
 }
 
-type IntervalChoice = StepsIndex of byte | Interval of TimeSpan
+type IntervalOrStepsIndex = StepsIndex of byte | Interval of TimeSpan
 
 type QuizCard = {
     CardId: int
@@ -119,9 +119,9 @@ type QuizCard = {
     Question: string
     Answer: string
     CardState: CardState
-    LapseCount: byte
+    IsLapsed: bool
     EaseFactor: float
-    Interval: IntervalChoice
+    IntervalOrStepsIndex: IntervalOrStepsIndex
     Options: CardOption
 }
 
@@ -144,9 +144,9 @@ type AcquiredCard = {
     FacetInstance: FacetInstance
     CardTemplate: CardTemplate
     CardState: CardState
-    LapseCount: byte
+    IsLapsed: bool
     EaseFactorInPermille: int16
-    Interval: IntervalChoice
+    IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
     CardOptionId: int
 }

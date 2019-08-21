@@ -39,7 +39,7 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             | Hard -> hard
             | Good -> good
             | Easy -> easy
-        match card.Interval with
+        match card.IntervalOrStepsIndex with
         | StepsIndex stepIndex -> intervalOfNewLearningOrLapsed card stepIndex score
         | Interval interval -> intervalOfMature card interval score
 
