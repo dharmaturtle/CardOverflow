@@ -10,38 +10,49 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
     let min a b = if a < b then a else b
     let equals a b threshold = abs(a-b) < threshold
 
-    let rawInterval (card: QuizCard) score =
-        let intervalOfNewLearningOrLapsed card stepIndex = 
+    let rawInterval (card: QuizCard) =
+        let calculateStepsInterval (steps: TimeSpan list) graduatingInterval easyInterval stepIndex =
             function
-            | Again -> card.Options.LapsedCardsSteps.Head
+            | Again -> steps.Head
             | Hard ->
-                match card.Options.NewCardsSteps |> List.tryItem (int32 stepIndex) with
+                match steps |> List.tryItem (int stepIndex) with
                 | Some step -> step
                 | None ->
-                    sprintf "Hard was chosen for QuizCard %A and it had None as its NewCardsSteps - an illegal value." card |> Log.Error
-                    card.Options.NewCardsSteps.Head
+                    sprintf "Hard was chosen for QuizCard %A and it had %i as its stepIndex - an illegal value." card stepIndex |> Log.Error
+                    steps.Head
             | Good ->
-                match card.Options.NewCardsSteps |> List.tryItem (int32 stepIndex + 1) with
+                match steps |> List.tryItem (int stepIndex + 1) with
                 | Some step -> step
-                | None -> card.Options.NewCardsGraduatingInterval
-            | Easy -> card.Options.NewCardsEasyInterval
-        let intervalOfMature card oldInterval =
+                | None -> graduatingInterval
+            | Easy -> easyInterval
+        let calculateInterval previousInterval =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
                 max (rawInterval * card.Options.MatureCardsIntervalFactor)
                     (TimeSpan.FromDays 1. |> previousInterval.Add)
                 |> min (TimeSpanInt16.value card.Options.MatureCardsMaximumInterval)
             let delta = time.utcNow - card.Due |> max TimeSpan.Zero
-            let hard = interval oldInterval (oldInterval * card.Options.MatureCardsHardInterval)
-            let good = interval hard (delta * 0.5 |> (+) oldInterval |> (*) card.EaseFactor)
-            let easy = interval good (delta * 1.  |> (+) oldInterval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
+            let hard = interval previousInterval <| previousInterval * card.Options.MatureCardsHardInterval
+            let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
+            let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
             function
             | Again -> card.Options.NewCardsSteps.Head
             | Hard -> hard
             | Good -> good
             | Easy -> easy
         match card.IntervalOrStepsIndex with
-        | StepsIndex stepIndex -> intervalOfNewLearningOrLapsed card stepIndex score
-        | Interval interval -> intervalOfMature card interval score
+        | NewStepsIndex i ->
+            calculateStepsInterval
+                card.Options.NewCardsSteps
+                card.Options.NewCardsGraduatingInterval
+                card.Options.NewCardsEasyInterval
+                i
+        | LapsedStepsIndex i ->
+            calculateStepsInterval
+                card.Options.LapsedCardsSteps
+                card.Options.NewCardsGraduatingInterval // medTODO consider an option for this
+                card.Options.NewCardsGraduatingInterval // medTODO consider an option for this
+                i
+        | Interval i -> calculateInterval i
 
     let fuzz(interval: TimeSpan) =
         let fuzzRangeInDaysInclusive =

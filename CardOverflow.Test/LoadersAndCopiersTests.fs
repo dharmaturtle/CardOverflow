@@ -22,14 +22,27 @@ let ``CardOptions load and copy defaultCardOptions are equal``() =
     Assert.Equal(UserRepository.defaultCardOptions, record)
 
 [<Fact>]
-let ``Interval, all step indexes map to db and back``() =
-    // lowTODO assert that the type of StepIndex is a unsigned byte
+let ``Interval, all NewStepsIndexes map to db and back``() =
+    // lowTODO assert that the type of NewStepsIndex is a unsigned byte
     for i in [ Byte.MinValue .. Byte.MaxValue ] do
-        StepsIndex i
+        NewStepsIndex i
         |> AcquiredCard.intervalToDb
         |> AcquiredCard.intervalFromDb
         |> function
-        | StepsIndex x -> Assert.Equal(i, x)
+        | NewStepsIndex x -> Assert.Equal(i, x)
+        | LapsedStepsIndex x -> failwithf "%A" x
+        | Interval x -> failwithf "%A" x
+
+[<Fact>]
+let ``Interval, all LapsedStepsIndexes map to db and back``() =
+    // lowTODO assert that the type of LapsedStepsIndex is a unsigned byte
+    for i in [ Byte.MinValue .. Byte.MaxValue ] do
+        LapsedStepsIndex i
+        |> AcquiredCard.intervalToDb
+        |> AcquiredCard.intervalFromDb
+        |> function
+        | NewStepsIndex x -> failwithf "%A" x
+        | LapsedStepsIndex x -> Assert.Equal(i, x)
         | Interval x -> failwithf "%A" x
 
 [<Fact>]
@@ -40,7 +53,8 @@ let ``Interval, all minutes map to db and back``() =
         |> AcquiredCard.intervalToDb
         |> AcquiredCard.intervalFromDb
         |> function
-        | StepsIndex x -> failwithf "%A" x
+        | NewStepsIndex x -> failwithf "%A" x
+        | LapsedStepsIndex x -> failwithf "%A" x
         | Interval x -> Assert.Equal(i, x)
 
 [<Fact>]
@@ -51,12 +65,18 @@ let ``Interval, first 100 days map to db and back``() =
         |> AcquiredCard.intervalToDb
         |> AcquiredCard.intervalFromDb
         |> function
-        | StepsIndex x -> failwithf "%A" x
+        | NewStepsIndex x -> failwithf "%A" x
+        | LapsedStepsIndex x -> failwithf "%A" x
         | Interval x -> Assert.Equal(i, x)
 
 [<Fact>]
 let ``Interval, last 100 days map to db and back``() =
-    let d0 = Int16.MinValue + int16 Byte.MaxValue + int16 (TimeSpan.FromDays(1.).TotalMinutes) // see implementation for what d0 means
+    let minutesInADay = TimeSpan.FromDays(1.).TotalMinutes
+    let n1 = Int16.MinValue + int16 Byte.MaxValue |> float
+    let l0 = n1 + 1.
+    let l1 = l0 + float Byte.MaxValue
+    let m0 = l1 + 1.
+    let d0 = m0 + float minutesInADay  // see implementation for what d0 means
     let maxValue = Math.Abs(float d0) + float Int16.MaxValue
     for i in [ maxValue-100. .. maxValue ] do
         let i = TimeSpan.FromDays i
@@ -64,5 +84,6 @@ let ``Interval, last 100 days map to db and back``() =
         |> AcquiredCard.intervalToDb
         |> AcquiredCard.intervalFromDb
         |> function
-        | StepsIndex x -> failwithf "%A" x
+        | NewStepsIndex x -> failwithf "%A" x
+        | LapsedStepsIndex x -> failwithf "%A" x
         | Interval x -> Assert.Equal(i, x)

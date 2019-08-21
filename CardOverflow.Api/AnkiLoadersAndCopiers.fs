@@ -445,7 +445,7 @@ module Anki =
                             if ankiCard.Left = 0L
                             then 0
                             else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
-                            |> byte |> StepsIndex
+                            |> byte |> NewStepsIndex
                         | Due ->
                             if ankiCard.Ivl > 0L
                             then ankiCard.Ivl |> float |> TimeSpan.FromDays

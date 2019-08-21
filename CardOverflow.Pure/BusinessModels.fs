@@ -111,7 +111,10 @@ type FacetTemplateInstance = {
     AcquireHash: byte[]
 }
 
-type IntervalOrStepsIndex = StepsIndex of byte | Interval of TimeSpan
+type IntervalOrStepsIndex =
+    | NewStepsIndex of byte
+    | LapsedStepsIndex of byte
+    | Interval of TimeSpan
 
 type QuizCard = {
     CardId: int
@@ -152,24 +155,30 @@ type AcquiredCard = {
 }
 
 module AcquiredCard =
-    //    -32768     255       -32513|-32512      1439         | <- The value of this is 1, not 0, cause 0 days is 0 minutes
-    //       |-----------------------|-------------------------|-----------------|
-    //              Step Indexes   s1|m0         Minutes       |d0      Days
+    //                 255            |             255             |            1439         | <- The value of this is 1, not 0, cause 0 days is 0 minutes
+    //       |------------------------|-----------------------------|-------------------------|-------------------|
+    //           New Step Indexes   n1|l0   Lapsed Step Indexes   l1|m0         Minutes       |d0      Days
     let minutesInADay = TimeSpan.FromDays(1.).TotalMinutes
-    let s1 = Int16.MinValue + int16 Byte.MaxValue |> float
-    let m0 = s1 + 1.
-    let d0 = Int16.MinValue + int16 Byte.MaxValue + int16 minutesInADay |> float
+    let n1 = Int16.MinValue + int16 Byte.MaxValue |> float
+    let l0 = n1 + 1.
+    let l1 = l0 + float Byte.MaxValue
+    let m0 = l1 + 1.
+    let d0 = m0 + float minutesInADay
     let intervalFromDb (x: int16) =
         let x = float x
-        if x <= s1
-        then x - float Int16.MinValue |> byte |> StepsIndex
+        if x <= n1
+        then x - float Int16.MinValue |> byte |> NewStepsIndex
         elif x > d0 // exclusive because we start counting at 1
         then x - d0 |> float |> TimeSpan.FromDays |> Interval
+        elif l0 <= x && x <= l1
+        then x - float l0 |> byte |> LapsedStepsIndex
         else x - m0 |> float |> TimeSpan.FromMinutes |> Interval
     let intervalToDb =
         function
-        | StepsIndex x ->
+        | NewStepsIndex x ->
             int16 x + Int16.MinValue
+        | LapsedStepsIndex x ->
+            int16 x + int16 l0
         | Interval x ->
             if x.TotalMinutes >= minutesInADay
             then x.TotalDays + d0
