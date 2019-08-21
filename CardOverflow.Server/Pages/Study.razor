@@ -1,4 +1,4 @@
-﻿@page "/study"
+@page "/study"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -6,8 +6,10 @@
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
 @inject CardOverflowDb Db
 @inject Scheduler Scheduler
+@inject TimeProvider TimeProvider
 
 @if (todaysCards == null) {
   <p><em>Loading...</em></p>
@@ -41,20 +43,25 @@
   string error;
   bool? isFront;
   IList<FSharpResult<QuizCard, string>> todaysCards;
+  int userId = 3;
+  DateTime frontVisible;
 
   protected override async Task OnInitAsync() {
     todaysCards = (await CardRepository.GetTodaysCards(Db, 3)).ToList(); // medTODO remove the 3
     ShowFront();
   }
 
-  void SaveScore(Score score) {
-    Scheduler.interval(todaysCards.First().ResultValue, score);
-    // medTODO actually save
+  async Task SaveScore(Score score) {
+    var (interval, easeFactor) = Scheduler.interval(todaysCards.First().ResultValue, score);
+    await SanitizeHistoryRepository.AddAndSaveAsync(Db, userId, todaysCards.First().ResultValue.CardId, score, TimeProvider.utcNow, interval, easeFactor, TimeProvider.utcNow - frontVisible);
+    // medTODO also need to update the AcquiredCard with the new interval (and maybe other stuff), due to a denormalized db. Move the Scheduler to that new function
+    // medTODO needs `undo review` support
     todaysCards.RemoveAt(0);
     ShowFront();
   }
 
   void ShowFront() {
+    frontVisible = TimeProvider.utcNow;
     if (todaysCards.First().IsOk) {
       isFront = true;
       iframeSrcdoc = todaysCards.First().ResultValue.Question;

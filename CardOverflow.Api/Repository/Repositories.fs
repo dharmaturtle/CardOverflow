@@ -11,6 +11,13 @@ open Helpers
 open FSharp.Control.Tasks
 open System.Collections.Generic
 
+module HistoryRepository =
+    let addAndSaveAsync (db: CardOverflowDb) e =
+        task {
+            let! _ = db.History.AddAsync e
+            return! db.SaveChangesAsync()
+        }
+
 module CardRepository =
     let private getCompleteCards (db: CardOverflowDb) =
         db.AcquiredCard
