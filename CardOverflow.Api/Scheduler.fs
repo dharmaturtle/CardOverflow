@@ -10,9 +10,9 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
     let min a b = if a < b then a else b
     let equals a b threshold = abs(a-b) < threshold
 
-    let rawInterval (card: QuizCard) =
+    let rawInterval (card: QuizCard) score =
         let calculateStepsInterval (steps: TimeSpan list) graduatingInterval easyInterval stepIndex =
-            function
+            match score with
             | Again -> steps.Head
             | Hard ->
                 match steps |> List.tryItem (int stepIndex) with
@@ -34,24 +34,26 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             let hard = interval previousInterval <| previousInterval * card.Options.MatureCardsHardInterval
             let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
             let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
-            function
-            | Again -> card.Options.NewCardsSteps.Head
-            | Hard -> hard
-            | Good -> good
-            | Easy -> easy
+            match score with
+            | Again -> (card.Options.NewCardsSteps.Head, 0.)
+            | Hard -> (hard, card.EaseFactor - 0.15)
+            | Good -> (good, card.EaseFactor)
+            | Easy -> (easy, max (card.EaseFactor + 0.15) 1.3)
         match card.IntervalOrStepsIndex with
         | NewStepsIndex i ->
-            calculateStepsInterval
+            (calculateStepsInterval
                 card.Options.NewCardsSteps
                 card.Options.NewCardsGraduatingInterval
                 card.Options.NewCardsEasyInterval
-                i
+                i,
+             card.Options.NewCardsStartingEaseFactor)
         | LapsedStepsIndex i ->
-            calculateStepsInterval
+            (calculateStepsInterval
                 card.Options.LapsedCardsSteps
                 card.Options.NewCardsGraduatingInterval // medTODO consider an option for this
-                card.Options.NewCardsGraduatingInterval // medTODO consider an option for this
-                i
+                card.Options.NewCardsGraduatingInterval // medTODO actually the card options are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
+                i,
+             card.Options.LapsedCardsNewIntervalFactor)
         | Interval i -> calculateInterval i
 
     let fuzz(interval: TimeSpan) =
@@ -68,4 +70,5 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
         randomProvider.float fuzzRangeInDaysInclusive |> TimeSpan.FromDays
 
     member __.interval (card: QuizCard) score =
-        rawInterval card score |> fuzz
+        rawInterval card score
+        |> fun (interval, easeFactor) -> fuzz interval, easeFactor

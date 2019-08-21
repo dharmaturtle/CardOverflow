@@ -55,7 +55,7 @@ type CardOption = {
     NewCardsBuryRelated: bool
     MatureCardsMaxPerDay: int16
     MatureCardsEaseFactorEasyBonusFactor: float
-    MatureCardsIntervalFactor: float
+    MatureCardsIntervalFactor: float // medTODO unused
     MatureCardsMaximumInterval: TimeSpanInt16.TimeSpanInt16
     MatureCardsHardInterval: float
     MatureCardsBuryRelated: bool
