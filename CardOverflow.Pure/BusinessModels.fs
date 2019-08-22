@@ -143,6 +143,8 @@ type AcquiredFacet = {
     FacetCreated: DateTime
     FacetModified: DateTime option
     FacetFields: (Field * string) seq
+    FrontSide: string
+    BackSide: string
 }
 
 type AcquiredCard = {

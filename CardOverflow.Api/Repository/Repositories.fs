@@ -22,13 +22,9 @@ module CardRepository =
     let private getCompleteCards (db: CardOverflowDb) =
         db.AcquiredCard
             .Include(fun x -> x.CardOption)
-            .Include(fun x -> x.Card)
-                .ThenInclude(fun x -> x.FacetInstance)
-                .ThenInclude(fun x -> x.FieldValues :> IEnumerable<_>)
+            .Include(fun x -> x.Card.FacetInstance.FieldValues :> IEnumerable<_>)
                 .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
-            .Include(fun x -> x.Card)
-                .ThenInclude(fun x -> x.CardTemplate)
-                .ThenInclude(fun x -> x.FacetTemplateInstance)
+            .Include(fun x -> x.Card.CardTemplate.FacetTemplateInstance)
     let GetTodaysCards (db: CardOverflowDb) userId =
         let tomorrow = DateTime.UtcNow.AddDays 1.
         task {
@@ -72,6 +68,7 @@ module ConceptRepository =
         task {
             let! r =
                 db.AcquiredCard
+                    .Include(fun x -> x.Card.CardTemplate.FacetTemplateInstance)
                     .Include(fun x -> x.Card.FacetInstance.Facet.Concept)
                     .Include(fun x -> x.Card.FacetInstance.FieldValues :> IEnumerable<_>)
                         .ThenInclude(fun (x: FieldValueEntity) -> x.Field)

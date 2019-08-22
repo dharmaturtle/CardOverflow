@@ -187,16 +187,11 @@ type FacetTemplateInstance with
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }
 
-type QuizCard with
-    static member Load(entity: AcquiredCardEntity) =
-#if DEBUG
-        entity.Card.FacetInstance.FieldValues |> Seq.head |> ignore
-#endif
-        let fieldNameValueMap =
-                entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value))
+module CardGenerator =
+    let generate fieldNameValueMap cardTemplateEntity =
         let replaceFields template =
             (template, fieldNameValueMap) ||> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value))
-        let cardTemplate = CardTemplate.Load entity.Card.CardTemplate
+        let cardTemplate = CardTemplate.Load cardTemplateEntity
         let frontSide =
             replaceFields cardTemplate.QuestionTemplate
         let backSide =
@@ -212,15 +207,22 @@ type QuizCard with
         %s
     </body>
 </html>"""      
-                entity.Card.CardTemplate.FacetTemplateInstance.Css
+                cardTemplateEntity.FacetTemplateInstance.Css
+        (htmlBase frontSide, htmlBase backSide)
 
+type QuizCard with
+    static member Load(entity: AcquiredCardEntity) =
+        let frontSide, backSide =
+            CardGenerator.generate
+                (entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
+                entity.Card.CardTemplate
         result {
             let! cardState = CardState.create entity.CardState
             return
                 { CardId = entity.CardId
                   Due = entity.Due
-                  Question = htmlBase frontSide
-                  Answer = htmlBase backSide
+                  Question = frontSide
+                  Answer = backSide
                   CardState = cardState
                   IsLapsed = entity.IsLapsed
                   EaseFactor = float entity.EaseFactorInPermille / 1000.
@@ -322,6 +324,10 @@ type AcquiredConcept with
                     acquiredCards.Select(fun acquiredCard ->
                         let fi = acquiredCard.Card.FacetInstance
                         let facet = fi.Facet
+                        let frontSide, backSide =
+                            CardGenerator.generate
+                                (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
+                                (acquiredCards.First().Card.CardTemplate) // lowToMedTODO not showing anything other than first card template, needs more UI designwork
                         {   FacetInstanceId = fi.Id
                             MaintainerId = facet.MaintainerId
                             Description = facet.Description
@@ -329,5 +335,7 @@ type AcquiredConcept with
                             FacetCreated = fi.Created
                             FacetModified = Option.ofNullable fi.Modified
                             FacetFields = fi.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> (Field.Load x.Field, x.Value))
+                            FrontSide = frontSide
+                            BackSide = backSide
                         })
             })
