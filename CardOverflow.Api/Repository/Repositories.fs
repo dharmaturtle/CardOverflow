@@ -73,6 +73,7 @@ module ConceptRepository =
                     .Include(fun x -> x.Card.FacetInstance.FieldValues :> IEnumerable<_>)
                         .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
                     .Where(fun x -> x.UserId = userId)
+                    .Take(10) // medTODO pagination
                     .ToListAsync()
             return AcquiredConcept.Load r
         }

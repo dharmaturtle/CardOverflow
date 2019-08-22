@@ -1,0 +1,43 @@
+@page "/Manage"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@inject CardOverflowDb Db
+
+@if (concepts == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <div>
+    <ul>
+      @foreach (var concept in concepts) {
+        <li>
+          @concept.Name
+          <ul>
+            @foreach (var facet in @concept.AcquiredFacets) {
+              <li>@facet.Description</li>
+              <li>
+                @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                <iframe sandbox allow-scripts class="study-iframe" srcdoc="@facet.FrontSide"></iframe>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    </ul>
+  </div>
+}
+
+@code {
+  IList<AcquiredConcept> concepts;
+  int userId = 3;
+
+  protected override async Task OnInitAsync() {
+    concepts = (await ConceptRepository.GetAcquiredConceptsAsync(Db, 3)).ToList();
+  }
+
+}
