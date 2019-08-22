@@ -135,11 +135,14 @@ type FacetInstance = {
     Fields: string seq
 }
 
-type Facet = {
-    Id: int
+type AcquiredFacet = {
+    FacetInstanceId: int
     MaintainerId: int
     Description: string
-    FacetInstances: FacetInstance seq
+    FacetId: int
+    FacetCreated: DateTime
+    FacetModified: DateTime option
+    FacetFields: (Field * string) seq
 }
 
 type AcquiredCard = {
@@ -185,9 +188,9 @@ module AcquiredCard =
             else x.TotalMinutes + m0
             |> int16
 
-type Concept = {
+type AcquiredConcept = {
     Id: int
     Name: string
     MaintainerId: int
-    Facets: Facet seq
+    AcquiredFacets: AcquiredFacet seq
 }

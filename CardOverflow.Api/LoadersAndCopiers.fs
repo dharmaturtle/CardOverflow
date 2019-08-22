@@ -311,18 +311,23 @@ type InitialConceptInstance = {
             ].ToList()
         )
 
-type Facet with
-    static member Load (e: FacetEntity) = {
-        Id = e.Id
-        MaintainerId = e.MaintainerId
-        Description = e.Description
-        FacetInstances = e.FacetInstances |> Seq.map FacetInstance.Load
-    }
-
-type Concept with
-    static member Load (e: ConceptEntity) = {
-        Id = e.Id
-        Name = e.Name
-        MaintainerId = e.MaintainerId
-        Facets = e.Facets |> Seq.map Facet.Load
-    }
+type AcquiredConcept with
+    static member Load (e: AcquiredCardEntity seq) =
+        e.GroupBy(fun x -> x.Card.FacetInstance.Facet.ConceptId).Select(fun acquiredCards ->
+            let concept = acquiredCards.First().Card.FacetInstance.Facet.Concept
+            {   Id = concept.Id
+                Name = concept.Name
+                MaintainerId = concept.MaintainerId
+                AcquiredFacets =
+                    acquiredCards.Select(fun acquiredCard ->
+                        let fi = acquiredCard.Card.FacetInstance
+                        let facet = fi.Facet
+                        {   FacetInstanceId = fi.Id
+                            MaintainerId = facet.MaintainerId
+                            Description = facet.Description
+                            FacetId = facet.Id
+                            FacetCreated = fi.Created
+                            FacetModified = Option.ofNullable fi.Modified
+                            FacetFields = fi.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> (Field.Load x.Field, x.Value))
+                        })
+            })

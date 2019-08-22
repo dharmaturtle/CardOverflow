@@ -57,10 +57,27 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
         |> Result.getOk
         |> fun x -> x.Answer
     )
-    Assert.Equal<string seq>(
-        ["Front"; "Back"],
-        (ConceptRepository.GetConcepts c.Db userId)
-            .Single().Facets.Single().FacetInstances.Single().Fields.OrderByDescending(fun x -> x)
+    Assert.Equal<(Field * string) seq>(
+        [({ Id = 10
+            Name = "Front"
+            Font = "Arial"
+            FontSize = 20uy
+            IsRightToLeft = false
+            Ordinal = 0uy
+            IsSticky = false }
+        , "Front")
+         ({ Id = 9
+            Name = "Back"
+            Font = "Arial"
+            FontSize = 20uy
+            IsRightToLeft = false
+            Ordinal = 1uy
+            IsSticky = false }
+         , "Back")],
+        (ConceptRepository.GetAcquiredConceptsAsync c.Db userId)
+            .GetAwaiter()
+            .GetResult()
+            .Single().AcquiredFacets.Single().FacetFields.OrderByDescending(fun x -> x)
     )
 
 // fuck merge
