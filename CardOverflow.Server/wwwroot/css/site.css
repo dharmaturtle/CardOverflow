@@ -20,6 +20,14 @@ html, body {
   height: 97%; /* minus 3 pts to hide scrollbar, lowTODO make this less stupid */
 }
 
+.manage-selected {
+  background-color: lightgray;
+}
+
+.manage-show-modal {
+  display: block;
+}
+
 a {
   color: #0366d6;
 }

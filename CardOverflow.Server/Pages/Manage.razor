@@ -13,9 +13,29 @@
   <p><em>Loading...</em></p>
 } else {
   <div>
+    <div class="modal @(selectedConcept == null ? "" : "manage-show-modal")" tabindex="-1" role="dialog" >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Modal title</h5>
+            <button type="button" class="close" aria-label="Close" onclick=@CloseEditConceptModal>
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Modal body text goes here.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick=@CloseEditConceptModal class="btn btn-primary">Save changes</button>
+            <button type="button" onclick=@CloseEditConceptModal class="btn btn-secondary">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <ul>
       @foreach (var concept in concepts) {
-        <li>
+        <li class="@(selectedConcept?.Id == concept.Id ? "manage-selected" : "")"
+            onclick=@(() =>  ConceptClick(concept.Id))>
           @concept.Name
           <ul>
             @foreach (var facet in @concept.AcquiredFacets) {
@@ -34,10 +54,20 @@
 
 @code {
   IList<AcquiredConcept> concepts;
+  AcquiredConcept selectedConcept;
   int userId = 3;
 
   protected override async Task OnInitAsync() {
     concepts = (await ConceptRepository.GetAcquiredConceptsAsync(Db, 3)).ToList();
+  }
+
+  void ConceptClick(int conceptId) {
+    selectedConcept = concepts.First(x => x.Id == conceptId);
+    StateHasChanged();
+  }
+
+  void CloseEditConceptModal() {
+    selectedConcept = null;
   }
 
 }
