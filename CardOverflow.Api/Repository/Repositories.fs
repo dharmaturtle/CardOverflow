@@ -77,6 +77,13 @@ module ConceptRepository =
                     .ToListAsync()
             return AcquiredConcept.Load r
         }
+    let Update (db: CardOverflowDb) conceptId conceptName =
+        task {
+            let! concept = db.Concept.FirstAsync(fun x -> x.Id = conceptId)
+            concept.Name <- conceptName
+            db.Concept.UpdateI concept
+            return! db.SaveChangesAsync()
+        }
 
     // member this.SaveFacets(facets: ResizeArray<FacetEntity>) =
     //                 this.GetFacets().Merge facets

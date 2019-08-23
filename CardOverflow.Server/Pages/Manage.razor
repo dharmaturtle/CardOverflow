@@ -13,28 +13,44 @@
   <p><em>Loading...</em></p>
 } else {
   <div>
-    <div class="modal @(selectedConcept == null ? "" : "manage-show-modal")" tabindex="-1" role="dialog" >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Modal title</h5>
-            <button type="button" class="close" aria-label="Close" onclick=@CloseEditConceptModal>
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>Modal body text goes here.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" onclick=@CloseEditConceptModal class="btn btn-primary">Save changes</button>
-            <button type="button" onclick=@CloseEditConceptModal class="btn btn-secondary">Close</button>
+
+    @if (editingConcept != null) {
+      <div class="modal manage-show-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <EditForm Model="@editingConcept" OnValidSubmit="@UpdateConcept">
+              <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" aria-label="Close" onclick=@CloseEditConceptModal>
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="form-group">
+                  <label for="modal-name">Name:</label>
+                  <InputText Id="modal-name" @bind-value="@editingConcept.Name" /> @*this seems to break validation: @bind-value:event="oninput"*@
+                </div>
+              </div>
+              <div class="modal-footer">
+                <div class="container">
+                  <div class="row">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                  <div class="row">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                  </div>
+                </div>
+              </div>
+            </EditForm>
           </div>
         </div>
       </div>
-    </div>
+    }
+
     <ul>
       @foreach (var concept in concepts) {
-        <li class="@(selectedConcept?.Id == concept.Id ? "manage-selected" : "")"
+        <li class="@(editingConcept?.Id == concept.Id ? "manage-selected" : "")"
             onclick=@(() =>  ConceptClick(concept.Id))>
           @concept.Name
           <ul>
@@ -54,7 +70,7 @@
 
 @code {
   IList<AcquiredConcept> concepts;
-  AcquiredConcept selectedConcept;
+  AcquiredConcept editingConcept;
   int userId = 3;
 
   protected override async Task OnInitAsync() {
@@ -62,12 +78,29 @@
   }
 
   void ConceptClick(int conceptId) {
-    selectedConcept = concepts.First(x => x.Id == conceptId);
+    editingConcept =
+      new AcquiredConcept {
+        Id = conceptId,
+        Name = concepts.First(x => x.Id == conceptId).Name
+      };
     StateHasChanged();
   }
 
   void CloseEditConceptModal() {
-    selectedConcept = null;
+    editingConcept = null;
+  }
+
+  async Task UpdateConcept() {
+    var result = SanitizeConceptRepository.Update(Db, userId, editingConcept.Id, editingConcept.Name);
+    if (result.IsOk) {
+      await result.ResultValue;
+      var targetConcept = concepts.First(x => x.Id == editingConcept.Id);
+      targetConcept.Name = editingConcept.Name;
+      CloseEditConceptModal();
+    } else {
+      // lowToMedTODO this returns an error; show it
+    }
+
   }
 
 }

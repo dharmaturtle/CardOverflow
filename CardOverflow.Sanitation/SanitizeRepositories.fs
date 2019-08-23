@@ -22,3 +22,10 @@ module SanitizeHistoryRepository =
             EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
             TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
         ) |> HistoryRepository.addAndSaveAsync db
+
+module SanitizeConceptRepository =
+    let Update (db: CardOverflowDb) userId conceptId conceptName =
+        let concept = db.Concept.First(fun x -> x.Id = conceptId)
+        if concept.MaintainerId = userId
+        then Ok <| ConceptRepository.Update db conceptId conceptName
+        else Error "You aren't that concept's maintainer."

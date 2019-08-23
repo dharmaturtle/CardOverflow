@@ -2,6 +2,7 @@ namespace CardOverflow.Pure
 
 open System
 open Microsoft.FSharp.Core.Operators.Checked
+open System.ComponentModel.DataAnnotations
 
 type Score = | Again | Hard | Good | Easy
 module Score =
@@ -190,9 +191,11 @@ module AcquiredCard =
             else x.TotalMinutes + m0
             |> int16
 
+[<CLIMutable>]
 type AcquiredConcept = {
     Id: int
-    Name: string
+    // medTODO 100 needs to be tied to the DB max somehow
+    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
     MaintainerId: int
     AcquiredFacets: AcquiredFacet seq
 }
