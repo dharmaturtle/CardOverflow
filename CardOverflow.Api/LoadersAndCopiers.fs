@@ -187,39 +187,14 @@ type FacetTemplateInstance with
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }
 
-module CardHtml =
-    let generate fieldNameValueMap cardTemplateEntity =
-        let replaceFields template =
-            (template, fieldNameValueMap)
-            ||> Seq.fold(fun (previous: string) (fieldName, value) -> 
-                previous
-                    .Replace("{{" + fieldName + "}}", value)
-            )
-        let cardTemplate = CardTemplate.Load cardTemplateEntity
-        let frontSide =
-            replaceFields cardTemplate.QuestionTemplate
-        let backSide =
-            (replaceFields cardTemplate.AnswerTemplate).Replace("{{FrontSide}}", frontSide)
-        let htmlBase =
-            sprintf """<html>
-    <head>
-        <style>
-            %s
-        </style>
-    </head>
-    <body>
-        %s
-    </body>
-</html>"""      
-                cardTemplateEntity.FacetTemplateInstance.Css
-        (htmlBase frontSide, htmlBase backSide)
-
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
         let frontSide, backSide =
             CardHtml.generate
                 (entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
-                entity.Card.CardTemplate
+                entity.Card.CardTemplate.QuestionTemplate
+                entity.Card.CardTemplate.AnswerTemplate
+                entity.Card.CardTemplate.FacetTemplateInstance.Css
         result {
             let! cardState = CardState.create entity.CardState
             return
@@ -331,7 +306,9 @@ type AcquiredConcept with
                         let frontSide, backSide =
                             CardHtml.generate
                                 (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
-                                (acquiredCard.Card.CardTemplate)
+                                acquiredCard.Card.CardTemplate.QuestionTemplate
+                                acquiredCard.Card.CardTemplate.AnswerTemplate
+                                acquiredCard.Card.CardTemplate.FacetTemplateInstance.Css
                         {   FacetInstanceId = fi.Id
                             MaintainerId = facet.MaintainerId
                             Description = facet.Description
