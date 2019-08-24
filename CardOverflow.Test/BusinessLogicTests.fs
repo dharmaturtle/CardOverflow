@@ -6,6 +6,21 @@ open CardOverflow.Debug
 open Xunit
 open System
 
+let assertBody expectedBody actualHtml =
+    Assert.Equal(
+        sprintf "<html>
+    <head>
+        <style>
+            
+        </style>
+    </head>
+    <body>
+        %s
+    </body>
+</html>" expectedBody,
+        actualHtml
+    )
+
 [<Fact>]
 let ``CardHtml generates proper basic card template``() =
     let frontSide, backSide =
@@ -16,32 +31,12 @@ let ``CardHtml generates proper basic card template``() =
         <hr id=answer>
         {{Back}}"
             ""
-    Assert.Equal(
-        "<html>
-    <head>
-        <style>
-            
-        </style>
-    </head>
-    <body>
-        What is the capital of Canada?
-    </body>
-</html>",
-        frontSide
-    )
 
-    Assert.Equal(
-        "<html>
-    <head>
-        <style>
-            
-        </style>
-    </head>
-    <body>
-        What is the capital of Canada?
+    assertBody
+        "What is the capital of Canada?"
+        frontSide
+    assertBody
+        "What is the capital of Canada?
         <hr id=answer>
-        Ottawa
-    </body>
-</html>",
+        Ottawa",
         backSide
-    )
