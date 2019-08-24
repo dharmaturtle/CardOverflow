@@ -187,10 +187,14 @@ type FacetTemplateInstance with
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }
 
-module CardGenerator =
+module CardHtml =
     let generate fieldNameValueMap cardTemplateEntity =
         let replaceFields template =
-            (template, fieldNameValueMap) ||> Seq.fold(fun (aggregate: string) (key, value) -> aggregate.Replace("{{" + key + "}}", value))
+            (template, fieldNameValueMap)
+            ||> Seq.fold(fun (previous: string) (fieldName, value) -> 
+                previous
+                    .Replace("{{" + fieldName + "}}", value)
+            )
         let cardTemplate = CardTemplate.Load cardTemplateEntity
         let frontSide =
             replaceFields cardTemplate.QuestionTemplate
@@ -213,7 +217,7 @@ module CardGenerator =
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
         let frontSide, backSide =
-            CardGenerator.generate
+            CardHtml.generate
                 (entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
                 entity.Card.CardTemplate
         result {
@@ -325,7 +329,7 @@ type AcquiredConcept with
                         let fi = acquiredCard.Card.FacetInstance
                         let facet = fi.Facet
                         let frontSide, backSide =
-                            CardGenerator.generate
+                            CardHtml.generate
                                 (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
                                 (acquiredCard.Card.CardTemplate)
                         {   FacetInstanceId = fi.Id
