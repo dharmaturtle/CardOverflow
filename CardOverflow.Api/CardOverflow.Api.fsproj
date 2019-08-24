@@ -31,6 +31,7 @@
     <PackageReference Include="Serilog.Sinks.Seq" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Trace" Version="2.1.0" />
     <PackageReference Include="SimpleInjector" Version="4.6.2" />
+    <PackageReference Include="UrlBase64" Version="0.1.2" />
   </ItemGroup>
 
   <ItemGroup>

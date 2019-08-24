@@ -55,14 +55,14 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
         "Basic (optional reversed card) frontBasic (optional reversed card) backBasic (optional reversed card) reverse"
         "Basic (type in the answer) frontBasic (type in the answer) back"
         "Cloze text.&nbsp;Canberra was founded in {{c1::1913}}.Cloze extra"
-        """Basic with image&nbsp;<img src="AAEECRAZJDFAUWR5kKnE4QAhRGmQueQRQHGk2RBJhME=">Basic back, no image"""
+        """Basic with image&nbsp;<img src="image/AAEECRAZJDFAUWR5kKnE4QAhRGmQueQRQHGk2RBJhME">Basic back, no image"""
         """Basic front with mp3
 <audio controls autoplay>
     <source src="AAIGDBQeKjhIWm6EnLbS8BAyVnykzvooWIq+9CxmouA=" type="audio/mpeg">
     Your browser does not support the audio element.
 </audio>
 Basic back, no mp3"""
-        """<img src="AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4="><img src="AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4=">"""]
+        """<img src="image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4"><img src="image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4">"""]
     let fields = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
     let map =
         [ ("png1.png", FileEntity(

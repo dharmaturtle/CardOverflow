@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open NeoSmart.Utils
 open FSharp.Text.RegexProvider
 open CardOverflow.Entity.Anki
 open CardOverflow.Debug
@@ -331,10 +332,10 @@ module Anki =
             then
                 let file = fileEntityByAnkiFileName.[ankiFileName]
                 ( file :: files,
-                  field.Replace(ankiFileName, Convert.ToBase64String file.Sha256))
+                  field.Replace(ankiFileName, "image/" + UrlBase64.Encode file.Sha256))
             else
                 ( files,
-                  field.Replace(ankiFileName, "missingImage.jpg"))
+                  field.Replace(ankiFileName, "missingImage.jpg")) // medTODO needs a placeholder
         )
         |> fun x -> (x, SoundRegex().TypedMatches field)
         ||> Seq.fold (fun (files, field) m -> 
