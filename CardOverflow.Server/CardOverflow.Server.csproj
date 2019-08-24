@@ -21,6 +21,7 @@
     <Watch Include="**\(!*\obj)*.json" />
     <Watch Include="**\(!.g.)*.cs" />
     <Watch Include="..\**\*.fs" />
+    <Watch Remove="..\*Test*\*"/>
   </ItemGroup>
 
   <ItemGroup>
