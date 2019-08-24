@@ -28,6 +28,10 @@ html, body {
   display: block;
 }
 
+.modal-wide {
+  max-width: 95%;
+}
+
 a {
   color: #0366d6;
 }

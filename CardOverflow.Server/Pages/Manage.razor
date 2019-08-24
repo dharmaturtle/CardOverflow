@@ -16,7 +16,7 @@
 
     @if (editingConcept != null) {
       <div class="modal manage-show-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-wide" role="document">
           <div class="modal-content">
             <EditForm Model="@editingConcept" OnValidSubmit="@UpdateConcept">
               <div class="modal-header">
@@ -29,6 +29,13 @@
                 <div class="form-group">
                   <label for="modal-name">Name:</label>
                   <InputText Id="modal-name" @bind-value="@editingConcept.Name" /> @*this seems to break validation: @bind-value:event="oninput"*@
+                  <ul>
+                    @foreach (var facetField in @editingConcept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
+                      <li>
+                        @facetField.Item1.Name : @facetField.Item2
+                      </li>
+                    }
+                  </ul>
                 </div>
               </div>
               <div class="modal-footer">
@@ -78,11 +85,13 @@
   }
 
   void ConceptClick(int conceptId) {
+    var clickedConcept = concepts.First(x => x.Id == conceptId);
     editingConcept =
       new AcquiredConcept {
         Id = conceptId,
-        Name = concepts.First(x => x.Id == conceptId).Name
-      };
+        Name = clickedConcept.Name,
+        AcquiredFacets = clickedConcept.AcquiredFacets, // medTODO clone
+    };
     StateHasChanged();
   }
 
