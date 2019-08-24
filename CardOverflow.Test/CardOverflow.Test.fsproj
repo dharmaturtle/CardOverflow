@@ -41,6 +41,7 @@
     </None>
     <Compile Include="TestHelpers.fs" />
     <Compile Include="CoreTests.fs" />
+    <Compile Include="BusinessLogicTests.fs" />
     <Compile Include="ResultTests.fs" />
     <Compile Include="MappingToolsTests.fs" />
     <Compile Include="InitializeDatabase.fs" />
