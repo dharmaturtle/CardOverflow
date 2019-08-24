@@ -327,7 +327,7 @@ type AcquiredConcept with
                         let frontSide, backSide =
                             CardGenerator.generate
                                 (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
-                                (acquiredCards.First().Card.CardTemplate) // lowToMedTODO not showing anything other than first card template, needs more UI designwork
+                                (acquiredCard.Card.CardTemplate)
                         {   FacetInstanceId = fi.Id
                             MaintainerId = facet.MaintainerId
                             Description = facet.Description

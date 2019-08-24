@@ -103,7 +103,7 @@ type AnkiFacetWrite = {
                 Concept = ConceptEntity(
                     Name = (
                         if firstValue.Length > 100 //medTODO config the 100
-                        then firstValue.Substring(0, 99) + "…"
+                        then firstValue.Substring(0, 99) + "â€¦"
                         else firstValue),
                     MaintainerId = this.MaintainerId
                 )
