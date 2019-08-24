@@ -1,6 +1,8 @@
 module MappingTools
 
 open System
+open HtmlAgilityPack
+open System.Web
 
 let delimiter = ' '
 
@@ -68,3 +70,10 @@ let round (dt: DateTime) (d: TimeSpan) = // https://stackoverflow.com/a/20046261
     let roundUp = delta > d.Ticks / 2L
     let offset = if roundUp then d.Ticks else 0L
     DateTime(dt.Ticks + offset - delta, dt.Kind)
+
+let stripHtmlTags html =
+    let doc = HtmlDocument()
+    doc.LoadHtml html
+    doc.DocumentNode.InnerText
+    |> HttpUtility.HtmlDecode
+    |> fun x -> x.Trim()

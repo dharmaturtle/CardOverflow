@@ -1,4 +1,4 @@
-module AnkiImportFileTests
+﻿module AnkiImportFileTests
 
 open CardOverflow.Api
 open ContainerExtensions
@@ -127,6 +127,8 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute"))
             .Cards.Single().ClozeIndex)
     Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.Contains """<img src="missingImage.jpg">""")
+    Assert.SingleI <| c.Db.Concept.Where(fun x -> x.Name = "↑↑ BUN/CR ratio indicates which type of acute renal failure?")
+    Assert.SingleI <| c.Db.Concept.Where(fun x -> x.Name = "Drugs that act on microtubules may be remembered with the mnemonic \"Microtubules Get Constructed Ve…")
 
 //[<Fact>]
 let ``Manual Anki import`` () =

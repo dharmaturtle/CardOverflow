@@ -93,7 +93,9 @@ type AnkiFacetWrite = {
         entity.AcquireHash <- FacetInstanceEntity.acquireHash entity facetTemplateHash hasher
     member this.CopyToNew (files: FileEntity seq) =
         let entity = FacetInstanceEntity()
-        let firstValue = this.FieldValues.First().Value
+        let firstValue =
+            this.FieldValues.OrderBy(fun x -> x.Field.Ordinal).First().Value
+            |> MappingTools.stripHtmlTags
         entity.Facet <-
             FacetEntity(
                 MaintainerId = this.MaintainerId,
@@ -101,7 +103,7 @@ type AnkiFacetWrite = {
                 Concept = ConceptEntity(
                     Name = (
                         if firstValue.Length > 100 //medTODO config the 100
-                        then firstValue.Substring(0,100)
+                        then firstValue.Substring(0, 99) + "…"
                         else firstValue),
                     MaintainerId = this.MaintainerId
                 )
