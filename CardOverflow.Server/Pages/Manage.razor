@@ -72,16 +72,18 @@
       @foreach (var concept in concepts) {
         <li class="@(editingConcept?.Id == concept.Id ? "manage-selected" : "")"
             onclick=@(() =>  ConceptClick(concept.Id))>
-          @concept.Name
-          <ul>
-            @foreach (var facet in @concept.AcquiredFacets) {
-              <li>@facet.Description</li>
-              <li>
-                @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@facet.FrontSide"></iframe>
-              </li>
-            }
-          </ul>
+          <div class="manage-tooltip-target">
+            @concept.Name
+            <ul class="manage-tooltip-content">
+              @foreach (var facet in @concept.AcquiredFacets) {
+                <li>@facet.Description</li>
+                <li>
+                  @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                  <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@facet.FrontSide"></iframe>
+                </li>
+              }
+            </ul>
+          </div>
         </li>
       }
     </ul>
