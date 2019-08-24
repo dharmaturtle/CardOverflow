@@ -26,27 +26,40 @@
                 </button>
               </div>
               <div class="modal-body">
-                <div class="form-group">
-                  <label for="modal-name">Name:</label>
-                  <InputText Id="modal-name" @bind-value="@editingConcept.Name" /> @*this seems to break validation: @bind-value:event="oninput"*@
-                  <ul>
-                    @foreach (var facetField in @editingConcept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
-                      <li>
-                        @facetField.Item1.Name : @facetField.Item2
-                      </li>
-                    }
-                  </ul>
+                <div class="row">
+                  <div class="col-sm">
+                    <div class="form-group">
+                      <label for="modal-name">Name:</label>
+                      <InputText Id="modal-name" @bind-value="@editingConcept.Name" /> @*this seems to break validation: @bind-value:event="oninput"*@
+                      <ul>
+                        @foreach (var facetField in @editingConcept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
+                          <li>
+                            @facetField.Item1.Name : @facetField.Item2
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-sm">
+                    <ul>
+                      @foreach (var facet in @editingConcept.AcquiredFacets) {
+                        <li>@facet.Description</li>
+                        <li>
+                          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                          <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@facet.BackSide"></iframe>
+                        </li>
+                      }
+                    </ul>
+                  </div>
                 </div>
               </div>
               <div class="modal-footer">
-                <div class="container">
-                  <div class="row">
-                    <button type="submit" class="btn btn-primary">Save</button>
-                  </div>
-                  <div class="row">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-                  </div>
+                <div class="row">
+                  <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+                <div class="row">
+                  <DataAnnotationsValidator />
+                  <ValidationSummary />
                 </div>
               </div>
             </EditForm>
@@ -65,7 +78,7 @@
               <li>@facet.Description</li>
               <li>
                 @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                <iframe sandbox allow-scripts class="study-iframe" srcdoc="@facet.FrontSide"></iframe>
+                <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@facet.FrontSide"></iframe>
               </li>
             }
           </ul>
