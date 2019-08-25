@@ -10,6 +10,7 @@ namespace CardOverflow.Entity
         public ConceptEntity()
         {
             Facets = new HashSet<FacetEntity>();
+            PublicTag_Concepts = new HashSet<PublicTag_ConceptEntity>();
         }
 
         public int Id { get; set; }
@@ -30,5 +31,7 @@ namespace CardOverflow.Entity
         public virtual UserEntity Maintainer { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<FacetEntity> Facets { get; set; }
+        [InverseProperty("Concept")]
+        public virtual ICollection<PublicTag_ConceptEntity> PublicTag_Concepts { get; set; }
     }
 }

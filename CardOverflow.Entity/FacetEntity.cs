@@ -11,7 +11,6 @@ namespace CardOverflow.Entity
         {
             CommentFacets = new HashSet<CommentFacetEntity>();
             FacetInstances = new HashSet<FacetInstanceEntity>();
-            PublicTag_Facets = new HashSet<PublicTag_FacetEntity>();
             Vote_Facets = new HashSet<Vote_FacetEntity>();
         }
 
@@ -39,8 +38,6 @@ namespace CardOverflow.Entity
         public virtual ICollection<CommentFacetEntity> CommentFacets { get; set; }
         [InverseProperty("Facet")]
         public virtual ICollection<FacetInstanceEntity> FacetInstances { get; set; }
-        [InverseProperty("Facet")]
-        public virtual ICollection<PublicTag_FacetEntity> PublicTag_Facets { get; set; }
         [InverseProperty("Facet")]
         public virtual ICollection<Vote_FacetEntity> Vote_Facets { get; set; }
     }

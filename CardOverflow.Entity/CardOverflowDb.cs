@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<PrivateTag_AcquiredCardEntity> PrivateTag_AcquiredCard { get; set; }
         public virtual DbSet<PrivateTag_User_FacetTemplateInstanceEntity> PrivateTag_User_FacetTemplateInstance { get; set; }
         public virtual DbSet<PublicTagEntity> PublicTag { get; set; }
-        public virtual DbSet<PublicTag_FacetEntity> PublicTag_Facet { get; set; }
+        public virtual DbSet<PublicTag_ConceptEntity> PublicTag_Concept { get; set; }
         public virtual DbSet<PublicTag_User_FacetTemplateInstanceEntity> PublicTag_User_FacetTemplateInstance { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
         public virtual DbSet<User_FacetTemplateInstanceEntity> User_FacetTemplateInstance { get; set; }
@@ -380,23 +380,23 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<PublicTag_FacetEntity>(entity =>
+            modelBuilder.Entity<PublicTag_ConceptEntity>(entity =>
             {
-                entity.HasKey(e => new { e.FacetId, e.PublicTagId });
+                entity.HasKey(e => new { e.PublicTagId, e.ConceptId });
 
-                entity.HasIndex(e => e.PublicTagId);
+                entity.HasIndex(e => e.ConceptId);
 
-                entity.HasOne(d => d.Facet)
-                    .WithMany(p => p.PublicTag_Facets)
-                    .HasForeignKey(d => d.FacetId)
+                entity.HasOne(d => d.Concept)
+                    .WithMany(p => p.PublicTag_Concepts)
+                    .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PublicTag_Facet_Facet");
+                    .HasConstraintName("FK_PublicTag_Concept_Concept");
 
                 entity.HasOne(d => d.PublicTag)
-                    .WithMany(p => p.PublicTag_Facets)
+                    .WithMany(p => p.PublicTag_Concepts)
                     .HasForeignKey(d => d.PublicTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_PublicTag_Facet_PublicTag");
+                    .HasConstraintName("FK_PublicTag_Concept_PublicTag");
             });
 
             modelBuilder.Entity<PublicTag_User_FacetTemplateInstanceEntity>(entity =>

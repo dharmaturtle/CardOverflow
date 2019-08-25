@@ -570,18 +570,18 @@ CREATE TABLE [dbo].[PublicTag](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PublicTag_Facet] ******/
+/****** Object:  Table [dbo].[PublicTag_Concept] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[PublicTag_Facet](
-	[FacetId] [int] NOT NULL,
+CREATE TABLE [dbo].[PublicTag_Concept](
 	[PublicTagId] [int] NOT NULL,
- CONSTRAINT [PK_PublicTag_Facet] PRIMARY KEY CLUSTERED 
+	[ConceptId] [int] NOT NULL,
+ CONSTRAINT [PK_PublicTag_Concept] PRIMARY KEY CLUSTERED 
 (
-	[FacetId] ASC,
-	[PublicTagId] ASC
+	[PublicTagId] ASC,
+	[ConceptId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -1087,10 +1087,10 @@ CREATE UNIQUE NONCLUSTERED INDEX [AK_PublicTag__Name] ON [dbo].[PublicTag]
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_PublicTag_Facet_PublicTagId] ******/
-CREATE NONCLUSTERED INDEX [IX_PublicTag_Facet_PublicTagId] ON [dbo].[PublicTag_Facet]
+/****** Object:  Index [IX_PublicTag_Concept_ConceptId] ******/
+CREATE NONCLUSTERED INDEX [IX_PublicTag_Concept_ConceptId] ON [dbo].[PublicTag_Concept]
 (
-	[PublicTagId] ASC
+	[ConceptId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_PublicTag_User_FacetTemplateInstance_DefaultPublicTagId] ******/
@@ -1362,15 +1362,15 @@ REFERENCES [dbo].[User_FacetTemplateInstance] ([UserId], [FacetTemplateInstanceI
 GO
 ALTER TABLE [dbo].[PrivateTag_User_FacetTemplateInstance] CHECK CONSTRAINT [FK_PrivateTag_User_FacetTemplateInstance_User_FacetTemplateInstance]
 GO
-ALTER TABLE [dbo].[PublicTag_Facet]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Facet_Facet] FOREIGN KEY([FacetId])
-REFERENCES [dbo].[Facet] ([Id])
+ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Concept_Concept] FOREIGN KEY([ConceptId])
+REFERENCES [dbo].[Concept] ([Id])
 GO
-ALTER TABLE [dbo].[PublicTag_Facet] CHECK CONSTRAINT [FK_PublicTag_Facet_Facet]
+ALTER TABLE [dbo].[PublicTag_Concept] CHECK CONSTRAINT [FK_PublicTag_Concept_Concept]
 GO
-ALTER TABLE [dbo].[PublicTag_Facet]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Facet_PublicTag] FOREIGN KEY([PublicTagId])
+ALTER TABLE [dbo].[PublicTag_Concept]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_Concept_PublicTag] FOREIGN KEY([PublicTagId])
 REFERENCES [dbo].[PublicTag] ([Id])
 GO
-ALTER TABLE [dbo].[PublicTag_Facet] CHECK CONSTRAINT [FK_PublicTag_Facet_PublicTag]
+ALTER TABLE [dbo].[PublicTag_Concept] CHECK CONSTRAINT [FK_PublicTag_Concept_PublicTag]
 GO
 ALTER TABLE [dbo].[PublicTag_User_FacetTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_PublicTag_User_FacetTemplateInstance_PublicTag] FOREIGN KEY([DefaultPublicTagId])
 REFERENCES [dbo].[PublicTag] ([Id])
