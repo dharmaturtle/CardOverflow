@@ -300,15 +300,23 @@ type AcquiredConcept with
                 Name = concept.Name
                 MaintainerId = concept.MaintainerId
                 AcquiredFacets =
-                    acquiredCards.Select(fun acquiredCard ->
-                        let fi = acquiredCard.Card.FacetInstance
+                    acquiredCards.GroupBy(fun x -> x.Card.FacetInstanceId).Select(fun x ->
+                        let fi = x.First().Card.FacetInstance
                         let facet = fi.Facet
-                        let frontSide, backSide =
-                            CardHtml.generate
-                                (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
-                                acquiredCard.Card.CardTemplate.QuestionTemplate
-                                acquiredCard.Card.CardTemplate.AnswerTemplate
-                                acquiredCard.Card.CardTemplate.FacetTemplateInstance.Css
+                        let cards =
+                            fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
+                                let cardTemplate = x.First().CardTemplate
+                                let front, back =
+                                    CardHtml.generate
+                                        (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
+                                        cardTemplate.QuestionTemplate
+                                        cardTemplate.AnswerTemplate
+                                        cardTemplate.FacetTemplateInstance.Css
+                                {   Front = front
+                                    Back = back
+                                    CardTemplateName = cardTemplate.Name
+                                }
+                            )
                         {   FacetInstanceId = fi.Id
                             MaintainerId = facet.MaintainerId
                             Description = facet.Description
@@ -316,7 +324,6 @@ type AcquiredConcept with
                             FacetCreated = fi.Created
                             FacetModified = Option.ofNullable fi.Modified
                             FacetFields = fi.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> (Field.Load x.Field, x.Value))
-                            FrontSide = frontSide
-                            BackSide = backSide
+                            Cards = cards
                         })
             })

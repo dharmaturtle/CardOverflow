@@ -136,6 +136,12 @@ type FacetInstance = {
     Fields: string seq
 }
 
+type EditCard = {
+    CardTemplateName: string
+    Front: string
+    Back: string
+}
+
 type AcquiredFacet = {
     FacetInstanceId: int
     MaintainerId: int
@@ -144,8 +150,7 @@ type AcquiredFacet = {
     FacetCreated: DateTime
     FacetModified: DateTime option
     FacetFields: (Field * string) seq
-    FrontSide: string
-    BackSide: string
+    Cards: EditCard seq
 }
 
 type AcquiredCard = {

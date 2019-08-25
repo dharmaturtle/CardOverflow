@@ -11,8 +11,7 @@ module CardHtml =
             (template, fieldNameValueMap)
             ||> Seq.fold(fun (previous: string) (fieldName, value) -> 
                 let simple =
-                    previous
-                        .Replace("{{" + fieldName + "}}", value)
+                    previous.Replace("{{" + fieldName + "}}", value)
                 let showIfHasText =
                     let regex = Regex("{{#" + fieldName + @"}}(.*?){{\/" + fieldName + "}}")
                     if String.IsNullOrWhiteSpace value
