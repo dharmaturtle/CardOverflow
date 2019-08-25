@@ -20,6 +20,10 @@ html, body {
   height: 97%; /* minus 3 pts to hide scrollbar, lowTODO make this less stupid */
 }
 
+.btn-link {
+  padding: 0;
+}
+
 .manage-iframe {
   width: 100%;
   height: 600px; /* lowTODO get the height to match the contents - there's some javascript involved :( */

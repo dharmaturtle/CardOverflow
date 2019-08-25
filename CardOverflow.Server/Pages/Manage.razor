@@ -19,6 +19,7 @@
     <table>
       <tr>
         <th>Facet Count</th>
+        <th>Preview</th>
         <th>Name</th>
       </tr>
       @foreach (var concept in concepts) {
@@ -26,10 +27,9 @@
           <td>
             @concept.AcquiredFacets.Count()
           </td>
-          <td class="@(editingConcept?.Id == concept.Id ? "manage-selected" : "")"
-              onclick=@(() =>  ConceptClick(concept.Id))>
+          <td>
             <div class="manage-tooltip-target">
-              @concept.Name
+              Preview
               <ul class="manage-tooltip-content">
                 @foreach (var facet in @concept.AcquiredFacets) {
                   <li>@facet.Description</li>
@@ -46,6 +46,11 @@
                 }
               </ul>
             </div>
+          </td>
+          <td class=@(editingConcept?.Id == concept.Id ? "manage-selected" : "")>
+            <button type="button" class="btn btn-link" onclick=@(() =>  ConceptClick(concept.Id))>
+              @concept.Name
+            </button>
           </td>
         </tr>
       }
