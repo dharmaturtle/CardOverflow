@@ -21,6 +21,7 @@
         <th>Facet Count</th>
         <th>Preview</th>
         <th>Name</th>
+        <th>Tags</th>
       </tr>
       @foreach (var concept in concepts) {
         <tr>
@@ -51,6 +52,15 @@
             <button type="button" class="btn btn-link" onclick=@(() =>  ConceptClick(concept.Id))>
               @concept.Name
             </button>
+          </td>
+          <td>
+            <ul>
+              @foreach (var tag in @concept.AcquiredFacets.SelectMany(x => x.Cards.SelectMany(xx => xx.Tags)).Distinct()) {
+                <li>
+                  @tag
+                </li>
+              }
+            </ul>
           </td>
         </tr>
       }

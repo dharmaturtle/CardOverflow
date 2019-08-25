@@ -140,6 +140,7 @@ type EditCard = {
     CardTemplateName: string
     Front: string
     Back: string
+    Tags: string seq
 }
 
 type AcquiredFacet = {

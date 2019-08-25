@@ -234,8 +234,9 @@ type AcquiredCard with
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalOrStepsIndex <- AcquiredCard.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
-    static member InitialCopyTo userId cardOptionId =
+    static member InitialCopyTo userId cardOptionId (privateTagIds: int seq) =
         AcquiredCardEntity(
+            PrivateTag_AcquiredCards = privateTagIds.Select(fun x -> PrivateTag_AcquiredCardEntity(PrivateTagId = x, UserId = userId)).ToList(),
             CardState = CardState.toDb Normal,
             IsLapsed = false,
             EaseFactorInPermille = 0s,
@@ -256,19 +257,19 @@ type InitialConceptInstance = {
     DefaultCardOptionId: int
     Description: string
     FacetTemplateHash: byte[]
-    CardTemplateIds: int seq
+    CardTemplateIdsAndTags: (int * int seq) seq
 } with
     member this.CopyToNew fileFacetInstances =
         let e =
             FacetInstanceEntity(
                 Created = DateTime.UtcNow,
                 Cards = (
-                    this.CardTemplateIds
-                    |> Seq.map (fun x -> 
+                    this.CardTemplateIdsAndTags
+                    |> Seq.map (fun (i, tags) -> 
                         CardEntity (
-                            CardTemplateId = x,
+                            CardTemplateId = i,
                             AcquiredCards = (
-                                AcquiredCard.InitialCopyTo this.MaintainerId this.DefaultCardOptionId
+                                AcquiredCard.InitialCopyTo this.MaintainerId this.DefaultCardOptionId tags
                                 |> Seq.singleton
                                 |> fun x -> x.ToList())))
                     |> fun x -> x.ToList()),
@@ -306,6 +307,7 @@ type AcquiredConcept with
                         let cards =
                             fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
                                 let cardTemplate = x.First().CardTemplate
+                                let card = acquiredCards.Single(fun x -> x.Card.CardTemplateId = cardTemplate.Id)
                                 let front, back =
                                     CardHtml.generate
                                         (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
@@ -315,6 +317,7 @@ type AcquiredConcept with
                                 {   Front = front
                                     Back = back
                                     CardTemplateName = cardTemplate.Name
+                                    Tags = card.PrivateTag_AcquiredCards.Select(fun x -> x.PrivateTag.Name)
                                 }
                             )
                         {   FacetInstanceId = fi.Id

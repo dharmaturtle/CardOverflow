@@ -25,12 +25,20 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             .Include(fun x -> x.User_FacetTemplateInstances)
             .First(fun x -> x.FacetTemplate.Name = "Basic")
             |> FacetTemplateInstance.Load
+    let cardTemplateNames =
+        facetTemplate.CardTemplates
+        |> Seq.map (fun x -> x.Name)
+    PrivateTagRepository.Add c.Db userId cardTemplateNames
+    let privateTags =
+        PrivateTagRepository.GetAll c.Db userId
+        |> Seq.map (fun x -> x.Id)
+
     let initialConcept = {
         FacetTemplateHash = facetTemplate.AcquireHash
         MaintainerId = userId
         Description = "Basic"
         DefaultCardOptionId = facetTemplate.DefaultCardOptionId
-        CardTemplateIds = facetTemplate.CardTemplates |> Seq.map (fun x -> x.Id)
+        CardTemplateIdsAndTags = facetTemplate.CardTemplates |> Seq.map (fun x -> x.Id, privateTags)
         FieldValues =
             facetTemplate.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
@@ -78,6 +86,13 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             .GetAwaiter()
             .GetResult()
             .Single().AcquiredFacets.Single().FacetFields.OrderByDescending(fun x -> x)
+    )
+    Assert.Equal<string seq>(
+        cardTemplateNames,
+        (ConceptRepository.GetAcquiredConceptsAsync c.Db userId)
+            .GetAwaiter()
+            .GetResult()
+            .Single().AcquiredFacets.Single().Cards.SelectMany(fun x -> x.Tags)
     )
 
 // fuck merge

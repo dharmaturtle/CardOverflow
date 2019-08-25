@@ -68,6 +68,8 @@ module ConceptRepository =
         task {
             let! r =
                 db.AcquiredCard
+                    .Include(fun x -> x.PrivateTag_AcquiredCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: PrivateTag_AcquiredCardEntity) -> x.PrivateTag)
                     .Include(fun x -> x.Card.CardTemplate.FacetTemplateInstance)
                     .Include(fun x -> x.Card.FacetInstance.Facet.Concept)
                     .Include(fun x -> x.Card.FacetInstance.FieldValues :> IEnumerable<_>)
@@ -159,7 +161,7 @@ module UserRepository =
 
 module PrivateTagRepository =
     let Add (db: CardOverflowDb) userId newTags =
-        let newTags = newTags |> List.distinct // https://stackoverflow.com/a/18113534
+        let newTags = newTags |> Seq.distinct // https://stackoverflow.com/a/18113534
         db.PrivateTag
             .Where(fun x -> x.UserId = userId)
             .Select(fun x -> x.Name)
@@ -172,8 +174,11 @@ module PrivateTagRepository =
         |> db.PrivateTag.AddRange
         db.SaveChangesI ()
 
-    let Search (db: CardOverflowDb) (input: string) =
-        db.PrivateTag.Where(fun t -> t.Name.ToLower().Contains(input.ToLower()))
+    let Search (db: CardOverflowDb) userId (input: string) =
+        db.PrivateTag.Where(fun t -> userId = t.UserId && t.Name.ToLower().Contains(input.ToLower())).ToList()
+    
+    let GetAll (db: CardOverflowDb) userId =
+        db.PrivateTag.Where(fun t -> userId = t.UserId).ToList()
         
     let Update (db: CardOverflowDb) tag =
         db.PrivateTag.UpdateI tag
