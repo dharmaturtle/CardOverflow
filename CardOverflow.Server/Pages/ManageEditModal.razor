@@ -1,0 +1,81 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+
+<div class="modal manage-show-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-wide" role="document">
+    <div class="modal-content">
+      <EditForm Model="@Concept" OnValidSubmit="@UpdateConcept">
+        <div class="modal-header">
+          <h5 class="modal-title">Modal title</h5>
+          <button type="button" class="close" aria-label="Close" onclick=@Close>
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-sm">
+              <div class="form-group">
+                <label for="modal-name">Name:</label>
+                <InputText Id="modal-name" @bind-value="@Concept.Name" /> @*this seems to break validation: @bind-value:event="oninput"*@
+                <ul>
+                  @foreach (var facetField in @Concept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
+                    <li>
+                      @facetField.Item1.Name : @facetField.Item2
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+            <div class="col-sm">
+              <ul>
+                @foreach (var facet in @Concept.AcquiredFacets) {
+                  <li>@facet.Description</li>
+                  <li>
+                    <BSTabGroup>
+                      <BSTabList>
+                        @foreach (var card in facet.Cards) {
+                          <BSTab>
+                            <BSTabLabel>@card.CardTemplateName</BSTabLabel>
+                            <BSTabContent>
+                              @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                              <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@card.Back"></iframe>
+                            </BSTabContent>
+                          </BSTab>
+                        }
+                      </BSTabList>
+                      <BSTabSelectedContent />
+                    </BSTabGroup>
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="row">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+          <div class="row">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+          </div>
+        </div>
+      </EditForm>
+    </div>
+  </div>
+</div>
+
+@code {
+  [Parameter]
+  AcquiredConcept Concept { get; set; }
+  [Parameter]
+  EventCallback Close { get; set; }
+  [Parameter]
+  EventCallback UpdateConcept { get; set; }
+}
