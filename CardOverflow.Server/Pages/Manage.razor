@@ -16,31 +16,40 @@
     @if (editingConcept != null) {
       <ManageEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
     }
-    <ul>
+    <table>
+      <tr>
+        <th>Facet Count</th>
+        <th>Name</th>
+      </tr>
       @foreach (var concept in concepts) {
-        <li class="@(editingConcept?.Id == concept.Id ? "manage-selected" : "")"
-            onclick=@(() =>  ConceptClick(concept.Id))>
-          <div class="manage-tooltip-target">
-            @concept.Name
-            <ul class="manage-tooltip-content">
-              @foreach (var facet in @concept.AcquiredFacets) {
-                <li>@facet.Description</li>
-                <li>
-                  @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                  <ul>
-                    @foreach (var card in facet.Cards) {
-                      <li>
-                        <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@card.Front"></iframe>
-                      </li>
-                    }
-                  </ul>
-                </li>
-              }
-            </ul>
-          </div>
-        </li>
+        <tr>
+          <td>
+            @concept.AcquiredFacets.Count()
+          </td>
+          <td class="@(editingConcept?.Id == concept.Id ? "manage-selected" : "")"
+              onclick=@(() =>  ConceptClick(concept.Id))>
+            <div class="manage-tooltip-target">
+              @concept.Name
+              <ul class="manage-tooltip-content">
+                @foreach (var facet in @concept.AcquiredFacets) {
+                  <li>@facet.Description</li>
+                  <li>
+                    @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                    <ul>
+                      @foreach (var card in facet.Cards) {
+                        <li>
+                          <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@card.Front"></iframe>
+                        </li>
+                      }
+                    </ul>
+                  </li>
+                }
+              </ul>
+            </div>
+          </td>
+        </tr>
       }
-    </ul>
+    </table>
   </div>
 }
 
