@@ -3,14 +3,22 @@ namespace CardOverflow.Pure
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
+open System.Text.RegularExpressions
 
 module CardHtml =
     let generate fieldNameValueMap questionTemplate answerTemplate css =
         let replaceFields template =
             (template, fieldNameValueMap)
             ||> Seq.fold(fun (previous: string) (fieldName, value) -> 
-                previous
-                    .Replace("{{" + fieldName + "}}", value)
+                let simple =
+                    previous
+                        .Replace("{{" + fieldName + "}}", value)
+                let showIfHasText =
+                    let regex = Regex("{{#" + fieldName + @"}}(.*?){{\/" + fieldName + "}}")
+                    if String.IsNullOrWhiteSpace value
+                    then regex.Replace(simple, "")
+                    else regex.Replace(simple, "$1")
+                showIfHasText
             )
         let frontSide =
             replaceFields questionTemplate
