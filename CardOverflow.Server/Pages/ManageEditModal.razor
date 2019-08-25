@@ -45,6 +45,14 @@
                             <BSTabContent>
                               @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
                               <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@card.Back"></iframe>
+                              Tags:
+                              <ul>
+                                @foreach (var tag in card.Tags) {
+                                  <li>
+                                    @tag
+                                  </li>
+                                }
+                              </ul>
                             </BSTabContent>
                           </BSTab>
                         }
