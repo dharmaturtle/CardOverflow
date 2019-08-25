@@ -23,7 +23,9 @@ module CardHtml =
                     if String.IsNullOrWhiteSpace value
                     then regex.Replace(showIfHasText, "$1")
                     else regex.Replace(showIfHasText, "")
-                showIfEmpty
+                let stripHtml =
+                    Regex("{{text:" + fieldName + "}}").Replace(showIfEmpty, MappingTools.stripHtmlTags value)
+                stripHtml
             )
         let frontSide =
             replaceFields questionTemplate

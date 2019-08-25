@@ -180,3 +180,25 @@ let ``CardHtml generates proper basic card template, with conditional Category (
         <hr id=answer>
         Ottawa"
         backSide
+
+[<Fact>]
+let ``CardHtml renders {{text:FieldName}} properly``(): unit =
+    let frontSide, backSide =
+        CardHtml.generate
+            [("Back", "<b>Ottawa</b>")
+             ("Front", "What is the capital of Canada?")
+            ]
+            "{{Front}}"
+            """{{FrontSide}}
+        <hr id=answer>
+        {{Back}}<br/><a href="http://example.com/search?q={{text:Back}}">check in dictionary</a>"""
+            ""
+
+    assertBody
+        "What is the capital of Canada?"
+        frontSide
+    assertBody
+        """What is the capital of Canada?
+        <hr id=answer>
+        <b>Ottawa</b><br/><a href="http://example.com/search?q=Ottawa">check in dictionary</a>"""
+        backSide
