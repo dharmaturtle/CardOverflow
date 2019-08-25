@@ -134,4 +134,49 @@ let ``CardHtml generates proper basic card template, but with conditional Catego
         <hr id=answer>
         Ottawa"
         backSide
-        
+
+[<Fact>]
+let ``CardHtml generates proper basic card template, with conditional Category (inverted and empty)``(): unit =
+    let frontSide, backSide =
+        CardHtml.generate
+            [("Back", "Ottawa")
+             ("Front", "What is the capital of Canada?")
+             ("Category", "")
+            ]
+            "{{^Category}}Category: {{Category}}No category was given<br/>{{/Category}}{{Front}}"
+            "{{FrontSide}}
+        <hr id=answer>
+        {{Back}}"
+            ""
+
+    assertBody
+        "Category: No category was given<br/>What is the capital of Canada?"
+        frontSide
+    assertBody
+        "Category: No category was given<br/>What is the capital of Canada?
+        <hr id=answer>
+        Ottawa"
+        backSide
+
+[<Fact>]
+let ``CardHtml generates proper basic card template, with conditional Category (inverted and populated)``(): unit =
+    let frontSide, backSide =
+        CardHtml.generate
+            [("Back", "Ottawa")
+             ("Front", "What is the capital of Canada?")
+             ("Category", "Nations and Capitals")
+            ]
+            "{{^Category}}Category: {{Category}}No category was given<br/>{{/Category}}{{Front}}"
+            "{{FrontSide}}
+        <hr id=answer>
+        {{Back}}"
+            ""
+
+    assertBody
+        "What is the capital of Canada?"
+        frontSide
+    assertBody
+        "What is the capital of Canada?
+        <hr id=answer>
+        Ottawa"
+        backSide
