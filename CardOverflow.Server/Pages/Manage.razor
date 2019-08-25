@@ -65,6 +65,7 @@
         </tr>
       }
     </table>
+    <Pager Details=@details PageChanged=@PageChanged />
   </div>
 }
 
@@ -72,9 +73,10 @@
   IList<AcquiredConcept> concepts;
   AcquiredConcept editingConcept;
   int userId = 3;
+  PagedListDetails details;
 
   protected override async Task OnInitAsync() {
-    concepts = (await ConceptRepository.GetAcquiredConceptsAsync(Db, 3)).ToList();
+    await PageChanged(1);
   }
 
   void ConceptClick(int conceptId) {
@@ -84,7 +86,7 @@
         Id = conceptId,
         Name = clickedConcept.Name,
         AcquiredFacets = clickedConcept.AcquiredFacets, // medTODO clone
-    };
+      };
     StateHasChanged();
   }
 
@@ -102,6 +104,12 @@
     } else {
       // lowToMedTODO this returns an error; show it
     }
+  }
+
+  async Task PageChanged(int pageNumber) {
+    var pagedList = await ConceptRepository.GetAcquiredConceptsAsync(Db, userId, pageNumber);
+    details = pagedList.Details;
+    concepts = pagedList.Results.ToList();
   }
 
 }

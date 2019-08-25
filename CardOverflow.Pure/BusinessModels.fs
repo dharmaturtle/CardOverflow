@@ -205,3 +205,13 @@ type AcquiredConcept = {
     MaintainerId: int
     AcquiredFacets: AcquiredFacet seq
 }
+
+type PagedListDetails = {
+    CurrentPage: int
+    PageCount: int
+}
+
+type PagedList<'T> = {
+    Results: 'T seq
+    Details: PagedListDetails
+}

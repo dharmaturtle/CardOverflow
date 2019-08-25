@@ -10,6 +10,7 @@ open System.Linq
 open Helpers
 open FSharp.Control.Tasks
 open System.Collections.Generic
+open X.PagedList
 
 module HistoryRepository =
     let addAndSaveAsync (db: CardOverflowDb) e =
@@ -64,7 +65,7 @@ module ConceptRepository =
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
-    let GetAcquiredConceptsAsync (db: CardOverflowDb) userId =
+    let GetAcquiredConceptsAsync (db: CardOverflowDb) userId (pageNumber: int) =
         task {
             let! r =
                 db.AcquiredCard
@@ -75,9 +76,15 @@ module ConceptRepository =
                     .Include(fun x -> x.Card.FacetInstance.FieldValues :> IEnumerable<_>)
                         .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
                     .Where(fun x -> x.UserId = userId)
-                    .Take(30) // medTODO pagination
-                    .ToListAsync()
-            return AcquiredConcept.Load r
+                    .ToPagedListAsync(pageNumber, 20)
+            return {
+                Results = AcquiredConcept.Load r
+                Details = {
+                    CurrentPage = r.PageNumber
+                    PageCount = r.PageCount
+                }
+            }
+                
         }
     let Update (db: CardOverflowDb) conceptId conceptName =
         task {

@@ -50,7 +50,7 @@
   int userId = 3;
 
   protected override async Task OnInitAsync() {
-    concepts = (await ConceptRepository.GetAcquiredConceptsAsync(Db, 3)).ToList();
+    concepts = (await ConceptRepository.GetAcquiredConceptsAsync(Db, 3, 1)).Results.ToList();
   }
 
   void ConceptClick(int conceptId) {
