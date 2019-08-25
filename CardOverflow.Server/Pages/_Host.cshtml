@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @namespace CardOverflow.Server.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
@@ -48,5 +48,7 @@
   <app>@(await Html.RenderComponentAsync<App>())</app>
 
   <script src="_framework/blazor.server.js"></script>
+  <script src="_content/BlazorStrap/blazorStrap.js"></script>
+  <script src="_content/BlazorStrap/popper.min.js"></script>
 </body>
 </html>
