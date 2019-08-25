@@ -45,8 +45,20 @@
                       @foreach (var facet in @editingConcept.AcquiredFacets) {
                         <li>@facet.Description</li>
                         <li>
-                          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                          <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@facet.BackSide"></iframe>
+                          <BSTabGroup>
+                            <BSTabList>
+                              @foreach (var card in facet.Cards) {
+                                <BSTab>
+                                  <BSTabLabel>@card.CardTemplateName</BSTabLabel>
+                                  <BSTabContent>
+                                    @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                                    <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@card.Back"></iframe>
+                                  </BSTabContent>
+                                </BSTab>
+                              }
+                            </BSTabList>
+                            <BSTabSelectedContent />
+                          </BSTabGroup>
                         </li>
                       }
                     </ul>
@@ -79,7 +91,13 @@
                 <li>@facet.Description</li>
                 <li>
                   @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                  <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@facet.FrontSide"></iframe>
+                  <ul>
+                    @foreach (var card in facet.Cards) {
+                      <li>
+                        <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@card.Front"></iframe>
+                      </li>
+                    }
+                  </ul>
                 </li>
               }
             </ul>
