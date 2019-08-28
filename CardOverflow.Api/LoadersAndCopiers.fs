@@ -294,39 +294,36 @@ type InitialConceptInstance = {
         )
 
 type AcquiredConcept with
-    static member Load (e: AcquiredCardEntity seq) =
-        e.GroupBy(fun x -> x.Card.FacetInstance.Facet.ConceptId).Select(fun acquiredCards ->
-            let concept = acquiredCards.First().Card.FacetInstance.Facet.Concept
-            {   Id = concept.Id
-                Name = concept.Name
-                MaintainerId = concept.MaintainerId
-                AcquiredFacets =
-                    acquiredCards.GroupBy(fun x -> x.Card.FacetInstanceId).Select(fun x ->
-                        let fi = x.First().Card.FacetInstance
-                        let facet = fi.Facet
-                        let cards =
-                            fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
-                                let cardTemplate = x.First().CardTemplate
-                                let card = acquiredCards.Single(fun x -> x.Card.CardTemplateId = cardTemplate.Id)
-                                let front, back =
-                                    CardHtml.generate
-                                        (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
-                                        cardTemplate.QuestionTemplate
-                                        cardTemplate.AnswerTemplate
-                                        cardTemplate.FacetTemplateInstance.Css
-                                {   Front = front
-                                    Back = back
-                                    CardTemplateName = cardTemplate.Name
-                                    Tags = card.PrivateTag_AcquiredCards.Select(fun x -> x.PrivateTag.Name)
-                                }
-                            )
-                        {   FacetInstanceId = fi.Id
-                            MaintainerId = facet.MaintainerId
-                            Description = facet.Description
-                            FacetId = facet.Id
-                            FacetCreated = fi.Created
-                            FacetModified = Option.ofNullable fi.Modified
-                            FacetFields = fi.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> (Field.Load x.Field, x.Value))
-                            Cards = cards
-                        })
-            })
+    static member Load userId (concept: ConceptEntity) =
+        {   Id = concept.Id
+            Name = concept.Name
+            MaintainerId = concept.MaintainerId
+            AcquiredFacets =
+                concept.Facets.Select(fun x -> x.FacetInstances |> Seq.maxBy (fun x -> x.Created) ).Select(fun fi -> // lowTODO, optimization, there should only be one facetInstance loaded from the db
+                    let cards =
+                        fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
+                            let cardTemplate = x.First().CardTemplate
+                            let card = x.Single(fun x -> x.CardTemplateId = cardTemplate.Id)
+                            let front, back =
+                                CardHtml.generate
+                                    (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
+                                    cardTemplate.QuestionTemplate
+                                    cardTemplate.AnswerTemplate
+                                    cardTemplate.FacetTemplateInstance.Css
+                            {   Front = front
+                                Back = back
+                                CardTemplateName = cardTemplate.Name
+                                Tags = card.AcquiredCards.Single(fun x -> x.UserId = userId).PrivateTag_AcquiredCards.Select(fun x -> x.PrivateTag.Name)
+                            }
+                        )
+                    {   FacetInstanceId = fi.Id
+                        MaintainerId = fi.Facet.MaintainerId
+                        Description = fi.Facet.Description
+                        FacetId = fi.FacetId
+                        FacetCreated = fi.Created
+                        FacetModified = Option.ofNullable fi.Modified
+                        FacetFields = fi.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> (Field.Load x.Field, x.Value))
+                        Cards = cards
+                    }
+                )
+        }
