@@ -145,6 +145,7 @@ type EditCard = {
 
 type AcquiredFacet = {
     FacetInstanceId: int
+    FacetTemplateInstanceId: int
     MaintainerId: int
     Description: string
     FacetId: int

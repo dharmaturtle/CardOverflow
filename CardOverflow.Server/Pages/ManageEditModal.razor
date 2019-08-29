@@ -36,6 +36,7 @@
               <ul>
                 @foreach (var facet in @Concept.AcquiredFacets) {
                   <li>@facet.Description</li>
+                  <li>Facet Template Instance Id: @facet.FacetTemplateInstanceId</li>
                   <li>
                     <BSTabGroup>
                       <BSTabList>

@@ -317,6 +317,7 @@ type AcquiredConcept with
                             }
                         )
                     {   FacetInstanceId = fi.Id
+                        FacetTemplateInstanceId = fi.FieldValues.First().Field.FacetTemplateInstanceId
                         MaintainerId = fi.Facet.MaintainerId
                         Description = fi.Facet.Description
                         FacetId = fi.FacetId
