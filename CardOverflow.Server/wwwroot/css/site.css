@@ -24,21 +24,21 @@ html, body {
   padding: 0;
 }
 
-.manage-iframe {
+.curate-iframe {
   width: 100%;
   height: 600px; /* lowTODO get the height to match the contents - there's some javascript involved :( */
 }
 
-.manage-iframe-tooltip {
+.curate-iframe-tooltip {
   width: 100%;
   height: 200px; /* lowTODO get the height to match the contents - there's some javascript involved :( */
 }
 
-.manage-selected {
+.curate-selected {
   background-color: lightgray;
 }
 
-.manage-show-modal {
+.curate-show-modal {
   display: block;
 }
 
@@ -46,11 +46,11 @@ html, body {
   max-width: 95%;
 }
 
-.manage-tooltip-target {
+.curate-tooltip-target {
   /*border-bottom: 1px dotted black;*/
 }
 
-  .manage-tooltip-target .manage-tooltip-content {
+  .curate-tooltip-target .curate-tooltip-content {
     background-color: white;
     border: solid;
     visibility: hidden;
@@ -59,7 +59,7 @@ html, body {
     z-index: 1;
   }
 
-  .manage-tooltip-target:hover .manage-tooltip-content {
+  .curate-tooltip-target:hover .curate-tooltip-content {
     visibility: visible;
   }
 

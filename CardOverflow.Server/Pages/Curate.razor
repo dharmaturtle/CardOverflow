@@ -1,4 +1,4 @@
-@page "/Manage"
+@page "/Curate"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -14,7 +14,7 @@
 } else {
   <div>
     @if (editingConcept != null) {
-      <ManageEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
+      <CurateEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
     }
     <table>
       <tr>
@@ -29,9 +29,9 @@
             @concept.AcquiredFacets.Count()
           </td>
           <td>
-            <div class="manage-tooltip-target">
+            <div class="curate-tooltip-target">
               Preview
-              <ul class="manage-tooltip-content">
+              <ul class="curate-tooltip-content">
                 @foreach (var facet in @concept.AcquiredFacets) {
                   <li>@facet.Description</li>
                   <li>
@@ -39,7 +39,7 @@
                     <ul>
                       @foreach (var card in facet.Cards) {
                         <li>
-                          <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@card.Front"></iframe>
+                          <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
                         </li>
                       }
                     </ul>
@@ -48,7 +48,7 @@
               </ul>
             </div>
           </td>
-          <td class=@(editingConcept?.Id == concept.Id ? "manage-selected" : "")>
+          <td class=@(editingConcept?.Id == concept.Id ? "curate-selected" : "")>
             <button type="button" class="btn btn-link" onclick=@(() =>  ConceptClick(concept.Id))>
               @concept.Name
             </button>

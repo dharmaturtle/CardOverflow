@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 
-<div class="modal manage-show-modal" tabindex="-1" role="dialog">
+<div class="modal curate-show-modal" tabindex="-1" role="dialog">
   <div class="modal-dialog modal-wide" role="document">
     <div class="modal-content">
       <EditForm Model="@Concept" OnValidSubmit="@UpdateConcept">
@@ -45,7 +45,7 @@
                             <BSTabLabel>@card.CardTemplateName</BSTabLabel>
                             <BSTabContent>
                               @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                              <iframe sandbox allow-scripts class="manage-iframe" srcdoc="@card.Back"></iframe>
+                              <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@card.Back"></iframe>
                               Tags:
                               <ul>
                                 @foreach (var tag in card.Tags) {

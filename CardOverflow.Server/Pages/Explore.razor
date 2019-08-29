@@ -14,15 +14,15 @@
 } else {
   <div>
     @if (editingConcept != null) {
-      <ManageEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
+      <CurateEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
     }
     <ul>
       @foreach (var concept in concepts) {
-        <li class="@(editingConcept?.Id == concept.Id ? "manage-selected" : "")"
+        <li class="@(editingConcept?.Id == concept.Id ? "curate-selected" : "")"
             onclick=@(() =>  ConceptClick(concept.Id))>
-          <div class="manage-tooltip-target">
+          <div class="curate-tooltip-target">
             @concept.Name
-            <ul class="manage-tooltip-content">
+            <ul class="curate-tooltip-content">
               @foreach (var facet in @concept.AcquiredFacets) {
                 <li>@facet.Description</li>
                 <li>
@@ -30,7 +30,7 @@
                   <ul>
                     @foreach (var card in facet.Cards) {
                       <li>
-                        <iframe sandbox allow-scripts class="manage-iframe-tooltip" srcdoc="@card.Front"></iframe>
+                        <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
                       </li>
                     }
                   </ul>
