@@ -25,7 +25,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var field in Latest.Fields) {
+      @foreach (var field in Latest.Fields.OrderBy(x => x.Ordinal)) {
         <tr>
           <td>@field.Name</td>
           <td>@field.Ordinal</td>
@@ -44,7 +44,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var cardTemplate in Latest.CardTemplates) {
+      @foreach (var cardTemplate in Latest.CardTemplates.OrderBy(x => x.Ordinal)) {
         <tr>
           <td>@cardTemplate.Name</td>
           <td>@cardTemplate.Ordinal</td>
