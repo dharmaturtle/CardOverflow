@@ -25,7 +25,8 @@ type SimpleAnkiDb = {
 }
 
 type AnkiFacetTemplateInstance = {
-    FacetTemplate: FacetTemplate
+    MaintainerId: int
+    Name: string
     Css: string
     Fields: Field seq
     CardTemplates: CardTemplate seq
@@ -65,8 +66,8 @@ type AnkiFacetTemplateInstance = {
             |> fun x -> x.ToList()
         entity.FacetTemplate <-
             FacetTemplateEntity(
-                MaintainerId = this.FacetTemplate.MaintainerId,
-                Name = this.FacetTemplate.Name)
+                MaintainerId = this.MaintainerId,
+                Name = this.Name)
         this.CopyTo entity
         use hasher = SHA256.Create() // lowTODO pull this out
         entity.AcquireHash <- FacetTemplateInstanceEntity.acquireHash hasher entity
@@ -286,11 +287,8 @@ module Anki =
         Decode.object(fun get ->
             { DeckId = get.Required.Field "did" Decode.int64
               FacetTemplate =
-                { FacetTemplate = {
-                    Id = 0
-                    MaintainerId = userId
-                    Name = get.Required.Field "name" Decode.string
-                  }
+                { MaintainerId = userId
+                  Name = get.Required.Field "name" Decode.string
                   Css = get.Required.Field "css" Decode.string
                   Fields =
                     get.Required.Field "flds" (Decode.object(fun get ->

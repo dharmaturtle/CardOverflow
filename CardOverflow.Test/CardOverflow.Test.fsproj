@@ -50,6 +50,7 @@
     <Compile Include="MergeTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="FacetRepositoryTests.fs" />
+    <Compile Include="FacetTemplateRepositoryTests.fs" />
     <Compile Include="PrivateTagRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />
     <Compile Include="AnkiImportTests.fs" />

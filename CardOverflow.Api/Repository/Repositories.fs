@@ -12,6 +12,19 @@ open FSharp.Control.Tasks
 open System.Collections.Generic
 open X.PagedList
 
+module FacetTemplateRepository =
+    let GetFromInstance (db: CardOverflowDb) instanceId =
+        task {
+            let! instance =
+                db.FacetTemplateInstance
+                    .Include(fun x -> x.FacetTemplate.FacetTemplateInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetTemplateInstanceEntity) -> x.CardTemplates)
+                    .Include(fun x -> x.FacetTemplate.FacetTemplateInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetTemplateInstanceEntity) -> x.Fields)
+                    .FirstAsync(fun x -> x.Id = instanceId)
+            return instance.FacetTemplate |> FacetTemplate.Load
+        }
+
 module HistoryRepository =
     let addAndSaveAsync (db: CardOverflowDb) e =
         task {

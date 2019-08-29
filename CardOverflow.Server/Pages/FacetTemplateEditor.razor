@@ -1,0 +1,70 @@
+﻿@page "/FacetTemplateInstance/{InstanceId:int}"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject CardOverflowDb Db
+
+<h1>Facet Template</h1>
+<hr />
+@if (Template == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <p>Name: @Template.Name</p>
+  <h2>Fields</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Ordinal</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var field in Latest.Fields) {
+        <tr>
+          <td>@field.Name</td>
+          <td>@field.Ordinal</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  <h2>Card Templates</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Ordinal</th>
+        <th>Question Template</th>
+        <th>Answer Template</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var cardTemplate in Latest.CardTemplates) {
+        <tr>
+          <td>@cardTemplate.Name</td>
+          <td>@cardTemplate.Ordinal</td>
+          <td>@cardTemplate.QuestionTemplate</td>
+          <td>@cardTemplate.AnswerTemplate</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@code {
+  [Parameter]
+  public int InstanceId { get; set; }
+  FacetTemplate Template;
+  FacetTemplateInstance Latest;
+
+  protected override async Task OnInitAsync() {
+    Template = await FacetTemplateRepository.GetFromInstance(Db, InstanceId);
+    Latest = Template.Instances.OrderByDescending(x => x.Created).First();
+  }
+
+}

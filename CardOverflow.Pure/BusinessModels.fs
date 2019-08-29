@@ -89,27 +89,31 @@ type CardTemplate = {
     Ordinal: byte
 }
 
-type FacetTemplate = {
-    Id: int
-    MaintainerId: int
-    Name: string
-}
-
 type FacetTemplateInstance = {
     Id: int
-    FacetTemplate: FacetTemplate
     Css: string
     Fields: Field seq
     CardTemplates: CardTemplate seq
     Created: DateTime
     Modified: DateTime option
     IsCloze: bool
-    DefaultPublicTags: int seq
-    DefaultPrivateTags: int seq
-    DefaultCardOptionId: int
     LatexPre: string
     LatexPost: string
     AcquireHash: byte[]
+}
+
+type AcquiredFacetTemplateInstance = {
+    DefaultPublicTags: int seq
+    DefaultPrivateTags: int seq
+    DefaultCardOptionId: int
+    Instance: FacetTemplateInstance
+}
+
+type FacetTemplate = {
+    Id: int
+    MaintainerId: int
+    Name: string
+    Instances: FacetTemplateInstance seq
 }
 
 type IntervalOrStepsIndex =

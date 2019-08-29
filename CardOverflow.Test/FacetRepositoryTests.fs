@@ -24,9 +24,9 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             .Include(fun x -> x.FacetTemplate)
             .Include(fun x -> x.User_FacetTemplateInstances)
             .First(fun x -> x.FacetTemplate.Name = "Basic")
-            |> FacetTemplateInstance.Load
+            |> AcquiredFacetTemplateInstance.Load
     let cardTemplateNames =
-        facetTemplate.CardTemplates
+        facetTemplate.Instance.CardTemplates
         |> Seq.map (fun x -> x.Name)
     PrivateTagRepository.Add c.Db userId cardTemplateNames
     let privateTags =
@@ -34,13 +34,13 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
         |> Seq.map (fun x -> x.Id)
 
     let initialConcept = {
-        FacetTemplateHash = facetTemplate.AcquireHash
+        FacetTemplateHash = facetTemplate.Instance.AcquireHash
         MaintainerId = userId
         Description = "Basic"
         DefaultCardOptionId = facetTemplate.DefaultCardOptionId
-        CardTemplateIdsAndTags = facetTemplate.CardTemplates |> Seq.map (fun x -> x.Id, privateTags)
+        CardTemplateIdsAndTags = facetTemplate.Instance.CardTemplates |> Seq.map (fun x -> x.Id, privateTags)
         FieldValues =
-            facetTemplate.Fields
+            facetTemplate.Instance.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
             |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
     }

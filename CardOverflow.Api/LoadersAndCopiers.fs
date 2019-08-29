@@ -159,33 +159,31 @@ type CardTemplate with
         entity
 
 type FacetTemplateInstance with
-    member this.AcquireEquality(that: FacetTemplateInstance) =
-        this.FacetTemplate.Id = that.FacetTemplate.Id &&
-        this.Css = that.Css &&
-        this.Fields = that.Fields &&
-        this.CardTemplates = that.CardTemplates &&
-        this.IsCloze = that.IsCloze &&
-        this.LatexPre = that.LatexPre &&
-        this.LatexPost = that.LatexPost
     static member Load(entity: FacetTemplateInstanceEntity) =
         { Id = entity.Id
-          FacetTemplate = {
-            Id = entity.FacetTemplate.Id
-            Name = entity.FacetTemplate.Name
-            MaintainerId = entity.FacetTemplate.MaintainerId
-          }
           Css = entity.Css
           Fields = entity.Fields |> Seq.map Field.Load
           CardTemplates = entity.CardTemplates |> Seq.map CardTemplate.Load
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
           IsCloze = entity.IsCloze
-          DefaultPublicTags = entity.User_FacetTemplateInstances.Single().PublicTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
-          DefaultPrivateTags = entity.User_FacetTemplateInstances.Single().PrivateTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
-          DefaultCardOptionId = entity.User_FacetTemplateInstances.Single().DefaultCardOptionId
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost
           AcquireHash = entity.AcquireHash }
+
+type AcquiredFacetTemplateInstance with
+    static member Load(entity: FacetTemplateInstanceEntity) =
+        { DefaultPublicTags = entity.User_FacetTemplateInstances.Single().PublicTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
+          DefaultPrivateTags = entity.User_FacetTemplateInstances.Single().PrivateTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
+          DefaultCardOptionId = entity.User_FacetTemplateInstances.Single().DefaultCardOptionId
+          Instance = FacetTemplateInstance.Load entity }
+
+type FacetTemplate with
+    static member Load(entity: FacetTemplateEntity) = {
+        Id = entity.Id
+        Name = entity.Name
+        MaintainerId = entity.MaintainerId
+        Instances = entity.FacetTemplateInstances |> Seq.map FacetTemplateInstance.Load }
 
 type QuizCard with
     static member Load(entity: AcquiredCardEntity) =
