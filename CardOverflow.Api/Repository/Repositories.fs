@@ -22,7 +22,7 @@ module FacetTemplateRepository =
                     .Include(fun x -> x.FacetTemplate.FacetTemplateInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: FacetTemplateInstanceEntity) -> x.Fields)
                     .FirstAsync(fun x -> x.Id = instanceId)
-            return instance.FacetTemplate |> FacetTemplate.Load
+            return instance.FacetTemplate |> FacetTemplate.load
         }
 
 module HistoryRepository =
@@ -48,13 +48,13 @@ module CardRepository =
                     .OrderBy(fun x -> x.Due)
                     .ToListAsync()
             return
-                cards |> Seq.map QuizCard.Load
+                cards |> Seq.map QuizCard.load
         }
     let GetAllCards (db: CardOverflowDb) userId =
         (getCompleteCards db)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
-        |> Seq.map QuizCard.Load
+        |> Seq.map QuizCard.load
     let SaveCard (db: CardOverflowDb) card =
         db.Card.AddI card
         db.SaveChangesI ()
@@ -75,6 +75,22 @@ module CardRepository =
         db.SaveChangesI ()
 
 module ConceptRepository =
+    let Get (db: CardOverflowDb) conceptId =
+        task {
+            let! concept =
+                db.Concept
+                    .Include(fun x -> x.Maintainer)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+                    .FirstAsync(fun x -> x.Id = conceptId)
+            return concept |> DetailedConcept.load
+        }
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
@@ -99,7 +115,7 @@ module ConceptRepository =
                         .ThenInclude(fun (x: PrivateTag_AcquiredCardEntity) -> x.PrivateTag)
                     .ToPagedListAsync(pageNumber, 20)
             return {
-                Results = r |> Seq.map (AcquiredConcept.Load userId)
+                Results = r |> Seq.map (AcquiredConcept.load userId)
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount

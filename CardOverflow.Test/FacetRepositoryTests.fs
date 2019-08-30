@@ -24,7 +24,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             .Include(fun x -> x.FacetTemplate)
             .Include(fun x -> x.User_FacetTemplateInstances)
             .First(fun x -> x.FacetTemplate.Name = "Basic")
-            |> AcquiredFacetTemplateInstance.Load
+            |> AcquiredFacetTemplateInstance.load
     let cardTemplateNames =
         facetTemplate.Instance.CardTemplates
         |> Seq.map (fun x -> x.Name)

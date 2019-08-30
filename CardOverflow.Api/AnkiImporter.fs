@@ -70,7 +70,7 @@ module AnkiImporter =
             let! cardOptionByDeckConfigurationId =
                 let toEntity _ (cardOption: CardOption) =
                     cardOptions
-                    |> Seq.map CardOption.Load
+                    |> Seq.map CardOption.load
                     |> Seq.filter (fun x -> x.AcquireEquality cardOption)
                     |> Seq.tryHead
                     |> function

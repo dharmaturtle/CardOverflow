@@ -133,14 +133,14 @@ type QuizCard = {
     Options: CardOption
 }
 
-type FacetInstance = {
-    Id: int
-    Created: DateTime
-    Modified: DateTime option
-    Fields: string seq
-}
+//type FacetInstance = {
+//    Id: int
+//    Created: DateTime
+//    Modified: DateTime option
+//    Fields: string seq
+//}
 
-type EditCard = {
+type AcquiredDisplayCard = { // Acquired cause only private tags can be on a card
     CardTemplateName: string
     Front: string
     Back: string
@@ -156,12 +156,11 @@ type AcquiredFacet = {
     FacetCreated: DateTime
     FacetModified: DateTime option
     FacetFields: (Field * string) seq
-    Cards: EditCard seq
+    Cards: AcquiredDisplayCard seq
 }
 
 type AcquiredCard = {
     UserId: int
-    FacetInstance: FacetInstance
     CardTemplate: CardTemplate
     CardState: CardState
     IsLapsed: bool
@@ -219,4 +218,51 @@ type PagedListDetails = {
 type PagedList<'T> = {
     Results: 'T seq
     Details: PagedListDetails
+}
+
+type FieldValue = {
+    Value: string
+    FieldId: int
+}
+
+type Card = {
+    CardTemplateName: string
+    ClozeIndex: byte option
+    Front: string
+    Back: string
+}
+
+type FacetInstance = {
+    Id: int
+    Created: DateTime
+    Modified: DateTime option
+    IsDmca: bool
+    Cards: Card seq
+    FieldValues: FieldValue seq
+    TemplateInstance: FacetTemplateInstance
+}
+
+type Comment = {
+    User: string
+    UserId: int
+    Text: string
+    Created: DateTime
+    IsDmca: bool
+}
+
+type Facet = {
+    Id: int
+    Maintainer: string
+    MaintainerId: int
+    Description: string
+    LatestInstance: FacetInstance
+    Comments: Comment seq
+}
+
+type DetailedConcept = {
+    Id: int
+    Name: string
+    Maintainer: string
+    MaintainerId: int
+    Facets: Facet seq
 }
