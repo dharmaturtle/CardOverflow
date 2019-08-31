@@ -16,31 +16,56 @@
     @if (editingConcept != null) {
       <CurateEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
     }
-    <ul>
+    <table>
+      <tr>
+        <th>Facet Count</th>
+        <th>Preview</th>
+        <th>Name</th>
+        <th>Tags</th>
+      </tr>
       @foreach (var concept in concepts) {
-        <li class="@(editingConcept?.Id == concept.Id ? "curate-selected" : "")"
-            onclick=@(() =>  ConceptClick(concept.Id))>
-          <div class="curate-tooltip-target">
-            @concept.Name
-            <ul class="curate-tooltip-content">
-              @foreach (var facet in @concept.AcquiredFacets) {
-                <li>@facet.Description</li>
+        <tr>
+          <td>
+            @concept.AcquiredFacets.Count()
+          </td>
+          <td>
+            <div class="curate-tooltip-target">
+              Preview
+              <ul class="curate-tooltip-content">
+                @foreach (var facet in @concept.AcquiredFacets) {
+                  <li>@facet.Description</li>
+                  <li>
+                    @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                    <ul>
+                      @foreach (var card in facet.Cards) {
+                        <li>
+                          <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
+                        </li>
+                      }
+                    </ul>
+                  </li>
+                }
+              </ul>
+            </div>
+          </td>
+          <td class=@(editingConcept?.Id == concept.Id ? "curate-selected" : "")>
+            <button type="button" class="btn btn-link" onclick=@(() =>  ConceptClick(concept.Id))>
+              @concept.Name
+            </button>
+          </td>
+          <td>
+            <ul>
+              @foreach (var tag in @concept.AcquiredFacets.SelectMany(x => x.Cards.SelectMany(xx => xx.Tags)).Distinct()) {
                 <li>
-                  @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                  <ul>
-                    @foreach (var card in facet.Cards) {
-                      <li>
-                        <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
-                      </li>
-                    }
-                  </ul>
+                  @tag
                 </li>
               }
             </ul>
-          </div>
-        </li>
+          </td>
+        </tr>
       }
-    </ul>
+    </table>
+    <Pager Details=@details PageChanged=@PageChanged />
   </div>
 }
 
@@ -48,9 +73,10 @@
   IList<AcquiredConcept> concepts;
   AcquiredConcept editingConcept;
   int userId = 3;
+  PagedListDetails details;
 
   protected override async Task OnInitAsync() {
-    concepts = (await ConceptRepository.GetAcquiredConceptsAsync(Db, 3, 1)).Results.ToList();
+    await PageChanged(1);
   }
 
   void ConceptClick(int conceptId) {
@@ -78,6 +104,12 @@
     } else {
       // lowToMedTODO this returns an error; show it
     }
+  }
+
+  async Task PageChanged(int pageNumber) {
+    var pagedList = await ConceptRepository.GetAcquiredConceptsAsync(Db, userId, pageNumber);
+    details = pagedList.Details;
+    concepts = pagedList.Results.ToList();
   }
 
 }
