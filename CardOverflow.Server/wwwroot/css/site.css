@@ -24,6 +24,11 @@ html, body {
   padding: 0;
 }
 
+.concept-iframe {
+  width: 100%;
+  height: 600px; /* lowTODO get the height to match the contents - there's some javascript involved :( */
+}
+
 .curate-iframe {
   width: 100%;
   height: 600px; /* lowTODO get the height to match the contents - there's some javascript involved :( */

@@ -1,0 +1,68 @@
+﻿@page "/Concept/{Id:int}"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject CardOverflowDb Db
+
+@if (Concept == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <h1>Concept: @Concept.Name</h1>
+  <h2>Facets</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Maintainer</th>
+        <th>Cards</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var facet in Concept.Facets) {
+        <tr>
+          <td>@facet.Description</td>
+          <td>@facet.Maintainer</td>
+          <td>
+            <ul>
+              @foreach (var card in facet.LatestInstance.Cards) {
+                <li>
+                  @card.CardTemplateName
+                  <iframe sandbox allow-scripts class="concept-iframe" srcdoc="@card.Back"></iframe>
+                </li>
+              }
+            </ul>
+          </td>
+          <td>
+            <ul>
+              @foreach (var comment in @facet.Comments) {
+                <li>
+                  @comment.User: @comment.Text
+                </li>
+              }
+                <Comment FacetId=@facet.Id />
+            </ul>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@code {
+  [Parameter]
+  public int Id { get; set; }
+  DetailedConcept Concept;
+  string Comment;
+
+  protected override async Task OnInitAsync() {
+    Concept = await ConceptRepository.Get(Db, Id);
+  }
+
+}
