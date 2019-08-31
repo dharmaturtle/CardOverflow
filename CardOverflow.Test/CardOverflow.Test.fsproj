@@ -48,8 +48,8 @@
     <Compile Include="TestDbServices.fs" />
     <Compile Include="LoadersAndCopiersTests.fs" />
     <Compile Include="MergeTests.fs" />
-    <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="FacetRepositoryTests.fs" />
+    <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="FacetTemplateRepositoryTests.fs" />
     <Compile Include="PrivateTagRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />

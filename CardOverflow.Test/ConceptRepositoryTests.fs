@@ -20,6 +20,7 @@ open SimpleInjector
 open SimpleInjector.Lifestyles
 open System.Diagnostics
 open FSharp.Control.Tasks
+open System.Threading.Tasks
 
 [<Fact>]
 let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() =
@@ -41,20 +42,22 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
 
 [<Fact>]
-let ``Get isn't empty``(): unit =
-    use c = new Container()
-    c.RegisterStuff
-    c.RegisterStandardConnectionString
-    use __ = AsyncScopedLifestyle.BeginScope c
+let ``Get isn't empty``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    FacetRepositoryTests.addBasicConcept c.Db userId []
+    do! CommentFacetEntity (
+            FacetId = 1,
+            UserId = userId,
+            Text = "text",
+            Created = DateTime.UtcNow
+        ) |> CommentRepository.addAndSaveAsync c.Db
     let conceptId = 1
-    (task {
-        let db = c.GetInstance<CardOverflowDb>()
         
-        let! concept = ConceptRepository.Get db conceptId
+    let! concept = ConceptRepository.Get c.Db conceptId
         
-        concept.Facets
-        |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
-        |> Seq.iter (fun x -> Assert.DoesNotContain("{{Front}}", x))
-        Assert.NotEmpty concept.Facets
-        return ()
-    }).GetAwaiter().GetResult()
+    concept.Facets
+    |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
+    |> Seq.iter (fun x -> Assert.DoesNotContain("{{Front}}", x))
+    Assert.NotEmpty <| concept.Facets
+    Assert.NotEmpty <| concept.Facets.Select(fun x -> x.Comments) }

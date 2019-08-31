@@ -13,26 +13,19 @@ open Xunit
 open CardOverflow.Pure
 open System.Collections.Generic
 
-[<Fact>]
-let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
-    use c = new TestContainer()
-    let userId = 3
+let addBasicConcept (db: CardOverflowDb) userId tags =
     let facetTemplate =
-        c.Db.FacetTemplateInstance
+        db.FacetTemplateInstance
             .Include(fun x -> x.CardTemplates)
             .Include(fun x -> x.Fields)
             .Include(fun x -> x.FacetTemplate)
             .Include(fun x -> x.User_FacetTemplateInstances)
             .First(fun x -> x.FacetTemplate.Name = "Basic")
             |> AcquiredFacetTemplateInstance.load
-    let cardTemplateNames =
-        facetTemplate.Instance.CardTemplates
-        |> Seq.map (fun x -> x.Name)
-    PrivateTagRepository.Add c.Db userId cardTemplateNames
+    PrivateTagRepository.Add db userId tags
     let privateTags =
-        PrivateTagRepository.GetAll c.Db userId
+        PrivateTagRepository.GetAll db userId
         |> Seq.map (fun x -> x.Id)
-
     let initialConcept = {
         FacetTemplateHash = facetTemplate.Instance.AcquireHash
         MaintainerId = userId
@@ -44,8 +37,15 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             |> Seq.sortBy (fun x -> x.Ordinal)
             |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
     }
+    ConceptRepository.CreateConcept db initialConcept <| Seq.empty.ToList()
+
+[<Fact>]
+let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
+    use c = new TestContainer()
+    let userId = 3
+    let tags = ["a"; "b"]
     
-    ConceptRepository.CreateConcept c.Db initialConcept <| Seq.empty.ToList()
+    addBasicConcept c.Db userId tags
 
     Assert.SingleI <| c.Db.Facet
     Assert.SingleI <| c.Db.Card
@@ -89,7 +89,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             .Single().AcquiredFacets.Single().FacetFields.OrderByDescending(fun x -> x)
     )
     Assert.Equal<string seq>(
-        cardTemplateNames,
+        tags,
         (ConceptRepository.GetAcquiredConceptsAsync c.Db userId 1)
             .GetAwaiter()
             .GetResult()

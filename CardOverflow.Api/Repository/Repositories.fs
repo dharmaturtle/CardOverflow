@@ -12,6 +12,11 @@ open FSharp.Control.Tasks
 open System.Collections.Generic
 open X.PagedList
 
+module CommentRepository =
+    let addAndSaveAsync (db: CardOverflowDb) (comment: CommentFacetEntity) =
+        db.CommentFacet.AddI comment
+        db.SaveChangesAsyncI ()
+
 module FacetTemplateRepository =
     let GetFromInstance (db: CardOverflowDb) instanceId =
         task {
@@ -27,10 +32,8 @@ module FacetTemplateRepository =
 
 module HistoryRepository =
     let addAndSaveAsync (db: CardOverflowDb) e =
-        task {
-            let! _ = db.History.AddAsync e
-            return! db.SaveChangesAsync()
-        }
+        db.History.AddI e
+        db.SaveChangesAsyncI ()
 
 module CardRepository =
     let private getCompleteCards (db: CardOverflowDb) =
@@ -88,6 +91,9 @@ module ConceptRepository =
                         .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
                         .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
                     .FirstAsync(fun x -> x.Id = conceptId)
             return concept |> DetailedConcept.load
         }
