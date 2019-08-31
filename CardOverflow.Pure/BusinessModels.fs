@@ -225,11 +225,14 @@ type FieldValue = {
     FieldId: int
 }
 
+[<CLIMutable>]
 type Card = {
+    Id: int
     CardTemplateName: string
     ClozeIndex: byte option
     Front: string
     Back: string
+    IsAcquired: bool
 }
 
 type FacetInstance = {

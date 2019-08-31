@@ -17,9 +17,9 @@ open SimpleInjector.Lifestyles
 
 [<Fact>]
 let ``CardOptions load and copy defaultCardOptions are equal``() =
-    let record = UserRepository.defaultCardOptions.CopyToNew 3 |> CardOption.load
+    let record = CardOptionsRepository.defaultCardOptions.CopyToNew 3 |> CardOption.load
 
-    Assert.Equal(UserRepository.defaultCardOptions, record)
+    Assert.Equal(CardOptionsRepository.defaultCardOptions, record)
 
 [<Fact>]
 let ``Interval, all NewStepsIndexes map to db and back``() =

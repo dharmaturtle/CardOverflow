@@ -329,26 +329,28 @@ type FieldValue with
     }
 
 type Card with
-    static member load (entity: CardEntity) =
+    static member load userId (entity: CardEntity) =
         let front, back =
             CardHtml.generate
                 (entity.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
                 entity.CardTemplate.QuestionTemplate
                 entity.CardTemplate.AnswerTemplate
                 entity.CardTemplate.FacetTemplateInstance.Css
-        {   CardTemplateName = entity.CardTemplate.Name
+        {   Id = entity.Id
+            CardTemplateName = entity.CardTemplate.Name
             ClozeIndex = entity.ClozeIndex |> Option.ofNullable
             Front = front
             Back = back
+            IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
         }
 
 type FacetInstance with
-    static member load (entity: FacetInstanceEntity) = {
+    static member load userId (entity: FacetInstanceEntity) = {
         Id = entity.Id
         Created = entity.Created
         Modified = entity.Modified |> Option.ofNullable
         IsDmca = entity.IsDmca
-        Cards = entity.Cards |> Seq.map Card.load
+        Cards = entity.Cards |> Seq.map (Card.load userId)
         FieldValues = entity.FieldValues |> Seq.map FieldValue.load
         TemplateInstance = entity.Cards.First().CardTemplate.FacetTemplateInstance |> FacetTemplateInstance.load
     }
@@ -363,20 +365,20 @@ type Comment with
     }
 
 type Facet with
-    static member load (entity: FacetEntity) = {
+    static member load userId (entity: FacetEntity) = {
         Id = entity.Id
         Maintainer = entity.Maintainer.DisplayName
         MaintainerId = entity.MaintainerId
         Description = entity.Description
-        LatestInstance = entity.FacetInstances.OrderByDescending(fun x -> x.Created).First() |> FacetInstance.load
+        LatestInstance = entity.FacetInstances.OrderByDescending(fun x -> x.Created).First() |> FacetInstance.load userId
         Comments = entity.CommentFacets |> Seq.map Comment.load
     }
 
 type DetailedConcept with
-    static member load (entity: ConceptEntity) = {
+    static member load userId (entity: ConceptEntity) = {
         Id = entity.Id
         Name = entity.Name
         Maintainer = entity.Maintainer.DisplayName
         MaintainerId = entity.MaintainerId
-        Facets = entity.Facets |> Seq.map Facet.load
+        Facets = entity.Facets |> Seq.map (Facet.load userId)
     }

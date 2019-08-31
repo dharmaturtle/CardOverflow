@@ -1,12 +1,32 @@
-﻿@inherits LayoutComponentBase
+﻿@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Api
+@using CardOverflow.Pure
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject CardOverflowDb Db
 
 <div class="sidebar">
   <NavMenu />
 </div>
 
 <div class="main">
-  @* Keep this div to make the Study page look ok. *@
-  <div class="content px-4">
-    @Body
-  </div>
+  <CascadingValue Value="@User">
+    @* Keep this div to make the Study page look ok. *@
+    <div class="content px-4">
+      @Body
+    </div>
+  </CascadingValue>
 </div>
+
+@code {
+  UserEntity User;
+
+  protected override async Task OnInitAsync() {
+    var email = 
+      (await AuthenticationStateProvider.GetAuthenticationStateAsync())
+      .User.Identity.Name;
+    User = UserRepository.Get(Db, email);
+  }
+
+}

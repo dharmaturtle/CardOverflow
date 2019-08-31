@@ -10,33 +10,33 @@
 @inject CardOverflowDb Db
 @inject TimeProvider Time
 
-<AuthorizeView>
-  <Authorized Context="AuthorizedContext">
-    <li>
-      @if (isSaved) {
-        <p>@AuthorizedContext.User.Identity.Name: @WriteComment.Text</p>
-      } else {
-        <EditForm Model="@WriteComment" OnValidSubmit="@(() => SaveComment(AuthorizedContext.User.Identity.Name))">
-          <div class="form-group">
-            <InputText @bind-value="@WriteComment.Text" /> @*this seems to break validation: @bind-value:event="oninput"*@
-            <button type="submit" class="btn btn-primary">Save</button>
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-          </div>
-        </EditForm>
-      }
-    </li>
-  </Authorized>
-</AuthorizeView>
+@if (User != null) {
+  <li>
+    @if (isSaved) {
+      <p>@User.DisplayName : @WriteComment.Text</p>
+    } else {
+      <EditForm Model="@WriteComment" OnValidSubmit=@SaveComment>
+        <div class="form-group">
+          <InputText @bind-value="@WriteComment.Text" /> @*this seems to break validation: @bind-value:event="oninput"*@
+          <button type="submit" class="btn btn-primary">Save</button>
+          <DataAnnotationsValidator />
+          <ValidationSummary />
+        </div>
+      </EditForm>
+    }
+  </li>
+}
 
 @code {
+  [CascadingParameter]
+  UserEntity User { get; set; }
   [Parameter]
   int FacetId { get; set; }
   CommentText WriteComment = new CommentText();
   bool isSaved;
 
-  async Task SaveComment(string email) {
-    await SanitizeCommentRepository.AddAndSaveAsync(Db, Time, WriteComment, FacetId, email);
+  async Task SaveComment() {
+    await SanitizeCommentRepository.AddAndSaveAsync(Db, Time, WriteComment, FacetId, User.Email);
     isSaved = true;
   }
 

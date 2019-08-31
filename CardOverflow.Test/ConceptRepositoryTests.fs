@@ -61,3 +61,30 @@ let ``Get isn't empty``(): Task<unit> = task {
     |> Seq.iter (fun x -> Assert.DoesNotContain("{{Front}}", x))
     Assert.NotEmpty <| concept.Facets
     Assert.NotEmpty <| concept.Facets.Select(fun x -> x.Comments) }
+
+[<Fact>]
+let ``GetForUser isn't empty``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    FacetRepositoryTests.addBasicConcept c.Db userId []
+    do! CommentFacetEntity (
+            FacetId = 1,
+            UserId = userId,
+            Text = "text",
+            Created = DateTime.UtcNow
+        ) |> CommentRepository.addAndSaveAsync c.Db
+    let conceptId = 1
+        
+    let! concept = ConceptRepository.GetForUser c.Db conceptId userId
+        
+    concept.Facets
+    |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
+    |> Seq.iter (fun x -> Assert.DoesNotContain("{{Front}}", x))
+    Assert.NotEmpty <| concept.Facets
+    Assert.NotEmpty <| concept.Facets.Select(fun x -> x.Comments)
+    Assert.NotEmpty <| 
+        concept.Facets.SelectMany(fun x -> x.LatestInstance.Cards.Select(fun x -> x.IsAcquired))
+    Assert.All(
+        concept.Facets.SelectMany(fun x -> x.LatestInstance.Cards.Select(fun x -> x.IsAcquired)),
+        fun x -> Assert.True(x))
+    }

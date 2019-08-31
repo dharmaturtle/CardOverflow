@@ -58,24 +58,21 @@ module CardRepository =
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
         |> Seq.map QuizCard.load
-    let SaveCard (db: CardOverflowDb) card =
-        db.Card.AddI card
-        db.SaveChangesI ()
-    let AcquireCards (db: CardOverflowDb) userId cardIds =
-        let user = db.User.First(fun x -> x.Id = userId)
+    let AcquireCardsAsync (db: CardOverflowDb) userId cardIds =
+        let defaultCardOptionId =
+            db.CardOption
+                .First(fun x -> x.UserId = userId && x.IsDefault).Id
         cardIds
-        |> List.map (fun i ->
-            AcquiredCardEntity(
-                UserId = userId, // eventualTODO missing FacetInstanceId and CardTemplateId
-                CardState = CardState.toDb Normal,
-                IsLapsed = false,
-                EaseFactorInPermille = 0s,
-                IntervalOrStepsIndex = Int16.MinValue,
-                Due = DateTime.UtcNow,
-                CardOption = user.CardOptions.First(fun x -> x.IsDefault)
-            ))
-        |> db.AcquiredCard.AddRange
-        db.SaveChangesI ()
+        |> Seq.map (fun cardId ->
+            let card =
+                AcquiredCard.InitialCopyTo
+                    userId
+                    defaultCardOptionId
+                    []
+            card.CardId <- cardId
+            card
+        ) |> db.AcquiredCard.AddRange
+        db.SaveChangesAsyncI ()
 
 module ConceptRepository =
     let Get (db: CardOverflowDb) conceptId =
@@ -95,7 +92,30 @@ module ConceptRepository =
                         .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
                     .FirstAsync(fun x -> x.Id = conceptId)
-            return concept |> DetailedConcept.load
+            return concept |> DetailedConcept.load 0
+        }
+    let GetForUser (db: CardOverflowDb) conceptId userId =
+        task {
+            let! concept =
+                db.Concept
+                    .Include(fun x -> x.Maintainer)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards)
+                    .FirstAsync(fun x -> x.Id = conceptId)
+            return concept |> DetailedConcept.load userId
         }
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
@@ -151,7 +171,7 @@ module ConceptRepository =
     //                 db.Update d |> ignore)
     //     )
 
-module UserRepository =
+module CardOptionsRepository =
     let defaultCardOptions =
         { Id = 0
           Name = "Default"
@@ -197,8 +217,10 @@ module UserRepository =
     //      ShowAnswerTimer = false
     //      AutomaticallyPlayAudio = false
     //      ReplayQuestionAudioOnAnswer = false }
+
+module UserRepository =
     let add (db: CardOverflowDb) name email =
-        let cardOption = defaultCardOptions.CopyToNew 0
+        let cardOption = CardOptionsRepository.defaultCardOptions.CopyToNew 0
         cardOption.IsDefault <- true
         UserEntity(
             DisplayName = name,
@@ -206,8 +228,8 @@ module UserRepository =
             CardOptions = (cardOption |> Seq.singleton |> fun x -> x.ToList())
         ) |> db.User.AddI
         db.SaveChangesI ()
-    let GetUser (db: CardOverflowDb) email =
-        db.User.First(fun x -> x.Email = email)
+    let Get (db: CardOverflowDb) email =
+        db.User.FirstOrDefault(fun x -> x.Email = email)
 
 module PrivateTagRepository =
     let Add (db: CardOverflowDb) userId newTags =

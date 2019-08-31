@@ -26,7 +26,7 @@
                 <ul>
                   @foreach (var facetField in @Concept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
                     <li>
-                      @facetField.Item1.Name : @facetField.Item2
+                      <b>@facetField.Item1.Name</b> @facetField.Item2
                     </li>
                   }
                 </ul>
