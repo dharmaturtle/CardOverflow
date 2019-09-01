@@ -108,7 +108,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAcquiredConceptsAsync(Db, User.Id, pageNumber);
+    var pagedList = await ConceptRepository.GetAcquiredAsync(Db, User.Id, pageNumber);
     details = pagedList.Details;
     concepts = pagedList.Results.ToList();
   }

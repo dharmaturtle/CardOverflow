@@ -33,7 +33,7 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (ConceptRepository.GetAcquiredConceptsAsync db userId i)
+        (ConceptRepository.GetAcquiredAsync db userId i)
             .GetAwaiter()
             .GetResult()
             .Results

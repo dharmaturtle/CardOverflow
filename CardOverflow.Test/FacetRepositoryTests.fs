@@ -82,7 +82,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
             Ordinal = 1uy
             IsSticky = false }
          , "Back")],
-        (ConceptRepository.GetAcquiredConceptsAsync c.Db userId 1)
+        (ConceptRepository.GetAcquiredAsync c.Db userId 1)
             .GetAwaiter()
             .GetResult()
             .Results
@@ -90,7 +90,7 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
     )
     Assert.Equal<string seq>(
         tags,
-        (ConceptRepository.GetAcquiredConceptsAsync c.Db userId 1)
+        (ConceptRepository.GetAcquiredAsync c.Db userId 1)
             .GetAwaiter()
             .GetResult()
             .Results

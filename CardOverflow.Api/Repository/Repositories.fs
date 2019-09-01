@@ -120,7 +120,7 @@ module ConceptRepository =
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
-    let GetAcquiredConceptsAsync (db: CardOverflowDb) (userId: int) (pageNumber: int) =
+    let GetAcquiredAsync (db: CardOverflowDb) (userId: int) (pageNumber: int) =
         task {
             let! r =
                 db.Concept
