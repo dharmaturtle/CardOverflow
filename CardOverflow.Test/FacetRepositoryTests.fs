@@ -71,23 +71,25 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
         |> Result.getOk
         |> fun x -> x.Answer
     )
-    Assert.Equal<(Field * string) seq>(
-        [({ Id = 10
-            Name = "Front"
-            Font = "Arial"
-            FontSize = 20uy
-            IsRightToLeft = false
-            Ordinal = 0uy
-            IsSticky = false }
-        , "Front")
-         ({ Id = 9
-            Name = "Back"
-            Font = "Arial"
-            FontSize = 20uy
-            IsRightToLeft = false
-            Ordinal = 1uy
-            IsSticky = false }
-         , "Back")],
+    Assert.Equal<FieldAndValue seq>(
+        [{  Field = {
+                Id = 10
+                Name = "Front"
+                Font = "Arial"
+                FontSize = 20uy
+                IsRightToLeft = false
+                Ordinal = 0uy
+                IsSticky = false }
+            Value = "Front" }
+         {  Field = {
+                Id = 9
+                Name = "Back"
+                Font = "Arial"
+                FontSize = 20uy
+                IsRightToLeft = false
+                Ordinal = 1uy
+                IsSticky = false }
+            Value = "Back"}],
         (ConceptRepository.GetAcquiredAsync c.Db userId 1)
             .GetAwaiter()
             .GetResult()

@@ -15,19 +15,13 @@
   <div>
     <table class="table">
       <tr>
+        <th>Preview</th>
         <th>Facet Count</th>
         <th>Users</th>
-        <th>Preview</th>
         <th>Name</th>
       </tr>
       @foreach (var concept in concepts) {
         <tr>
-          <td>
-            @concept.Facets.Count()
-          </td>
-          <td>
-            @concept.Users
-          </td>
           <td>
             <div class="curate-tooltip-target">
               Preview
@@ -47,6 +41,12 @@
                 }
               </ul>
             </div>
+          </td>
+          <td>
+            @concept.Facets.Count()
+          </td>
+          <td>
+            @concept.Users
           </td>
           <td>
             <a href="concept/@concept.Id">

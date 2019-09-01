@@ -14,7 +14,9 @@
     <div class="modal-content">
       <EditForm Model="@Concept" OnValidSubmit="@UpdateConcept">
         <div class="modal-header">
-          <h5 class="modal-title">Modal title</h5>
+          <h5 class="modal-title">
+            <InputText @bind-value="@Concept.Name" Class="curate-edit-inputtext" /> @*this seems to break validation: @bind-value:event="oninput"*@
+          </h5>
           <button type="button" class="close" aria-label="Close" onclick=@Close>
             <span aria-hidden="true">&times;</span>
           </button>
@@ -23,12 +25,11 @@
           <div class="row">
             <div class="col-sm">
               <div class="form-group">
-                <label for="modal-name">Name:</label>
-                <InputText Id="modal-name" @bind-value="@Concept.Name" /> @*this seems to break validation: @bind-value:event="oninput"*@
                 <ul>
                   @foreach (var facetField in @Concept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
                     <li>
-                      <b>@facetField.Item1.Name</b> @facetField.Item2
+                      <label><b>@facetField.Field.Name: </b></label>
+                      <InputTextArea @bind-value="@facetField.Value" Class="curate-edit-inputtextarea" />
                     </li>
                   }
                 </ul>

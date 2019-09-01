@@ -324,7 +324,13 @@ type AcquiredConcept with
                         FacetId = fi.FacetId
                         FacetCreated = fi.Created
                         FacetModified = Option.ofNullable fi.Modified
-                        FacetFields = fi.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> (Field.load x.Field, x.Value))
+                        FacetFields =
+                            fi.FieldValues
+                                .OrderBy(fun x -> x.Field.Ordinal)
+                                .Select(fun x -> 
+                                    {   Field = Field.load x.Field
+                                        Value = x.Value
+                                    })
                         Cards = cards |> Seq.choose id
                     }
                 )

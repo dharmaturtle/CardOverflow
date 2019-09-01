@@ -18,16 +18,13 @@
     }
     <table class="table">
       <tr>
-        <th>Facet Count</th>
         <th>Preview</th>
+        <th>Facet Count</th>
         <th>Name</th>
         <th>Tags</th>
       </tr>
       @foreach (var concept in concepts) {
         <tr>
-          <td>
-            @concept.AcquiredFacets.Count()
-          </td>
           <td>
             <div class="curate-tooltip-target">
               Preview
@@ -47,6 +44,9 @@
                 }
               </ul>
             </div>
+          </td>
+          <td>
+            @concept.AcquiredFacets.Count()
           </td>
           <td class=@(editingConcept?.Id == concept.Id ? "curate-selected" : "")>
             <button type="button" class="btn btn-link" onclick=@(() =>  ConceptClick(concept.Id))>

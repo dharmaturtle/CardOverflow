@@ -147,6 +147,12 @@ type AcquiredDisplayCard = { // Acquired cause only private tags can be on a car
     Tags: string seq
 }
 
+[<CLIMutable>]
+type FieldAndValue = {
+    Field: Field
+    Value: string
+}
+
 type AcquiredFacet = {
     FacetInstanceId: int
     FacetTemplateInstanceId: int
@@ -155,7 +161,7 @@ type AcquiredFacet = {
     FacetId: int
     FacetCreated: DateTime
     FacetModified: DateTime option
-    FacetFields: (Field * string) seq
+    FacetFields: FieldAndValue seq
     Cards: AcquiredDisplayCard seq
 }
 
