@@ -70,9 +70,10 @@
 }
 
 @code {
+  [CascadingParameter]
+  UserEntity User { get; set; }
   IList<AcquiredConcept> concepts;
   AcquiredConcept editingConcept;
-  int userId = 3;
   PagedListDetails details;
 
   protected override async Task OnInitAsync() {
@@ -95,7 +96,7 @@
   }
 
   async Task UpdateConcept() {
-    var result = SanitizeConceptRepository.Update(Db, userId, editingConcept.Id, editingConcept.Name);
+    var result = SanitizeConceptRepository.Update(Db, User.Id, editingConcept.Id, editingConcept.Name);
     if (result.IsOk) {
       await result.ResultValue;
       var targetConcept = concepts.First(x => x.Id == editingConcept.Id);
@@ -107,7 +108,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAcquiredConceptsAsync(Db, userId, pageNumber);
+    var pagedList = await ConceptRepository.GetAcquiredConceptsAsync(Db, User.Id, pageNumber);
     details = pagedList.Details;
     concepts = pagedList.Results.ToList();
   }

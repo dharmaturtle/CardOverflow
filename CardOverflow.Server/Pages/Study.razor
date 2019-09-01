@@ -42,8 +42,9 @@
   string iframeSrcdoc;
   string error;
   bool? isFront;
+  [CascadingParameter]
+  UserEntity User { get; set; }
   IList<FSharpResult<QuizCard, string>> todaysCards;
-  int userId = 3;
   DateTime frontVisible;
 
   protected override async Task OnInitAsync() {
@@ -53,7 +54,7 @@
 
   async Task SaveScore(Score score) {
     var (interval, easeFactor) = Scheduler.interval(todaysCards.First().ResultValue, score);
-    await SanitizeHistoryRepository.AddAndSaveAsync(Db, userId, todaysCards.First().ResultValue.CardId, score, TimeProvider.utcNow, interval, easeFactor, TimeProvider.utcNow - frontVisible);
+    await SanitizeHistoryRepository.AddAndSaveAsync(Db, User.Id, todaysCards.First().ResultValue.CardId, score, TimeProvider.utcNow, interval, easeFactor, TimeProvider.utcNow - frontVisible);
     // medTODO also need to update the AcquiredCard with the new interval (and maybe other stuff), due to a denormalized db. Move the Scheduler to that new function
     // medTODO needs `undo review` support
     todaysCards.RemoveAt(0);
