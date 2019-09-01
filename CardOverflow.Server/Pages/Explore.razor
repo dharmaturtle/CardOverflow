@@ -13,28 +13,31 @@
   <p><em>Loading...</em></p>
 } else {
   <div>
-    <table>
+    <table class="table">
       <tr>
         <th>Facet Count</th>
+        <th>Users</th>
         <th>Preview</th>
         <th>Name</th>
-        <th>Tags</th>
       </tr>
       @foreach (var concept in concepts) {
         <tr>
           <td>
-            @concept.AcquiredFacets.Count()
+            @concept.Facets.Count()
+          </td>
+          <td>
+            @concept.Users
           </td>
           <td>
             <div class="curate-tooltip-target">
               Preview
               <ul class="curate-tooltip-content">
-                @foreach (var facet in @concept.AcquiredFacets) {
+                @foreach (var facet in @concept.Facets) {
                   <li>@facet.Description</li>
                   <li>
                     @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
                     <ul>
-                      @foreach (var card in facet.Cards) {
+                      @foreach (var card in facet.LatestInstance.Cards) {
                         <li>
                           <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
                         </li>
@@ -46,18 +49,9 @@
             </div>
           </td>
           <td>
-            <a href="concept/@concept.Id" >
+            <a href="concept/@concept.Id">
               @concept.Name
             </a>
-          </td>
-          <td>
-            <ul>
-              @foreach (var tag in @concept.AcquiredFacets.SelectMany(x => x.Cards.SelectMany(xx => xx.Tags)).Distinct()) {
-                <li>
-                  @tag
-                </li>
-              }
-            </ul>
           </td>
         </tr>
       }
@@ -67,9 +61,10 @@
 }
 
 @code {
-  IList<AcquiredConcept> concepts;
-  int userId = 3;
+  IList<ExploreConcept> concepts;
   PagedListDetails details;
+  [CascadingParameter]
+  UserEntity User { get; set; }
 
   protected override async Task OnInitAsync() {
     await PageChanged(1);
@@ -81,7 +76,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAcquiredConceptsAsync(Db, userId, pageNumber);
+    var pagedList = await ConceptRepository.GetAsync(Db, User?.Id ?? 0, pageNumber);
     details = pagedList.Details;
     concepts = pagedList.Results.ToList();
   }

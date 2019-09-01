@@ -139,7 +139,7 @@ module ConceptRepository =
                         .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: AcquiredCardEntity) -> x.PrivateTag_AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: PrivateTag_AcquiredCardEntity) -> x.PrivateTag)
-                    .ToPagedListAsync(pageNumber, 20)
+                    .ToPagedListAsync(pageNumber, 15)
             return {
                 Results = r |> Seq.map (AcquiredConcept.load userId)
                 Details = {
@@ -147,7 +147,33 @@ module ConceptRepository =
                     PageCount = r.PageCount
                 }
             }
-                
+        }
+    let GetAsync (db: CardOverflowDb) userId (pageNumber: int) =
+        task {
+            let! r =
+                db.Concept
+                    .Include(fun x -> x.Maintainer)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
+                    .Include(fun x -> x.Facets :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: AcquiredCardEntity) -> x.PrivateTag_AcquiredCards)
+                    .ToPagedListAsync(pageNumber, 15)
+            return {
+                Results = r |> Seq.map (ExploreConcept.load userId)
+                Details = {
+                    CurrentPage = r.PageNumber
+                    PageCount = r.PageCount
+                }
+            }
         }
     let Update (db: CardOverflowDb) conceptId conceptName =
         task {

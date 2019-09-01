@@ -16,7 +16,7 @@
     @if (editingConcept != null) {
       <CurateEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
     }
-    <table>
+    <table class="table">
       <tr>
         <th>Facet Count</th>
         <th>Preview</th>
@@ -87,7 +87,7 @@
         Id = conceptId,
         Name = clickedConcept.Name,
         AcquiredFacets = clickedConcept.AcquiredFacets, // medTODO clone
-      };
+    };
     StateHasChanged();
   }
 
@@ -108,7 +108,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAcquiredAsync(Db, User.Id, pageNumber);
+    var pagedList = await ConceptRepository.GetAcquiredAsync(Db, User?.Id ?? 0, pageNumber);
     details = pagedList.Details;
     concepts = pagedList.Results.ToList();
   }

@@ -88,3 +88,22 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         concept.Facets.SelectMany(fun x -> x.LatestInstance.Cards.Select(fun x -> x.IsAcquired)),
         fun x -> Assert.True(x))
     }
+
+[<Fact>]
+let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
+    use c = new Container()
+    c.RegisterStuff
+    c.RegisterStandardConnectionString
+    use __ = AsyncScopedLifestyle.BeginScope c
+    let db = c.GetInstance<CardOverflowDb>()
+    let userId = 3
+
+    let stopwatch = Stopwatch.StartNew()
+    for i in 1 .. 10 do
+        (ConceptRepository.GetAsync db userId i)
+            .GetAwaiter()
+            .GetResult()
+            .Results
+            .ToList()
+            |> ignore
+    Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)

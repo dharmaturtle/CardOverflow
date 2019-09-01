@@ -382,3 +382,13 @@ type DetailedConcept with
         MaintainerId = entity.MaintainerId
         Facets = entity.Facets |> Seq.map (Facet.load userId)
     }
+
+type ExploreConcept with
+    static member load userId (entity: ConceptEntity) = {
+        Id = entity.Id
+        Name = entity.Name
+        Maintainer = entity.Maintainer.DisplayName
+        MaintainerId = entity.MaintainerId
+        Users = entity.Facets.SelectMany(fun x -> x.FacetInstances.SelectMany(fun x -> x.Cards.Select(fun x -> x.AcquiredCards.Count))).Sum()
+        Facets = entity.Facets |> Seq.map (Facet.load userId)
+    }

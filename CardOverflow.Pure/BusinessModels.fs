@@ -269,3 +269,12 @@ type DetailedConcept = {
     MaintainerId: int
     Facets: Facet seq
 }
+
+type ExploreConcept = {
+    Id: int
+    Maintainer: string
+    MaintainerId: int
+    Name: string
+    Users: int
+    Facets: Facet seq
+}
