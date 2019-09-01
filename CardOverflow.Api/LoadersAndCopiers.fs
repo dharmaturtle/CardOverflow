@@ -1,5 +1,6 @@
 module LoadersAndCopiers
 
+open CardOverflow.Pure.Core
 open CardOverflow.Debug
 open MappingTools
 open CardOverflow.Entity
@@ -292,7 +293,7 @@ type AcquiredConcept with
             Name = concept.Name
             MaintainerId = concept.MaintainerId
             AcquiredFacets =
-                concept.Facets.Select(fun x -> x.FacetInstances |> Seq.maxBy (fun x -> x.Created) ).Select(fun fi -> // lowTODO, optimization, there should only be one facetInstance loaded from the db
+                concept.Facets.Select(fun x -> x.FacetInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) ).Select(fun fi -> // lowTODO, optimization, there should only be one facetInstance loaded from the db
                     let cards =
                         fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
                             let cardTemplate = x.First().CardTemplate

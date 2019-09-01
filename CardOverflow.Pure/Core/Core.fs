@@ -3,6 +3,7 @@ namespace CardOverflow.Pure
 open System.Security.Cryptography
 open System.Text
 open Microsoft.FSharp.Quotations
+open System
 
 module Map =
     let overValue f =
@@ -46,3 +47,20 @@ module Core =
         | DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _)) -> mi.Name
         | _ -> failwith "Unexpected format"
     let any<'R> : 'R = failwith "!"
+    
+    type NullCoalesce = // https://stackoverflow.com/a/21194566
+        static member Coalesce(a: 'a option, b: 'a Lazy) = 
+            match a with 
+            | Some a -> a 
+            | _ -> b.Value
+        static member Coalesce(a: 'a Nullable, b: 'a Lazy) = 
+            if a.HasValue then a.Value
+            else b.Value
+        static member Coalesce(a: 'a when 'a:null, b: 'a Lazy) = 
+            match a with 
+            | null -> b.Value 
+            | _ -> a
+    let inline nullCoalesceHelper< ^t, ^a, ^b, ^c when (^t or ^a) : (static member Coalesce : ^a * ^b -> ^c)> a b = 
+            // calling the statically inferred member
+            ((^t or ^a) : (static member Coalesce : ^a * ^b -> ^c) (a, b))
+    let inline (|??) a b = nullCoalesceHelper<NullCoalesce, _, _, _> a b
