@@ -13,6 +13,7 @@ open Xunit
 open CardOverflow.Pure
 open System.Collections.Generic
 open FSharp.Control.Tasks
+open System.Threading.Tasks
 
 [<Fact>]
 let ``AcquireCards works``() = task {

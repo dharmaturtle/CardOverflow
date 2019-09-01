@@ -14,14 +14,6 @@ open System
 open AnkiImportTestData
 open System.Collections.Generic
 
-let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
-    match q with
-    | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
-    | Patterns.PropertyGet(_, mi, _) -> mi.Name
-    | DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _)) -> mi.Name
-    | _ -> failwith "Unexpected format"
-let any<'R> : 'R = failwith "!"
-
 let assertHasBasicInfo db ankiDb =
     let userId = 3
     AnkiImporter.save db ankiDb userId Map.empty

@@ -2,6 +2,7 @@ namespace CardOverflow.Pure
 
 open System.Security.Cryptography
 open System.Text
+open Microsoft.FSharp.Quotations
 
 module Map =
     let overValue f =
@@ -36,3 +37,12 @@ module Random =
         let sb = StringBuilder length
         data |> Seq.iter(fun b -> sb.Append(chars.[int b % chars.Length]) |> ignore)
         sb.ToString()
+
+module Core =
+    let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
+        match q with
+        | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
+        | Patterns.PropertyGet(_, mi, _) -> mi.Name
+        | DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _)) -> mi.Name
+        | _ -> failwith "Unexpected format"
+    let any<'R> : 'R = failwith "!"

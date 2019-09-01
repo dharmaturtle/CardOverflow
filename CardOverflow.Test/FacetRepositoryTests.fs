@@ -13,14 +13,14 @@ open Xunit
 open CardOverflow.Pure
 open System.Collections.Generic
 
-let addBasicConcept (db: CardOverflowDb) userId tags =
+let add templateName (db: CardOverflowDb) userId tags =
     let facetTemplate =
         db.FacetTemplateInstance
             .Include(fun x -> x.CardTemplates)
             .Include(fun x -> x.Fields)
             .Include(fun x -> x.FacetTemplate)
             .Include(fun x -> x.User_FacetTemplateInstances)
-            .First(fun x -> x.FacetTemplate.Name = "Basic")
+            .First(fun x -> x.FacetTemplate.Name = templateName)
             |> AcquiredFacetTemplateInstance.load
     PrivateTagRepository.Add db userId tags
     let privateTags =
@@ -29,7 +29,7 @@ let addBasicConcept (db: CardOverflowDb) userId tags =
     let initialConcept = {
         FacetTemplateHash = facetTemplate.Instance.AcquireHash
         MaintainerId = userId
-        Description = "Basic"
+        Description = templateName
         DefaultCardOptionId = facetTemplate.DefaultCardOptionId
         CardTemplateIdsAndTags = facetTemplate.Instance.CardTemplates |> Seq.map (fun x -> x.Id, privateTags)
         FieldValues =
@@ -38,6 +38,12 @@ let addBasicConcept (db: CardOverflowDb) userId tags =
             |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
     }
     ConceptRepository.CreateConcept db initialConcept <| Seq.empty.ToList()
+
+let addBasicAndReversedConcept: CardOverflowDb -> int -> seq<string> -> unit =
+    add "Basic (and reversed card)"
+
+let addBasicConcept =
+    add "Basic"
 
 [<Fact>]
 let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =

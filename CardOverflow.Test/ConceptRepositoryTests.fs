@@ -1,5 +1,6 @@
 module ConceptRepositoryTests
 
+open CardOverflow.Pure.Core
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Api
@@ -107,3 +108,42 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
             .ToList()
             |> ignore
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
+
+let testGetAcquiredAsync cardIds addConcept name = task {
+    use c = new TestContainer(name)
+    let userId = 2
+    addConcept c.Db 3 []
+    do! CardRepository.AcquireCardsAsync c.Db userId cardIds
+
+    let! results = ConceptRepository.GetAcquiredAsync c.Db userId 1
+    
+    Assert.Equal(
+        cardIds.Count(),
+        results.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards)).Count()
+    )
+    //Assert.Equal<string seq>( // medTODO uncomment when tags work
+    //    ["a"],
+    //    results.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards.SelectMany(fun x -> x.Tags)))
+    //)
+    }
+    
+[<Fact>]
+let rec ``GetAcquiredAsync works when acquiring 1 basic card``(): Task<unit> =
+    testGetAcquiredAsync
+        [1]
+        FacetRepositoryTests.addBasicConcept
+        <| nameof <@ ``GetAcquiredAsync works when acquiring 1 basic card`` @>
+
+[<Fact>]
+let rec ``GetAcquiredAsync works when acquiring 1 card of a pair``(): Task<unit> = 
+    testGetAcquiredAsync
+        [1]
+        FacetRepositoryTests.addBasicAndReversedConcept
+        <| nameof <@ ``GetAcquiredAsync works when acquiring 1 card of a pair`` @>
+
+[<Fact>]
+let rec ``GetAcquiredAsync works when acquiring 2 cards of a pair``(): Task<unit> =
+    testGetAcquiredAsync
+        [1; 2]
+        FacetRepositoryTests.addBasicAndReversedConcept
+        <| nameof <@ ``GetAcquiredAsync works when acquiring 2 cards of a pair`` @>
