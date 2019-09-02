@@ -43,6 +43,54 @@
       Pooling();
     </script>
   </environment>
+  <script>
+    window.Speak = (message) => {
+      var msg = new SpeechSynthesisUtterance(message);
+      window.speechSynthesis.speak(msg);
+    }
+
+    window.Listen = (instance) => {
+      var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+      var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
+      var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+      var grammar = '#JSGF V1.0; grammar phrase; public <phrase> = ' + "" + ';'; // medTODO needs list of commands
+      var recognition = new SpeechRecognition();
+      var speechRecognitionList = new SpeechGrammarList();
+      speechRecognitionList.addFromString(grammar, 1);
+      recognition.grammars = speechRecognitionList;
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+
+      recognition.onresult = function (event) {
+        // The SpeechRecognitionEvent results property returns a SpeechRecognitionResultList object
+        // The SpeechRecognitionResultList object contains SpeechRecognitionResult objects.
+        // It has a getter so it can be accessed like an array
+        // The first [0] returns the SpeechRecognitionResult at position 0.
+        // Each SpeechRecognitionResult object contains SpeechRecognitionAlternative objects that contain individual results.
+        // These also have getters so they can be accessed like arrays.
+        // The second [0] returns the SpeechRecognitionAlternative at position 0.
+        // We then return the transcript property of the SpeechRecognitionAlternative object
+        console.log('Confidence: ' + event.results[0][0].confidence + " Transcript:" + event.results[0][0].transcript)
+        instance.invokeMethodAsync('GetTranscript', event.results[0][0].transcript)
+          .then((message) => {
+            console.log(message);
+          });
+      }
+
+      recognition.onerror = function (event) {
+        console.log('Error occurred in recognition: ' + event.error);
+      }
+
+      recognition.onend = function (event) {
+        //Fired when the speech recognition service has disconnected.
+        console.log('SpeechRecognition.onend');
+        recognition.start();
+      }
+    }
+  </script>
 </head>
 <body>
   <app>@(await Html.RenderComponentAsync<App>())</app>

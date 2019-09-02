@@ -124,8 +124,10 @@ type IntervalOrStepsIndex =
 type QuizCard = {
     CardId: int
     Due: DateTime
-    Question: string
-    Answer: string
+    Front: string
+    Back: string
+    FrontSynthVoice: string
+    BackSynthVoice: string
     CardState: CardState
     IsLapsed: bool
     EaseFactor: float

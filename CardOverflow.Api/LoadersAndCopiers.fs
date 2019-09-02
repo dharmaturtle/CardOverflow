@@ -188,7 +188,7 @@ type FacetTemplate with
 
 type QuizCard with
     static member load(entity: AcquiredCardEntity) =
-        let frontSide, backSide =
+        let front, back, frontSynthVoice, backSynthVoice =
             CardHtml.generate
                 (entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
                 entity.Card.CardTemplate.QuestionTemplate
@@ -199,8 +199,10 @@ type QuizCard with
             return
                 { CardId = entity.CardId
                   Due = entity.Due
-                  Question = frontSide
-                  Answer = backSide
+                  Front = front
+                  Back = back
+                  FrontSynthVoice = frontSynthVoice
+                  BackSynthVoice = backSynthVoice
                   CardState = cardState
                   IsLapsed = entity.IsLapsed
                   EaseFactor = float entity.EaseFactorInPermille / 1000.
@@ -302,7 +304,7 @@ type AcquiredConcept with
                                     .Single(fun x -> x.CardTemplateId = cardTemplate.Id)
                                     .AcquiredCards
                                     .SingleOrDefault(fun x -> x.UserId = userId)
-                            let front, back =
+                            let front, back, _, _ =
                                 CardHtml.generate
                                     (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
                                     cardTemplate.QuestionTemplate
@@ -344,7 +346,7 @@ type FieldValue with
 
 type Card with
     static member load userId (entity: CardEntity) =
-        let front, back =
+        let front, back, _, _ =
             CardHtml.generate
                 (entity.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
                 entity.CardTemplate.QuestionTemplate

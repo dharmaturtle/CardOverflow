@@ -42,4 +42,4 @@ module CardHtml =
     </body>
 </html>"""
                 css
-        (htmlBase frontSide, htmlBase backSide)
+        htmlBase frontSide, htmlBase backSide, MappingTools.stripHtmlTags frontSide, MappingTools.stripHtmlTags backSide

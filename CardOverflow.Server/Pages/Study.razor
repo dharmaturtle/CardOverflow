@@ -10,6 +10,7 @@
 @inject CardOverflowDb Db
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
+@inject IJSRuntime Js
 
 @if (todaysCards == null) {
   <p><em>Loading...</em></p>
@@ -27,6 +28,8 @@
   <div class="study-footer">
     @if (isFront == true) {
       <button class="btn btn-primary" onclick="@ShowBack">Show answer</button>
+      <button class="btn btn-primary" onclick="@Speak">Speak!</button>
+      @transcript
     } else if (isFront == false) {
       <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Again))">Again</button> @*medTODO show how long until this card comes back*@
       <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Hard))">Hard</button>
@@ -46,9 +49,10 @@
   UserEntity User { get; set; }
   IList<FSharpResult<QuizCard, string>> todaysCards;
   DateTime frontVisible;
+  string transcript;
 
   protected override async Task OnInitAsync() {
-    todaysCards = (await CardRepository.GetTodaysCards(Db, 3)).ToList(); // medTODO remove the 3
+    todaysCards = (await CardRepository.GetTodaysCards(Db, User.Id)).ToList();
     ShowFront();
   }
 
@@ -65,7 +69,7 @@
     frontVisible = TimeProvider.utcNow;
     if (todaysCards.First().IsOk) {
       isFront = true;
-      iframeSrcdoc = todaysCards.First().ResultValue.Question;
+      iframeSrcdoc = todaysCards.First().ResultValue.Front;
     } else {
       error = todaysCards.First().ErrorValue;
     }
@@ -73,13 +77,26 @@
 
   void ShowBack() {
     isFront = false;
-    iframeSrcdoc = todaysCards.First().ResultValue.Answer;
+    iframeSrcdoc = todaysCards.First().ResultValue.Back;
   }
 
   void ShowNextCard() {
     todaysCards.RemoveAt(0);
     ShowFront();
     error = null;
+  }
+
+  async Task Speak() {
+    await Js.InvokeAsync<object>("Speak", todaysCards.First().ResultValue.FrontSynthVoice);
+    await Js.InvokeAsync<object>("Listen", DotNetObjectRef.Create(this));
+  }
+
+  [JSInvokable]
+  public Task<string> GetTranscript(string transcript) {
+    Console.WriteLine(transcript);
+    this.transcript = transcript;
+    StateHasChanged();
+    return Task.FromResult("C# received: " + transcript);
   }
 
 }
