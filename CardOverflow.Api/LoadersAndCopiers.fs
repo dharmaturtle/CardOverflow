@@ -332,10 +332,10 @@ type AcquiredConcept with
                                 .Select(fun x -> 
                                     {   Field = Field.load x.Field
                                         Value = x.Value
-                                    })
+                                    }).ToList()
                         Cards = cards |> Seq.choose id
                     }
-                )
+                ).ToList()
         }
 
 type FieldValue with

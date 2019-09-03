@@ -155,6 +155,7 @@ type FieldAndValue = {
     Value: string
 }
 
+[<CLIMutable>]
 type AcquiredFacet = {
     FacetInstanceId: int
     FacetTemplateInstanceId: int
@@ -163,7 +164,7 @@ type AcquiredFacet = {
     FacetId: int
     FacetCreated: DateTime
     FacetModified: DateTime option
-    FacetFields: FieldAndValue seq
+    FacetFields: FieldAndValue ResizeArray
     Cards: AcquiredDisplayCard seq
 }
 
@@ -215,7 +216,7 @@ type AcquiredConcept = {
     // medTODO 100 needs to be tied to the DB max somehow
     [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
     MaintainerId: int
-    AcquiredFacets: AcquiredFacet seq
+    AcquiredFacets: AcquiredFacet ResizeArray
 }
 
 type PagedListDetails = {
