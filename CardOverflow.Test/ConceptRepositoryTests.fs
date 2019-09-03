@@ -109,18 +109,20 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
             |> ignore
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
 
-let testGetAcquiredAsync cardIds addConcept name = task {
+let testGetAcquired cardIds addConcept name = task {
     use c = new TestContainer(name)
     let userId = 2
     addConcept c.Db 3 []
     do! CardRepository.AcquireCardsAsync c.Db userId cardIds
 
-    let! results = ConceptRepository.GetAcquiredPages c.Db userId 1
+    let! concepts = ConceptRepository.GetAcquiredPages c.Db userId 1
+    let! concept = ConceptRepository.GetAcquired c.Db userId 1
     
     Assert.Equal(
         cardIds.Count(),
-        results.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards)).Count()
+        concepts.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards)).Count()
     )
+    Assert.SingleI concept.AcquiredFacets
     //Assert.Equal<string seq>( // medTODO uncomment when tags work
     //    ["a"],
     //    results.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards.SelectMany(fun x -> x.Tags)))
@@ -128,22 +130,22 @@ let testGetAcquiredAsync cardIds addConcept name = task {
     }
     
 [<Fact>]
-let rec ``GetAcquiredAsync works when acquiring 1 basic card``(): Task<unit> =
-    testGetAcquiredAsync
+let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
+    testGetAcquired
         [1]
         FacetRepositoryTests.addBasicConcept
-        <| nameof <@ ``GetAcquiredAsync works when acquiring 1 basic card`` @>
+        <| nameof <@ ``GetAcquired works when acquiring 1 basic card`` @>
 
 [<Fact>]
-let rec ``GetAcquiredAsync works when acquiring 1 card of a pair``(): Task<unit> = 
-    testGetAcquiredAsync
+let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> = 
+    testGetAcquired
         [1]
         FacetRepositoryTests.addBasicAndReversedConcept
-        <| nameof <@ ``GetAcquiredAsync works when acquiring 1 card of a pair`` @>
+        <| nameof <@ ``GetAcquired works when acquiring 1 card of a pair`` @>
 
 [<Fact>]
-let rec ``GetAcquiredAsync works when acquiring 2 cards of a pair``(): Task<unit> =
-    testGetAcquiredAsync
+let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
+    testGetAcquired
         [1; 2]
         FacetRepositoryTests.addBasicAndReversedConcept
-        <| nameof <@ ``GetAcquiredAsync works when acquiring 2 cards of a pair`` @>
+        <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>

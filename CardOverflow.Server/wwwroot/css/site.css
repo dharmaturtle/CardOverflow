@@ -25,7 +25,7 @@ html, body {
 }
 
 .curate-edit-inputtext {
-  width: 1760px; /* hack */
+  width: 100%;
 }
 
 .curate-edit-inputtextarea {
