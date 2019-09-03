@@ -18,51 +18,47 @@
     <h1>
       <InputText @bind-value="@Concept.Name" Class="curate-edit-inputtext" /> @*this seems to break validation: @bind-value:event="oninput"*@
     </h1>
-    <div class="row">
-      <div class="col-sm">
-        <div class="form-group">
-          <ul>
-            @foreach (var facetField in @Concept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
-              <li>
-                <label><b>@facetField.Field.Name: </b></label>
-                <InputTextArea @bind-value="@facetField.Value" Class="curate-edit-inputtextarea" />
-              </li>
-            }
-          </ul>
-        </div>
-      </div>
-      <div class="col-sm">
-        <ul>
-          @foreach (var facet in @Concept.AcquiredFacets) {
-            <li>@facet.Description</li>
-            <li><a href="FacetTemplateInstance/@facet.FacetTemplateInstanceId">Facet Template Instance</a></li>
-            <li>
-              <BSTabGroup>
-                <BSTabList>
-                  @foreach (var card in facet.Cards) {
-                    <BSTab>
-                      <BSTabLabel>@card.CardTemplateName</BSTabLabel>
-                      <BSTabContent>
-                        @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                        <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@card.Back"></iframe>
-                        Tags:
-                        <ul>
-                          @foreach (var tag in card.Tags) {
-                            <li>
-                              @tag
-                            </li>
-                          }
-                        </ul>
-                      </BSTabContent>
-                    </BSTab>
-                  }
-                </BSTabList>
-                <BSTabSelectedContent />
-              </BSTabGroup>
-            </li>
-          }
-        </ul>
-      </div>
+    <div class="form-group">
+      <ul>
+        @foreach (var facet in @Concept.AcquiredFacets) {
+          <li>
+            <div class="row">
+              <div class="col-sm">
+                <h1>@facet.Description</h1>
+                @foreach (var field in facet.FacetFields) {
+                  <label><b>@field.Field.Name: </b></label>
+                  <InputTextArea @bind-value="@field.Value" Class="curate-edit-inputtextarea" />
+                }
+              </div>
+              <div class="col-sm">
+                <a href="FacetTemplateInstance/@facet.FacetTemplateInstanceId">Facet Template Instance</a>
+                <BSTabGroup>
+                  <BSTabList>
+                    @foreach (var card in facet.Cards) {
+                      <BSTab>
+                        <BSTabLabel>@card.CardTemplateName</BSTabLabel>
+                        <BSTabContent>
+                          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                          <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@card.Back"></iframe>
+                          Tags:
+                          <ul>
+                            @foreach (var tag in card.Tags) {
+                              <li>
+                                @tag
+                              </li>
+                            }
+                          </ul>
+                        </BSTabContent>
+                      </BSTab>
+                    }
+                  </BSTabList>
+                  <BSTabSelectedContent />
+                </BSTabGroup>
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
     </div>
     <div class="modal-footer">
       <div class="row">
