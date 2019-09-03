@@ -23,7 +23,7 @@ let assertBody expectedBody actualHtml =
 
 [<Fact>]
 let ``CardHtml generates proper basic card template``(): unit =
-    let frontSide, backSide =
+    let front, back, frontVoice, backVoice =
         CardHtml.generate
             [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
             "{{Front}}"
@@ -34,16 +34,18 @@ let ``CardHtml generates proper basic card template``(): unit =
 
     assertBody
         "What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         "What is the capital of Canada?
         <hr id=answer>
         Ottawa"
-        backSide
+        back
+    Assert.Equal("What is the capital of Canada?", frontVoice)
+    Assert.Equal("Ottawa", backVoice)
 
 [<Fact>]
 let ``CardHtml generates proper basic with optional reversed custom card template``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
              ("Front", "What is the capital of Canada?")
@@ -58,16 +60,16 @@ let ``CardHtml generates proper basic with optional reversed custom card templat
 
     assertBody
         "What is Ottawa the capital of?"
-        frontSide
+        front
     assertBody
         "What is Ottawa the capital of?
         <hr id=answer>
         Canada"
-        backSide
+        back
 
 [<Fact>]
 let ``CardHtml generates proper basic with optional reversed custom card template, but for {{Front}}``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
              ("Front", "What is the capital of Canada?")
@@ -82,16 +84,16 @@ let ``CardHtml generates proper basic with optional reversed custom card templat
 
     assertBody
         "What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         "What is the capital of Canada?
         <hr id=answer>
         Ottawa"
-        backSide
+        back
 
 [<Fact>]
 let ``CardHtml generates proper basic card template, but with (empty) conditional Category``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
              ("Front", "What is the capital of Canada?")
@@ -105,16 +107,16 @@ let ``CardHtml generates proper basic card template, but with (empty) conditiona
 
     assertBody
         "What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         "What is the capital of Canada?
         <hr id=answer>
         Ottawa"
-        backSide
+        back
 
 [<Fact>]
 let ``CardHtml generates proper basic card template, but with conditional Category that's shown``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
              ("Front", "What is the capital of Canada?")
@@ -128,16 +130,16 @@ let ``CardHtml generates proper basic card template, but with conditional Catego
 
     assertBody
         "Category: Nations and Capitals<br/>What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         "Category: Nations and Capitals<br/>What is the capital of Canada?
         <hr id=answer>
         Ottawa"
-        backSide
+        back
 
 [<Fact>]
 let ``CardHtml generates proper basic card template, with conditional Category (inverted and empty)``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
              ("Front", "What is the capital of Canada?")
@@ -151,16 +153,16 @@ let ``CardHtml generates proper basic card template, with conditional Category (
 
     assertBody
         "Category: No category was given<br/>What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         "Category: No category was given<br/>What is the capital of Canada?
         <hr id=answer>
         Ottawa"
-        backSide
+        back
 
 [<Fact>]
 let ``CardHtml generates proper basic card template, with conditional Category (inverted and populated)``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
              ("Front", "What is the capital of Canada?")
@@ -174,16 +176,16 @@ let ``CardHtml generates proper basic card template, with conditional Category (
 
     assertBody
         "What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         "What is the capital of Canada?
         <hr id=answer>
         Ottawa"
-        backSide
+        back
 
 [<Fact>]
 let ``CardHtml renders {{text:FieldName}} properly``(): unit =
-    let frontSide, backSide =
+    let front, back, _, _ =
         CardHtml.generate
             [("Back", "<b>Ottawa</b>")
              ("Front", "What is the capital of Canada?")
@@ -196,9 +198,9 @@ let ``CardHtml renders {{text:FieldName}} properly``(): unit =
 
     assertBody
         "What is the capital of Canada?"
-        frontSide
+        front
     assertBody
         """What is the capital of Canada?
         <hr id=answer>
         <b>Ottawa</b><br/><a href="http://example.com/search?q=Ottawa">check in dictionary</a>"""
-        backSide
+        back

@@ -62,14 +62,14 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
         (CardRepository.GetTodaysCards c.Db userId).GetAwaiter().GetResult()
         |> Seq.head
         |> Result.getOk
-        |> fun x -> x.Question
+        |> fun x -> x.Front
     )
     Assert.Equal(
         "<html>\r\n    <head>\r\n        <style>\r\n            .card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n\r\n        </style>\r\n    </head>\r\n    <body>\r\n        Front\r\n\r\n<hr id=answer>\r\n\r\nBack\r\n    </body>\r\n</html>",
         (CardRepository.GetTodaysCards c.Db userId).GetAwaiter().GetResult()
         |> Seq.head
         |> Result.getOk
-        |> fun x -> x.Answer
+        |> fun x -> x.Back
     )
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {

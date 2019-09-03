@@ -49,12 +49,15 @@
       window.speechSynthesis.speak(msg);
     }
 
+    var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+    var recognition = new SpeechRecognition();
+    var isListening = false
+
     window.Listen = (instance) => {
-      var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+      isListening = true
       var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
       var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
       var grammar = '#JSGF V1.0; grammar phrase; public <phrase> = ' + "" + ';'; // medTODO needs list of commands
-      var recognition = new SpeechRecognition();
       var speechRecognitionList = new SpeechGrammarList();
       speechRecognitionList.addFromString(grammar, 1);
       recognition.grammars = speechRecognitionList;
@@ -87,8 +90,14 @@
       recognition.onend = function (event) {
         //Fired when the speech recognition service has disconnected.
         console.log('SpeechRecognition.onend');
-        recognition.start();
+        if (isListening) {
+          recognition.start();
+        }
       }
+    }
+    window.StopListening = (instance) => {
+      isListening = false;
+      recognition.stop();
     }
   </script>
 </head>

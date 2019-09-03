@@ -28,8 +28,6 @@
   <div class="study-footer">
     @if (isFront == true) {
       <button class="btn btn-primary" onclick="@ShowBack">Show answer</button>
-      <button class="btn btn-primary" onclick="@Speak">Speak!</button>
-      @transcript
     } else if (isFront == false) {
       <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Again))">Again</button> @*medTODO show how long until this card comes back*@
       <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Hard))">Hard</button>
@@ -37,6 +35,12 @@
       <button class="btn btn-primary" onclick="@(() => SaveScore(Score.Easy))">Easy</button>
     } else {
       <button class="btn btn-primary" onclick="@ShowNextCard">Show next card</button>
+    }
+    @if (isBlindMode) {
+      <button class="btn btn-primary" onclick="@DisableBlindMode">Disable blind mode</button>
+      @transcript
+    } else {
+      <button class="btn btn-primary" onclick="@EnableBlindMode">Enable blind mode</button>
     }
   </div>
 }
@@ -50,6 +54,7 @@
   IList<FSharpResult<QuizCard, string>> todaysCards;
   DateTime frontVisible;
   string transcript;
+  bool isBlindMode;
 
   protected override async Task OnInitAsync() {
     todaysCards = (await CardRepository.GetTodaysCards(Db, User.Id)).ToList();
@@ -73,11 +78,13 @@
     } else {
       error = todaysCards.First().ErrorValue;
     }
+    StateHasChanged();
   }
 
   void ShowBack() {
     isFront = false;
     iframeSrcdoc = todaysCards.First().ResultValue.Back;
+    StateHasChanged();
   }
 
   void ShowNextCard() {
@@ -86,17 +93,57 @@
     error = null;
   }
 
-  async Task Speak() {
-    await Js.InvokeAsync<object>("Speak", todaysCards.First().ResultValue.FrontSynthVoice);
+  async Task EnableBlindMode() {
     await Js.InvokeAsync<object>("Listen", DotNetObjectRef.Create(this));
+    isBlindMode = true;
+    await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
+  }
+
+  async Task Speak(string msg) =>
+    await Js.InvokeAsync<object>("Speak", msg);
+
+  async Task DisableBlindMode() {
+    await Js.InvokeAsync<object>("StopListening", DotNetObjectRef.Create(this));
+    isBlindMode = false;
   }
 
   [JSInvokable]
-  public Task<string> GetTranscript(string transcript) {
+  public async Task<string> GetTranscript(string transcript) {
     Console.WriteLine(transcript);
     this.transcript = transcript;
     StateHasChanged();
-    return Task.FromResult("C# received: " + transcript);
+    switch (transcript) {
+      case "what":
+        if (isFront == true) {
+          await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
+        } else {
+          await Speak(todaysCards.First().ResultValue.BackSynthVoice);
+        }
+        break;
+      case "tell me":
+        ShowBack();
+        await Speak(todaysCards.First().ResultValue.BackSynthVoice);
+        break;
+      case "again":
+        await SaveScore(Score.Again);
+        await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
+        break;
+      case "hard":
+        await SaveScore(Score.Hard);
+        await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
+        break;
+      case "good":
+        await SaveScore(Score.Good);
+        await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
+        break;
+      case "easy":
+        await SaveScore(Score.Easy);
+        await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
+        break;
+      default:
+        break;
+    }
+    return "C# received: " + transcript;
   }
 
 }
