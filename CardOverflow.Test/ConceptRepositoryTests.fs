@@ -34,7 +34,7 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (ConceptRepository.GetAcquiredAsync db userId i)
+        (ConceptRepository.GetAcquiredPages db userId i)
             .GetAwaiter()
             .GetResult()
             .Results
@@ -55,7 +55,7 @@ let ``Get isn't empty``(): Task<unit> = task {
         ) |> CommentRepository.addAndSaveAsync c.Db
     let conceptId = 1
         
-    let! concept = ConceptRepository.Get c.Db conceptId
+    let! concept = ConceptRepository.Get c.Db conceptId 0
         
     concept.Facets
     |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
@@ -76,7 +76,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         ) |> CommentRepository.addAndSaveAsync c.Db
     let conceptId = 1
         
-    let! concept = ConceptRepository.GetForUser c.Db conceptId userId
+    let! concept = ConceptRepository.Get c.Db conceptId userId
         
     concept.Facets
     |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
@@ -115,7 +115,7 @@ let testGetAcquiredAsync cardIds addConcept name = task {
     addConcept c.Db 3 []
     do! CardRepository.AcquireCardsAsync c.Db userId cardIds
 
-    let! results = ConceptRepository.GetAcquiredAsync c.Db userId 1
+    let! results = ConceptRepository.GetAcquiredPages c.Db userId 1
     
     Assert.Equal(
         cardIds.Count(),

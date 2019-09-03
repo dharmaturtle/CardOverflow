@@ -11,6 +11,7 @@ open Helpers
 open FSharp.Control.Tasks
 open System.Collections.Generic
 open X.PagedList
+open System.Threading.Tasks
 
 module CommentRepository =
     let addAndSaveAsync (db: CardOverflowDb) (comment: CommentFacetEntity) =
@@ -75,70 +76,74 @@ module CardRepository =
         db.SaveChangesAsyncI ()
 
 module ConceptRepository =
-    let Get (db: CardOverflowDb) conceptId =
+    let Get (db: CardOverflowDb) conceptId userId =
         task {
             let! concept =
-                db.Concept
-                    .Include(fun x -> x.Maintainer)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
-                    .FirstAsync(fun x -> x.Id = conceptId)
-            return concept |> DetailedConcept.load 0
-        }
-    let GetForUser (db: CardOverflowDb) conceptId userId =
-        task {
-            let! concept =
-                db.Concept
-                    .Include(fun x -> x.Maintainer)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards)
-                    .FirstAsync(fun x -> x.Id = conceptId)
+                if userId = 0
+                then
+                    db.Concept
+                        .Include(fun x -> x.Maintainer)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
+                        .FirstAsync(fun x -> x.Id = conceptId)
+                else
+                    db.Concept
+                        .Include(fun x -> x.Maintainer)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.CommentFacets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CommentFacetEntity) -> x.User)
+                        .Include(fun x -> x.Facets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards)
+                        .FirstAsync(fun x -> x.Id = conceptId)
             return concept |> DetailedConcept.load userId
         }
     let CreateConcept (db: CardOverflowDb) (concept: InitialConceptInstance) fileFacetInstances =
         fileFacetInstances |> concept.CopyToNew |> db.Concept.AddI
         db.SaveChangesI ()
-    let GetAcquiredAsync (db: CardOverflowDb) (userId: int) (pageNumber: int) =
+    let private get (db: CardOverflowDb) =
+        db.Concept
+            .Include(fun x -> x.Facets :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+            .Include(fun x -> x.Facets :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
+            .Include(fun x -> x.Facets :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
+                .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards :> IEnumerable<_>)
+                .ThenInclude(fun (x: AcquiredCardEntity) -> x.PrivateTag_AcquiredCards :> IEnumerable<_>)
+                .ThenInclude(fun (x: PrivateTag_AcquiredCardEntity) -> x.PrivateTag)
+    let GetAcquired (db: CardOverflowDb) (userId: int) (conceptId: int) =
+        get(db)
+            .FirstAsync(fun x -> x.Id = conceptId)
+            .ContinueWith(fun (x: Task<ConceptEntity>) -> AcquiredConcept.load userId x.Result)
+    let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) =
         task {
             let! r =
-                db.Concept
+                get(db)
                     .Where(fun x -> x.Facets.Any(fun x -> x.FacetInstances.Any(fun x -> x.Cards.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))))
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.FacetTemplateInstance)
-                    .Include(fun x -> x.Facets :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetEntity) -> x.FacetInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FacetInstanceEntity) -> x.Cards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: AcquiredCardEntity) -> x.PrivateTag_AcquiredCards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: PrivateTag_AcquiredCardEntity) -> x.PrivateTag)
                     .ToPagedListAsync(pageNumber, 15)
             return {
                 Results = r |> Seq.map (AcquiredConcept.load userId)

@@ -1,3 +1,4 @@
+@page "/Curate/Concept/{Id:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -6,88 +7,96 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
+@inject CardOverflowDb Db
 
 @*lowTODO change this from a modal to a page that has "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
-<div class="modal curate-show-modal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-wide" role="document">
-    <div class="modal-content">
-      <EditForm Model="@Concept" OnValidSubmit="@UpdateConcept">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <InputText @bind-value="@Concept.Name" Class="curate-edit-inputtext" /> @*this seems to break validation: @bind-value:event="oninput"*@
-          </h5>
-          <button type="button" class="close" aria-label="Close" onclick=@Close>
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-sm">
-              <div class="form-group">
-                <ul>
-                  @foreach (var facetField in @Concept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
-                    <li>
-                      <label><b>@facetField.Field.Name: </b></label>
-                      <InputTextArea @bind-value="@facetField.Value" Class="curate-edit-inputtextarea" />
-                    </li>
-                  }
-                </ul>
-              </div>
-            </div>
-            <div class="col-sm">
-              <ul>
-                @foreach (var facet in @Concept.AcquiredFacets) {
-                  <li>@facet.Description</li>
-                  <li><a href="FacetTemplateInstance/@facet.FacetTemplateInstanceId">Facet Template Instance</a></li>
-                  <li>
-                    <BSTabGroup>
-                      <BSTabList>
-                        @foreach (var card in facet.Cards) {
-                          <BSTab>
-                            <BSTabLabel>@card.CardTemplateName</BSTabLabel>
-                            <BSTabContent>
-                              @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                              <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@card.Back"></iframe>
-                              Tags:
-                              <ul>
-                                @foreach (var tag in card.Tags) {
-                                  <li>
-                                    @tag
-                                  </li>
-                                }
-                              </ul>
-                            </BSTabContent>
-                          </BSTab>
-                        }
-                      </BSTabList>
-                      <BSTabSelectedContent />
-                    </BSTabGroup>
-                  </li>
-                }
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <div class="row">
-            <button type="submit" class="btn btn-primary">Save</button>
-          </div>
-          <div class="row">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-          </div>
-        </div>
-      </EditForm>
+@if (Concept == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <EditForm Model="@Concept" OnValidSubmit="@UpdateConcept">
+    <div>
+      <h1>
+        <InputText @bind-value="@Concept.Name" Class="curate-edit-inputtext" /> @*this seems to break validation: @bind-value:event="oninput"*@
+      </h1>
     </div>
-  </div>
-</div>
+    <div class="row">
+      <div class="col-sm">
+        <div class="form-group">
+          <ul>
+            @foreach (var facetField in @Concept.AcquiredFacets.SelectMany(x => x.FacetFields)) {
+              <li>
+                <label><b>@facetField.Field.Name: </b></label>
+                <InputTextArea @bind-value="@facetField.Value" Class="curate-edit-inputtextarea" />
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+      <div class="col-sm">
+        <ul>
+          @foreach (var facet in @Concept.AcquiredFacets) {
+            <li>@facet.Description</li>
+            <li><a href="FacetTemplateInstance/@facet.FacetTemplateInstanceId">Facet Template Instance</a></li>
+            <li>
+              <BSTabGroup>
+                <BSTabList>
+                  @foreach (var card in facet.Cards) {
+                    <BSTab>
+                      <BSTabLabel>@card.CardTemplateName</BSTabLabel>
+                      <BSTabContent>
+                        @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                        <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@card.Back"></iframe>
+                        Tags:
+                        <ul>
+                          @foreach (var tag in card.Tags) {
+                            <li>
+                              @tag
+                            </li>
+                          }
+                        </ul>
+                      </BSTabContent>
+                    </BSTab>
+                  }
+                </BSTabList>
+                <BSTabSelectedContent />
+              </BSTabGroup>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+      <div class="row">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+      </div>
+    </div>
+  </EditForm>
+}
 
 @code {
+  AcquiredConcept Concept;
   [Parameter]
-  AcquiredConcept Concept { get; set; }
-  [Parameter]
-  EventCallback Close { get; set; }
-  [Parameter]
-  EventCallback UpdateConcept { get; set; }
+  public int Id { get; set; }
+  [CascadingParameter]
+  UserEntity User { get; set; }
+
+  protected override async Task OnInitAsync() {
+    Concept = await ConceptRepository.GetAcquired(Db, Id, User?.Id ?? 0);
+  }
+
+  async Task UpdateConcept() {
+    var result = SanitizeConceptRepository.Update(Db, User.Id, Concept.Id, Concept.Name);
+    if (result.IsOk) {
+      await result.ResultValue;
+      // lowToMedTODO display message that save worked
+    } else {
+      // lowToMedTODO this returns an error; show it
+    }
+  }
+
 }

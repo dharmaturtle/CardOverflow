@@ -48,18 +48,6 @@ html, body {
   height: 200px; /* lowTODO get the height to match the contents - there's some javascript involved :( */
 }
 
-.curate-selected {
-  background-color: lightgray;
-}
-
-.curate-show-modal {
-  display: block;
-}
-
-.modal-wide {
-  max-width: 95%;
-}
-
 .curate-tooltip-target {
   /*border-bottom: 1px dotted black;*/
 }

@@ -13,9 +13,6 @@
   <p><em>Loading...</em></p>
 } else {
   <div>
-    @if (editingConcept != null) {
-      <CurateEditModal Concept=@editingConcept UpdateConcept=@UpdateConcept Close=@CloseEditConceptModal />
-    }
     <table class="table">
       <tr>
         <th>Preview</th>
@@ -48,10 +45,10 @@
           <td>
             @concept.AcquiredFacets.Count()
           </td>
-          <td class=@(editingConcept?.Id == concept.Id ? "curate-selected" : "")>
-            <button type="button" class="btn btn-link" onclick=@(() =>  ConceptClick(concept.Id))>
+          <td>
+            <a href="/Curate/Concept/@concept.Id">
               @concept.Name
-            </button>
+            </a>
           </td>
           <td>
             <ul>
@@ -73,42 +70,14 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   IList<AcquiredConcept> concepts;
-  AcquiredConcept editingConcept;
   PagedListDetails details;
 
   protected override async Task OnInitAsync() {
     await PageChanged(1);
   }
 
-  void ConceptClick(int conceptId) {
-    var clickedConcept = concepts.First(x => x.Id == conceptId);
-    editingConcept =
-      new AcquiredConcept {
-        Id = conceptId,
-        Name = clickedConcept.Name,
-        AcquiredFacets = clickedConcept.AcquiredFacets, // medTODO clone
-    };
-    StateHasChanged();
-  }
-
-  void CloseEditConceptModal() {
-    editingConcept = null;
-  }
-
-  async Task UpdateConcept() {
-    var result = SanitizeConceptRepository.Update(Db, User.Id, editingConcept.Id, editingConcept.Name);
-    if (result.IsOk) {
-      await result.ResultValue;
-      var targetConcept = concepts.First(x => x.Id == editingConcept.Id);
-      targetConcept.Name = editingConcept.Name;
-      CloseEditConceptModal();
-    } else {
-      // lowToMedTODO this returns an error; show it
-    }
-  }
-
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAcquiredAsync(Db, User?.Id ?? 0, pageNumber);
+    var pagedList = await ConceptRepository.GetAcquiredPages(Db, User?.Id ?? 0, pageNumber);
     details = pagedList.Details;
     concepts = pagedList.Results.ToList();
   }

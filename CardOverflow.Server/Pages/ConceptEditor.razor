@@ -76,11 +76,7 @@
   UserEntity User { get; set; }
 
   protected override async Task OnInitAsync() {
-    if (User == null) {
-      Concept = await ConceptRepository.Get(Db, Id);
-    } else {
-      Concept = await ConceptRepository.GetForUser(Db, Id, User.Id);
-    }
+    Concept = await ConceptRepository.Get(Db, Id, User?.Id ?? 0);
   }
 
   async Task Acquire(int cardId) {
