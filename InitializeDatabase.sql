@@ -220,7 +220,7 @@ CREATE TABLE [dbo].[Card](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[AuthorId] [int] NOT NULL,
 	[Description] [nvarchar](100) NOT NULL,
- CONSTRAINT [PK_Facet] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -454,6 +454,22 @@ CREATE TABLE [dbo].[History](
 	[EaseFactorInPermille] [smallint] NOT NULL,
 	[TimeFromSeeingQuestionToScoreInSecondsPlus32768] [smallint] NOT NULL,
  CONSTRAINT [PK_History] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Relationship] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Relationship](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[SourceId] [int] NOT NULL,
+	[TargetId] [int] NOT NULL,
+	[Relationship] [nvarchar](250) NOT NULL,
+ CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -706,8 +722,8 @@ INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [D
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 3, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 4, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 5, 2)
-/****** Object:  Index [IX_AcquiredCard_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardId] ON [dbo].[AcquiredCard]
+/****** Object:  Index [IX_AcquiredCard_CardInstanceId] ******/
+CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardInstanceId] ON [dbo].[AcquiredCard]
 (
 	[CardInstanceId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -752,8 +768,8 @@ CREATE NONCLUSTERED INDEX [IX_AspNetUserRoles_RoleId] ON [dbo].[AspNetUserRoles]
 	[RoleId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Facet_AuthorId] ******/
-CREATE NONCLUSTERED INDEX [IX_Facet_AuthorId] ON [dbo].[Card]
+/****** Object:  Index [IX_Card_AuthorId] ******/
+CREATE NONCLUSTERED INDEX [IX_Card_AuthorId] ON [dbo].[Card]
 (
 	[AuthorId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -1006,10 +1022,10 @@ ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[AspNetUserTokens] CHECK CONSTRAINT [FK_AspNetUserTokens_User_UserId]
 GO
-ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Facet_User] FOREIGN KEY([AuthorId])
+ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User] FOREIGN KEY([AuthorId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Facet_User]
+ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_User]
 GO
 ALTER TABLE [dbo].[CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_FacetInstance_Facet] FOREIGN KEY([CardId])
 REFERENCES [dbo].[Card] ([Id])
@@ -1085,6 +1101,16 @@ ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard
 REFERENCES [dbo].[AcquiredCard] ([UserId], [CardInstanceId])
 GO
 ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard]
+GO
+ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Source] FOREIGN KEY([TargetId])
+REFERENCES [dbo].[Card] ([Id])
+GO
+ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Source]
+GO
+ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Target] FOREIGN KEY([SourceId])
+REFERENCES [dbo].[Card] ([Id])
+GO
+ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Target]
 GO
 ALTER TABLE [dbo].[Tag]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_User] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])

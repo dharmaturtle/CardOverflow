@@ -22,6 +22,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
+        public virtual DbSet<RelationshipEntity> Relationship { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_AcquiredCardEntity> Tag_AcquiredCard { get; set; }
         public virtual DbSet<Tag_User_CardTemplateInstanceEntity> Tag_User_CardTemplateInstance { get; set; }
@@ -49,6 +50,8 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<AcquiredCardEntity>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.CardInstanceId });
+
+                entity.HasIndex(e => e.CardInstanceId);
 
                 entity.HasIndex(e => e.CardOptionId);
 
@@ -232,6 +235,21 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.Histories)
                     .HasForeignKey(d => new { d.UserId, d.CardId })
                     .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<RelationshipEntity>(entity =>
+            {
+                entity.HasOne(d => d.Source)
+                    .WithMany(p => p.RelationshipSources)
+                    .HasForeignKey(d => d.SourceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Relationship_Target");
+
+                entity.HasOne(d => d.Target)
+                    .WithMany(p => p.RelationshipTargets)
+                    .HasForeignKey(d => d.TargetId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Relationship_Source");
             });
 
             modelBuilder.Entity<TagEntity>(entity =>
