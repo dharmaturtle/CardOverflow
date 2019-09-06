@@ -10,11 +10,11 @@ namespace CardOverflow.Entity
         public AcquiredCardEntity()
         {
             Histories = new HashSet<HistoryEntity>();
-            PrivateTag_AcquiredCards = new HashSet<PrivateTag_AcquiredCardEntity>();
+            Tag_AcquiredCards = new HashSet<Tag_AcquiredCardEntity>();
         }
 
         public int UserId { get; set; }
-        public int CardId { get; set; }
+        public int CardInstanceId { get; set; }
         public byte CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
@@ -23,9 +23,9 @@ namespace CardOverflow.Entity
         public int CardOptionId { get; set; }
         public bool IsLapsed { get; set; }
 
-        [ForeignKey("CardId")]
+        [ForeignKey("CardInstanceId")]
         [InverseProperty("AcquiredCards")]
-        public virtual CardEntity Card { get; set; }
+        public virtual CardInstanceEntity CardInstance { get; set; }
         [ForeignKey("CardOptionId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardOptionEntity CardOption { get; set; }
@@ -35,6 +35,6 @@ namespace CardOverflow.Entity
         [InverseProperty("AcquiredCard")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
         [InverseProperty("AcquiredCard")]
-        public virtual ICollection<PrivateTag_AcquiredCardEntity> PrivateTag_AcquiredCards { get; set; }
+        public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }
     }
 }

@@ -5,13 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class FacetInstanceEntity
+    public partial class CardInstanceEntity
     {
-        public FacetInstanceEntity()
+        public CardInstanceEntity()
         {
-            Cards = new HashSet<CardEntity>();
+            AcquiredCards = new HashSet<AcquiredCardEntity>();
             FieldValues = new HashSet<FieldValueEntity>();
-            File_FacetInstances = new HashSet<File_FacetInstanceEntity>();
+            File_CardInstances = new HashSet<File_CardInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -19,20 +19,20 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime? Modified { get; set; }
-        public int FacetId { get; set; }
+        public int CardId { get; set; }
         [Required]
         [MaxLength(32)]
         public byte[] AcquireHash { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("FacetId")]
-        [InverseProperty("FacetInstances")]
-        public virtual FacetEntity Facet { get; set; }
-        [InverseProperty("FacetInstance")]
-        public virtual ICollection<CardEntity> Cards { get; set; }
-        [InverseProperty("FacetInstance")]
+        [ForeignKey("CardId")]
+        [InverseProperty("CardInstances")]
+        public virtual CardEntity Card { get; set; }
+        [InverseProperty("CardInstance")]
+        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        [InverseProperty("CardInstance")]
         public virtual ICollection<FieldValueEntity> FieldValues { get; set; }
-        [InverseProperty("FacetInstance")]
-        public virtual ICollection<File_FacetInstanceEntity> File_FacetInstances { get; set; }
+        [InverseProperty("CardInstance")]
+        public virtual ICollection<File_CardInstanceEntity> File_CardInstances { get; set; }
     }
 }

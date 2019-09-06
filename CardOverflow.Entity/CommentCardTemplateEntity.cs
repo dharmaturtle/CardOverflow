@@ -5,15 +5,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommentFacetTemplateEntity
+    public partial class CommentCardTemplateEntity
     {
-        public CommentFacetTemplateEntity()
+        public CommentCardTemplateEntity()
         {
-            Vote_CommentFacetTemplates = new HashSet<Vote_CommentFacetTemplateEntity>();
+            Vote_CommentCardTemplates = new HashSet<Vote_CommentCardTemplateEntity>();
         }
 
         public int Id { get; set; }
-        public int FacetTemplateId { get; set; }
+        public int CardTemplateId { get; set; }
         public int UserId { get; set; }
         [Required]
         [StringLength(500)]
@@ -29,13 +29,13 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("FacetTemplateId")]
-        [InverseProperty("CommentFacetTemplates")]
-        public virtual FacetTemplateEntity FacetTemplate { get; set; }
+        [ForeignKey("CardTemplateId")]
+        [InverseProperty("CommentCardTemplates")]
+        public virtual CardTemplateEntity CardTemplate { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("CommentFacetTemplates")]
+        [InverseProperty("CommentCardTemplates")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("CommentFacetTemplate")]
-        public virtual ICollection<Vote_CommentFacetTemplateEntity> Vote_CommentFacetTemplates { get; set; }
+        [InverseProperty("CommentCardTemplate")]
+        public virtual ICollection<Vote_CommentCardTemplateEntity> Vote_CommentCardTemplates { get; set; }
     }
 }

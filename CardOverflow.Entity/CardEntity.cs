@@ -9,21 +9,29 @@ namespace CardOverflow.Entity
     {
         public CardEntity()
         {
-            AcquiredCards = new HashSet<AcquiredCardEntity>();
+            CardInstances = new HashSet<CardInstanceEntity>();
+            CommentCards = new HashSet<CommentCardEntity>();
         }
 
         public int Id { get; set; }
-        public int FacetInstanceId { get; set; }
-        public int CardTemplateId { get; set; }
-        public byte? ClozeIndex { get; set; }
+        public int AuthorId { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Description {
+            get => _Description;
+            set {
+                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Description has a maximum length of 100. Attempted value: {value}");
+                _Description = value;
+            }
+        }
+        private string _Description;
 
-        [ForeignKey("CardTemplateId")]
+        [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]
-        public virtual CardTemplateEntity CardTemplate { get; set; }
-        [ForeignKey("FacetInstanceId")]
-        [InverseProperty("Cards")]
-        public virtual FacetInstanceEntity FacetInstance { get; set; }
+        public virtual UserEntity Author { get; set; }
         [InverseProperty("Card")]
-        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
+        [InverseProperty("Card")]
+        public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
     }
 }

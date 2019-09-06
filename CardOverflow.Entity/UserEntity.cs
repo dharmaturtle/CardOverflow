@@ -12,18 +12,15 @@ namespace CardOverflow.Entity
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             CardOptions = new HashSet<CardOptionEntity>();
-            CommentFacetTemplates = new HashSet<CommentFacetTemplateEntity>();
-            CommentFacets = new HashSet<CommentFacetEntity>();
-            Concepts = new HashSet<ConceptEntity>();
+            CardTemplates = new HashSet<CardTemplateEntity>();
+            Cards = new HashSet<CardEntity>();
+            CommentCardTemplates = new HashSet<CommentCardTemplateEntity>();
+            CommentCards = new HashSet<CommentCardEntity>();
             Decks = new HashSet<DeckEntity>();
-            FacetTemplates = new HashSet<FacetTemplateEntity>();
-            Facets = new HashSet<FacetEntity>();
-            PrivateTags = new HashSet<PrivateTagEntity>();
-            User_FacetTemplateInstances = new HashSet<User_FacetTemplateInstanceEntity>();
-            Vote_CommentFacetTemplates = new HashSet<Vote_CommentFacetTemplateEntity>();
-            Vote_CommentFacets = new HashSet<Vote_CommentFacetEntity>();
-            Vote_FacetTemplates = new HashSet<Vote_FacetTemplateEntity>();
-            Vote_Facets = new HashSet<Vote_FacetEntity>();
+            Tags = new HashSet<TagEntity>();
+            User_CardTemplateInstances = new HashSet<User_CardTemplateInstanceEntity>();
+            Vote_CommentCardTemplates = new HashSet<Vote_CommentCardTemplateEntity>();
+            Vote_CommentCards = new HashSet<Vote_CommentCardEntity>();
         }
 
         //[Required] // medTODO make this not nullable
@@ -41,30 +38,24 @@ namespace CardOverflow.Entity
         public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        [InverseProperty("Author")]
+        public virtual ICollection<CardTemplateEntity> CardTemplates { get; set; }
+        [InverseProperty("Author")]
+        public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentFacetTemplateEntity> CommentFacetTemplates { get; set; }
+        public virtual ICollection<CommentCardTemplateEntity> CommentCardTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentFacetEntity> CommentFacets { get; set; }
-        [InverseProperty("Maintainer")]
-        public virtual ICollection<ConceptEntity> Concepts { get; set; }
+        public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<DeckEntity> Decks { get; set; }
-        [InverseProperty("Maintainer")]
-        public virtual ICollection<FacetTemplateEntity> FacetTemplates { get; set; }
-        [InverseProperty("Maintainer")]
-        public virtual ICollection<FacetEntity> Facets { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<PrivateTagEntity> PrivateTags { get; set; }
+        public virtual ICollection<TagEntity> Tags { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<User_FacetTemplateInstanceEntity> User_FacetTemplateInstances { get; set; }
+        public virtual ICollection<User_CardTemplateInstanceEntity> User_CardTemplateInstances { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentFacetTemplateEntity> Vote_CommentFacetTemplates { get; set; }
+        public virtual ICollection<Vote_CommentCardTemplateEntity> Vote_CommentCardTemplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentFacetEntity> Vote_CommentFacets { get; set; }
-        [InverseProperty("User")]
-        public virtual ICollection<Vote_FacetTemplateEntity> Vote_FacetTemplates { get; set; }
-        [InverseProperty("User")]
-        public virtual ICollection<Vote_FacetEntity> Vote_Facets { get; set; }
+        public virtual ICollection<Vote_CommentCardEntity> Vote_CommentCards { get; set; }
     }
 }
 

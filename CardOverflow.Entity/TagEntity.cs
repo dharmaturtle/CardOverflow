@@ -5,12 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class PrivateTagEntity
+    public partial class TagEntity
     {
-        public PrivateTagEntity()
+        public TagEntity()
         {
-            PrivateTag_AcquiredCards = new HashSet<PrivateTag_AcquiredCardEntity>();
-            PrivateTag_User_FacetTemplateInstances = new HashSet<PrivateTag_User_FacetTemplateInstanceEntity>();
+            Tag_AcquiredCards = new HashSet<Tag_AcquiredCardEntity>();
+            Tag_User_CardTemplateInstances = new HashSet<Tag_User_CardTemplateInstanceEntity>();
         }
 
         public int Id { get; set; }
@@ -27,11 +27,11 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
 
         [ForeignKey("UserId")]
-        [InverseProperty("PrivateTags")]
+        [InverseProperty("Tags")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("PrivateTag")]
-        public virtual ICollection<PrivateTag_AcquiredCardEntity> PrivateTag_AcquiredCards { get; set; }
-        [InverseProperty("DefaultPrivateTag")]
-        public virtual ICollection<PrivateTag_User_FacetTemplateInstanceEntity> PrivateTag_User_FacetTemplateInstances { get; set; }
+        [InverseProperty("Tag")]
+        public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }
+        [InverseProperty("DefaultTag")]
+        public virtual ICollection<Tag_User_CardTemplateInstanceEntity> Tag_User_CardTemplateInstances { get; set; }
     }
 }

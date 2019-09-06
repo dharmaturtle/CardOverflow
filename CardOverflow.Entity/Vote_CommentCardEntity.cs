@@ -5,16 +5,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class Vote_CommentFacetEntity
+    public partial class Vote_CommentCardEntity
     {
-        public int CommentFacetId { get; set; }
+        public int CommentCardId { get; set; }
         public int UserId { get; set; }
 
-        [ForeignKey("CommentFacetId")]
-        [InverseProperty("Vote_CommentFacets")]
-        public virtual CommentFacetEntity CommentFacet { get; set; }
+        [ForeignKey("CommentCardId")]
+        [InverseProperty("Vote_CommentCards")]
+        public virtual CommentCardEntity CommentCard { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("Vote_CommentFacets")]
+        [InverseProperty("Vote_CommentCards")]
         public virtual UserEntity User { get; set; }
     }
 }

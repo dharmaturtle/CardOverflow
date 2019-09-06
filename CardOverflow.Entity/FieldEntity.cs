@@ -41,7 +41,7 @@ namespace CardOverflow.Entity
 
         [ForeignKey("FacetTemplateInstanceId")]
         [InverseProperty("Fields")]
-        public virtual FacetTemplateInstanceEntity FacetTemplateInstance { get; set; }
+        public virtual CardTemplateInstanceEntity FacetTemplateInstance { get; set; }
         [InverseProperty("Field")]
         public virtual ICollection<FieldValueEntity> FieldValues { get; set; }
     }
