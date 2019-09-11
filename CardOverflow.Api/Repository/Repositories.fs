@@ -94,8 +94,15 @@ module CardRepository =
                         .FirstAsync(fun x -> x.Id = cardId)
                 else
                     db.Card
-                        //.Include(fun x -> x.Maintainer)
-                        //.Include(fun x -> x.Cards :> IEnumerable<_>)
+                        .Include(fun x -> x.Author)
+                        .Include(fun x -> x.CommentCards)
+                        .Include(fun x -> x.CardInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                        .Include(fun x -> x.CardInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                         //    .ThenInclude(fun (x: CardEntity) -> x.CardInstances :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardInstanceEntity) -> x.Cards :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.CardTemplateInstance)
