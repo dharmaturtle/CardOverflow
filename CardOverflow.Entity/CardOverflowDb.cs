@@ -86,6 +86,8 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.AcquireHash)
                     .IsUnique();
 
+                entity.HasIndex(e => e.CardId);
+
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.CardInstances)
                     .HasForeignKey(d => d.CardId)
@@ -239,6 +241,10 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
             {
+                entity.HasIndex(e => e.SourceId);
+
+                entity.HasIndex(e => e.TargetId);
+
                 entity.HasOne(d => d.Source)
                     .WithMany(p => p.RelationshipSources)
                     .HasForeignKey(d => d.SourceId)

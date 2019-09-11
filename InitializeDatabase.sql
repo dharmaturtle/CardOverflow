@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -305,7 +305,6 @@ CREATE TABLE [dbo].[CardTemplateInstance](
 	[Css] [varchar](4000) NOT NULL,
 	[Created] [smalldatetime] NOT NULL,
 	[Modified] [smalldatetime] NULL,
-	[IsCloze] [bit] NOT NULL,
 	[LatexPre] [nvarchar](500) NOT NULL,
 	[LatexPost] [nvarchar](500) NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
@@ -432,7 +431,7 @@ GO
 CREATE TABLE [dbo].[File_CardInstance](
 	[CardInstanceId] [int] NOT NULL,
 	[FileId] [int] NOT NULL,
- CONSTRAINT [PK_File_Card] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_File_CardInstance] PRIMARY KEY CLUSTERED 
 (
 	[CardInstanceId] ASC,
 	[FileId] ASC
@@ -484,7 +483,7 @@ CREATE TABLE [dbo].[Tag](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [nvarchar](250) NOT NULL,
 	[UserId] [int] NOT NULL,
- CONSTRAINT [PK_PrivateTag] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_Tag] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -499,7 +498,7 @@ CREATE TABLE [dbo].[Tag_AcquiredCard](
 	[TagId] [int] NOT NULL,
 	[UserId] [int] NOT NULL,
 	[CardId] [int] NOT NULL,
- CONSTRAINT [PK_PrivateTag_AcquiredCard] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_Tag_AcquiredCard] PRIMARY KEY CLUSTERED 
 (
 	[TagId] ASC,
 	[UserId] ASC,
@@ -614,67 +613,103 @@ INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (5, 2, N'Cloze')
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] ON 
 
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (1, 1, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (1, 1, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:54:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:54:00' AS SmallDateTime), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x60493569DF91D284A8C43CF4FCA5DAC826BD7A98F778616298E2BB10ED95378A, 0, N'""', N'""', N'""', N'""')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (2, 2, N'.card {
+', N'\end{document}', 0x2A5FC38AF1420FF14113FC331E3429EBBF1C261D211F20A0BAE621BDC9E348FA, 0, N'{{Front}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (2, 2, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:51:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:51:00' AS SmallDateTime), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x4643599FEF0CECFBADB3DA654DA2B0587B89DE0DCAFBE04537768AAB0ECA3316, 0, N'""', N'""', N'""', N'""')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (3, 3, N'.card {
+', N'\end{document}', 0x5DC9059C3535A11E090B0C5DCD88C87487C96AFEE8AB667AB879655FF30A76C9, 0, N'{{Back}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', N'', N'')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (3, 3, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x037F71E478A4286CA3CF5C50044B0CF5017BBF77C47CDA99F4FAB5873656B608, 0, N'""', N'""', N'""', N'""')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (4, 4, N'.card {
+', N'\end{document}', 0xA4257D78D1CD3D2C41A8B1FD966E3F3EB936C0A1DCC8AC1988C469117DE43CC0, 0, N'{{Front}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (4, 4, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), 0, N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0xA18D04E6E681021987B7BB9B6F4D2247A8CF479B2CFBA276C9E3E49D8EE253E8, 0, N'""', N'""', N'""', N'""')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [IsCloze], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (5, 5, N'.card {
+', N'\end{document}', 0xDDF5BD49CD518965D29555E5CEB4186F3C7D79FE0BF85E8FDA361C9D4F834E6E, 0, N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', N'', N'')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (5, 5, N'.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', N'\end{document}', 0x9FF44DBCBAD87D71DAC8825C0912C5FC5CD79F83B9876A8A2CAA762F6BA1F012, 0, N'{{Front}}
+{{type:Back}}', N'{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', N'', N'')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (6, 6, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -688,40 +723,45 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 }
 .nightMode .cloze {
  color: lightblue;
-}', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), 1, N'\documentclass[12pt]{article}
+}', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x41F84217C80C0918F95729E8704B7C5288630B2217C6E1D7D4C7BB4933C8D5FC, 0, N'""', N'""', N'""', N'""')
+', N'\end{document}', 0xA169E80F786DD7EF046CC587C8CCD78693474E2FB77991F125D278F7C7ABE5DD, 0, N'{{cloze:Text}}', N'{{cloze:Text}}<br>
+{{Extra}}', N'', N'')
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[Field] ON 
 
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (1, N'Text', N'Arial', 20, 0, 0, 0, 5)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (2, N'Back', N'Arial', 20, 0, 1, 0, 4)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (3, N'Front', N'Arial', 20, 0, 0, 0, 4)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (4, N'Add Reverse', N'Arial', 20, 0, 2, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (5, N'Back', N'Arial', 20, 0, 1, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (1, N'Front', N'Arial', 20, 0, 0, 0, 1)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (2, N'Back', N'Arial', 20, 0, 1, 0, 1)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (3, N'Text', N'Arial', 20, 0, 0, 0, 6)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (4, N'Front', N'Arial', 20, 0, 0, 0, 2)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (5, N'Back', N'Arial', 20, 0, 1, 0, 2)
 INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (6, N'Front', N'Arial', 20, 0, 0, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 2)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (8, N'Front', N'Arial', 20, 0, 0, 0, 2)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (9, N'Back', N'Arial', 20, 0, 1, 0, 1)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (10, N'Front', N'Arial', 20, 0, 0, 0, 1)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (11, N'Extra', N'Arial', 20, 0, 1, 0, 5)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (8, N'Add Reverse', N'Arial', 20, 0, 2, 0, 3)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (9, N'Extra', N'Arial', 20, 0, 1, 0, 6)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (10, N'Front', N'Arial', 20, 0, 0, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (11, N'Back', N'Arial', 20, 0, 1, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (12, N'Add Reverse', N'Arial', 20, 0, 2, 0, 4)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (13, N'Back', N'Arial', 20, 0, 1, 0, 5)
+INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (14, N'Front', N'Arial', 20, 0, 0, 0, 5)
 SET IDENTITY_INSERT [dbo].[Field] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'3cb002ab-17d6-453f-860a-f86feb7e08d5', NULL, 0, 0, NULL, 0, 0, N'Admin')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'79d35774-8255-4459-a7b2-76c6d28682f6', NULL, 0, 0, NULL, 0, 0, N'The Collective')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'61eebfe3-e552-4f00-9e3f-877d8dade807', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'4934a9df-035b-4216-a8d7-cf00510a16ff', NULL, 0, 0, NULL, 0, 0, N'Admin')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'7f15011b-1605-4b2c-ba98-af5659739d60', NULL, 0, 0, NULL, 0, 0, N'The Collective')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'd622b1ce-0c3b-48a3-9851-506e17bd04ec', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
 SET IDENTITY_INSERT [dbo].[User] OFF
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 1, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 2, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 3, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 4, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 5, 2)
+INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 6, 2)
 /****** Object:  Index [IX_AcquiredCard_CardInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardInstanceId] ON [dbo].[AcquiredCard]
 (
@@ -776,8 +816,8 @@ CREATE NONCLUSTERED INDEX [IX_Card_AuthorId] ON [dbo].[Card]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_CardInstance_AcquireHash] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_CardInstance_AcquireHash] ON [dbo].[CardInstance]
+/****** Object:  Index [IX_CardInstance_AcquireHash] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CardInstance_AcquireHash] ON [dbo].[CardInstance]
 (
 	[AcquireHash] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -788,8 +828,8 @@ CREATE NONCLUSTERED INDEX [IX_CardInstance_CardId] ON [dbo].[CardInstance]
 	[CardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [UQ_CardOption__UserId_IsDefault] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [UQ_CardOption__UserId_IsDefault] ON [dbo].[CardOption]
+/****** Object:  Index [IX_CardOption_UserId] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CardOption_UserId] ON [dbo].[CardOption]
 (
 	[UserId] ASC
 )
@@ -804,8 +844,8 @@ CREATE NONCLUSTERED INDEX [IX_CardTemplate_AuthorId] ON [dbo].[CardTemplate]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_CardTemplateInstance_AcquireHash] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_CardTemplateInstance_AcquireHash] ON [dbo].[CardTemplateInstance]
+/****** Object:  Index [IX_CardTemplateInstance_AcquireHash] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CardTemplateInstance_AcquireHash] ON [dbo].[CardTemplateInstance]
 (
 	[AcquireHash] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -860,14 +900,14 @@ CREATE NONCLUSTERED INDEX [IX_FieldValue_FieldId] ON [dbo].[FieldValue]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_File_Sha256] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_File_Sha256] ON [dbo].[File]
+/****** Object:  Index [IX_File_Sha256] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_File_Sha256] ON [dbo].[File]
 (
 	[Sha256] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_File_Card_FileId] ******/
-CREATE NONCLUSTERED INDEX [IX_File_Card_FileId] ON [dbo].[File_CardInstance]
+/****** Object:  Index [IX_File_CardInstance_FileId] ******/
+CREATE NONCLUSTERED INDEX [IX_File_CardInstance_FileId] ON [dbo].[File_CardInstance]
 (
 	[FileId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -879,17 +919,29 @@ CREATE NONCLUSTERED INDEX [IX_History_UserId_CardId] ON [dbo].[History]
 	[CardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Relationship_SourceId] ******/
+CREATE NONCLUSTERED INDEX [IX_Relationship_SourceId] ON [dbo].[Relationship]
+(
+	[SourceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Relationship_TargetId] ******/
+CREATE NONCLUSTERED INDEX [IX_Relationship_TargetId] ON [dbo].[Relationship]
+(
+	[TargetId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_PrivateTag__UserId_Name] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_PrivateTag__UserId_Name] ON [dbo].[Tag]
+/****** Object:  Index [IX_Tag_UserId_Name] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Tag_UserId_Name] ON [dbo].[Tag]
 (
 	[UserId] ASC,
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_PrivateTag_AcquiredCard_UserId_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_PrivateTag_AcquiredCard_UserId_CardId] ON [dbo].[Tag_AcquiredCard]
+/****** Object:  Index [IX_Tag_AcquiredCard_UserId_CardId] ******/
+CREATE NONCLUSTERED INDEX [IX_Tag_AcquiredCard_UserId_CardId] ON [dbo].[Tag_AcquiredCard]
 (
 	[UserId] ASC,
 	[CardId] ASC
@@ -903,8 +955,16 @@ CREATE NONCLUSTERED INDEX [IX_Tag_User_CardTemplateInstance_DefaultTagId] ON [db
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_User__DisplayName] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_User__DisplayName] ON [dbo].[User]
+/****** Object:  Index [EmailIndex] ******/
+CREATE NONCLUSTERED INDEX [EmailIndex] ON [dbo].[User]
+(
+	[NormalizedEmail] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [IX_User_DisplayName] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_User_DisplayName] ON [dbo].[User]
 (
 	[DisplayName] ASC
 )
@@ -913,21 +973,13 @@ WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNOR
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [AK_User__Email] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [AK_User__Email] ON [dbo].[User]
+/****** Object:  Index [IX_User_Email] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_User_Email] ON [dbo].[User]
 (
 	[Email] ASC
 )
 WHERE ([Email] IS NOT NULL)
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [EmailIndex] ******/
-CREATE NONCLUSTERED INDEX [EmailIndex] ON [dbo].[User]
-(
-	[NormalizedEmail] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
 GO
@@ -939,16 +991,16 @@ CREATE UNIQUE NONCLUSTERED INDEX [UserNameIndex] ON [dbo].[User]
 WHERE ([NormalizedUserName] IS NOT NULL)
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_CardTemplateDefault_DefaultCardOptionId] ******/
-CREATE NONCLUSTERED INDEX [IX_CardTemplateDefault_DefaultCardOptionId] ON [dbo].[User_CardTemplateInstance]
-(
-	[DefaultCardOptionId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
 /****** Object:  Index [IX_User_CardTemplateInstance_CardTemplateInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_User_CardTemplateInstance_CardTemplateInstanceId] ON [dbo].[User_CardTemplateInstance]
 (
 	[CardTemplateInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_User_CardTemplateInstance_DefaultCardOptionId] ******/
+CREATE NONCLUSTERED INDEX [IX_User_CardTemplateInstance_DefaultCardOptionId] ON [dbo].[User_CardTemplateInstance]
+(
+	[DefaultCardOptionId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Vote_CommentCard_UserId] ******/
@@ -963,28 +1015,20 @@ CREATE NONCLUSTERED INDEX [IX_Vote_CommentCardTemplate_UserId] ON [dbo].[Vote_Co
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[CardInstance] ADD  CONSTRAINT [DF_CardInstance_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
-GO
-ALTER TABLE [dbo].[CardTemplateInstance] ADD  CONSTRAINT [DF_CardTemplateInstance_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
-GO
-ALTER TABLE [dbo].[CommentCard] ADD  CONSTRAINT [DF_CommentCard_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
-GO
-ALTER TABLE [dbo].[CommentCardTemplate] ADD  CONSTRAINT [DF_CommentCardTemplate_IsDmca]  DEFAULT ((0)) FOR [IsDmca]
-GO
-ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardOption] FOREIGN KEY([CardOptionId])
-REFERENCES [dbo].[CardOption] ([Id])
-GO
-ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardOption]
-GO
-ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardInstance] FOREIGN KEY([CardInstanceId])
+ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])
 GO
-ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardInstance]
+ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardInstance_CardInstanceId]
 GO
-ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardOption_CardOptionId] FOREIGN KEY([CardOptionId])
+REFERENCES [dbo].[CardOption] ([Id])
+GO
+ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardOption_CardOptionId]
+GO
+ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_User]
+ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_User_UserId]
 GO
 ALTER TABLE [dbo].[AspNetRoleClaims]  WITH CHECK ADD  CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY([RoleId])
 REFERENCES [dbo].[AspNetRoles] ([Id])
@@ -1022,85 +1066,85 @@ ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[AspNetUserTokens] CHECK CONSTRAINT [FK_AspNetUserTokens_User_UserId]
 GO
-ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User] FOREIGN KEY([AuthorId])
+ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User_AuthorId] FOREIGN KEY([AuthorId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_User]
+ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_User_AuthorId]
 GO
-ALTER TABLE [dbo].[CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardInstance_Card] FOREIGN KEY([CardId])
+ALTER TABLE [dbo].[CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardInstance_Card_CardId] FOREIGN KEY([CardId])
 REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[CardInstance] CHECK CONSTRAINT [FK_CardInstance_Card]
+ALTER TABLE [dbo].[CardInstance] CHECK CONSTRAINT [FK_CardInstance_Card_CardId]
 GO
-ALTER TABLE [dbo].[CardOption]  WITH CHECK ADD  CONSTRAINT [FK_CardOption_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[CardOption]  WITH CHECK ADD  CONSTRAINT [FK_CardOption_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[CardOption] CHECK CONSTRAINT [FK_CardOption_User]
+ALTER TABLE [dbo].[CardOption] CHECK CONSTRAINT [FK_CardOption_User_UserId]
 GO
-ALTER TABLE [dbo].[CardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CardTemplate_User] FOREIGN KEY([AuthorId])
+ALTER TABLE [dbo].[CardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CardTemplate_User_AuthorId] FOREIGN KEY([AuthorId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[CardTemplate] CHECK CONSTRAINT [FK_CardTemplate_User]
+ALTER TABLE [dbo].[CardTemplate] CHECK CONSTRAINT [FK_CardTemplate_User_AuthorId]
 GO
-ALTER TABLE [dbo].[CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardTemplateInstance_CardTemplate] FOREIGN KEY([CardTemplateId])
+ALTER TABLE [dbo].[CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardTemplateInstance_CardTemplate_CardTemplateId] FOREIGN KEY([CardTemplateId])
 REFERENCES [dbo].[CardTemplate] ([Id])
 GO
-ALTER TABLE [dbo].[CardTemplateInstance] CHECK CONSTRAINT [FK_CardTemplateInstance_CardTemplate]
+ALTER TABLE [dbo].[CardTemplateInstance] CHECK CONSTRAINT [FK_CardTemplateInstance_CardTemplate_CardTemplateId]
 GO
-ALTER TABLE [dbo].[CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_CommentCard_Card] FOREIGN KEY([CardId])
+ALTER TABLE [dbo].[CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_CommentCard_Card_CardId] FOREIGN KEY([CardId])
 REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[CommentCard] CHECK CONSTRAINT [FK_CommentCard_Card]
+ALTER TABLE [dbo].[CommentCard] CHECK CONSTRAINT [FK_CommentCard_Card_CardId]
 GO
-ALTER TABLE [dbo].[CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_CommentCard_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_CommentCard_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[CommentCard] CHECK CONSTRAINT [FK_CommentCard_User]
+ALTER TABLE [dbo].[CommentCard] CHECK CONSTRAINT [FK_CommentCard_User_UserId]
 GO
-ALTER TABLE [dbo].[CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentCardTemplate_CardTemplate] FOREIGN KEY([CardTemplateId])
+ALTER TABLE [dbo].[CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentCardTemplate_CardTemplate_CardTemplateId] FOREIGN KEY([CardTemplateId])
 REFERENCES [dbo].[CardTemplate] ([Id])
 GO
-ALTER TABLE [dbo].[CommentCardTemplate] CHECK CONSTRAINT [FK_CommentCardTemplate_CardTemplate]
+ALTER TABLE [dbo].[CommentCardTemplate] CHECK CONSTRAINT [FK_CommentCardTemplate_CardTemplate_CardTemplateId]
 GO
-ALTER TABLE [dbo].[CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentCardTemplate_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentCardTemplate_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[CommentCardTemplate] CHECK CONSTRAINT [FK_CommentCardTemplate_User]
+ALTER TABLE [dbo].[CommentCardTemplate] CHECK CONSTRAINT [FK_CommentCardTemplate_User_UserId]
 GO
-ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User]
+ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User_UserId]
 GO
-ALTER TABLE [dbo].[Field]  WITH CHECK ADD  CONSTRAINT [FK_Field_CardTemplateInstance] FOREIGN KEY([CardTemplateInstanceId])
+ALTER TABLE [dbo].[Field]  WITH CHECK ADD  CONSTRAINT [FK_Field_CardTemplateInstance_CardTemplateInstanceId] FOREIGN KEY([CardTemplateInstanceId])
 REFERENCES [dbo].[CardTemplateInstance] ([Id])
 GO
-ALTER TABLE [dbo].[Field] CHECK CONSTRAINT [FK_Field_CardTemplateInstance]
+ALTER TABLE [dbo].[Field] CHECK CONSTRAINT [FK_Field_CardTemplateInstance_CardTemplateInstanceId]
 GO
-ALTER TABLE [dbo].[FieldValue]  WITH CHECK ADD  CONSTRAINT [FK_FieldValue_CardInstance] FOREIGN KEY([CardInstanceId])
+ALTER TABLE [dbo].[FieldValue]  WITH CHECK ADD  CONSTRAINT [FK_FieldValue_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])
 GO
-ALTER TABLE [dbo].[FieldValue] CHECK CONSTRAINT [FK_FieldValue_CardInstance]
+ALTER TABLE [dbo].[FieldValue] CHECK CONSTRAINT [FK_FieldValue_CardInstance_CardInstanceId]
 GO
-ALTER TABLE [dbo].[FieldValue]  WITH CHECK ADD  CONSTRAINT [FK_FieldValue_Field] FOREIGN KEY([FieldId])
+ALTER TABLE [dbo].[FieldValue]  WITH CHECK ADD  CONSTRAINT [FK_FieldValue_Field_FieldId] FOREIGN KEY([FieldId])
 REFERENCES [dbo].[Field] ([Id])
 GO
-ALTER TABLE [dbo].[FieldValue] CHECK CONSTRAINT [FK_FieldValue_Field]
+ALTER TABLE [dbo].[FieldValue] CHECK CONSTRAINT [FK_FieldValue_Field_FieldId]
 GO
-ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_CardInstance] FOREIGN KEY([CardInstanceId])
+ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])
 GO
-ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_CardInstance]
+ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId]
 GO
-ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_File] FOREIGN KEY([FileId])
+ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_File_FileId] FOREIGN KEY([FileId])
 REFERENCES [dbo].[File] ([Id])
 GO
-ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_File]
+ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_File_FileId]
 GO
-ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard] FOREIGN KEY([UserId], [CardId])
+ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard_UserId_CardId] FOREIGN KEY([UserId], [CardId])
 REFERENCES [dbo].[AcquiredCard] ([UserId], [CardInstanceId])
 GO
-ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard]
+ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard_UserId_CardId]
 GO
 ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Source] FOREIGN KEY([TargetId])
 REFERENCES [dbo].[Card] ([Id])
@@ -1112,65 +1156,65 @@ REFERENCES [dbo].[Card] ([Id])
 GO
 ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Target]
 GO
-ALTER TABLE [dbo].[Tag]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[Tag]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[Tag] CHECK CONSTRAINT [FK_PrivateTag_User]
+ALTER TABLE [dbo].[Tag] CHECK CONSTRAINT [FK_Tag_User_UserId]
 GO
-ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_AcquiredCard_AcquiredCard] FOREIGN KEY([UserId], [CardId])
+ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_UserId_CardId] FOREIGN KEY([UserId], [CardId])
 REFERENCES [dbo].[AcquiredCard] ([UserId], [CardInstanceId])
 GO
-ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_PrivateTag_AcquiredCard_AcquiredCard]
+ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_UserId_CardId]
 GO
-ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_PrivateTag_AcquiredCard_PrivateTag] FOREIGN KEY([TagId])
+ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_Tag_TagId] FOREIGN KEY([TagId])
 REFERENCES [dbo].[Tag] ([Id])
 GO
-ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_PrivateTag_AcquiredCard_PrivateTag]
+ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_Tag_TagId]
 GO
-ALTER TABLE [dbo].[Tag_User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_CardTemplateInstance_Tag] FOREIGN KEY([DefaultTagId])
+ALTER TABLE [dbo].[Tag_User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_CardTemplateInstance_Tag_DefaultTagId] FOREIGN KEY([DefaultTagId])
 REFERENCES [dbo].[Tag] ([Id])
 GO
-ALTER TABLE [dbo].[Tag_User_CardTemplateInstance] CHECK CONSTRAINT [FK_Tag_User_CardTemplateInstance_Tag]
+ALTER TABLE [dbo].[Tag_User_CardTemplateInstance] CHECK CONSTRAINT [FK_Tag_User_CardTemplateInstance_Tag_DefaultTagId]
 GO
-ALTER TABLE [dbo].[Tag_User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_CardTemplateInstance_User_CardTemplateInstance] FOREIGN KEY([UserId], [CardTemplateInstanceId])
+ALTER TABLE [dbo].[Tag_User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_CardTemplateInstance_User_CardTemplateInstance_UserId_CardTemplateInstanceId] FOREIGN KEY([UserId], [CardTemplateInstanceId])
 REFERENCES [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId])
 GO
-ALTER TABLE [dbo].[Tag_User_CardTemplateInstance] CHECK CONSTRAINT [FK_Tag_User_CardTemplateInstance_User_CardTemplateInstance]
+ALTER TABLE [dbo].[Tag_User_CardTemplateInstance] CHECK CONSTRAINT [FK_Tag_User_CardTemplateInstance_User_CardTemplateInstance_UserId_CardTemplateInstanceId]
 GO
-ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_CardOption1] FOREIGN KEY([DefaultCardOptionId])
+ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_CardOption_DefaultCardOptionId] FOREIGN KEY([DefaultCardOptionId])
 REFERENCES [dbo].[CardOption] ([Id])
 GO
-ALTER TABLE [dbo].[User_CardTemplateInstance] CHECK CONSTRAINT [FK_User_CardTemplateInstance_CardOption1]
+ALTER TABLE [dbo].[User_CardTemplateInstance] CHECK CONSTRAINT [FK_User_CardTemplateInstance_CardOption_DefaultCardOptionId]
 GO
-ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_CardTemplateInstance] FOREIGN KEY([CardTemplateInstanceId])
+ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_CardTemplateInstance_CardTemplateInstanceId] FOREIGN KEY([CardTemplateInstanceId])
 REFERENCES [dbo].[CardTemplateInstance] ([Id])
 GO
-ALTER TABLE [dbo].[User_CardTemplateInstance] CHECK CONSTRAINT [FK_User_CardTemplateInstance_CardTemplateInstance]
+ALTER TABLE [dbo].[User_CardTemplateInstance] CHECK CONSTRAINT [FK_User_CardTemplateInstance_CardTemplateInstance_CardTemplateInstanceId]
 GO
-ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[User_CardTemplateInstance] CHECK CONSTRAINT [FK_User_CardTemplateInstance_User]
+ALTER TABLE [dbo].[User_CardTemplateInstance] CHECK CONSTRAINT [FK_User_CardTemplateInstance_User_UserId]
 GO
-ALTER TABLE [dbo].[Vote_CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCard_CommentCard] FOREIGN KEY([CommentCardId])
+ALTER TABLE [dbo].[Vote_CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCard_CommentCard_CommentCardId] FOREIGN KEY([CommentCardId])
 REFERENCES [dbo].[CommentCard] ([Id])
 GO
-ALTER TABLE [dbo].[Vote_CommentCard] CHECK CONSTRAINT [FK_Vote_CommentCard_CommentCard]
+ALTER TABLE [dbo].[Vote_CommentCard] CHECK CONSTRAINT [FK_Vote_CommentCard_CommentCard_CommentCardId]
 GO
-ALTER TABLE [dbo].[Vote_CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCard_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[Vote_CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCard_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[Vote_CommentCard] CHECK CONSTRAINT [FK_Vote_CommentCard_User]
+ALTER TABLE [dbo].[Vote_CommentCard] CHECK CONSTRAINT [FK_Vote_CommentCard_User_UserId]
 GO
-ALTER TABLE [dbo].[Vote_CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCardTemplate_CommentCardTemplate] FOREIGN KEY([CommentCardTemplateId])
+ALTER TABLE [dbo].[Vote_CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCardTemplate_CommentCardTemplate_CommentCardTemplateId] FOREIGN KEY([CommentCardTemplateId])
 REFERENCES [dbo].[CommentCardTemplate] ([Id])
 GO
-ALTER TABLE [dbo].[Vote_CommentCardTemplate] CHECK CONSTRAINT [FK_Vote_CommentCardTemplate_CommentCardTemplate]
+ALTER TABLE [dbo].[Vote_CommentCardTemplate] CHECK CONSTRAINT [FK_Vote_CommentCardTemplate_CommentCardTemplate_CommentCardTemplateId]
 GO
-ALTER TABLE [dbo].[Vote_CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCardTemplate_User] FOREIGN KEY([UserId])
+ALTER TABLE [dbo].[Vote_CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCardTemplate_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
-ALTER TABLE [dbo].[Vote_CommentCardTemplate] CHECK CONSTRAINT [FK_Vote_CommentCardTemplate_User]
+ALTER TABLE [dbo].[Vote_CommentCardTemplate] CHECK CONSTRAINT [FK_Vote_CommentCardTemplate_User_UserId]
 GO
 USE [master]
 GO
