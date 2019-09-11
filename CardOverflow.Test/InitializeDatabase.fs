@@ -15,6 +15,7 @@ open System.IO
 open System.Linq
 open SimpleInjector.Lifestyles
 open Microsoft.EntityFrameworkCore
+open System.Text
 
 let importedDate = DateTime(2020, 1, 1)
 
@@ -28,7 +29,15 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
     UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
     let theCollective = db.User.AsNoTracking().Include(fun x -> x.CardOptions).First(fun x -> x.DisplayName = "The Collective")
-    Anki.parseModels theCollective.Id ankiModels |> Result.getOk |> Seq.map (fun (_, x) -> x.CardTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First())
+    let toEntity (x: AnkiCardTemplateAndDeckId) =
+        x.CardTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First()
+    Anki.parseModels
+        theCollective.Id
+        ankiModels
+    |> Result.getOk
+    |> Seq.collect (snd >> Seq.map toEntity)
+    |> Seq.groupBy (fun x -> Encoding.UTF8.GetString x.AcquireHash)
+    |> Seq.map (snd >> Seq.head)
     |> db.CardTemplateInstance.AddRange
     db.SaveChangesI ()
 
@@ -89,3 +98,4 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript``() =
     c.RegisterStuff
     c.RegisterStandardConnectionString
     c.GetInstance<ConnectionString>() |> deleteAndRecreateDb "CardOverflow"
+        
