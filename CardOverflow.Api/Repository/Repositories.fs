@@ -118,10 +118,11 @@ module CardRepository =
         db.SaveChangesI ()
     let private get (db: CardOverflowDb) =
         db.AcquiredCard
-            //.Include(fun x -> x.Cards :> IEnumerable<_>)
-            //    .ThenInclude(fun (x: CardEntity) -> x.CardInstances :> IEnumerable<_>)
-            //    .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-            //    .ThenInclude(fun (x: FieldValueEntity) -> x.Field)
+            .Include(fun x -> x.CardInstance.FieldValues :> IEnumerable<_>)
+                .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+            .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
+                .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
+                .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
             //.Include(fun x -> x.Cards :> IEnumerable<_>)
             //    .ThenInclude(fun (x: CardEntity) -> x.CardInstances :> IEnumerable<_>)
             //    .ThenInclude(fun (x: CardInstanceEntity) -> x.Cards :> IEnumerable<_>)

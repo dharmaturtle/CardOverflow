@@ -72,7 +72,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
     )
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {
-                Id = 10
+                Id = 1
                 Name = "Front"
                 Font = "Arial"
                 FontSize = 20uy
@@ -81,7 +81,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
                 IsSticky = false }
             Value = "Front" }
          {  Field = {
-                Id = 9
+                Id = 2
                 Name = "Back"
                 Font = "Arial"
                 FontSize = 20uy
@@ -96,7 +96,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
             .Single()
             |> Result.getOk
             |> fun x -> x.CardInstance.FieldValues
-            |> Seq.sortBy (fun x -> x.Field.Name)
+            |> Seq.sortByDescending (fun x -> x.Field.Name)
     )
     Assert.Equal<string seq>(
         tags,
