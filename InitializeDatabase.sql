@@ -467,7 +467,7 @@ CREATE TABLE [dbo].[Relationship](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[SourceId] [int] NOT NULL,
 	[TargetId] [int] NOT NULL,
-	[Relationship] [nvarchar](250) NOT NULL,
+	[Name] [nvarchar](250) NOT NULL,
  CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -606,10 +606,11 @@ SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplate] ON 
 
 INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (1, 2, N'Basic')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (2, 2, N'Basic (and reversed card)')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (3, 2, N'Basic (optional reversed card)')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (4, 2, N'Basic (type in the answer)')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (5, 2, N'Cloze')
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (2, 2, N'Basic (and reversed card) - Card 2')
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (3, 2, N'Basic (optional reversed card) - Card 1')
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (4, 2, N'Basic (optional reversed card) - Card 2')
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (5, 2, N'Basic (type in the answer)')
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (6, 2, N'Cloze')
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] ON 
 

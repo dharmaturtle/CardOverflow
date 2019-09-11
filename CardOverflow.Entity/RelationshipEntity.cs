@@ -11,16 +11,15 @@ namespace CardOverflow.Entity
         public int SourceId { get; set; }
         public int TargetId { get; set; }
         [Required]
-        [Column("Relationship")]
         [StringLength(250)]
         public string Name {
-            get => _Relationship1;
+            get => _Name;
             set {
-                if (value.Length > 250) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Relationship1 has a maximum length of 250. Attempted value: {value}");
-                _Relationship1 = value;
+                if (value.Length > 250) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Name has a maximum length of 250. Attempted value: {value}");
+                _Name = value;
             }
         }
-        private string _Relationship1;
+        private string _Name;
 
         [ForeignKey("SourceId")]
         [InverseProperty("RelationshipSources")]
