@@ -34,7 +34,7 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (ConceptRepository.GetAcquiredPages db userId i)
+        (CardRepository.GetAcquiredPages db userId i)
             .GetAwaiter()
             .GetResult()
             .Results
@@ -46,49 +46,40 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
 let ``Get isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    FacetRepositoryTests.addBasicConcept c.Db userId []
-    do! CommentFacetEntity (
-            FacetId = 1,
+    FacetRepositoryTests.addBasicCard c.Db userId []
+    do! CommentCardEntity (
+            CardId = 1,
             UserId = userId,
             Text = "text",
             Created = DateTime.UtcNow
         ) |> CommentRepository.addAndSaveAsync c.Db
     let conceptId = 1
         
-    let! concept = ConceptRepository.Get c.Db conceptId 0
-        
-    concept.Facets
-    |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
-    |> Seq.iter (fun x -> Assert.DoesNotContain("{{Front}}", x))
-    Assert.NotEmpty <| concept.Facets
-    Assert.NotEmpty <| concept.Facets.Select(fun x -> x.Comments) }
+    let! card = CardRepository.Get c.Db conceptId 0
+    
+    let front, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
+    Assert.DoesNotContain("{{Front}}", front)
+    Assert.NotEmpty <| card.Comments }
 
 [<Fact>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    FacetRepositoryTests.addBasicConcept c.Db userId []
-    do! CommentFacetEntity (
-            FacetId = 1,
+    FacetRepositoryTests.addBasicCard c.Db userId []
+    do! CommentCardEntity (
+            CardId = 1,
             UserId = userId,
             Text = "text",
             Created = DateTime.UtcNow
         ) |> CommentRepository.addAndSaveAsync c.Db
-    let conceptId = 1
+    let cardId = 1
         
-    let! concept = ConceptRepository.Get c.Db conceptId userId
+    let! card = CardRepository.Get c.Db cardId userId
         
-    concept.Facets
-    |> Seq.collect (fun x -> x.LatestInstance.Cards.Select(fun x -> x.Front))
-    |> Seq.iter (fun x -> Assert.DoesNotContain("{{Front}}", x))
-    Assert.NotEmpty <| concept.Facets
-    Assert.NotEmpty <| concept.Facets.Select(fun x -> x.Comments)
-    Assert.NotEmpty <| 
-        concept.Facets.SelectMany(fun x -> x.LatestInstance.Cards.Select(fun x -> x.IsAcquired))
-    Assert.All(
-        concept.Facets.SelectMany(fun x -> x.LatestInstance.Cards.Select(fun x -> x.IsAcquired)),
-        fun x -> Assert.True(x))
-    }
+    let front, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
+    Assert.DoesNotContain("{{Front}}", front)
+    Assert.NotEmpty <| card.Comments
+    Assert.True card.LatestInstance.IsAcquired }
 
 [<Fact>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
@@ -101,7 +92,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (ConceptRepository.GetAsync db userId i)
+        (CardRepository.GetAsync db userId i)
             .GetAwaiter()
             .GetResult()
             .Results
@@ -115,17 +106,20 @@ let testGetAcquired cardIds addConcept name = task {
     addConcept c.Db 3 []
     do! CardRepository.AcquireCardsAsync c.Db userId cardIds
 
-    let! concepts = ConceptRepository.GetAcquiredPages c.Db userId 1
-    let! concept = ConceptRepository.GetAcquired c.Db userId 1
+    let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1
+    let! card = CardRepository.GetAcquired c.Db userId 1
     
     Assert.Equal(
         cardIds.Count(),
-        concepts.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards)).Count()
+        acquiredCards.Results.Count()
     )
-    Assert.SingleI concept.AcquiredFacets
+    Assert.Equal(
+        userId,
+        card |> Result.getOk |> fun x -> x.UserId
+    )
     //Assert.Equal<string seq>( // medTODO uncomment when tags work
     //    ["a"],
-    //    results.Results.SelectMany(fun x -> x.AcquiredFacets.SelectMany(fun x -> x.Cards.SelectMany(fun x -> x.Tags)))
+    //    results.Results.SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Cards.SelectMany(fun x -> x.Tags)))
     //)
     }
     
@@ -133,19 +127,19 @@ let testGetAcquired cardIds addConcept name = task {
 let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
     testGetAcquired
         [1]
-        FacetRepositoryTests.addBasicConcept
+        FacetRepositoryTests.addBasicCard
         <| nameof <@ ``GetAcquired works when acquiring 1 basic card`` @>
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> = 
     testGetAcquired
         [1]
-        FacetRepositoryTests.addBasicAndReversedConcept
+        FacetRepositoryTests.addBasicAndReversedCard
         <| nameof <@ ``GetAcquired works when acquiring 1 card of a pair`` @>
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
     testGetAcquired
         [1; 2]
-        FacetRepositoryTests.addBasicAndReversedConcept
+        FacetRepositoryTests.addBasicAndReversedCard
         <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>

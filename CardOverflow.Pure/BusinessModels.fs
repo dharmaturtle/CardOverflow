@@ -1,6 +1,7 @@
 namespace CardOverflow.Pure
 
 open System
+open System.Linq
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 
@@ -79,41 +80,32 @@ type Field = {
     IsSticky: bool
 }
 
-type CardTemplate = {
+type CardTemplateInstance = {
     Id: int
-    Name: string
+    Css: string
+    Fields: Field seq
+    Created: DateTime
+    Modified: DateTime option
+    LatexPre: string
+    LatexPost: string
+    AcquireHash: byte[]
     QuestionTemplate: string
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
-    Ordinal: byte
 }
 
-type FacetTemplateInstance = {
-    Id: int
-    Css: string
-    Fields: Field seq
-    CardTemplates: CardTemplate seq
-    Created: DateTime
-    Modified: DateTime option
-    IsCloze: bool
-    LatexPre: string
-    LatexPost: string
-    AcquireHash: byte[]
-}
-
-type AcquiredFacetTemplateInstance = {
-    DefaultPublicTags: int seq
-    DefaultPrivateTags: int seq
+type AcquiredCardTemplateInstance = {
+    DefaultTags: int seq
     DefaultCardOptionId: int
-    Instance: FacetTemplateInstance
+    CardTemplateInstance: CardTemplateInstance
 }
 
-type FacetTemplate = {
+type CardTemplate = {
     Id: int
     MaintainerId: int
     Name: string
-    Instances: FacetTemplateInstance seq
+    Instances: CardTemplateInstance seq
 }
 
 type IntervalOrStepsIndex =
@@ -122,7 +114,7 @@ type IntervalOrStepsIndex =
     | Interval of TimeSpan
 
 type QuizCard = {
-    CardId: int
+    CardInstanceId: int
     Due: DateTime
     Front: string
     Back: string
@@ -135,19 +127,20 @@ type QuizCard = {
     Options: CardOption
 }
 
-//type FacetInstance = {
+//type CardInstance = {
 //    Id: int
 //    Created: DateTime
 //    Modified: DateTime option
 //    Fields: string seq
 //}
 
-type AcquiredDisplayCard = { // Acquired cause only private tags can be on a card
-    CardTemplateName: string
-    Front: string
-    Back: string
-    Tags: string seq
-}
+// medTODO delete?
+//type AcquiredDisplayCard = { // Acquired cause only private tags can be on a card
+//    CardTemplateName: string
+//    Front: string
+//    Back: string
+//    Tags: string seq
+//}
 
 [<CLIMutable>]
 type FieldAndValue = {
@@ -155,31 +148,20 @@ type FieldAndValue = {
     Value: string
 }
 
-[<CLIMutable>]
-type AcquiredFacet = {
-    FacetInstanceId: int
-    FacetTemplateInstanceId: int
-    MaintainerId: int
-    Description: string
-    FacetId: int
-    FacetCreated: DateTime
-    FacetModified: DateTime option
-    FacetFields: FieldAndValue ResizeArray
-    Cards: AcquiredDisplayCard seq
-}
+//[<CLIMutable>]
+//type AcquiredCard = {
+//    CardInstanceId: int
+//    CardTemplateInstanceId: int
+//    MaintainerId: int
+//    Description: string
+//    CardId: int
+//    CardCreated: DateTime
+//    CardModified: DateTime option
+//    CardFields: FieldAndValue ResizeArray
+//    Cards: AcquiredDisplayCard seq
+//}
 
-type AcquiredCard = {
-    UserId: int
-    CardTemplate: CardTemplate
-    CardState: CardState
-    IsLapsed: bool
-    EaseFactorInPermille: int16
-    IntervalOrStepsIndex: IntervalOrStepsIndex
-    Due: DateTime
-    CardOptionId: int
-}
-
-module AcquiredCard =
+module IntervalOrStepsIndex =
     //                 255            |             255             |            1439         | <- The value of this is 1, not 0, cause 0 days is 0 minutes
     //       |------------------------|-----------------------------|-------------------------|-------------------|
     //           New Step Indexes   n1|l0   Lapsed Step Indexes   l1|m0         Minutes       |d0      Days
@@ -210,14 +192,14 @@ module AcquiredCard =
             else x.TotalMinutes + m0
             |> int16
 
-[<CLIMutable>]
-type AcquiredConcept = {
-    Id: int
-    // medTODO 100 needs to be tied to the DB max somehow
-    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
-    MaintainerId: int
-    AcquiredFacets: AcquiredFacet ResizeArray
-}
+//[<CLIMutable>]
+//type AcquiredConcept = {
+//    Id: int
+//    // medTODO 100 needs to be tied to the DB max somehow
+//    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
+//    MaintainerId: int
+//    AcquiredCards: AcquiredCard ResizeArray
+//}
 
 type PagedListDetails = {
     CurrentPage: int
@@ -229,29 +211,33 @@ type PagedList<'T> = {
     Details: PagedListDetails
 }
 
-type FieldValue = {
-    Value: string
-    FieldId: int
-}
-
-[<CLIMutable>]
-type Card = {
-    Id: int
-    CardTemplateName: string
-    ClozeIndex: byte option
-    Front: string
-    Back: string
-    IsAcquired: bool
-}
-
-type FacetInstance = {
+type CardInstance = {
     Id: int
     Created: DateTime
     Modified: DateTime option
     IsDmca: bool
-    Cards: Card seq
-    FieldValues: FieldValue seq
-    TemplateInstance: FacetTemplateInstance
+    FieldValues: FieldAndValue seq
+    TemplateInstance: CardTemplateInstance
+    IsAcquired: bool
+} with
+    member this.FrontBackFrontSynthBackSynth =
+        CardHtml.generate
+            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value)
+            <| this.TemplateInstance.QuestionTemplate
+            <| this.TemplateInstance.AnswerTemplate
+            <| this.TemplateInstance.Css
+
+type AcquiredCard = {
+    UserId: int
+    CardInstance: CardInstance
+    CardTemplateInstance: CardTemplateInstance
+    CardState: CardState
+    IsLapsed: bool
+    EaseFactorInPermille: int16
+    IntervalOrStepsIndex: IntervalOrStepsIndex
+    Due: DateTime
+    CardOptionId: int
+    Tags: string seq
 }
 
 type Comment = {
@@ -262,28 +248,12 @@ type Comment = {
     IsDmca: bool
 }
 
-type Facet = {
+type ExploreCard = {
     Id: int
-    Maintainer: string
-    MaintainerId: int
-    Description: string
-    LatestInstance: FacetInstance
-    Comments: Comment seq
-}
-
-type DetailedConcept = {
-    Id: int
-    Name: string
-    Maintainer: string
-    MaintainerId: int
-    Facets: Facet seq
-}
-
-type ExploreConcept = {
-    Id: int
-    Maintainer: string
-    MaintainerId: int
-    Name: string
     Users: int
-    Facets: Facet seq
+    Author: string
+    AuthorId: int
+    Description: string
+    LatestInstance: CardInstance
+    Comments: Comment seq
 }

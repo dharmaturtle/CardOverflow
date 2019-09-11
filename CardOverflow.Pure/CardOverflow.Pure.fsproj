@@ -10,8 +10,8 @@
     <Compile Include="Core\Helpers.fs" />
     <Compile Include="Core\Extensions.fs" />
     <Compile Include="MappingTools.fs" />
-    <Compile Include="BusinessModels.fs" />
     <Compile Include="BusinessLogic.fs" />
+    <Compile Include="BusinessModels.fs" />
   </ItemGroup>
 
   <ItemGroup>

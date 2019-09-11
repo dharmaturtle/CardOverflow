@@ -16,7 +16,7 @@
     <table class="table">
       <tr>
         <th>Preview</th>
-        <th>Facet Count</th>
+        <th>Card Count</th>
         <th>Users</th>
         <th>Name</th>
       </tr>
@@ -26,12 +26,12 @@
             <div class="curate-tooltip-target">
               Preview
               <ul class="curate-tooltip-content">
-                @foreach (var facet in @concept.Facets) {
-                  <li>@facet.Description</li>
+                @foreach (var card in @concept.Cards) {
+                  <li>@card.Description</li>
                   <li>
                     @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
                     <ul>
-                      @foreach (var card in facet.LatestInstance.Cards) {
+                      @foreach (var card in card.LatestInstance.Cards) {
                         <li>
                           <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
                         </li>
@@ -43,7 +43,7 @@
             </div>
           </td>
           <td>
-            @concept.Facets.Count()
+            @concept.Cards.Count()
           </td>
           <td>
             @concept.Users

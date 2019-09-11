@@ -26,8 +26,8 @@ let ``Interval, all NewStepsIndexes map to db and back``() =
     // lowTODO assert that the type of NewStepsIndex is a unsigned byte
     for i in [ Byte.MinValue .. Byte.MaxValue ] do
         NewStepsIndex i
-        |> AcquiredCard.intervalToDb
-        |> AcquiredCard.intervalFromDb
+        |> IntervalOrStepsIndex.intervalToDb
+        |> IntervalOrStepsIndex.intervalFromDb
         |> function
         | NewStepsIndex x -> Assert.Equal(i, x)
         | LapsedStepsIndex x -> failwithf "%A" x
@@ -38,8 +38,8 @@ let ``Interval, all LapsedStepsIndexes map to db and back``() =
     // lowTODO assert that the type of LapsedStepsIndex is a unsigned byte
     for i in [ Byte.MinValue .. Byte.MaxValue ] do
         LapsedStepsIndex i
-        |> AcquiredCard.intervalToDb
-        |> AcquiredCard.intervalFromDb
+        |> IntervalOrStepsIndex.intervalToDb
+        |> IntervalOrStepsIndex.intervalFromDb
         |> function
         | NewStepsIndex x -> failwithf "%A" x
         | LapsedStepsIndex x -> Assert.Equal(i, x)
@@ -50,8 +50,8 @@ let ``Interval, all minutes map to db and back``() =
     for i in [ 0. .. 1440. ] do
         let i = TimeSpan.FromMinutes i
         Interval i
-        |> AcquiredCard.intervalToDb
-        |> AcquiredCard.intervalFromDb
+        |> IntervalOrStepsIndex.intervalToDb
+        |> IntervalOrStepsIndex.intervalFromDb
         |> function
         | NewStepsIndex x -> failwithf "%A" x
         | LapsedStepsIndex x -> failwithf "%A" x
@@ -62,8 +62,8 @@ let ``Interval, first 100 days map to db and back``() =
     for i in [ 1. .. 100. ] do
         let i = TimeSpan.FromDays i
         Interval i
-        |> AcquiredCard.intervalToDb
-        |> AcquiredCard.intervalFromDb
+        |> IntervalOrStepsIndex.intervalToDb
+        |> IntervalOrStepsIndex.intervalFromDb
         |> function
         | NewStepsIndex x -> failwithf "%A" x
         | LapsedStepsIndex x -> failwithf "%A" x
@@ -81,8 +81,8 @@ let ``Interval, last 100 days map to db and back``() =
     for i in [ maxValue-100. .. maxValue ] do
         let i = TimeSpan.FromDays i
         Interval i
-        |> AcquiredCard.intervalToDb
-        |> AcquiredCard.intervalFromDb
+        |> IntervalOrStepsIndex.intervalToDb
+        |> IntervalOrStepsIndex.intervalFromDb
         |> function
         | NewStepsIndex x -> failwithf "%A" x
         | LapsedStepsIndex x -> failwithf "%A" x

@@ -1,4 +1,4 @@
-module FacetTemplateRepositoryTests
+module CardTemplateRepositoryTests
 
 open LoadersAndCopiers
 open Helpers
@@ -15,12 +15,11 @@ open System.Collections.Generic
 open FSharp.Control.Tasks
 
 [<Fact>]
-let ``FacetTemplateRepository.GetFromInstance isn't empty``() =
+let ``CardTemplateRepository.GetFromInstance isn't empty``() =
     let templateId = 1
     task {
         use c = new TestContainer()
-        let! facetTemplate = FacetTemplateRepository.GetFromInstance c.Db templateId
-        Assert.NotEmpty(facetTemplate.Instances)
-        Assert.NotEmpty(facetTemplate.Instances.First().CardTemplates)
-        Assert.NotEmpty(facetTemplate.Instances.First().Fields)
+        let! cardTemplate = CardTemplateRepository.GetFromInstance c.Db templateId
+        Assert.NotEmpty(cardTemplate.Instances)
+        Assert.NotEmpty(cardTemplate.Instances.First().Fields)
     }

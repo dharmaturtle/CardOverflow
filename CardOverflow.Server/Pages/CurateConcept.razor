@@ -20,24 +20,24 @@
         <InputText @bind-value="@Concept.Name" Class="form-control" id="concept-input" /> @*this seems to break validation: @bind-value:event="oninput"*@
       </form>
       <ul>
-        @foreach (var facet in @Concept.AcquiredFacets) {
+        @foreach (var card in @Concept.AcquiredCards) {
           <li>
             <div class="row">
               <div class="col-sm">
                 <form class="input-group input-group-lg">
-                  <label for="facet-input" class="input-group-prepend input-group-text">Facet</label>
-                  <InputText @bind-value="@facet.Description" Class="form-control" id="facet-input" /> @*this seems to break validation: @bind-value:event="oninput"*@
+                  <label for="card-input" class="input-group-prepend input-group-text">Card</label>
+                  <InputText @bind-value="@card.Description" Class="form-control" id="card-input" /> @*this seems to break validation: @bind-value:event="oninput"*@
                 </form>
-                @foreach (var field in facet.FacetFields) {
+                @foreach (var field in card.CardFields) {
                   <label><b>@field.Field.Name: </b></label>
                   <InputTextArea @bind-value="@field.Value" Class="curate-edit-inputtextarea" />
                 }
               </div>
               <div class="col-sm">
-                <a href="FacetTemplateInstance/@facet.FacetTemplateInstanceId">Facet Template Instance</a>
+                <a href="CardTemplateInstance/@card.CardTemplateInstanceId">Card Template Instance</a>
                 <BSTabGroup>
                   <BSTabList>
-                    @foreach (var card in facet.Cards) {
+                    @foreach (var card in card.Cards) {
                       <BSTab>
                         <BSTabLabel>@card.CardTemplateName</BSTabLabel>
                         <BSTabContent>

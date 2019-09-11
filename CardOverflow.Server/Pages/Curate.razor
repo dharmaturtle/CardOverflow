@@ -16,7 +16,7 @@
     <table class="table">
       <tr>
         <th>Preview</th>
-        <th>Facet Count</th>
+        <th>Card Count</th>
         <th>Name</th>
         <th>Tags</th>
       </tr>
@@ -26,12 +26,12 @@
             <div class="curate-tooltip-target">
               Preview
               <ul class="curate-tooltip-content">
-                @foreach (var facet in @concept.AcquiredFacets) {
-                  <li>@facet.Description</li>
+                @foreach (var card in @concept.AcquiredCards) {
+                  <li>@card.Description</li>
                   <li>
                     @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
                     <ul>
-                      @foreach (var card in facet.Cards) {
+                      @foreach (var card in card.Cards) {
                         <li>
                           <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
                         </li>
@@ -43,7 +43,7 @@
             </div>
           </td>
           <td>
-            @concept.AcquiredFacets.Count()
+            @concept.AcquiredCards.Count()
           </td>
           <td>
             <a href="/Curate/Concept/@concept.Id">
@@ -52,7 +52,7 @@
           </td>
           <td>
             <ul>
-              @foreach (var tag in @concept.AcquiredFacets.SelectMany(x => x.Cards.SelectMany(xx => xx.Tags)).Distinct()) {
+              @foreach (var tag in @concept.AcquiredCards.SelectMany(x => x.Cards.SelectMany(xx => xx.Tags)).Distinct()) {
                 <li>
                   @tag
                 </li>

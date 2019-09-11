@@ -17,10 +17,10 @@ type CommentText = {
 }
 
 module SanitizeCommentRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: CommentText) facetId email = // lowTODO add idempotency key
+    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: CommentText) cardId email = // lowTODO add idempotency key
         let userId = db.User.First(fun x -> x.Email = email).Id // lowTODO is there a way to get the userId directly from the UI?
-        CommentFacetEntity(
-            FacetId = facetId,
+        CommentCardEntity(
+            CardId = cardId,
             UserId = userId,
             Text = comment.Text,
             Created = time.utcNow
@@ -33,14 +33,14 @@ module SanitizeHistoryRepository =
             CardId = cardId,
             Score = Score.toDb score,
             Timestamp = timestamp,
-            IntervalWithUnusedStepsIndex = (interval |> Interval |> AcquiredCard.intervalToDb),
+            IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
             EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
             TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
         ) |> HistoryRepository.addAndSaveAsync db
 
-module SanitizeConceptRepository =
-    let Update (db: CardOverflowDb) userId conceptId conceptName =
-        let concept = db.Concept.First(fun x -> x.Id = conceptId)
-        if concept.MaintainerId = userId
-        then Ok <| ConceptRepository.Update db conceptId conceptName
-        else Error "You aren't that concept's maintainer."
+//module SanitizeConceptRepository =
+//    let Update (db: CardOverflowDb) authorId cardId conceptName =
+//        let concept = db.Card.First(fun x -> x.Id = cardId)
+//        if concept.AuthorId = authorId
+//        then Ok <| CardRepository.Update db conceptId conceptName
+//        else Error "You aren't that concept's maintainer."

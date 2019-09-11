@@ -59,11 +59,11 @@ module AnkiImporter =
         ankiDb
         userId
         fileEntityByAnkiFileName
-        (usersTags: PrivateTagEntity seq)
+        (usersTags: TagEntity seq)
         (cardOptions: CardOptionEntity seq)
-        getFacetTemplates
-        getFacet
+        getCardTemplates
         getCard
+        getAcquiredCard
         getHistory =
         let col = ankiDb.Cols.Single()
         result {
@@ -95,34 +95,32 @@ module AnkiImporter =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
                     cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
-            let! facetTemplatesByModelId =
-                let toEntity _ (x: AnkiFacetTemplateAndDeckId) =
+            let! cardTemplatesByModelId =
+                let toEntity (x: AnkiCardTemplateAndDeckId) =
                     let defaultCardOption =
                         cardOptionAndDeckNameByDeckId.TryFind x.DeckId
                         |> function
                         | Some (cardOption, _) -> cardOption
                         | None -> cardOptions.First(fun x -> x.IsDefault) // veryLowTODO some anki models have invalid deck ids. Perhaps log this
-                    let entity = x.FacetTemplate.CopyToNew userId defaultCardOption
-                    getFacetTemplates x.FacetTemplate
+                    let entity = x.CardTemplate.CopyToNew userId defaultCardOption
+                    getCardTemplates x.CardTemplate
                     |> function
-                    | Some (e: FacetTemplateInstanceEntity) ->
-                        if e.User_FacetTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
-                            User_FacetTemplateInstanceEntity(
+                    | Some (e: CardTemplateInstanceEntity) ->
+                        if e.User_CardTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
+                            User_CardTemplateInstanceEntity(
                                 UserId = userId,
-                                PublicTag_User_FacetTemplateInstances =
-                                    (x.FacetTemplate.DefaultPublicTags.ToList()
-                                    |> Seq.map (fun x -> PublicTag_User_FacetTemplateInstanceEntity(UserId = userId, DefaultPublicTagId = x))
-                                    |> fun x -> x.ToList()),
-                                PrivateTag_User_FacetTemplateInstances =
-                                    (x.FacetTemplate.DefaultPrivateTags.ToList()
-                                    |> Seq.map (fun x -> PrivateTag_User_FacetTemplateInstanceEntity(UserId = userId, DefaultPrivateTagId = x))
+                                Tag_User_CardTemplateInstances =
+                                    (x.CardTemplate.DefaultTags.ToList()
+                                    |> Seq.map (fun x -> Tag_User_CardTemplateInstanceEntity(UserId = userId, DefaultTagId = x))
                                     |> fun x -> x.ToList()),
                                 DefaultCardOption = defaultCardOption)
-                            |> e.User_FacetTemplateInstances.Add
+                            |> e.User_CardTemplateInstances.Add
                         e
                     | None -> entity
+                let toEntities  _ (xs: AnkiCardTemplateAndDeckId seq) =
+                    xs |> Seq.map toEntity
                 Anki.parseModels userId col.Models
-                |> Result.map (Map.ofSeq >> Map.map toEntity)
+                |> Result.map (fun x -> x |> Map.ofSeq |> Map.map toEntities)
             let usersTags =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.overValue fst
@@ -133,30 +131,30 @@ module AnkiImporter =
                     |> Seq.tryHead
                     |> function
                     | Some e -> e
-                    | None -> PrivateTagEntity(Name = deckTag, UserId = userId))
+                    | None -> TagEntity(Name = deckTag, UserId = userId))
                 |> Seq.append usersTags
                 |> Seq.toList
-            let facetsAndTagsByAnkiId =
+            let cardsAndTagsByAnkiId =
                 Anki.parseNotes
-                    facetTemplatesByModelId
+                    cardTemplatesByModelId
                     usersTags
                     userId
                     fileEntityByAnkiFileName
-                    getFacet
+                    getCard
                     ankiDb.Notes
-            let facetsAndTagsByAnkiId =
+            let cardsAndTagsByAnkiId =
                 let duplicates =
-                    facetsAndTagsByAnkiId
+                    cardsAndTagsByAnkiId
                     |> Seq.groupBy(fun (_, (c, _)) -> c.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
                     |> Seq.filter(fun (_, x) -> x.Count() > 1)
                     |> Seq.collect(fun (_, x) -> 
                         let tags = x.SelectMany(fun (_, (_, tags)) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
-                        let (_, (facet, _)) = x.First()
-                        facet.Created <- x.Min(fun (_, (c, _)) -> c.Created)
-                        facet.Modified <- x.Max(fun (_, (c, _)) -> c.Modified)
-                        x |> Seq.map (fun (ankiId, _) -> (ankiId, (facet, tags)))
+                        let (_, (card, _)) = x.First()
+                        card.Created <- x.Min(fun (_, (c, _)) -> c.Created)
+                        card.Modified <- x.Max(fun (_, (c, _)) -> c.Modified)
+                        x |> Seq.map (fun (ankiId, _) -> (ankiId, (card, tags)))
                     ) |> Map.ofSeq
-                facetsAndTagsByAnkiId
+                cardsAndTagsByAnkiId
                 |> Seq.map (fun (ankiId, tuple) ->
                     if duplicates.ContainsKey ankiId
                     then (ankiId, duplicates.[ankiId])
@@ -165,7 +163,7 @@ module AnkiImporter =
             let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId facetsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags getCard)
+                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId cardsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags getAcquiredCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory) |> Result.consolidate
@@ -173,18 +171,18 @@ module AnkiImporter =
         }
 
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
-        let getFacetTemplateInstance (templateInstance: AnkiFacetTemplateInstance) =
+        let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null
-            db.FacetTemplateInstance
+            db.CardTemplateInstance
                 .Include(fun x -> x.Fields :> IEnumerable<_>)
-                    .ThenInclude(fun (x: FieldEntity) -> x.FacetTemplateInstance.CardTemplates)
-                .Include(fun x -> x.User_FacetTemplateInstances)
+                    //.ThenInclude(fun (x: FieldEntity) -> x.CardTemplateInstance.CardTemplates)
+                .Include(fun x -> x.User_CardTemplateInstances)
                 .FirstOrDefault(fun x -> x.AcquireHash = ti.AcquireHash)
                 |> Option.ofObj
-        let getFacet (facet: AnkiFacetWrite) =
-            facet.AcquireEquality db
+        let getCard (card: AnkiCardWrite) =
+            card.AcquireEquality db
             |> Option.ofObj
-        let getCard (card: AnkiAcquiredCard) =
+        let getAcquiredCard (card: AnkiAcquiredCard) =
             card.AcquireEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =
             history.AcquireEquality db |> Option.ofObj
@@ -194,15 +192,15 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| db.PrivateTag.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and facettemplates is heavy
+                    <| db.Tag.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
-                    <| getFacetTemplateInstance
-                    <| getFacet
+                    <| getCardTemplateInstance
                     <| getCard
+                    <| getAcquiredCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
-                if x.Card <> null && x.Card.CardTemplateId = 0 && x.Card.FacetInstanceId = 0
+                if x.CardInstance <> null && x.CardInstance.FieldValues.First().Field.CardTemplateInstanceId = 0 && x.CardInstanceId = 0
                 then db.AcquiredCard.AddI x
                 //else db.AcquiredCard.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )

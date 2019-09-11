@@ -179,11 +179,11 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<FieldEntity>(entity =>
             {
-                entity.HasIndex(e => e.FacetTemplateInstanceId);
+                entity.HasIndex(e => e.CardTemplateInstanceId);
 
-                entity.HasOne(d => d.FacetTemplateInstance)
+                entity.HasOne(d => d.CardTemplateInstance)
                     .WithMany(p => p.Fields)
-                    .HasForeignKey(d => d.FacetTemplateInstanceId)
+                    .HasForeignKey(d => d.CardTemplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

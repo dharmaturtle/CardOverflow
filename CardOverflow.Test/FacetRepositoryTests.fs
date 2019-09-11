@@ -14,46 +14,45 @@ open CardOverflow.Pure
 open System.Collections.Generic
 
 let add templateName (db: CardOverflowDb) userId tags =
-    let facetTemplate =
-        db.FacetTemplateInstance
-            .Include(fun x -> x.CardTemplates)
+    let cardTemplateInstance =
+        db.CardTemplateInstance
             .Include(fun x -> x.Fields)
-            .Include(fun x -> x.FacetTemplate)
-            .Include(fun x -> x.User_FacetTemplateInstances)
-            .First(fun x -> x.FacetTemplate.Name = templateName)
-            |> AcquiredFacetTemplateInstance.load
-    PrivateTagRepository.Add db userId tags
-    let privateTags =
-        PrivateTagRepository.GetAll db userId
+            .Include(fun x -> x.CardTemplate)
+            .Include(fun x -> x.User_CardTemplateInstances)
+            .First(fun x -> x.CardTemplate.Name = templateName)
+            |> AcquiredCardTemplateInstance.load
+    TagRepository.Add db userId tags
+    let tags =
+        TagRepository.GetAll db userId
         |> Seq.map (fun x -> x.Id)
-    let initialConcept = {
-        FacetTemplateHash = facetTemplate.Instance.AcquireHash
-        MaintainerId = userId
+    let initialCard = {
+        CardTemplateHash = cardTemplateInstance.CardTemplateInstance.AcquireHash
+        AuthorId = userId
         Description = templateName
-        DefaultCardOptionId = facetTemplate.DefaultCardOptionId
-        CardTemplateIdsAndTags = facetTemplate.Instance.CardTemplates |> Seq.map (fun x -> x.Id, privateTags)
+        DefaultCardOptionId = cardTemplateInstance.DefaultCardOptionId
+        CardTemplateIdsAndTags = cardTemplateInstance.CardTemplateInstance |> fun x -> x.Id, tags
         FieldValues =
-            facetTemplate.Instance.Fields
+            cardTemplateInstance.CardTemplateInstance.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
-            |> Seq.map (fun x -> { FieldId = x.Id; Value = x.Name })
+            |> Seq.map (fun x -> { Field = x; Value = x.Name })
     }
-    ConceptRepository.CreateConcept db initialConcept <| Seq.empty.ToList()
+    CardRepository.CreateCard db initialCard <| Seq.empty.ToList()
 
-let addBasicAndReversedConcept: CardOverflowDb -> int -> seq<string> -> unit =
+let addBasicAndReversedCard: CardOverflowDb -> int -> seq<string> -> unit =
     add "Basic (and reversed card)"
 
-let addBasicConcept =
+let addBasicCard =
     add "Basic"
 
 [<Fact>]
-let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
+let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
     
-    addBasicConcept c.Db userId tags
+    addBasicCard c.Db userId tags
 
-    Assert.SingleI <| c.Db.Facet
+    Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.AcquiredCard
     Assert.SingleI <| CardRepository.GetAllCards c.Db userId
@@ -90,44 +89,49 @@ let ``FacetRepository.CreateFacet on a basic facet acquires 1 card/facet``() =
                 Ordinal = 1uy
                 IsSticky = false }
             Value = "Back"}],
-        (ConceptRepository.GetAcquiredPages c.Db userId 1)
+        (CardRepository.GetAcquiredPages c.Db userId 1)
             .GetAwaiter()
             .GetResult()
             .Results
-            .Single().AcquiredFacets.Single().FacetFields.OrderByDescending(fun x -> x)
+            .Single()
+            |> Result.getOk
+            |> fun x -> x.CardInstance.FieldValues
+            |> Seq.sortBy (fun x -> x.Field.Name)
     )
     Assert.Equal<string seq>(
         tags,
-        (ConceptRepository.GetAcquiredPages c.Db userId 1)
+        (CardRepository.GetAcquiredPages c.Db userId 1)
             .GetAwaiter()
             .GetResult()
             .Results
-            .Single().AcquiredFacets.Single().Cards.SelectMany(fun x -> x.Tags)
+            .Single()
+            |> Result.getOk
+            |> fun x -> x.Tags
     )
 
 // fuck merge
 //[<Fact>]
-//let ``FacetRepository's SaveFacets updates a Facet``() =
+//let ``CardRepository's SaveCards updates a Card``() =
 //    use c = new TestContainer()
 //    let facet = 
-//        FacetEntity(
+//        CardEntity(
 //            Title = "",
 //            Description = "",
 //            Fields = "",
-//            FacetTemplateId = 1,
+//            CardTemplateId = 1,
 //            Modified = DateTime.UtcNow)
     
-//    FacetRepository.AddFacet c.Db facet
+//    CardRepository.AddCard c.Db facet
 
-//    let updatedFacet = FacetRepository.GetFacets c.Db |> Seq.head
+//    let updatedCard = CardRepository.GetCards c.Db |> Seq.head
 //    let updatedTitle = Guid.NewGuid().ToString()
-//    updatedFacet.Title <- updatedTitle
+//    updatedCard.Title <- updatedTitle
 
-//    updatedFacet 
+//    updatedCard 
 //    |> Seq.singleton 
-//    |> ResizeArray<FacetEntity>
-//    |> FacetRepository.SaveFacets c.Db
+//    |> ResizeArray<CardEntity>
+//    |> CardRepository.SaveCards c.Db
 
-//    FacetRepository.GetFacets c.Db
+//    CardRepository.GetCards c.Db
 //    |> Seq.filter(fun x -> x.Title = updatedTitle)
 //    |> Assert.Single

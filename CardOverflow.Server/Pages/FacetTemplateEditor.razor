@@ -1,4 +1,4 @@
-﻿@page "/FacetTemplateInstance/{InstanceId:int}"
+﻿@page "/CardTemplateInstance/{InstanceId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -10,7 +10,7 @@
 @using CardOverflow.Server.Data
 @inject CardOverflowDb Db
 
-<h1>Facet Template</h1>
+<h1>Card Template</h1>
 <hr />
 @if (Template == null) {
   <p><em>Loading...</em></p>
@@ -59,11 +59,11 @@
 @code {
   [Parameter]
   public int InstanceId { get; set; }
-  FacetTemplate Template;
-  FacetTemplateInstance Latest;
+  CardTemplate Template;
+  CardTemplateInstance Latest;
 
   protected override async Task OnInitAsync() {
-    Template = await FacetTemplateRepository.GetFromInstance(Db, InstanceId);
+    Template = await CardTemplateRepository.GetFromInstance(Db, InstanceId);
     Latest = Template.Instances.OrderByDescending(x => x.Created).First();
   }
 

@@ -19,12 +19,12 @@ open System.Threading.Tasks
 let ``AcquireCards works``() = task {
     use c = new TestContainer()
     let maintainerId = 3
-    FacetRepositoryTests.addBasicConcept c.Db maintainerId []
-    let cardIds = [1]
+    FacetRepositoryTests.addBasicCard c.Db maintainerId []
+    let cardInstanceIds = [1]
     let userId = 2
 
-    do! CardRepository.AcquireCardsAsync c.Db userId cardIds
+    do! CardRepository.AcquireCardsAsync c.Db userId cardInstanceIds
 
     Assert.SingleI
-        <| c.Db.AcquiredCard.Where(fun x -> x.UserId = userId && x.CardId = cardIds.Head)
+        <| c.Db.AcquiredCard.Where(fun x -> x.UserId = userId && x.CardInstanceId = cardInstanceIds.Head)
     }

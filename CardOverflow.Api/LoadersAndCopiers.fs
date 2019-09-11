@@ -12,36 +12,29 @@ open System.Security.Cryptography
 open System.Text
 open System.Collections.Generic
 
-module FacetTemplateInstanceEntity =
-    let acquireHash (hasher: SHA256) (e: FacetTemplateInstanceEntity) =
-        let hash (hasher: HashAlgorithm) (ct: CardTemplateEntity) =
-            [ ct.QuestionTemplate; ct.AnswerTemplate ]
-            |> MappingTools.joinByUnitSeparator
-            |> Encoding.Unicode.GetBytes
-            |> hasher.ComputeHash
-        let stringBytes =
-            [   e.Css
-                e.LatexPre
-                e.LatexPost
-            ].Concat <| e.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name)
-            |> Seq.toList
-            |> MappingTools.joinByUnitSeparator
-            |> Encoding.Unicode.GetBytes
-        e.CardTemplates
-            |> Seq.sortBy (fun x -> x.Ordinal)
-            |> Seq.collect (hash hasher)
-            |> Seq.append stringBytes
-            |> Seq.toArray
-            |> hasher.ComputeHash
+module CardTemplateInstanceEntity =
+    let acquireHash (hasher: SHA256) (e: CardTemplateInstanceEntity) =
+        [   e.Css
+            e.LatexPre
+            e.LatexPost
+            e.QuestionTemplate
+            e.AnswerTemplate
+            e.ShortQuestionTemplate
+            e.ShortAnswerTemplate
+        ].Concat <| e.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name)
+        |> Seq.toList
+        |> MappingTools.joinByUnitSeparator
+        |> Encoding.Unicode.GetBytes
+        |> hasher.ComputeHash
 
-module FacetInstanceEntity =
-    let acquireHash (e: FacetInstanceEntity) (facetTemplateHash: byte[]) (hasher: SHA256) =
+module CardInstanceEntity =
+    let acquireHash (e: CardInstanceEntity) (cardTemplateHash: byte[]) (hasher: SHA256) =
         e.FieldValues
         |> Seq.map (fun x -> x.Value)
         |> Seq.sort
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Seq.append facetTemplateHash
+        |> Seq.append cardTemplateHash
         |> Seq.toArray
         |> hasher.ComputeHash
 
@@ -128,76 +121,79 @@ type Field with
           IsRightToLeft = entity.IsRightToLeft
           Ordinal = entity.Ordinal
           IsSticky = entity.IsSticky }
-    member this.CopyToNew (facetTemplateInstance: FacetTemplateInstanceEntity) =
-        let entity = FieldEntity()
+    member this.copyTo (entity: FieldEntity) (cardTemplateInstance: CardTemplateInstanceEntity) =
         entity.Name <- this.Name
         entity.Font <- this.Font
         entity.FontSize <- this.FontSize
         entity.IsRightToLeft <- this.IsRightToLeft
         entity.Ordinal <- this.Ordinal
         entity.IsSticky <- this.IsSticky
-        entity.FacetTemplateInstance <- facetTemplateInstance
+        entity.CardTemplateInstance <- cardTemplateInstance
+    member this.CopyToNew (cardTemplateInstance: CardTemplateInstanceEntity) =
+        let entity = FieldEntity()
+        this.copyTo entity cardTemplateInstance
         entity
 
-type CardTemplate with
-    static member load (entity: CardTemplateEntity) =
-        { Id = entity.Id
-          Name = entity.Name
-          QuestionTemplate = entity.QuestionTemplate
-          AnswerTemplate = entity.AnswerTemplate
-          ShortQuestionTemplate = entity.ShortQuestionTemplate
-          ShortAnswerTemplate = entity.ShortAnswerTemplate
-          Ordinal = entity.Ordinal }
-    member this.CopyToNew (facetTemplateInstance: FacetTemplateInstanceEntity)=
-        let entity = CardTemplateEntity()
-        entity.Name <- this.Name
-        entity.QuestionTemplate <- this.QuestionTemplate
-        entity.AnswerTemplate <- this.AnswerTemplate
-        entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
-        entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
-        entity.FacetTemplateInstance <- facetTemplateInstance
-        entity.Ordinal <- this.Ordinal
+type FieldAndValue with
+    static member load (entity: FieldValueEntity) =
+        {   Field = Field.load entity.Field
+            Value = entity.Value
+        }
+    member this.copyToValue (entity: FieldValueEntity) =
+        entity.FieldId <- this.Field.Id
+        entity.Value <- this.Value
+    member this.copyToNewValue =
+        let entity = FieldValueEntity()
+        this.copyToValue entity
         entity
 
-type FacetTemplateInstance with
-    static member load(entity: FacetTemplateInstanceEntity) =
+type CardTemplateInstance with
+    static member load(entity: CardTemplateInstanceEntity) =
         { Id = entity.Id
           Css = entity.Css
           Fields = entity.Fields |> Seq.map Field.load
-          CardTemplates = entity.CardTemplates |> Seq.map CardTemplate.load
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
-          IsCloze = entity.IsCloze
           LatexPre = entity.LatexPre
           LatexPost = entity.LatexPost
-          AcquireHash = entity.AcquireHash }
+          AcquireHash = entity.AcquireHash
+          QuestionTemplate = entity.QuestionTemplate
+          AnswerTemplate = entity.AnswerTemplate
+          ShortQuestionTemplate = entity.ShortQuestionTemplate
+          ShortAnswerTemplate = entity.ShortAnswerTemplate }
+    member this.CopyToNew (cardTemplateInstance: CardTemplateInstanceEntity)=
+        let entity = CardTemplateInstanceEntity()
+        entity.QuestionTemplate <- this.QuestionTemplate
+        entity.AnswerTemplate <- this.AnswerTemplate
+        entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
+        entity.ShortAnswerTemplate <- this.ShortAnswerTemplate // medTODO not done
+        entity
 
-type AcquiredFacetTemplateInstance with
-    static member load(entity: FacetTemplateInstanceEntity) =
-        { DefaultPublicTags = entity.User_FacetTemplateInstances.Single().PublicTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPublicTagId)
-          DefaultPrivateTags = entity.User_FacetTemplateInstances.Single().PrivateTag_User_FacetTemplateInstances.Select(fun x -> x.DefaultPrivateTagId)
-          DefaultCardOptionId = entity.User_FacetTemplateInstances.Single().DefaultCardOptionId
-          Instance = FacetTemplateInstance.load entity }
+type AcquiredCardTemplateInstance with
+    static member load(entity: CardTemplateInstanceEntity) =
+        { DefaultTags = entity.User_CardTemplateInstances.Single().Tag_User_CardTemplateInstances.Select(fun x -> x.DefaultTagId)
+          DefaultCardOptionId = entity.User_CardTemplateInstances.Single().DefaultCardOptionId
+          CardTemplateInstance = CardTemplateInstance.load entity }
 
-type FacetTemplate with
-    static member load(entity: FacetTemplateEntity) = {
+type CardTemplate with
+    static member load(entity: CardTemplateEntity) = {
         Id = entity.Id
         Name = entity.Name
-        MaintainerId = entity.MaintainerId
-        Instances = entity.FacetTemplateInstances |> Seq.map FacetTemplateInstance.load }
+        MaintainerId = entity.AuthorId
+        Instances = entity.CardTemplateInstances |> Seq.map CardTemplateInstance.load }
 
 type QuizCard with
     static member load(entity: AcquiredCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
             CardHtml.generate
-                (entity.Card.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
-                entity.Card.CardTemplate.QuestionTemplate
-                entity.Card.CardTemplate.AnswerTemplate
-                entity.Card.CardTemplate.FacetTemplateInstance.Css
+                (entity.CardInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
+                (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.QuestionTemplate)
+                (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.AnswerTemplate)
+                (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.Css)
         result {
             let! cardState = CardState.create entity.CardState
             return
-                { CardId = entity.CardId
+                { CardInstanceId = entity.CardInstanceId
                   Due = entity.Due
                   Front = front
                   Back = back
@@ -206,26 +202,29 @@ type QuizCard with
                   CardState = cardState
                   IsLapsed = entity.IsLapsed
                   EaseFactor = float entity.EaseFactorInPermille / 1000.
-                  IntervalOrStepsIndex = AcquiredCard.intervalFromDb entity.IntervalOrStepsIndex
+                  IntervalOrStepsIndex = IntervalOrStepsIndex.intervalFromDb entity.IntervalOrStepsIndex
                   Options = CardOption.load entity.CardOption }
         }
 
-//type FacetInstance with
-//    static member load(entity: FacetInstanceEntity) = {
-//        Id = entity.Id
-//        Fields = entity.FieldValues |> Seq.map (fun x -> x.Value)
-//        Created = entity.Created
-//        Modified = entity.Modified |> Option.ofNullable
-//    }
-//    member this.CopyTo (entity: FacetInstanceEntity) =
-//        entity.Created <- this.Created
-//        entity.Modified <- this.Modified |> Option.toNullable
-//        entity.FieldValues <- this.Fields |> Seq.map (fun x -> FieldValueEntity(Value = x)) |> fun x -> x.ToList()
-//    member this.CopyToNew =
-//        let entity = FacetInstanceEntity()
-//        this.CopyTo entity
-//        entity.Facet <- FacetEntity()
-//        entity
+type CardInstance with
+    static member load userId (entity: CardInstanceEntity) = {
+        Id = entity.Id
+        Created = entity.Created
+        Modified = entity.Modified |> Option.ofNullable
+        IsDmca = entity.IsDmca
+        FieldValues = entity.FieldValues |> Seq.map FieldAndValue.load
+        TemplateInstance = entity.FieldValues.First().Field.CardTemplateInstance |> CardTemplateInstance.load
+        IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
+    }
+    member this.CopyTo (entity: CardInstanceEntity) =
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
+        entity.FieldValues <- this.FieldValues |> Seq.map (fun x -> FieldValueEntity(Value = x.Value)) |> fun x -> x.ToList()
+    member this.CopyToNew =
+        let entity = CardInstanceEntity()
+        this.CopyTo entity
+        entity.Card <- CardEntity()
+        entity
 
 type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
@@ -233,11 +232,11 @@ type AcquiredCard with
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
-        entity.IntervalOrStepsIndex <- AcquiredCard.intervalToDb this.IntervalOrStepsIndex
+        entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
     static member InitialCopyTo userId cardOptionId (privateTagIds: int seq) =
         AcquiredCardEntity(
-            PrivateTag_AcquiredCards = privateTagIds.Select(fun x -> PrivateTag_AcquiredCardEntity(PrivateTagId = x, UserId = userId)).ToList(),
+            Tag_AcquiredCards = privateTagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x, UserId = userId)).ToList(),
             CardState = CardState.toDb Normal,
             IsLapsed = false,
             EaseFactorInPermille = 0s,
@@ -247,132 +246,117 @@ type AcquiredCard with
             UserId = userId
         )
 
-type InitialConceptInstance = {
-    FieldValues: FieldValue seq
-    MaintainerId: int
+type InitialCardInstance = {
+    FieldValues: FieldAndValue seq
+    AuthorId: int
     DefaultCardOptionId: int
     Description: string
-    FacetTemplateHash: byte[]
-    CardTemplateIdsAndTags: (int * int seq) seq
+    CardTemplateHash: byte[]
+    CardTemplateIdsAndTags: int * int seq
 } with
-    member this.CopyToNew fileFacetInstances =
+    member this.CopyToNew fileCardInstances =
+        let _, tags = this.CardTemplateIdsAndTags // medTODO drop the _
         let e =
-            FacetInstanceEntity(
+            CardInstanceEntity(
                 Created = DateTime.UtcNow,
-                Cards = (
-                    this.CardTemplateIdsAndTags
-                    |> Seq.map (fun (i, tags) -> 
-                        CardEntity (
-                            CardTemplateId = i,
-                            AcquiredCards = (
-                                AcquiredCard.InitialCopyTo this.MaintainerId this.DefaultCardOptionId tags
-                                |> Seq.singleton
-                                |> fun x -> x.ToList())))
-                    |> fun x -> x.ToList()),
-                FieldValues = (
+                Card =
+                    CardEntity(
+                        AuthorId = this.AuthorId,
+                        Description = this.Description
+                    ),
+                FieldValues =
                     this.FieldValues
-                    |> Seq.map (fun { FieldId = fi; Value = v } -> FieldValueEntity(FieldId = fi, Value = v))
-                    |> fun x -> x.ToList()),
-                File_FacetInstances = fileFacetInstances
+                        .Select(fun x -> x.copyToNewValue)
+                        .ToList(),
+                File_CardInstances = fileCardInstances,
+                AcquiredCards = [
+                    AcquiredCard.InitialCopyTo this.AuthorId this.DefaultCardOptionId tags
+                ].ToList()
             )
         use hasher = SHA256.Create() // lowTODO pull this out
-        e.AcquireHash <- FacetInstanceEntity.acquireHash e this.FacetTemplateHash hasher
-        ConceptEntity(
-            Name = this.FieldValues.First().Value,
-            MaintainerId = this.MaintainerId,
-            Facets = [
-                FacetEntity (
-                    MaintainerId = this.MaintainerId,
-                    Description = this.Description,
-                    FacetInstances = [e].ToList()
-                )
-            ].ToList()
-        )
+        e.AcquireHash <- CardInstanceEntity.acquireHash e this.CardTemplateHash hasher
+        e
 
-type AcquiredConcept with
-    static member load userId (concept: ConceptEntity) =
-        {   Id = concept.Id
-            Name = concept.Name
-            MaintainerId = concept.MaintainerId
-            AcquiredFacets =
-                concept.Facets.Select(fun x -> x.FacetInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) ).Select(fun fi -> // lowTODO, optimization, there should only be one facetInstance loaded from the db
-                    let cards =
-                        fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
-                            let cardTemplate = x.First().CardTemplate
-                            let card =
-                                x
-                                    .Single(fun x -> x.CardTemplateId = cardTemplate.Id)
-                                    .AcquiredCards
-                                    .SingleOrDefault(fun x -> x.UserId = userId)
-                            let front, back, _, _ =
-                                CardHtml.generate
-                                    (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
-                                    cardTemplate.QuestionTemplate
-                                    cardTemplate.AnswerTemplate
-                                    cardTemplate.FacetTemplateInstance.Css
-                            if isNull card
-                            then None
-                            else
-                                {   Front = front
-                                    Back = back
-                                    CardTemplateName = cardTemplate.Name
-                                    Tags = card.PrivateTag_AcquiredCards.Select(fun x -> x.PrivateTag.Name)
-                                } |> Some
-                        )
-                    {   FacetInstanceId = fi.Id
-                        FacetTemplateInstanceId = fi.FieldValues.First().Field.FacetTemplateInstanceId
-                        MaintainerId = fi.Facet.MaintainerId
-                        Description = fi.Facet.Description
-                        FacetId = fi.FacetId
-                        FacetCreated = fi.Created
-                        FacetModified = Option.ofNullable fi.Modified
-                        FacetFields =
-                            fi.FieldValues
-                                .OrderBy(fun x -> x.Field.Ordinal)
-                                .Select(fun x -> 
-                                    {   Field = Field.load x.Field
-                                        Value = x.Value
-                                    }).ToList()
-                        Cards = cards |> Seq.choose id
-                    }
-                ).ToList()
+type AcquiredCard with
+    static member load (entity: AcquiredCardEntity) = result {
+        let! cardState = entity.CardState |> CardState.create
+        return
+            {   UserId = entity.UserId
+                CardTemplateInstance = entity.CardInstance.FieldValues.First().Field.CardTemplateInstance |> CardTemplateInstance.load
+                CardState = cardState
+                IsLapsed = entity.IsLapsed
+                EaseFactorInPermille = entity.EaseFactorInPermille
+                IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
+                Due = entity.Due
+                CardOptionId = entity.CardOptionId
+                CardInstance = CardInstance.load entity.UserId entity.CardInstance
+                Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
+                //Id = concept.Id
+                //Name = concept.Name
+                //MaintainerId = concept.MaintainerId
+                //AcquiredCards =
+                //    concept.Cards.Select(fun x -> x.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) ).Select(fun fi -> // lowTODO, optimization, there should only be one cardInstance loaded from the db
+                //        let cards =
+                //            fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
+                //                let cardTemplate = x.First().CardTemplate
+                //                let card =
+                //                    x
+                //                        .Single(fun x -> x.CardTemplateId = cardTemplate.Id)
+                //                        .AcquiredCards
+                //                        .SingleOrDefault(fun x -> x.UserId = userId)
+                //                let front, back, _, _ =
+                //                    CardHtml.generate
+                //                        (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
+                //                        cardTemplate.QuestionTemplate
+                //                        cardTemplate.AnswerTemplate
+                //                        cardTemplate.CardTemplateInstance.Css
+                //                if isNull card
+                //                then None
+                //                else
+                //                    {   Front = front
+                //                        Back = back
+                //                        CardTemplateName = cardTemplate.Name
+                //                        Tags = card.PrivateTag_AcquiredCards.Select(fun x -> x.PrivateTag.Name)
+                //                    } |> Some
+                //            )
+                //        {   CardInstanceId = fi.Id
+                //            CardTemplateInstanceId = fi.FieldValues.First().Field.CardTemplateInstanceId
+                //            MaintainerId = fi.Card.MaintainerId
+                //            Description = fi.Card.Description
+                //            CardId = fi.CardId
+                //            CardCreated = fi.Created
+                //            CardModified = Option.ofNullable fi.Modified
+                //            CardFields =
+                //                fi.FieldValues
+                //                    .OrderBy(fun x -> x.Field.Ordinal)
+                //                    .Select(fun x -> 
+                //                        {   Field = Field.load x.Field
+                //                            Value = x.Value
+                //                        }).ToList()
+                //            Cards = cards |> Seq.choose id
+                //        }
+                //    ).ToList()
+            }
         }
 
-type FieldValue with
-    static member load (entity: FieldValueEntity) = {
-        Value = entity.Value
-        FieldId = entity.FieldId
-    }
-
-type Card with
-    static member load userId (entity: CardEntity) =
-        let front, back, _, _ =
-            CardHtml.generate
-                (entity.FacetInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
-                entity.CardTemplate.QuestionTemplate
-                entity.CardTemplate.AnswerTemplate
-                entity.CardTemplate.FacetTemplateInstance.Css
-        {   Id = entity.Id
-            CardTemplateName = entity.CardTemplate.Name
-            ClozeIndex = entity.ClozeIndex |> Option.ofNullable
-            Front = front
-            Back = back
-            IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
-        }
-
-type FacetInstance with
-    static member load userId (entity: FacetInstanceEntity) = {
-        Id = entity.Id
-        Created = entity.Created
-        Modified = entity.Modified |> Option.ofNullable
-        IsDmca = entity.IsDmca
-        Cards = entity.Cards |> Seq.map (Card.load userId)
-        FieldValues = entity.FieldValues |> Seq.map FieldValue.load
-        TemplateInstance = entity.Cards.First().CardTemplate.FacetTemplateInstance |> FacetTemplateInstance.load
-    }
+//type Card with
+//    static member load userId (entity: CardEntity) =
+//        let front, back, _, _ =
+//            CardHtml.generate
+//                (entity.CardInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
+//                entity.CardTemplate.QuestionTemplate
+//                entity.CardTemplate.AnswerTemplate
+//                entity.CardTemplate.CardTemplateInstance.Css
+//        {   Id = entity.Id
+//            CardTemplateName = entity.CardTemplate.Name
+//            ClozeIndex = entity.ClozeIndex |> Option.ofNullable
+//            Front = front
+//            Back = back
+//            IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
+//        }
 
 type Comment with
-    static member load (entity: CommentFacetEntity) = {
+    static member load (entity: CommentCardEntity) = {
         User = entity.User.DisplayName
         UserId = entity.UserId
         Text = entity.Text
@@ -380,31 +364,23 @@ type Comment with
         IsDmca = entity.IsDmca
     }
 
-type Facet with
-    static member load userId (entity: FacetEntity) = {
+//type Card with
+//    static member load userId (entity: CardEntity) = {
+//        Id = entity.Id
+//        Maintainer = entity.Author.DisplayName
+//        MaintainerId = entity.AuthorId
+//        Description = entity.Description
+//        LatestInstance = entity.CardInstances.OrderByDescending(fun x -> x.Created).First() |> CardInstance.load userId
+//        Comments = entity.CommentCards |> Seq.map Comment.load
+//    }
+
+type ExploreCard with
+    static member load userId (entity: CardEntity) = {
         Id = entity.Id
-        Maintainer = entity.Maintainer.DisplayName
-        MaintainerId = entity.MaintainerId
+        Author = entity.Author.DisplayName
+        AuthorId = entity.AuthorId
+        Users = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum()
         Description = entity.Description
-        LatestInstance = entity.FacetInstances.OrderByDescending(fun x -> x.Created).First() |> FacetInstance.load userId
-        Comments = entity.CommentFacets |> Seq.map Comment.load
-    }
-
-type DetailedConcept with
-    static member load userId (entity: ConceptEntity) = {
-        Id = entity.Id
-        Name = entity.Name
-        Maintainer = entity.Maintainer.DisplayName
-        MaintainerId = entity.MaintainerId
-        Facets = entity.Facets |> Seq.map (Facet.load userId)
-    }
-
-type ExploreConcept with
-    static member load userId (entity: ConceptEntity) = {
-        Id = entity.Id
-        Name = entity.Name
-        Maintainer = entity.Maintainer.DisplayName
-        MaintainerId = entity.MaintainerId
-        Users = entity.Facets.SelectMany(fun x -> x.FacetInstances.SelectMany(fun x -> x.Cards.Select(fun x -> x.AcquiredCards.Count))).Sum()
-        Facets = entity.Facets |> Seq.map (Facet.load userId)
+        LatestInstance = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstance.load userId
+        Comments = entity.CommentCards |> Seq.map Comment.load
     }

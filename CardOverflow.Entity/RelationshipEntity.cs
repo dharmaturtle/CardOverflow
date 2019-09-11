@@ -13,7 +13,7 @@ namespace CardOverflow.Entity
         [Required]
         [Column("Relationship")]
         [StringLength(250)]
-        public string Relationship1 {
+        public string Name {
             get => _Relationship1;
             set {
                 if (value.Length > 250) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Relationship1 has a maximum length of 250. Attempted value: {value}");

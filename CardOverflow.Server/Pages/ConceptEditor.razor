@@ -14,7 +14,7 @@
   <p><em>Loading...</em></p>
 } else {
   <h1>Concept: @Concept.Name</h1>
-  <h2>Facets</h2>
+  <h2>Cards</h2>
   <table class="table">
     <thead>
       <tr>
@@ -25,13 +25,13 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var facet in Concept.Facets) {
+      @foreach (var card in Concept.Cards) {
         <tr>
-          <td>@facet.Description</td>
-          <td>@facet.Maintainer</td>
+          <td>@card.Description</td>
+          <td>@card.Maintainer</td>
           <td>
             <ul>
-              @foreach (var card in facet.LatestInstance.Cards) {
+              @foreach (var card in card.LatestInstance.Cards) {
                 <li>
                   <p>Template name: @card.CardTemplateName</p>
                   @if (User == null) {
@@ -54,12 +54,12 @@
           </td>
           <td>
             <ul>
-              @foreach (var comment in @facet.Comments) {
+              @foreach (var comment in @card.Comments) {
                 <li>
                   @comment.User: @comment.Text
                 </li>
               }
-              <Comment FacetId=@facet.Id />
+              <Comment CardId=@card.Id />
             </ul>
           </td>
         </tr>
@@ -81,7 +81,7 @@
 
   async Task Acquire(int cardId) {
     await CardRepository.AcquireCardsAsync(Db, User.Id, new List<int> { cardId });
-    Concept.Facets.SelectMany(x => x.LatestInstance.Cards.Where(xx => xx.Id == cardId)).Single().IsAcquired = true;
+    Concept.Cards.SelectMany(x => x.LatestInstance.Cards.Where(xx => xx.Id == cardId)).Single().IsAcquired = true;
     StateHasChanged();
   }
 

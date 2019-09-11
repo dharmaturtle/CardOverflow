@@ -31,12 +31,12 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   [Parameter]
-  int FacetId { get; set; }
+  int CardId { get; set; }
   CommentText WriteComment = new CommentText();
   bool isSaved;
 
   async Task SaveComment() {
-    await SanitizeCommentRepository.AddAndSaveAsync(Db, Time, WriteComment, FacetId, User.Email);
+    await SanitizeCommentRepository.AddAndSaveAsync(Db, Time, WriteComment, CardId, User.Email);
     isSaved = true;
   }
 

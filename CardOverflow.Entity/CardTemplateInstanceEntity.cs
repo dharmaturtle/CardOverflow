@@ -29,7 +29,6 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime? Modified { get; set; }
-        public bool IsCloze { get; set; }
         [Required]
         [StringLength(500)]
         public string LatexPre {
@@ -98,7 +97,7 @@ namespace CardOverflow.Entity
         [ForeignKey("CardTemplateId")]
         [InverseProperty("CardTemplateInstances")]
         public virtual CardTemplateEntity CardTemplate { get; set; }
-        [InverseProperty("FacetTemplateInstance")]
+        [InverseProperty("CardTemplateInstance")]
         public virtual ICollection<FieldEntity> Fields { get; set; }
         [InverseProperty("CardTemplateInstance")]
         public virtual ICollection<User_CardTemplateInstanceEntity> User_CardTemplateInstances { get; set; }

@@ -28,8 +28,8 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
     UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
     let theCollective = db.User.AsNoTracking().Include(fun x -> x.CardOptions).First(fun x -> x.DisplayName = "The Collective")
-    Anki.parseModels theCollective.Id ankiModels |> Result.getOk |> Seq.map (fun (_, x) -> x.FacetTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First())
-    |> db.FacetTemplateInstance.AddRange
+    Anki.parseModels theCollective.Id ankiModels |> Result.getOk |> Seq.map (fun (_, x) -> x.CardTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First())
+    |> db.CardTemplateInstance.AddRange
     db.SaveChangesI ()
 
 //[<Fact>]
