@@ -277,18 +277,24 @@ module Anki =
         |> Decode.fromString
     let parseModels userId =
         Decode.object(fun get ->
-            get.Required.Field "tmpls" (Decode.object(fun g ->
-                        {|Name = g.Required.Field "name" Decode.string
-                          QuestionTemplate = g.Required.Field "qfmt" Decode.string
-                          AnswerTemplate = g.Required.Field "afmt" Decode.string
-                          ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
-                          ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string |})
-                          |> Decode.list )
+            let cardTemplates =
+                get.Required.Field "tmpls" (Decode.object(fun g ->
+                            {|Name = g.Required.Field "name" Decode.string
+                              QuestionTemplate = g.Required.Field "qfmt" Decode.string
+                              AnswerTemplate = g.Required.Field "afmt" Decode.string
+                              ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
+                              ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string |})
+                              |> Decode.list )
+            cardTemplates
             |> Seq.map(fun cardTemplate ->
+                let namePostfix =
+                    if cardTemplates.Count() >= 2
+                    then " - " + cardTemplate.Name
+                    else ""
                 { DeckId = get.Required.Field "did" Decode.int64
                   CardTemplate =
                     { MaintainerId = userId
-                      Name = get.Required.Field "name" Decode.string + " - " + cardTemplate.Name
+                      Name = get.Required.Field "name" Decode.string + namePostfix
                       Css = get.Required.Field "css" Decode.string
                       Fields =
                         get.Required.Field "flds" (Decode.object(fun get ->
