@@ -79,7 +79,11 @@ module CardRepository =
                 if userId = 0
                 then
                     db.Card
-                        //.Include(fun x -> x.Maintainer)
+                        .Include(fun x -> x.Author)
+                        .Include(fun x -> x.CommentCards)
+                        .Include(fun x -> x.CardInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
+                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
                         //.Include(fun x -> x.Cards :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardEntity) -> x.CardInstances :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardInstanceEntity) -> x.Cards :> IEnumerable<_>)

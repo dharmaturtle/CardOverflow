@@ -39,7 +39,7 @@ let add templateName (db: CardOverflowDb) userId tags =
     CardRepository.CreateCard db initialCard <| Seq.empty.ToList()
 
 let addBasicAndReversedCard: CardOverflowDb -> int -> seq<string> -> unit =
-    add "Basic (and reversed card)"
+    add "Basic (and reversed card) - Card 2"
 
 let addBasicCard =
     add "Basic"
