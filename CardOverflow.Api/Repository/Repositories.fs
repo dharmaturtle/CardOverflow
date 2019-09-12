@@ -23,10 +23,8 @@ module CardTemplateRepository =
         task {
             let! instance =
                 db.CardTemplateInstance
-                    //.Include(fun x -> x.CardTemplate.CardTemplateInstances :> IEnumerable<_>)
-                    //    .ThenInclude(fun (x: CardTemplateInstanceEntity) -> x.CardTemplateInstances)
-                    //.Include(fun x -> x.CardTemplate.CardTemplateInstances :> IEnumerable<_>)
-                    //    .ThenInclude(fun (x: CardTemplateInstanceEntity) -> x.Fields)
+                    .Include(fun x -> x.CardTemplate.CardTemplateInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardTemplateInstanceEntity) -> x.Fields)
                     .FirstAsync(fun x -> x.Id = instanceId)
             return instance.CardTemplate |> CardTemplate.load
         }
