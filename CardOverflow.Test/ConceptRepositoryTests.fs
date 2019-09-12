@@ -100,10 +100,10 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
             |> ignore
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
 
-let testGetAcquired cardIds addConcept name = task {
+let testGetAcquired cardIds addCards name = task {
     use c = new TestContainer(name)
     let userId = 2
-    addConcept c.Db 3 []
+    addCards |> Seq.iter (fun addCard -> addCard c.Db 3 [])
     do! CardRepository.AcquireCardsAsync c.Db userId cardIds
 
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1
@@ -127,19 +127,19 @@ let testGetAcquired cardIds addConcept name = task {
 let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
     testGetAcquired
         [1]
-        FacetRepositoryTests.addBasicCard
+        [ FacetRepositoryTests.addBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 1 basic card`` @>
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> = 
     testGetAcquired
         [1]
-        FacetRepositoryTests.addBasicAndReversedCard
+        [ FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 1 card of a pair`` @>
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
     testGetAcquired
         [1; 2]
-        FacetRepositoryTests.addBasicAndReversedCard
+        [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>
