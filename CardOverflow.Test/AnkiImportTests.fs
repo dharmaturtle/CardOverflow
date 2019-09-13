@@ -25,17 +25,19 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:14:00"
             "4/8/2019 02:14:00"
             "4/8/2019 02:14:00"
+            "4/8/2019 02:14:00"
         ].ToList(),
-        db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
+        db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "6/16/2019 00:51:00"
             "6/16/2019 00:52:00"
             "6/16/2019 00:52:00"
             "6/16/2019 00:52:00"
+            "6/16/2019 00:52:00"
             "6/16/2019 00:54:00"
         ].ToList(),
-        db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
+        db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32" // lowTODO why do these have seconds when its a smalldatetime?
@@ -47,7 +49,7 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
         ].ToList(),
-        db.CardInstance.AsEnumerable().Select(fun x -> x.Created.ToString()).OrderBy(fun x -> x)
+        db.CardInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53" // lowTODO why do these have seconds when its a smalldatetime?

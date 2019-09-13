@@ -162,7 +162,7 @@ type AnkiAcquiredCard = {
             .FirstOrDefault(fun c -> 
                 this.UserId = c.UserId &&
                 this.CardInstance.Id = c.CardInstanceId &&
-                this.CardTemplateInstance.Id = c.CardInstance.FieldValues.First().Field.CardTemplateInstanceId
+                this.CardTemplateInstance.Id = c.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId
             )
 
 type AnkiHistory = {
