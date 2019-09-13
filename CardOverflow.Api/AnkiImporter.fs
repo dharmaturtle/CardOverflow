@@ -145,14 +145,16 @@ module AnkiImporter =
             let cardsAndTagsByAnkiId =
                 let duplicates =
                     cardsAndTagsByAnkiId
-                    |> Seq.groupBy(fun (_, (c, _)) -> c.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
+                    |> Seq.groupBy(fun (_, (c, _)) -> c.Select(fun x -> x.AcquireHash)) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
                     |> Seq.filter(fun (_, x) -> x.Count() > 1)
                     |> Seq.collect(fun (_, x) -> 
                         let tags = x.SelectMany(fun (_, (_, tags)) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
-                        let (_, (card, _)) = x.First()
-                        card.Created <- x.Min(fun (_, (c, _)) -> c.Created)
-                        card.Modified <- x.Max(fun (_, (c, _)) -> c.Modified)
-                        x |> Seq.map (fun (ankiId, _) -> (ankiId, (card, tags)))
+                        let (_, (cards, _)) = x.First()
+                        cards |> Seq.iter(fun card ->
+                            card.Created <- x.SelectMany(fun (_, (cs, _)) -> cs.Select(fun x -> x.Created)).Min()
+                            card.Modified <- x.SelectMany(fun (_, (cs, _)) -> cs.Select(fun x -> x.Modified)).Max()
+                        )
+                        x |> Seq.map (fun (ankiId, _) -> (ankiId, (cards, tags)))
                     ) |> Map.ofSeq
                 cardsAndTagsByAnkiId
                 |> Seq.map (fun (ankiId, tuple) ->
@@ -200,8 +202,9 @@ module AnkiImporter =
                     <| getAcquiredCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
-                if x.CardInstance <> null && x.CardInstance.FieldValues.First().Field.CardTemplateInstanceId = 0 && x.CardInstanceId = 0
-                then db.AcquiredCard.AddI x
+                //if x.CardInstance <> null && x.CardInstance.FieldValues.First().Field.CardTemplateInstanceId = 0 && x.CardInstanceId = 0
+                //then 
+                    db.AcquiredCard.AddI x
                 //else db.AcquiredCard.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
             histories |> Seq.iter (fun x ->

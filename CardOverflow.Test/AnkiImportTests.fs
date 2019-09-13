@@ -42,6 +42,8 @@ let assertHasBasicInfo db ankiDb =
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32" // lowTODO why do these have seconds when its a smalldatetime?
             "4/8/2019 02:14:57"
+            "4/8/2019 02:14:57"
+            "4/8/2019 02:15:50"
             "4/8/2019 02:15:50"
             "4/8/2019 02:16:27"
             "4/8/2019 02:16:42"
@@ -54,6 +56,8 @@ let assertHasBasicInfo db ankiDb =
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53" // lowTODO why do these have seconds when its a smalldatetime?
             "4/8/2019 02:15:44"
+            "4/8/2019 02:15:44"
+            "4/8/2019 02:16:22"
             "4/8/2019 02:16:22"
             "4/8/2019 02:16:39"
             "4/8/2019 02:18:05"
@@ -61,12 +65,11 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
         ].ToList(),
-        db.CardInstance.AsEnumerable().Select(fun x -> x.Modified.ToString()).OrderBy(fun x -> x)
+        db.CardInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
-    Assert.Equal(8, db.Card.Count())
     Assert.Equal(10, db.Card.Count())
     Assert.Equal(10, db.AcquiredCard.Count(fun x -> x.UserId = userId))
-    Assert.Equal(8, db.User.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
+    Assert.Equal(10, db.User.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
     Assert.Equal(2, db.CardOption.Count(fun db -> db.UserId = userId))
     Assert.Equal(5, db.User_CardTemplateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(

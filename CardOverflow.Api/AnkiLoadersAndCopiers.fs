@@ -93,9 +93,6 @@ type AnkiCardWrite = {
         entity.AcquireHash <- CardInstanceEntity.acquireHash entity cardTemplateHash hasher
     member this.CopyToNew (files: FileEntity seq) =
         let entity = CardInstanceEntity()
-        let firstValue =
-            this.FieldValues.OrderBy(fun x -> x.Field.Ordinal).First().Value
-            |> MappingTools.stripHtmlTags
         entity.Card <-
             CardEntity(
                 AuthorId = this.MaintainerId,
@@ -134,29 +131,13 @@ type AnkiAcquiredCard = {
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
-    member this.CopyToNew (privateTags: TagEntity seq) =
+    member this.CopyToNew (tags: TagEntity seq) =
         let entity = AcquiredCardEntity ()
         this.CopyTo entity
+        entity.CardInstance <- this.CardInstance
+        entity.CardOption <- this.CardOption
+        entity.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(AcquiredCard = entity, Tag = x)).ToList()
         entity
-        //this.CardInstance.Cards
-        //|> Seq.filter (fun c -> c.CardTemplate = this.CardTemplate && c.ClozeIndex = clozeIndex)
-        //|> Seq.tryExactlyOne
-        //|> function
-        //| Some card ->
-        //    card.AcquiredCards.Single()
-        //| None ->
-        //    let card =
-        //        CardEntity (
-        //            CardInstance = this.CardInstance,
-        //            CardTemplate = this.CardTemplate,
-        //            ClozeIndex = clozeIndex,
-        //            AcquiredCards = [entity].ToList()
-        //        )
-        //    this.CardInstance.Cards.Add card
-        //    entity.Card <- card
-        //    entity.CardOption <- this.CardOption
-        //    entity.PrivateTag_AcquiredCards <- privateTags.Select(fun x -> PrivateTag_AcquiredCardEntity(AcquiredCard = entity, PrivateTag = x)).ToList()
-        //    entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCard
             .FirstOrDefault(fun c -> 
@@ -283,8 +264,10 @@ module Anki =
                               QuestionTemplate = g.Required.Field "qfmt" Decode.string
                               AnswerTemplate = g.Required.Field "afmt" Decode.string
                               ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
-                              ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string |})
+                              ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
+                              Ordinal = g.Required.Field "ord" Decode.int |> byte|})
                               |> Decode.list )
+                |> Seq.sortBy (fun x -> x.Ordinal)
             cardTemplates
             |> Seq.map(fun cardTemplate ->
                 let namePostfix =
@@ -399,14 +382,16 @@ module Anki =
                     )
                 parseNotesRec
                     allTags
-                    (Seq.append xs cardsAndTagsByNoteId)
+                    (Seq.append
+                        [note.Id, (cards, relevantTags)]
+                        cardsAndTagsByNoteId)
                     tail
             | _ ->
                 cardsAndTagsByNoteId
         parseNotesRec initialTags []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
-        (cardsAndTagsByAnkiId: Map<int64, CardInstanceEntity * TagEntity seq>)
+        (cardsAndTagsByAnkiId: Map<int64, CardInstanceEntity seq * TagEntity seq>)
         (colCreateDate: DateTime)
         userId
         (usersTags: TagEntity seq)
@@ -414,7 +399,8 @@ module Anki =
         (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
-        let card, tags = cardsAndTagsByAnkiId.[ankiCard.Nid]
+        let cards, tags = cardsAndTagsByAnkiId.[ankiCard.Nid]
+        let card = cards.ElementAt(ankiCard.Ord |> int)
         let cti = card.FieldValues.First().Field.CardTemplateInstance
         match ankiCard.Type with
         | 0L -> Ok New
