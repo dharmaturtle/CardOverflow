@@ -142,25 +142,32 @@ module AnkiImporter =
                     fileEntityByAnkiFileName
                     getCard
                     ankiDb.Notes
+                |> List.ofSeq
             let cardsAndTagsByAnkiId =
                 let duplicates =
                     cardsAndTagsByAnkiId
-                    |> Seq.groupBy(fun (_, (c, _)) -> c.Select(fun x -> x.AcquireHash)) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
+                    |> Seq.collect (fun (id, (cards, tags)) -> cards |> Seq.map (fun card -> (card, id, tags)))
+                    |> Seq.groupBy(fun (card, _, _) -> card.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
                     |> Seq.filter(fun (_, x) -> x.Count() > 1)
-                    |> Seq.collect(fun (_, x) -> 
-                        let tags = x.SelectMany(fun (_, (_, tags)) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
-                        let (_, (cards, _)) = x.First()
-                        cards |> Seq.iter(fun card ->
-                            card.Created <- x.SelectMany(fun (_, (cs, _)) -> cs.Select(fun x -> x.Created)).Min()
-                            card.Modified <- x.SelectMany(fun (_, (cs, _)) -> cs.Select(fun x -> x.Modified)).Max()
-                        )
-                        x |> Seq.map (fun (ankiId, _) -> (ankiId, (cards, tags)))
-                    ) |> Map.ofSeq
+                    |> Seq.collect(fun (_, x) ->
+                        let tags = x.SelectMany(fun (_, _, tags) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
+                        let card, _, _ = x.First()
+                        card.Created <- x.Min(fun (card, _, _) -> card.Created)
+                        card.Modified <- x.Max(fun (card, _, _) -> card.Modified)
+                        x |> Seq.map (fun (_, ankiId, _) -> ankiId, (card, tags))
+                    )
+                    |> Seq.groupBy (fun (ankiId, _) -> ankiId)
+                    |> Seq.map (fun (ankiId, xs) ->
+                        let cards = xs.Select(fun (_, (card, _)) -> card)
+                        let tags = xs.SelectMany(fun (_, (_, tags)) -> tags)
+                        ankiId, (cards, tags)
+                    )
+                    |> Map.ofSeq
                 cardsAndTagsByAnkiId
                 |> Seq.map (fun (ankiId, tuple) ->
                     if duplicates.ContainsKey ankiId
-                    then (ankiId, duplicates.[ankiId])
-                    else (ankiId, tuple)
+                    then ankiId, duplicates.[ankiId]
+                    else ankiId, tuple
                 ) |> Map.ofSeq
             let! cardByAnkiId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
@@ -169,9 +176,10 @@ module AnkiImporter =
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory) |> Result.consolidate
-            return (cardByAnkiId |> Map.overValue id, histories |> Seq.choose id)
+            return
+                cardByAnkiId |> Map.overValue id |> Seq.distinctBy (fun x -> x.CardInstance.GetHashCode()), // duplicate anki notes share a CardInstance instance
+                histories |> Seq.choose id
         }
-
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null

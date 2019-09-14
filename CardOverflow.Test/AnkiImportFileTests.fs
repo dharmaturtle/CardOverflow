@@ -97,8 +97,8 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     Assert.Equal<string seq>(
         ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
-    Assert.Equal("3/8/2018 23:48:00", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Created.ToString())
-    Assert.Equal("4/26/2018 02:54:00", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Modified.ToString())
+    Assert.Equal("3/8/2018 23:48:00", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Created.ToString("M/d/yyyy HH:mm:ss"))
+    Assert.Equal("4/26/2018 02:54:00", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Modified.Value.ToString("M/d/yyyy HH:mm:ss"))
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` () =
