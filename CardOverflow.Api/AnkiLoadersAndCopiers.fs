@@ -160,7 +160,7 @@ type AnkiHistory = {
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.UserId &&
             this.AcquiredCard.CardInstanceId = h.AcquiredCard.CardInstanceId &&
-            this.AcquiredCard.CardInstance.FieldValues.First().Field.CardTemplateInstanceId = h.AcquiredCard.CardInstance.FieldValues.First().Field.CardTemplateInstanceId &&
+            this.AcquiredCard.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId = h.AcquiredCard.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId &&
             this.Score = h.Score &&
             roundedTimeStamp = h.Timestamp &&
             interval = h.IntervalWithUnusedStepsIndex &&
