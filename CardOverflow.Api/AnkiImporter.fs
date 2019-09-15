@@ -134,7 +134,7 @@ module AnkiImporter =
                     | None -> TagEntity(Name = deckTag, UserId = userId))
                 |> Seq.append usersTags
                 |> Seq.toList
-            let cardsAndTagsByAnkiId =
+            let cardsAndTagsByNoteId =
                 Anki.parseNotes
                     cardTemplatesByModelId
                     usersTags
@@ -143,10 +143,10 @@ module AnkiImporter =
                     getCard
                     ankiDb.Notes
                 |> List.ofSeq
-            let cardsAndTagsByAnkiId =
+            let cardsAndTagsByNoteId =
                 let duplicates =
-                    cardsAndTagsByAnkiId
-                    |> Seq.collect (fun (id, (cards, tags)) -> cards |> Seq.map (fun card -> (card, id, tags)))
+                    cardsAndTagsByNoteId
+                    |> Seq.collect (fun (noteId, (cards, tags)) -> cards |> Seq.map (fun card -> (card, noteId, tags)))
                     |> Seq.groupBy(fun (card, _, _) -> card.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
                     |> Seq.filter(fun (_, x) -> x.Count() > 1)
                     |> Seq.collect(fun (_, x) ->
@@ -154,30 +154,30 @@ module AnkiImporter =
                         let card, _, _ = x.First()
                         card.Created <- x.Min(fun (card, _, _) -> card.Created)
                         card.Modified <- x.Max(fun (card, _, _) -> card.Modified)
-                        x |> Seq.map (fun (_, ankiId, _) -> ankiId, (card, tags))
+                        x |> Seq.map (fun (_, noteId, _) -> noteId, (card, tags))
                     )
-                    |> Seq.groupBy (fun (ankiId, _) -> ankiId)
-                    |> Seq.map (fun (ankiId, xs) ->
+                    |> Seq.groupBy (fun (noteId, _) -> noteId)
+                    |> Seq.map (fun (noteId, xs) ->
                         let cards = xs.Select(fun (_, (card, _)) -> card)
                         let tags = xs.SelectMany(fun (_, (_, tags)) -> tags)
-                        ankiId, (cards, tags)
+                        noteId, (cards, tags)
                     )
                     |> Map.ofSeq
-                cardsAndTagsByAnkiId
-                |> Seq.map (fun (ankiId, tuple) ->
-                    if duplicates.ContainsKey ankiId
-                    then ankiId, duplicates.[ankiId]
-                    else ankiId, tuple
+                cardsAndTagsByNoteId
+                |> Seq.map (fun (noteId, tuple) ->
+                    if duplicates.ContainsKey noteId
+                    then noteId, duplicates.[noteId]
+                    else noteId, tuple
                 ) |> Map.ofSeq
-            let! cardByAnkiId =
+            let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId cardsAndTagsByAnkiId collectionCreationTimeStamp userId usersTags getAcquiredCard)
+                |> List.map (Anki.mapCard cardOptionAndDeckNameByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId usersTags getAcquiredCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
-            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByAnkiId getHistory) |> Result.consolidate
+            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByNoteId getHistory) |> Result.consolidate
             return
-                cardByAnkiId |> Map.overValue id |> Seq.distinctBy (fun x -> x.CardInstance.GetHashCode()), // duplicate anki notes share a CardInstance instance
+                cardByNoteId |> Map.overValue id |> Seq.distinctBy (fun x -> x.CardInstance.GetHashCode()), // duplicate anki notes share a CardInstance instance
                 histories |> Seq.choose id
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
