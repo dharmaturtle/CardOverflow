@@ -54,15 +54,13 @@ type AnkiCardTemplateInstance = {
     member this.CopyToNew userId defaultCardOption =
         let entity = CardTemplateInstanceEntity()
         entity.User_CardTemplateInstances <-
-            User_CardTemplateInstanceEntity(
+            [User_CardTemplateInstanceEntity(
                 UserId = userId,
                 Tag_User_CardTemplateInstances =
                     (this.DefaultTags.ToList()
                     |> Seq.map (fun x -> Tag_User_CardTemplateInstanceEntity(UserId = userId, DefaultTagId = x))
                     |> fun x -> x.ToList()),
-                DefaultCardOption = defaultCardOption)
-            |> Seq.singleton
-            |> fun x -> x.ToList()
+                DefaultCardOption = defaultCardOption)].ToList()
         entity.CardTemplate <-
             CardTemplateEntity(
                 AuthorId = this.MaintainerId,
@@ -376,10 +374,6 @@ module Anki =
                     | None -> c.CopyToNew files
                     )
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
-                let xs =
-                    cards |> Seq.map (fun card ->
-                        (note.Id, (card, relevantTags))
-                    )
                 parseNotesRec
                     allTags
                     (Seq.append

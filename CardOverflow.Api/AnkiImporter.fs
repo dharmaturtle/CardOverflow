@@ -102,7 +102,6 @@ module AnkiImporter =
                         |> function
                         | Some (cardOption, _) -> cardOption
                         | None -> cardOptions.First(fun x -> x.IsDefault) // veryLowTODO some anki models have invalid deck ids. Perhaps log this
-                    let entity = x.CardTemplate.CopyToNew userId defaultCardOption
                     getCardTemplates x.CardTemplate
                     |> function
                     | Some (e: CardTemplateInstanceEntity) ->
@@ -116,7 +115,7 @@ module AnkiImporter =
                                 DefaultCardOption = defaultCardOption)
                             |> e.User_CardTemplateInstances.Add
                         e
-                    | None -> entity
+                    | None -> x.CardTemplate.CopyToNew userId defaultCardOption
                 let toEntities  _ (xs: AnkiCardTemplateAndDeckId seq) =
                     xs |> Seq.map toEntity
                 Anki.parseModels userId col.Models
