@@ -39,6 +39,8 @@ type AnkiCardTemplateInstance = {
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
+    DeckId: int64
+    IsCloze: bool
 } with
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
         entity.Css <- this.Css
@@ -70,12 +72,6 @@ type AnkiCardTemplateInstance = {
         entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
         entity
     
-
-type AnkiCardTemplateAndDeckId = {
-    CardTemplate: AnkiCardTemplateInstance
-    DeckId: int64
-}
-
 type AnkiCardWrite = {
     CardTemplateHash: byte[]
     FieldValues: FieldValueEntity seq
@@ -272,32 +268,31 @@ module Anki =
                     if cardTemplates.Count() >= 2
                     then " - " + cardTemplate.Name
                     else ""
-                { DeckId = get.Required.Field "did" Decode.int64
-                  CardTemplate =
-                    { MaintainerId = userId
-                      Name = get.Required.Field "name" Decode.string + namePostfix
-                      Css = get.Required.Field "css" Decode.string
-                      Fields =
-                        get.Required.Field "flds" (Decode.object(fun get ->
-                            { Id = 0
-                              Name = get.Required.Field "name" Decode.string
-                              Font = get.Required.Field "font" Decode.string
-                              FontSize = get.Required.Field "size" Decode.int |> byte
-                              IsRightToLeft = get.Required.Field "rtl" Decode.bool
-                              Ordinal = get.Required.Field "ord" Decode.int |> byte
-                              IsSticky = get.Required.Field "sticky" Decode.bool })
-                            |> Decode.list )
-                      QuestionTemplate = cardTemplate.QuestionTemplate
-                      AnswerTemplate = cardTemplate.AnswerTemplate
-                      ShortQuestionTemplate = cardTemplate.ShortQuestionTemplate
-                      ShortAnswerTemplate = cardTemplate.ShortAnswerTemplate
-                      Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
-                      Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
-                      DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
-                      DefaultCardOptionId = 0
-                      LatexPre = get.Required.Field "latexPre" Decode.string
-                      LatexPost = get.Required.Field "latexPost" Decode.string
-                    }
+                {   MaintainerId = userId
+                    Name = get.Required.Field "name" Decode.string + namePostfix
+                    Css = get.Required.Field "css" Decode.string
+                    Fields =
+                      get.Required.Field "flds" (Decode.object(fun get ->
+                          { Id = 0
+                            Name = get.Required.Field "name" Decode.string
+                            Font = get.Required.Field "font" Decode.string
+                            FontSize = get.Required.Field "size" Decode.int |> byte
+                            IsRightToLeft = get.Required.Field "rtl" Decode.bool
+                            Ordinal = get.Required.Field "ord" Decode.int |> byte
+                            IsSticky = get.Required.Field "sticky" Decode.bool })
+                          |> Decode.list )
+                    QuestionTemplate = cardTemplate.QuestionTemplate
+                    AnswerTemplate = cardTemplate.AnswerTemplate
+                    ShortQuestionTemplate = cardTemplate.ShortQuestionTemplate
+                    ShortAnswerTemplate = cardTemplate.ShortAnswerTemplate
+                    Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
+                    Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
+                    DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
+                    DefaultCardOptionId = 0
+                    LatexPre = get.Required.Field "latexPre" Decode.string
+                    LatexPost = get.Required.Field "latexPost" Decode.string
+                    DeckId = get.Required.Field "did" Decode.int64
+                    IsCloze = get.Required.Field "type" ankiIntToBool
                 }))
         |> Decode.keyValuePairs
         |> Decode.fromString
@@ -317,7 +312,7 @@ module Anki =
                   field.Replace(ankiFileName, "missingImage.jpg")) // medTODO needs a placeholder
         )
         |> fun x -> (x, SoundRegex().TypedMatches field)
-        ||> Seq.fold (fun (files, field) m -> 
+        ||> Seq.fold (fun (files, field) m ->
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
@@ -335,8 +330,9 @@ module Anki =
                   field.Replace(ankiFileName, "[MISSING SOUND]")) // medTODO uh, what does this look/sound like? Write a test lol
         )
         |> fun (files, fields) -> (files |> List.distinct, fields)
+    type ClozeRegex = Regex< """{{c(?<clozeIndex>\d)::.*?}}""" >
     let parseNotes
-        (cardTemplatesByModelId: Map<string, CardTemplateInstanceEntity seq>)
+        (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; IsCloze: bool |} seq>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -358,21 +354,30 @@ module Anki =
                 let cardTemplates = cardTemplatesByModelId.[string note.Mid]
                 let cards =
                     cardTemplates |> Seq.map (fun cardTemplate ->
-                    let c =
-                        { CardTemplateHash = cardTemplate.AcquireHash
-                          FieldValues =
-                            Seq.zip
-                                cardTemplate.Fields
-                                (MappingTools.splitByUnitSeparator fields)
-                            |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
-                          Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
-                          Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
-                          MaintainerId = userId }
-                    getCard c
-                    |> function
-                    | Some x -> x
-                    | None -> c.CopyToNew files
+                        let c =
+                            { CardTemplateHash = cardTemplate.Entity.AcquireHash
+                              FieldValues =
+                                Seq.zip
+                                    cardTemplate.Entity.Fields
+                                    (MappingTools.splitByUnitSeparator fields)
+                                |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
+                              Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
+                              Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
+                              MaintainerId = userId }
+                        defaultArg
+                            <| getCard c
+                            <| c.CopyToNew files
                     )
+                let cards =
+                    if cardTemplates.First().IsCloze
+                    then
+                        let maxClozeIndex =
+                            ClozeRegex().TypedMatches fields
+                            |> Seq.map (fun x -> x.clozeIndex.Value |> int)
+                            |> Seq.max
+                        let card = cards |> Seq.exactlyOne
+                        [1 .. maxClozeIndex] |> Seq.map (fun _ -> card)
+                    else cards
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
                 parseNotesRec
                     allTags
@@ -385,7 +390,7 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
-        (cardsAndTagsByAnkiId: Map<int64, CardInstanceEntity seq * TagEntity seq>)
+        (cardsAndTagsByNoteId: Map<int64, CardInstanceEntity seq * TagEntity seq>)
         (colCreateDate: DateTime)
         userId
         (usersTags: TagEntity seq)
@@ -393,7 +398,7 @@ module Anki =
         (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
-        let cards, tags = cardsAndTagsByAnkiId.[ankiCard.Nid]
+        let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
         let card = cards.ElementAt(ankiCard.Ord |> int)
         let cti = card.FieldValues.First().Field.CardTemplateInstance
         match ankiCard.Type with
@@ -447,6 +452,6 @@ module Anki =
                 | Some entity ->
                     c.CopyTo entity
                     entity
-                | None -> c.CopyToNew (deckTag :: List.ofSeq tags)
-            (ankiCard.Id, entity)
+                | None -> c.CopyToNew <| Seq.append [deckTag] tags
+            ankiCard.Id, entity
         )

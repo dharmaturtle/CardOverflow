@@ -29,8 +29,8 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
     UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
     let theCollective = db.User.AsNoTracking().Include(fun x -> x.CardOptions).First(fun x -> x.DisplayName = "The Collective")
-    let toEntity (x: AnkiCardTemplateAndDeckId) =
-        x.CardTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First()
+    let toEntity (cardTemplate: AnkiCardTemplateInstance) =
+        cardTemplate.CopyToNew theCollective.Id <| theCollective.CardOptions.First()
     Anki.parseModels
         theCollective.Id
         ankiModels

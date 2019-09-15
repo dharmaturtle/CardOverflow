@@ -96,28 +96,29 @@ module AnkiImporter =
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
                     cardOptionByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! cardTemplatesByModelId =
-                let toEntity (x: AnkiCardTemplateAndDeckId) =
+                let toEntity (cardTemplate: AnkiCardTemplateInstance) =
                     let defaultCardOption =
-                        cardOptionAndDeckNameByDeckId.TryFind x.DeckId
+                        cardOptionAndDeckNameByDeckId.TryFind cardTemplate.DeckId
                         |> function
                         | Some (cardOption, _) -> cardOption
                         | None -> cardOptions.First(fun x -> x.IsDefault) // veryLowTODO some anki models have invalid deck ids. Perhaps log this
-                    getCardTemplates x.CardTemplate
+                    getCardTemplates cardTemplate
                     |> function
                     | Some (e: CardTemplateInstanceEntity) ->
                         if e.User_CardTemplateInstances.Any(fun x -> x.UserId = userId) |> not then
                             User_CardTemplateInstanceEntity(
                                 UserId = userId,
                                 Tag_User_CardTemplateInstances =
-                                    (x.CardTemplate.DefaultTags.ToList()
+                                    (cardTemplate.DefaultTags.ToList()
                                     |> Seq.map (fun x -> Tag_User_CardTemplateInstanceEntity(UserId = userId, DefaultTagId = x))
                                     |> fun x -> x.ToList()),
                                 DefaultCardOption = defaultCardOption)
                             |> e.User_CardTemplateInstances.Add
                         e
-                    | None -> x.CardTemplate.CopyToNew userId defaultCardOption
-                let toEntities  _ (xs: AnkiCardTemplateAndDeckId seq) =
-                    xs |> Seq.map toEntity
+                    | None -> cardTemplate.CopyToNew userId defaultCardOption
+                    |> fun x -> {| Entity = x; IsCloze = cardTemplate.IsCloze |}
+                let toEntities _ =
+                    Seq.map toEntity
                 Anki.parseModels userId col.Models
                 |> Result.map (fun x -> x |> Map.ofSeq |> Map.map toEntities)
             let usersTags =
@@ -158,7 +159,7 @@ module AnkiImporter =
                     |> Seq.groupBy (fun (noteId, _) -> noteId)
                     |> Seq.map (fun (noteId, xs) ->
                         let cards = xs.Select(fun (_, (card, _)) -> card)
-                        let tags = xs.SelectMany(fun (_, (_, tags)) -> tags)
+                        let tags = xs.SelectMany(fun (_, (_, tags)) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
                         noteId, (cards, tags)
                     )
                     |> Map.ofSeq
