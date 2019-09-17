@@ -211,6 +211,7 @@ type PagedList<'T> = {
     Details: PagedListDetails
 }
 
+[<CLIMutable>]
 type CardInstance = {
     Id: int
     Created: DateTime

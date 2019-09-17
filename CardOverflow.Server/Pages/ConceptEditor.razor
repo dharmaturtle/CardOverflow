@@ -1,4 +1,4 @@
-﻿@page "/Concept/{Id:int}"
+﻿@page "/Card/{Id:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -10,60 +10,49 @@
 @using CardOverflow.Server.Data
 @inject CardOverflowDb Db
 
-@if (Concept == null) {
+@if (Card == null) {
   <p><em>Loading...</em></p>
 } else {
-  <h1>Concept: @Concept.Name</h1>
-  <h2>Cards</h2>
   <table class="table">
     <thead>
       <tr>
         <th>Description</th>
         <th>Maintainer</th>
-        <th>Cards</th>
+        <th>Card</th>
         <th>Comments</th>
       </tr>
     </thead>
     <tbody>
-      @foreach (var card in Concept.Cards) {
-        <tr>
-          <td>@card.Description</td>
-          <td>@card.Maintainer</td>
-          <td>
-            <ul>
-              @foreach (var card in card.LatestInstance.Cards) {
-                <li>
-                  <p>Template name: @card.CardTemplateName</p>
-                  @if (User == null) {
-                    <p>Log in to verb</p>
-                  } else {
-                    @if (card.IsAcquired) {
-                      <button class="btn btn-secondary" disabled>
-                        Verb, but past tense (Needs a better name)
-                      </button>
-                    } else {
-                      <button class="btn btn-primary" onclick=@(() => @Acquire(card.Id))>
-                        Verb (Needs a better name)
-                      </button>
-                    }
-                  }
-                  <iframe sandbox allow-scripts class="concept-iframe" srcdoc=@card.Back></iframe>
-                </li>
-              }
-            </ul>
-          </td>
-          <td>
-            <ul>
-              @foreach (var comment in @card.Comments) {
-                <li>
-                  @comment.User: @comment.Text
-                </li>
-              }
-              <Comment CardId=@card.Id />
-            </ul>
-          </td>
-        </tr>
-      }
+      <tr>
+        <td>@Card.Description</td>
+        <td>@Card.Author</td>
+        <td>
+          @if (User == null) {
+            <p>Log in to verb</p>
+          } else {
+            @if (Card.LatestInstance.IsAcquired) {
+              <button class="btn btn-secondary" disabled>
+                Verb, but past tense (Needs a better name)
+              </button>
+            } else {
+              <button class="btn btn-primary" onclick=@(() => @Acquire(Card.Id))>
+                Verb (Needs a better name)
+              </button>
+            }
+          }
+          <iframe sandbox allow-scripts class="concept-iframe" srcdoc=@Card.LatestInstance.FrontBackFrontSynthBackSynth.Item2></iframe>
+        </td>
+        <td>
+          <ul>
+            @foreach (var comment in @Card.Comments) {
+              <li>
+                @comment.User: @comment.Text
+              </li>
+            }
+            <Comment CardId=@Card.Id />
+          </ul>
+        </td>
+      </tr>
     </tbody>
   </table>
 }
@@ -71,17 +60,17 @@
 @code {
   [Parameter]
   public int Id { get; set; }
-  DetailedConcept Concept;
+  ExploreCard Card;
   [CascadingParameter]
   UserEntity User { get; set; }
 
   protected override async Task OnInitAsync() {
-    Concept = await ConceptRepository.Get(Db, Id, User?.Id ?? 0);
+    Card = await CardRepository.Get(Db, Id, User?.Id ?? 0);
   }
 
   async Task Acquire(int cardId) {
     await CardRepository.AcquireCardsAsync(Db, User.Id, new List<int> { cardId });
-    Concept.Cards.SelectMany(x => x.LatestInstance.Cards.Where(xx => xx.Id == cardId)).Single().IsAcquired = true;
+    Card.LatestInstance.IsAcquired = true;
     StateHasChanged();
   }
 
