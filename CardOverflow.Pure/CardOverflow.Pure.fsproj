@@ -12,6 +12,7 @@
     <Compile Include="MappingTools.fs" />
     <Compile Include="BusinessLogic.fs" />
     <Compile Include="BusinessModels.fs" />
+    <Compile Include="AnkiImportLogic.fs" />
   </ItemGroup>
 
   <ItemGroup>

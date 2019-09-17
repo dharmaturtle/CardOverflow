@@ -109,12 +109,12 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     | Ok () -> ()
     | Error x -> failwith x
     //highTODO uncomment
-    //Assert.Equal<byte Nullable seq>(
-    //    [ 0uy; 1uy; 2uy; 3uy; 4uy ] |> Seq.map Nullable,
-    //    c.Db.CardInstance
-    //        .Include(fun x -> x.Card)
-    //        .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "c5"))
-    //        .Cards.Select(fun x -> x.ClozeIndex).OrderBy(fun x -> x))
+    Assert.Equal(
+        5,
+        c.Db.CardInstance
+            .Include(fun x -> x.Card)
+            .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "may be remembered with the mnemonic"))
+        )
     //Assert.Equal(
     //    Nullable 0uy,
     //    c.Db.CardInstance

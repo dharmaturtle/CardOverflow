@@ -302,8 +302,7 @@ module Anki =
         (([], field), ImgRegex().TypedMatches field)
         ||> Seq.fold (fun (files, field) m -> 
             let ankiFileName = m.ankiFileName.Value
-            if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
-            then
+            if fileEntityByAnkiFileName |> Map.containsKey ankiFileName then
                 let file = fileEntityByAnkiFileName.[ankiFileName]
                 ( file :: files,
                   field.Replace(ankiFileName, "image/" + UrlBase64.Encode file.Sha256))
@@ -330,7 +329,7 @@ module Anki =
                   field.Replace(ankiFileName, "[MISSING SOUND]")) // medTODO uh, what does this look/sound like? Write a test lol
         )
         |> fun (files, fields) -> (files |> List.distinct, fields)
-    type ClozeRegex = Regex< """{{c(?<clozeIndex>\d)::.*?}}""" >
+    
     let parseNotes
         (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; IsCloze: bool |} seq>)
         initialTags
@@ -353,13 +352,13 @@ module Anki =
                 let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let cardTemplates = cardTemplatesByModelId.[string note.Mid]
                 let cards =
-                    cardTemplates |> Seq.map (fun cardTemplate ->
+                    let toCard fields (cardTemplate: CardTemplateInstanceEntity) =
                         let c =
-                            { CardTemplateHash = cardTemplate.Entity.AcquireHash
+                            { CardTemplateHash = cardTemplate.AcquireHash
                               FieldValues =
                                 Seq.zip
-                                    cardTemplate.Entity.Fields
-                                    (MappingTools.splitByUnitSeparator fields)
+                                    <| cardTemplate.Fields
+                                    <| MappingTools.splitByUnitSeparator fields
                                 |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
                               Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                               Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
@@ -367,17 +366,15 @@ module Anki =
                         defaultArg
                             <| getCard c
                             <| c.CopyToNew files
-                    )
-                let cards =
-                    if cardTemplates.First().IsCloze
-                    then
-                        let maxClozeIndex =
-                            ClozeRegex().TypedMatches fields
-                            |> Seq.map (fun x -> x.clozeIndex.Value |> int)
-                            |> Seq.max
-                        let card = cards |> Seq.exactlyOne
-                        [1 .. maxClozeIndex] |> Seq.map (fun _ -> card)
-                    else cards
+                    if cardTemplates.First().IsCloze then
+                        let cardTemplate = cardTemplates |> Seq.exactlyOne
+                        [1 .. AnkiImportLogic.maxClozeIndex fields] |> Seq.map (fun i ->
+                            toCard
+                                <| AnkiImportLogic.multipleClozeToSingleCloze fields i
+                                <| cardTemplate.Entity
+                        )
+                    else
+                        cardTemplates |> Seq.map (fun x -> toCard fields x.Entity)
                 let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
                 parseNotesRec
                     allTags
