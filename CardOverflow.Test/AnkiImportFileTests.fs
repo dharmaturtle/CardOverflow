@@ -108,28 +108,18 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     |> function
     | Ok () -> ()
     | Error x -> failwith x
-    //highTODO uncomment
     Assert.Equal(
         5,
         c.Db.CardInstance
-            .Include(fun x -> x.Card)
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "may be remembered with the mnemonic"))
         )
-    //Assert.Equal(
-    //    Nullable 0uy,
-    //    c.Db.CardInstance
-    //        .Include(fun x -> x.Cards)
-    //        .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis"))
-    //        .Cards.Single().ClozeIndex)
-    //Assert.Equal(
-    //    Nullable(),
-    //    c.Db.CardInstance
-    //        .Include(fun x -> x.Cards)
-    //        .Single(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute"))
-    //        .Cards.Single().ClozeIndex)
-    //Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.Contains """<img src="missingImage.jpg">""")
-    //Assert.SingleI <| c.Db.Concept.Where(fun x -> x.Name = "↑↑ BUN/CR ratio indicates which type of acute renal failure?")
-    //Assert.SingleI <| c.Db.Concept.Where(fun x -> x.Name = "Drugs that act on microtubules may be remembered with the mnemonic \"Microtubules Get Constructed Ve…")
+    Assert.SingleI
+        <| c.Db.CardInstance
+            .Where(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis"))
+    Assert.SingleI
+        <| c.Db.CardInstance
+            .Where(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute"))
+    Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.Contains """<img src="missingImage.jpg">""")
 
 //[<Fact>]
 let ``Manual Anki import`` () =
