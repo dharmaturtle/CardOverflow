@@ -9,50 +9,35 @@
 @using CardOverflow.Sanitation
 @inject CardOverflowDb Db
 
-@if (concepts == null) {
+@if (cards == null) {
   <p><em>Loading...</em></p>
 } else {
   <div>
     <table class="table">
       <tr>
         <th>Preview</th>
-        <th>Card Count</th>
         <th>Name</th>
         <th>Tags</th>
       </tr>
-      @foreach (var concept in concepts) {
+      @foreach (var card in cards) {
         <tr>
           <td>
             <div class="curate-tooltip-target">
               Preview
-              <ul class="curate-tooltip-content">
-                @foreach (var card in @concept.AcquiredCards) {
-                  <li>@card.Description</li>
-                  <li>
-                    @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                    <ul>
-                      @foreach (var card in card.Cards) {
-                        <li>
-                          <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
-                        </li>
-                      }
-                    </ul>
-                  </li>
-                }
-              </ul>
+              <div class="curate-tooltip-content">
+                @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.CardInstance.FrontBackFrontSynthBackSynth.Item1"></iframe>
+              </div>
             </div>
           </td>
           <td>
-            @concept.AcquiredCards.Count()
-          </td>
-          <td>
-            <a href="/Curate/Concept/@concept.Id">
-              @concept.Name
+            <a href="/Curate/Card/@card.CardId">
+              @MappingTools.stripHtmlTags(card.CardInstance.FrontBackFrontSynthBackSynth.Item1)
             </a>
           </td>
           <td>
             <ul>
-              @foreach (var tag in @concept.AcquiredCards.SelectMany(x => x.Cards.SelectMany(xx => xx.Tags)).Distinct()) {
+              @foreach (var tag in @card.Tags) {
                 <li>
                   @tag
                 </li>
@@ -69,7 +54,7 @@
 @code {
   [CascadingParameter]
   UserEntity User { get; set; }
-  IList<AcquiredConcept> concepts;
+  IList<AcquiredCard> cards;
   PagedListDetails details;
 
   protected override async Task OnInitAsync() {
@@ -77,9 +62,9 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAcquiredPages(Db, User?.Id ?? 0, pageNumber);
+    var pagedList = await CardRepository.GetAcquiredPages(Db, User?.Id ?? 0, pageNumber);
     details = pagedList.Details;
-    concepts = pagedList.Results.ToList();
+    cards = pagedList.Results.Select(x => x.ResultValue).ToList(); // medTODO show errors
   }
 
 }
