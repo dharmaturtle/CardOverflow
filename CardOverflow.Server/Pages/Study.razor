@@ -12,7 +12,9 @@
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
 
-@if (todaysCards == null) {
+@if (User == null) {
+  <p><em>You aren't signed in dude.</em></p>
+} else if (todaysCards == null) {
   <p><em>Loading...</em></p>
 } else {
   <div class="study-content">
@@ -57,8 +59,10 @@
   bool isBlindMode;
 
   protected override async Task OnInitAsync() {
-    todaysCards = (await CardRepository.GetTodaysCards(Db, User.Id)).ToList();
-    ShowFront();
+    if (User != null) {
+      todaysCards = (await CardRepository.GetTodaysCards(Db, User.Id)).ToList();
+      ShowFront();
+    }
   }
 
   async Task SaveScore(Score score) {
