@@ -98,6 +98,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[AcquiredCard](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[UserId] [int] NOT NULL,
 	[CardInstanceId] [int] NOT NULL,
 	[CardState] [tinyint] NOT NULL,
@@ -108,8 +109,7 @@ CREATE TABLE [dbo].[AcquiredCard](
 	[IsLapsed] [bit] NOT NULL,
  CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
 (
-	[UserId] ASC,
-	[CardInstanceId] ASC
+	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -445,8 +445,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[History](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[CardId] [int] NOT NULL,
+	[AcquiredCardId] [int] NOT NULL,
 	[Score] [tinyint] NOT NULL,
 	[Timestamp] [smalldatetime] NOT NULL,
 	[IntervalWithUnusedStepsIndex] [smallint] NOT NULL,
@@ -496,13 +495,11 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[Tag_AcquiredCard](
 	[TagId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
-	[CardId] [int] NOT NULL,
+	[AcquiredCardId] [int] NOT NULL,
  CONSTRAINT [PK_Tag_AcquiredCard] PRIMARY KEY CLUSTERED 
 (
 	[TagId] ASC,
-	[UserId] ASC,
-	[CardId] ASC
+	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -775,6 +772,12 @@ CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardOptionId] ON [dbo].[AcquiredCard]
 	[CardOptionId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_AcquiredCard_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_AcquiredCard_UserId] ON [dbo].[AcquiredCard]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_AspNetRoleClaims_RoleId] ******/
 CREATE NONCLUSTERED INDEX [IX_AspNetRoleClaims_RoleId] ON [dbo].[AspNetRoleClaims]
 (
@@ -913,11 +916,10 @@ CREATE NONCLUSTERED INDEX [IX_File_CardInstance_FileId] ON [dbo].[File_CardInsta
 	[FileId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_History_UserId_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_History_UserId_CardId] ON [dbo].[History]
+/****** Object:  Index [IX_History_AcquiredCardId] ******/
+CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]
 (
-	[UserId] ASC,
-	[CardId] ASC
+	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Relationship_SourceId] ******/
@@ -941,11 +943,10 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_Tag_UserId_Name] ON [dbo].[Tag]
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Tag_AcquiredCard_UserId_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_Tag_AcquiredCard_UserId_CardId] ON [dbo].[Tag_AcquiredCard]
+/****** Object:  Index [IX_Tag_AcquiredCard_AcquiredCardId] ******/
+CREATE NONCLUSTERED INDEX [IX_Tag_AcquiredCard_AcquiredCardId] ON [dbo].[Tag_AcquiredCard]
 (
-	[UserId] ASC,
-	[CardId] ASC
+	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Tag_User_CardTemplateInstance_DefaultTagId] ******/
@@ -1142,30 +1143,30 @@ REFERENCES [dbo].[File] ([Id])
 GO
 ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_File_FileId]
 GO
-ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard_UserId_CardId] FOREIGN KEY([UserId], [CardId])
-REFERENCES [dbo].[AcquiredCard] ([UserId], [CardInstanceId])
+ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
+REFERENCES [dbo].[AcquiredCard] ([Id])
 GO
-ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard_UserId_CardId]
+ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId]
 GO
-ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Source] FOREIGN KEY([TargetId])
+ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Card_SourceId] FOREIGN KEY([SourceId])
 REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Source]
+ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Card_SourceId]
 GO
-ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Target] FOREIGN KEY([SourceId])
+ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Card_TargetId] FOREIGN KEY([TargetId])
 REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Target]
+ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Card_TargetId]
 GO
 ALTER TABLE [dbo].[Tag]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Tag] CHECK CONSTRAINT [FK_Tag_User_UserId]
 GO
-ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_UserId_CardId] FOREIGN KEY([UserId], [CardId])
-REFERENCES [dbo].[AcquiredCard] ([UserId], [CardInstanceId])
+ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
+REFERENCES [dbo].[AcquiredCard] ([Id])
 GO
-ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_UserId_CardId]
+ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId]
 GO
 ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_Tag_TagId] FOREIGN KEY([TagId])
 REFERENCES [dbo].[Tag] ([Id])
