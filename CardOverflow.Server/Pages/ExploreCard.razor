@@ -35,7 +35,7 @@
                 Verb, but past tense (Needs a better name)
               </button>
             } else {
-              <button class="btn btn-primary" onclick=@(() => @Acquire(Card.Id))>
+              <button class="btn btn-primary" onclick=@(() => @Acquire(Card.LatestInstance.Id))>
                 Verb (Needs a better name)
               </button>
             }
@@ -60,7 +60,7 @@
 @code {
   [Parameter]
   public int Id { get; set; }
-  ExploreCard Card;
+  CardOverflow.Pure.ExploreCard Card;
   [CascadingParameter]
   UserEntity User { get; set; }
 
