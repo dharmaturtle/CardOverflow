@@ -219,12 +219,17 @@ type CardInstance with
     member this.CopyTo (entity: CardInstanceEntity) =
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.FieldValues <- this.FieldValues |> Seq.map (fun x -> FieldValueEntity(Value = x.Value)) |> fun x -> x.ToList()
+        entity.FieldValues <- this.FieldValues |> Seq.map (fun x -> FieldValueEntity(FieldId = x.Field.Id, Value = x.Value)) |> fun x -> x.ToList()
+        use hasher = SHA256.Create()
+        entity.AcquireHash <- CardInstanceEntity.acquireHash entity this.TemplateInstance.AcquireHash hasher
     member this.CopyToNew =
         let entity = CardInstanceEntity()
         this.CopyTo entity
-        entity.Card <- CardEntity()
         entity
+    member this.CopyFieldsToNewInstance cardId =
+        let e = this.CopyToNew
+        e.CardId <- cardId
+        e
 
 type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
@@ -234,9 +239,9 @@ type AcquiredCard with
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
-    static member InitialCopyTo userId cardOptionId (privateTagIds: int seq) =
+    static member InitialCopyTo userId cardOptionId (tagIds: int seq) =
         AcquiredCardEntity(
-            Tag_AcquiredCards = privateTagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList(),
+            Tag_AcquiredCards = tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList(),
             CardState = CardState.toDb Normal,
             IsLapsed = false,
             EaseFactorInPermille = 0s,
@@ -281,7 +286,9 @@ type AcquiredCard with
     static member load (entity: AcquiredCardEntity) = result {
         let! cardState = entity.CardState |> CardState.create
         return
-            {   UserId = entity.UserId
+            {   CardId = entity.CardInstance.CardId
+                AcquiredCardId = entity.Id
+                UserId = entity.UserId
                 CardTemplateInstance = entity.CardInstance.FieldValues.First().Field.CardTemplateInstance |> CardTemplateInstance.load
                 CardState = cardState
                 IsLapsed = entity.IsLapsed

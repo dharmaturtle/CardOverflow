@@ -12,6 +12,8 @@ open System.Linq
 open Xunit
 open CardOverflow.Pure
 open System.Collections.Generic
+open FSharp.Control.Tasks
+open System.Threading.Tasks
 
 let add templateName (db: CardOverflowDb) userId tags =
     let cardTemplateInstance =
@@ -108,6 +110,40 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
             |> Result.getOk
             |> fun x -> x.Tags
     )
+
+[<Fact>]
+let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the fields``() : Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let tags = ["a"; "b"]
+    addBasicCard c.Db userId tags
+    let cardId = 1
+    let newValue = ""
+    let! old = 
+        (CardRepository.GetAcquired c.Db userId cardId)
+            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
+    let updated = {
+        old with
+            CardInstance = {
+                old.CardInstance with
+                    FieldValues =
+                        old.CardInstance.FieldValues
+                        |> Seq.map (fun x ->
+                            { x with Value = newValue}
+                        )
+            }
+        }
+    
+    do! CardRepository.UpdateFieldsToNewInstance c.Db updated
+    
+    let! updated =
+        (CardRepository.GetAcquired c.Db userId cardId)
+            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
+    Assert.Equal<string seq>(
+        [newValue; newValue],
+        updated.CardInstance.FieldValues.Select(fun x -> x.Value)
+    )
+    }
 
 // fuck merge
 //[<Fact>]

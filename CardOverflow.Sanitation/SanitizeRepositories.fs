@@ -37,9 +37,9 @@ module SanitizeHistoryRepository =
             TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
         ) |> HistoryRepository.addAndSaveAsync db
 
-//module SanitizeConceptRepository =
-//    let Update (db: CardOverflowDb) authorId cardId conceptName =
-//        let concept = db.Card.First(fun x -> x.Id = cardId)
-//        if concept.AuthorId = authorId
-//        then Ok <| CardRepository.Update db conceptId conceptName
-//        else Error "You aren't that concept's maintainer."
+module SanitizeCardRepository =
+    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+        let card = db.Card.First(fun x -> x.Id = acquiredCard.CardId)
+        if card.AuthorId = authorId
+        then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard
+        else Error "You aren't that concept's maintainer."

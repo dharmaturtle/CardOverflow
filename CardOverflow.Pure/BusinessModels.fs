@@ -229,6 +229,8 @@ type CardInstance = {
             <| this.TemplateInstance.Css
 
 type AcquiredCard = {
+    CardId: int
+    AcquiredCardId: int
     UserId: int
     CardInstance: CardInstance
     CardTemplateInstance: CardTemplateInstance

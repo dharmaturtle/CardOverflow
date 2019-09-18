@@ -1,4 +1,4 @@
-@page "/Curate/Concept/{Id:int}"
+@page "/Curate/Card/{Id:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -8,60 +8,34 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @inject CardOverflowDb Db
-@*lowTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
+@*medTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
-@if (Concept == null) {
+@if (Card == null) {
   <p><em>Loading...</em></p>
 } else {
-  <EditForm Model="@Concept" OnValidSubmit="@UpdateConcept">
+  <EditForm Model="@Card" OnValidSubmit="@UpdateCard">
     <div class="form-group">
-      <form class="input-group input-group-lg">
-        <label for="concept-input" class="input-group-prepend input-group-text">Concept</label>
-        <InputText @bind-value="@Concept.Name" Class="form-control" id="concept-input" /> @*this seems to break validation: @bind-value:event="oninput"*@
-      </form>
-      <ul>
-        @foreach (var card in @Concept.AcquiredCards) {
-          <li>
-            <div class="row">
-              <div class="col-sm">
-                <form class="input-group input-group-lg">
-                  <label for="card-input" class="input-group-prepend input-group-text">Card</label>
-                  <InputText @bind-value="@card.Description" Class="form-control" id="card-input" /> @*this seems to break validation: @bind-value:event="oninput"*@
-                </form>
-                @foreach (var field in card.CardFields) {
-                  <label><b>@field.Field.Name: </b></label>
-                  <InputTextArea @bind-value="@field.Value" Class="curate-edit-inputtextarea" />
-                }
-              </div>
-              <div class="col-sm">
-                <a href="CardTemplateInstance/@card.CardTemplateInstanceId">Card Template Instance</a>
-                <BSTabGroup>
-                  <BSTabList>
-                    @foreach (var card in card.Cards) {
-                      <BSTab>
-                        <BSTabLabel>@card.CardTemplateName</BSTabLabel>
-                        <BSTabContent>
-                          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                          <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@card.Back"></iframe>
-                          Tags:
-                          <ul>
-                            @foreach (var tag in card.Tags) {
-                              <li>
-                                @tag
-                              </li>
-                            }
-                          </ul>
-                        </BSTabContent>
-                      </BSTab>
-                    }
-                  </BSTabList>
-                  <BSTabSelectedContent />
-                </BSTabGroup>
-              </div>
-            </div>
-          </li>
-        }
-      </ul>
+      <div class="row">
+        <div class="col-sm">
+          @foreach (var field in Card.CardInstance.FieldValues) {
+            <label><b>@field.Field.Name: </b></label>
+            <InputTextArea @bind-value="@field.Value" Class="curate-edit-inputtextarea" />
+          }
+        </div>
+        <div class="col-sm">
+          <a href="CardTemplateInstance/@Card.CardTemplateInstance.Id">Card Template Instance</a>
+          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+          <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@Card.CardInstance.FrontBackFrontSynthBackSynth.Item2"></iframe>
+          Tags:
+          <ul>
+            @foreach (var tag in Card.Tags) {
+              <li>
+                @tag
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <div class="row">
@@ -76,18 +50,18 @@
 }
 
 @code {
-  AcquiredConcept Concept;
+  AcquiredCard Card;
   [Parameter]
   public int Id { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
 
   protected override async Task OnInitAsync() {
-    Concept = await ConceptRepository.GetAcquired(Db, Id, User?.Id ?? 0);
+    Card = (await CardRepository.GetAcquired(Db, Id, User?.Id ?? 0)).ResultValue; // medTODO report errors
   }
 
-  async Task UpdateConcept() {
-    var result = SanitizeConceptRepository.Update(Db, User.Id, Concept.Id, Concept.Name);
+  async Task UpdateCard() {
+    var result = SanitizeCardRepository.Update(Db, User.Id, Card);
     if (result.IsOk) {
       await result.ResultValue;
       // lowToMedTODO display message that save worked

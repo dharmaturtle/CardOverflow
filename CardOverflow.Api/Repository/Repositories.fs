@@ -142,9 +142,9 @@ module CardRepository =
             //    .ThenInclude(fun (x: CardEntity) -> x.AcquiredCards :> IEnumerable<_>)
             //    .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
             //    .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
-    let GetAcquired (db: CardOverflowDb) (userId: int) (cardInstanceId: int) =
+    let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) =
         get(db)
-            .FirstAsync(fun x -> x.CardInstanceId = cardInstanceId && x.UserId = userId)
+            .FirstAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId)
             .ContinueWith(fun (x: Task<AcquiredCardEntity>) -> AcquiredCard.load x.Result)
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) =
         task {
@@ -159,7 +159,7 @@ module CardRepository =
                     PageCount = r.PageCount
                 }
             }
-        }
+        } 
     let GetAsync (db: CardOverflowDb) userId (pageNumber: int) =
         task {
             let! r =
@@ -187,13 +187,12 @@ module CardRepository =
                 }
             }
         }
-    //let Update (db: CardOverflowDb) conceptId conceptName =
-    //    task {
-    //        let! concept = db.Concept.FirstAsync(fun x -> x.Id = conceptId)
-    //        concept.Name <- conceptName
-    //        db.Concept.UpdateI concept
-    //        return! db.SaveChangesAsync()
-    //    }
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) =
+        task {
+            let! e = db.AcquiredCard.FirstAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
+            e.CardInstance <- acquiredCard.CardInstance.CopyFieldsToNewInstance acquiredCard.CardId
+            return! db.SaveChangesAsyncI()
+        }
 
     // member this.SaveCards(cards: ResizeArray<CardEntity>) =
     //                 this.GetCards().Merge cards
