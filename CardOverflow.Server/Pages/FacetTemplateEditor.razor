@@ -37,21 +37,15 @@
   <table class="table">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Ordinal</th>
         <th>Question Template</th>
         <th>Answer Template</th>
       </tr>
     </thead>
     <tbody>
-      @foreach (var cardTemplate in Latest.CardTemplates.OrderBy(x => x.Ordinal)) {
-        <tr>
-          <td>@cardTemplate.Name</td>
-          <td>@cardTemplate.Ordinal</td>
-          <td>@cardTemplate.QuestionTemplate</td>
-          <td>@cardTemplate.AnswerTemplate</td>
-        </tr>
-      }
+      <tr>
+        <td>@Latest.QuestionTemplate</td>
+        <td>@Latest.AnswerTemplate</td>
+      </tr>
     </tbody>
   </table>
 }
