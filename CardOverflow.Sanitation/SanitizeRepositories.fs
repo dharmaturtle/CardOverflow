@@ -27,10 +27,9 @@ module SanitizeCommentRepository =
         ) |> CommentRepository.addAndSaveAsync db
 
 module SanitizeHistoryRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) userId cardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) =
+    let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) =
         HistoryEntity(
-            UserId = userId,
-            CardId = cardId,
+            AcquiredCardId = acquiredCardId,
             Score = Score.toDb score,
             Timestamp = timestamp,
             IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),

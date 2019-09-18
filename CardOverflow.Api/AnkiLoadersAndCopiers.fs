@@ -152,7 +152,7 @@ type AnkiHistory = {
         let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         db.History.FirstOrDefault(fun h -> 
-            this.AcquiredCard.UserId = h.UserId &&
+            this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
             this.AcquiredCard.CardInstanceId = h.AcquiredCard.CardInstanceId &&
             this.AcquiredCard.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId = h.AcquiredCard.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId &&
             this.Score = h.Score &&

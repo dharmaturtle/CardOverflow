@@ -236,7 +236,7 @@ type AcquiredCard with
         entity.Due <- this.Due
     static member InitialCopyTo userId cardOptionId (privateTagIds: int seq) =
         AcquiredCardEntity(
-            Tag_AcquiredCards = privateTagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x, UserId = userId)).ToList(),
+            Tag_AcquiredCards = privateTagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList(),
             CardState = CardState.toDb Normal,
             IsLapsed = false,
             EaseFactorInPermille = 0s,
