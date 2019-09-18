@@ -9,48 +9,34 @@
 @using CardOverflow.Sanitation
 @inject CardOverflowDb Db
 
-@if (concepts == null) {
+@if (cards == null) {
   <p><em>Loading...</em></p>
 } else {
   <div>
     <table class="table">
       <tr>
         <th>Preview</th>
-        <th>Card Count</th>
         <th>Users</th>
         <th>Name</th>
       </tr>
-      @foreach (var concept in concepts) {
+      @foreach (var card in cards) {
         <tr>
           <td>
             <div class="curate-tooltip-target">
               Preview
-              <ul class="curate-tooltip-content">
-                @foreach (var card in @concept.Cards) {
-                  <li>@card.Description</li>
-                  <li>
-                    @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                    <ul>
-                      @foreach (var card in card.LatestInstance.Cards) {
-                        <li>
-                          <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.Front"></iframe>
-                        </li>
-                      }
-                    </ul>
-                  </li>
-                }
-              </ul>
+              <div class="curate-tooltip-content">
+                <div>@card.Description</div>
+                @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+                <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.LatestInstance.FrontBackFrontSynthBackSynth.Item1"></iframe>
+              </div>
             </div>
           </td>
           <td>
-            @concept.Cards.Count()
+            @card.Users
           </td>
           <td>
-            @concept.Users
-          </td>
-          <td>
-            <a href="concept/@concept.Id">
-              @concept.Name
+            <a href="card/@card.Id">
+              @MappingTools.stripHtmlTags(card.LatestInstance.FrontBackFrontSynthBackSynth.Item1)
             </a>
           </td>
         </tr>
@@ -61,7 +47,7 @@
 }
 
 @code {
-  IList<ExploreConcept> concepts;
+  IList<CardOverflow.Pure.ExploreCard> cards;
   PagedListDetails details;
   [CascadingParameter]
   UserEntity User { get; set; }
@@ -70,15 +56,15 @@
     await PageChanged(1);
   }
 
-  void ConceptClick(int conceptId) {
-    var clickedConcept = concepts.First(x => x.Id == conceptId);
+  void CardClick(int cardId) {
+    var clickedCard = cards.First(x => x.Id == cardId);
     StateHasChanged();
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await ConceptRepository.GetAsync(Db, User?.Id ?? 0, pageNumber);
+    var pagedList = await CardRepository.GetAsync(Db, User?.Id ?? 0, pageNumber);
     details = pagedList.Details;
-    concepts = pagedList.Results.ToList();
+    cards = pagedList.Results.ToList();
   }
 
 }
