@@ -42,4 +42,4 @@ module SanitizeCardRepository =
         let card = db.Card.First(fun x -> x.Id = acquiredCard.CardId)
         if card.AuthorId = authorId
         then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard
-        else Error "You aren't that concept's maintainer."
+        else Error "You aren't that card's author."
