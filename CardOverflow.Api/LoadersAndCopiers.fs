@@ -192,18 +192,19 @@ type QuizCard with
                 (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.Css)
         result {
             let! cardState = CardState.create entity.CardState
-            return
-                { CardInstanceId = entity.CardInstanceId
-                  Due = entity.Due
-                  Front = front
-                  Back = back
-                  FrontSynthVoice = frontSynthVoice
-                  BackSynthVoice = backSynthVoice
-                  CardState = cardState
-                  IsLapsed = entity.IsLapsed
-                  EaseFactor = float entity.EaseFactorInPermille / 1000.
-                  IntervalOrStepsIndex = IntervalOrStepsIndex.intervalFromDb entity.IntervalOrStepsIndex
-                  Options = CardOption.load entity.CardOption }
+            return {
+                AcquiredCardId = entity.Id
+                CardInstanceId = entity.CardInstanceId
+                Due = entity.Due
+                Front = front
+                Back = back
+                FrontSynthVoice = frontSynthVoice
+                BackSynthVoice = backSynthVoice
+                CardState = cardState
+                IsLapsed = entity.IsLapsed
+                EaseFactor = float entity.EaseFactorInPermille / 1000.
+                IntervalOrStepsIndex = IntervalOrStepsIndex.intervalFromDb entity.IntervalOrStepsIndex
+                Options = CardOption.load entity.CardOption }
         }
 
 type CardInstance with

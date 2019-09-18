@@ -114,6 +114,7 @@ type IntervalOrStepsIndex =
     | Interval of TimeSpan
 
 type QuizCard = {
+    AcquiredCardId: int
     CardInstanceId: int
     Due: DateTime
     Front: string
