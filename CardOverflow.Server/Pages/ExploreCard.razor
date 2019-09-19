@@ -13,48 +13,40 @@
 @if (Card == null) {
   <p><em>Loading...</em></p>
 } else {
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Description</th>
-        <th>Maintainer</th>
-        <th>Card</th>
-        <th>Comments</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>@Card.Description</td>
-        <td>@Card.Author</td>
-        <td>
-          @if (User == null) {
-            <p>Log in to verb</p>
-          } else {
-            @if (Card.LatestInstance.IsAcquired) {
-              <button class="btn btn-secondary" disabled>
-                Verb, but past tense (Needs a better name)
-              </button>
-            } else {
-              <button class="btn btn-primary" onclick=@(() => @Acquire(Card.LatestInstance.Id))>
-                Verb (Needs a better name)
-              </button>
-            }
-          }
-          <iframe sandbox allow-scripts class="concept-iframe" srcdoc=@Card.LatestInstance.FrontBackFrontSynthBackSynth.Item2></iframe>
-        </td>
-        <td>
-          <ul>
-            @foreach (var comment in @Card.Comments) {
-              <li>
-                @comment.User: @comment.Text
-              </li>
-            }
-            <Comment CardId=@Card.Id />
-          </ul>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div>
+    Gotten by @Card.Users
+    @if (User == null) {
+      <p>Log in to Get</p>
+    } else {
+      @if (Card.LatestInstance.IsAcquired) {
+        <button class="btn btn-secondary" disabled>
+          Gotten
+        </button>
+      } else {
+        <button class="btn btn-primary" onclick=@(() => @Acquire(Card.LatestInstance.Id))>
+          Get
+        </button>
+      }
+    }
+    Description: @Card.Description
+  </div>
+  <div>
+    <iframe sandbox allow-scripts class="concept-iframe" srcdoc=@Card.LatestInstance.FrontBackFrontSynthBackSynth.Item2></iframe>
+  </div>
+  <div>
+    By: @Card.Author
+  </div>
+  <div>
+    Comments
+    <ul>
+      @foreach (var comment in @Card.Comments) {
+        <li>
+          @comment.User: @comment.Text
+        </li>
+      }
+      <Comment CardId=@Card.Id />
+    </ul>
+  </div>
 }
 
 @code {
