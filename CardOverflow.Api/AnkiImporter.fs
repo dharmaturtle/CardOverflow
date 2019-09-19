@@ -119,6 +119,8 @@ module AnkiImporter =
                     |> fun x -> {| Entity = x; IsCloze = cardTemplate.IsCloze |}
                 let toEntities _ =
                     Seq.map toEntity
+                    >> Seq.distinctBy (fun x -> (System.Text.Encoding.UTF8.GetString x.Entity.AcquireHash))
+                    >> Seq.toList
                 Anki.parseModels userId col.Models
                 |> Result.map (fun x -> x |> Map.ofSeq |> Map.map toEntities)
             let usersTags =

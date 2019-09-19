@@ -16,6 +16,90 @@ open CardOverflow.Sanitation
 open System
 open System.Runtime.CompilerServices
 
+let myHighPriority =
+    {
+        Cards = [
+            CardEntity(
+                Id = 1499255730025L,
+                Nid = 1499255605503L,
+                Did = 1499255619842L,
+                Ord = 0L,
+                Mod = 1565571358L,
+                Usn = -1L,
+                Type = 0L,
+                Queue = 0L,
+                Due = 4L,
+                Ivl = 0L,
+                Factor = 2500L,
+                Reps = 0L,
+                Lapses = 0L,
+                Left = 1001L,
+                Odue = 0L,
+                Odid = 0L,
+                Flags = 0L,
+                Data = "")
+            CardEntity(
+                Id = 1499256297743L,
+                Nid = 1499256047451L,
+                Did = 1499255619842L,
+                Ord = 0L,
+                Mod = 1565571358L,
+                Usn = -1L,
+                Type = 0L,
+                Queue = 0L,
+                Due = 5L,
+                Ivl = 0L,
+                Factor = 2500L,
+                Reps = 0L,
+                Lapses = 0L,
+                Left = 1001L,
+                Odue = 0L,
+                Odid = 0L,
+                Flags = 0L,
+                Data = "")]
+        Cols = [
+            ColEntity(
+                Id = 1L,
+                Crt = 1424584800L,
+                Mod = 1565571632604L,
+                Scm = 1565571358767L,
+                Ver = 11L,
+                Dty = 0L,
+                Usn = 0L,
+                Ls = 0L,
+                Conf = "{\"nextPos\": 1, \"estTimes\": true, \"activeDecks\": [1], \"sortType\": \"noteFld\", \"timeLim\": 0, \"sortBackwards\": false, \"addToCur\": true, \"curDeck\": 1, \"newBury\": true, \"newSpread\": 0, \"dueCounts\": true, \"curModel\": \"1565571358768\", \"collapseTime\": 1200}",
+                Models = "{\"1463127463252\": {\"vers\": [], \"name\": \"Basic (optional reversed custom card) with source\", \"tags\": [], \"did\": 1544464955044, \"usn\": 2221, \"req\": [[0, \"all\", [0]], [1, \"all\", [2]]], \"flds\": [{\"name\": \"Front\", \"media\": [], \"sticky\": false, \"rtl\": false, \"ord\": 0, \"font\": \"Arial\", \"size\": 20}, {\"name\": \"Back\", \"media\": [], \"sticky\": false, \"rtl\": false, \"ord\": 1, \"font\": \"Arial\", \"size\": 20}, {\"name\": \"Front2\", \"media\": [], \"sticky\": false, \"rtl\": false, \"ord\": 2, \"font\": \"Arial\", \"size\": 20}, {\"name\": \"Back2\", \"media\": [], \"sticky\": false, \"rtl\": false, \"ord\": 3, \"font\": \"Arial\", \"size\": 20}, {\"name\": \"Source\", \"media\": [], \"sticky\": true, \"rtl\": false, \"ord\": 4, \"font\": \"Arial\", \"size\": 20}], \"sortf\": 0, \"tmpls\": [{\"name\": \"ReversibleForward\", \"qfmt\": \"{{Front}}\\n\\n<script>\\nlet uls = document.getElementsByClassName(\\\"random\\\");\\nlet ulsArray = Array.prototype.slice.call(uls);\\n\\nlet arrayLength = ulsArray.length;\\nfor (let i = 0; i < arrayLength; i++) {\\n  let lis = ulsArray[i].getElementsByTagName(\\\"li\\\");\\n  let lisArray = Array.prototype.slice.call(lis);\\n  shuffle(lisArray);\\n\\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\\n    return node.outerHTML;\\n  }).join(\\\"\\\");\\n}\\n\\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\\nfunction shuffle(a) {\\n  let j, x, i;\\n  for (i = a.length; i; i -= 1) {\\n    j = Math.floor(Math.random() * i);\\n    x = a[i - 1];\\n    a[i - 1] = a[j];\\n    a[j] = x;\\n  }\\n}\\n\\ndocument.onkeydown = function(evt) {\\n  if (evt.keyCode == 90) {\\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \\n\\n    let allDetails = document.getElementsByTagName(\'details\');\\n    for (i = 0; i < allDetails.length; i++) {\\n      if (!allDetails[i].hasAttribute(\\\"open\\\")) {\\n        allDetails[i].setAttribute(\'open\', \'\');\\n        break;\\n      }\\n    }\\n  }\\n};\\n\\n</script>\", \"did\": null, \"bafmt\": \"\", \"afmt\": \"<div id=\\\"front\\\">\\n{{FrontSide}}\\n</div>\\n\\n<hr id=answer>\\n\\n{{Back}}\\n\\n<script>\\nlet uls = document.getElementsByClassName(\\\"random\\\");\\nlet ulsArray = Array.prototype.slice.call(uls);\\n\\nlet arrayLength = ulsArray.length;\\nfor (let i = 0; i < arrayLength; i++) {\\n  let lis = ulsArray[i].getElementsByTagName(\\\"li\\\");\\n  let lisArray = Array.prototype.slice.call(lis);\\n  shuffle(lisArray);\\n\\t\\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\\n    return node.outerHTML;\\n  }).join(\\\"\\\");\\n}\\n\\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\\nfunction shuffle(a) {\\n  let j, x, i;\\n  for (i = a.length; i; i -= 1) {\\n    j = Math.floor(Math.random() * i);\\n    x = a[i - 1];\\n    a[i - 1] = a[j];\\n    a[j] = x;\\n  }\\n}\\n\\ndocument.onkeydown = function(evt) {\\n  if (evt.keyCode == 90) {\\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \\n\\n    let allDetails = document.getElementsByTagName(\'details\');\\n    for (i = 0; i < allDetails.length; i++) {\\n      if (!allDetails[i].hasAttribute(\\\"open\\\")) {\\n        allDetails[i].setAttribute(\'open\', \'\');\\n        break;\\n      }\\n    }\\n  }\\n};\\n\\nlet frontDetails = document.getElementById(\\\"front\\\").getElementsByTagName(\'details\')\\nfor (i = 0; i < frontDetails.length; i++) {\\n  frontDetails[i].setAttribute(\'open\', \'\');\\n}\\n\\n</script>\", \"ord\": 0, \"bqfmt\": \"\"}, {\"name\": \"ReversibleBackward\", \"qfmt\": \"\\t{{#Front2}}{{Front2}}{{/Front2}}\\n\\n<script>\\nlet uls = document.getElementsByClassName(\\\"random\\\");\\nlet ulsArray = Array.prototype.slice.call(uls);\\n\\nlet arrayLength = ulsArray.length;\\nfor (let i = 0; i < arrayLength; i++) {\\n  let lis = ulsArray[i].getElementsByTagName(\\\"li\\\");\\n  let lisArray = Array.prototype.slice.call(lis);\\n  shuffle(lisArray);\\n\\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\\n    return node.outerHTML;\\n  }).join(\\\"\\\");\\n}\\n\\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\\nfunction shuffle(a) {\\n  let j, x, i;\\n  for (i = a.length; i; i -= 1) {\\n    j = Math.floor(Math.random() * i);\\n    x = a[i - 1];\\n    a[i - 1] = a[j];\\n    a[j] = x;\\n  }\\n}\\n\\ndocument.onkeydown = function(evt) {\\n  if (evt.keyCode == 90) {\\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \\n\\n    let allDetails = document.getElementsByTagName(\'details\');\\n    for (i = 0; i < allDetails.length; i++) {\\n      if (!allDetails[i].hasAttribute(\\\"open\\\")) {\\n        allDetails[i].setAttribute(\'open\', \'\');\\n        break;\\n      }\\n    }\\n  }\\n};\\n\\n</script>\", \"did\": null, \"bafmt\": \"\", \"afmt\": \"<div id=\\\"front\\\">\\n{{FrontSide}}\\n</div>\\n\\n<hr id=answer>\\n\\n{{Back2}}\\n\\n<script>\\nlet uls = document.getElementsByClassName(\\\"random\\\");\\nlet ulsArray = Array.prototype.slice.call(uls);\\n\\nlet arrayLength = ulsArray.length;\\nfor (let i = 0; i < arrayLength; i++) {\\n  let lis = ulsArray[i].getElementsByTagName(\\\"li\\\");\\n  let lisArray = Array.prototype.slice.call(lis);\\n  shuffle(lisArray);\\n\\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\\n    return node.outerHTML;\\n  }).join(\\\"\\\");\\n}\\n\\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\\nfunction shuffle(a) {\\n  let j, x, i;\\n  for (i = a.length; i; i -= 1) {\\n    j = Math.floor(Math.random() * i);\\n    x = a[i - 1];\\n    a[i - 1] = a[j];\\n    a[j] = x;\\n  }\\n}\\n\\ndocument.onkeydown = function(evt) {\\n  if (evt.keyCode == 90) {\\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \\n\\n    let allDetails = document.getElementsByTagName(\'details\');\\n    for (i = 0; i < allDetails.length; i++) {\\n      if (!allDetails[i].hasAttribute(\\\"open\\\")) {\\n        allDetails[i].setAttribute(\'open\', \'\');\\n        break;\\n      }\\n    }\\n  }\\n};\\n\\nlet frontDetails = document.getElementById(\\\"front\\\").getElementsByTagName(\'details\')\\nfor (i = 0; i < frontDetails.length; i++) {\\n  frontDetails[i].setAttribute(\'open\', \'\');\\n}\\n\\n</script>\", \"ord\": 1, \"bqfmt\": \"\"}], \"mod\": 1565487544, \"latexPost\": \"\\\\end{preview}\\n\\\\end{document}\", \"type\": 0, \"id\": \"1463127463252\", \"css\": \".card {\\n  font-family: arial;\\n  font-size: 30px;\\n//  text-align: center;\\n  color: black;\\n  background-color: white;\\n}\\n\\n.c {\\n  text-align: left;\\n}\\n\\n.code {\\n  text-align: left;\\n}\\n\\n\\ndetails summary {\\n  cursor: pointer;\\n  border-bottom: 3px solid DarkBlue;\\n}\\n\\ndetails summary.noq {\\n  cursor: pointer;\\n  border-bottom: 100px;\\n}\\n\\ndetails summary.noq:after {\\n  content: \\\"^\\\"\\n}\\n\\ndetails summary::-webkit-details-marker {\\n  color: Maroon;\\n}\\n\\ndetails {\\n  border-radius: 3px;\\n  border: 3px solid #222;\\n  margin: 1em 0;\\n}\\n\\nul.random.disc {\\n  list-style-type: disc;\\n  display: table;\\n  margin: 0 auto;\\n}\\n\\nul.random {\\n  list-style-type: lower-greek;\\n}\\n\\n.question:before {\\n  content: \\\"???\\\";\\n  color: red;\\n  font-weight: bolder;\\n  padding-right: 5px;\\n}\\n\\n.question {\\n  border-bottom: 3px solid Maroon;\\n}\\n\\n ol{\\n   list-style-type: square;\\n } \", \"latexPre\": \"\\\\documentclass[12pt]{article}\\n\\\\special{papersize=3in,5in}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{amssymb,amsmath,blkarray}\\n\\\\pagestyle{empty}\\n\\\\setlength{\\\\parindent}{0in}\\n\\\\usepackage[makeroom]{cancel}\\n\\\\usepackage[utf8]{inputenc}\\n\\\\usepackage{lmodern}\\n\\\\usepackage[T1]{fontenc}\\n\\\\usepackage{color}\\n\\\\usepackage{bm}\\n\\\\usepackage{array}\\n\\\\usepackage[active]{preview}\\n\\\\begin{document}\\n\\\\begin{preview}\\n\\\\pagecolor{black}\\n\\\\color{white}\"}}",
+                Decks = "{\"1524882578904\": {\"name\": \"High Priority::TensorFlow\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": false, \"browserCollapsed\": true, \"newToday\": [1631, 0], \"timeToday\": [1631, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [1631, 0], \"lrnToday\": [1631, 0], \"id\": 1524882578904, \"mod\": 1529534141, \"desc\": \"\"}, \"1507779083555\": {\"name\": \"High Priority::Reinforcement Learning\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": false, \"browserCollapsed\": true, \"newToday\": [1631, 0], \"timeToday\": [1631, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [1631, 0], \"lrnToday\": [1631, 0], \"id\": 1507779083555, \"mod\": 1553816834, \"desc\": \"\"}, \"1524882578896\": {\"name\": \"High Priority\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": true, \"browserCollapsed\": true, \"newToday\": [1631, 0], \"timeToday\": [1631, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [1631, 0], \"lrnToday\": [1631, 0], \"id\": 1524882578896, \"mod\": 1553818500, \"desc\": \"\"}, \"1\": {\"desc\": \"\", \"name\": \"Default\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": false, \"newToday\": [0, 0], \"timeToday\": [0, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [0, 0], \"lrnToday\": [0, 0], \"id\": 1, \"mod\": 1565571358}, \"1499255619842\": {\"name\": \"High Priority::Python\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": false, \"browserCollapsed\": true, \"newToday\": [1631, 0], \"timeToday\": [1631, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [1631, 0], \"lrnToday\": [1631, 0], \"id\": 1499255619842, \"mod\": 1553816811, \"desc\": \"\"}, \"1528647422786\": {\"name\": \"High Priority::PyTorch\", \"extendRev\": 50, \"usn\": 0, \"collapsed\": false, \"browserCollapsed\": true, \"newToday\": [1631, 0], \"timeToday\": [1631, 0], \"dyn\": 0, \"extendNew\": 10, \"conf\": 1, \"revToday\": [1631, 0], \"lrnToday\": [1631, 0], \"id\": 1528647422786, \"mod\": 1553818500, \"desc\": \"\"}}",
+                Dconf = "{\"1\": {\"name\": \"Default\", \"replayq\": true, \"lapse\": {\"leechFails\": 8, \"minInt\": 1, \"delays\": [10], \"leechAction\": 0, \"mult\": 0}, \"rev\": {\"perDay\": 200, \"fuzz\": 0.05, \"ivlFct\": 1, \"maxIvl\": 36500, \"ease4\": 1.3, \"bury\": false, \"minSpace\": 1}, \"timer\": 0, \"maxTaken\": 60, \"usn\": 0, \"new\": {\"perDay\": 20, \"delays\": [1, 10], \"separate\": true, \"ints\": [1, 4, 7], \"initialFactor\": 2500, \"bury\": false, \"order\": 1}, \"mod\": 0, \"id\": 1, \"autoplay\": true}}",
+                Tags = "{}")]
+        Notes = [
+            NoteEntity(
+                Id = 1499255605503L,
+                Guid = "H(UF9r*;w_",
+                Mid = 1463127463252L,
+                Mod = 1499255960L,
+                Usn = 1517L,
+                Tags = "",
+                Flds = "<code class=\"myCodeClass\">_single_leading_underscore</code><div>means...</div>weak \"internal use\" indicator.<div><br /></div><div>E.g. <code class=\"myCodeClass\">from M import *</code> does not import objects whose name starts with an underscore</div>https://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name",
+                Sfld = 0L,
+                Csum = 1063138871L,
+                Flags = 0L,
+                Data = "")
+            NoteEntity(
+                Id = 1499256047451L,
+                Guid = "Qp}wIj5W|&",
+                Mid = 1463127463252L,
+                Mod = 1525268272L,
+                Usn = 2122L,
+                Tags = "",
+                Flds = "<div><code class=\"myCodeClass\">__double_leading_underscore</code></div><div>means...</div>Since there is a valid use-case for class-private members (namely to avoid name clashes of names with names defined by subclasses), there is limited support for such a mechanism, called <i>name mangling</i>. Any identifier of the form <code class=\"myCodeClass\">__spam</code> (at least two leading underscores, at most one trailing underscore) is textually replaced with <code class=\"myCodeClass\">_classname__spam</code>, where classname is the current class name with leading underscore(s) stripped. This mangling is done without regard to the syntactic position of the identifier, as long as it occurs within the definition of a class.<div><br /></div><div>Note that the mangling rules are designed mostly to avoid accidents; it still is possible to access or modify a letiable that is considered private.</div>https://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name<div>https://docs.python.org/3/tutorial/classes.html#private-letiables-and-class-local-references</div>",
+                Sfld = 0L,
+                Csum = 2858365534L,
+                Flags = 0L,
+                Data = "")]
+        Revlogs = []
+    }
+
 let allDefaultTemplatesAndImageAndMp3_apkg =
     {
         Cards = [

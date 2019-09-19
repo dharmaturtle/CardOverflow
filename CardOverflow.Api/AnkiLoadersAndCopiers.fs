@@ -331,7 +331,7 @@ module Anki =
         |> fun (files, fields) -> (files |> List.distinct, fields)
     
     let parseNotes
-        (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; IsCloze: bool |} seq>)
+        (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; IsCloze: bool |} list>)
         initialTags
         userId
         fileEntityByAnkiFileName

@@ -14,6 +14,14 @@ open System
 open AnkiImportTestData
 open System.Collections.Generic
 
+[<Fact>]
+let ``Can import myHighPriority, but really testing duplicate card templates`` () =
+    use c = new TestContainer()
+    let userId = 3
+    AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
+    |> Result.isOk
+    |> Assert.True
+
 let assertHasBasicInfo db ankiDb =
     let userId = 3
     AnkiImporter.save db ankiDb userId Map.empty
