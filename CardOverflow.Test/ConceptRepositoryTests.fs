@@ -43,25 +43,6 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
 
 [<Fact>]
-let ``Get isn't empty``(): Task<unit> = task {
-    use c = new TestContainer()
-    let userId = 3
-    FacetRepositoryTests.addBasicCard c.Db userId []
-    do! CommentCardEntity (
-            CardId = 1,
-            UserId = userId,
-            Text = "text",
-            Created = DateTime.UtcNow
-        ) |> CommentRepository.addAndSaveAsync c.Db
-    let conceptId = 1
-        
-    let! card = CardRepository.Get c.Db conceptId 0
-    
-    let front, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
-    Assert.DoesNotContain("{{Front}}", front)
-    Assert.NotEmpty <| card.Comments }
-
-[<Fact>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
@@ -82,23 +63,24 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     Assert.True card.LatestInstance.IsAcquired }
 
 [<Fact>]
-let ``Getting 10 pages of GetAsync takes less than 1 minute``() =
-    use c = new Container()
-    c.RegisterStuff
-    c.RegisterStandardConnectionString
-    use __ = AsyncScopedLifestyle.BeginScope c
-    let db = c.GetInstance<CardOverflowDb>()
+let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
+    use c = new TestContainer()
     let userId = 3
+    FacetRepositoryTests.addBasicCard c.Db userId []
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (CardRepository.GetAsync db userId i)
+        (CardRepository.GetAsync c.Db userId i)
             .GetAwaiter()
             .GetResult()
             .Results
             .ToList()
             |> ignore
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
+    
+    let! cards = CardRepository.GetAsync c.Db userId 1
+    Assert.Equal(1, cards.Results.Single().Users)
+    }
 
 let testGetAcquired cardIds addCards name = task {
     use c = new TestContainer(name)
