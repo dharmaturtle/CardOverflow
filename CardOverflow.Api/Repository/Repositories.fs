@@ -263,7 +263,7 @@ module UserRepository =
         db.User.FirstOrDefault(fun x -> x.Email = email)
 
 module TagRepository =
-    let Add (db: CardOverflowDb) userId newTags =
+    let tagEntities (db: CardOverflowDb) userId newTags =
         let newTags = newTags |> Seq.distinct // https://stackoverflow.com/a/18113534
         db.Tag
             .Where(fun x -> x.UserId = userId)
@@ -274,9 +274,16 @@ module TagRepository =
             .Contains >> not
         |> newTags.Where
         |> Seq.map (fun x -> TagEntity(Name = x, UserId = userId ))
+    let Add (db: CardOverflowDb) userId newTags =
+        tagEntities db userId newTags
         |> db.Tag.AddRange
         db.SaveChangesI ()
 
+    let AddTo (db: CardOverflowDb) userId newTags acquiredCardId =
+        tagEntities db userId newTags
+        |> Seq.map (fun x -> Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = x))
+        |> db.Tag_AcquiredCard.AddRange
+        db.SaveChangesI ()
     let Search (db: CardOverflowDb) userId (input: string) =
         db.Tag.Where(fun t -> userId = t.UserId && t.Name.ToLower().Contains(input.ToLower())).ToList()
     

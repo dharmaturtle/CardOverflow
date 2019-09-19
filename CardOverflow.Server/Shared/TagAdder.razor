@@ -1,0 +1,47 @@
+﻿@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject CardOverflowDb Db
+
+@if (User != null) {
+  @foreach (var tag in Tags) {
+    <li>
+      1 - @tag
+    </li>
+  }
+  <EditForm Model="@WriteTag" OnValidSubmit=@SaveTag>
+    <div class="form-group">
+      <InputText @bind-value="@WriteTag.Text" /> @*this seems to break validation: @bind-value:event="oninput"*@
+      <button type="submit" class="btn btn-primary">Add</button>
+      <DataAnnotationsValidator />
+      <ValidationSummary />
+    </div>
+  </EditForm>
+}
+
+@code {
+  [CascadingParameter]
+  UserEntity User { get; set; }
+  [Parameter]
+  int CardId { get; set; }
+  TagText WriteTag = new TagText();
+  List<string> Tags = new List<string>();
+
+  async Task SaveTag() {
+    var r = SanitizeTagRepository.AddTo(Db, new List<TagText>() { WriteTag }, User.Id, CardId);
+    if (r.IsOk) {
+      Tags.Add(WriteTag.Text);
+      Tags = Tags.Distinct().ToList();
+      WriteTag.Text = "";
+    } else {
+      // medTODO show error
+    }
+  }
+
+}

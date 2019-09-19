@@ -26,6 +26,20 @@ module SanitizeCommentRepository =
             Created = time.utcNow
         ) |> CommentRepository.addAndSaveAsync db
 
+[<CLIMutable>]
+type TagText = {
+    [<StringLength(250, ErrorMessage = "Tag must be less than 250 characters.")>] // medTODO 250 needs to be tied to the DB max somehow
+    Text: string
+}
+
+module SanitizeTagRepository =
+    let AddTo (db: CardOverflowDb) (tags: TagText seq) userId cardId =
+        db.AcquiredCard.FirstOrDefault(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        |> Option.ofObj
+        |> function
+        | Some x -> Ok <| TagRepository.AddTo db userId (tags |> Seq.map (fun x -> x.Text)) x.Id
+        | None -> Error "You haven't gotten that card."
+
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) =
         HistoryEntity(
