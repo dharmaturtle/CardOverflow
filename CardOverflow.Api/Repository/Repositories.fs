@@ -170,8 +170,8 @@ module CardRepository =
                         .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
-                        //.ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
-                        //.ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
+                        .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
             return {
                 Results = r |> Seq.map (ExploreCard.load userId)

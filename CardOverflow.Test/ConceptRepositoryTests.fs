@@ -46,7 +46,7 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    FacetRepositoryTests.addBasicCard c.Db userId []
+    FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
     do! CommentCardEntity (
             CardId = 1,
             UserId = userId,
@@ -60,13 +60,14 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| card.Comments
-    Assert.True card.LatestInstance.IsAcquired }
+    Assert.True card.LatestInstance.IsAcquired
+    Assert.Equal<(string * int) seq>(["a", 1; "b", 1], card.Tags) }
 
 [<Fact>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    FacetRepositoryTests.addBasicCard c.Db userId []
+    FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
@@ -80,7 +81,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     
     let! cards = CardRepository.GetAsync c.Db userId 1
     Assert.Equal(1, cards.Results.Single().Users)
-    }
+    Assert.Equal<(string * int) seq>(["a", 1; "b", 1], cards.Results.Single().Tags) }
 
 let testGetAcquired cardIds addCards name = task {
     use c = new TestContainer(name)

@@ -391,4 +391,9 @@ type ExploreCard with
         Description = entity.Description
         LatestInstance = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstance.load userId
         Comments = entity.CommentCards |> Seq.map Comment.load
+        Tags =
+            entity.CardInstances
+                .SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)))
+                .GroupBy(fun x -> x)
+                .Select(fun x -> x.First(), x.Count())
     }

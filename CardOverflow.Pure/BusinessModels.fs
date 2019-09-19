@@ -259,5 +259,6 @@ type ExploreCard = {
     AuthorId: int
     Description: string
     LatestInstance: CardInstance
+    Tags: (string * int) seq
     Comments: Comment seq
 }
