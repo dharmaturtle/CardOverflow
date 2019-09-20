@@ -44,7 +44,9 @@
           @tag.Item2 - @tag.Item1
         </li>
       }
-      <TagAdder CardId=@Card.Id />
+      @if (Card.LatestInstance.IsAcquired) {
+        <TagAdder CardId=@Card.Id />
+      }
     </ul>
   </div>
   <div>

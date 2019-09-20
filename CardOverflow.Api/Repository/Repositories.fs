@@ -78,7 +78,8 @@ module CardRepository =
                 then
                     db.Card
                         .Include(fun x -> x.Author)
-                        .Include(fun x -> x.CommentCards)
+                        .Include(fun x -> x.CommentCards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CommentCardEntity) -> x.User )
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
                             .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
@@ -97,7 +98,8 @@ module CardRepository =
                 else
                     db.Card
                         .Include(fun x -> x.Author)
-                        .Include(fun x -> x.CommentCards)
+                        .Include(fun x -> x.CommentCards :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CommentCardEntity) -> x.User )
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
                             .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
