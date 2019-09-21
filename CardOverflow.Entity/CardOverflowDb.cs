@@ -258,13 +258,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<TagEntity>(entity =>
             {
-                entity.HasIndex(e => new { e.UserId, e.Name })
+                entity.HasIndex(e => e.Name)
                     .IsUnique();
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Tags)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<Tag_AcquiredCardEntity>(entity =>

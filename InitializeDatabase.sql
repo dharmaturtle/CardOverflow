@@ -481,7 +481,6 @@ GO
 CREATE TABLE [dbo].[Tag](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [nvarchar](250) NOT NULL,
-	[UserId] [int] NOT NULL,
  CONSTRAINT [PK_Tag] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -936,10 +935,9 @@ CREATE NONCLUSTERED INDEX [IX_Relationship_TargetId] ON [dbo].[Relationship]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_Tag_UserId_Name] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Tag_UserId_Name] ON [dbo].[Tag]
+/****** Object:  Index [IX_Tag_Name] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Tag_Name] ON [dbo].[Tag]
 (
-	[UserId] ASC,
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
@@ -1157,11 +1155,6 @@ ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Ca
 REFERENCES [dbo].[Card] ([Id])
 GO
 ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Card_TargetId]
-GO
-ALTER TABLE [dbo].[Tag]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Tag] CHECK CONSTRAINT [FK_Tag_User_UserId]
 GO
 ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
 REFERENCES [dbo].[AcquiredCard] ([Id])

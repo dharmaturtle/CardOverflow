@@ -24,11 +24,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public int UserId { get; set; }
 
-        [ForeignKey("UserId")]
-        [InverseProperty("Tags")]
-        public virtual UserEntity User { get; set; }
         [InverseProperty("Tag")]
         public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }
         [InverseProperty("DefaultTag")]
