@@ -38,22 +38,36 @@
   </div>
   <div>
     <h3>Tags</h3>
-    <ul>
-      @foreach (var tag in @Card.Tags) {
-        <li>
-          @tag.Item2 - @tag.Item1
+    <ul class="d-flex flex-wrap list-unstyled">
+      @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderBy(x => x.Count)) {
+        <li class="m-1">
+          <button type="button" class="btn btn-outline-primary btn-sm">
+            <span class="badge badge-light">@tag.Count</span> @tag.Name
+          </button>
         </li>
       }
-      @if (Card.LatestInstance.IsAcquired) {
-        <TagAdder CardId=@Card.Id />
-      }
     </ul>
+    @if (User != null) {
+      <h3>Your Tags</h3>
+      <ul class="d-flex flex-wrap list-unstyled">
+        @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderBy(x => x.Count)) {
+          <li class="m-1">
+            <button type="button" class="btn btn-primary btn-sm">
+              <span class="badge badge-light">@tag.Count</span> @tag.Name
+            </button>
+          </li>
+        }
+        @if (Card.LatestInstance.IsAcquired) {
+          <TagAdder CardId=@Card.Id />
+        }
+      </ul>
+    }
   </div>
   <div>
     <h3>Comments</h3>
-    <ul>
+    <ul class="list-group">
       @foreach (var comment in @Card.Comments) {
-        <li>
+        <li class="list-group-item">
           @comment.User: @comment.Text
         </li>
       }

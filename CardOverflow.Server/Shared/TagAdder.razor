@@ -11,9 +11,11 @@
 
 @if (User != null) {
   @foreach (var tag in Tags) {
-    <li>
-      1 - @tag
-    </li>
+  <li class="m-1">
+    <button type="button" class="btn btn-primary btn-sm">
+      <span class="badge badge-light">1</span> @tag
+    </button>
+  </li>
   }
   <EditForm Model="@WriteTag" OnValidSubmit=@SaveTag>
     <div class="form-group">

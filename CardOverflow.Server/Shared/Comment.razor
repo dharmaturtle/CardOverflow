@@ -11,7 +11,7 @@
 @inject TimeProvider Time
 
 @if (User != null) {
-  <li>
+  <li class="list-group-item">
     @if (isSaved) {
       <p>@User.DisplayName : @WriteComment.Text</p>
     } else {
