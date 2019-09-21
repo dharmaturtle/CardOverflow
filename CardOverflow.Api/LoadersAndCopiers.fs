@@ -395,5 +395,8 @@ type ExploreCard with
             entity.CardInstances
                 .SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)))
                 .GroupBy(fun x -> x)
-                .Select(fun x -> x.First(), x.Count())
+                .Select(fun x ->
+                    {   Name = x.First()
+                        Count = x.Count()
+                        IsAcquired = entity.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)) })
     }

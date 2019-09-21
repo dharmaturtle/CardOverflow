@@ -252,6 +252,12 @@ type Comment = {
     IsDmca: bool
 }
 
+type ViewTag = {
+    Name: string
+    Count: int
+    IsAcquired: bool
+}
+
 type ExploreCard = {
     Id: int
     Users: int
@@ -259,6 +265,6 @@ type ExploreCard = {
     AuthorId: int
     Description: string
     LatestInstance: CardInstance
-    Tags: (string * int) seq
+    Tags: ViewTag seq
     Comments: Comment seq
 }
