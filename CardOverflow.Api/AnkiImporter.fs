@@ -148,23 +148,23 @@ module AnkiImporter =
             let cardsAndTagsByNoteId =
                 let duplicates =
                     cardsAndTagsByNoteId
-                    |> Seq.collect (fun (noteId, (cards, tags)) -> cards |> Seq.map (fun card -> (card, noteId, tags)))
-                    |> Seq.groupBy(fun (card, _, _) -> card.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
-                    |> Seq.filter(fun (_, x) -> x.Count() > 1)
-                    |> Seq.collect(fun (_, x) ->
-                        let tags = x.SelectMany(fun (_, _, tags) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
+                    |> List.collect (fun (noteId, (cards, tags)) -> cards |> List.map (fun card -> (card, noteId, tags)))
+                    |> List.groupBy(fun (card, _, _) -> card.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
+                    |> List.filter(fun (_, x) -> x.Count() > 1)
+                    |> List.collect(fun (_, x) ->
+                        let tags = x |> List.collect(fun (_, _, tags) -> tags) |> List.groupBy(fun x -> x.Name) |> List.map(fun (x, y) -> y.First())
                         let card, _, _ = x.First()
                         card.Created <- x.Min(fun (card, _, _) -> card.Created)
                         card.Modified <- x.Max(fun (card, _, _) -> card.Modified)
-                        x |> Seq.map (fun (_, noteId, _) -> noteId, (card, tags))
+                        x |> List.map (fun (_, noteId, _) -> noteId, (card, tags))
                     )
-                    |> Seq.groupBy (fun (noteId, _) -> noteId)
-                    |> Seq.map (fun (noteId, xs) ->
-                        let cards = xs.Select(fun (_, (card, _)) -> card)
-                        let tags = xs.SelectMany(fun (_, (_, tags)) -> tags).GroupBy(fun x -> x.Name).Select(fun x -> x.First())
+                    |> List.groupBy (fun (noteId, _) -> noteId)
+                    |> List.map (fun (noteId, xs) ->
+                        let cards = xs |> List.map (fun (_, (card, _)) -> card)
+                        let tags = xs |> List.collect (fun (_, (_, tags)) -> tags) |> List.groupBy(fun x -> x.Name) |> List.map(fun (x, y) -> y.First())
                         noteId, (cards, tags)
                     )
-                    |> Map.ofSeq
+                    |> Map.ofList
                 cardsAndTagsByNoteId
                 |> Seq.map (fun (noteId, tuple) ->
                     if duplicates.ContainsKey noteId
@@ -221,6 +221,13 @@ module AnkiImporter =
                 then db.History.AddI x
                 //else db.Histories.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
+            db.ChangeTracker.Entries() // CardInstances may be unused if they're duplicates; this removes their orphaned Relationships
+                |> Seq.filter (fun e -> e.State = EntityState.Added && e.Entity :? RelationshipEntity)
+                |> Seq.iter (fun x ->
+                    let e = x.Entity :?> RelationshipEntity
+                    if isNull e.Source || isNull e.Target then
+                        x.State <- EntityState.Detached
+                )
             db.SaveChangesI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
         }
         

@@ -120,6 +120,17 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <| c.Db.CardInstance
             .Where(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute"))
     Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.Contains """<img src="missingImage.jpg">""")
+    Assert.Equal<(int * int) seq>(
+        (Core.combination 2 [1.. 5])
+            .Select(fun x -> x.[0], x.[1])
+            .OrderBy(fun (a, _) -> a)
+            .ThenBy(fun (_, b) -> b),
+        c.Db.Relationship
+            .Where(fun x -> x.Name = "Cloze").AsEnumerable()
+            .Select(fun x -> x.SourceId, x.TargetId)
+            .OrderBy(fun (a, _) -> a)
+                .ThenBy(fun (_, b) -> b)
+    )
 
 //[<Fact>]
 let ``Manual Anki import`` () =

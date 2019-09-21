@@ -64,3 +64,9 @@ module Core =
             // calling the statically inferred member
             ((^t or ^a) : (static member Coalesce : ^a * ^b -> ^c) (a, b))
     let inline (|??) a b = nullCoalesceHelper<NullCoalesce, _, _, _> a b
+    
+    let rec combination elementCount targetList = // https://stackoverflow.com/a/1231711
+        match elementCount, targetList with
+        | 0, _ -> [[]]
+        | _, [] -> []
+        | k, (x::xs) -> List.map ((@) [x]) (combination (k-1) xs) @ combination k xs

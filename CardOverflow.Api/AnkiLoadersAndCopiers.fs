@@ -104,6 +104,8 @@ type AnkiCardWrite = {
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.CardInstance
             .Include(fun x -> x.FieldValues)
+            .Include(fun x -> x.Card.RelationshipSources)
+            .Include(fun x -> x.Card.RelationshipTargets)
             .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
 
 type AnkiAcquiredCard = {
@@ -368,14 +370,29 @@ module Anki =
                             <| c.CopyToNew files
                     if cardTemplates.First().IsCloze then
                         let cardTemplate = cardTemplates |> Seq.exactlyOne
-                        [1 .. AnkiImportLogic.maxClozeIndex fields] |> Seq.map (fun i ->
-                            toCard
-                                <| AnkiImportLogic.multipleClozeToSingleCloze fields i
-                                <| cardTemplate.Entity
-                        )
+                        let instances =
+                            [1 .. AnkiImportLogic.maxClozeIndex fields] |> List.map (fun i ->
+                                toCard
+                                    <| AnkiImportLogic.multipleClozeToSingleCloze fields i
+                                    <| cardTemplate.Entity
+                            )
+                        Core.combination 2 instances
+                        |> List.iter (fun x ->
+                                let r = RelationshipEntity(Name = "Cloze")
+                                x.[0].Card.RelationshipSources.Add r
+                                x.[1].Card.RelationshipTargets.Add r
+                            )
+                        instances
                     else
-                        cardTemplates |> Seq.map (fun x -> toCard fields x.Entity)
-                let relevantTags = allTags |> Seq.filter(fun x -> notesTags.Contains x.Name)
+                        let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity)
+                        Core.combination 2 instances
+                        |> List.iter (fun instancePair ->
+                                let r = RelationshipEntity(Name = "Linked")
+                                instancePair.[0].Card.RelationshipSources.Add r
+                                instancePair.[1].Card.RelationshipTargets.Add r
+                            )
+                        instances
+                let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
                 parseNotesRec
                     allTags
                     (Seq.append
@@ -387,10 +404,10 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
-        (cardsAndTagsByNoteId: Map<int64, CardInstanceEntity seq * TagEntity seq>)
+        (cardsAndTagsByNoteId: Map<int64, CardInstanceEntity list * TagEntity list>)
         (colCreateDate: DateTime)
         userId
-        (usersTags: TagEntity seq)
+        (usersTags: TagEntity list)
         getCard
         (ankiCard: Anki.CardEntity) =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]

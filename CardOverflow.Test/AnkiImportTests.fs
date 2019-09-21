@@ -21,6 +21,11 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     |> Result.isOk
     |> Assert.True
+    Assert.Equal(2, c.Db.Card.Count())
+    Assert.Equal(2, c.Db.CardInstance.Count())
+    Assert.Equal(7, c.Db.CardTemplate.Count())
+    Assert.Equal(7, c.Db.CardTemplateInstance.Count())
+    Assert.Equal(0, c.Db.Relationship.Count())
 
 let assertHasBasicInfo db ankiDb =
     let userId = 3
@@ -89,6 +94,8 @@ let assertHasBasicInfo db ankiDb =
             .Single(fun c -> c.CardInstance.FieldValues.Any(fun x -> x.Value.Contains("mp3")))
             .Tag_AcquiredCards.Select(fun t -> t.Tag.Name)
             |> Seq.sortBy id)
+    Assert.Equal(2, db.Relationship.Count())
+    Assert.Equal(2, db.Relationship.Count(fun x -> x.Name = "Linked"))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
