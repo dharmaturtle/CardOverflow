@@ -395,8 +395,17 @@ type ExploreCard with
             entity.CardInstances
                 .SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)))
                 .GroupBy(fun x -> x)
-                .Select(fun x ->
-                    {   Name = x.First()
-                        Count = x.Count()
-                        IsAcquired = entity.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)) })
+                .Select(fun tags ->
+                    let name = tags.First()
+                    {   Name = name
+                        Count = tags.Count()
+                        IsAcquired = 
+                            entity.CardInstances
+                                .Select(fun x -> x.AcquiredCards.SingleOrDefault(fun x -> x.UserId = userId))
+                                .SingleOrDefault() // medTODO revisit this when multiple card instances are a thing
+                                |> Option.ofObj
+                                |> function
+                                | Some x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name = name)
+                                | None -> false
+                    })
     }

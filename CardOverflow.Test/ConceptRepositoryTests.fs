@@ -99,15 +99,13 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
         cards.Results.Single().Tags
     )}
 
-let testGetAcquired cardIds addCards name = task {
+let testGetAcquired (cardIds: int list) addCards name = task {
     use c = new TestContainer(name)
-    let userId = 2
-    addCards |> Seq.iter (fun addCard -> addCard c.Db 3 [])
-    do! CardRepository.AcquireCardsAsync c.Db userId cardIds
-
+    
+    let userId = 3 // creates the card
+    addCards |> Seq.iter (fun addCard -> addCard c.Db userId ["a"])
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1
     let! card = CardRepository.GetAcquired c.Db userId 1
-    
     Assert.Equal(
         cardIds.Count(),
         acquiredCards.Results.Count()
@@ -115,6 +113,29 @@ let testGetAcquired cardIds addCards name = task {
     Assert.Equal(
         userId,
         card |> Result.getOk |> fun x -> x.UserId
+    )
+
+    let userId = 1 // acquires the card
+    do! CardRepository.AcquireCardsAsync c.Db userId [1]
+    let! card = CardRepository.Get c.Db 1 userId
+    Assert.Equal(
+        [{  Name = "a"
+            Count = 1
+            IsAcquired = false }],
+        card.Tags
+    )
+
+    let userId = 2 // never acquires the card
+    let! cards = CardRepository.GetAsync c.Db userId 1
+    Assert.Equal(
+        cardIds.Count(),
+        cards.Results.Count()
+    )
+    Assert.Equal(
+        [{  Name = "a"
+            Count = 1
+            IsAcquired = false }],
+        cards.Results.SelectMany(fun x -> x.Tags).Distinct()
     )
     //Assert.Equal<string seq>( // medTODO uncomment when tags work
     //    ["a"],
