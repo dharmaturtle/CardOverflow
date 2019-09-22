@@ -9,6 +9,7 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int>
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
+        public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<CardEntity> Card { get; set; }
         public virtual DbSet<CardInstanceEntity> CardInstance { get; set; }
         public virtual DbSet<CardOptionEntity> CardOption { get; set; }
@@ -22,6 +23,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
+        public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_AcquiredCardEntity> Tag_AcquiredCard { get; set; }

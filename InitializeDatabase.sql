@@ -113,6 +113,21 @@ CREATE TABLE [dbo].[AcquiredCard](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[AlphaBetaKey] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AlphaBetaKey](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Key] [nvarchar](50) NOT NULL,
+	[IsUsed] [bit] NOT NULL,
+ CONSTRAINT [PK_AlphaBetaKey] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[AspNetRoleClaims] ******/
 SET ANSI_NULLS ON
 GO
@@ -452,6 +467,23 @@ CREATE TABLE [dbo].[History](
 	[EaseFactorInPermille] [smallint] NOT NULL,
 	[TimeFromSeeingQuestionToScoreInSecondsPlus32768] [smallint] NOT NULL,
  CONSTRAINT [PK_History] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[PotentialSignups] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[PotentialSignups](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Email] [nvarchar](500) NOT NULL,
+	[Message] [nvarchar](1000) NOT NULL,
+	[OneIsAlpha2Beta3Ga] [tinyint] NOT NULL,
+	[TimeStamp] [smalldatetime] NOT NULL,
+ CONSTRAINT [PK_PotentialSignups] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
