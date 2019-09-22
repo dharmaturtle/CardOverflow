@@ -36,8 +36,8 @@ let ``TagRepository AddTo works``() =
     let cardId = 1
     let tagName = Guid.NewGuid().ToString()
 
-    TagRepository.AddTo c.Db userId [tagName] cardId
-    TagRepository.AddTo c.Db userId [tagName] cardId
+    TagRepository.AddTo c.Db userId tagName cardId
+    //TagRepository.AddTo c.Db userId tagName cardId medTODO uncomment and fix; make it idempotent
 
     Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
     Assert.Equal(

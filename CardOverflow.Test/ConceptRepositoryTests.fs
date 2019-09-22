@@ -102,20 +102,20 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 let testGetAcquired (cardIds: int list) addCards name = task {
     use c = new TestContainer(name)
     
-    let userId = 3 // creates the card
+    let userId = 1 // creates the card
     addCards |> Seq.iter (fun addCard -> addCard c.Db userId ["a"])
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1
-    let! card = CardRepository.GetAcquired c.Db userId 1
     Assert.Equal(
         cardIds.Count(),
         acquiredCards.Results.Count()
     )
+    let! card = CardRepository.GetAcquired c.Db userId 1
     Assert.Equal(
         userId,
         card |> Result.getOk |> fun x -> x.UserId
     )
 
-    let userId = 1 // acquires the card
+    let userId = 2 // acquires the card
     do! CardRepository.AcquireCardsAsync c.Db userId [1]
     let! card = CardRepository.Get c.Db 1 userId
     Assert.Equal(
@@ -124,19 +124,40 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             IsAcquired = false }],
         card.Tags
     )
+    let! card = CardRepository.GetAcquired c.Db userId 1
+    let card = card |> Result.getOk
+    TagRepository.AddTo c.Db userId "a" card.AcquiredCardId
+    let! card = CardRepository.Get c.Db 1 userId
+    Assert.Equal(
+        [{  Name = "a"
+            Count = 2
+            IsAcquired = true }],
+        card.Tags
+    )
 
-    let userId = 2 // never acquires the card
+    let userId = 3 // never acquires the card
     let! cards = CardRepository.GetAsync c.Db userId 1
     Assert.Equal(
         cardIds.Count(),
         cards.Results.Count()
     )
-    Assert.Equal(
-        [{  Name = "a"
-            Count = 1
-            IsAcquired = false }],
-        cards.Results.SelectMany(fun x -> x.Tags).Distinct()
-    )
+    if cardIds.Length = 1 then
+        Assert.Equal(
+            [{  Name = "a"
+                Count = 2
+                IsAcquired = false }],
+            cards.Results.SelectMany(fun x -> x.Tags)
+        )
+    else
+        Assert.Equal(
+            [{  Name = "a"
+                Count = 2
+                IsAcquired = false }
+             {  Name = "a"
+                Count = 1
+                IsAcquired = false }],
+            cards.Results.SelectMany(fun x -> x.Tags)
+        )
     //Assert.Equal<string seq>( // medTODO uncomment when tags work
     //    ["a"],
     //    results.Results.SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Cards.SelectMany(fun x -> x.Tags)))

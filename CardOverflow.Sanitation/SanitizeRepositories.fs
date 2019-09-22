@@ -33,11 +33,11 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let AddTo (db: CardOverflowDb) (tags: TagText seq) userId cardId =
+    let AddTo (db: CardOverflowDb) (tag: TagText) userId cardId =
         db.AcquiredCard.FirstOrDefault(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
         |> Option.ofObj
         |> function
-        | Some x -> Ok <| TagRepository.AddTo db userId (tags |> Seq.map (fun x -> x.Text)) x.Id
+        | Some x -> Ok <| TagRepository.AddTo db userId tag.Text x.Id
         | None -> Error "You haven't gotten that card."
 
 module SanitizeHistoryRepository =

@@ -36,7 +36,7 @@
   List<string> Tags = new List<string>();
 
   async Task SaveTag() {
-    var r = SanitizeTagRepository.AddTo(Db, new List<TagText>() { WriteTag }, User.Id, CardId);
+    var r = SanitizeTagRepository.AddTo(Db, WriteTag, User.Id, CardId);
     if (r.IsOk) {
       Tags.Add(WriteTag.Text);
       Tags = Tags.Distinct().ToList();

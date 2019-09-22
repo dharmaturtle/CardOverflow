@@ -265,7 +265,7 @@ module UserRepository =
         db.User.FirstOrDefault(fun x -> x.Email = email)
 
 module TagRepository =
-    let tagEntities (db: CardOverflowDb) userId newTags =
+    let tagEntities (db: CardOverflowDb) newTags =
         let newTags = newTags |> Seq.distinct // https://stackoverflow.com/a/18113534
         db.Tag // medTODO there's no filter, you're .ToListing all tags into memory
             .Select(fun x -> x.Name)
@@ -276,14 +276,16 @@ module TagRepository =
         |> newTags.Where
         |> Seq.map (fun x -> TagEntity(Name = x))
     let Add (db: CardOverflowDb) userId newTags =
-        tagEntities db userId newTags
+        tagEntities db newTags
         |> db.Tag.AddRange
         db.SaveChangesI ()
 
-    let AddTo (db: CardOverflowDb) userId newTags acquiredCardId =
-        tagEntities db userId newTags
-        |> Seq.map (fun x -> Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = x))
-        |> db.Tag_AcquiredCard.AddRange
+    let AddTo (db: CardOverflowDb) userId newTag acquiredCardId =
+        defaultArg
+            (db.Tag.SingleOrDefault(fun x -> x.Name = newTag) |> Option.ofObj)
+            (TagEntity(Name = newTag))
+        |> fun x -> Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = x)
+        |> db.Tag_AcquiredCard.AddI
         db.SaveChangesI ()
     let Search (db: CardOverflowDb) userId (input: string) =
         db.Tag.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())).ToList()
