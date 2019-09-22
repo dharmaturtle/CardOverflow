@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using CardOverflow.Api;
 
 namespace CardOverflow.Server.Areas.Identity.Pages.Account
 {
@@ -79,7 +80,7 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                var user = new UserEntity { UserName = Input.Email, Email = Input.Email };
+                var user = new UserEntity { UserName = Input.Email, Email = Input.Email, CardOptions = new List<CardOptionEntity> { CardOptionsRepository.defaultCardOptionsEntity.Invoke(0) } };
         var x = Input.InviteCode;
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)

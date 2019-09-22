@@ -228,6 +228,8 @@ module CardOptionsRepository =
           ShowAnswerTimer = false
           AutomaticallyPlayAudio = false
           ReplayQuestionAudioOnAnswer = false }
+    let defaultCardOptionsEntity =
+        defaultCardOptions.CopyToNew
     //let defaultAnkiCardOptions =
     //    { Id = 0
     //      Name = "Default Anki Options"
