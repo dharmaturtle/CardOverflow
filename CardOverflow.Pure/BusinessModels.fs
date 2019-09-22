@@ -252,6 +252,7 @@ type Comment = {
     IsDmca: bool
 }
 
+[<CLIMutable>]
 type ViewTag = {
     Name: string
     Count: int

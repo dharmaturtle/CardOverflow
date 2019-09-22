@@ -1,4 +1,4 @@
-﻿@page "/Card/{Id:int}"
+@page "/Card/{Id:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -23,7 +23,7 @@
           Gotten
         </button>
       } else {
-        <button class="btn btn-primary" onclick=@(() => @Acquire(Card.LatestInstance.Id))>
+        <button class="btn btn-primary" onclick=@(() => Acquire(Card.LatestInstance.Id))>
           Get
         </button>
       }
@@ -41,7 +41,7 @@
     <ul class="d-flex flex-wrap list-unstyled">
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderBy(x => x.Count)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="@(() => AcquireTag(tag.Name))">
             <span class="badge badge-light">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -91,6 +91,15 @@
     await CardRepository.AcquireCardsAsync(Db, User.Id, new List<int> { cardId });
     Card.LatestInstance.IsAcquired = true;
     StateHasChanged();
+  }
+
+  void AcquireTag(string name) {
+    if (SanitizeTagRepository.AddToRaw(Db, name, User.Id, Card.Id).IsOk) {
+      Card.Tags.Single(x => x.Name == name).IsAcquired = true;
+      StateHasChanged();
+    } else {
+      // show error
+    }
   }
 
 }

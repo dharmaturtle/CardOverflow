@@ -33,12 +33,14 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let AddTo (db: CardOverflowDb) (tag: TagText) userId cardId =
+    let AddToRaw (db: CardOverflowDb) tag userId cardId = // medTODO tag length needs validation
         db.AcquiredCard.FirstOrDefault(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
         |> Option.ofObj
         |> function
-        | Some x -> Ok <| TagRepository.AddTo db userId tag.Text x.Id
+        | Some x -> Ok <| TagRepository.AddTo db userId tag x.Id
         | None -> Error "You haven't gotten that card."
+    let AddTo (db: CardOverflowDb) tag userId cardId =
+        AddToRaw db tag.Text userId cardId
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) =
