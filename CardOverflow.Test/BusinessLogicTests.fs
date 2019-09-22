@@ -204,3 +204,21 @@ let ``CardHtml renders {{text:FieldName}} properly``(): unit =
         <hr id=answer>
         <b>Ottawa</b><br/><a href="http://example.com/search?q=Ottawa">check in dictionary</a>"""
         back
+        
+[<Fact>]
+let ``CardHtml renders {{cloze:FieldName}} properly``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [("Text", "Canberra was founded in {{c::1913}}.")
+             ("Extra", "Some extra stuff.")
+            ]
+            "{{cloze:Text}}"
+            """{{cloze:Text}}<br>{{Extra}}"""
+            ""
+
+    assertBody
+        "Canberra was founded in [...]."
+        front
+    assertBody
+        """Canberra was founded in 1913.<br>Some extra stuff."""
+        back

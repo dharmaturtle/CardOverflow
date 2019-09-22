@@ -6,8 +6,9 @@ open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
 
 module CardHtml =
+    type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
     let generate fieldNameValueMap questionTemplate answerTemplate css =
-        let replaceFields template =
+        let replaceFields isFront template =
             (template, fieldNameValueMap)
             ||> Seq.fold(fun (previous: string) (fieldName, value) -> 
                 let simple =
@@ -24,12 +25,19 @@ module CardHtml =
                     else regex.Replace(showIfHasText, "")
                 let stripHtml =
                     Regex("{{text:" + fieldName + "}}").Replace(showIfEmpty, MappingTools.stripHtmlTags value)
-                stripHtml
+                let cloze =
+                    if isFront then
+                        let hidden = ClozeRegex().Replace(value, "[...]") // medTODO show the hint
+                        Regex("{{cloze:" + fieldName + "}}").Replace(stripHtml, hidden)
+                    else
+                        let answer = ClozeRegex().Replace(value, ClozeRegex().TypedMatch(value).answer.Value)
+                        Regex("{{cloze:" + fieldName + "}}").Replace(stripHtml, answer)
+                cloze
             )
         let frontSide =
-            replaceFields questionTemplate
+            replaceFields true questionTemplate
         let backSide =
-            (replaceFields answerTemplate).Replace("{{FrontSide}}", frontSide)
+            (replaceFields false answerTemplate).Replace("{{FrontSide}}", frontSide)
         let htmlBase =
             sprintf """<html>
     <head>
@@ -45,4 +53,4 @@ module CardHtml =
         htmlBase frontSide,
         htmlBase backSide,
         MappingTools.stripHtmlTags <| frontSide,
-        MappingTools.stripHtmlTags <| (replaceFields answerTemplate).Replace("{{FrontSide}}", "")
+        MappingTools.stripHtmlTags <| (replaceFields false answerTemplate).Replace("{{FrontSide}}", "")
