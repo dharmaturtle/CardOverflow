@@ -408,4 +408,28 @@ type ExploreCard with
                                 | Some x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name = name)
                                 | None -> false
                     })
+        Relationships =
+            let sources =
+                entity.RelationshipSources.Select(fun r ->
+                    let front, _, _, _ =
+                        r.Target.CardInstances.First() // .First should have an orderby when we have multiple card instances
+                        |> CardInstance.load userId
+                        |> fun x -> x.FrontBackFrontSynthBackSynth
+                    {   Name = r.Name
+                        Front = front
+                        CardId = r.TargetId
+                        IsAcquired = r.Target.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))
+                    }) |> Seq.toList
+            let targets =
+                entity.RelationshipTargets.Select(fun r ->
+                    let front, _, _, _ =
+                        r.Source.CardInstances.First() // .First should have an orderby when we have multiple card instances
+                        |> CardInstance.load userId
+                        |> fun x -> x.FrontBackFrontSynthBackSynth
+                    {   Name = r.Name
+                        Front = front
+                        CardId = r.SourceId
+                        IsAcquired = r.Source.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))
+                    }) |> Seq.toList
+            sources @ targets
     }

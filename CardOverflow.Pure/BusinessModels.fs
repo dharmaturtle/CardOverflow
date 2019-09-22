@@ -259,6 +259,14 @@ type ViewTag = {
     IsAcquired: bool
 }
 
+[<CLIMutable>]
+type ViewRelationship = {
+    Name: string
+    CardId: int
+    IsAcquired: bool
+    Front: string
+}
+
 type ExploreCard = {
     Id: int
     Users: int
@@ -267,5 +275,6 @@ type ExploreCard = {
     Description: string
     LatestInstance: CardInstance
     Tags: ViewTag seq
+    Relationships: ViewRelationship seq
     Comments: Comment seq
 }
