@@ -145,7 +145,7 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
         |> Assert.True
 
     Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
-    Assert.Equal(4, c.Db.Tag.Count(fun x -> x.UserId = userId))
+    Assert.Equal(4, c.Db.Tag.Count())
     Assert.Equal(6, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
     Assert.Equal(6, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))

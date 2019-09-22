@@ -267,15 +267,14 @@ module UserRepository =
 module TagRepository =
     let tagEntities (db: CardOverflowDb) userId newTags =
         let newTags = newTags |> Seq.distinct // https://stackoverflow.com/a/18113534
-        db.Tag
-            .Where(fun x -> x.UserId = userId)
+        db.Tag // medTODO there's no filter, you're .ToListing all tags into memory
             .Select(fun x -> x.Name)
             .AsEnumerable()
             .Where(newTags.Contains)
             .ToList()
             .Contains >> not
         |> newTags.Where
-        |> Seq.map (fun x -> TagEntity(Name = x, UserId = userId ))
+        |> Seq.map (fun x -> TagEntity(Name = x))
     let Add (db: CardOverflowDb) userId newTags =
         tagEntities db userId newTags
         |> db.Tag.AddRange
@@ -287,10 +286,10 @@ module TagRepository =
         |> db.Tag_AcquiredCard.AddRange
         db.SaveChangesI ()
     let Search (db: CardOverflowDb) userId (input: string) =
-        db.Tag.Where(fun t -> userId = t.UserId && t.Name.ToLower().Contains(input.ToLower())).ToList()
+        db.Tag.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())).ToList()
     
     let GetAll (db: CardOverflowDb) userId =
-        db.Tag.Where(fun t -> userId = t.UserId).ToList()
+        db.Tag.ToList()
         
     let Update (db: CardOverflowDb) tag =
         db.Tag.UpdateI tag

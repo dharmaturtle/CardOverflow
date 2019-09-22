@@ -347,7 +347,7 @@ module Anki =
                         notesTags
                         (tags |> List.map (fun (x: TagEntity) -> x.Name) |> Set.ofSeq)
                     |> List.ofSeq
-                    |> List.map (fun x -> TagEntity(Name = x,  UserId = userId))
+                    |> List.map (fun x -> TagEntity(Name = x))
                     |> List.append tags
                     |> List.groupBy (fun x -> x.Name.ToLower())
                     |> List.map (fun (_, x) -> x.First())

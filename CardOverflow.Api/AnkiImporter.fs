@@ -133,7 +133,7 @@ module AnkiImporter =
                     |> Seq.tryHead
                     |> function
                     | Some e -> e
-                    | None -> TagEntity(Name = deckTag, UserId = userId))
+                    | None -> TagEntity(Name = deckTag))
                 |> Seq.append usersTags
                 |> Seq.toList
             let cardsAndTagsByNoteId =
@@ -204,7 +204,7 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| db.Tag.Where(fun pt -> pt.UserId = userId) // lowTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy
+                    <| db.Tag // medTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy... no actually you're loading the ENTIRE tag table
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
                     <| getCardTemplateInstance
