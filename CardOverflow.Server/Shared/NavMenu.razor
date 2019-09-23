@@ -1,3 +1,5 @@
+@using CardOverflow.Entity
+
 <div class="top-row pl-4 navbar navbar-dark">
   <a class="navbar-brand" href="">Website Needs A Name!</a>
   <button class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -46,7 +48,7 @@
       <Authorized>
         <li class="nav-item px-3">
           <NavLink class="nav-link" href="Identity/Account/Manage">
-            <span class="oi oi-person" aria-hidden="true"></span> Hello, @context.User.Identity.Name!
+            <span class="oi oi-person" aria-hidden="true"></span> Hi @User.DisplayName!
           </NavLink>
         </li>
         <li class="nav-item px-3">
@@ -72,6 +74,8 @@
 </div>
 
 @code {
+  [CascadingParameter]
+  UserEntity User { get; set; }
   bool collapseNavMenu = true;
 
   string NavMenuCssClass => collapseNavMenu ? "collapse" : null;

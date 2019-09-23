@@ -6,24 +6,24 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject CardOverflowDb Db
 
-<div class="sidebar">
-  <NavMenu />
-</div>
+<CascadingValue Value="@User">
+  <div class="sidebar">
+    <NavMenu />
+  </div>
 
-<div class="main">
-  <CascadingValue Value="@User">
+  <div class="main">
     @* Keep this div to make the Study page look ok. *@
     <div class="content px-4">
       @Body
     </div>
-  </CascadingValue>
-</div>
+  </div>
+</CascadingValue>
 
 @code {
   UserEntity User;
 
   protected override async Task OnInitAsync() {
-    var email = 
+    var email =
       (await AuthenticationStateProvider.GetAuthenticationStateAsync())
       .User.Identity.Name;
     User = UserRepository.Get(Db, email);

@@ -20,6 +20,7 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
   [AllowAnonymous]
   public class RegisterModel : PageModel {
     private readonly SignInManager<UserEntity> _signInManager;
+    private readonly CardOverflowDb _db;
     private readonly UserManager<UserEntity> _userManager;
     private readonly ILogger<RegisterModel> _logger;
     private readonly IEmailSender _emailSender;
@@ -27,10 +28,12 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
     public RegisterModel(
         UserManager<UserEntity> userManager,
         SignInManager<UserEntity> signInManager,
+        CardOverflowDb db,
         ILogger<RegisterModel> logger,
         IEmailSender emailSender) {
       _userManager = userManager;
       _signInManager = signInManager;
+      _db = db;
       _logger = logger;
       _emailSender = emailSender;
     }
@@ -77,13 +80,15 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
     public async Task<IActionResult> OnPostAsync(string returnUrl = null) {
       returnUrl = returnUrl ?? Url.Content("~/");
       ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-      if (ModelState.IsValid) {
+      var key = _db.AlphaBetaKey.SingleOrDefault(x => x.Key == Input.InviteCode && !x.IsUsed);
+      if (ModelState.IsValid && key != null) {
         var user = new UserEntity { UserName = Input.Email, Email = Input.Email, DisplayName = Input.DisplayName, CardOptions = new List<CardOptionEntity> { CardOptionsRepository.defaultCardOptionsEntity.Invoke(0) } };
-        var x = Input.InviteCode;
         var result = await _userManager.CreateAsync(user, Input.Password);
         if (result.Succeeded) {
           _logger.LogInformation("User created a new account with password.");
 
+          key.IsUsed = true;
+          await _db.SaveChangesAsync();
           var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
           code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
           var callbackUrl = Url.Page(
@@ -105,6 +110,10 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
         foreach (var error in result.Errors) {
           ModelState.AddModelError(string.Empty, error.Description);
         }
+      }
+
+      if (key == null) {
+        ModelState.AddModelError(string.Empty, "Invalid invite code.");
       }
 
       // If we got this far, something failed, redisplay form
