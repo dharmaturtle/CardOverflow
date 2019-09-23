@@ -1,5 +1,9 @@
-﻿namespace CardOverflow.Sanitation
+namespace CardOverflow.Sanitation
 
+open System.Collections.Generic
+open Microsoft.EntityFrameworkCore
+open FsToolkit.ErrorHandling
+open FSharp.Text.RegexProvider
 open Microsoft.FSharp.Core.Operators.Checked
 open System.Linq
 open Helpers
@@ -52,6 +56,37 @@ module SanitizeHistoryRepository =
             EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
             TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
         ) |> HistoryRepository.addAndSaveAsync db
+
+[<CLIMutable>]
+type AddRelationshipCommand = {
+    [<Required>]
+    [<StringLength(250, ErrorMessage = "Name must be less than 250 characters.")>]
+    Name: string
+    [<Required>]
+    SourceId: int
+    [<Required>]
+    TargetLink: string
+}
+type CardIdRegex = Regex< """(?<cardId>\d+)$""" >
+module SanitizeRelationshipRepository =
+    let GetCardId input =
+        let x = CardIdRegex().TypedMatch input
+        if x.Success 
+        then Ok <| int x.Value
+        else Error "Couldn't find the card ID"
+    let Add (db: CardOverflowDb) userId command = result {
+        let! targetId = GetCardId command.TargetLink
+        return!
+            if  db.AcquiredCard.Where(fun x -> x.UserId = userId).Any(fun x -> x.CardInstance.CardId = targetId) && 
+                db.AcquiredCard.Where(fun x -> x.UserId = userId).Any(fun x -> x.CardInstance.CardId = command.SourceId) then
+                RelationshipEntity(
+                    SourceId = command.SourceId,
+                    TargetId = targetId,
+                    Name = command.Name)
+                |> RelationshipRepository.addAndSaveAsync db
+                |> Ok
+            else Error "You must have acquired both cards!"
+        }
 
 module SanitizeCardRepository =
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id

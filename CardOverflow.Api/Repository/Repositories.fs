@@ -13,6 +13,11 @@ open System.Collections.Generic
 open X.PagedList
 open System.Threading.Tasks
 
+module RelationshipRepository =
+    let addAndSaveAsync (db: CardOverflowDb) (relationship: RelationshipEntity) =
+        db.Relationship.AddI relationship
+        db.SaveChangesAsyncI ()
+
 module CommentRepository =
     let addAndSaveAsync (db: CardOverflowDb) (comment: CommentCardEntity) =
         db.CommentCard.AddI comment
@@ -111,10 +116,16 @@ module CardRepository =
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Target.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
                             .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                        .Include(fun x -> x.RelationshipSources :> IEnumerable<_>)
+                            .ThenInclude(fun (x: RelationshipEntity) -> x.Target.CardInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
                         .Include(fun x -> x.RelationshipTargets :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
                             .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                        .Include(fun x -> x.RelationshipTargets :> IEnumerable<_>)
+                            .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
                         //    .ThenInclude(fun (x: CardEntity) -> x.CardInstances :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardInstanceEntity) -> x.Cards :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardEntity) -> x.CardTemplate.CardTemplateInstance)

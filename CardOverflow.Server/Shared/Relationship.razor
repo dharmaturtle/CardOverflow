@@ -1,0 +1,81 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject CardOverflowDb Db
+
+<h3>Relationships</h3>
+<ul class="list-unstyled">
+  @foreach (var relationship in Relationships) {
+    <li>
+      <span class="curate-tooltip-target">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <span class="oi oi-eye" aria-hidden="true"></span>
+        @if (relationship.IsAcquired) {
+          <span class="oi oi-circle-check text-success"></span>
+        } else {
+          <span class="oi oi-circle-x text-danger"></span>
+        }
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <div class="curate-tooltip-content">
+          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+          <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@relationship.Front"></iframe>
+        </div>
+      </span>
+      <a href="/card/@relationship.CardId">@relationship.Name</a>
+    </li>
+  }
+</ul>
+@if (User != null) {
+  <EditForm Model="@Command" OnValidSubmit=@Add>
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="RelationName">How are they related?</label>
+        <InputText @bind-value="@Command.Name" class="form-control" id="RelationName" placeholder="Name of the relationship" /> @*this seems to break validation: @bind-value:event="oninput"*@
+      </div>
+      <div class="form-group col-md-7">
+        <label for="TargetCardUrl">Related card URL</label>
+        <InputText @bind-value="@Command.TargetLink" class="form-control" id="TargetCardUrl" placeholder="www.cardoverflow.com/card/1234" /> @*this seems to break validation: @bind-value:event="oninput"*@
+      </div>
+      <div class="form-group col-md-1">
+        <label>&nbsp;</label>
+        <button type="submit" class="btn btn-primary form-control">Add</button>
+      </div>
+    </div>
+    <ValidationSummary />
+    <DataAnnotationsValidator />
+  </EditForm>
+}
+
+@code {
+  [Parameter]
+  public int SourceId { get; set; }
+  [Parameter]
+  public List<ViewRelationship> Relationships { get; set; }
+  [CascadingParameter]
+  UserEntity User { get; set; }
+  AddRelationshipCommand Command;
+
+  public override async Task SetParametersAsync(ParameterCollection parameters) {
+    await base.SetParametersAsync(parameters);
+    Command = new AddRelationshipCommand { SourceId = SourceId };
+    StateHasChanged();
+  }
+
+  async Task Add() {
+    var x = SanitizeRelationshipRepository.Add(Db, User.Id, Command);
+    if (x.IsOk) {
+      await x.ResultValue;
+      var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
+      Relationships = Relationships.Append(new ViewRelationship(Command.Name, targetId, true, "")).ToList(); // medTODO make not ""
+    } else {
+      // medTODO show error
+    }
+  }
+
+}
