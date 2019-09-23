@@ -16,6 +16,7 @@ open System
 open AnkiImportTestData
 open SimpleInjector
 open SimpleInjector.Lifestyles
+open CardOverflow.Sanitation
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -23,7 +24,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
     let userId = 3
     use c = new TestContainer(ankiFileName)
     
-    ankiExportsDir +/ ankiFileName
+    SanitizeAnki.ankiExportsDir +/ ankiFileName
     |> AnkiImporter.loadFiles (fun _ -> None)
     |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
     |> Result.getOk
@@ -38,7 +39,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
     use c = new TestContainer(ankiFileName)
 
     for _ in [1..3] do
-        ankiExportsDir +/ ankiFileName
+        SanitizeAnki.ankiExportsDir +/ ankiFileName
         |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File.FirstOrDefault(fun f -> f.Sha256 = sha256) |> Option.ofObj)
         |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
         |> Result.isOk
@@ -157,7 +158,7 @@ let ``Manual Anki import`` () =
     
     let ankiDb =
         AnkiImporter.getSimpleAnkiDb
-        |> using(ankiDb pathToCollection "Manual Anki import")
+        |> using(SanitizeAnki.ankiDb pathToCollection)
     pathToCollection
     |> AnkiImporter.loadFiles (fun sha256 -> db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
     |> Result.bind (AnkiImporter.save db ankiDb userId)

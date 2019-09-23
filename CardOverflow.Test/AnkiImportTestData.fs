@@ -1,4 +1,4 @@
-﻿module AnkiImportTestData
+module AnkiImportTestData
 
 open CardOverflow.Api
 open CardOverflow.Entity.Anki
@@ -1039,15 +1039,8 @@ type AllDefaultTemplatesAndImageAndMp3 () =
             [|"AllDefaultTemplatesAndImageAndMp3.colpkg" ; allDefaultTemplatesAndImageAndMp3_colpkg |]
             [|"AllDefaultTemplatesAndImageAndMp3.apkg" ; allDefaultTemplatesAndImageAndMp3_apkg |] ])
 
-let ankiExportsDir = Directory.GetCurrentDirectory() +/ "AnkiExports"
-
-let ankiDb ankiFileName callerMemberName =
-    let unzipDir = ankiExportsDir +/ "Temp" +/ ankiFileName + callerMemberName // Need to isolate each tests's ankiDb otherwise tests run in parallel fail
-    if Directory.Exists unzipDir
-    then Directory.Delete(unzipDir, true)
-    Directory.CreateDirectory unzipDir |> ignore
-    Anki.unzipCollectionToRandom (ankiExportsDir +/ ankiFileName) unzipDir
-    |> AnkiDbFactory.Create
+let recreateAnkiDb ankiFileName callerMemberName =
+    SanitizeAnki.ankiDb (SanitizeAnki.ankiExportsDir +/ ankiFileName)
 
 let serialize x =
     ObjectDumper.Dump(x, DumpOptions(DumpStyle = DumpStyle.CSharp,
@@ -1059,7 +1052,7 @@ let serialize x =
 let ``Actual AllDefaultTemplatesAndImageAndMp3 matches mock`` fileName mock =
     let actualDb =
         AnkiImporter.getSimpleAnkiDb
-        |> using(ankiDb fileName "Actual testnametoolong matches mock")
+        |> using(recreateAnkiDb fileName "Actual testnametoolong matches mock")
     
     serialize actualDb.Revlogs = serialize mock.Revlogs |> Assert.True
     serialize actualDb.Cols = serialize mock.Cols |> Assert.True
@@ -1074,7 +1067,7 @@ type AnkiTestContainer(ankiFileName: string, [<CallerMemberName>] ?memberName: s
     member __.Db =
         container.Db
     member __.AnkiDb () =
-        ankiDb ankiFileName memberName.Value
+        recreateAnkiDb ankiFileName memberName.Value
 
 type AllAnkiCols () =
     inherit XunitClassDataBase
