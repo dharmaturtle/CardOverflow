@@ -15,37 +15,27 @@
       </NavLink>
     </li>
     <li class="nav-item px-3">
-      <NavLink class="nav-link" href="counter">
-        <span class="oi oi-plus" aria-hidden="true"></span> Counter
-      </NavLink>
-    </li>
-    <li class="nav-item px-3">
-      <NavLink class="nav-link" href="fetchdata">
-        <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-      </NavLink>
-    </li>
-    <li class="nav-item px-3">
-      <NavLink class="nav-link" href="upload">
-        <span class="oi oi-cloud-upload" aria-hidden="true"></span> Upload
-      </NavLink>
-    </li>
-    <li class="nav-item px-3">
-      <NavLink class="nav-link" href="Curate">
-        <span class="oi oi-list" aria-hidden="true"></span> Curate
-      </NavLink>
-    </li>
-    <li class="nav-item px-3">
       <NavLink class="nav-link" href="Explore">
         <span class="oi oi-compass" aria-hidden="true"></span> Explore
       </NavLink>
     </li>
-    <li class="nav-item px-3">
-      <NavLink class="nav-link" href="study">
-        <span class="oi oi-list-rich" aria-hidden="true"></span> Study
-      </NavLink>
-    </li>
     <AuthorizeView>
       <Authorized>
+        <li class="nav-item px-3">
+          <NavLink class="nav-link" href="Curate">
+            <span class="oi oi-list" aria-hidden="true"></span> Curate
+          </NavLink>
+        </li>
+        <li class="nav-item px-3">
+          <NavLink class="nav-link" href="study">
+            <span class="oi oi-list-rich" aria-hidden="true"></span> Study
+          </NavLink>
+        </li>
+        <li class="nav-item px-3">
+          <NavLink class="nav-link" href="upload">
+            <span class="oi oi-cloud-upload" aria-hidden="true"></span> Upload
+          </NavLink>
+        </li>
         <li class="nav-item px-3">
           <NavLink class="nav-link" href="Identity/Account/Manage">
             <span class="oi oi-person" aria-hidden="true"></span> Hi @User.DisplayName!
@@ -58,22 +48,22 @@
         </li>
       </Authorized>
       <NotAuthorized>
-        <li class="nav-item px-3">
-          <NavLink class="nav-link" href="Identity/Account/Register">
-            <span class="oi oi-star" aria-hidden="true"></span> Register
-          </NavLink>
-        </li>
-        <li class="nav-item px-3">
-          <NavLink class="nav-link" href="Identity/Account/Login">
-            <span class="oi oi-account-login" aria-hidden="true"></span> Log in
-          </NavLink>
-        </li>
       </NotAuthorized>
     </AuthorizeView>
   </ul>
 </div>
 
 @code {
+  @*<li class="nav-item px-3">
+      <NavLink class="nav-link" href="Identity/Account/Register">
+        <span class="oi oi-star" aria-hidden="true"></span> Register
+      </NavLink>
+    </li>
+    <li class="nav-item px-3">
+      <NavLink class="nav-link" href="Identity/Account/Login">
+        <span class="oi oi-account-login" aria-hidden="true"></span> Log in
+      </NavLink>
+    </li>*@
   [CascadingParameter]
   UserEntity User { get; set; }
   bool collapseNavMenu = true;
