@@ -1,5 +1,143 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject CardOverflowDb Db
 
-Welcome to your new app.
+<div class="container">
+
+  <header>
+    <h1 class="display-3">How do you not have a name‽</h1>
+    <p class="lead"><a href="https://www.google.com/search?q=2+hard+things+in+computer+science">Naming is hard, ok?</a> Here are some random words to persuade you to sign up. Something something spaced repetition, herp derp social media, blah blah content aggregation. Just watch the video.</p>
+    <div class="embed-responsive embed-responsive-16by9">
+      <iframe src="https://www.youtube-nocookie.com/embed/1hHMwLxN6EM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </header>
+
+  <div class="row text-center mt-1">
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h4 class="card-title">Alpha</h4>
+          <p class="card-text font-italic">For personal friends, family, and people who won't sue me.</p>
+          <p class="card-text">My legal stuff isn't complete yet, but soon!</p>
+        </div>
+        <div class="card-footer">
+          @if (Form.OneIsAlpha2Beta3Ga == 1) {
+            <button type="button" class="btn btn-success" disabled>
+              But I'm clicking this anyway
+            </button>
+          } else {
+            <button type="button" class="btn btn-primary" onclick="@(() => Select(1))">
+              I don't know you
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h4 class="card-title">Beta</h4>
+          <p class="card-text font-italic">For people who enjoy losing their work.</p>
+          <p class="card-text">The database will be deleted regularly as the core features evolve.</p>
+          <p class="card-text text-light">I'm too lazy to migrate data.</p>
+        </div>
+        <div class="card-footer">
+          @if (Form.OneIsAlpha2Beta3Ga == 2) {
+            <button type="button" class="btn btn-success" disabled>
+              Cause I have way too many
+            </button>
+          } else {
+            <button type="button" class="btn btn-primary" onclick="@(() => Select(2))">
+              I want you to delete my cards
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h4 class="card-title">General Availability</h4>
+          <p class="card-text font-italic">For smart people.</p>
+          <p class="card-text">Sit back, relax, and let everyone else find the bugs. It'll be out Soon&trade;.</p>
+        </div>
+        <div class="card-footer">
+          @if (Form.OneIsAlpha2Beta3Ga == 3) {
+            <button type="button" class="btn btn-success" disabled>
+              Selected
+            </button>
+          } else {
+            <button type="button" class="btn btn-primary" onclick="@(() => Select(3))">
+              Dude, this is the only reasonable option
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <EditForm Model="@Form" OnValidSubmit=@Submit>
+        <div class="control-group">
+          <div class="form-group floating-label-form-group controls mb-0 pb-2">
+            <div class="d-flex justify-content-between">
+              <label>Email Address</label>
+              <small id="emailHelp" class="form-text text-muted">I'll never share your email with anyone else.</small>
+            </div>
+            <InputText @bind-value="@Form.Email" class="form-control" type="email" placeholder="you@interested.com" disabled="@Submitted" /> @*this seems to break validation: @bind-value:event="oninput"*@
+            <ValidationMessage For="@(() => Form.Email)" />
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="form-group floating-label-form-group controls mb-0 pb-2">
+            <label>Optional Message</label>
+            <InputTextArea @bind-value="@Form.Message" class="form-control" rows="4" placeholder="Feature requests, promises to not sue me, or ideas for a real name 🤨." disabled="@Submitted" /> @*this seems to break validation: @bind-value:event="oninput"*@
+            <ValidationMessage For="@(() => Form.Message)" />
+          </div>
+        </div>
+        <div class="form-group">
+          @if (Submitted) {
+            <button class="btn btn-secondary" disabled>Joined! I'll let you know when there's space!</button>
+          } else {
+            <button type="submit" class="btn btn-primary">Join the @SelectedText Waitlist!</button>
+          }
+          <DataAnnotationsValidator />
+        </div>
+      </EditForm>
+    </div>
+  </div>
+
+</div>
+
+@code {
+  PotentialSignupCommand Form = new PotentialSignupCommand() { OneIsAlpha2Beta3Ga = 3, Message = "" };
+  string SelectedText = "General Availability";
+  bool Submitted = false;
+
+  async Task Submit() {
+    await SanitizeLandingPage.SignUp(Db, Form);
+    Submitted = true;
+  }
+
+  void Select(byte i) {
+    Form.OneIsAlpha2Beta3Ga = i;
+    if (i == 1) {
+      SelectedText = "Alpha";
+    } else if (i == 2) {
+      SelectedText = "Beta";
+    } else if (i == 3) {
+      SelectedText = "General Availability";
+    }
+  }
+
+}

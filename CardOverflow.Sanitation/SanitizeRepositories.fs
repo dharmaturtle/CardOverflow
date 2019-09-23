@@ -94,3 +94,23 @@ module SanitizeCardRepository =
         if card.AuthorId = authorId
         then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard
         else Error "You aren't that card's author."
+
+[<CLIMutable>]
+type PotentialSignupCommand = {
+    [<Required>]
+    [<EmailAddress>]
+    Email: string
+    [<StringLength(1000, ErrorMessage = "Message must be less than 1000 characters.")>]
+    Message: string
+    OneIsAlpha2Beta3Ga: byte
+}
+
+module SanitizeLandingPage =
+    let SignUp (db: CardOverflowDb) signUpForm =
+        PotentialSignupsEntity(
+            Email = signUpForm.Email,
+            Message = signUpForm.Message,
+            OneIsAlpha2Beta3Ga = signUpForm.OneIsAlpha2Beta3Ga,
+            TimeStamp = DateTime.UtcNow
+        ) |> db.PotentialSignups.AddI
+        db.SaveChangesAsyncI()
