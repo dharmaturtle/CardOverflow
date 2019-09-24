@@ -57,7 +57,7 @@
   UserEntity User { get; set; }
 
   protected override async Task OnInitAsync() {
-    Card = (await CardRepository.GetAcquired(Db, Id, User?.Id ?? 0)).ResultValue; // medTODO report errors
+    Card = (await CardRepository.GetAcquired(Db, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
   }
 
   async Task UpdateCard() {
