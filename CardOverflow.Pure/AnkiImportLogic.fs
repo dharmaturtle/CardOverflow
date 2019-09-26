@@ -6,7 +6,7 @@ open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 
 module AnkiImportLogic =
-    type ClozeRegex = Regex< """{{c(?<clozeIndex>\d)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
+    type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
     let maxClozeIndex fields =
         ClozeRegex().TypedMatches fields
         |> Seq.map (fun x -> x.clozeIndex.Value |> int)
