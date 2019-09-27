@@ -39,9 +39,9 @@
   <div>
     <h3>Tags</h3>
     <ul class="d-flex flex-wrap list-unstyled">
-      @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderBy(x => x.Count)) {
+      @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="@(() => AcquireTag(tag.Name))">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.LatestInstance?.IsAcquired ?? true)>
             <span class="badge badge-light">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -50,9 +50,9 @@
     @if (User != null) {
       <h3>Your Tags</h3>
       <ul class="d-flex flex-wrap list-unstyled">
-        @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderBy(x => x.Count)) {
+        @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
           <li class="m-1">
-            <button type="button" class="btn btn-primary btn-sm">
+            <button type="button" class="btn btn-primary btn-sm" onclick=@(() => DeleteTag(tag.Name))>
               <span class="badge badge-light">@tag.Count</span> @tag.Name
             </button>
           </li>
@@ -97,11 +97,20 @@
   }
 
   void AcquireTag(string name) {
-    if (SanitizeTagRepository.AddToRaw(Db, name, User.Id, Card.Id).IsOk) {
+    if (SanitizeTagRepository.AddTo(Db, new TagText { Text = name }, User.Id, Card.Id).IsOk) {
       Card.Tags.Single(x => x.Name == name).IsAcquired = true;
       StateHasChanged();
     } else {
-      // show error
+      // medTODO show error
+    }
+  }
+
+  void DeleteTag(string tag) { // highTODO figure out why the button isn't being removed until refresh. Also if you delete multiple, it's offset by one
+    if (SanitizeTagRepository.DeleteFrom(Db, tag, User.Id, Card.Id).IsOk) {
+      Card.Tags.Single(x => x.Name == tag).IsAcquired = false;
+      StateHasChanged();
+    } else {
+      // medTODO show error
     }
   }
 

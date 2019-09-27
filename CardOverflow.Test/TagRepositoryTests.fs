@@ -8,6 +8,8 @@ open System
 open System.Linq
 open Xunit
 open System.Collections.Generic
+open System.Threading.Tasks
+open FSharp.Control.Tasks
 
 [<Fact>]
 let ``TagRepository can add a new tag``() =
@@ -29,23 +31,28 @@ let ``When TagRepository adds a tag twice, only one is added``() =
     Assert.Single(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
 
 [<Fact>]
-let ``TagRepository AddTo works``() =
+let ``TagRepository AddTo/DeleteFrom works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     FacetRepositoryTests.addBasicCard c.Db userId []
     let cardId = 1
     let tagName = Guid.NewGuid().ToString()
 
-    TagRepository.AddTo c.Db userId tagName cardId
+    TagRepository.AddTo c.Db tagName cardId
     //TagRepository.AddTo c.Db userId tagName cardId medTODO uncomment and fix; make it idempotent
 
     Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
-    Assert.Equal(
-        tagName,
+    let joinTable () =
         c.Db.AcquiredCard
             .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
             .Single(fun x -> x.Id = 1)
             .Tag_AcquiredCards
-            .Single(fun x -> x.Tag.Name = tagName).Tag.Name
+    Assert.Equal(
+        tagName,
+        joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
         )
+    
+    do! TagRepository.DeleteFrom c.Db tagName cardId
+    Assert.Empty <| joinTable ()
+    }

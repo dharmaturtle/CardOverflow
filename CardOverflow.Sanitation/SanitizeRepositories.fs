@@ -37,14 +37,17 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let AddToRaw (db: CardOverflowDb) tag userId cardId = // medTODO tag length needs validation
+    let validate (db: CardOverflowDb) tag userId cardId action = // medTODO tag length needs validation
         db.AcquiredCard.FirstOrDefault(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
-        |> Option.ofObj
         |> function
-        | Some x -> Ok <| TagRepository.AddTo db userId tag x.Id
-        | None -> Error "You haven't gotten that card."
-    let AddTo (db: CardOverflowDb) tag userId cardId =
-        AddToRaw db tag.Text userId cardId
+        | null -> Error "You haven't gotten that card."
+        | card -> Ok <| action card.Id
+    let AddTo db tag userId cardId =
+        validate db tag.Text userId cardId
+            <| TagRepository.AddTo db tag.Text
+    let DeleteFrom db tag userId cardId =
+        validate db tag userId cardId
+            <| TagRepository.DeleteFrom db tag
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) =

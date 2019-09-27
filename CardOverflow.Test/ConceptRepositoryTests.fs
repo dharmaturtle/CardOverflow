@@ -126,7 +126,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     )
     let! card = CardRepository.GetAcquired c.Db userId 1
     let card = card |> Result.getOk
-    TagRepository.AddTo c.Db userId "a" card.AcquiredCardId
+    TagRepository.AddTo c.Db "a" card.AcquiredCardId
     let! card = CardRepository.Get c.Db 1 userId
     Assert.Equal(
         [{  Name = "a"

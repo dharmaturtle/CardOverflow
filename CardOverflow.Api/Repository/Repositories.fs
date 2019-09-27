@@ -12,6 +12,7 @@ open FSharp.Control.Tasks
 open System.Collections.Generic
 open X.PagedList
 open System.Threading.Tasks
+open Microsoft.FSharp.Core
 
 module RelationshipRepository =
     let addAndSaveAsync (db: CardOverflowDb) (relationship: RelationshipEntity) =
@@ -301,13 +302,26 @@ module TagRepository =
         |> db.Tag.AddRange
         db.SaveChangesI ()
 
-    let AddTo (db: CardOverflowDb) userId newTag acquiredCardId =
+    let AddTo (db: CardOverflowDb) newTag acquiredCardId =
         defaultArg
             (db.Tag.SingleOrDefault(fun x -> x.Name = newTag) |> Option.ofObj)
             (TagEntity(Name = newTag))
         |> fun x -> Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = x)
         |> db.Tag_AcquiredCard.AddI
         db.SaveChangesI ()
+    
+    let DeleteFrom (db: CardOverflowDb) tagName acquiredCardId = task {
+        let! tag = db.Tag.SingleOrDefaultAsync(fun x -> x.Name = tagName)
+        return!
+            tag
+            |> function
+            | null -> Task.FromResult()
+            | tag ->
+                db.Tag_AcquiredCard.Single(fun x -> x.AcquiredCardId = acquiredCardId && x.TagId = tag.Id)
+                |> db.Tag_AcquiredCard.RemoveI
+                db.SaveChangesAsyncI()
+        }
+
     let Search (db: CardOverflowDb) userId (input: string) =
         db.Tag.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())).ToList()
     
