@@ -307,10 +307,10 @@ module Anki =
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName then
                 let file = fileEntityByAnkiFileName.[ankiFileName]
                 ( file :: files,
-                  field.Replace(ankiFileName, "image/" + UrlBase64.Encode file.Sha256))
+                  field.Replace(ankiFileName, "/image/" + UrlBase64.Encode file.Sha256))
             else
                 ( files,
-                  field.Replace(ankiFileName, "missingImage.jpg")) // medTODO needs a placeholder
+                  field.Replace(ankiFileName, "/missingImage.jpg")) // medTODO needs a placeholder
         )
         |> fun x -> (x, SoundRegex().TypedMatches field)
         ||> Seq.fold (fun (files, field) m ->
