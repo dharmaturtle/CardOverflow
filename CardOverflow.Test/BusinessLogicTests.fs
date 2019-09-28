@@ -11,6 +11,26 @@ let assertBody expectedBody actualHtml =
         sprintf """<!DOCTYPE html>
     <head>
         <style>
+            .cloze-brackets-front {
+                font-size: 150%%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-filler-front {
+                font-size: 150%%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-brackets-back {
+                font-size: 150%%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: red;
+            }
+        </style>
+        <style>
             
         </style>
     </head>
@@ -218,8 +238,16 @@ let ``CardHtml renders {{cloze:FieldName}} properly``(): unit =
             ""
 
     assertBody
-        "Canberra was founded in [...]."
+        """Canberra was founded in 
+        <span class="cloze-brackets-front">[</span>
+        <span class="cloze-filler-front">...</span>
+        <span class="cloze-brackets-front">]</span>
+        ."""
         front
     assertBody
-        """Canberra was founded in 1913.<br>Some extra stuff."""
+        """Canberra was founded in 
+        <span class="cloze-brackets-back">[</span>
+        1913
+        <span class="cloze-brackets-back">]</span>
+        .<br>Some extra stuff."""
         back

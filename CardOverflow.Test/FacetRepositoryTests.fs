@@ -62,6 +62,26 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
         """<!DOCTYPE html>
     <head>
         <style>
+            .cloze-brackets-front {
+                font-size: 150%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-filler-front {
+                font-size: 150%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-brackets-back {
+                font-size: 150%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: red;
+            }
+        </style>
+        <style>
             .card {
  font-family: arial;
  font-size: 20px;
@@ -85,6 +105,26 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
     Assert.Equal(
         """<!DOCTYPE html>
     <head>
+        <style>
+            .cloze-brackets-front {
+                font-size: 150%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-filler-front {
+                font-size: 150%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-brackets-back {
+                font-size: 150%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: red;
+            }
+        </style>
         <style>
             .card {
  font-family: arial;

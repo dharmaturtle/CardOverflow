@@ -27,10 +27,21 @@ module CardHtml =
                     Regex("{{text:" + fieldName + "}}").Replace(showIfEmpty, MappingTools.stripHtmlTags value)
                 let cloze =
                     if isFront then
-                        let hidden = ClozeRegex().Replace(value, "[...]") // medTODO show the hint
+                        let brackets = """
+        <span class="cloze-brackets-front">[</span>
+        <span class="cloze-filler-front">...</span>
+        <span class="cloze-brackets-front">]</span>
+        """
+                        let hidden = ClozeRegex().Replace(value, brackets) // medTODO show the hint
                         Regex("{{cloze:" + fieldName + "}}").Replace(stripHtml, hidden)
                     else
-                        let answer = ClozeRegex().Replace(value, ClozeRegex().TypedMatch(value).answer.Value)
+                        let html =
+                            sprintf """
+        <span class="cloze-brackets-back">[</span>
+        %s
+        <span class="cloze-brackets-back">]</span>
+        """
+                        let answer = ClozeRegex().Replace(value, html <| ClozeRegex().TypedMatch(value).answer.Value)
                         Regex("{{cloze:" + fieldName + "}}").Replace(stripHtml, answer)
                 cloze
             )
@@ -41,6 +52,26 @@ module CardHtml =
         let htmlBase =
             sprintf """<!DOCTYPE html>
     <head>
+        <style>
+            .cloze-brackets-front {
+                font-size: 150%%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-filler-front {
+                font-size: 150%%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: dodgerblue;
+            }
+            .cloze-brackets-back {
+                font-size: 150%%;
+                font-family: monospace;
+                font-weight: bolder;
+                color: red;
+            }
+        </style>
         <style>
             %s
         </style>
