@@ -80,7 +80,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (CardRepository.GetAsync c.Db userId i)
+        (CardRepository.SearchAsync c.Db userId i "")
             .GetAwaiter()
             .GetResult()
             .Results
@@ -88,7 +88,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
             |> ignore
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
-    let! cards = CardRepository.GetAsync c.Db userId 1
+    let! cards = CardRepository.SearchAsync c.Db userId 1 ""
     Assert.Equal(1, cards.Results.Single().Users)
     Assert.Equal(
         [{  Name = "a"
@@ -162,7 +162,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     )
 
     let userId = 3 // never acquires the card
-    let! cards = CardRepository.GetAsync c.Db userId 1
+    let! cards = CardRepository.SearchAsync c.Db userId 1 ""
     Assert.Equal(
         cardIds.Count(),
         cards.Results.Count()

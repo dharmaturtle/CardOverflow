@@ -192,10 +192,11 @@ module CardRepository =
                 }
             }
         } 
-    let GetAsync (db: CardOverflowDb) userId (pageNumber: int) =
+    let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
                 db.Card
+                    .Where(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm))))
                     .Include(fun x -> x.Author)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
