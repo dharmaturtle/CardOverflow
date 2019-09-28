@@ -85,7 +85,8 @@ module SanitizeRelationshipRepository =
                 RelationshipEntity(
                     SourceId = command.SourceId,
                     TargetId = targetId,
-                    Name = command.Name)
+                    Name = command.Name,
+                    UserId = userId)
                 |> RelationshipRepository.addAndSaveAsync db
                 |> Ok
             else Error "You must have acquired both cards!"

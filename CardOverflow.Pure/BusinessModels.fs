@@ -265,6 +265,7 @@ type ViewRelationship = {
     CardId: int
     IsAcquired: bool
     Front: string
+    Users: int
 }
 
 [<CLIMutable>]

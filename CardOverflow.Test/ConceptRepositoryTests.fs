@@ -22,6 +22,7 @@ open SimpleInjector.Lifestyles
 open System.Diagnostics
 open FSharp.Control.Tasks
 open System.Threading.Tasks
+open CardOverflow.Sanitation
 
 [<Fact>]
 let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() =
@@ -114,7 +115,16 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         userId,
         card |> Result.getOk |> fun x -> x.UserId
     )
-
+    if cardIds.Length <> 1 then
+        let addRelationshipCommand =
+            {   Name = "test relationship"
+                SourceId = 1
+                TargetLink = "2"
+            }
+        do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand |> Result.getOk
+        let! card = CardRepository.Get c.Db 1 userId
+        Assert.Equal(1, card.Relationships.Single().Users)
+    
     let userId = 2 // acquires the card
     do! CardRepository.AcquireCardsAsync c.Db userId [1]
     let! card = CardRepository.Get c.Db 1 userId
@@ -158,10 +168,6 @@ let testGetAcquired (cardIds: int list) addCards name = task {
                 IsAcquired = false }],
             cards.Results.SelectMany(fun x -> x.Tags)
         )
-    //Assert.Equal<string seq>( // medTODO uncomment when tags work
-    //    ["a"],
-    //    results.Results.SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Cards.SelectMany(fun x -> x.Tags)))
-    //)
     }
     
 [<Fact>]

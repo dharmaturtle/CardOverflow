@@ -17,6 +17,8 @@ open AnkiImportTestData
 open SimpleInjector
 open SimpleInjector.Lifestyles
 open CardOverflow.Sanitation
+open System.Threading.Tasks
+open FSharp.Control.Tasks
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -102,7 +104,7 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     Assert.Equal("4/26/2018 02:54:00", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Modified.Value.ToString("M/d/yyyy HH:mm:ss"))
 
 [<Fact>]
-let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` () =
+let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
     AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
@@ -161,6 +163,12 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <span class="cloze-filler-front">...</span>
         <span class="cloze-brackets-front">]</span>
         &nbsp;</div><br /></div>"""))
+    Assert.Equal(10, c.Db.Relationship.Count(fun x -> x.Name = "Cloze"))
+    let! card = CardRepository.Get c.Db 1 userId
+    Assert.Equal<int seq>(
+        [1; 1; 1; 1],
+        card.Relationships.Select(fun x -> x.Users)
+    )}
 
 //[<Fact>]
 let ``Manual Anki import`` () =
