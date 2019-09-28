@@ -247,6 +247,11 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.TargetId);
 
+                entity.HasIndex(e => e.UserId);
+
+                entity.HasIndex(e => new { e.SourceId, e.TargetId, e.UserId, e.Name })
+                    .IsUnique();
+
                 entity.HasOne(d => d.Source)
                     .WithMany(p => p.RelationshipSources)
                     .HasForeignKey(d => d.SourceId)
@@ -255,6 +260,11 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.Target)
                     .WithMany(p => p.RelationshipTargets)
                     .HasForeignKey(d => d.TargetId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Relationships)
+                    .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

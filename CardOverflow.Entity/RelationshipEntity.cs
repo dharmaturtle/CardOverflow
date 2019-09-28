@@ -20,6 +20,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
+        public int UserId { get; set; }
 
         [ForeignKey("SourceId")]
         [InverseProperty("RelationshipSources")]
@@ -27,5 +28,8 @@ namespace CardOverflow.Entity
         [ForeignKey("TargetId")]
         [InverseProperty("RelationshipTargets")]
         public virtual CardEntity Target { get; set; }
+        [ForeignKey("UserId")]
+        [InverseProperty("Relationships")]
+        public virtual UserEntity User { get; set; }
     }
 }

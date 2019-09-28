@@ -337,6 +337,7 @@ module Anki =
         initialTags
         userId
         fileEntityByAnkiFileName
+        noRelationship
         getCard = // lowTODO use tail recursion
         let rec parseNotesRec tags cardsAndTagsByNoteId =
             function
@@ -377,19 +378,27 @@ module Anki =
                                     <| cardTemplate.Entity
                             )
                         Core.combination 2 instances
-                        |> List.iter (fun x ->
-                                let r = RelationshipEntity(Name = "Cloze")
-                                x.[0].Card.RelationshipSources.Add r
-                                x.[1].Card.RelationshipTargets.Add r
+                        |> List.iter (fun instancePair ->
+                                if  instancePair.[0].Card.Id = 0 &&
+                                    instancePair.[1].Card.Id = 0 &&
+                                    noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Cloze"
+                                then
+                                    let r = RelationshipEntity(Name = "Cloze", UserId = userId)
+                                    instancePair.[0].Card.RelationshipSources.Add r
+                                    instancePair.[1].Card.RelationshipTargets.Add r
                             )
                         instances
                     else
                         let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity)
                         Core.combination 2 instances
                         |> List.iter (fun instancePair ->
-                                let r = RelationshipEntity(Name = "Linked")
-                                instancePair.[0].Card.RelationshipSources.Add r
-                                instancePair.[1].Card.RelationshipTargets.Add r
+                                if  instancePair.[0].Card.Id = 0 &&
+                                    instancePair.[1].Card.Id = 0 &&
+                                    noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked"
+                                then
+                                    let r = RelationshipEntity(Name = "Linked", UserId = userId)
+                                    instancePair.[0].Card.RelationshipSources.Add r
+                                    instancePair.[1].Card.RelationshipTargets.Add r
                             )
                         instances
                 let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)

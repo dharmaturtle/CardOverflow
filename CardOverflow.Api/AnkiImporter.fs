@@ -63,6 +63,7 @@ module AnkiImporter =
         (cardOptions: CardOptionEntity seq)
         getCardTemplates
         getCard
+        noRelationship
         getAcquiredCard
         getHistory =
         let col = ankiDb.Cols.Single()
@@ -142,6 +143,7 @@ module AnkiImporter =
                     usersTags
                     userId
                     fileEntityByAnkiFileName
+                    noRelationship
                     getCard
                     ankiDb.Notes
                 |> List.ofSeq
@@ -198,6 +200,8 @@ module AnkiImporter =
             card.AcquireEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =
             history.AcquireEquality db |> Option.ofObj
+        let noRelationship sourceId targetId userId name =
+            not <| db.Relationship.Any(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.UserId = userId && x.Name = name)
         result {
             let! acquiredCardEntities, histories =
                 load
@@ -209,6 +213,7 @@ module AnkiImporter =
                         .Where(fun x -> x.UserId = userId)
                     <| getCardTemplateInstance
                     <| getCard
+                    <| noRelationship
                     <| getAcquiredCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
