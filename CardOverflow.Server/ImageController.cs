@@ -17,7 +17,7 @@ namespace CardOverflow.Server {
       _db = db;
     }
 
-    [HttpGet("{hash}")]
+    [HttpGet("{hash}")] // medTODO move to another server
     public async Task<IActionResult> GetImage(string hash) { // medTODO is this a security hazard?
       var sha256 = UrlBase64.Decode(hash);
       var imageArray = _db.File.First(x => x.Sha256 == sha256).Data;

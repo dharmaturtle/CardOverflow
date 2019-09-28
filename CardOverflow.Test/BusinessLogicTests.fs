@@ -8,7 +8,7 @@ open System
 
 let assertBody expectedBody actualHtml =
     Assert.Equal<string>(
-        sprintf "<html>
+        sprintf """<!DOCTYPE html>
     <head>
         <style>
             
@@ -16,8 +16,9 @@ let assertBody expectedBody actualHtml =
     </head>
     <body>
         %s
+        <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
     </body>
-</html>" expectedBody,
+</html>""" expectedBody,
         actualHtml
     )
 

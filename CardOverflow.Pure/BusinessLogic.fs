@@ -39,7 +39,7 @@ module CardHtml =
         let backSide =
             (replaceFields false answerTemplate).Replace("{{FrontSide}}", frontSide)
         let htmlBase =
-            sprintf """<html>
+            sprintf """<!DOCTYPE html>
     <head>
         <style>
             %s
@@ -47,6 +47,7 @@ module CardHtml =
     </head>
     <body>
         %s
+        <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
     </body>
 </html>"""
                 css

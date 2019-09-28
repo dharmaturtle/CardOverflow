@@ -100,6 +100,12 @@
       recognition.stop();
     }
   </script>
+  <script type="text/javascript" src="../js/iframeResizer.min.js"></script>
+  <script>
+    function resizeIframe(obj) {
+      iFrameResize({ log: true }, obj)
+    }
+  </script>
 </head>
 <body>
   <app>@(await Html.RenderComponentAsync<App>())</app>

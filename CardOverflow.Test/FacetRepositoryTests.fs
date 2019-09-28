@@ -59,14 +59,52 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
     Assert.SingleI <| c.Db.AcquiredCard
     Assert.SingleI <| CardRepository.GetAllCards c.Db userId
     Assert.Equal(
-        "<html>\r\n    <head>\r\n        <style>\r\n            .card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n\r\n        </style>\r\n    </head>\r\n    <body>\r\n        Front\r\n    </body>\r\n</html>",
+        """<!DOCTYPE html>
+    <head>
+        <style>
+            .card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+        </style>
+    </head>
+    <body>
+        Front
+        <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
+    </body>
+</html>""",
         (CardRepository.GetTodaysCards c.Db userId).GetAwaiter().GetResult()
         |> Seq.head
         |> Result.getOk
         |> fun x -> x.Front
     )
     Assert.Equal(
-        "<html>\r\n    <head>\r\n        <style>\r\n            .card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n\r\n        </style>\r\n    </head>\r\n    <body>\r\n        Front\r\n\r\n<hr id=answer>\r\n\r\nBack\r\n    </body>\r\n</html>",
+        """<!DOCTYPE html>
+    <head>
+        <style>
+            .card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+        </style>
+    </head>
+    <body>
+        Front
+
+<hr id=answer>
+
+Back
+        <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
+    </body>
+</html>""",
         (CardRepository.GetTodaysCards c.Db userId).GetAwaiter().GetResult()
         |> Seq.head
         |> Result.getOk
