@@ -11,7 +11,7 @@
 
 <h3>Relationships</h3>
 <ul class="list-unstyled">
-  @foreach (var relationship in Relationships) {
+  @foreach (var relationship in Card.Relationships) {
     <li>
       <span class="curate-tooltip-target">
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -26,7 +26,7 @@
     </li>
   }
 </ul>
-@if (User != null) {
+@if (Card.LatestInstance.IsAcquired) {
   <EditForm Model="@Command" OnValidSubmit=@Add>
     <div class="form-row">
       <div class="form-group col-md-4">
@@ -49,16 +49,14 @@
 
 @code {
   [Parameter]
-  public int SourceId { get; set; }
-  [Parameter]
-  public List<ViewRelationship> Relationships { get; set; }
+  CardOverflow.Pure.ExploreCard Card { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
   AddRelationshipCommand Command;
 
   public override async Task SetParametersAsync(ParameterCollection parameters) {
     await base.SetParametersAsync(parameters);
-    Command = new AddRelationshipCommand { SourceId = SourceId };
+    Command = new AddRelationshipCommand { SourceId = Card.Id };
     StateHasChanged();
   }
 
@@ -67,7 +65,7 @@
     if (x.IsOk) {
       await x.ResultValue;
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
-      Relationships = Relationships.Append(new ViewRelationship(Command.Name, targetId, true, "")).ToList(); // medTODO make not ""
+      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, "")).ToList(); // medTODO make not ""
     } else {
       // medTODO show error
     }
