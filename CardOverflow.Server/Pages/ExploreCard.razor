@@ -32,7 +32,7 @@
     Description: @Card.Description
   </div>
   <div>
-    <iframe sandbox="allow-scripts allow-same-origin" src="/card/raw/@Id" scrolling="no" @ref="iframe" onload=@iframeloaded 
+    <iframe sandbox="allow-scripts allow-same-origin" src="/card/raw/@Id" scrolling="no" @ref="iframe" onload=@iframeloaded
             style="width: 1px; min-width: 100%; height:100px;"></iframe>
   </div>
   <div class="text-right">
@@ -96,6 +96,7 @@
   async Task Acquire(int cardId) {
     await CardRepository.AcquireCardsAsync(Db, User.Id, new List<int> { cardId });
     Card.LatestInstance.IsAcquired = true;
+    Card.Users++;
     StateHasChanged();
   }
 

@@ -267,6 +267,7 @@ type ViewRelationship = {
     Front: string
 }
 
+[<CLIMutable>]
 type ExploreCard = {
     Id: int
     Users: int
