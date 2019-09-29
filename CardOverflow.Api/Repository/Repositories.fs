@@ -18,6 +18,16 @@ module RelationshipRepository =
     let addAndSaveAsync (db: CardOverflowDb) (relationship: RelationshipEntity) =
         db.Relationship.AddI relationship
         db.SaveChangesAsyncI ()
+    let removeAndSaveAsync (db: CardOverflowDb) sourceId targetId userId name =
+        db.Relationship.SingleOrDefault(fun x -> 
+            ((x.SourceId = sourceId && x.TargetId = targetId)  ||
+             (x.SourceId = targetId && x.TargetId = sourceId)) &&
+            x.Name = name &&
+            x.UserId = userId
+        ) |> function
+        | null -> ()
+        | x -> db.Relationship.RemoveI x
+        db.SaveChangesAsyncI ()
 
 module CommentRepository =
     let addAndSaveAsync (db: CardOverflowDb) (comment: CommentCardEntity) =

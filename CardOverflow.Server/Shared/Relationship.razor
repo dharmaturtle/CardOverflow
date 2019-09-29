@@ -65,7 +65,7 @@
     if (x.IsOk) {
       await x.ResultValue;
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
-      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, "")).ToList(); // medTODO make not ""
+      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, "", 1)).ToList(); // medTODO make not ""
     } else {
       // medTODO show error
     }

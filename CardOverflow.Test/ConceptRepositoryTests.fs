@@ -116,14 +116,30 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         card |> Result.getOk |> fun x -> x.UserId
     )
     if cardIds.Length <> 1 then
+        let name = "test relationship"
         let addRelationshipCommand =
-            {   Name = "test relationship"
+            {   Name = name
                 SourceId = 1
                 TargetLink = "2"
             }
         do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand |> Result.getOk
         let! card = CardRepository.Get c.Db 1 userId
         Assert.Equal(1, card.Relationships.Single().Users)
+        let! card = CardRepository.Get c.Db 2 userId
+        Assert.Equal(1, card.Relationships.Single().Users)
+
+        do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId name
+        let! card = CardRepository.Get c.Db 1 userId
+        Assert.Equal(0, card.Relationships.Count())
+        let! card = CardRepository.Get c.Db 2 userId
+        Assert.Equal(0, card.Relationships.Count())
+
+        do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand |> Result.getOk
+        do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId name
+        let! card = CardRepository.Get c.Db 1 userId
+        Assert.Equal(0, card.Relationships.Count())
+        let! card = CardRepository.Get c.Db 2 userId
+        Assert.Equal(0, card.Relationships.Count())
     
     let userId = 2 // acquires the card
     do! CardRepository.AcquireCardsAsync c.Db userId [1]

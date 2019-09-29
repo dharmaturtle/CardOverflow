@@ -419,7 +419,7 @@ type ExploreCard with
                         Front = front
                         CardId = r.TargetId
                         IsAcquired = r.Target.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))
-                        Users = entity.RelationshipSources.Where(fun x -> x.SourceId = r.SourceId && x.TargetId = r.TargetId ).Count()
+                        Users = entity.RelationshipSources.Where(fun x -> x.SourceId = r.SourceId && x.TargetId = r.TargetId).Count()
                     }) |> Seq.toList
             let targets =
                 entity.RelationshipTargets.Select(fun r ->
@@ -431,7 +431,7 @@ type ExploreCard with
                         Front = front
                         CardId = r.SourceId
                         IsAcquired = r.Source.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))
-                        Users = entity.RelationshipSources.Where(fun x -> x.SourceId = r.SourceId && x.TargetId = r.TargetId ).Count()
+                        Users = entity.RelationshipTargets.Where(fun x -> x.SourceId = r.SourceId && x.TargetId = r.TargetId).Count()
                     }) |> Seq.toList
             sources @ targets
     }

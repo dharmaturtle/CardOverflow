@@ -91,6 +91,7 @@ module SanitizeRelationshipRepository =
                 |> Ok
             else Error "You must have acquired both cards!"
         }
+    let Remove = RelationshipRepository.removeAndSaveAsync
 
 module SanitizeCardRepository =
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
