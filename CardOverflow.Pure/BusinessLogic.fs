@@ -5,6 +5,15 @@ open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
 
+module Relationship =
+    type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
+    let flipName name =
+        let x = RelationshipRegex().TypedMatch name
+        if x.Success then
+            x.target.Value + "/" + x.source.Value
+        else
+            originalName
+
 module CardHtml =
     type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
     let generate fieldNameValueMap questionTemplate answerTemplate css =
