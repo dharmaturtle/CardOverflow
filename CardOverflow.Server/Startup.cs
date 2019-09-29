@@ -39,6 +39,7 @@ namespace CardOverflow.Server {
       services.AddServerSideBlazor();
       services.AddScoped<AuthenticationStateProvider, RevalidatingAuthenticationStateProvider<UserEntity>>();
       services.AddSingleton<WeatherForecastService>();
+      services.AddHttpClient<UserContentHttpClient>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

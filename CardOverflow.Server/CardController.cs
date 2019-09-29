@@ -11,7 +11,11 @@ namespace CardOverflow.Server {
       _db = db;
     }
 
-    [HttpGet("card/raw/{id}")] // highTODO move to another server
+    [HttpGet("card/rawfront/{id}")] // highTODO move to another server
+    public async Task<IActionResult> GetFront(int id) =>
+      Content((await CardRepository.Get(_db, id, 0)).LatestInstance.FrontBackFrontSynthBackSynth.Item1, "text/html");
+
+    [HttpGet("card/rawback/{id}")] // highTODO move to another server
     public async Task<IActionResult> GetBack(int id) =>
       Content((await CardRepository.Get(_db, id, 0)).LatestInstance.FrontBackFrontSynthBackSynth.Item2, "text/html");
 
