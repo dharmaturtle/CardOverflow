@@ -64,6 +64,7 @@
       recognition.lang = 'en-US';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
+      recognition.continuous = true;
 
       recognition.start();
 
@@ -76,8 +77,9 @@
         // These also have getters so they can be accessed like arrays.
         // The second [0] returns the SpeechRecognitionAlternative at position 0.
         // We then return the transcript property of the SpeechRecognitionAlternative object
-        console.log('Confidence: ' + event.results[0][0].confidence + " Transcript:" + event.results[0][0].transcript)
-        instance.invokeMethodAsync('GetTranscript', event.results[0][0].transcript)
+        let mostRecent = event.results[event.results.length - 1][0]
+        console.log('Confidence: ' + mostRecent.confidence + " Transcript:" + mostRecent.transcript)
+        instance.invokeMethodAsync('GetTranscript', mostRecent.transcript)
           .then((message) => {
             console.log(message);
           });

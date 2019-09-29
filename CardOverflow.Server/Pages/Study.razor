@@ -112,11 +112,11 @@
   }
 
   [JSInvokable]
-  public async Task<string> GetTranscript(string transcript) {
-    Console.WriteLine(transcript);
-    this.transcript = transcript;
+  public async Task<string> GetTranscript(string rawTranscript) {
+    this.transcript = rawTranscript.Trim().ToLower();
+    Console.WriteLine(this.transcript);
     StateHasChanged();
-    switch (transcript) {
+    switch (this.transcript) {
       case "what":
         if (isFront == true) {
           await Speak(todaysCards.First().ResultValue.FrontSynthVoice);
@@ -147,7 +147,7 @@
       default:
         break;
     }
-    return "C# received: " + transcript;
+    return "C# received: " + this.transcript;
   }
 
 }
