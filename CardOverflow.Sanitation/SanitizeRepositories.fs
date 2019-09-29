@@ -91,7 +91,8 @@ module SanitizeRelationshipRepository =
                 |> Ok
             else Error "You must have acquired both cards!"
         }
-    let Remove = RelationshipRepository.removeAndSaveAsync
+    let Remove db sourceId targetId userId name =
+        RelationshipRepository.removeAndSaveAsync db sourceId targetId userId name // don't eta reduce - consumed by C#
 
 [<CLIMutable>]
 type SearchCommand = {

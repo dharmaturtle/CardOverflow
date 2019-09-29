@@ -11,9 +11,9 @@
 
 <h3>Relationships</h3>
 <ul class="list-unstyled">
-  @foreach (var relationship in Card.Relationships) {
+  @foreach (var relationship in Card.Relationships.Where(x => !x.IsAcquired)) {
     <li>
-      <button type="button" class="btn btn-primary btn-sm">
+      <button type="button" class="btn btn-outline-primary btn-sm" onclick=@(() => Acquire(relationship.Name, relationship.CardId))>
         <span class="curate-tooltip-target">
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
@@ -21,7 +21,7 @@
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           <div class="curate-tooltip-content">
             @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-            <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@relationship.Front"></iframe>
+            <iframe sandbox allow-scripts class="curate-iframe-tooltip" src="/card/raw/@relationship.CardId"></iframe>
           </div>
         </span>
       </button>
@@ -29,6 +29,28 @@
     </li>
   }
 </ul>
+@if (User != null) {
+  <h3>Your Relationships</h3>
+  <ul class="list-unstyled">
+    @foreach (var relationship in Card.Relationships.Where(x => x.IsAcquired)) {
+      <li>
+        <button type="button" class="btn btn-primary btn-sm" onclick=@(() => Unacquire(relationship.Name, relationship.CardId))>
+          <span class="curate-tooltip-target">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+            <span class="badge badge-success">@relationship.Users</span>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <div class="curate-tooltip-content">
+              @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+              <iframe sandbox allow-scripts class="curate-iframe-tooltip" src="/card/raw/@relationship.CardId"></iframe>
+            </div>
+          </span>
+        </button>
+        <a href="/card/@relationship.CardId">@relationship.Name</a>
+      </li>
+    }
+  </ul>
+}
 @if (Card.LatestInstance.IsAcquired) {
   <EditForm Model="@Command" OnValidSubmit=@Add>
     <div class="form-row">
@@ -68,10 +90,29 @@
     if (x.IsOk) {
       await x.ResultValue;
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
-      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, "", 1)).ToList(); // medTODO make not ""
+      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, 1)).ToList();
     } else {
       // medTODO show error
     }
+  }
+
+  async Task Acquire(string name, int targetId) {
+    var x = SanitizeRelationshipRepository.Add(Db, User.Id, new AddRelationshipCommand(name, Card.Id, targetId.ToString()));
+    if (x.IsOk) {
+      await x.ResultValue;
+      Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = true;
+      Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users++;
+      StateHasChanged();
+    } else {
+      // medTODO show error
+    }
+  }
+
+  async Task Unacquire(string name, int targetId) {
+    await SanitizeRelationshipRepository.Remove(Db, Card.Id, targetId, User.Id, name);
+    Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = false;
+    Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users--;
+    StateHasChanged();
   }
 
 }

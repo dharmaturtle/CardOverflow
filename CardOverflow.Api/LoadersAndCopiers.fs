@@ -410,28 +410,32 @@ type ExploreCard with
                     })
         Relationships =
             let sources =
-                entity.RelationshipSources.Select(fun r ->
-                    let front, _, _, _ =
-                        r.Target.CardInstances.First() // .First should have an orderby when we have multiple card instances
-                        |> CardInstance.load userId
-                        |> fun x -> x.FrontBackFrontSynthBackSynth
-                    {   Name = r.Name
-                        Front = front
-                        CardId = r.TargetId
-                        IsAcquired = r.Target.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))
-                        Users = entity.RelationshipSources.Where(fun x -> x.SourceId = r.SourceId && x.TargetId = r.TargetId).Count()
+                entity.RelationshipSources.GroupBy(fun x -> x.Name, x.SourceId, x.TargetId).Select(fun r ->
+                    let name = r.First().Name
+                    let sourceId = r.First().SourceId
+                    let targetId = r.First().TargetId
+                    {   Name = name
+                        CardId = targetId
+                        IsAcquired = r.Any(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.UserId = userId && x.Name = name)
+                        Users = r.Count(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.Name = name)
                     }) |> Seq.toList
             let targets =
-                entity.RelationshipTargets.Select(fun r ->
-                    let front, _, _, _ =
-                        r.Source.CardInstances.First() // .First should have an orderby when we have multiple card instances
-                        |> CardInstance.load userId
-                        |> fun x -> x.FrontBackFrontSynthBackSynth
-                    {   Name = r.Name
-                        Front = front
-                        CardId = r.SourceId
-                        IsAcquired = r.Source.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))
-                        Users = entity.RelationshipTargets.Where(fun x -> x.SourceId = r.SourceId && x.TargetId = r.TargetId).Count()
+                entity.RelationshipTargets.GroupBy(fun x -> x.Name, x.SourceId, x.TargetId).Select(fun r ->
+                    let name = r.First().Name
+                    let sourceId = r.First().SourceId
+                    let targetId = r.First().TargetId
+                    {   Name = name
+                        CardId = sourceId
+                        IsAcquired = r.Any(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.UserId = userId && x.Name = name)
+                        Users = r.Count(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.Name = name)
                     }) |> Seq.toList
             sources @ targets
+            |> List.groupBy (fun x -> x.CardId)
+            |> List.map (fun (cardId, relationships) -> 
+                {   Name = relationships.First().Name
+                    CardId = cardId
+                    IsAcquired = relationships.Any(fun x -> x.IsAcquired)
+                    Users = relationships.Sum(fun x -> x.Users)
+                }
+            )
     }

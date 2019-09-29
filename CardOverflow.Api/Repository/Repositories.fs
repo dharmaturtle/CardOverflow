@@ -90,8 +90,7 @@ module CardRepository =
     let Get (db: CardOverflowDb) cardId userId =
         task {
             let! concept =
-                if userId = 0
-                then
+                if userId = 0 then
                     db.Card
                         .Include(fun x -> x.Author)
                         .Include(fun x -> x.CommentCards :> IEnumerable<_>)

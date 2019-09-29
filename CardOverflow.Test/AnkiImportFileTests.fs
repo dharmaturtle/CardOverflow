@@ -142,27 +142,10 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <span class="cloze-brackets-front">]</span>
         &nbsp;</div><div><b>V</b>:&nbsp;Vincristine/Vinblastine (anticancer)</div><div><b>P</b>:&nbsp;Palcitaxel (anticancer)&nbsp;</div><br /></div>""")
     Assert.Equal(4, card.Relationships.Count())
-    let relationships = card.Relationships.Select(fun x -> x.Front).OrderBy(fun x -> x) |> Seq.toList
-    Assert.True(relationships.[0].Contains("""<div>&nbsp;<u>Drugs</u>&nbsp;that act on&nbsp;<b>microtubules</b>&nbsp;may be remembered with the mnemonic "<i><b>M</b>icrotubules&nbsp;<b>G</b>et&nbsp;<b>C</b>onstructed&nbsp;<b>V</b>ery&nbsp;<b>P</b>oorly</i>":</div><div><br /></div><div><b>M</b>:&nbsp;
-        <span class="cloze-brackets-front">[</span>
-        <span class="cloze-filler-front">...</span>
-        <span class="cloze-brackets-front">]</span>
-        <div><b>G</b>:&nbsp;Griseofulvin (antifungal)&nbsp;</div><div><b>C</b>:&nbsp;Colchicine (antigout)&nbsp;</div><div><b>V</b>:&nbsp;Vincristine/Vinblastine (anticancer)</div><div><b>P</b>:&nbsp;Palcitaxel (anticancer)&nbsp;</div><br /></div>"""))
-    Assert.True(relationships.[1].Contains("""<div>&nbsp;<u>Drugs</u>&nbsp;that act on&nbsp;<b>microtubules</b>&nbsp;may be remembered with the mnemonic "<i><b>M</b>icrotubules&nbsp;<b>G</b>et&nbsp;<b>C</b>onstructed&nbsp;<b>V</b>ery&nbsp;<b>P</b>oorly</i>":</div><div><br /></div><div><b>M</b>:&nbsp;Mebendazole (antihelminthic)<div><b>G</b>:&nbsp;
-        <span class="cloze-brackets-front">[</span>
-        <span class="cloze-filler-front">...</span>
-        <span class="cloze-brackets-front">]</span>
-        &nbsp;</div><div><b>C</b>:&nbsp;Colchicine (antigout)&nbsp;</div><div><b>V</b>:&nbsp;Vincristine/Vinblastine (anticancer)</div><div><b>P</b>:&nbsp;Palcitaxel (anticancer)&nbsp;</div><br /></div>"""))
-    Assert.True(relationships.[2].Contains("""<div>&nbsp;<u>Drugs</u>&nbsp;that act on&nbsp;<b>microtubules</b>&nbsp;may be remembered with the mnemonic "<i><b>M</b>icrotubules&nbsp;<b>G</b>et&nbsp;<b>C</b>onstructed&nbsp;<b>V</b>ery&nbsp;<b>P</b>oorly</i>":</div><div><br /></div><div><b>M</b>:&nbsp;Mebendazole (antihelminthic)<div><b>G</b>:&nbsp;Griseofulvin (antifungal)&nbsp;</div><div><b>C</b>:&nbsp;Colchicine (antigout)&nbsp;</div><div><b>V</b>:&nbsp;
-        <span class="cloze-brackets-front">[</span>
-        <span class="cloze-filler-front">...</span>
-        <span class="cloze-brackets-front">]</span>
-        </div><div><b>P</b>:&nbsp;Palcitaxel (anticancer)&nbsp;</div><br /></div>"""))
-    Assert.True(relationships.[3].Contains("""<div>&nbsp;<u>Drugs</u>&nbsp;that act on&nbsp;<b>microtubules</b>&nbsp;may be remembered with the mnemonic "<i><b>M</b>icrotubules&nbsp;<b>G</b>et&nbsp;<b>C</b>onstructed&nbsp;<b>V</b>ery&nbsp;<b>P</b>oorly</i>":</div><div><br /></div><div><b>M</b>:&nbsp;Mebendazole (antihelminthic)<div><b>G</b>:&nbsp;Griseofulvin (antifungal)&nbsp;</div><div><b>C</b>:&nbsp;Colchicine (antigout)&nbsp;</div><div><b>V</b>:&nbsp;Vincristine/Vinblastine (anticancer)</div><div><b>P</b>:&nbsp;
-        <span class="cloze-brackets-front">[</span>
-        <span class="cloze-filler-front">...</span>
-        <span class="cloze-brackets-front">]</span>
-        &nbsp;</div><br /></div>"""))
+    Assert.Equal<int seq>(
+        [1; 2; 4; 5],
+        card.Relationships.Select(fun x -> x.CardId).OrderBy(fun x -> x)
+    )
     Assert.Equal(10, c.Db.Relationship.Count(fun x -> x.Name = "Cloze"))
     let! card = CardRepository.Get c.Db 1 userId
     Assert.Equal<int seq>(

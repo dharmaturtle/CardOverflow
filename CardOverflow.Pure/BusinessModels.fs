@@ -264,7 +264,6 @@ type ViewRelationship = {
     Name: string
     CardId: int
     IsAcquired: bool
-    Front: string
     Users: int
 }
 
