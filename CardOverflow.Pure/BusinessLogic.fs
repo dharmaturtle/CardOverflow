@@ -7,12 +7,18 @@ open System.Text.RegularExpressions
 
 module Relationship =
     type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
+    let split name =
+        let x = RelationshipRegex().TypedMatch name
+        if x.Success then
+            x.source.Value, x.target.Value
+        else
+            name, ""
     let flipName name =
         let x = RelationshipRegex().TypedMatch name
         if x.Success then
             x.target.Value + "/" + x.source.Value
         else
-            originalName
+            name
 
 module CardHtml =
     type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >

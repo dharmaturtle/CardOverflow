@@ -23,7 +23,7 @@
             <iframe sandbox allow-scripts class="curate-iframe-tooltip" src="/card/rawfront/@relationship.CardId"></iframe>
           </div>
         </span>
-        @relationship.Name
+        @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
       <a href="/card/@relationship.CardId">@MappingTools.stripHtmlTags(htmlByCardId[relationship.CardId])</a>
     </li>
@@ -43,7 +43,7 @@
               <iframe sandbox allow-scripts class="curate-iframe-tooltip" src="/card/rawfront/@relationship.CardId"></iframe>
             </div>
           </span>
-          @relationship.Name
+          @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
         </button>
         <a href="/card/@relationship.CardId">@MappingTools.stripHtmlTags(htmlByCardId[relationship.CardId])</a>
       </li>

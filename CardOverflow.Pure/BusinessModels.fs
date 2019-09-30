@@ -265,7 +265,11 @@ type ViewRelationship = {
     CardId: int
     IsAcquired: bool
     Users: int
-}
+} with
+    member this.PrimaryName =
+        Relationship.split this.Name |> fst
+    member this.SecondaryName =
+        Relationship.split this.Name |> snd
 
 [<CLIMutable>]
 type ExploreCard = {
