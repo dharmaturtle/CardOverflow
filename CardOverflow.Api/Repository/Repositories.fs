@@ -63,6 +63,7 @@ module CardRepository =
                 (getCompleteCards db)
                     .Where(fun x -> x.UserId = userId && x.Due < tomorrow)
                     .OrderBy(fun x -> x.Due)
+                    .Take(3) // highTODO fix
                     .ToListAsync()
             return
                 cards |> Seq.map QuizCard.load

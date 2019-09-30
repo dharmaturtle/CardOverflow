@@ -73,7 +73,7 @@ type AddRelationshipCommand = {
 type CardIdRegex = Regex< """(?<cardId>\d+)$""" >
 module SanitizeRelationshipRepository =
     let GetCardId input =
-        let x = CardIdRegex().TypedMatch input
+        let x = CardIdRegex().TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
         if x.Success 
         then Ok <| int x.Value
         else Error "Couldn't find the card ID"
