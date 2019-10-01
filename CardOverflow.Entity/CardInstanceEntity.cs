@@ -10,7 +10,6 @@ namespace CardOverflow.Entity
         public CardInstanceEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
-            FieldValues = new HashSet<FieldValueEntity>();
             File_CardInstances = new HashSet<File_CardInstanceEntity>();
         }
 
@@ -24,14 +23,18 @@ namespace CardOverflow.Entity
         [MaxLength(32)]
         public byte[] AcquireHash { get; set; }
         public bool IsDmca { get; set; }
+        [Required]
+        public string FieldValues { get; set; }
+        public int CardTemplateInstanceId { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]
         public virtual CardEntity Card { get; set; }
+        [ForeignKey("CardTemplateInstanceId")]
+        [InverseProperty("CardInstances")]
+        public virtual CardTemplateInstanceEntity CardTemplateInstance { get; set; }
         [InverseProperty("CardInstance")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        [InverseProperty("CardInstance")]
-        public virtual ICollection<FieldValueEntity> FieldValues { get; set; }
         [InverseProperty("CardInstance")]
         public virtual ICollection<File_CardInstanceEntity> File_CardInstances { get; set; }
     }

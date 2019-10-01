@@ -7,11 +7,6 @@ namespace CardOverflow.Entity
 {
     public partial class FieldEntity
     {
-        public FieldEntity()
-        {
-            FieldValues = new HashSet<FieldValueEntity>();
-        }
-
         public int Id { get; set; }
         [Required]
         [StringLength(100)]
@@ -42,7 +37,5 @@ namespace CardOverflow.Entity
         [ForeignKey("CardTemplateInstanceId")]
         [InverseProperty("Fields")]
         public virtual CardTemplateInstanceEntity CardTemplateInstance { get; set; }
-        [InverseProperty("Field")]
-        public virtual ICollection<FieldValueEntity> FieldValues { get; set; }
     }
 }

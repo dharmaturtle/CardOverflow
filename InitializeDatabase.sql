@@ -253,11 +253,13 @@ CREATE TABLE [dbo].[CardInstance](
 	[CardId] [int] NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
 	[IsDmca] [bit] NOT NULL,
+	[FieldValues] [nvarchar](max) NOT NULL,
+	[CardTemplateInstanceId] [int] NOT NULL,
  CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[CardOption] ******/
 SET ANSI_NULLS ON
@@ -405,22 +407,6 @@ CREATE TABLE [dbo].[Field](
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[FieldValue] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[FieldValue](
-	[CardInstanceId] [int] NOT NULL,
-	[FieldId] [int] NOT NULL,
-	[Value] [nvarchar](max) NOT NULL,
- CONSTRAINT [PK_FieldValue] PRIMARY KEY CLUSTERED 
-(
-	[CardInstanceId] ASC,
-	[FieldId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[File] ******/
 SET ANSI_NULLS ON
@@ -864,6 +850,12 @@ CREATE NONCLUSTERED INDEX [IX_CardInstance_CardId] ON [dbo].[CardInstance]
 	[CardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_CardInstance_CardTemplateInstanceId] ******/
+CREATE NONCLUSTERED INDEX [IX_CardInstance_CardTemplateInstanceId] ON [dbo].[CardInstance]
+(
+	[CardTemplateInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_CardOption_UserId] ******/
 CREATE UNIQUE NONCLUSTERED INDEX [IX_CardOption_UserId] ON [dbo].[CardOption]
 (
@@ -926,12 +918,6 @@ GO
 CREATE NONCLUSTERED INDEX [IX_Field_CardTemplateInstanceId] ON [dbo].[Field]
 (
 	[CardTemplateInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_FieldValue_FieldId] ******/
-CREATE NONCLUSTERED INDEX [IX_FieldValue_FieldId] ON [dbo].[FieldValue]
-(
-	[FieldId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
@@ -1126,6 +1112,11 @@ REFERENCES [dbo].[Card] ([Id])
 GO
 ALTER TABLE [dbo].[CardInstance] CHECK CONSTRAINT [FK_CardInstance_Card_CardId]
 GO
+ALTER TABLE [dbo].[CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardInstance_CardTemplateInstance_CardTemplateInstanceId] FOREIGN KEY([CardTemplateInstanceId])
+REFERENCES [dbo].[CardTemplateInstance] ([Id])
+GO
+ALTER TABLE [dbo].[CardInstance] CHECK CONSTRAINT [FK_CardInstance_CardTemplateInstance_CardTemplateInstanceId]
+GO
 ALTER TABLE [dbo].[CardOption]  WITH CHECK ADD  CONSTRAINT [FK_CardOption_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
 GO
@@ -1170,16 +1161,6 @@ ALTER TABLE [dbo].[Field]  WITH CHECK ADD  CONSTRAINT [FK_Field_CardTemplateInst
 REFERENCES [dbo].[CardTemplateInstance] ([Id])
 GO
 ALTER TABLE [dbo].[Field] CHECK CONSTRAINT [FK_Field_CardTemplateInstance_CardTemplateInstanceId]
-GO
-ALTER TABLE [dbo].[FieldValue]  WITH CHECK ADD  CONSTRAINT [FK_FieldValue_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
-REFERENCES [dbo].[CardInstance] ([Id])
-GO
-ALTER TABLE [dbo].[FieldValue] CHECK CONSTRAINT [FK_FieldValue_CardInstance_CardInstanceId]
-GO
-ALTER TABLE [dbo].[FieldValue]  WITH CHECK ADD  CONSTRAINT [FK_FieldValue_Field_FieldId] FOREIGN KEY([FieldId])
-REFERENCES [dbo].[Field] ([Id])
-GO
-ALTER TABLE [dbo].[FieldValue] CHECK CONSTRAINT [FK_FieldValue_Field_FieldId]
 GO
 ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])

@@ -19,7 +19,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommentCardTemplateEntity> CommentCardTemplate { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<FieldEntity> Field { get; set; }
-        public virtual DbSet<FieldValueEntity> FieldValue { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
@@ -90,9 +89,16 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.CardId);
 
+                entity.HasIndex(e => e.CardTemplateInstanceId);
+
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.CardInstances)
                     .HasForeignKey(d => d.CardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.CardTemplateInstance)
+                    .WithMany(p => p.CardInstances)
+                    .HasForeignKey(d => d.CardTemplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -188,23 +194,6 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.CardTemplateInstance)
                     .WithMany(p => p.Fields)
                     .HasForeignKey(d => d.CardTemplateInstanceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<FieldValueEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.CardInstanceId, e.FieldId });
-
-                entity.HasIndex(e => e.FieldId);
-
-                entity.HasOne(d => d.CardInstance)
-                    .WithMany(p => p.FieldValues)
-                    .HasForeignKey(d => d.CardInstanceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.Field)
-                    .WithMany(p => p.FieldValues)
-                    .HasForeignKey(d => d.FieldId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
