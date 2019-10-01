@@ -24,7 +24,7 @@
           Gotten
         </button>
       } else {
-        <button class="btn btn-primary" onclick=@(() => Acquire(Card.LatestInstance.Id))>
+        <button class="btn btn-primary" @onclick=@(() => Acquire(Card.LatestInstance.Id))>
           Get
         </button>
       }
@@ -32,7 +32,7 @@
     Description: @Card.Description
   </div>
   <div>
-    <iframe sandbox="allow-scripts allow-same-origin" src="/card/rawback/@Id" scrolling="no" @ref="iframe" onload=@iframeloaded
+    <iframe sandbox="allow-scripts allow-same-origin" src="/card/rawback/@Id" scrolling="no" @ref="iframe" @onload=@iframeloaded
             style="width: 1px; min-width: 100%; height:100px;"></iframe>
   </div>
   <div class="text-right">
@@ -43,7 +43,7 @@
     <ul class="d-flex flex-wrap list-unstyled">
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.LatestInstance?.IsAcquired ?? true)>
+          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.LatestInstance?.IsAcquired ?? true)>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -54,7 +54,7 @@
       <ul class="d-flex flex-wrap list-unstyled">
         @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
           <li class="m-1">
-            <button type="button" class="btn btn-primary btn-sm" onclick=@(() => DeleteTag(tag.Name))>
+            <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
               <span class="badge badge-success">@tag.Count</span> @tag.Name
             </button>
           </li>
@@ -85,9 +85,9 @@
   CardOverflow.Pure.ExploreCard Card;
   [CascadingParameter]
   UserEntity User { get; set; }
-  private ElementRef iframe;
+  private ElementReference iframe;
 
-  public override async Task SetParametersAsync(ParameterCollection parameters) {
+  public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     Card = await CardRepository.Get(Db, Id, User?.Id ?? 0);
     StateHasChanged();

@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ObjectDumper.NET" Version="2.4.19166.1" />
+    <PackageReference Include="ObjectDumper.NET" Version="2.4.19218.1" />
   </ItemGroup>
 
 </Project>

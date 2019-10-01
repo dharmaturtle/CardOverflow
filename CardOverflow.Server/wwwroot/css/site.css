@@ -57,7 +57,7 @@ html, body {
     visibility: visible;
   }
 
-a {
+a, .btn-link {
   color: #0366d6;
 }
 

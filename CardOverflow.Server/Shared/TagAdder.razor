@@ -19,7 +19,7 @@
   }
   <EditForm Model="@WriteTag" OnValidSubmit=@SaveTag>
     <div class="form-group">
-      <InputText @bind-value="@WriteTag.Text" /> @*this seems to break validation: @bind-value:event="oninput"*@
+      <InputText @bind-Value="@WriteTag.Text" /> @*this seems to break validation: @bind-Value:event="oninput"*@
       <button type="submit" class="btn btn-primary">Add</button>
       <DataAnnotationsValidator />
       <ValidationSummary />
@@ -31,7 +31,7 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   [Parameter]
-  int CardId { get; set; }
+  public int CardId { get; set; }
   TagText WriteTag = new TagText();
   List<string> Tags = new List<string>();
 

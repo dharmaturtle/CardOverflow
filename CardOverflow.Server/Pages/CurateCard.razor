@@ -19,7 +19,7 @@
         <div class="col-sm">
           @foreach (var field in Card.CardInstance.FieldValues) {
             <label><b>@field.Field.Name: </b></label>
-            <InputTextArea @bind-value="@field.Value" Class="curate-edit-inputtextarea" />
+            <InputTextArea @bind-Value="@field.Value" Class="curate-edit-inputtextarea" />
           }
         </div>
         <div class="col-sm">
@@ -56,7 +56,7 @@
   [CascadingParameter]
   UserEntity User { get; set; }
 
-  protected override async Task OnInitAsync() {
+  protected override async Task OnInitializedAsync() {
     Card = (await CardRepository.GetAcquired(Db, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
   }
 

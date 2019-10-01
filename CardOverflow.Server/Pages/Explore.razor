@@ -16,27 +16,27 @@
     @if (selectedCardId != null) {
       <span style="min-width: fit-content;">
         @*see if you can remove this span... only here since the if breaks the nbsp*@
-        <a href="javascript:void(0);" onclick=@(() => CardClick(null))>
+        <a href="javascript:void(0);" @onclick=@(() => CardClick(null))>
           <span class="oi oi-arrow-circle-left"></span>
         </a>
         &nbsp;
       </span>
     }
-  <EditForm OnValidSubmit=@(() => PageChanged(1)) Model=@query class="form-inline input-group">
-    <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-value=@query.Query />
-    <button class="btn btn-primary" type="submit">Search</button>
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-  </EditForm>
+    <EditForm OnValidSubmit=@(() => PageChanged(1)) Model=@query class="form-inline input-group">
+      <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-Value=@query.Query />
+      <button class="btn btn-primary" type="submit">Search</button>
+      <DataAnnotationsValidator />
+      <ValidationSummary />
+    </EditForm>
     @if (selectedCardId != null) {
       <span style="min-width: fit-content;">
         @*see if you can remove this span... only here since the if breaks the nbsp*@
         &nbsp;
-        <a href="javascript:void(0);" onclick=@(() => CardClick(selectedCardId - 1))>
+        <a href="javascript:void(0);" @onclick=@(() => CardClick(selectedCardId - 1))>
           <span class="oi oi-chevron-left"></span>
         </a>
         &nbsp;
-        <a href="javascript:void(0);" onclick=@(() => CardClick(selectedCardId + 1))>
+        <a href="javascript:void(0);" @onclick=@(() => CardClick(selectedCardId + 1))>
           <span class="oi oi-chevron-right"></span>
         </a>
       </span>
@@ -67,7 +67,7 @@
             @card.Users
           </td>
           <td>
-            <a href="javascript:void(0);" onclick=@(() => CardClick(card.Id))>
+            <a href="javascript:void(0);" @onclick=@(() => CardClick(card.Id))>
               @MappingTools.stripHtmlTags(card.LatestInstance.FrontBackFrontSynthBackSynth.Item1)
             </a>
           </td>
@@ -88,7 +88,7 @@
   int? selectedCardId;
   SearchCommand query = new SearchCommand { Query = "" };
 
-  protected override async Task OnInitAsync() {
+  protected override async Task OnInitializedAsync() {
     await PageChanged(1);
   }
 

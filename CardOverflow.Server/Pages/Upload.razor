@@ -1,4 +1,4 @@
-﻿@page "/upload"
+@page "/upload"
 
 @using CardOverflow.Sanitation
 @using CardOverflow.Entity
@@ -37,7 +37,7 @@
 <textarea style="max-width: 100%;" cols="50" rows="20">@Output</textarea>
 
 @code {
-  ElementRef dropTargetElement;
+  ElementReference dropTargetElement;
   IFileReaderRef dropReference;
   [CascadingParameter]
   UserEntity User { get; set; }
@@ -47,7 +47,7 @@
   string Output { get; set; }
   List<IFileInfo> FileList { get; } = new List<IFileInfo>();
 
-  protected override async Task OnAfterRenderAsync() {
+  protected override async Task OnAfterRenderAsync(bool firstRender) {
     dropReference = fileReaderService.CreateReference(dropTargetElement);
     await dropReference.RegisterDropEventsAsync();
   }
@@ -57,7 +57,7 @@
     await this.RefreshFileList();
   }
 
-  public async Task OnDrop(UIDragEventArgs e) {
+  public async Task OnDrop(DragEventArgs e) {
     Output += "Dropped a file.";
     this.DropClass = _dropClass;
     this.StateHasChanged();

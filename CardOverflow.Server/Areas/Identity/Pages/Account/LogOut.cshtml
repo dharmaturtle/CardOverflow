@@ -1,9 +1,10 @@
-﻿@page
+@page
 @using CardOverflow.Entity
 @using Microsoft.AspNetCore.Identity
+@attribute [IgnoreAntiforgeryToken]
 @inject SignInManager<UserEntity> SignInManager
 @functions {
-    public async Task<IActionResult> OnGet()
+    public async Task<IActionResult> OnPost()
     {
         if (SignInManager.IsSignedIn(User))
         {

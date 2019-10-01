@@ -56,7 +56,7 @@
   CardTemplate Template;
   CardTemplateInstance Latest;
 
-  protected override async Task OnInitAsync() {
+  protected override async Task OnInitializedAsync() {
     Template = await CardTemplateRepository.GetFromInstance(Db, InstanceId);
     Latest = Template.Instances.OrderByDescending(x => x.Created).First();
   }

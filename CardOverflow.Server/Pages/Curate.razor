@@ -59,7 +59,7 @@
   IList<AcquiredCard> cards;
   PagedListDetails details;
 
-  protected override async Task OnInitAsync() {
+  protected override async Task OnInitializedAsync() {
     await PageChanged(1);
   }
 

@@ -13,16 +13,16 @@
     <div class="col-md-8 col-sm-8">
       @if (Details.PageCount > 1) {
         <ul class="pagination pull-right">
-          <li><button type="button" onclick="@(() => PagerButtonClicked(1))" class="btn">&laquo;</button></li>
+          <li><button type="button" @onclick="@(() => PagerButtonClicked(1))" class="btn">&laquo;</button></li>
           @for (var i = StartIndex; i <= FinishIndex; i++) {
             var currentIndex = i;
             @if (i == Details.CurrentPage) {
               <li><span class="btn btn-primary">@i</span></li>
             } else {
-              <li><button type="button" onclick="@(() => PagerButtonClicked(currentIndex))" class="btn">@i</button></li>
+              <li><button type="button" @onclick="@(() => PagerButtonClicked(currentIndex))" class="btn">@i</button></li>
             }
           }
-          <li><button type="button" onclick="@(() => PagerButtonClicked(Details.PageCount))" class="btn">&raquo;</button></li>
+          <li><button type="button" @onclick="@(() => PagerButtonClicked(Details.PageCount))" class="btn">&raquo;</button></li>
         </ul>
       }
     </div>
@@ -31,9 +31,9 @@
 
 @code {
   [Parameter]
-  PagedListDetails Details { get; set; }
+  public PagedListDetails Details { get; set; }
   [Parameter]
-  EventCallback<int> PageChanged { get; set; }
+  public EventCallback<int> PageChanged { get; set; }
 
   int StartIndex;
   int FinishIndex;

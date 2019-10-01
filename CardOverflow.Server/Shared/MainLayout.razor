@@ -22,7 +22,7 @@
 @code {
   UserEntity User;
 
-  protected override async Task OnInitAsync() {
+  protected override async Task OnInitializedAsync() {
     var email =
       (await AuthenticationStateProvider.GetAuthenticationStateAsync())
       .User.Identity.Name;

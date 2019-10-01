@@ -14,7 +14,7 @@
 <ul class="list-unstyled">
   @foreach (var relationship in Card.Relationships.Where(x => !x.IsAcquired)) {
     <li>
-      <button type="button" class="btn btn-outline-primary btn-sm" onclick=@(() => Acquire(relationship.Name, relationship.CardId))>
+      <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.CardId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
@@ -34,7 +34,7 @@
   <ul class="list-unstyled">
     @foreach (var relationship in Card.Relationships.Where(x => x.IsAcquired)) {
       <li>
-        <button type="button" class="btn btn-primary btn-sm" onclick=@(() => Unacquire(relationship.Name, relationship.CardId))>
+        <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.CardId))>
           <span class="curate-tooltip-target">
             <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
             <span class="badge badge-success">@relationship.Users</span>
@@ -55,11 +55,11 @@
     <div class="form-row">
       <div class="form-group col-md-4">
         <label for="RelationName">How are they related?</label>
-        <InputText @bind-value="@Command.Name" class="form-control" id="RelationName" placeholder="Name of the relationship" /> @*this seems to break validation: @bind-value:event="oninput"*@
+        <InputText @bind-Value="@Command.Name" class="form-control" id="RelationName" placeholder="Name of the relationship" /> @*this seems to break validation: @bind-Value:event="oninput"*@
       </div>
       <div class="form-group col-md-7">
         <label for="TargetCardUrl">Related card URL</label>
-        <InputText @bind-value="@Command.TargetLink" class="form-control" id="TargetCardUrl" placeholder="buffbrains.io/card/1234" /> @*this seems to break validation: @bind-value:event="oninput"*@
+        <InputText @bind-Value="@Command.TargetLink" class="form-control" id="TargetCardUrl" placeholder="buffbrains.io/card/1234" /> @*this seems to break validation: @bind-Value:event="oninput"*@
       </div>
       <div class="form-group col-md-1">
         <label>&nbsp;</label>
@@ -73,13 +73,13 @@
 
 @code {
   [Parameter]
-  CardOverflow.Pure.ExploreCard Card { get; set; }
+  public CardOverflow.Pure.ExploreCard Card { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
   AddRelationshipCommand Command;
   IDictionary<int, string> htmlByCardId = new Dictionary<int, string>();
 
-  public override async Task SetParametersAsync(ParameterCollection parameters) {
+  public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     Command = new AddRelationshipCommand { SourceId = Card.Id };
     htmlByCardId = Card.Relationships.ToDictionary(x => x.CardId, x => ""); // medTODO after you upgrade to 3.0, is this still needed?
