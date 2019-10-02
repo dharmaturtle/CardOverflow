@@ -73,7 +73,7 @@ type AnkiCardTemplateInstance = {
         entity
     
 type AnkiCardWrite = {
-    CardTemplateHash: byte[]
+    CardTemplate: CardTemplateInstanceEntity
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
@@ -83,6 +83,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
+        entity.CardTemplateInstance <- this.CardTemplate
         use hasher = SHA256.Create()
         entity.AcquireHash <- CardInstanceEntity.acquireHash entity cardTemplateHash hasher
     member this.CopyToNew (files: FileEntity seq) =
@@ -99,11 +100,10 @@ type AnkiCardWrite = {
                     File = x
                 )
             ).ToList()
-        this.CopyTo(entity, this.CardTemplateHash)
+        this.CopyTo(entity, this.CardTemplate.AcquireHash)
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.CardInstance
-            .Include(fun x -> x.FieldValues)
             .Include(fun x -> x.Card.RelationshipSources)
             .Include(fun x -> x.Card.RelationshipTargets)
             .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
@@ -357,7 +357,7 @@ module Anki =
                 let cards =
                     let toCard fields (cardTemplate: CardTemplateInstanceEntity) =
                         let c =
-                            { CardTemplateHash = cardTemplate.AcquireHash
+                            { CardTemplate = cardTemplate
                               FieldValues = fields
                               Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                               Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some

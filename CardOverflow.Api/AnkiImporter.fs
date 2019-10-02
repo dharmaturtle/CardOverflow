@@ -74,9 +74,7 @@ module AnkiImporter =
                     |> Seq.map CardOption.load
                     |> Seq.filter (fun x -> x.AcquireEquality cardOption)
                     |> Seq.tryHead
-                    |> function
-                    | Some x -> x
-                    | None -> cardOption
+                    |> Option.defaultValue cardOption
                     |> fun co -> co.CopyToNew userId
                 Anki.parseCardOptions col.Dconf
                 |> Result.map (Map.ofList >> Map.map toEntity)
@@ -84,13 +82,13 @@ module AnkiImporter =
                 Anki.parseDecks col.Decks
                 |> Result.bind (fun tuples ->
                     let names = tuples |> List.map (fun (_, (_, name, _)) -> name)
-                    if names |> List.distinct |> List.length = names.Length
-                    then tuples |> List.map snd |> Ok
+                    if names |> List.distinct |> List.length = names.Length then
+                        tuples |> List.map snd |> Ok
                     else Error "Cannot import decks with the same name. Please give your decks distinct names." ) // lowTODO list the decks with the same names
                 |> Result.bind (fun tuples ->
                     let filtered = tuples |> List.filter (fun (_, _, i) -> i.IsSome)
-                    if filtered.Length = tuples.Length
-                    then filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
+                    if filtered.Length = tuples.Length then
+                        filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
             let cardOptionAndDeckNameByDeckId =
                 deckNameAndDeckConfigurationIdByDeckId
