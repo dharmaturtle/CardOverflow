@@ -91,9 +91,9 @@ let assertHasBasicInfo db ankiDb =
     Assert.Equal<string>(
         [ "Deck:Default"; "OtherTag" ],
         db.AcquiredCard
-            .Single(fun c -> c.CardInstance.FieldValues.Any(fun x -> x.Value.Contains("mp3")))
+            .Single(fun c -> c.CardInstance.FieldValues.Contains("mp3"))
             .Tag_AcquiredCards.Select(fun t -> t.Tag.Name)
-            |> Seq.sortBy id)
+            |> Seq.sort)
     Assert.Equal(2, db.Relationship.Count())
     Assert.Equal(2, db.Relationship.Count(fun x -> x.Name = "Linked"))
 
@@ -153,13 +153,13 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
     Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
     Assert.Equal(10, c.Db.Card.Count())
-    Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Any(fun x -> x.Value = "Basic Front")))
-    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
-    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
+    Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic Front")))
+    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (and reversed card) front")))
+    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (optional reversed card) front")))
     Assert.Equal(10, c.Db.AcquiredCard.Count())
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Any(fun x -> x.Value = "Basic Front")))
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Any(fun x -> x.Value = "Basic (and reversed card) front")))
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Any(fun x -> x.Value = "Basic (optional reversed card) front")))
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]

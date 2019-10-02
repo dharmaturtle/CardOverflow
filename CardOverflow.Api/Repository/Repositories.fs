@@ -54,8 +54,7 @@ module CardRepository =
     let private getCompleteCards (db: CardOverflowDb) =
         db.AcquiredCard
             .Include(fun x -> x.CardOption)
-            .Include(fun x -> x.CardInstance.FieldValues :> IEnumerable<_>)
-                .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+            .Include(fun x -> x.CardInstance.CardTemplateInstance)
     let GetTodaysCards (db: CardOverflowDb) userId =
         let tomorrow = DateTime.UtcNow.AddDays 1.
         task {
@@ -66,13 +65,13 @@ module CardRepository =
                     .Take(3) // highTODO fix
                     .ToListAsync()
             return
-                cards |> Seq.map QuizCard.load
+                cards |> Seq.map (QuizCard.load userId)
         }
     let GetAllCards (db: CardOverflowDb) userId =
         (getCompleteCards db)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
-        |> Seq.map QuizCard.load
+        |> Seq.map (QuizCard.load userId)
     let AcquireCardsAsync (db: CardOverflowDb) userId cardInstanceIds =
         let defaultCardOptionId =
             db.CardOption
@@ -97,8 +96,7 @@ module CardRepository =
                         .Include(fun x -> x.CommentCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: CommentCardEntity) -> x.User )
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                         //.Include(fun x -> x.Cards :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardEntity) -> x.CardInstances :> IEnumerable<_>)
                         //    .ThenInclude(fun (x: CardInstanceEntity) -> x.Cards :> IEnumerable<_>)
@@ -117,23 +115,20 @@ module CardRepository =
                         .Include(fun x -> x.CommentCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: CommentCardEntity) -> x.User )
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                         .Include(fun x -> x.RelationshipSources :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Target.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                         .Include(fun x -> x.RelationshipSources :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Target.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
                         .Include(fun x -> x.RelationshipTargets :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                            .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                            .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                         .Include(fun x -> x.RelationshipTargets :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
@@ -159,8 +154,7 @@ module CardRepository =
         db.SaveChangesI ()
     let private get (db: CardOverflowDb) =
         db.AcquiredCard
-            .Include(fun x -> x.CardInstance.FieldValues :> IEnumerable<_>)
-                .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+            .Include(fun x -> x.CardInstance.CardTemplateInstance)
             .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
@@ -199,8 +193,7 @@ module CardRepository =
                     .Where(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm))))
                     .Include(fun x -> x.Author)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardInstanceEntity) -> x.FieldValues :> IEnumerable<_>)
-                        .ThenInclude(fun (x: FieldValueEntity) -> x.Field.CardTemplateInstance)
+                        .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)

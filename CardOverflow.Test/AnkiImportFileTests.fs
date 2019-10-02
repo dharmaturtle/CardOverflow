@@ -114,15 +114,15 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Equal(
         5,
         c.Db.CardInstance
-            .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "may be remembered with the mnemonic"))
+            .Count(fun x -> x.FieldValues.Contains("may be remembered with the mnemonic"))
         )
     Assert.SingleI
         <| c.Db.CardInstance
-            .Where(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "Fibrosis"))
+            .Where(fun x -> x.FieldValues.Contains("Fibrosis"))
     Assert.SingleI
         <| c.Db.CardInstance
-            .Where(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains "acute"))
-    Assert.True(c.Db.FieldValue.Single(fun x -> x.Value.Contains "Prerenal").Value.Contains """<img src="/missingImage.jpg">""")
+            .Where(fun x -> x.FieldValues.Contains("acute"))
+    Assert.True(c.Db.CardInstance.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
     Assert.Equal<(int * int) seq>(
         (Core.combination 2 [1.. 5])
             .Select(fun x -> x.[0], x.[1])

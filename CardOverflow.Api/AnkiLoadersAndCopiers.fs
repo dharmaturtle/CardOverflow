@@ -74,13 +74,13 @@ type AnkiCardTemplateInstance = {
     
 type AnkiCardWrite = {
     CardTemplateHash: byte[]
-    FieldValues: FieldValueEntity seq
+    FieldValues: string
     Created: DateTime
     Modified: DateTime option
     MaintainerId: int
 } with
     member this.CopyTo(entity: CardInstanceEntity, cardTemplateHash: byte[]) =
-        entity.FieldValues <- this.FieldValues.ToList()
+        entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         use hasher = SHA256.Create()
@@ -139,7 +139,7 @@ type AnkiAcquiredCard = {
             .FirstOrDefault(fun c -> 
                 this.UserId = c.UserId &&
                 this.CardInstance.Id = c.CardInstanceId &&
-                this.CardTemplateInstance.Id = c.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId
+                this.CardTemplateInstance.Id = c.CardInstance.CardTemplateInstanceId
             )
 
 type AnkiHistory = {
@@ -156,7 +156,7 @@ type AnkiHistory = {
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
             this.AcquiredCard.CardInstanceId = h.AcquiredCard.CardInstanceId &&
-            this.AcquiredCard.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId = h.AcquiredCard.CardInstance.FieldValues.FirstOrDefault().Field.CardTemplateInstanceId &&
+            this.AcquiredCard.CardInstance.CardTemplateInstanceId = h.AcquiredCard.CardInstance.CardTemplateInstanceId &&
             this.Score = h.Score &&
             roundedTimeStamp = h.Timestamp &&
             interval = h.IntervalWithUnusedStepsIndex &&
@@ -358,11 +358,7 @@ module Anki =
                     let toCard fields (cardTemplate: CardTemplateInstanceEntity) =
                         let c =
                             { CardTemplateHash = cardTemplate.AcquireHash
-                              FieldValues =
-                                Seq.zip
-                                    <| cardTemplate.Fields
-                                    <| MappingTools.splitByUnitSeparator fields
-                                |> Seq.map (fun (field, value) -> FieldValueEntity(Field = field, Value = value))
+                              FieldValues = fields
                               Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                               Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
                               MaintainerId = userId }
@@ -423,7 +419,7 @@ module Anki =
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
         let card = cards.ElementAt(ankiCard.Ord |> int)
-        let cti = card.FieldValues.First().Field.CardTemplateInstance
+        let cti = card.CardTemplateInstance
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning

@@ -30,9 +30,6 @@ module CardTemplateInstanceEntity =
 module CardInstanceEntity =
     let acquireHash (e: CardInstanceEntity) (cardTemplateHash: byte[]) (hasher: SHA256) =
         e.FieldValues
-        |> Seq.map (fun x -> x.Value)
-        |> Seq.sort
-        |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
         |> Seq.append cardTemplateHash
         |> Seq.toArray
@@ -135,17 +132,13 @@ type Field with
         entity
 
 type FieldAndValue with
-    static member load (entity: FieldValueEntity) =
-        {   Field = Field.load entity.Field
-            Value = entity.Value
-        }
-    member this.copyToValue (entity: FieldValueEntity) =
-        entity.FieldId <- this.Field.Id
-        entity.Value <- this.Value
-    member this.copyToNewValue =
-        let entity = FieldValueEntity()
-        this.copyToValue entity
-        entity
+    static member load (fields: FieldEntity seq) fieldValues =
+        fieldValues |> MappingTools.splitByUnitSeparator |> Seq.indexed |> Seq.map (fun (i, x) -> {
+            Field = fields.Single(fun x -> int x.Ordinal = i) |> Field.load
+            Value = x
+        })
+    static member join (fields: FieldAndValue seq) =
+        fields |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
 type CardTemplateInstance with
     static member load(entity: CardTemplateInstanceEntity) =
@@ -182,14 +175,39 @@ type CardTemplate with
         MaintainerId = entity.AuthorId
         Instances = entity.CardTemplateInstances |> Seq.map CardTemplateInstance.load }
 
+type CardInstance with
+    static member load userId (entity: CardInstanceEntity) = {
+        Id = entity.Id
+        Created = entity.Created
+        Modified = entity.Modified |> Option.ofNullable
+        IsDmca = entity.IsDmca
+        FieldValues = FieldAndValue.load entity.CardTemplateInstance.Fields entity.FieldValues
+        TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance
+        IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId) }
+    member this.CopyTo (entity: CardInstanceEntity) =
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
+        entity.FieldValues <- FieldAndValue.join this.FieldValues 
+        use hasher = SHA256.Create()
+        entity.AcquireHash <- CardInstanceEntity.acquireHash entity this.TemplateInstance.AcquireHash hasher
+    member this.CopyToNew =
+        let entity = CardInstanceEntity()
+        this.CopyTo entity
+        entity
+    member this.CopyFieldsToNewInstance cardId =
+        let e = this.CopyToNew
+        e.CardId <- cardId
+        e
+
 type QuizCard with
-    static member load(entity: AcquiredCardEntity) =
+    static member load userId (entity: AcquiredCardEntity) =
+        let instance = entity.CardInstance |> CardInstance.load userId
         let front, back, frontSynthVoice, backSynthVoice =
             CardHtml.generate
-                (entity.CardInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
-                (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.QuestionTemplate)
-                (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.AnswerTemplate)
-                (entity.CardInstance.FieldValues.First().Field.CardTemplateInstance.Css)
+                (instance.FieldValues |> Seq.map (fun x -> x.Field.Name, x.Value))
+                (entity.CardInstance.CardTemplateInstance.QuestionTemplate)
+                (entity.CardInstance.CardTemplateInstance.AnswerTemplate)
+                (entity.CardInstance.CardTemplateInstance.Css)
         result {
             let! cardState = CardState.create entity.CardState
             return {
@@ -206,31 +224,6 @@ type QuizCard with
                 IntervalOrStepsIndex = IntervalOrStepsIndex.intervalFromDb entity.IntervalOrStepsIndex
                 Options = CardOption.load entity.CardOption }
         }
-
-type CardInstance with
-    static member load userId (entity: CardInstanceEntity) = {
-        Id = entity.Id
-        Created = entity.Created
-        Modified = entity.Modified |> Option.ofNullable
-        IsDmca = entity.IsDmca
-        FieldValues = entity.FieldValues |> Seq.map FieldAndValue.load
-        TemplateInstance = entity.FieldValues.First().Field.CardTemplateInstance |> CardTemplateInstance.load
-        IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
-    }
-    member this.CopyTo (entity: CardInstanceEntity) =
-        entity.Created <- this.Created
-        entity.Modified <- this.Modified |> Option.toNullable
-        entity.FieldValues <- this.FieldValues |> Seq.map (fun x -> FieldValueEntity(FieldId = x.Field.Id, Value = x.Value)) |> fun x -> x.ToList()
-        use hasher = SHA256.Create()
-        entity.AcquireHash <- CardInstanceEntity.acquireHash entity this.TemplateInstance.AcquireHash hasher
-    member this.CopyToNew =
-        let entity = CardInstanceEntity()
-        this.CopyTo entity
-        entity
-    member this.CopyFieldsToNewInstance cardId =
-        let e = this.CopyToNew
-        e.CardId <- cardId
-        e
 
 type AcquiredCard with
     member this.CopyTo (entity: AcquiredCardEntity) =
@@ -258,22 +251,20 @@ type InitialCardInstance = {
     DefaultCardOptionId: int
     Description: string
     CardTemplateHash: byte[]
-    CardTemplateIdsAndTags: int * int seq
+    CardTemplateInstanceIdAndTags: int * int seq
 } with
     member this.CopyToNew fileCardInstances =
-        let _, tags = this.CardTemplateIdsAndTags // medTODO drop the _
+        let cardTemplateInstanceId, tags = this.CardTemplateInstanceIdAndTags
         let e =
             CardInstanceEntity(
                 Created = DateTime.UtcNow,
+                CardTemplateInstanceId = cardTemplateInstanceId,
                 Card =
                     CardEntity(
                         AuthorId = this.AuthorId,
                         Description = this.Description
                     ),
-                FieldValues =
-                    this.FieldValues
-                        .Select(fun x -> x.copyToNewValue)
-                        .ToList(),
+                FieldValues = FieldAndValue.join this.FieldValues,
                 File_CardInstances = fileCardInstances,
                 AcquiredCards = [
                     AcquiredCard.InitialCopyTo this.AuthorId this.DefaultCardOptionId tags
@@ -290,7 +281,7 @@ type AcquiredCard with
             {   CardId = entity.CardInstance.CardId
                 AcquiredCardId = entity.Id
                 UserId = entity.UserId
-                CardTemplateInstance = entity.CardInstance.FieldValues.First().Field.CardTemplateInstance |> CardTemplateInstance.load
+                CardTemplateInstance = entity.CardInstance.CardTemplateInstance |> CardTemplateInstance.load
                 CardState = cardState
                 IsLapsed = entity.IsLapsed
                 EaseFactorInPermille = entity.EaseFactorInPermille

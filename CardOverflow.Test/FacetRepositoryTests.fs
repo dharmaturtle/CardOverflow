@@ -32,7 +32,7 @@ let add templateName (db: CardOverflowDb) userId tags =
         AuthorId = userId
         Description = templateName
         DefaultCardOptionId = cardTemplateInstance.DefaultCardOptionId
-        CardTemplateIdsAndTags = cardTemplateInstance.CardTemplateInstance |> fun x -> x.Id, tags
+        CardTemplateInstanceIdAndTags = cardTemplateInstance.CardTemplateInstance |> fun x -> x.Id, tags
         FieldValues =
             cardTemplateInstance.CardTemplateInstance.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
