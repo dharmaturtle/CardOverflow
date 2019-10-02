@@ -194,9 +194,10 @@ type CardInstance with
         let entity = CardInstanceEntity()
         this.CopyTo entity
         entity
-    member this.CopyFieldsToNewInstance cardId =
+    member this.CopyFieldsToNewInstance cardId cardTemplateInstanceId =
         let e = this.CopyToNew
         e.CardId <- cardId
+        e.CardTemplateInstanceId <- cardTemplateInstanceId
         e
 
 type QuizCard with

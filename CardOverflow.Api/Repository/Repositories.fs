@@ -210,7 +210,7 @@ module CardRepository =
     let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) =
         task {
             let! e = db.AcquiredCard.FirstAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
-            e.CardInstance <- acquiredCard.CardInstance.CopyFieldsToNewInstance acquiredCard.CardId
+            e.CardInstance <- acquiredCard.CardInstance.CopyFieldsToNewInstance acquiredCard.CardId acquiredCard.CardTemplateInstance.Id
             return! db.SaveChangesAsyncI()
         }
 
