@@ -153,11 +153,11 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
     Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
     Assert.Equal(10, c.Db.Card.Count())
-    Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic Front")))
+    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic Front")))
     Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (and reversed card) front")))
     Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (optional reversed card) front")))
     Assert.Equal(10, c.Db.AcquiredCard.Count())
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
 
