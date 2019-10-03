@@ -28,6 +28,7 @@ let add templateName (db: CardOverflowDb) userId tags =
         TagRepository.GetAll db userId
         |> Seq.map (fun x -> x.Id)
     let initialCard = {
+        Created = DateTime.Now - TimeSpan.FromDays 1.
         CardTemplateHash = cardTemplateInstance.CardTemplateInstance.AcquireHash
         AuthorId = userId
         Description = templateName
@@ -196,7 +197,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let tags = ["a"; "b"]
     addBasicCard c.Db userId tags
     let cardId = 1
-    let newValue = ""
+    let newValue = Guid.NewGuid().ToString()
     let! old = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
@@ -205,10 +206,9 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
             CardInstance = {
                 old.CardInstance with
                     FieldValues =
-                        old.CardInstance.FieldValues
-                        |> Seq.map (fun x ->
+                        old.CardInstance.FieldValues.Select(fun x ->
                             { x with Value = newValue}
-                        )
+                        ).ToList()
             }
         }
     
@@ -219,10 +219,27 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
     Assert.Equal<string seq>(
         [newValue; newValue],
-        updated.CardInstance.FieldValues.Select(fun x -> x.Value)
+        updated.CardInstance.FieldValues.Select(fun x -> x.Value))
+    Assert.Equal(
+        2,
+        c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
+    let! card = CardRepository.Get c.Db cardId userId
+    Assert.Equal(
+        [{  Name = "a"
+            Count = 1
+            IsAcquired = true }
+         {  Name = "b"
+            Count = 1
+            IsAcquired = true }],
+        card.Tags)
+    Assert.Equal<string seq>(
+        [newValue; newValue],
+        card.LatestInstance.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
     )
+    let createds = (c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList)
+    Assert.NotEqual(createds.[0], createds.[1])
     }
-
+    
 // fuck merge
 //[<Fact>]
 //let ``CardRepository's SaveCards updates a Card``() =

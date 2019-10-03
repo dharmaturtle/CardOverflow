@@ -196,6 +196,8 @@ type CardInstance with
         entity
     member this.CopyFieldsToNewInstance cardId cardTemplateInstanceId =
         let e = this.CopyToNew
+        e.Created <- DateTime.UtcNow
+        e.Modified <- Nullable()
         e.CardId <- cardId
         e.CardTemplateInstanceId <- cardTemplateInstanceId
         e
@@ -253,12 +255,13 @@ type InitialCardInstance = {
     Description: string
     CardTemplateHash: byte[]
     CardTemplateInstanceIdAndTags: int * int seq
+    Created: DateTime
 } with
     member this.CopyToNew fileCardInstances =
         let cardTemplateInstanceId, tags = this.CardTemplateInstanceIdAndTags
         let e =
             CardInstanceEntity(
-                Created = DateTime.UtcNow,
+                Created = this.Created,
                 CardTemplateInstanceId = cardTemplateInstanceId,
                 Card =
                     CardEntity(
@@ -394,11 +397,10 @@ type ExploreCard with
                         IsAcquired = 
                             entity.CardInstances
                                 .Select(fun x -> x.AcquiredCards.SingleOrDefault(fun x -> x.UserId = userId))
-                                .SingleOrDefault() // medTODO revisit this when multiple card instances are a thing
-                                |> Option.ofObj
+                                .SingleOrDefault(fun x -> not <| isNull x)
                                 |> function
-                                | Some x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name = name)
-                                | None -> false
+                                | null -> false
+                                | x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name = name)
                     })
         Relationships =
             let sources =
