@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open System.Linq
 open System.Security.Cryptography
 open System.Text
 open Microsoft.FSharp.Quotations
@@ -70,3 +71,6 @@ module Core =
         | 0, _ -> [[]]
         | _, [] -> []
         | k, (x::xs) -> List.map ((@) [x]) (combination (k-1) xs) @ combination k xs
+
+    let toResizeArray (xs: 'a seq) =
+        xs.ToList()

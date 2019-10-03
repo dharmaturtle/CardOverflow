@@ -7,6 +7,8 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
+@using Syncfusion.EJ2.Blazor
+@using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject CardOverflowDb Db
 @*medTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
@@ -19,7 +21,9 @@
         <div class="col-sm">
           @foreach (var field in Card.CardInstance.FieldValues) {
             <label><b>@field.Field.Name: </b></label>
-            <InputTextArea @bind-Value="@field.Value" Class="curate-edit-inputtextarea" />
+            <EjsRichTextEditor @bind-Value=@field.Value>
+              <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
+            </EjsRichTextEditor>
           }
         </div>
         <div class="col-sm">
@@ -50,6 +54,7 @@
 }
 
 @code {
+  private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   AcquiredCard Card;
   [Parameter]
   public int Id { get; set; }

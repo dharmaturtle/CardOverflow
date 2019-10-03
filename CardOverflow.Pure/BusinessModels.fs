@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open CardOverflow.Pure.Core
 open System
 open System.Linq
 open Microsoft.FSharp.Core.Operators.Checked
@@ -218,13 +219,13 @@ type CardInstance = {
     Created: DateTime
     Modified: DateTime option
     IsDmca: bool
-    FieldValues: FieldAndValue seq
+    FieldValues: FieldAndValue ResizeArray
     TemplateInstance: CardTemplateInstance
     IsAcquired: bool
 } with
     member this.FrontBackFrontSynthBackSynth =
-        CardHtml.generate
-            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value)
+        CardHtml.generate   
+            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "")
             <| this.TemplateInstance.QuestionTemplate
             <| this.TemplateInstance.AnswerTemplate
             <| this.TemplateInstance.Css

@@ -136,7 +136,7 @@ type FieldAndValue with
         fieldValues |> MappingTools.splitByUnitSeparator |> Seq.indexed |> Seq.map (fun (i, x) -> {
             Field = fields.Single(fun x -> int x.Ordinal = i) |> Field.load
             Value = x
-        })
+        }) |> toResizeArray
     static member join (fields: FieldAndValue seq) =
         fields |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
