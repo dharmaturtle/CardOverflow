@@ -72,14 +72,38 @@ type CardOption = {
 }
 
 type Field = {
-    Id: int
     Name: string
     Font: string
     FontSize: byte
     IsRightToLeft: bool
     Ordinal: byte
     IsSticky: bool
-}
+} with
+    member this.toString =
+        [   this.Name
+            this.Font
+            this.FontSize |> string
+            this.IsRightToLeft |> string
+            this.Ordinal |> string
+            this.IsSticky |> string
+        ] |> MappingTools.joinByUnitSeparator
+    static member fromString x =
+        let x = x |> MappingTools.splitByUnitSeparator
+        {   Name = x.[0]
+            Font = x.[1]
+            FontSize = x.[2] |> byte
+            IsRightToLeft = x.[3] = "True"
+            Ordinal = x.[4] |> byte
+            IsSticky = x.[5] = "True"
+        }
+
+module Fields =
+    let toString: (Field seq -> string) =
+        Seq.map (fun x -> x.toString)
+        >> MappingTools.joinByRecordSeparator
+    let fromString =
+        MappingTools.splitByRecordSeparator
+        >> List.map Field.fromString
 
 type CardTemplateInstance = {
     Id: int

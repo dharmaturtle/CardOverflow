@@ -21,8 +21,8 @@ module CardTemplateInstanceEntity =
             e.AnswerTemplate
             e.ShortQuestionTemplate
             e.ShortAnswerTemplate
-        ].Concat <| e.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name)
-        |> Seq.toList
+            e.Fields
+        ]
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
         |> hasher.ComputeHash
@@ -109,32 +109,10 @@ type CardOption with
         entity.UserId <- userId
         entity
 
-type Field with
-    static member load (entity: FieldEntity) =
-        { Id = entity.Id
-          Name = entity.Name
-          Font = entity.Font
-          FontSize = entity.FontSize
-          IsRightToLeft = entity.IsRightToLeft
-          Ordinal = entity.Ordinal
-          IsSticky = entity.IsSticky }
-    member this.copyTo (entity: FieldEntity) (cardTemplateInstance: CardTemplateInstanceEntity) =
-        entity.Name <- this.Name
-        entity.Font <- this.Font
-        entity.FontSize <- this.FontSize
-        entity.IsRightToLeft <- this.IsRightToLeft
-        entity.Ordinal <- this.Ordinal
-        entity.IsSticky <- this.IsSticky
-        entity.CardTemplateInstance <- cardTemplateInstance
-    member this.CopyToNew (cardTemplateInstance: CardTemplateInstanceEntity) =
-        let entity = FieldEntity()
-        this.copyTo entity cardTemplateInstance
-        entity
-
 type FieldAndValue with
-    static member load (fields: FieldEntity seq) fieldValues =
+    static member load (fields: Field seq) fieldValues =
         fieldValues |> MappingTools.splitByUnitSeparator |> Seq.indexed |> Seq.map (fun (i, x) -> {
-            Field = fields.Single(fun x -> int x.Ordinal = i) |> Field.load
+            Field = fields.Single(fun x -> int x.Ordinal = i)
             Value = x
         }) |> toResizeArray
     static member join (fields: FieldAndValue seq) =
@@ -144,7 +122,7 @@ type CardTemplateInstance with
     static member load(entity: CardTemplateInstanceEntity) =
         { Id = entity.Id
           Css = entity.Css
-          Fields = entity.Fields |> Seq.map Field.load
+          Fields = Fields.fromString entity.Fields
           Created = entity.Created
           Modified = entity.Modified |> Option.ofNullable
           LatexPre = entity.LatexPre
@@ -181,7 +159,7 @@ type CardInstance with
         Created = entity.Created
         Modified = entity.Modified |> Option.ofNullable
         IsDmca = entity.IsDmca
-        FieldValues = FieldAndValue.load entity.CardTemplateInstance.Fields entity.FieldValues
+        FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
         TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance
         IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId) }
     member this.CopyTo (entity: CardInstanceEntity) =

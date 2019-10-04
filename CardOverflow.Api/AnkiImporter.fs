@@ -186,8 +186,6 @@ module AnkiImporter =
         let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null
             db.CardTemplateInstance
-                .Include(fun x -> x.Fields :> IEnumerable<_>)
-                    //.ThenInclude(fun (x: FieldEntity) -> x.CardTemplateInstance.CardTemplates)
                 .Include(fun x -> x.User_CardTemplateInstances)
                 .FirstOrDefault(fun x -> x.AcquireHash = ti.AcquireHash)
                 |> Option.ofObj

@@ -44,7 +44,7 @@ type AnkiCardTemplateInstance = {
 } with
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
         entity.Css <- this.Css
-        entity.Fields <- this.Fields |> Seq.map (fun x -> x.CopyToNew entity) |> fun x -> x.ToList()
+        entity.Fields <- Fields.toString this.Fields
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
@@ -275,8 +275,7 @@ module Anki =
                     Css = get.Required.Field "css" Decode.string
                     Fields =
                       get.Required.Field "flds" (Decode.object(fun get ->
-                          { Id = 0
-                            Name = get.Required.Field "name" Decode.string
+                          { Name = get.Required.Field "name" Decode.string
                             Font = get.Required.Field "font" Decode.string
                             FontSize = get.Required.Field "size" Decode.int |> byte
                             IsRightToLeft = get.Required.Field "rtl" Decode.bool

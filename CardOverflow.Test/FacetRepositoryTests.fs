@@ -18,7 +18,6 @@ open System.Threading.Tasks
 let add templateName (db: CardOverflowDb) userId tags =
     let cardTemplateInstance =
         db.CardTemplateInstance
-            .Include(fun x -> x.Fields)
             .Include(fun x -> x.CardTemplate)
             .Include(fun x -> x.User_CardTemplateInstances)
             .First(fun x -> x.CardTemplate.Name = templateName)
@@ -153,7 +152,6 @@ Back
     )
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {
-                Id = 1
                 Name = "Front"
                 Font = "Arial"
                 FontSize = 20uy
@@ -162,7 +160,6 @@ Back
                 IsSticky = false }
             Value = "Front" }
          {  Field = {
-                Id = 2
                 Name = "Back"
                 Font = "Arial"
                 FontSize = 20uy
