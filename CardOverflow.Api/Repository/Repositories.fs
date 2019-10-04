@@ -43,6 +43,14 @@ module CardTemplateRepository =
                     .FirstAsync(fun x -> x.Id = instanceId)
             return instance.CardTemplate |> CardTemplate.load
         }
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (template: CardTemplate) =
+        task {
+            let! cardTemplate = db.CardTemplate.SingleAsync(fun x -> x.Id = template.Id)
+            cardTemplate.Name <- template.Name
+            template.LatestInstance.CopyToNewInstance template.Id
+            |> db.CardTemplateInstance.AddI
+            return! db.SaveChangesAsyncI()
+        }
 
 module HistoryRepository =
     let addAndSaveAsync (db: CardOverflowDb) e =

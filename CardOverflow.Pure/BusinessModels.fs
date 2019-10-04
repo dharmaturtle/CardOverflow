@@ -105,6 +105,7 @@ module Fields =
         MappingTools.splitByRecordSeparator
         >> List.map Field.fromString
 
+[<CLIMutable>]
 type CardTemplateInstance = {
     Id: int
     Css: string
@@ -130,7 +131,7 @@ type CardTemplate = {
     Id: int
     MaintainerId: int
     Name: string
-    Instances: CardTemplateInstance seq
+    LatestInstance: CardTemplateInstance
 }
 
 type IntervalOrStepsIndex =

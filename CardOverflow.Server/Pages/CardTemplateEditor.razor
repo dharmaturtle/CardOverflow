@@ -25,7 +25,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach (var field in Latest.Fields.OrderBy(x => x.Ordinal)) {
+      @foreach (var field in Template.LatestInstance.Fields.OrderBy(x => x.Ordinal)) {
         <tr>
           <td>@field.Name</td>
           <td>@field.Ordinal</td>
@@ -33,32 +33,51 @@
       }
     </tbody>
   </table>
-  <h2>Card Templates</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Question Template</th>
-        <th>Answer Template</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>@Latest.QuestionTemplate</td>
-        <td>@Latest.AnswerTemplate</td>
-      </tr>
-    </tbody>
-  </table>
+  <EditForm Model="@Template" OnValidSubmit=@Submit>
+    <h2>Card Templates</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Question Template</th>
+          <th>Answer Template</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <InputTextArea @bind-Value=@Template.LatestInstance.QuestionTemplate class="form-control code" rows="25" />
+            <ValidationMessage For="@(() => Template.LatestInstance.QuestionTemplate)" />
+          </td>
+          <td>
+            <InputTextArea @bind-Value=@Template.LatestInstance.AnswerTemplate class="form-control code" rows="25" />
+            <ValidationMessage For="@(() => Template.LatestInstance.AnswerTemplate)" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <DataAnnotationsValidator />
+  </EditForm>
 }
 
 @code {
   [Parameter]
   public int InstanceId { get; set; }
   CardTemplate Template;
-  CardTemplateInstance Latest;
+  [CascadingParameter]
+  UserEntity User { get; set; }
 
   protected override async Task OnInitializedAsync() {
     Template = await CardTemplateRepository.GetFromInstance(Db, InstanceId);
-    Latest = Template.Instances.OrderByDescending(x => x.Created).First();
+  }
+
+  async Task Submit() {
+    var x = SanitizeCardTemplate.Update(Db, User.Id,Template);
+    if (x.IsOk) {
+      await x.ResultValue;
+    } else {
+      // medTODO show error
+    }
   }
 
 }

@@ -37,16 +37,16 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let validate (db: CardOverflowDb) tag userId cardId action = // medTODO tag length needs validation
+    let validate (db: CardOverflowDb) userId cardId action = // medTODO tag length needs validation
         db.AcquiredCard.FirstOrDefault(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
         |> function
         | null -> Error "You haven't gotten that card."
         | card -> Ok <| action card.Id
     let AddTo db tag userId cardId =
-        validate db tag.Text userId cardId
+        validate db userId cardId
             <| TagRepository.AddTo db tag.Text
     let DeleteFrom db tag userId cardId =
-        validate db tag userId cardId
+        validate db userId cardId
             <| TagRepository.DeleteFrom db tag
 
 module SanitizeHistoryRepository =
@@ -128,3 +128,10 @@ module SanitizeLandingPage =
             TimeStamp = DateTime.UtcNow
         ) |> db.PotentialSignups.AddI
         db.SaveChangesAsyncI()
+
+module SanitizeCardTemplate =
+    let Update (db: CardOverflowDb) userId (template: CardTemplate) =
+        let cardTemplate = db.CardTemplate.Single(fun x -> x.Id = template.Id)
+        if cardTemplate.AuthorId = userId
+        then Ok <| CardTemplateRepository.UpdateFieldsToNewInstance db template
+        else Error <| "You aren't that this template's author."

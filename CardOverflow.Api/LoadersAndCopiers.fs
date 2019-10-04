@@ -119,26 +119,39 @@ type FieldAndValue with
         fields |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
 type CardTemplateInstance with
-    static member load(entity: CardTemplateInstanceEntity) =
-        { Id = entity.Id
-          Css = entity.Css
-          Fields = Fields.fromString entity.Fields
-          Created = entity.Created
-          Modified = entity.Modified |> Option.ofNullable
-          LatexPre = entity.LatexPre
-          LatexPost = entity.LatexPost
-          AcquireHash = entity.AcquireHash
-          QuestionTemplate = entity.QuestionTemplate
-          AnswerTemplate = entity.AnswerTemplate
-          ShortQuestionTemplate = entity.ShortQuestionTemplate
-          ShortAnswerTemplate = entity.ShortAnswerTemplate }
-    member this.CopyToNew (cardTemplateInstance: CardTemplateInstanceEntity)=
-        let entity = CardTemplateInstanceEntity()
+    static member load(entity: CardTemplateInstanceEntity) = {
+        Id = entity.Id
+        Css = entity.Css
+        Fields = Fields.fromString entity.Fields
+        Created = entity.Created
+        Modified = entity.Modified |> Option.ofNullable
+        LatexPre = entity.LatexPre
+        LatexPost = entity.LatexPost
+        AcquireHash = entity.AcquireHash
+        QuestionTemplate = entity.QuestionTemplate
+        AnswerTemplate = entity.AnswerTemplate
+        ShortQuestionTemplate = entity.ShortQuestionTemplate
+        ShortAnswerTemplate = entity.ShortAnswerTemplate }
+    member this.CopyTo (entity: CardTemplateInstanceEntity) =
+        entity.Css <- this.Css
+        entity.Fields <- Fields.toString this.Fields
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
+        entity.LatexPre <- this.LatexPre
+        entity.LatexPost <- this.LatexPost
         entity.QuestionTemplate <- this.QuestionTemplate
         entity.AnswerTemplate <- this.AnswerTemplate
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
-        entity.ShortAnswerTemplate <- this.ShortAnswerTemplate // medTODO not done
-        entity
+        entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
+        use hasher = SHA256.Create()
+        entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
+    member this.CopyToNewInstance cardTemplateId =
+        let e = CardTemplateInstanceEntity()
+        this.CopyTo e
+        e.Created <- DateTime.UtcNow
+        e.Modified <- Nullable()
+        e.CardTemplateId <- cardTemplateId
+        e
 
 type AcquiredCardTemplateInstance with
     static member load(entity: CardTemplateInstanceEntity) =
@@ -151,7 +164,7 @@ type CardTemplate with
         Id = entity.Id
         Name = entity.Name
         MaintainerId = entity.AuthorId
-        Instances = entity.CardTemplateInstances |> Seq.map CardTemplateInstance.load }
+        LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load }
 
 type CardInstance with
     static member load userId (entity: CardInstanceEntity) = {
