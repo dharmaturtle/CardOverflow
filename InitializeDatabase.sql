@@ -330,11 +330,12 @@ CREATE TABLE [dbo].[CardTemplateInstance](
 	[AnswerTemplate] [nvarchar](4000) NOT NULL,
 	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
 	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
+	[Fields] [nvarchar](max) NOT NULL,
  CONSTRAINT [PK_CardTemplateInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[CommentCard] ******/
 SET ANSI_NULLS ON
@@ -383,26 +384,6 @@ CREATE TABLE [dbo].[Deck](
 	[UserId] [int] NOT NULL,
 	[Query] [nvarchar](100) NOT NULL,
  CONSTRAINT [PK_Deck] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Field] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Field](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](100) NOT NULL,
-	[Font] [nvarchar](100) NOT NULL,
-	[FontSize] [tinyint] NOT NULL,
-	[IsRightToLeft] [bit] NOT NULL,
-	[Ordinal] [tinyint] NOT NULL,
-	[IsSticky] [bit] NOT NULL,
-	[CardTemplateInstanceId] [int] NOT NULL,
- CONSTRAINT [PK_Field] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -629,7 +610,7 @@ INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (6, 2, N'Cloze')
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] ON 
 
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (1, 1, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (1, 1, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -643,12 +624,12 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x2A5FC38AF1420FF14113FC331E3429EBBF1C261D211F20A0BAE621BDC9E348FA, 0, N'{{Front}}', N'{{FrontSide}}
+', N'\end{document}', 0x6C42194D6BAEF56C03FCA23E7499DB09FE1BF0BEAC6D2A0EA2A926E9A024B2A6, 0, N'{{Front}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Back}}', N'', N'')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (2, 2, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (2, 2, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -662,12 +643,12 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x5DC9059C3535A11E090B0C5DCD88C87487C96AFEE8AB667AB879655FF30A76C9, 0, N'{{Back}}', N'{{FrontSide}}
+', N'\end{document}', 0x0552B08228DBEA274F1BC59176948985D7E9B8135560D7E42080817D82331CF9, 0, N'{{Back}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Front}}', N'', N'')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (3, 3, N'.card {
+{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (3, 3, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -681,12 +662,12 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0xA4257D78D1CD3D2C41A8B1FD966E3F3EB936C0A1DCC8AC1988C469117DE43CC0, 0, N'{{Front}}', N'{{FrontSide}}
+', N'\end{document}', 0x45A1501877CFBA20EB3D1B00F38E7F4F1F93956335A0844B15BF1F9236BB14FE, 0, N'{{Front}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Back}}', N'', N'')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (4, 4, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (4, 4, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -700,12 +681,12 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0xDDF5BD49CD518965D29555E5CEB4186F3C7D79FE0BF85E8FDA361C9D4F834E6E, 0, N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
+', N'\end{document}', 0xEDC70FC8196A92AB4D6D1D624027D5976BF50F949C3463434A812CC4A690AA30, 0, N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Front}}', N'', N'')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (5, 5, N'.card {
+{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (5, 5, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -719,13 +700,13 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0x9FF44DBCBAD87D71DAC8825C0912C5FC5CD79F83B9876A8A2CAA762F6BA1F012, 0, N'{{Front}}
+', N'\end{document}', 0xD87AFC30EC7CACFC2F84B73583CC5D9113130D7702CC251D2C1E5571F1CBE70C, 0, N'{{Front}}
 {{type:Back}}', N'{{FrontSide}}
 
 <hr id=answer>
 
-{{Back}}', N'', N'')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate]) VALUES (6, 6, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False')
+INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (6, 6, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -746,26 +727,9 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \pagestyle{empty}
 \setlength{\parindent}{0in}
 \begin{document}
-', N'\end{document}', 0xA169E80F786DD7EF046CC587C8CCD78693474E2FB77991F125D278F7C7ABE5DD, 0, N'{{cloze:Text}}', N'{{cloze:Text}}<br>
-{{Extra}}', N'', N'')
+', N'\end{document}', 0xE6F61D326D25521F8F1C730771FC881FFE731466CACAFB313BA79184D163578A, 0, N'{{cloze:Text}}', N'{{cloze:Text}}<br>
+{{Extra}}', N'', N'', N'TextArial20False0FalseExtraArial20False1False')
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] OFF
-SET IDENTITY_INSERT [dbo].[Field] ON 
-
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (1, N'Front', N'Arial', 20, 0, 0, 0, 1)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (2, N'Back', N'Arial', 20, 0, 1, 0, 1)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (3, N'Text', N'Arial', 20, 0, 0, 0, 6)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (4, N'Front', N'Arial', 20, 0, 0, 0, 2)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (5, N'Back', N'Arial', 20, 0, 1, 0, 2)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (6, N'Front', N'Arial', 20, 0, 0, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (7, N'Back', N'Arial', 20, 0, 1, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (8, N'Add Reverse', N'Arial', 20, 0, 2, 0, 3)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (9, N'Extra', N'Arial', 20, 0, 1, 0, 6)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (10, N'Front', N'Arial', 20, 0, 0, 0, 4)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (11, N'Back', N'Arial', 20, 0, 1, 0, 4)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (12, N'Add Reverse', N'Arial', 20, 0, 2, 0, 4)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (13, N'Back', N'Arial', 20, 0, 1, 0, 5)
-INSERT [dbo].[Field] ([Id], [Name], [Font], [FontSize], [IsRightToLeft], [Ordinal], [IsSticky], [CardTemplateInstanceId]) VALUES (14, N'Front', N'Arial', 20, 0, 0, 0, 5)
-SET IDENTITY_INSERT [dbo].[Field] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
 INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'4934a9df-035b-4216-a8d7-cf00510a16ff', NULL, 0, 0, NULL, 0, 0, N'Admin')
@@ -912,12 +876,6 @@ GO
 CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 (
 	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Field_CardTemplateInstanceId] ******/
-CREATE NONCLUSTERED INDEX [IX_Field_CardTemplateInstanceId] ON [dbo].[Field]
-(
-	[CardTemplateInstanceId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
@@ -1156,11 +1114,6 @@ ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User_UserId] FOREI
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User_UserId]
-GO
-ALTER TABLE [dbo].[Field]  WITH CHECK ADD  CONSTRAINT [FK_Field_CardTemplateInstance_CardTemplateInstanceId] FOREIGN KEY([CardTemplateInstanceId])
-REFERENCES [dbo].[CardTemplateInstance] ([Id])
-GO
-ALTER TABLE [dbo].[Field] CHECK CONSTRAINT [FK_Field_CardTemplateInstance_CardTemplateInstanceId]
 GO
 ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])

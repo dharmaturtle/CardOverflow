@@ -18,7 +18,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommentCardEntity> CommentCard { get; set; }
         public virtual DbSet<CommentCardTemplateEntity> CommentCardTemplate { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
-        public virtual DbSet<FieldEntity> Field { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
@@ -184,16 +183,6 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Decks)
                     .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<FieldEntity>(entity =>
-            {
-                entity.HasIndex(e => e.CardTemplateInstanceId);
-
-                entity.HasOne(d => d.CardTemplateInstance)
-                    .WithMany(p => p.Fields)
-                    .HasForeignKey(d => d.CardTemplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

@@ -10,7 +10,6 @@ namespace CardOverflow.Entity
         public CardTemplateInstanceEntity()
         {
             CardInstances = new HashSet<CardInstanceEntity>();
-            Fields = new HashSet<FieldEntity>();
             User_CardTemplateInstances = new HashSet<User_CardTemplateInstanceEntity>();
         }
 
@@ -94,14 +93,14 @@ namespace CardOverflow.Entity
             }
         }
         private string _ShortAnswerTemplate;
+        [Required]
+        public string Fields { get; set; }
 
         [ForeignKey("CardTemplateId")]
         [InverseProperty("CardTemplateInstances")]
         public virtual CardTemplateEntity CardTemplate { get; set; }
         [InverseProperty("CardTemplateInstance")]
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
-        [InverseProperty("CardTemplateInstance")]
-        public virtual ICollection<FieldEntity> Fields { get; set; }
         [InverseProperty("CardTemplateInstance")]
         public virtual ICollection<User_CardTemplateInstanceEntity> User_CardTemplateInstances { get; set; }
     }
