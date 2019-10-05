@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open System.Security.Cryptography
 open System
 open LoadersAndCopiers
 open CardOverflow.Pure
@@ -47,8 +48,21 @@ module CardTemplateRepository =
         task {
             let! cardTemplate = db.CardTemplate.SingleAsync(fun x -> x.Id = template.Id)
             cardTemplate.Name <- template.Name
-            template.LatestInstance.CopyToNewInstance template.Id
-            |> db.CardTemplateInstance.AddI
+            let newTemplateInstance = template.LatestInstance.CopyToNewInstance template.Id
+            db.CardTemplateInstance.AddI newTemplateInstance
+            use hasher = SHA256.Create ()
+            db  
+                .AcquiredCard
+                .Include(fun x -> x.CardInstance)
+                .Where(fun x -> x.CardInstance.CardTemplateInstanceId = template.LatestInstance.Id)
+                |> Seq.iter(fun ac ->
+                    db.Entry(ac.CardInstance).State <- EntityState.Added
+                    ac.CardInstance.Id <- 0
+                    ac.CardInstance.Created <- DateTime.UtcNow
+                    ac.CardInstance.Modified <- Nullable()
+                    ac.CardInstance.CardTemplateInstance <- newTemplateInstance
+                    ac.CardInstance.AcquireHash <- CardInstanceEntity.acquireHash ac.CardInstance newTemplateInstance.AcquireHash hasher
+                )
             return! db.SaveChangesAsyncI()
         }
 
