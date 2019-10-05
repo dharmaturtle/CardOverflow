@@ -71,6 +71,12 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
+            modelBuilder.Entity<AlphaBetaKeyEntity>(entity =>
+            {
+                entity.HasIndex(e => e.Key)
+                    .IsUnique();
+            });
+
             modelBuilder.Entity<CardEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
