@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorStrap" Version="1.0.101" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.0.0" />
@@ -39,18 +41,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Areas\Identity\Pages\Account\Register.cshtml" />
-    <None Include="Areas\Identity\Pages\Account\_ViewImports.cshtml" />
-    <None Include="Areas\Identity\Pages\_ViewImports.cshtml" />
-    <None Include="Areas\Identity\Pages\_ViewStart.cshtml" />
-    <None Include="Pages\Shared\_CookieConsentPartial.cshtml" />
-    <None Include="Areas\Identity\Pages\Shared\_IdentityLayout.cshtml" />
-    <None Include="Pages\Shared\_LoginPartial.cshtml" />
-    <None Include="Pages\Shared\_ValidationScriptsPartial.cshtml" />
-    <None Include="Pages\_ViewImports.cshtml" />
   </ItemGroup>
 
 </Project>
