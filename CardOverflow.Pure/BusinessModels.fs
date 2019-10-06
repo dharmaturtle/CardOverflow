@@ -248,12 +248,20 @@ type CardInstance = {
     TemplateInstance: CardTemplateInstance
     IsAcquired: bool
 } with
-    member this.FrontBackFrontSynthBackSynth =
-        CardHtml.generate   
+    member this.FrontBackFrontSynthBackSynth = // medTODO split this up
+        CardHtml.generate
             <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "")
             <| this.TemplateInstance.QuestionTemplate
             <| this.TemplateInstance.AnswerTemplate
             <| this.TemplateInstance.Css
+
+type CardInstanceMeta = {
+    Id: int
+    Created: DateTime
+    Modified: DateTime option
+    IsDmca: bool
+    IsAcquired: bool
+}
 
 type AcquiredCard = {
     CardId: int
@@ -308,4 +316,12 @@ type ExploreCard = {
     Tags: ViewTag seq
     Relationships: ViewRelationship seq
     Comments: Comment seq
+}
+
+type CardRevision = {
+    Id: int
+    Author: string
+    AuthorId: int
+    Description: string
+    SortedMeta: CardInstanceMeta list
 }

@@ -1,0 +1,47 @@
+@page "/card/{Id:int}/revision"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@inherits OwningComponentBase<CardOverflowDb>
+
+@if (Revision == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <div>
+    Description: @Revision.Description
+  </div>
+  <div class="text-right">
+    By @Revision.Author
+  </div>
+  <ol class="list-group" style="list-style: decimal inside;">
+    @foreach (var meta in Revision.SortedMeta) {
+      <li class="list-group-item" style="display: list-item">
+        <label>Created:</label> @meta.Created
+        @if (meta.Modified != null) {
+          <label>Modified:</label> @meta.Modified.Value;
+        }
+        <ResizingIframe SrcUrl=@("/cardinstance/" + meta.Id + "/back")></ResizingIframe>
+      </li>
+    }
+  </ol>
+}
+
+@code {
+  [Parameter]
+  public int Id { get; set; }
+  [CascadingParameter]
+  UserEntity User { get; set; }
+  CardOverflow.Pure.CardRevision Revision;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    Revision = await CardRepository.Revisions(Service, User?.Id ?? 0, Id);
+    StateHasChanged();
+  }
+
+}

@@ -193,6 +193,14 @@ type CardInstance with
         e.CardTemplateInstanceId <- cardTemplateInstanceId
         e
 
+type CardInstanceMeta with
+    static member load userId (entity: CardInstanceEntity) = {
+        Id = entity.Id
+        Created = entity.Created
+        Modified = entity.Modified |> Option.ofNullable
+        IsDmca = entity.IsDmca
+        IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId) }
+
 type QuizCard with
     static member load userId (entity: AcquiredCardEntity) =
         let instance = entity.CardInstance |> CardInstance.load userId
@@ -423,4 +431,13 @@ type ExploreCard with
                     Users = relationships.Sum(fun x -> x.Users)
                 }
             )
+    }
+
+type CardRevision with
+    static member load userId (e: CardEntity) = {
+        Id = e.Id
+        Author = e.Author.DisplayName
+        AuthorId = e.AuthorId
+        Description = e.Description
+        SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.map (CardInstanceMeta.load userId) |> Seq.toList
     }

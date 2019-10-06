@@ -233,8 +233,17 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
         [newValue; newValue],
         card.LatestInstance.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
     )
-    let createds = (c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList)
+    let createds = c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
+
+    let! revisions = CardRepository.Revisions c.Db userId cardId
+    Assert.Equal(2, revisions.SortedMeta.Count())
+    let! instance = CardRepository.instance c.Db userId revisions.SortedMeta.[0].Id
+    let revision, _, _, _ = instance.FrontBackFrontSynthBackSynth
+    Assert.Contains(newValue, revision)
+    let! instance = CardRepository.instance c.Db userId revisions.SortedMeta.[1].Id
+    let original, _, _, _ = instance.FrontBackFrontSynthBackSynth
+    Assert.Contains("Front", original)
     }
     
 // fuck merge
