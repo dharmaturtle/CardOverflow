@@ -5,7 +5,7 @@
 @using System.IO
 @using Blazor.FileReader
 @inject IFileReaderService fileReaderService
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 <style>
   .droptarget {
     display: block;
@@ -85,7 +85,7 @@
       Output += $"{nameof(IFileInfo)}.{nameof(fileInfo.LastModifiedDate)}: {fileInfo.LastModifiedDate?.ToString() ?? "(N/A)"}{nl}";
       Output += $"Uploading...";
       this.StateHasChanged();
-      
+
       var downloadPath = SanitizeAnki.ankiExportsDir + "/" + fileInfo.Name + CardOverflow.Pure.Random.cryptographicString(32);
       var buffer = new byte[4096];
       var count = 0;
@@ -102,7 +102,7 @@
       Output += $"Beginning import... this  may take a while.{nl}";
       this.StateHasChanged();
 
-      var x = SanitizeAnki.Import(Db, downloadPath, User.Id);
+      var x = SanitizeAnki.Import(Service, downloadPath, User.Id);
       if (x.IsOk) {
         Output += $"Import complete!.{nl}";
       } else {

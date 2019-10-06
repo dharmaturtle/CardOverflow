@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 
 @if (cards == null) {
   <p><em>Loading...</em></p>
@@ -64,7 +64,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await CardRepository.GetAcquiredPages(Db, User?.Id ?? 0, pageNumber);
+    var pagedList = await CardRepository.GetAcquiredPages(Service, User?.Id ?? 0, pageNumber);
     details = pagedList.Details;
     cards = pagedList.Results.Select(x => x.ResultValue).ToList(); // medTODO show errors
   }

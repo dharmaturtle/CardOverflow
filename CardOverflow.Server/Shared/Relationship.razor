@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 @inject UserContentHttpClient UserContentHttpClient;
 
 <h3>Relationships</h3>
@@ -91,7 +91,7 @@
   }
 
   async Task Add() {
-    var x = SanitizeRelationshipRepository.Add(Db, User.Id, Command);
+    var x = SanitizeRelationshipRepository.Add(Service, User.Id, Command);
     if (x.IsOk) {
       await x.ResultValue;
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
@@ -102,7 +102,7 @@
   }
 
   async Task Acquire(string name, int targetId) {
-    var x = SanitizeRelationshipRepository.Add(Db, User.Id, new AddRelationshipCommand(name, Card.Id, targetId.ToString()));
+    var x = SanitizeRelationshipRepository.Add(Service, User.Id, new AddRelationshipCommand(name, Card.Id, targetId.ToString()));
     if (x.IsOk) {
       await x.ResultValue;
       Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = true;
@@ -114,7 +114,7 @@
   }
 
   async Task Unacquire(string name, int targetId) {
-    await SanitizeRelationshipRepository.Remove(Db, Card.Id, targetId, User.Id, name);
+    await SanitizeRelationshipRepository.Remove(Service, Card.Id, targetId, User.Id, name);
     Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = false;
     Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users--;
     StateHasChanged();

@@ -8,7 +8,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 @inject IJSRuntime Js
 
 @if (Card == null) {
@@ -89,19 +89,19 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Card = await CardRepository.Get(Db, Id, User?.Id ?? 0);
+    Card = await CardRepository.Get(Service, Id, User?.Id ?? 0);
     StateHasChanged();
   }
 
   async Task Acquire(int cardId) {
-    await CardRepository.AcquireCardsAsync(Db, User.Id, new List<int> { cardId });
+    await CardRepository.AcquireCardsAsync(Service, User.Id, new List<int> { cardId });
     Card.LatestInstance.IsAcquired = true;
     Card.Users++;
     StateHasChanged();
   }
 
   void AcquireTag(string name) {
-    if (SanitizeTagRepository.AddTo(Db, new TagText { Text = name }, User.Id, Card.Id).IsOk) {
+    if (SanitizeTagRepository.AddTo(Service, new TagText { Text = name }, User.Id, Card.Id).IsOk) {
       Card.Tags.Single(x => x.Name == name).IsAcquired = true;
       StateHasChanged();
     } else {
@@ -110,7 +110,7 @@
   }
 
   void DeleteTag(string tag) { // highTODO figure out why the button isn't being removed until refresh. Also if you delete multiple, it's offset by one
-    if (SanitizeTagRepository.DeleteFrom(Db, tag, User.Id, Card.Id).IsOk) {
+    if (SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id).IsOk) {
       Card.Tags.Single(x => x.Name == tag).IsAcquired = false;
       StateHasChanged();
     } else {

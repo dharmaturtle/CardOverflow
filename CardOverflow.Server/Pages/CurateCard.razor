@@ -9,7 +9,7 @@
 @using CardOverflow.Sanitation
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 @*medTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
 @if (Card == null) {
@@ -62,11 +62,11 @@
   UserEntity User { get; set; }
 
   protected override async Task OnInitializedAsync() {
-    Card = (await CardRepository.GetAcquired(Db, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
+    Card = (await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
   }
 
   async Task UpdateCard() {
-    var result = SanitizeCardRepository.Update(Db, User.Id, Card);
+    var result = SanitizeCardRepository.Update(Service, User.Id, Card);
     if (result.IsOk) {
       await result.ResultValue;
       // lowToMedTODO display message that save worked

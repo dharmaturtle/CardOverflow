@@ -9,7 +9,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 
 <div class="container">
 
@@ -125,7 +125,7 @@
   bool Submitted = false;
 
   async Task Submit() {
-    await SanitizeLandingPage.SignUp(Db, Form);
+    await SanitizeLandingPage.SignUp(Service, Form);
     Submitted = true;
   }
 

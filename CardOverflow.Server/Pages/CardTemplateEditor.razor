@@ -8,7 +8,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inject CardOverflowDb Db
+@inherits OwningComponentBase<CardOverflowDb>
 
 <h1>Card Template</h1>
 <hr />
@@ -68,11 +68,11 @@
   UserEntity User { get; set; }
 
   protected override async Task OnInitializedAsync() {
-    Template = await CardTemplateRepository.GetFromInstance(Db, InstanceId);
+    Template = await CardTemplateRepository.GetFromInstance(Service, InstanceId);
   }
 
   async Task Submit() {
-    var x = SanitizeCardTemplate.Update(Db, User.Id,Template);
+    var x = SanitizeCardTemplate.Update(Service, User.Id, Template);
     if (x.IsOk) {
       await x.ResultValue;
     } else {
