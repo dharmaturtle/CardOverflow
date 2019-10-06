@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open CardOverflow.Pure.Core
 open System.Security.Cryptography
 open System
 open LoadersAndCopiers
@@ -57,7 +58,8 @@ module CardTemplateRepository =
                 .Where(fun x -> x.CardInstance.CardTemplateInstanceId = template.LatestInstance.Id)
                 |> Seq.iter(fun ac ->
                     db.Entry(ac.CardInstance).State <- EntityState.Added
-                    ac.CardInstance.Id <- 0
+                    ac.CardInstance.Id <- ac.CardInstance.GetHashCode()
+                    db.Entry(ac.CardInstance).Property(Core.nameof <@ any<CardInstanceEntity>.Id @>).IsTemporary <- true
                     ac.CardInstance.Created <- DateTime.UtcNow
                     ac.CardInstance.Modified <- Nullable()
                     ac.CardInstance.CardTemplateInstance <- newTemplateInstance
