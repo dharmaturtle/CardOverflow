@@ -141,7 +141,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <span class="cloze-filler-front">...</span>
         <span class="cloze-brackets-front">]</span>
         &nbsp;</div><div><b>V</b>:&nbsp;Vincristine/Vinblastine (anticancer)</div><div><b>P</b>:&nbsp;Palcitaxel (anticancer)&nbsp;</div><br /></div>""")
-    Assert.Equal(4, card.Relationships.Count())
+    Assert.Equal(4, card.Relationships.Count)
     Assert.Equal<int seq>(
         [1; 2; 4; 5],
         card.Relationships.Select(fun x -> x.CardId).OrderBy(fun x -> x)

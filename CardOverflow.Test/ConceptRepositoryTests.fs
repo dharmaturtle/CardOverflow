@@ -23,6 +23,7 @@ open System.Diagnostics
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Sanitation
+open System.Collections
 
 [<Fact>]
 let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() =
@@ -62,7 +63,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| card.Comments
     Assert.True card.LatestInstance.IsAcquired
-    Assert.Equal(
+    Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
             IsAcquired = true }
@@ -90,7 +91,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     
     let! cards = CardRepository.SearchAsync c.Db userId 1 ""
     Assert.Equal(1, cards.Results.Single().Users)
-    Assert.Equal(
+    Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
             IsAcquired = true }
@@ -130,21 +131,21 @@ let testGetAcquired (cardIds: int list) addCards name = task {
 
         do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
         let! card = CardRepository.Get c.Db 1 userId
-        Assert.Equal(0, card.Relationships.Count())
+        Assert.Equal(0, card.Relationships.Count)
         let! card = CardRepository.Get c.Db 2 userId
-        Assert.Equal(0, card.Relationships.Count())
+        Assert.Equal(0, card.Relationships.Count)
 
         do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1 |> Result.getOk
         do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
         let! card = CardRepository.Get c.Db 1 userId
-        Assert.Equal(0, card.Relationships.Count())
+        Assert.Equal(0, card.Relationships.Count)
         let! card = CardRepository.Get c.Db 2 userId
-        Assert.Equal(0, card.Relationships.Count())
+        Assert.Equal(0, card.Relationships.Count)
     
     let userId = 2 // acquires the card
     do! CardRepository.AcquireCardsAsync c.Db userId cardIds
     let! card = CardRepository.Get c.Db 1 userId
-    Assert.Equal(
+    Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
             IsAcquired = false }],
@@ -154,7 +155,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     let card = card |> Result.getOk
     TagRepository.AddTo c.Db "a" card.AcquiredCardId
     let! card = CardRepository.Get c.Db 1 userId
-    Assert.Equal(
+    Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 2
             IsAcquired = true }],
@@ -184,19 +185,19 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         
             do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
             let! card = CardRepository.Get c.Db 1 userId
-            Assert.Equal(1, card.Relationships.Count())
+            Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             let! card = CardRepository.Get c.Db 2 userId
-            Assert.Equal(1, card.Relationships.Count())
+            Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
 
             do! SanitizeRelationshipRepository.Add c.Db userId acquirer |> Result.getOk
             do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
             let! card = CardRepository.Get c.Db 1 userId
-            Assert.Equal(1, card.Relationships.Count())
+            Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             let! card = CardRepository.Get c.Db 2 userId
-            Assert.Equal(1, card.Relationships.Count())
+            Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             
             do! SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
@@ -212,21 +213,21 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         cards.Results.Count()
     )
     if cardIds.Length = 1 then
-        Assert.Equal(
+        Assert.Equal<ViewTag seq>(
             [{  Name = "a"
                 Count = 2
                 IsAcquired = false }],
-            cards.Results.SelectMany(fun x -> x.Tags)
+            cards.Results.SelectMany(fun x -> x.Tags.AsEnumerable())
         )
     else
-        Assert.Equal(
+        Assert.Equal<ViewTag seq>(
             [{  Name = "a"
                 Count = 2
                 IsAcquired = false }
              {  Name = "a"
                 Count = 1
                 IsAcquired = false }],
-            cards.Results.SelectMany(fun x -> x.Tags)
+            cards.Results.SelectMany(fun x -> x.Tags.AsEnumerable())
         )
     }
     

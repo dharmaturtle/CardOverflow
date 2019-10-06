@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
 @inherits OwningComponentBase<CardOverflowDb>
 
 @if (Card == null) {
@@ -31,10 +32,13 @@
     Description: @Card.Description
   </div>
   <div>
-    <ResizingIframe SrcUrl=@("/card/rawback/" + @Id) ></ResizingIframe>
+    <ResizingIframe SrcUrl=@("/card/rawback/" + @Id)></ResizingIframe>
   </div>
   <div class="text-right">
     By @Card.Author
+    <div>
+      <a href="/card/@Card.Id/revision">Revisions</a>
+    </div>
   </div>
   <div>
     <h3>Tags</h3>
@@ -86,7 +90,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Card = await CardRepository.Get(Service, Id, User?.Id ?? 0);
+    Card = await DbExecutor.QueryAsync(db => CardRepository.Get(db, Id, User?.Id ?? 0));
     StateHasChanged();
   }
 
@@ -106,7 +110,7 @@
     }
   }
 
-  void DeleteTag(string tag) { // highTODO figure out why the button isn't being removed until refresh. Also if you delete multiple, it's offset by one
+  void DeleteTag(string tag) {
     if (SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id).IsOk) {
       Card.Tags.Single(x => x.Name == tag).IsAcquired = false;
       StateHasChanged();

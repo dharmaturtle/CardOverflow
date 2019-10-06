@@ -384,7 +384,7 @@ type ExploreCard with
         Users = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum()
         Description = entity.Description
         LatestInstance = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstance.load userId
-        Comments = entity.CommentCards |> Seq.map Comment.load
+        Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
         Tags =
             entity.CardInstances
                 .SelectMany(fun x -> x.AcquiredCards.SelectMany(fun x -> x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)))
@@ -401,6 +401,7 @@ type ExploreCard with
                                 | null -> false
                                 | x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name = name)
                     })
+                 |> List.ofSeq
         Relationships =
             let sources =
                 entity.RelationshipSources.GroupBy(fun x -> x.Name, x.SourceId, x.TargetId).Select(fun r ->
@@ -430,7 +431,7 @@ type ExploreCard with
                     IsAcquired = relationships.Any(fun x -> x.IsAcquired)
                     Users = relationships.Sum(fun x -> x.Users)
                 }
-            )
+            ) |> toResizeArray
     }
 
 type CardRevision with

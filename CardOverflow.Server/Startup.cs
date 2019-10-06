@@ -28,8 +28,13 @@ namespace CardOverflow.Server {
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
-      services.AddDbContext<CardOverflowDb>(options => options
-        .UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+      services.AddSingleton(
+        new DbContextOptionsBuilder<CardOverflowDb>()
+          .UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
+          .Options
+        );
+      services.AddSingleton<DbExecutor>();
+      services.AddDbContext<CardOverflowDb>();
       services.AddDefaultIdentity<UserEntity>(options => {
         options.User.RequireUniqueEmail = true;
         options.Password.RequireNonAlphanumeric = false;

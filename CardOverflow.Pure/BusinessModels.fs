@@ -313,9 +313,9 @@ type ExploreCard = {
     AuthorId: int
     Description: string
     LatestInstance: CardInstance
-    Tags: ViewTag seq
-    Relationships: ViewRelationship seq
-    Comments: Comment seq
+    Tags: ViewTag list
+    Relationships: ViewRelationship ResizeArray
+    Comments: Comment list
 }
 
 type CardRevision = {
