@@ -86,7 +86,7 @@
       Output += $"Uploading...";
       this.StateHasChanged();
 
-      var downloadPath = SanitizeAnki.ankiExportsDir + "/" + fileInfo.Name + CardOverflow.Pure.Random.cryptographicString(32);
+      var downloadPath = SanitizeAnki.ankiExportsDir + "/" + fileInfo.Name + CardOverflow.Pure.Random.cryptographicString(32) + ".ankiTemp";
       var buffer = new byte[4096];
       var count = 0;
       using (var stream = await file.OpenReadAsync()) {

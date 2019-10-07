@@ -19,7 +19,8 @@ module SanitizeAnki = // medTODO actually sanitize, ie virus scan
             if entries.Any(fun x -> x.Name = "collection.anki21")
             then entries.First(fun x -> x.Name = "collection.anki21")
             else entries.First(fun x -> x.Name = "collection.anki2")
-        let destination = ankiExportsDir +/ Random.cryptographicString 64 + ".ankiTemp"
+        let zipName = Path.GetFileNameWithoutExtension(zipFile)
+        let destination = ankiExportsDir +/ zipName + ".sqlite.ankiTemp"
         destination |> collection.ExtractToFile
         destination
     

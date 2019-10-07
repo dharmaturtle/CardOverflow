@@ -1040,7 +1040,9 @@ type AllDefaultTemplatesAndImageAndMp3 () =
             [|"AllDefaultTemplatesAndImageAndMp3.apkg" ; allDefaultTemplatesAndImageAndMp3_apkg |] ])
 
 let recreateAnkiDb ankiFileName callerMemberName =
-    SanitizeAnki.ankiDb (SanitizeAnki.ankiExportsDir +/ ankiFileName)
+    let randomizedDestFileName = SanitizeAnki.ankiExportsDir +/ ankiFileName + CardOverflow.Pure.Random.cryptographicString(32) + ".ankiTemp"
+    File.Copy(SanitizeAnki.ankiExportsDir +/ ankiFileName, randomizedDestFileName)
+    SanitizeAnki.ankiDb randomizedDestFileName
 
 let serialize x =
     ObjectDumper.Dump(x, DumpOptions(DumpStyle = DumpStyle.CSharp,
