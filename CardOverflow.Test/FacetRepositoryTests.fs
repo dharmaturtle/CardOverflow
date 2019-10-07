@@ -15,7 +15,7 @@ open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 
-let add templateName (db: CardOverflowDb) userId tags =
+let add templateName fieldValues (db: CardOverflowDb) userId tags =
     let cardTemplateInstance =
         db.CardTemplateInstance
             .Include(fun x -> x.CardTemplate)
@@ -23,9 +23,11 @@ let add templateName (db: CardOverflowDb) userId tags =
             .First(fun x -> x.CardTemplate.Name = templateName)
             |> AcquiredCardTemplateInstance.load
     TagRepository.Add db userId tags
-    let tags =
-        TagRepository.GetAll db userId
-        |> Seq.map (fun x -> x.Id)
+    let tags = tags |> List.map (fun x -> (TagRepository.Search db x).Single().Id)
+    let fieldValues =
+        match fieldValues with
+        | [] -> ["Front"; "Back"]
+        | _ -> fieldValues
     let initialCard = {
         Created = DateTime.Now - TimeSpan.FromDays 1.
         CardTemplateHash = cardTemplateInstance.CardTemplateInstance.AcquireHash
@@ -36,15 +38,18 @@ let add templateName (db: CardOverflowDb) userId tags =
         FieldValues =
             cardTemplateInstance.CardTemplateInstance.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
-            |> Seq.map (fun x -> { Field = x; Value = x.Name })
+            |> Seq.mapi (fun i field -> { Field = field; Value = fieldValues.[i] })
     }
     CardRepository.CreateCard db initialCard <| Seq.empty.ToList()
 
-let addReversedBasicCard: CardOverflowDb -> int -> seq<string> -> unit =
-    add "Basic (and reversed card) - Card 2"
+let addReversedBasicCard: CardOverflowDb -> int -> string list -> unit =
+    add "Basic (and reversed card) - Card 2" []
 
 let addBasicCard =
-    add "Basic"
+    add "Basic" []
+
+let addBasicCustomCard x =
+    add "Basic" x
 
 [<Fact>]
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =

@@ -252,7 +252,7 @@ type InitialCardInstance = {
     DefaultCardOptionId: int
     Description: string
     CardTemplateHash: byte[]
-    CardTemplateInstanceIdAndTags: int * int seq
+    CardTemplateInstanceIdAndTags: int * int list
     Created: DateTime
 } with
     member this.CopyToNew fileCardInstances =

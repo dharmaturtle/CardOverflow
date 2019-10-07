@@ -251,3 +251,30 @@ let rec ``GetAcquired works when acquiring 2 cards of a pair; also a lot of rela
         [1; 2]
         [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair; also a lot of relationship tests`` @>
+
+[<Fact>]
+let ``Card search works`` (): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let basicTag = "basic tag"
+    FacetRepositoryTests.addBasicCard c.Db userId [basicTag]
+    let front = Guid.NewGuid().ToString()
+    let back = Guid.NewGuid().ToString()
+    FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom tag"]
+    do! Task.Delay 10000 // give the full text index time to rebuild
+
+    let search = CardRepository.SearchAsync c.Db userId 1
+    
+    let! cards = search ""
+    Assert.Equal(2, cards.Results.Count())
+    let! cards = search basicTag
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "Front"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search <| Guid.NewGuid().ToString()
+    Assert.Empty(cards.Results)
+    let! cards = search front
+    Assert.Equal(2, cards.Results.Single().Id)
+    let! cards = search back
+    Assert.Equal(2, cards.Results.Single().Id)
+    }

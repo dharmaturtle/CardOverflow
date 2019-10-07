@@ -1,4 +1,4 @@
-USE [master]
+﻿USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -91,6 +91,9 @@ GO
 ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET QUERY_OPTIMIZER_HOTFIXES = PRIMARY;
 GO
 USE [CardOverflow]
+GO
+/****** Object:  FullTextCatalog [CardInstanceFieldValueFullTextCatalog] ******/
+CREATE FULLTEXT CATALOG [CardInstanceFieldValueFullTextCatalog] WITH ACCENT_SENSITIVITY = ON
 GO
 /****** Object:  Table [dbo].[AcquiredCard] ******/
 SET ANSI_NULLS ON
@@ -1016,6 +1019,13 @@ CREATE NONCLUSTERED INDEX [IX_Vote_CommentCardTemplate_UserId] ON [dbo].[Vote_Co
 (
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  FullTextIndex ******/
+CREATE FULLTEXT INDEX ON [dbo].[CardInstance](
+[FieldValues] LANGUAGE 'English' STATISTICAL_SEMANTICS)
+KEY INDEX [PK_CardInstance]ON ([CardInstanceFieldValueFullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
 GO
 ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])

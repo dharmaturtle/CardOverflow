@@ -98,4 +98,3 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript``() =
     c.RegisterStuff
     c.RegisterStandardConnectionString
     c.GetInstance<ConnectionString>() |> deleteAndRecreateDb "CardOverflow"
-        
