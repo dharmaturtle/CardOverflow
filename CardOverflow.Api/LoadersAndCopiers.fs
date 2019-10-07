@@ -81,7 +81,6 @@ type CardOption with
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
           ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
     member this.CopyTo(entity: CardOptionEntity) =
-        entity.Id <- this.Id
         entity.Name <- this.Name
         entity.IsDefault <- this.IsDefault
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
