@@ -248,8 +248,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[CardInstance](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Created] [smalldatetime] NOT NULL,
-	[Modified] [smalldatetime] NULL,
+	[Created] [datetime2](7) NOT NULL,
+	[Modified] [datetime2](7) NULL,
 	[CardId] [int] NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
 	[IsDmca] [bit] NOT NULL,
@@ -320,8 +320,8 @@ CREATE TABLE [dbo].[CardTemplateInstance](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[CardTemplateId] [int] NOT NULL,
 	[Css] [varchar](4000) NOT NULL,
-	[Created] [smalldatetime] NOT NULL,
-	[Modified] [smalldatetime] NULL,
+	[Created] [datetime2](7) NOT NULL,
+	[Modified] [datetime2](7) NULL,
 	[LatexPre] [nvarchar](500) NOT NULL,
 	[LatexPost] [nvarchar](500) NOT NULL,
 	[AcquireHash] [binary](32) NOT NULL,
@@ -617,7 +617,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:54:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:29.5810000' AS DateTime2), CAST(N'2019-06-16T00:53:30.0000000' AS DateTime2), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -636,7 +636,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:51:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:29.5770000' AS DateTime2), CAST(N'2019-06-16T00:51:28.0000000' AS DateTime2), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -655,7 +655,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:29.5720000' AS DateTime2), CAST(N'2019-06-16T00:51:32.0000000' AS DateTime2), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -674,7 +674,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:29.5720000' AS DateTime2), CAST(N'2019-06-16T00:51:32.0000000' AS DateTime2), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -693,7 +693,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
  color: black;
  background-color: white;
 }
-', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+', CAST(N'2019-04-08T02:14:29.5710000' AS DateTime2), CAST(N'2019-06-16T00:51:46.0000000' AS DateTime2), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -720,7 +720,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 }
 .nightMode .cloze {
  color: lightblue;
-}', CAST(N'2019-04-08T02:14:00' AS SmallDateTime), CAST(N'2019-06-16T00:52:00' AS SmallDateTime), N'\documentclass[12pt]{article}
+}', CAST(N'2019-04-08T02:14:29.5700000' AS DateTime2), CAST(N'2019-06-16T00:51:55.0000000' AS DateTime2), N'\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}

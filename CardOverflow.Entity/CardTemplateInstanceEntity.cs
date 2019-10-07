@@ -25,9 +25,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Css;
-        [Column(TypeName = "smalldatetime")]
         public DateTime Created { get; set; }
-        [Column(TypeName = "smalldatetime")]
         public DateTime? Modified { get; set; }
         [Required]
         [StringLength(500)]

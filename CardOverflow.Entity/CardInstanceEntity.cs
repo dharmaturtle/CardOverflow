@@ -14,9 +14,7 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
-        [Column(TypeName = "smalldatetime")]
         public DateTime Created { get; set; }
-        [Column(TypeName = "smalldatetime")]
         public DateTime? Modified { get; set; }
         public int CardId { get; set; }
         [Required]
