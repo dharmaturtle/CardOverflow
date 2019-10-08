@@ -27,6 +27,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Description;
+        public int Users { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]

@@ -95,7 +95,7 @@
   }
 
   async Task Acquire(int cardId) {
-    await CardRepository.AcquireCardsAsync(Service, User.Id, new List<int> { cardId });
+    await CardRepository.AcquireCardAsync(Service, User.Id, cardId);
     Card.LatestInstance.IsAcquired = true;
     Card.Users++;
     StateHasChanged();

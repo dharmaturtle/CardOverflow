@@ -24,6 +24,7 @@ namespace CardOverflow.Entity
         [Required]
         public string FieldValues { get; set; }
         public int CardTemplateInstanceId { get; set; }
+        public int Users { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]

@@ -55,6 +55,9 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.UserId);
 
+                entity.HasIndex(e => new { e.UserId, e.CardInstanceId })
+                    .IsUnique();
+
                 entity.HasOne(d => d.CardInstance)
                     .WithMany(p => p.AcquiredCards)
                     .HasForeignKey(d => d.CardInstanceId)
@@ -218,11 +221,6 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
                 entity.HasIndex(e => e.AcquiredCardId);
-
-                entity.HasOne(d => d.AcquiredCard)
-                    .WithMany(p => p.Histories)
-                    .HasForeignKey(d => d.AcquiredCardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
@@ -263,11 +261,6 @@ namespace CardOverflow.Entity
                 entity.HasKey(e => new { e.TagId, e.AcquiredCardId });
 
                 entity.HasIndex(e => e.AcquiredCardId);
-
-                entity.HasOne(d => d.AcquiredCard)
-                    .WithMany(p => p.Tag_AcquiredCards)
-                    .HasForeignKey(d => d.AcquiredCardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Tag)
                     .WithMany(p => p.Tag_AcquiredCards)

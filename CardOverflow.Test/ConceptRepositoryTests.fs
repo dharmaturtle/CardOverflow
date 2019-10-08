@@ -143,7 +143,11 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         Assert.Equal(0, card.Relationships.Count)
     
     let userId = 2 // acquires the card
-    do! CardRepository.AcquireCardsAsync c.Db userId cardIds
+    if cardIds.Length = 1 then
+        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    else
+        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
     let! card = CardRepository.Get c.Db 1 userId
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"

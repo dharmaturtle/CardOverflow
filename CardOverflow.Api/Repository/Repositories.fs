@@ -110,21 +110,23 @@ module CardRepository =
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
         |> Seq.map (QuizCard.load userId)
-    let AcquireCardsAsync (db: CardOverflowDb) userId cardInstanceIds =
-        let defaultCardOptionId =
+    let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
+        let! defaultCardOption =
             db.CardOption
-                .First(fun x -> x.UserId = userId && x.IsDefault).Id
-        cardInstanceIds
-        |> Seq.map (fun cardInstanceId ->
+                .SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
+        let! cardInstance = db.CardInstance.SingleAsync(fun x -> x.Id = cardInstanceId)
+        match! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardInstance.CardId) with
+        | null ->
             let card =
                 AcquiredCard.InitialCopyTo
                     userId
-                    defaultCardOptionId
+                    defaultCardOption.Id
                     []
             card.CardInstanceId <- cardInstanceId
-            card
-        ) |> db.AcquiredCard.AddRange
-        db.SaveChangesAsyncI ()
+            card |> db.AcquiredCard.AddI
+        | x -> x.CardInstanceId <- cardInstanceId
+        return! db.SaveChangesAsyncI ()
+        }
     let Get (db: CardOverflowDb) cardId userId =
         task {
             let! concept =

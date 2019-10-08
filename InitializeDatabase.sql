@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -238,6 +238,7 @@ CREATE TABLE [dbo].[Card](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[AuthorId] [int] NOT NULL,
 	[Description] [nvarchar](100) NOT NULL,
+	[Users] [int] NOT NULL,
  CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -258,6 +259,7 @@ CREATE TABLE [dbo].[CardInstance](
 	[IsDmca] [bit] NOT NULL,
 	[FieldValues] [nvarchar](max) NOT NULL,
 	[CardTemplateInstanceId] [int] NOT NULL,
+	[Users] [int] NOT NULL,
  CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -763,6 +765,13 @@ CREATE NONCLUSTERED INDEX [IX_AcquiredCard_UserId] ON [dbo].[AcquiredCard]
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_AcquiredCard_UserId_CardInstanceId] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_AcquiredCard_UserId_CardInstanceId] ON [dbo].[AcquiredCard]
+(
+	[UserId] ASC,
+	[CardInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [IX_AlphaBetaKey_Key] ******/
@@ -1145,6 +1154,7 @@ ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_Fil
 GO
 ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
 REFERENCES [dbo].[AcquiredCard] ([Id])
+ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId]
 GO
@@ -1165,6 +1175,7 @@ ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_User_UserId]
 GO
 ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
 REFERENCES [dbo].[AcquiredCard] ([Id])
+ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId]
 GO
@@ -1217,6 +1228,75 @@ ALTER TABLE [dbo].[Vote_CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vot
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Vote_CommentCardTemplate] CHECK CONSTRAINT [FK_Vote_CommentCardTemplate_User_UserId]
+GO
+/****** Object:  Trigger [dbo].[TriggerCardInstanceUserUpdate] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Alex
+-- Create date: 11:40 10/8/2019
+-- Description:	Updates the Users count of Card and CardInstance
+-- =============================================
+CREATE TRIGGER [dbo].[TriggerCardInstanceUserUpdate] 
+	ON  [dbo].[AcquiredCard]
+	AFTER INSERT, DELETE, UPDATE
+AS 
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	IF EXISTS (SELECT 1 FROM inserted)
+	BEGIN
+		UPDATE	dbo.CardInstance
+		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = i.CardInstanceId)
+		FROM	inserted i
+		WHERE	dbo.CardInstance.Id = i.CardInstanceId
+	END
+	IF EXISTS (SELECT 1 FROM deleted)
+	BEGIN
+		UPDATE	dbo.CardInstance
+		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = d.CardInstanceId)
+		FROM	deleted d
+		WHERE	dbo.CardInstance.Id = d.CardInstanceId
+	END
+
+	DECLARE	@cardId int
+	IF EXISTS (SELECT 1 FROM inserted)
+	BEGIN
+		SELECT	@cardId = CardId --medTODO does this break when we insert cards with different Ids?
+		FROM	dbo.CardInstance ci
+		INNER JOIN inserted i
+			ON	ci.Id = i.CardInstanceId
+
+		UPDATE	c
+		SET		Users =
+				   (SELECT	SUM(ci.Users)
+					FROM	dbo.CardInstance ci
+					WHERE	ci.CardId = @cardId)
+		FROM	dbo.Card c
+		WHERE	c.Id = @cardId
+	END
+	IF EXISTS (SELECT 1 FROM deleted)
+	BEGIN
+		SELECT	@cardId = CardId --medTODO does this break when we insert cards with different Ids?
+		FROM	dbo.CardInstance ci
+		INNER JOIN deleted d
+			ON	ci.Id = d.CardInstanceId
+
+		UPDATE	c
+		SET		Users =
+				   (SELECT	SUM(ci.Users)
+					FROM	dbo.CardInstance ci
+					WHERE	ci.CardId = @cardId)
+		FROM	dbo.Card c
+		WHERE	c.Id = @cardId
+	END
+END
+GO
+ALTER TABLE [dbo].[AcquiredCard] ENABLE TRIGGER [TriggerCardInstanceUserUpdate]
 GO
 USE [master]
 GO
