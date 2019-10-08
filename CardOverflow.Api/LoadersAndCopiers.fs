@@ -380,7 +380,12 @@ type ExploreCard with
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
-        Users = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum()
+        Users =
+            let actual = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum()
+            if actual = entity.Users then
+                actual
+            else
+                failwithf "Discrepancy between the triggered value and the actual value for CardId %i, %i is not the same as %i" entity.Id actual entity.Users
         Description = entity.Description
         LatestInstance = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstance.load userId
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
