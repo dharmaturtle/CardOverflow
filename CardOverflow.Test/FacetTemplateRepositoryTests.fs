@@ -71,7 +71,7 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     let createds = c.Db.CardTemplateInstance.Where(fun x -> x.CardTemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let front, _, _, _ =
-        (CardRepository.Get c.Db 1 userId).GetAwaiter().GetResult()
+        (CardRepository.Get c.Db userId 1).GetAwaiter().GetResult()
             .LatestInstance.FrontBackFrontSynthBackSynth
     Assert.Equal(
         """<!DOCTYPE html>

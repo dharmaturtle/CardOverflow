@@ -225,7 +225,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     Assert.Equal(
         2,
         c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
-    let! card = CardRepository.Get c.Db cardId userId
+    let! card = CardRepository.Get c.Db userId cardId
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1

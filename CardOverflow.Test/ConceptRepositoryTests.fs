@@ -57,7 +57,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         ) |> CommentRepository.addAndSaveAsync c.Db
     let cardId = 1
         
-    let! card = CardRepository.Get c.Db cardId userId
+    let! card = CardRepository.Get c.Db userId cardId
         
     let front, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
     Assert.DoesNotContain("{{Front}}", front)
@@ -124,22 +124,22 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         }
     if cardIds.Length <> 1 then
         do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1 |> Result.getOk
-        let! card = CardRepository.Get c.Db 1 userId
+        let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(1, card.Relationships.Single().Users)
-        let! card = CardRepository.Get c.Db 2 userId
+        let! card = CardRepository.Get c.Db userId 2
         Assert.Equal(1, card.Relationships.Single().Users)
 
         do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
-        let! card = CardRepository.Get c.Db 1 userId
+        let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(0, card.Relationships.Count)
-        let! card = CardRepository.Get c.Db 2 userId
+        let! card = CardRepository.Get c.Db userId 2
         Assert.Equal(0, card.Relationships.Count)
 
         do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1 |> Result.getOk
         do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
-        let! card = CardRepository.Get c.Db 1 userId
+        let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(0, card.Relationships.Count)
-        let! card = CardRepository.Get c.Db 2 userId
+        let! card = CardRepository.Get c.Db userId 2
         Assert.Equal(0, card.Relationships.Count)
     
     let userId = 2 // acquires the card
@@ -148,7 +148,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     else
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
-    let! card = CardRepository.Get c.Db 1 userId
+    let! card = CardRepository.Get c.Db userId 1
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
@@ -158,7 +158,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     let! card = CardRepository.GetAcquired c.Db userId 1
     let card = card |> Result.getOk
     TagRepository.AddTo c.Db "a" card.AcquiredCardId
-    let! card = CardRepository.Get c.Db 1 userId
+    let! card = CardRepository.Get c.Db userId 1
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 2
@@ -180,27 +180,27 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             do! SanitizeRelationshipRepository.Add c.Db 1 creator |> Result.getOk // card creator also acquires the relationship; .Single() below refers this this
         
             do! SanitizeRelationshipRepository.Add c.Db userId acquirer |> Result.getOk
-            let! card = CardRepository.Get c.Db 1 userId
+            let! card = CardRepository.Get c.Db userId 1
             Assert.Equal(2, card.Relationships.Single().Users)
             Assert.True(card.Relationships.Single().IsAcquired)
-            let! card = CardRepository.Get c.Db 2 userId
+            let! card = CardRepository.Get c.Db userId 2
             Assert.Equal(2, card.Relationships.Single().Users)
             Assert.True(card.Relationships.Single().IsAcquired)
         
             do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
-            let! card = CardRepository.Get c.Db 1 userId
+            let! card = CardRepository.Get c.Db userId 1
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
-            let! card = CardRepository.Get c.Db 2 userId
+            let! card = CardRepository.Get c.Db userId 2
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
 
             do! SanitizeRelationshipRepository.Add c.Db userId acquirer |> Result.getOk
             do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
-            let! card = CardRepository.Get c.Db 1 userId
+            let! card = CardRepository.Get c.Db userId 1
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
-            let! card = CardRepository.Get c.Db 2 userId
+            let! card = CardRepository.Get c.Db userId 2
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             

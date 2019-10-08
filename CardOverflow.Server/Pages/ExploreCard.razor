@@ -90,7 +90,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Card = await DbExecutor.QueryAsync(db => CardRepository.Get(db, Id, User?.Id ?? 0));
+    Card = await DbExecutor.QueryAsync(db => CardRepository.Get(db, User?.Id ?? 0, Id));
     StateHasChanged();
   }
 

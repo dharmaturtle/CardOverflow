@@ -131,7 +131,7 @@ module CardRepository =
         db.AcquiredCard.Single(fun x -> x.Id = acquiredCardId)
         |> db.AcquiredCard.RemoveI
         db.SaveChangesAsyncI ()
-    let Get (db: CardOverflowDb) cardId userId =
+    let Get (db: CardOverflowDb) userId cardId =
         task {
             let! concept =
                 if userId = 0 then
