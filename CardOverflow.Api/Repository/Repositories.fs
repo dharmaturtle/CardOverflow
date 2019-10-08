@@ -127,6 +127,10 @@ module CardRepository =
         | x -> x.CardInstanceId <- cardInstanceId
         return! db.SaveChangesAsyncI ()
         }
+    let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId =
+        db.AcquiredCard.Single(fun x -> x.Id = acquiredCardId)
+        |> db.AcquiredCard.RemoveI
+        db.SaveChangesAsyncI ()
     let Get (db: CardOverflowDb) cardId userId =
         task {
             let! concept =

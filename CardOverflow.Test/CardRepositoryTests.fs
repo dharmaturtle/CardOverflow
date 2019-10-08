@@ -67,4 +67,12 @@ let ``AcquireCards works``() = task {
     Assert.Equal(3, c.Db.CardInstance.Count())
     Assert.Equal(4, c.Db.AcquiredCard.Count())
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
+
+    do! CardRepository.UnacquireCardAsync c.Db ac.AcquiredCardId
+    Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
+    Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
+    // misc
+    Assert.Equal(3, c.Db.CardInstance.Count())
+    Assert.Equal(3, c.Db.AcquiredCard.Count())
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
     }
