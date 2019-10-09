@@ -101,10 +101,10 @@ type SearchCommand = {
     Query: string
 }
 module SanitizeCardRepository =
-    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (view: CardInstanceView) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let card = db.Card.First(fun x -> x.Id = acquiredCard.CardId)
         if card.AuthorId = authorId
-        then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard
+        then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard view
         else Error "You aren't that card's author."
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Query

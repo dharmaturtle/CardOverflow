@@ -54,12 +54,11 @@
           <td>
             <div class="curate-tooltip-target">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="oi oi-eye@(card.LatestInstance.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+              <span class="oi oi-eye@(card.LatestMeta.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
                 <div>@card.Description</div>
-                @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.LatestInstance.FrontBackFrontSynthBackSynth.Item1"></iframe>
+                <ResizingIframe SrcUrl=@("/card/" + card.Id + "/front")></ResizingIframe>
               </div>
             </div>
           </td>
@@ -68,7 +67,7 @@
           </td>
           <td>
             <a href="javascript:void(0);" @onclick=@(() => CardClick(card.Id))>
-              @MappingTools.stripHtmlTags(card.LatestInstance.FrontBackFrontSynthBackSynth.Item1)
+              @card.LatestMeta.StrippedFront
             </a>
           </td>
         </tr>
@@ -81,7 +80,7 @@
 }
 
 @code {
-  IList<CardOverflow.Pure.ExploreCard> cards;
+  IList<CardOverflow.Pure.ExploreCardSummary> cards;
   PagedListDetails details;
   [CascadingParameter]
   UserEntity User { get; set; }

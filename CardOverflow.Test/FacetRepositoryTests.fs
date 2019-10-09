@@ -52,7 +52,7 @@ let addBasicCustomCard x =
     add "Basic" x
 
 [<Fact>]
-let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``() =
+let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
@@ -155,6 +155,7 @@ Back
         |> Result.getOk
         |> fun x -> x.Back
     )
+    let! view = CardRepository.getView c.Db 1
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {
                 Name = "Front"
@@ -172,13 +173,7 @@ Back
                 Ordinal = 1uy
                 IsSticky = false }
             Value = "Back"}],
-        (CardRepository.GetAcquiredPages c.Db userId 1)
-            .GetAwaiter()
-            .GetResult()
-            .Results
-            .Single()
-            |> Result.getOk
-            |> fun x -> x.CardInstance.FieldValues
+        view.FieldValues
             |> Seq.sortByDescending (fun x -> x.Field.Name)
     )
     Assert.Equal<string seq>(
@@ -191,6 +186,7 @@ Back
             |> Result.getOk
             |> fun x -> x.Tags
     )
+    }
 
 [<Fact>]
 let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the fields``() : Task<unit> = task {
@@ -200,28 +196,24 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     addBasicCard c.Db userId tags
     let cardId = 1
     let newValue = Guid.NewGuid().ToString()
-    let! old = 
+    let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
+    let! old = CardRepository.getView c.Db cardId
     let updated = {
         old with
-            CardInstance = {
-                old.CardInstance with
-                    FieldValues =
-                        old.CardInstance.FieldValues.Select(fun x ->
-                            { x with Value = newValue}
-                        ).ToList()
-            }
+            FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
         }
     
-    do! CardRepository.UpdateFieldsToNewInstance c.Db updated
+    do! CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated
     
-    let! updated =
-        (CardRepository.GetAcquired c.Db userId cardId)
-            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
+    let! refreshed = CardRepository.getView c.Db cardId
     Assert.Equal<string seq>(
         [newValue; newValue],
-        updated.CardInstance.FieldValues.Select(fun x -> x.Value))
+        refreshed.FieldValues.Select(fun x -> x.Value))
     Assert.Equal(
         2,
         c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
@@ -236,17 +228,17 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
         card.Tags)
     Assert.Equal<string seq>(
         [newValue; newValue],
-        card.LatestInstance.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
+        refreshed.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
     )
     let createds = c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
 
     let! revisions = CardRepository.Revisions c.Db userId cardId
     Assert.Equal(2, revisions.SortedMeta.Count())
-    let! instance = CardRepository.instance c.Db userId revisions.SortedMeta.[0].Id
+    let! instance = CardRepository.instance c.Db revisions.SortedMeta.[0].Id
     let revision, _, _, _ = instance.FrontBackFrontSynthBackSynth
     Assert.Contains(newValue, revision)
-    let! instance = CardRepository.instance c.Db userId revisions.SortedMeta.[1].Id
+    let! instance = CardRepository.instance c.Db revisions.SortedMeta.[1].Id
     let original, _, _, _ = instance.FrontBackFrontSynthBackSynth
     Assert.Contains("Front", original)
     }

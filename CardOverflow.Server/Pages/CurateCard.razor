@@ -15,11 +15,11 @@
 @if (Card == null) {
   <p><em>Loading...</em></p>
 } else {
-  <EditForm Model="@Card" OnValidSubmit="@UpdateCard">
+  <EditForm Model="@CardView" OnValidSubmit="@UpdateCard">
     <div class="form-group">
       <div class="row">
         <div class="col-sm">
-          @foreach (var field in Card.CardInstance.FieldValues) {
+          @foreach (var field in CardView.FieldValues) {
             <label><b>@field.Field.Name: </b></label>
             <EjsRichTextEditor @bind-Value=@field.Value>
               <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
@@ -27,9 +27,8 @@
           }
         </div>
         <div class="col-sm">
-          <a href="CardTemplateInstance/@Card.CardTemplateInstance.Id">Card Template Instance</a>
-          @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-          <iframe sandbox allow-scripts class="curate-iframe" srcdoc="@Card.CardInstance.FrontBackFrontSynthBackSynth.Item2"></iframe>
+          <a href="CardTemplateInstance/@CardView.TemplateInstance.Id">Card Template Instance</a>
+          <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back")></ResizingIframe>
           Tags:
           <ul>
             @foreach (var tag in Card.Tags) {
@@ -56,6 +55,7 @@
 @code {
   private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   AcquiredCard Card;
+  CardInstanceView CardView;
   [Parameter]
   public int Id { get; set; }
   [CascadingParameter]
@@ -63,10 +63,11 @@
 
   protected override async Task OnInitializedAsync() {
     Card = (await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
+    CardView = await CardRepository.instance(Service, Card.CardInstanceMeta.Id);
   }
 
   async Task UpdateCard() {
-    var result = SanitizeCardRepository.Update(Service, User.Id, Card);
+    var result = SanitizeCardRepository.Update(Service, User.Id, Card, CardView);
     if (result.IsOk) {
       await result.ResultValue;
       // lowToMedTODO display message that save worked

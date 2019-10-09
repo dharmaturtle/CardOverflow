@@ -15,16 +15,16 @@
   <p><em>Loading...</em></p>
 } else {
   <div>
-    Gotten by <span class="badge badge-success">@Card.Users</span>
+    Gotten by <span class="badge badge-success">@Card.Summary.Users</span>
     @if (User == null) {
       <p>Log in to Get</p>
     } else {
-      @if (Card.LatestInstance.IsAcquired) {
+      @if (Card.LatestMeta.IsAcquired) {
         <button class="btn btn-secondary" disabled>
           Gotten
         </button>
       } else {
-        <button class="btn btn-primary" @onclick=@(() => Acquire(Card.LatestInstance.Id))>
+        <button class="btn btn-primary" @onclick=@(() => Acquire(Card.LatestMeta.Id))>
           Get
         </button>
       }
@@ -32,7 +32,7 @@
     Description: @Card.Description
   </div>
   <div>
-    <ResizingIframe SrcUrl=@("/card/rawback/" + @Id)></ResizingIframe>
+    <ResizingIframe SrcUrl=@("/card/" + @Id + "/back/")></ResizingIframe>
   </div>
   <div class="text-right">
     By @Card.Author
@@ -45,7 +45,7 @@
     <ul class="d-flex flex-wrap list-unstyled">
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.LatestInstance?.IsAcquired ?? true)>
+          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.LatestMeta?.IsAcquired ?? true)>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -61,7 +61,7 @@
             </button>
           </li>
         }
-        @if (Card.LatestInstance.IsAcquired) {
+        @if (Card.LatestMeta.IsAcquired) {
           <TagAdder CardId=@Card.Id />
         }
       </ul>
@@ -96,8 +96,8 @@
 
   async Task Acquire(int cardId) {
     await CardRepository.AcquireCardAsync(Service, User.Id, cardId);
-    Card.LatestInstance.IsAcquired = true;
-    Card.Users++;
+    Card.LatestMeta.IsAcquired = true;
+    Card.Summary.Users++;
     StateHasChanged();
   }
 

@@ -165,18 +165,11 @@ type CardTemplate with
         MaintainerId = entity.AuthorId
         LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load }
 
-type CardInstance with
-    static member load userId (entity: CardInstanceEntity) = {
-        Id = entity.Id
-        Created = entity.Created
-        Modified = entity.Modified |> Option.ofNullable
-        IsDmca = entity.IsDmca
+type CardInstanceView with
+    static member load (entity: CardInstanceEntity) = {
         FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
-        TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance
-        IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId) }
+        TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
     member this.CopyTo (entity: CardInstanceEntity) =
-        entity.Created <- this.Created
-        entity.Modified <- this.Modified |> Option.toNullable
         entity.FieldValues <- FieldAndValue.join this.FieldValues 
         use hasher = SHA256.Create()
         entity.AcquireHash <- CardInstanceEntity.acquireHash entity this.TemplateInstance.AcquireHash hasher
@@ -193,22 +186,24 @@ type CardInstance with
         e
 
 type CardInstanceMeta with
-    static member load userId (entity: CardInstanceEntity) = {
-        Id = entity.Id
-        Created = entity.Created
-        Modified = entity.Modified |> Option.ofNullable
-        IsDmca = entity.IsDmca
-        IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId) }
+    static member load userId (entity: CardInstanceEntity) =
+        let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
+        {   Id = entity.Id
+            Created = entity.Created
+            Modified = entity.Modified |> Option.ofNullable
+            IsDmca = entity.IsDmca
+            IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
+            StrippedFront = MappingTools.stripHtmlTags front
+            StrippedBack = MappingTools.stripHtmlTags back
+        }
+        // temp copyTo
+        //entity.Created <- this.Created
+        //entity.Modified <- this.Modified |> Option.toNullable
 
 type QuizCard with
-    static member load userId (entity: AcquiredCardEntity) =
-        let instance = entity.CardInstance |> CardInstance.load userId
+    static member load (entity: AcquiredCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
-            CardHtml.generate
-                (instance.FieldValues |> Seq.map (fun x -> x.Field.Name, x.Value))
-                (entity.CardInstance.CardTemplateInstance.QuestionTemplate)
-                (entity.CardInstance.CardTemplateInstance.AnswerTemplate)
-                (entity.CardInstance.CardTemplateInstance.Css)
+            entity.CardInstance |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         result {
             let! cardState = CardState.create entity.CardState
             return {
@@ -283,78 +278,16 @@ type AcquiredCard with
             {   CardId = entity.CardInstance.CardId
                 AcquiredCardId = entity.Id
                 UserId = entity.UserId
-                CardTemplateInstance = entity.CardInstance.CardTemplateInstance |> CardTemplateInstance.load
                 CardState = cardState
                 IsLapsed = entity.IsLapsed
                 EaseFactorInPermille = entity.EaseFactorInPermille
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardOptionId = entity.CardOptionId
-                CardInstance = CardInstance.load entity.UserId entity.CardInstance
+                CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.CardInstance
                 Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
-                //Id = concept.Id
-                //Name = concept.Name
-                //MaintainerId = concept.MaintainerId
-                //AcquiredCards =
-                //    concept.Cards.Select(fun x -> x.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) ).Select(fun fi -> // lowTODO, optimization, there should only be one cardInstance loaded from the db
-                //        let cards =
-                //            fi.Cards.GroupBy(fun x -> x.CardTemplateId).Select(fun x ->
-                //                let cardTemplate = x.First().CardTemplate
-                //                let card =
-                //                    x
-                //                        .Single(fun x -> x.CardTemplateId = cardTemplate.Id)
-                //                        .AcquiredCards
-                //                        .SingleOrDefault(fun x -> x.UserId = userId)
-                //                let front, back, _, _ =
-                //                    CardHtml.generate
-                //                        (fi.FieldValues.Select(fun x -> (x.Field.Name, x.Value)))
-                //                        cardTemplate.QuestionTemplate
-                //                        cardTemplate.AnswerTemplate
-                //                        cardTemplate.CardTemplateInstance.Css
-                //                if isNull card
-                //                then None
-                //                else
-                //                    {   Front = front
-                //                        Back = back
-                //                        CardTemplateName = cardTemplate.Name
-                //                        Tags = card.PrivateTag_AcquiredCards.Select(fun x -> x.PrivateTag.Name)
-                //                    } |> Some
-                //            )
-                //        {   CardInstanceId = fi.Id
-                //            CardTemplateInstanceId = fi.FieldValues.First().Field.CardTemplateInstanceId
-                //            MaintainerId = fi.Card.MaintainerId
-                //            Description = fi.Card.Description
-                //            CardId = fi.CardId
-                //            CardCreated = fi.Created
-                //            CardModified = Option.ofNullable fi.Modified
-                //            CardFields =
-                //                fi.FieldValues
-                //                    .OrderBy(fun x -> x.Field.Ordinal)
-                //                    .Select(fun x -> 
-                //                        {   Field = Field.load x.Field
-                //                            Value = x.Value
-                //                        }).ToList()
-                //            Cards = cards |> Seq.choose id
-                //        }
-                //    ).ToList()
             }
         }
-
-//type Card with
-//    static member load userId (entity: CardEntity) =
-//        let front, back, _, _ =
-//            CardHtml.generate
-//                (entity.CardInstance.FieldValues |> Seq.map (fun x -> (x.Field.Name, x.Value)))
-//                entity.CardTemplate.QuestionTemplate
-//                entity.CardTemplate.AnswerTemplate
-//                entity.CardTemplate.CardTemplateInstance.Css
-//        {   Id = entity.Id
-//            CardTemplateName = entity.CardTemplate.Name
-//            ClozeIndex = entity.ClozeIndex |> Option.ofNullable
-//            Front = front
-//            Back = back
-//            IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
-//        }
 
 type Comment with
     static member load (entity: CommentCardEntity) = {
@@ -365,29 +298,24 @@ type Comment with
         IsDmca = entity.IsDmca
     }
 
-//type Card with
-//    static member load userId (entity: CardEntity) = {
-//        Id = entity.Id
-//        Maintainer = entity.Author.DisplayName
-//        MaintainerId = entity.AuthorId
-//        Description = entity.Description
-//        LatestInstance = entity.CardInstances.OrderByDescending(fun x -> x.Created).First() |> CardInstance.load userId
-//        Comments = entity.CommentCards |> Seq.map Comment.load
-//    }
-
-type ExploreCard with
+type ExploreCardSummary with
     static member load userId (entity: CardEntity) = {
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
         Users =
-            let actual = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum()
+            let actual = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum() // medTODO eventually remove
             if actual = entity.Users then
                 actual
             else
                 failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
         Description = entity.Description
-        LatestInstance = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstance.load userId
+        LatestMeta = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstanceMeta.load userId
+    }
+
+type ExploreCard with
+    static member load userId (entity: CardEntity) = {
+        Summary = ExploreCardSummary.load userId entity
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
         Tags =
             entity.CardInstances

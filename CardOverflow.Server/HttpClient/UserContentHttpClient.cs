@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CardOverflow.Pure;
 
 namespace CardOverflow.Server {
   public class UserContentHttpClient {
@@ -13,8 +14,9 @@ namespace CardOverflow.Server {
       _client = httpClient;
     }
 
-    public Task<string> GetFront(int cardId) =>
-      _client.GetStringAsync("/card/rawfront/" + cardId);
+    public Task<string> GetStrippedFront(int cardId) =>
+      _client.GetStringAsync("/card/" + cardId + "/front/")
+        .ContinueWith(x => x.Result.Apply(MappingTools.stripHtmlTags));
 
   }
 }

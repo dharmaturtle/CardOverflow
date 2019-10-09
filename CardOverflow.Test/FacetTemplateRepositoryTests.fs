@@ -70,9 +70,8 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.CardId = 1))
     let createds = c.Db.CardTemplateInstance.Where(fun x -> x.CardTemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
-    let front, _, _, _ =
-        (CardRepository.Get c.Db userId 1).GetAwaiter().GetResult()
-            .LatestInstance.FrontBackFrontSynthBackSynth
+    let! x = CardRepository.getView c.Db 1
+    let front, _, _, _ = x.FrontBackFrontSynthBackSynth
     Assert.Equal(
         """<!DOCTYPE html>
     <head>

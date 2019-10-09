@@ -74,18 +74,28 @@ module HistoryRepository =
         db.SaveChangesAsyncI ()
 
 module CardRepository =
-    let instance (db: CardOverflowDb) userId instanceId = task {
+    let instance (db: CardOverflowDb) instanceId = task {
         let! r =
             db.CardInstance
                 .Include(fun x -> x.CardTemplateInstance)
                 .SingleAsync(fun x -> x.Id = instanceId)
-        return CardInstance.load userId r
+        return CardInstanceView.load r
+    }
+    let getView (db: CardOverflowDb) cardId = task {
+        let! r =
+            db.CardInstance
+                .Include(fun x -> x.CardTemplateInstance)
+                .Where(fun x -> x.CardId = cardId)
+                .OrderByDescending(fun x -> x.Created) // medTODO how can we also sort by modified? `|??` and `if x.Modified = Nullable()` don't translate
+                .FirstAsync()
+        return CardInstanceView.load r
     }
     let Revisions (db: CardOverflowDb) userId cardId = task {
         let! r =
             db.Card
                 .Include(fun x -> x.Author)
-                .Include(fun x -> x.CardInstances)
+                .Include(fun x -> x.CardInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                 .SingleAsync(fun x -> x.Id = cardId)
         return CardRevision.load userId r
     }
@@ -103,13 +113,13 @@ module CardRepository =
                     .Take(3) // highTODO fix
                     .ToListAsync()
             return
-                cards |> Seq.map (QuizCard.load userId)
+                cards |> Seq.map QuizCard.load
         }
     let GetAllCards (db: CardOverflowDb) userId =
         (getCompleteCards db)
             .Where(fun x -> x.UserId = userId)
             .AsEnumerable()
-        |> Seq.map (QuizCard.load userId)
+        |> Seq.map QuizCard.load
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
         let! defaultCardOption =
             db.CardOption
@@ -208,39 +218,23 @@ module CardRepository =
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
+                        .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
                     .OrderByDescending(fun x -> x.Users)
                     .ToPagedListAsync(pageNumber, 15)
             return {
-                Results = r |> Seq.map (ExploreCard.load userId)
+                Results = r |> Seq.map (ExploreCardSummary.load userId)
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount
                 }
             }
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) =
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (view: CardInstanceView) =
         task {
             let! e = db.AcquiredCard.FirstAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
-            e.CardInstance <- acquiredCard.CardInstance.CopyFieldsToNewInstance acquiredCard.CardId acquiredCard.CardTemplateInstance.Id
+            e.CardInstance <- view.CopyFieldsToNewInstance acquiredCard.CardId view.TemplateInstance.Id
             return! db.SaveChangesAsyncI()
         }
-
-    // member this.SaveCards(cards: ResizeArray<CardEntity>) =
-    //                 this.GetCards().Merge cards
-    //             (fun (x, y) -> x.Id = y.Id)
-    //             id
-    //             (db.Remove >> ignore)
-    //             (db.Add >> ignore)
-    //             (fun d s -> // todo make copyto
-    //                 d.Title <- s.Title
-    //                 d.Description <- s.Description
-    //                 d.Fields <- s.Fields
-    //                 d.CardTemplate <- s.CardTemplate
-    //                 db.Update d |> ignore)
-    //     )
 
 module CardOptionsRepository =
     let defaultCardOptions =

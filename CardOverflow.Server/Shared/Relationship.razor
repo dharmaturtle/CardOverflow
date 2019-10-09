@@ -19,13 +19,12 @@
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
           <div class="curate-tooltip-content">
-            @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-            <iframe sandbox allow-scripts class="curate-iframe-tooltip" src="/card/rawfront/@relationship.CardId"></iframe>
+            <ResizingIframe SrcUrl=@("/card/" + @relationship.CardId + "/front/")></ResizingIframe>
           </div>
         </span>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
-      <a href="/card/@relationship.CardId">@MappingTools.stripHtmlTags(htmlByCardId[relationship.CardId])</a>
+      <a href="/card/@relationship.CardId">@htmlByCardId[relationship.CardId]</a>
     </li>
   }
 </ul>
@@ -39,18 +38,17 @@
             <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
             <span class="badge badge-success">@relationship.Users</span>
             <div class="curate-tooltip-content">
-              @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-              <iframe sandbox allow-scripts class="curate-iframe-tooltip" src="/card/rawfront/@relationship.CardId"></iframe>
+              <ResizingIframe SrcUrl=@("/card/" + @relationship.CardId + "/front/")></ResizingIframe>
             </div>
           </span>
           @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
         </button>
-        <a href="/card/@relationship.CardId">@MappingTools.stripHtmlTags(htmlByCardId[relationship.CardId])</a>
+        <a href="/card/@relationship.CardId">@htmlByCardId[relationship.CardId]</a>
       </li>
     }
   </ul>
 }
-@if (Card.LatestInstance.IsAcquired) {
+@if (Card.LatestMeta.IsAcquired) {
   <EditForm Model="@Command" OnValidSubmit=@Add>
     <div class="form-row">
       <div class="form-group col-md-4">
@@ -84,7 +82,7 @@
     Command = new AddRelationshipCommand { SourceId = Card.Id };
     htmlByCardId = Card.Relationships.ToDictionary(x => x.CardId, x => ""); // medTODO after you upgrade to 3.0, is this still needed?
     htmlByCardId = (await Card.Relationships
-      .Select(async x => (x.CardId, await UserContentHttpClient.GetFront(x.CardId)))
+      .Select(async x => (x.CardId, await UserContentHttpClient.GetStrippedFront(x.CardId)))
       .Apply(Task.WhenAll))
       .ToDictionary(x => x.CardId, x => x.Item2);
     StateHasChanged();

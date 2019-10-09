@@ -1,4 +1,4 @@
-﻿@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
@@ -10,6 +10,7 @@
 @inherits OwningComponentBase<CardOverflowDb>
 @inject IJSRuntime Js
 
+@* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
 <iframe sandbox="allow-scripts allow-same-origin" src=@SrcUrl scrolling="no" @ref="iframe" @onload=@iframeloaded
         style="width: 1px; min-width: 100%; height:100px;"></iframe>
 

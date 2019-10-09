@@ -239,14 +239,9 @@ type PagedList<'T> = {
 }
 
 [<CLIMutable>]
-type CardInstance = {
-    Id: int
-    Created: DateTime
-    Modified: DateTime option
-    IsDmca: bool
+type CardInstanceView = {
     FieldValues: FieldAndValue ResizeArray
     TemplateInstance: CardTemplateInstance
-    IsAcquired: bool
 } with
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         CardHtml.generate
@@ -255,20 +250,22 @@ type CardInstance = {
             <| this.TemplateInstance.AnswerTemplate
             <| this.TemplateInstance.Css
 
+[<CLIMutable>]
 type CardInstanceMeta = {
     Id: int
     Created: DateTime
     Modified: DateTime option
     IsDmca: bool
     IsAcquired: bool
+    StrippedFront: string
+    StrippedBack: string
 }
 
 type AcquiredCard = {
     CardId: int
     AcquiredCardId: int
     UserId: int
-    CardInstance: CardInstance
-    CardTemplateInstance: CardTemplateInstance
+    CardInstanceMeta: CardInstanceMeta
     CardState: CardState
     IsLapsed: bool
     EaseFactorInPermille: int16
@@ -306,17 +303,28 @@ type ViewRelationship = {
         Relationship.split this.Name |> snd
 
 [<CLIMutable>]
-type ExploreCard = {
+type ExploreCardSummary = {
     Id: int
     Users: int
     Author: string
     AuthorId: int
     Description: string
-    LatestInstance: CardInstance
+    LatestMeta: CardInstanceMeta
+}
+
+[<CLIMutable>]
+type ExploreCard = {
+    Summary: ExploreCardSummary
     Tags: ViewTag list
     Relationships: ViewRelationship ResizeArray
     Comments: Comment list
-}
+} with
+    member this.Id = this.Summary.Id
+    //don't add users - the UI needs it to be mutable
+    member this.Author = this.Summary.Author
+    member this.AuthorId = this.Summary.AuthorId
+    member this.Description = this.Summary.Description
+    member this.LatestMeta = this.Summary.LatestMeta
 
 type CardRevision = {
     Id: int

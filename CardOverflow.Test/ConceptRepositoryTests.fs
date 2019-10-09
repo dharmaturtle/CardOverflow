@@ -58,11 +58,12 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let cardId = 1
         
     let! card = CardRepository.Get c.Db userId cardId
+    let! view = CardRepository.getView c.Db cardId
         
-    let front, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
+    let front, _, _, _ = view.FrontBackFrontSynthBackSynth
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| card.Comments
-    Assert.True card.LatestInstance.IsAcquired
+    Assert.True card.LatestMeta.IsAcquired
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
@@ -89,8 +90,8 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
             |> ignore
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
-    let! cards = CardRepository.SearchAsync c.Db userId 1 ""
-    Assert.Equal(1, cards.Results.Single().Users)
+    let! card = CardRepository.Get c.Db userId 1
+    Assert.Equal(1, card.Summary.Users)
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
@@ -98,7 +99,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
          {  Name = "b"
             Count = 1
             IsAcquired = true }],
-        cards.Results.Single().Tags
+        card.Tags
     )}
 
 let testGetAcquired (cardIds: int list) addCards name = task {
@@ -211,27 +212,38 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         do! testRelationships commands.[2]
         do! testRelationships commands.[3]
     let userId = 3 // never acquires the card
-    let! cards = CardRepository.SearchAsync c.Db userId 1 ""
-    Assert.Equal(
-        cardIds.Count(),
-        cards.Results.Count()
-    )
     if cardIds.Length = 1 then
+        let! cards = CardRepository.SearchAsync c.Db userId 1 ""
+        Assert.Equal(
+            cardIds.Count(),
+            cards.Results.Count()
+        )
+        let! card = CardRepository.Get c.Db userId 1
         Assert.Equal<ViewTag seq>(
             [{  Name = "a"
                 Count = 2
                 IsAcquired = false }],
-            cards.Results.SelectMany(fun x -> x.Tags.AsEnumerable())
+            card.Tags
         )
     else
+        let! cards = CardRepository.SearchAsync c.Db userId 1 ""
+        Assert.Equal(
+            cardIds.Count(),
+            cards.Results.Count()
+        )
+        let! card1 = CardRepository.Get c.Db userId 1
         Assert.Equal<ViewTag seq>(
             [{  Name = "a"
                 Count = 2
-                IsAcquired = false }
-             {  Name = "a"
+                IsAcquired = false }],
+            card1.Tags
+        )
+        let! card2 = CardRepository.Get c.Db userId 2
+        Assert.Equal<ViewTag seq>(
+            [{  Name = "a"
                 Count = 1
                 IsAcquired = false }],
-            cards.Results.SelectMany(fun x -> x.Tags.AsEnumerable())
+            card2.Tags
         )
     }
     

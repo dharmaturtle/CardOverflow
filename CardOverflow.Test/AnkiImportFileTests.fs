@@ -134,13 +134,14 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             .OrderBy(fun (a, _) -> a)
                 .ThenBy(fun (_, b) -> b)
     )
-    let card = (CardRepository.Get c.Db userId 1).GetAwaiter().GetResult()
-    let f, _, _, _ = card.LatestInstance.FrontBackFrontSynthBackSynth
+    let! view = CardRepository.getView c.Db 1
+    let f, _, _, _ = view.FrontBackFrontSynthBackSynth
     Assert.True(f.Contains """<div>&nbsp;<u>Drugs</u>&nbsp;that act on&nbsp;<b>microtubules</b>&nbsp;may be remembered with the mnemonic "<i><b>M</b>icrotubules&nbsp;<b>G</b>et&nbsp;<b>C</b>onstructed&nbsp;<b>V</b>ery&nbsp;<b>P</b>oorly</i>":</div><div><br /></div><div><b>M</b>:&nbsp;
         <span class="cloze-brackets-front">[</span>
         <span class="cloze-filler-front">...</span>
         <span class="cloze-brackets-front">]</span>
         <div><b>G</b>:&nbsp;Griseofulvin (antifungal)&nbsp;</div><div><b>C</b>:&nbsp;Colchicine (antigout)&nbsp;</div><div><b>V</b>:&nbsp;Vincristine/Vinblastine (anticancer)</div><div><b>P</b>:&nbsp;Palcitaxel (anticancer)&nbsp;</div><br /></div>""")
+    let! card = CardRepository.Get c.Db userId 1
     Assert.Equal(4, card.Relationships.Count)
     Assert.Equal<int seq>(
         [2; 3; 4; 5],

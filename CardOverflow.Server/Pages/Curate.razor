@@ -24,17 +24,16 @@
           <td>
             <div class="curate-tooltip-target">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <div class="oi oi-eye@(card.CardInstance.IsAcquired ? " text-success" : "")" aria-hidden="true"></div>
+              <div class="oi oi-eye@(card.CardInstanceMeta.IsAcquired ? " text-success" : "")" aria-hidden="true"></div>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
-                @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-                <iframe sandbox allow-scripts class="curate-iframe-tooltip" srcdoc="@card.CardInstance.FrontBackFrontSynthBackSynth.Item1"></iframe>
+                <ResizingIframe SrcUrl=@("/cardinstance/" + card.CardInstanceMeta.Id + "/front")></ResizingIframe>
               </div>
             </div>
           </td>
           <td>
             <a href="/Curate/Card/@card.CardId">
-              @MappingTools.stripHtmlTags(card.CardInstance.FrontBackFrontSynthBackSynth.Item1)
+              @card.CardInstanceMeta.StrippedFront
             </a>
           </td>
           <td>
