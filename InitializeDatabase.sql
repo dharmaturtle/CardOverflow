@@ -1,4 +1,4 @@
-USE [master]
+﻿USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -44,7 +44,7 @@ ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
 GO
 ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
 GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY OFF 
+ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
 GO
 ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
 GO
@@ -1234,6 +1234,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+
 -- =============================================
 -- Author:		Alex
 -- Create date: 11:40 10/8/2019
@@ -1263,36 +1264,31 @@ BEGIN
 		WHERE	dbo.CardInstance.Id = d.CardInstanceId
 	END
 
-	DECLARE	@cardId int
 	IF EXISTS (SELECT 1 FROM inserted)
 	BEGIN
-		SELECT	@cardId = CardId --medTODO does this break when we insert cards with different Ids?
-		FROM	dbo.CardInstance ci
-		INNER JOIN inserted i
-			ON	ci.Id = i.CardInstanceId
-
 		UPDATE	c
 		SET		Users =
-				   (SELECT	SUM(ci.Users)
-					FROM	dbo.CardInstance ci
-					WHERE	ci.CardId = @cardId)
+				   (SELECT	SUM(ci2.Users)
+					FROM	dbo.CardInstance ci2
+					WHERE	ci2.CardId = c.Id)
 		FROM	dbo.Card c
-		WHERE	c.Id = @cardId
+		INNER JOIN dbo.CardInstance ci
+			ON ci.CardId = c.Id
+		INNER JOIN inserted i
+			ON ci.Id = i.CardInstanceId
 	END
 	IF EXISTS (SELECT 1 FROM deleted)
 	BEGIN
-		SELECT	@cardId = CardId --medTODO does this break when we insert cards with different Ids?
-		FROM	dbo.CardInstance ci
-		INNER JOIN deleted d
-			ON	ci.Id = d.CardInstanceId
-
 		UPDATE	c
 		SET		Users =
-				   (SELECT	SUM(ci.Users)
-					FROM	dbo.CardInstance ci
-					WHERE	ci.CardId = @cardId)
+				   (SELECT	SUM(ci2.Users)
+					FROM	dbo.CardInstance ci2
+					WHERE	ci2.CardId = c.Id)
 		FROM	dbo.Card c
-		WHERE	c.Id = @cardId
+		INNER JOIN dbo.CardInstance ci
+			ON ci.CardId = c.Id
+		INNER JOIN deleted d
+			ON ci.Id = d.CardInstanceId
 	END
 END
 GO

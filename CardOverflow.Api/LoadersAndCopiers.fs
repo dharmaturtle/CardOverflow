@@ -385,7 +385,7 @@ type ExploreCard with
             if actual = entity.Users then
                 actual
             else
-                failwithf "Discrepancy between the triggered value and the actual value for CardId %i, %i is not the same as %i" entity.Id actual entity.Users
+                failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
         Description = entity.Description
         LatestInstance = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstance.load userId
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
