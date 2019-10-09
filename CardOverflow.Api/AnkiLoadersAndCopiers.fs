@@ -59,9 +59,9 @@ type AnkiCardTemplateInstance = {
             [User_CardTemplateInstanceEntity(
                 UserId = userId,
                 Tag_User_CardTemplateInstances =
-                    (this.DefaultTags.ToList()
-                    |> Seq.map (fun x -> Tag_User_CardTemplateInstanceEntity(UserId = userId, DefaultTagId = x))
-                    |> fun x -> x.ToList()),
+                    (this.DefaultTags
+                        .Select(fun x -> Tag_User_CardTemplateInstanceEntity(UserId = userId, DefaultTagId = x))
+                        .ToList()),
                 DefaultCardOption = defaultCardOption)].ToList()
         entity.CardTemplate <-
             CardTemplateEntity(

@@ -211,6 +211,7 @@ module CardRepository =
                         .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
+                    .OrderByDescending(fun x -> x.Users)
                     .ToPagedListAsync(pageNumber, 15)
             return {
                 Results = r |> Seq.map (ExploreCard.load userId)
