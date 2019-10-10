@@ -25,7 +25,7 @@ type SimpleAnkiDb = {
 }
 
 type AnkiCardTemplateInstance = {
-    MaintainerId: int
+    AuthorId: int
     Name: string
     Css: string
     Fields: Field seq
@@ -43,6 +43,7 @@ type AnkiCardTemplateInstance = {
     IsCloze: bool
 } with
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
+        entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
         entity.Created <- this.Created
@@ -53,6 +54,7 @@ type AnkiCardTemplateInstance = {
         entity.AnswerTemplate <- this.AnswerTemplate
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
+        entity.EditSummary <- "Imported from Anki"
     member this.CopyToNew userId defaultCardOption =
         let entity = CardTemplateInstanceEntity()
         entity.User_CardTemplateInstances <-
@@ -65,8 +67,7 @@ type AnkiCardTemplateInstance = {
                 DefaultCardOption = defaultCardOption)].ToList()
         entity.CardTemplate <-
             CardTemplateEntity(
-                AuthorId = this.MaintainerId,
-                Name = this.Name)
+                AuthorId = this.AuthorId)
         this.CopyTo entity
         use hasher = SHA256.Create() // lowTODO pull this out
         entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
@@ -77,7 +78,7 @@ type AnkiCardWrite = {
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
-    MaintainerId: int
+    AuthorId: int
 } with
     member this.CopyTo(entity: CardInstanceEntity, cardTemplateHash: byte[]) =
         entity.FieldValues <- this.FieldValues
@@ -86,12 +87,12 @@ type AnkiCardWrite = {
         entity.CardTemplateInstance <- this.CardTemplate
         use hasher = SHA256.Create()
         entity.AcquireHash <- CardInstanceEntity.acquireHash entity cardTemplateHash hasher
-    member this.CopyToNew (files: FileEntity seq) =
+    member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = CardInstanceEntity()
+        entity.EditSummary <- "Imported from Anki"
         entity.Card <-
             CardEntity(
-                AuthorId = this.MaintainerId,
-                Description = "Imported from Anki"
+                AuthorId = this.AuthorId
             )
         entity.File_CardInstances <-
             files.Select(fun x ->
@@ -270,7 +271,7 @@ module Anki =
                     if cardTemplates.Count() >= 2
                     then " - " + cardTemplate.Name
                     else ""
-                {   MaintainerId = userId
+                {   AuthorId = userId
                     Name = get.Required.Field "name" Decode.string + namePostfix
                     Css = get.Required.Field "css" Decode.string
                     Fields =
@@ -360,7 +361,7 @@ module Anki =
                               FieldValues = fields
                               Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                               Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
-                              MaintainerId = userId }
+                              AuthorId = userId }
                         defaultArg
                             <| getCard c
                             <| c.CopyToNew files

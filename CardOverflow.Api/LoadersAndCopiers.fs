@@ -120,6 +120,7 @@ type FieldAndValue with
 type CardTemplateInstance with
     static member load(entity: CardTemplateInstanceEntity) = {
         Id = entity.Id
+        Name = entity.Name
         CardTemplateId = entity.CardTemplateId
         Css = entity.Css
         Fields = Fields.fromString entity.Fields
@@ -131,8 +132,10 @@ type CardTemplateInstance with
         QuestionTemplate = entity.QuestionTemplate
         AnswerTemplate = entity.AnswerTemplate
         ShortQuestionTemplate = entity.ShortQuestionTemplate
-        ShortAnswerTemplate = entity.ShortAnswerTemplate }
+        ShortAnswerTemplate = entity.ShortAnswerTemplate
+        EditSummary = entity.EditSummary }
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
+        entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
         entity.Created <- this.Created
@@ -143,6 +146,7 @@ type CardTemplateInstance with
         entity.AnswerTemplate <- this.AnswerTemplate
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
+        entity.EditSummary <- this.EditSummary
         use hasher = SHA256.Create()
         entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
     member this.CopyToNewInstance cardTemplateId =
@@ -162,8 +166,7 @@ type AcquiredCardTemplateInstance with
 type CardTemplate with
     static member load (entity: CardTemplateEntity) = {
         Id = entity.Id
-        Name = entity.Name
-        MaintainerId = entity.AuthorId
+        AuthorId = entity.AuthorId
         LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load }
 
 type CardInstanceView with
@@ -259,14 +262,14 @@ type InitialCardInstance = {
                 CardTemplateInstanceId = cardTemplateInstanceId,
                 Card =
                     CardEntity(
-                        AuthorId = this.AuthorId,
-                        Description = this.Description
+                        AuthorId = this.AuthorId
                     ),
                 FieldValues = FieldAndValue.join this.FieldValues,
                 File_CardInstances = fileCardInstances,
                 AcquiredCards = [
                     AcquiredCard.InitialCopyTo this.AuthorId this.DefaultCardOptionId tags
-                ].ToList()
+                ].ToList(),
+                EditSummary = "Initial creation"
             )
         use hasher = SHA256.Create() // lowTODO pull this out
         e.AcquireHash <- CardInstanceEntity.acquireHash e this.CardTemplateHash hasher
@@ -310,7 +313,6 @@ type ExploreCardSummary with
                 actual
             else
                 failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
-        Description = entity.Description
         LatestMeta = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstanceMeta.load userId
     }
 
@@ -372,6 +374,5 @@ type CardRevision with
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
-        Description = e.Description
         SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.map (CardInstanceMeta.load userId) |> Seq.toList
     }

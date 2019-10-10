@@ -21,7 +21,7 @@
     <ul class="col-sm list-group">
       @foreach (var instance in Template.Instances.Where(x => SelectedInstance == x.Id)) { @* only ever going to be one selected, but whatever *@
         <li class="list-group-item">
-          <h2>@Template.Name</h2>
+          <h2>@instance.Name</h2>
           <EditForm Model=@instance OnValidSubmit=@Submit>
             <fieldset disabled=@(instance.Id != Latest.Id)>
               <table class="table-borderless">

@@ -28,7 +28,7 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     
     Assert.Equal(
         "Basic",
-        cardTemplate.Name)
+        cardTemplate.Instances.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
@@ -56,7 +56,7 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
         cardTemplate.LatestInstance.QuestionTemplate)
     Assert.Equal(
         newTemplateName,
-        cardTemplate.Name)
+        cardTemplate.LatestInstance.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
         cardTemplate.LatestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))

@@ -237,7 +237,6 @@ GO
 CREATE TABLE [dbo].[Card](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[AuthorId] [int] NOT NULL,
-	[Description] [nvarchar](100) NOT NULL,
 	[Users] [int] NOT NULL,
  CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
 (
@@ -260,6 +259,7 @@ CREATE TABLE [dbo].[CardInstance](
 	[FieldValues] [nvarchar](max) NOT NULL,
 	[CardTemplateInstanceId] [int] NOT NULL,
 	[Users] [int] NOT NULL,
+	[EditSummary] [nvarchar](200) NOT NULL,
  CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -309,7 +309,6 @@ GO
 CREATE TABLE [dbo].[CardTemplate](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[AuthorId] [int] NOT NULL,
-	[Name] [nvarchar](100) NOT NULL,
  CONSTRAINT [PK_CardTemplate] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -323,6 +322,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[CardTemplateInstance](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](100) NOT NULL,
 	[CardTemplateId] [int] NOT NULL,
 	[Css] [varchar](4000) NOT NULL,
 	[Created] [datetime2](7) NOT NULL,
@@ -335,12 +335,13 @@ CREATE TABLE [dbo].[CardTemplateInstance](
 	[AnswerTemplate] [nvarchar](4000) NOT NULL,
 	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
 	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
-	[Fields] [nvarchar](max) NOT NULL,
+	[Fields] [nvarchar](1000) NOT NULL,
+	[EditSummary] [nvarchar](200) NOT NULL,
  CONSTRAINT [PK_CardTemplateInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[CommentCard] ******/
 SET ANSI_NULLS ON
@@ -640,16 +641,16 @@ INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsIn
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplate] ON 
 
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (1, 2, N'Basic')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (2, 2, N'Basic (and reversed card) - Card 2')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (3, 2, N'Basic (optional reversed card) - Card 1')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (4, 2, N'Basic (optional reversed card) - Card 2')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (5, 2, N'Basic (type in the answer)')
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId], [Name]) VALUES (6, 2, N'Cloze')
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (1, 2)
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (2, 2)
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (3, 2)
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (4, 2)
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (5, 2)
+INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (6, 2)
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] ON 
 
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (1, 1, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary]) VALUES (1, N'Basic', 1, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -667,8 +668,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (2, 2, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki')
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary]) VALUES (2, N'Basic (and reversed card) - Card 2', 2, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -686,8 +687,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 
 <hr id=answer>
 
-{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (3, 3, N'.card {
+{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki')
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary]) VALUES (3, N'Basic (optional reversed card) - Card 1', 3, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -705,8 +706,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (4, 4, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki')
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary]) VALUES (4, N'Basic (optional reversed card) - Card 2', 4, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -724,8 +725,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 
 <hr id=answer>
 
-{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (5, 5, N'.card {
+{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki')
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary]) VALUES (5, N'Basic (type in the answer)', 5, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -744,8 +745,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False')
-INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields]) VALUES (6, 6, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki')
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [AcquireHash], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary]) VALUES (6, N'Cloze', 6, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -767,7 +768,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [CardTemplateId], [Css], [Created], [
 \setlength{\parindent}{0in}
 \begin{document}
 ', N'\end{document}', 0xE6F61D326D25521F8F1C730771FC881FFE731466CACAFB313BA79184D163578A, 0, N'{{cloze:Text}}', N'{{cloze:Text}}<br>
-{{Extra}}', N'', N'', N'TextArial20False0FalseExtraArial20False1False')
+{{Extra}}', N'', N'', N'TextArial20False0FalseExtraArial20False1False', N'Imported from Anki')
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 

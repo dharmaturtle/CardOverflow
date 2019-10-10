@@ -107,6 +107,7 @@ module Fields =
 
 type CardTemplateInstance = {
     Id: int
+    Name: string
     CardTemplateId: int
     Css: string
     Fields: Field list
@@ -119,6 +120,7 @@ type CardTemplateInstance = {
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
+    EditSummary: string
 }
 
 type AcquiredCardTemplateInstance = {
@@ -129,8 +131,7 @@ type AcquiredCardTemplateInstance = {
 
 type CardTemplate = {
     Id: int
-    MaintainerId: int
-    Name: string
+    AuthorId: int
     LatestInstance: CardTemplateInstance
 }
 
@@ -175,19 +176,6 @@ type FieldAndValue = {
     Value: string
 }
 
-//[<CLIMutable>]
-//type AcquiredCard = {
-//    CardInstanceId: int
-//    CardTemplateInstanceId: int
-//    MaintainerId: int
-//    Description: string
-//    CardId: int
-//    CardCreated: DateTime
-//    CardModified: DateTime option
-//    CardFields: FieldAndValue ResizeArray
-//    Cards: AcquiredDisplayCard seq
-//}
-
 module IntervalOrStepsIndex =
     //                 255            |             255             |            1439         | <- The value of this is 1, not 0, cause 0 days is 0 minutes
     //       |------------------------|-----------------------------|-------------------------|-------------------|
@@ -224,7 +212,7 @@ module IntervalOrStepsIndex =
 //    Id: int
 //    // medTODO 100 needs to be tied to the DB max somehow
 //    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
-//    MaintainerId: int
+//    AuthorId: int
 //    AcquiredCards: AcquiredCard ResizeArray
 //}
 
@@ -308,7 +296,6 @@ type ExploreCardSummary = {
     Users: int
     Author: string
     AuthorId: int
-    Description: string
     LatestMeta: CardInstanceMeta
 }
 
@@ -323,13 +310,11 @@ type ExploreCard = {
     //don't add users - the UI needs it to be mutable
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
-    member this.Description = this.Summary.Description
     member this.LatestMeta = this.Summary.LatestMeta
 
 type CardRevision = {
     Id: int
     Author: string
     AuthorId: int
-    Description: string
     SortedMeta: CardInstanceMeta list
 }

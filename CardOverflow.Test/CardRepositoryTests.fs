@@ -20,11 +20,11 @@ open CardOverflow.Pure
 let ``AcquireCards works``() = task {
     use c = new TestContainer()
     
-    let maintainerId = 3
+    let authorId = 3
     
     let c1 = 1
     let ci1_1 = 1
-    FacetRepositoryTests.addBasicCard c.Db maintainerId []
+    FacetRepositoryTests.addBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single().Users)
     Assert.Equal(1, c.Db.CardInstance.Single().Users)
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
@@ -32,7 +32,7 @@ let ``AcquireCards works``() = task {
     
     let c2 = 2
     let ci2_1 = 2
-    FacetRepositoryTests.addReversedBasicCard c.Db maintainerId []
+    FacetRepositoryTests.addReversedBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c2).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
     
@@ -48,7 +48,7 @@ let ``AcquireCards works``() = task {
     Assert.Equal(4, c.Db.AcquiredCard.Count())
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_1));
 
-    let! ac = CardRepository.GetAcquired c.Db maintainerId c1
+    let! ac = CardRepository.GetAcquired c.Db authorId c1
     let ac = Result.getOk ac
     let! v = CardRepository.getView c.Db c1
     let v = { v with FieldValues = [].ToList() }

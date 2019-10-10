@@ -50,6 +50,9 @@ module ViewField =
 [<CLIMutable>]
 type ViewCardTemplateInstance = {
     Id: int
+    [<Required>]
+    [<StringLength(100, MinimumLength = 3, ErrorMessage = "Name must be 3-100 characters long.")>]
+    Name: string
     CardTemplateId: int
     Css: string
     Fields: ViewField ResizeArray
@@ -62,11 +65,13 @@ type ViewCardTemplateInstance = {
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
+    EditSummary: string
 }
 
 module ViewCardTemplateInstance =
     let load (bznz: CardTemplateInstance) = {
         Id = bznz.Id
+        Name = bznz.Name
         CardTemplateId = bznz.CardTemplateId
         Css = bznz.Css
         Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
@@ -79,9 +84,11 @@ module ViewCardTemplateInstance =
         AnswerTemplate = bznz.AnswerTemplate
         ShortQuestionTemplate = bznz.ShortQuestionTemplate
         ShortAnswerTemplate = bznz.ShortAnswerTemplate
+        EditSummary = bznz.EditSummary
     }
     let copyTo (view: ViewCardTemplateInstance): CardTemplateInstance = {
         Id = view.Id
+        Name = view.Name
         CardTemplateId = view.CardTemplateId
         Css = view.Css
         Fields = view.Fields |> Seq.map ViewField.copyTo |> Seq.toList
@@ -94,19 +101,18 @@ module ViewCardTemplateInstance =
         AnswerTemplate = view.AnswerTemplate
         ShortQuestionTemplate = view.ShortQuestionTemplate
         ShortAnswerTemplate = view.ShortAnswerTemplate
+        EditSummary = view.EditSummary
     }
 
 [<CLIMutable>]
 type ViewCardTemplateWithAllInstances = {
     Id: int
-    MaintainerId: int
-    Name: string
+    AuthorId: int
     Instances: ViewCardTemplateInstance ResizeArray
 } with
     static member load (entity: CardTemplateEntity) = {
         Id = entity.Id
-        Name = entity.Name
-        MaintainerId = entity.AuthorId
+        AuthorId = entity.AuthorId
         Instances =
             entity.CardTemplateInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)

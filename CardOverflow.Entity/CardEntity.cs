@@ -17,16 +17,6 @@ namespace CardOverflow.Entity
 
         public int Id { get; set; }
         public int AuthorId { get; set; }
-        [Required]
-        [StringLength(100)]
-        public string Description {
-            get => _Description;
-            set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Description has a maximum length of 100. Attempted value: {value}");
-                _Description = value;
-            }
-        }
-        private string _Description;
         public int Users { get; set; }
 
         [ForeignKey("AuthorId")]

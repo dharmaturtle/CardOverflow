@@ -20,7 +20,7 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags =
         db.CardTemplateInstance
             .Include(fun x -> x.CardTemplate)
             .Include(fun x -> x.User_CardTemplateInstances)
-            .First(fun x -> x.CardTemplate.Name = templateName)
+            .First(fun x -> x.CardTemplate.CardTemplateInstances.Single().Name = templateName)
             |> AcquiredCardTemplateInstance.load
     TagRepository.Add db userId tags
     let tags = tags |> List.map (fun x -> (TagRepository.Search db x).Single().Id)

@@ -25,6 +25,16 @@ namespace CardOverflow.Entity
         public string FieldValues { get; set; }
         public int CardTemplateInstanceId { get; set; }
         public int Users { get; set; }
+        [Required]
+        [StringLength(200)]
+        public string EditSummary {
+            get => _EditSummary;
+            set {
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and EditSummary has a maximum length of 200. Attempted value: {value}");
+                _EditSummary = value;
+            }
+        }
+        private string _EditSummary;
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]

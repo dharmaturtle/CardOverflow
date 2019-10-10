@@ -14,6 +14,16 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name {
+            get => _Name;
+            set {
+                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Name has a maximum length of 100. Attempted value: {value}");
+                _Name = value;
+            }
+        }
+        private string _Name;
         public int CardTemplateId { get; set; }
         [Required]
         [StringLength(4000)]
@@ -92,7 +102,25 @@ namespace CardOverflow.Entity
         }
         private string _ShortAnswerTemplate;
         [Required]
-        public string Fields { get; set; }
+        [StringLength(1000)]
+        public string Fields {
+            get => _Fields;
+            set {
+                if (value.Length > 1000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Fields has a maximum length of 1000. Attempted value: {value}");
+                _Fields = value;
+            }
+        }
+        private string _Fields;
+        [Required]
+        [StringLength(200)]
+        public string EditSummary {
+            get => _EditSummary;
+            set {
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and EditSummary has a maximum length of 200. Attempted value: {value}");
+                _EditSummary = value;
+            }
+        }
+        private string _EditSummary;
 
         [ForeignKey("CardTemplateId")]
         [InverseProperty("CardTemplateInstances")]
