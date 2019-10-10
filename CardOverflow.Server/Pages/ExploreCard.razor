@@ -9,6 +9,7 @@
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
 @inject DbExecutor DbExecutor
+@inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
 @if (Card == null) {
@@ -101,20 +102,22 @@
   }
 
   void AcquireTag(string name) {
-    if (SanitizeTagRepository.AddTo(Service, new TagText { Text = name }, User.Id, Card.Id).IsOk) {
-      Card.Tags.Single(x => x.Name == name).IsAcquired = true;
+    var x = SanitizeTagRepository.AddTo(Service, new TagText { Text = name }, User.Id, Card.Id);
+    if (x.IsOk) {
+      Card.Tags.Single(t => t.Name == name).IsAcquired = true;
       StateHasChanged();
     } else {
-      // medTODO show error
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 
   void DeleteTag(string tag) {
-    if (SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id).IsOk) {
-      Card.Tags.Single(x => x.Name == tag).IsAcquired = false;
+    var x = SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id);
+    if (x.IsOk) {
+      Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
       StateHasChanged();
     } else {
-      // medTODO show error
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 

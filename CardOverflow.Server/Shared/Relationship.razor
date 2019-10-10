@@ -8,6 +8,7 @@
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
 @inherits OwningComponentBase<CardOverflowDb>
+@inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient;
 
 <h3>Relationships</h3>
@@ -80,7 +81,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     Command = new AddRelationshipCommand { SourceId = Card.Id };
-    htmlByCardId = Card.Relationships.ToDictionary(x => x.CardId, x => ""); // medTODO after you upgrade to 3.0, is this still needed?
+    htmlByCardId = Card.Relationships.ToDictionary(x => x.CardId, x => "");
     htmlByCardId = (await Card.Relationships
       .Select(async x => (x.CardId, await UserContentHttpClient.GetStrippedFront(x.CardId)))
       .Apply(Task.WhenAll))
@@ -95,7 +96,7 @@
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
       Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, 1)).ToList();
     } else {
-      // medTODO show error
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 
@@ -107,7 +108,7 @@
       Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users++;
       StateHasChanged();
     } else {
-      // medTODO show error
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 

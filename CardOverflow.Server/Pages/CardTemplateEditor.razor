@@ -11,11 +11,12 @@
 @using CardOverflow.Server.Data
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager NavigationManager
+@inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
 <h1>Card Template</h1>
 @if (Template == null) {
-  <p><em>Loading...</em></p>
+  <p><em>@LoadingMessage</em></p>
 } else {
   <di class="row">
     <ul class="col-sm list-group">
@@ -102,6 +103,7 @@
   public int TemplateId { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
+  string LoadingMessage = "Loading...";
   ViewCardTemplateWithAllInstances Template;
   ViewCardTemplateInstance Latest;
   int SelectedInstance;
@@ -121,7 +123,8 @@
         ? possibleId
         : Latest.Id;
     } else {
-      //x.ErrorValue; // medTODO show error
+      LoadingMessage = x.ErrorValue;
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 
@@ -132,8 +135,9 @@
     var x = SanitizeCardTemplate.Update(Service, User.Id, Latest);
     if (x.IsOk) {
       await x.ResultValue;
+      ToastService.ShowSuccess("Saved!");
     } else {
-      // medTODO show error
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 

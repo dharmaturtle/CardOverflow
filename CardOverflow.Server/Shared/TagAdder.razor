@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
 @if (User != null) {
@@ -35,14 +36,14 @@
   TagText WriteTag = new TagText();
   List<string> Tags = new List<string>();
 
-  async Task SaveTag() {
+  void SaveTag() {
     var r = SanitizeTagRepository.AddTo(Service, WriteTag, User.Id, CardId);
     if (r.IsOk) {
       Tags.Add(WriteTag.Text);
       Tags = Tags.Distinct().ToList();
       WriteTag.Text = "";
     } else {
-      // medTODO show error
+      ToastService.ShowError(r.ErrorValue);
     }
   }
 

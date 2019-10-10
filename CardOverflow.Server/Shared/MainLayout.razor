@@ -7,6 +7,7 @@
 @inject CardOverflowDb Db
 
 <CascadingValue Value="@User">
+  <BlazoredToasts Timeout="10" />
   <div class="sidebar">
     <NavMenu />
   </div>
@@ -15,7 +16,7 @@
     @* Keep this div to make the Study page look ok. *@
     <div class="content px-4">
       @Body
-      <FeedbackPopup/>
+      <FeedbackPopup />
     </div>
   </div>
 </CascadingValue>

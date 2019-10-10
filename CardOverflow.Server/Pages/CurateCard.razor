@@ -9,11 +9,12 @@
 @using CardOverflow.Sanitation
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
+@inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 @*medTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
 @if (Card == null) {
-  <p><em>Loading...</em></p>
+  <p><em>@LoadingMessage</em></p>
 } else {
   <EditForm Model="@EditCard" OnValidSubmit="@UpdateCard">
     <div class="form-group">
@@ -60,19 +61,26 @@
   public int Id { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
+  string LoadingMessage = "Loading...";
 
   protected override async Task OnInitializedAsync() {
-    Card = (await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
-    EditCard = await SanitizeCardRepository.getEdit(Service, Card.CardInstanceMeta.Id);
+    var x = await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id);
+    if (x.IsOk) {
+      Card = x.ResultValue;
+      EditCard = await SanitizeCardRepository.getEdit(Service, Card.CardInstanceMeta.Id);
+    } else {
+      LoadingMessage = x.ErrorValue;
+      ToastService.ShowError(x.ErrorValue);
+    }
   }
 
   async Task UpdateCard() {
     var result = SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
     if (result.IsOk) {
       await result.ResultValue;
-      // lowToMedTODO display message that save worked
+      ToastService.ShowInfo("Saved!");
     } else {
-      // lowToMedTODO this returns an error; show it
+      ToastService.ShowError(result.ErrorValue);
     }
   }
 
