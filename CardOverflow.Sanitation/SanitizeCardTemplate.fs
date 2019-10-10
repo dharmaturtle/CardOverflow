@@ -1,0 +1,128 @@
+namespace CardOverflow.Sanitation
+
+open FSharp.Control.Tasks
+open System.Collections.Generic
+open Microsoft.EntityFrameworkCore
+open FsToolkit.ErrorHandling
+open FSharp.Text.RegexProvider
+open Microsoft.FSharp.Core.Operators.Checked
+open System.Linq
+open Helpers
+open System
+open CardOverflow.Debug
+open CardOverflow.Pure
+open CardOverflow.Pure.Core
+open CardOverflow.Api
+open CardOverflow.Entity
+open System.ComponentModel.DataAnnotations
+open LoadersAndCopiers
+
+[<CLIMutable>]
+type ViewField = {
+    [<Required>]
+    [<StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be less than 100 characters.")>] // lowTODO the 100 is completely made up; what's the real max?
+    Name: string
+    Font: string
+    FontSize: byte
+    IsRightToLeft: bool
+    Ordinal: int
+    IsSticky: bool
+}
+
+module ViewField =
+    let load (bznz: Field): ViewField = {
+        Name = bznz.Name
+        Font = bznz.Font
+        FontSize = bznz.FontSize
+        IsRightToLeft = bznz.IsRightToLeft
+        Ordinal = bznz.Ordinal |> int
+        IsSticky = bznz.IsSticky
+    }
+    let copyTo (view: ViewField): Field = {
+        Name = view.Name
+        Font = view.Font
+        FontSize = view.FontSize
+        IsRightToLeft = view.IsRightToLeft
+        Ordinal = view.Ordinal |> byte
+        IsSticky = view.IsSticky
+    }
+
+[<CLIMutable>]
+type ViewCardTemplateInstance = {
+    Id: int
+    CardTemplateId: int
+    Css: string
+    Fields: ViewField ResizeArray
+    Created: DateTime
+    Modified: DateTime option
+    LatexPre: string
+    LatexPost: string
+    AcquireHash: byte[]
+    QuestionTemplate: string
+    AnswerTemplate: string
+    ShortQuestionTemplate: string
+    ShortAnswerTemplate: string
+}
+
+module ViewCardTemplateInstance =
+    let load (bznz: CardTemplateInstance) = {
+        Id = bznz.Id
+        CardTemplateId = bznz.CardTemplateId
+        Css = bznz.Css
+        Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
+        Created = bznz.Created
+        Modified = bznz.Modified
+        LatexPre = bznz.LatexPre
+        LatexPost = bznz.LatexPost
+        AcquireHash = bznz.AcquireHash
+        QuestionTemplate = bznz.QuestionTemplate
+        AnswerTemplate = bznz.AnswerTemplate
+        ShortQuestionTemplate = bznz.ShortQuestionTemplate
+        ShortAnswerTemplate = bznz.ShortAnswerTemplate
+    }
+    let copyTo (view: ViewCardTemplateInstance): CardTemplateInstance = {
+        Id = view.Id
+        CardTemplateId = view.CardTemplateId
+        Css = view.Css
+        Fields = view.Fields |> Seq.map ViewField.copyTo |> Seq.toList
+        Created = view.Created
+        Modified = view.Modified
+        LatexPre = view.LatexPre
+        LatexPost = view.LatexPost
+        AcquireHash = view.AcquireHash
+        QuestionTemplate = view.QuestionTemplate
+        AnswerTemplate = view.AnswerTemplate
+        ShortQuestionTemplate = view.ShortQuestionTemplate
+        ShortAnswerTemplate = view.ShortAnswerTemplate
+    }
+
+[<CLIMutable>]
+type ViewCardTemplateWithAllInstances = {
+    Id: int
+    MaintainerId: int
+    Name: string
+    Instances: ViewCardTemplateInstance ResizeArray
+} with
+    static member load (entity: CardTemplateEntity) = {
+        Id = entity.Id
+        Name = entity.Name
+        MaintainerId = entity.AuthorId
+        Instances =
+            entity.CardTemplateInstances
+            |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
+            |> Seq.map (CardTemplateInstance.load >> ViewCardTemplateInstance.load)
+            |> toResizeArray }
+
+module SanitizeCardTemplate =
+    let AllInstances (db: CardOverflowDb) templateId = task {
+        let! template =
+            db.CardTemplate
+                .Include(fun x -> x.CardTemplateInstances)
+                .SingleAsync(fun x -> templateId = x.Id)
+        return template |> ViewCardTemplateWithAllInstances.load
+        }
+    let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
+        let cardTemplate = db.CardTemplate.Single(fun x -> x.Id = instance.CardTemplateId)
+        if cardTemplate.AuthorId = userId
+        then Ok <| CardTemplateRepository.UpdateFieldsToNewInstance db (ViewCardTemplateInstance.copyTo instance)
+        else Error <| "You aren't that this template's author."

@@ -129,13 +129,6 @@ module SanitizeLandingPage =
         ) |> db.PotentialSignups.AddI
         db.SaveChangesAsyncI()
 
-module SanitizeCardTemplate =
-    let Update (db: CardOverflowDb) userId (template: CardTemplate) =
-        let cardTemplate = db.CardTemplate.Single(fun x -> x.Id = template.Id)
-        if cardTemplate.AuthorId = userId
-        then Ok <| CardTemplateRepository.UpdateFieldsToNewInstance db template
-        else Error <| "You aren't that this template's author."
-
 [<CLIMutable>]
 type Feedback = {
     [<Required>]

@@ -120,6 +120,7 @@ type FieldAndValue with
 type CardTemplateInstance with
     static member load(entity: CardTemplateInstanceEntity) = {
         Id = entity.Id
+        CardTemplateId = entity.CardTemplateId
         Css = entity.Css
         Fields = Fields.fromString entity.Fields
         Created = entity.Created
@@ -159,7 +160,7 @@ type AcquiredCardTemplateInstance with
           CardTemplateInstance = CardTemplateInstance.load entity }
 
 type CardTemplate with
-    static member load(entity: CardTemplateEntity) = {
+    static member load (entity: CardTemplateEntity) = {
         Id = entity.Id
         Name = entity.Name
         MaintainerId = entity.AuthorId

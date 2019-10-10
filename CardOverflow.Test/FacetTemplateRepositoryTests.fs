@@ -11,9 +11,11 @@ open System
 open System.Linq
 open Xunit
 open CardOverflow.Pure
+open CardOverflow.Pure.Core
 open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
+open CardOverflow.Sanitation
 
 [<Fact>]
 let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task {
@@ -21,17 +23,18 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     let userId = 3
     use c = new TestContainer()
     
-    let! cardTemplate = CardTemplateRepository.GetFromInstance c.Db templateId
+    let! cardTemplate = SanitizeCardTemplate.AllInstances c.Db templateId
+    let latestInstance = cardTemplate.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
         cardTemplate.Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
-        cardTemplate.LatestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
+        latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
-        cardTemplate.LatestInstance.QuestionTemplate)
+        latestInstance.QuestionTemplate)
     Assert.Equal(1, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplateId = templateId))
 
     // Testing UpdateFieldsToNewInstance
@@ -39,14 +42,11 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     let newQuestionTemplate = "modified {{Front mutated}}"
     let newTemplateName = "new name"
     let updated =
-        { cardTemplate with
+        { latestInstance with
             Name = newTemplateName
-            LatestInstance = { 
-                cardTemplate.LatestInstance with
-                    QuestionTemplate = newQuestionTemplate
-                    Fields = cardTemplate.LatestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" })
-            }
-        }
+            QuestionTemplate = newQuestionTemplate
+            Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
+        } |> ViewCardTemplateInstance.copyTo
     
     do! CardTemplateRepository.UpdateFieldsToNewInstance c.Db updated
 

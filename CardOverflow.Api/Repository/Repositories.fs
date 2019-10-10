@@ -56,17 +56,17 @@ module CardTemplateRepository =
                     .FirstAsync(fun x -> x.Id = instanceId)
             return instance.CardTemplate |> CardTemplate.load
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (template: CardTemplate) =
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (instance: CardTemplateInstance) =
         task {
-            let! cardTemplate = db.CardTemplate.SingleAsync(fun x -> x.Id = template.Id)
-            cardTemplate.Name <- template.Name
-            let newTemplateInstance = template.LatestInstance.CopyToNewInstance template.Id
+            let! cardTemplate = db.CardTemplate.SingleAsync(fun x -> x.Id = instance.CardTemplateId)
+            //cardTemplate.Name <- instance.Name // medTODO
+            let newTemplateInstance = instance.CopyToNewInstance instance.CardTemplateId
             db.CardTemplateInstance.AddI newTemplateInstance
             use hasher = SHA256.Create ()
             db  
                 .AcquiredCard
                 .Include(fun x -> x.CardInstance)
-                .Where(fun x -> x.CardInstance.CardTemplateInstanceId = template.LatestInstance.Id)
+                .Where(fun x -> x.CardInstance.CardTemplateInstanceId = instance.Id)
                 |> Seq.iter(fun ac ->
                     db.Entry(ac.CardInstance).State <- EntityState.Added
                     ac.CardInstance.Id <- ac.CardInstance.GetHashCode()

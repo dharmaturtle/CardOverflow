@@ -1,4 +1,5 @@
-﻿@page "/CardTemplateInstance/{InstanceId:int}"
+﻿@page "/CardTemplate/{TemplateId:int}"
+@using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -8,76 +9,138 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavigationManager
 @inherits OwningComponentBase<CardOverflowDb>
 
 <h1>Card Template</h1>
-<hr />
 @if (Template == null) {
   <p><em>Loading...</em></p>
 } else {
-  <p>Name: @Template.Name</p>
-  <h2>Fields</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Ordinal</th>
-      </tr>
-    </thead>
-    <tbody>
-      @foreach (var field in Template.LatestInstance.Fields.OrderBy(x => x.Ordinal)) {
-        <tr>
-          <td>@field.Name</td>
-          <td>@field.Ordinal</td>
-        </tr>
+  <di class="row">
+    <ul class="col-sm list-group">
+      @foreach (var instance in Template.Instances.Where(x => SelectedInstance == x.Id)) { @* only ever going to be one selected, but whatever *@
+        <li class="list-group-item">
+          <h2>@Template.Name</h2>
+          <EditForm Model=@instance OnValidSubmit=@Submit>
+            <fieldset disabled=@(instance.Id != Latest.Id)>
+              <table class="table-borderless">
+                <thead>
+                  <tr>
+                    <th>Field Name</th>
+                    <th>Ordinal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach (var field in instance.Fields.OrderBy(x => x.Ordinal)) {
+                    <tr>
+                      <td>
+                        <InputText @bind-Value=@field.Name class="form-control" />
+                        <ValidationMessage For="@(() => field.Name)" />
+                      </td>
+                      <td>
+                        <InputNumber @bind-Value=@field.Ordinal class="form-control" />
+                        <ValidationMessage For="@(() => field.Ordinal)" />
+                      </td>
+                      <td>
+                        <button class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
+                          <span class="oi oi-trash"></span>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                  <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                      <button class="btn btn-success" @onclick=AddField>
+                        <span class="oi oi-plus"></span>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="row">
+                <div class="col-sm">
+                  <h5 class="text-center">Question Template</h5>
+                  <InputTextArea @bind-Value=@instance.QuestionTemplate class="form-control code" rows="25" />
+                  <ValidationMessage For="@(() => instance.QuestionTemplate)" />
+                </div>
+                <div class="col-sm">
+                  <h5 class="text-center">Answer Template</h5>
+                  <InputTextArea @bind-Value=@instance.AnswerTemplate class="form-control code" rows="25" />
+                  <ValidationMessage For="@(() => instance.AnswerTemplate)" />
+                </div>
+                <div class="col-sm">
+                  <h5 class="text-center">CSS</h5>
+                  <InputTextArea @bind-Value=@instance.Css class="form-control code" rows="25" />
+                  <ValidationMessage For="@(() => instance.Css)" />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Save</button>
+              <DataAnnotationsValidator />
+            </fieldset>
+          </EditForm>
+        </li>
       }
-    </tbody>
-  </table>
-  <EditForm Model="@Template" OnValidSubmit=@Submit>
-    <h2>Card Templates</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Question Template</th>
-          <th>Answer Template</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <InputTextArea @bind-Value=@Template.LatestInstance.QuestionTemplate class="form-control code" rows="25" />
-            <ValidationMessage For="@(() => Template.LatestInstance.QuestionTemplate)" />
-          </td>
-          <td>
-            <InputTextArea @bind-Value=@Template.LatestInstance.AnswerTemplate class="form-control code" rows="25" />
-            <ValidationMessage For="@(() => Template.LatestInstance.AnswerTemplate)" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <button type="submit" class="btn btn-primary">Save</button>
-    <DataAnnotationsValidator />
-  </EditForm>
+    </ul>
+    <div class="col-sm-1 list-group">
+      <h5>Revisions</h5>
+      @foreach (var instance in Template.Instances) {
+        <button class="list-group-item list-group-item-action @(SelectedInstance == instance.Id ? "active" : "")"
+                @onclick=@(() => Select(instance.Id))>
+          @instance.Created
+        </button>
+      }
+    </div>
+  </di>
 }
 
 @code {
   [Parameter]
-  public int InstanceId { get; set; }
-  CardTemplate Template;
+  public int TemplateId { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
+  ViewCardTemplateWithAllInstances Template;
+  ViewCardTemplateInstance Latest;
+  int SelectedInstance;
 
   protected override async Task OnInitializedAsync() {
-    Template = await CardTemplateRepository.GetFromInstance(Service, InstanceId);
+    Template = await SanitizeCardTemplate.AllInstances(Service, TemplateId);
+    Latest = Template.Instances.OrderByDescending(i => i.Modified ?? i.Created).First();
+    SelectedInstance =
+      NavigationManager.Uri
+        .Apply(NavigationManager.ToAbsoluteUri).Query
+        .Apply(QueryHelpers.ParseQuery)
+        .TryGetValue("InstanceId", out var token) &&
+      int.TryParse(token.First(), out int possibleId) &&
+      Template.Instances.Any(x => x.Id == possibleId)
+      ? possibleId
+      : Latest.Id;
   }
 
+  void Select(int id) =>
+    SelectedInstance = id;
+
   async Task Submit() {
-    var x = SanitizeCardTemplate.Update(Service, User.Id, Template);
+    var x = SanitizeCardTemplate.Update(Service, User.Id, Latest);
     if (x.IsOk) {
       await x.ResultValue;
     } else {
       // medTODO show error
     }
+  }
+
+  void DeleteField(int ordinal) {
+    Latest.Fields = Latest.Fields
+      .Where(x => x.Ordinal != ordinal).ToList();
+  }
+
+  void AddField() {
+    Latest.Fields.Add(new ViewField {
+      Ordinal = Latest.Fields.Max(x => x.Ordinal) + 1
+    });
   }
 
 }

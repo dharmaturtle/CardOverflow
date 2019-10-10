@@ -105,11 +105,11 @@ module Fields =
         MappingTools.splitByRecordSeparator
         >> List.map Field.fromString
 
-[<CLIMutable>]
 type CardTemplateInstance = {
     Id: int
+    CardTemplateId: int
     Css: string
-    Fields: Field seq
+    Fields: Field list
     Created: DateTime
     Modified: DateTime option
     LatexPre: string
