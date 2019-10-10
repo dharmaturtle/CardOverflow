@@ -135,3 +135,18 @@ module SanitizeCardTemplate =
         if cardTemplate.AuthorId = userId
         then Ok <| CardTemplateRepository.UpdateFieldsToNewInstance db template
         else Error <| "You aren't that this template's author."
+
+[<CLIMutable>]
+type Feedback = {
+    [<Required>]
+    [<StringLength(50, ErrorMessage = "Title must be less than 50 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Title: string
+    [<Required>]
+    [<StringLength(1000, ErrorMessage = "Description must be less than 1000 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Description: string
+    [<Required>]
+    Priority: string
+}
+module SanitizeFeedback =
+    let addAndSaveAsync (db: CardOverflowDb) userId feedback =
+        FeedbackRepository.addAndSaveAsync db userId feedback.Title feedback.Description (feedback.Priority |> byte |> Nullable)

@@ -16,6 +16,17 @@ open X.PagedList
 open System.Threading.Tasks
 open Microsoft.FSharp.Core
 
+module FeedbackRepository =
+    let addAndSaveAsync (db: CardOverflowDb) userId title description priority =
+        FeedbackEntity(
+            Title = title,
+            Description = description,
+            UserId = userId,
+            Created = DateTime.UtcNow,
+            Priority = priority
+        ) |> db.Feedback.AddI
+        db.SaveChangesAsyncI()
+
 module RelationshipRepository =
     let addAndSaveAsync (db: CardOverflowDb) (relationship: RelationshipEntity) =
         db.Relationship.AddI relationship

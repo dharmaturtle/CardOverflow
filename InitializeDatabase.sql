@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -394,6 +394,25 @@ CREATE TABLE [dbo].[Deck](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[Feedback] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Feedback](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Title] [nvarchar](50) NOT NULL,
+	[Description] [nvarchar](1000) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[Created] [smalldatetime] NOT NULL,
+	[ParentId] [int] NULL,
+	[Priority] [tinyint] NULL,
+ CONSTRAINT [PK_Feedback] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[File] ******/
 SET ANSI_NULLS ON
 GO
@@ -594,6 +613,21 @@ CREATE TABLE [dbo].[Vote_CommentCardTemplate](
  CONSTRAINT [PK_Vote_CommentCardTemplate] PRIMARY KEY CLUSTERED 
 (
 	[CommentCardTemplateId] ASC,
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Vote_Feedback] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Vote_Feedback](
+	[FeedbackId] [int] NOT NULL,
+	[UserId] [int] NOT NULL,
+ CONSTRAINT [PK_Vote_Feedback] PRIMARY KEY CLUSTERED 
+(
+	[FeedbackId] ASC,
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
@@ -898,6 +932,18 @@ CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Feedback_ParentId] ******/
+CREATE NONCLUSTERED INDEX [IX_Feedback_ParentId] ON [dbo].[Feedback]
+(
+	[ParentId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Feedback_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_Feedback_UserId] ON [dbo].[Feedback]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [IX_File_Sha256] ******/
@@ -1035,6 +1081,11 @@ CREATE FULLTEXT INDEX ON [dbo].[CardInstance](
 KEY INDEX [PK_CardInstance]ON ([CardInstanceFieldValueFullTextCatalog], FILEGROUP [PRIMARY])
 WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
 
+/****** Object:  Index [IX_Vote_Feedback_UserId] ******/
+CREATE NONCLUSTERED INDEX [IX_Vote_Feedback_UserId] ON [dbo].[Vote_Feedback]
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])
@@ -1142,6 +1193,16 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Deck] CHECK CONSTRAINT [FK_Deck_User_UserId]
 GO
+ALTER TABLE [dbo].[Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Feedback_Feedback_ParentId] FOREIGN KEY([ParentId])
+REFERENCES [dbo].[Feedback] ([Id])
+GO
+ALTER TABLE [dbo].[Feedback] CHECK CONSTRAINT [FK_Feedback_Feedback_ParentId]
+GO
+ALTER TABLE [dbo].[Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Feedback_User_UserId] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[Feedback] CHECK CONSTRAINT [FK_Feedback_User_UserId]
+GO
 ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
 REFERENCES [dbo].[CardInstance] ([Id])
 GO
@@ -1229,12 +1290,21 @@ REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[Vote_CommentCardTemplate] CHECK CONSTRAINT [FK_Vote_CommentCardTemplate_User_UserId]
 GO
+ALTER TABLE [dbo].[Vote_Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Vote_Feedback_Feedback_FeedbackId] FOREIGN KEY([FeedbackId])
+REFERENCES [dbo].[Feedback] ([Id])
+GO
+ALTER TABLE [dbo].[Vote_Feedback] CHECK CONSTRAINT [FK_Vote_Feedback_Feedback_FeedbackId]
+GO
+ALTER TABLE [dbo].[Vote_Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Vote_Feedback_User_UserId] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[Vote_Feedback] CHECK CONSTRAINT [FK_Vote_Feedback_User_UserId]
+GO
 /****** Object:  Trigger [dbo].[TriggerCardInstanceUserUpdate] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-
 -- =============================================
 -- Author:		Alex
 -- Create date: 11:40 10/8/2019

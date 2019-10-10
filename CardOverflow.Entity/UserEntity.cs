@@ -17,10 +17,12 @@ namespace CardOverflow.Entity
             CommentCardTemplates = new HashSet<CommentCardTemplateEntity>();
             CommentCards = new HashSet<CommentCardEntity>();
             Decks = new HashSet<DeckEntity>();
+            Feedbacks = new HashSet<FeedbackEntity>();
             Relationships = new HashSet<RelationshipEntity>();
             User_CardTemplateInstances = new HashSet<User_CardTemplateInstanceEntity>();
             Vote_CommentCardTemplates = new HashSet<Vote_CommentCardTemplateEntity>();
             Vote_CommentCards = new HashSet<Vote_CommentCardEntity>();
+            Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
         //[Required] // medTODO make this not nullable
@@ -49,6 +51,8 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<DeckEntity> Decks { get; set; }
         [InverseProperty("User")]
+        public virtual ICollection<FeedbackEntity> Feedbacks { get; set; }
+        [InverseProperty("User")]
         public virtual ICollection<RelationshipEntity> Relationships { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<User_CardTemplateInstanceEntity> User_CardTemplateInstances { get; set; }
@@ -56,6 +60,8 @@ namespace CardOverflow.Entity
         public virtual ICollection<Vote_CommentCardTemplateEntity> Vote_CommentCardTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentCardEntity> Vote_CommentCards { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<Vote_FeedbackEntity> Vote_Feedbacks { get; set; }
     }
 }
 

@@ -18,6 +18,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommentCardEntity> CommentCard { get; set; }
         public virtual DbSet<CommentCardTemplateEntity> CommentCardTemplate { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
+        public virtual DbSet<FeedbackEntity> Feedback { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
@@ -30,6 +31,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<User_CardTemplateInstanceEntity> User_CardTemplateInstance { get; set; }
         public virtual DbSet<Vote_CommentCardEntity> Vote_CommentCard { get; set; }
         public virtual DbSet<Vote_CommentCardTemplateEntity> Vote_CommentCardTemplate { get; set; }
+        public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
 
         public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options)
         {
@@ -195,6 +197,18 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
+            modelBuilder.Entity<FeedbackEntity>(entity =>
+            {
+                entity.HasIndex(e => e.ParentId);
+
+                entity.HasIndex(e => e.UserId);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Feedbacks)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
             modelBuilder.Entity<FileEntity>(entity =>
             {
                 entity.HasIndex(e => e.Sha256)
@@ -350,6 +364,23 @@ namespace CardOverflow.Entity
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Vote_CommentCardTemplates)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<Vote_FeedbackEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.FeedbackId, e.UserId });
+
+                entity.HasIndex(e => e.UserId);
+
+                entity.HasOne(d => d.Feedback)
+                    .WithMany(p => p.Vote_Feedbacks)
+                    .HasForeignKey(d => d.FeedbackId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Vote_Feedbacks)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
