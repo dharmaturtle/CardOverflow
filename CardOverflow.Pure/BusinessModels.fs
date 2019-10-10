@@ -226,7 +226,6 @@ type PagedList<'T> = {
     Details: PagedListDetails
 }
 
-[<CLIMutable>]
 type CardInstanceView = {
     FieldValues: FieldAndValue ResizeArray
     TemplateInstance: CardTemplateInstance

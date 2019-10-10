@@ -240,10 +240,10 @@ module CardRepository =
                 }
             }
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (view: CardInstanceView) =
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (view: CardInstanceView) editSummary =
         task {
             let! e = db.AcquiredCard.FirstAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
-            e.CardInstance <- view.CopyFieldsToNewInstance acquiredCard.CardId view.TemplateInstance.Id
+            e.CardInstance <- view.CopyFieldsToNewInstance acquiredCard.CardId view.TemplateInstance.Id editSummary
             return! db.SaveChangesAsyncI()
         }
 

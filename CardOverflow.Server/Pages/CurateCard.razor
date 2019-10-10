@@ -15,11 +15,11 @@
 @if (Card == null) {
   <p><em>Loading...</em></p>
 } else {
-  <EditForm Model="@CardView" OnValidSubmit="@UpdateCard">
+  <EditForm Model="@EditCard" OnValidSubmit="@UpdateCard">
     <div class="form-group">
       <div class="row">
         <div class="col-sm">
-          @foreach (var field in CardView.FieldValues) {
+          @foreach (var field in EditCard.View.FieldValues) {
             <label><b>@field.Field.Name: </b></label>
             <EjsRichTextEditor @bind-Value=@field.Value>
               <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
@@ -27,7 +27,7 @@
           }
         </div>
         <div class="col-sm">
-          <a href="CardTemplateInstance/@CardView.TemplateInstance.Id">Card Template Instance</a>
+          <a href="CardTemplateInstance/@EditCard.View.TemplateInstance.Id">Card Template Instance</a>
           <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back")></ResizingIframe>
           Tags:
           <ul>
@@ -55,7 +55,7 @@
 @code {
   private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   AcquiredCard Card;
-  CardInstanceView CardView;
+  EditCardCommand EditCard;
   [Parameter]
   public int Id { get; set; }
   [CascadingParameter]
@@ -63,11 +63,11 @@
 
   protected override async Task OnInitializedAsync() {
     Card = (await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id)).ResultValue; // medTODO report errors
-    CardView = await CardRepository.instance(Service, Card.CardInstanceMeta.Id);
+    EditCard = await SanitizeCardRepository.getEdit(Service, Card.CardInstanceMeta.Id);
   }
 
   async Task UpdateCard() {
-    var result = SanitizeCardRepository.Update(Service, User.Id, Card, CardView);
+    var result = SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
     if (result.IsOk) {
       await result.ResultValue;
       // lowToMedTODO display message that save worked

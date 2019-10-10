@@ -208,7 +208,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
                 ).ToList()
         }
     
-    do! CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated
+    do! CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated ""
     
     let! refreshed = CardRepository.getView c.Db cardId
     Assert.Equal<string seq>(

@@ -1,5 +1,7 @@
 namespace CardOverflow.Sanitation
 
+open LoadersAndCopiers
+open FSharp.Control.Tasks
 open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 open FsToolkit.ErrorHandling
@@ -100,11 +102,25 @@ type SearchCommand = {
     [<StringLength(250, ErrorMessage = "Query must be less than 250 characters.")>]
     Query: string
 }
+[<CLIMutable>]
+type EditCardCommand = {
+    [<Required>]
+    [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
+    EditSummary: string
+    View: CardInstanceView
+}
 module SanitizeCardRepository =
-    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (view: CardInstanceView) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+    let getEdit (db: CardOverflowDb) instanceId = task {
+        let! r = CardRepository.instance db instanceId
+        return {
+            EditSummary = ""
+            View = r
+        }
+    }
+    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: EditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let card = db.Card.First(fun x -> x.Id = acquiredCard.CardId)
         if card.AuthorId = authorId
-        then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard view
+        then Ok <| CardRepository.UpdateFieldsToNewInstance db acquiredCard command.View command.EditSummary
         else Error "You aren't that card's author."
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Query

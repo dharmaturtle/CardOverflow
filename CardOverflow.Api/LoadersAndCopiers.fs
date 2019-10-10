@@ -181,12 +181,13 @@ type CardInstanceView with
         let entity = CardInstanceEntity()
         this.CopyTo entity
         entity
-    member this.CopyFieldsToNewInstance cardId cardTemplateInstanceId =
+    member this.CopyFieldsToNewInstance cardId cardTemplateInstanceId editSummary =
         let e = this.CopyToNew
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         e.CardId <- cardId
         e.CardTemplateInstanceId <- cardTemplateInstanceId
+        e.EditSummary <- editSummary
         e
 
 type CardInstanceMeta with
