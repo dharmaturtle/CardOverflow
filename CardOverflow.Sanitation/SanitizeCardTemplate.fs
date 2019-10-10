@@ -124,8 +124,11 @@ module SanitizeCardTemplate =
         let! template =
             db.CardTemplate
                 .Include(fun x -> x.CardTemplateInstances)
-                .SingleAsync(fun x -> templateId = x.Id)
-        return template |> ViewCardTemplateWithAllInstances.load
+                .SingleOrDefaultAsync(fun x -> templateId = x.Id)
+        return
+            match template with
+            | null -> Error "That template doesn't exist"
+            | x -> Ok <| ViewCardTemplateWithAllInstances.load x
         }
     let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
         let cardTemplate = db.CardTemplate.Single(fun x -> x.Id = instance.CardTemplateId)
