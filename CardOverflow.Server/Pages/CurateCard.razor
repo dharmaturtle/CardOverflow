@@ -30,7 +30,9 @@
             }
           </div>
           <div class="col-sm">
-            <a href="CardTemplate/@EditCard.View.TemplateInstance.CardTemplateId?InstanceId=@EditCard.View.TemplateInstance.Id">Card Template Instance</a>
+            <a href="CardTemplate/@EditCard.View.TemplateInstance.CardTemplateId?InstanceId=@EditCard.View.TemplateInstance.Id">
+              Card Template Instance
+            </a>
             <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back") />
             Tags:
             <ul>
@@ -43,7 +45,7 @@
           </div>
         </div>
       </div>
-      <div class="float-right">
+      <div class="float-right mr-3">
         <div class="row">
           <span class="btn-group">
             <InputText @bind-Value=@EditCard.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />

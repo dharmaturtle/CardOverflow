@@ -16,12 +16,14 @@
       <p>@User.DisplayName : @WriteComment.Text</p>
     } else {
       <EditForm Model="@WriteComment" OnValidSubmit=@SaveComment>
-        <div class="form-group">
+        <div class="form-group form-inline btn-group">
           <InputText @bind-Value="@WriteComment.Text" class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-          <button type="submit" class="btn btn-primary">Save</button>
-          <DataAnnotationsValidator />
-          <ValidationSummary />
+          <button type="submit" class="btn btn-primary">
+            Save
+          </button>
         </div>
+        <DataAnnotationsValidator />
+        <ValidationSummary />
       </EditForm>
     }
   </li>

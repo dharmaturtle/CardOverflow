@@ -15,7 +15,17 @@
 
 <EditForm Model=@Instance OnValidSubmit=@Submit>
   <fieldset disabled=@IsDisabled>
-    <table class="table-borderless">
+    <div class="form-row align-items-center">
+      <div class="col-auto-1">
+        <label for="nameInput" class="form-label">
+          Name:
+        </label>
+      </div>
+      <div class="col-sm-11">
+        <InputText id="nameInput" @bind-Value=@Instance.Name class="form-control mb-2" />
+      </div>
+    </div>
+    <table class="table-borderless my-3">
       <thead>
         <tr>
           <th>Field Name</th>
@@ -35,7 +45,7 @@
               <ValidationMessage For="@(() => field.Ordinal)" />
             </td>
             <td>
-              <button class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
+              <button type="button" class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
                 <span class="oi oi-trash"></span>
               </button>
             </td>
@@ -45,7 +55,7 @@
           <td></td>
           <td></td>
           <td>
-            <button class="btn btn-success" @onclick=AddField>
+            <button type="button" class="btn btn-success" @onclick=AddField>
               <span class="oi oi-plus"></span>
             </button>
           </td>
@@ -69,7 +79,7 @@
         <ValidationMessage For="@(() => Instance.Css)" />
       </div>
     </div>
-    <div class="float-right mt-3">
+    <div class="float-right mt-3 mr-3">
       <div class="row">
         <span class="btn-group">
           <InputText @bind-Value=@Instance.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />

@@ -200,7 +200,7 @@ module CardRepository =
                 .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) =
         get(db)
-            .FirstAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId)
+            .FirstAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId) // medTODO make SingleOrDefault
             .ContinueWith(fun (x: Task<AcquiredCardEntity>) -> AcquiredCard.load x.Result)
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) =
         task {
