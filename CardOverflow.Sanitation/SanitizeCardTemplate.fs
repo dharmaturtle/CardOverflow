@@ -65,6 +65,7 @@ type ViewCardTemplateInstance = {
     AnswerTemplate: string
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
+    [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
 }
 
@@ -109,15 +110,21 @@ type ViewCardTemplateWithAllInstances = {
     Id: int
     AuthorId: int
     Instances: ViewCardTemplateInstance ResizeArray
+    Editable: ViewCardTemplateInstance
 } with
-    static member load (entity: CardTemplateEntity) = {
-        Id = entity.Id
-        AuthorId = entity.AuthorId
-        Instances =
+    static member load (entity: CardTemplateEntity) =
+        let instances =
             entity.CardTemplateInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
             |> Seq.map (CardTemplateInstance.load >> ViewCardTemplateInstance.load)
-            |> toResizeArray }
+            |> toResizeArray
+        {   Id = entity.Id
+            AuthorId = entity.AuthorId
+            Instances = instances
+            Editable = {
+                instances.First() with
+                    Id = 0
+                    EditSummary = "" }}
 
 module SanitizeCardTemplate =
     let AllInstances (db: CardOverflowDb) templateId = task {

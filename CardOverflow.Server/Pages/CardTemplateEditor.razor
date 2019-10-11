@@ -19,79 +19,24 @@
   <p><em>@LoadingMessage</em></p>
 } else {
   <di class="row">
-    <ul class="col-sm list-group">
-      @foreach (var instance in Template.Instances.Where(x => SelectedInstance == x.Id)) {@* only ever going to be one selected, but whatever *@
-      <li class="list-group-item">
-        <h2>@instance.Name</h2>
-        <EditForm Model=@instance OnValidSubmit=@Submit>
-          <fieldset disabled=@(instance.Id != Latest.Id)>
-            <table class="table-borderless">
-              <thead>
-                <tr>
-                  <th>Field Name</th>
-                  <th>Ordinal</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach (var field in instance.Fields.OrderBy(x => x.Ordinal)) {
-                  <tr>
-                    <td>
-                      <InputText @bind-Value=@field.Name class="form-control" />
-                      <ValidationMessage For="@(() => field.Name)" />
-                    </td>
-                    <td>
-                      <InputNumber @bind-Value=@field.Ordinal class="form-control" />
-                      <ValidationMessage For="@(() => field.Ordinal)" />
-                    </td>
-                    <td>
-                      <button class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
-                        <span class="oi oi-trash"></span>
-                      </button>
-                    </td>
-                  </tr>
-                }
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td>
-                    <button class="btn btn-success" @onclick=AddField>
-                      <span class="oi oi-plus"></span>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="row">
-              <div class="col-sm">
-                <h5 class="text-center">Question Template</h5>
-                <InputTextArea @bind-Value=@instance.QuestionTemplate class="form-control code" rows="25" />
-                <ValidationMessage For="@(() => instance.QuestionTemplate)" />
-              </div>
-              <div class="col-sm">
-                <h5 class="text-center">Answer Template</h5>
-                <InputTextArea @bind-Value=@instance.AnswerTemplate class="form-control code" rows="25" />
-                <ValidationMessage For="@(() => instance.AnswerTemplate)" />
-              </div>
-              <div class="col-sm">
-                <h5 class="text-center">CSS</h5>
-                <InputTextArea @bind-Value=@instance.Css class="form-control code" rows="25" />
-                <ValidationMessage For="@(() => instance.Css)" />
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-            <DataAnnotationsValidator />
-          </fieldset>
-        </EditForm>
-      </li>
-    }
-    </ul>
+    <div class="col-sm">
+      @if (SelectedInstance == 0) {
+        <CardTemplateEditorDetail IsDisabled=false Instance=@Editable />
+      } else {
+        <CardTemplateEditorDetail IsDisabled=true Instance=@Template.Instances.Single(x => x.Id == SelectedInstance) />
+      }
+    </div>
     <div class="col-sm-1 list-group">
       <h5>Revisions</h5>
+      <button class="list-group-item list-group-item-action @(SelectedInstance == 0 ? "active" : "")"
+              @onclick=@(() => Select(0))>
+        Edit
+      </button>
       @foreach (var instance in Template.Instances) {
         <button class="list-group-item list-group-item-action @(SelectedInstance == instance.Id ? "active" : "")"
                 @onclick=@(() => Select(instance.Id))>
           @instance.Created
+          @instance.EditSummary
         </button>
       }
     </div>
@@ -105,14 +50,14 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   ViewCardTemplateWithAllInstances Template;
-  ViewCardTemplateInstance Latest;
+  ViewCardTemplateInstance Editable;
   int SelectedInstance;
 
   protected override async Task OnInitializedAsync() {
     var x = await SanitizeCardTemplate.AllInstances(Service, TemplateId);
     if (x.IsOk) {
       Template = x.ResultValue;
-      Latest = Template.Instances.OrderByDescending(i => i.Modified ?? i.Created).First();
+      Editable = Template.Editable;
       SelectedInstance =
         NavigationManager.Uri
           .Apply(NavigationManager.ToAbsoluteUri).Query
@@ -121,7 +66,7 @@
         int.TryParse(token.First(), out int possibleId) &&
         Template.Instances.Any(i => i.Id == possibleId)
         ? possibleId
-        : Latest.Id;
+        : 0;
     } else {
       LoadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
@@ -130,26 +75,5 @@
 
   void Select(int id) =>
     SelectedInstance = id;
-
-  async Task Submit() {
-    var x = SanitizeCardTemplate.Update(Service, User.Id, Latest);
-    if (x.IsOk) {
-      await x.ResultValue;
-      ToastService.ShowSuccess("Saved!");
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
-  }
-
-  void DeleteField(int ordinal) {
-    Latest.Fields = Latest.Fields
-      .Where(x => x.Ordinal != ordinal).ToList();
-  }
-
-  void AddField() {
-    Latest.Fields.Add(new ViewField {
-      Ordinal = Latest.Fields.Max(x => x.Ordinal) + 1
-    });
-  }
 
 }

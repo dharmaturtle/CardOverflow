@@ -1,0 +1,118 @@
+﻿@using Microsoft.AspNetCore.Mvc
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inherits OwningComponentBase<CardOverflowDb>
+
+<EditForm Model=@Instance OnValidSubmit=@Submit>
+  <fieldset disabled=@IsDisabled>
+    <table class="table-borderless">
+      <thead>
+        <tr>
+          <th>Field Name</th>
+          <th>Ordinal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var field in Instance.Fields.OrderBy(x => x.Ordinal)) {
+          <tr>
+            <td>
+              <InputText @bind-Value=@field.Name class="form-control" />
+              <ValidationMessage For="@(() => field.Name)" />
+            </td>
+            <td>
+              <InputNumber @bind-Value=@field.Ordinal class="form-control" />
+              <ValidationMessage For="@(() => field.Ordinal)" />
+            </td>
+            <td>
+              <button class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
+                <span class="oi oi-trash"></span>
+              </button>
+            </td>
+          </tr>
+        }
+        <tr>
+          <td></td>
+          <td></td>
+          <td>
+            <button class="btn btn-success" @onclick=AddField>
+              <span class="oi oi-plus"></span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="row">
+      <div class="col-sm">
+        <h5 class="text-center">Question Template</h5>
+        <InputTextArea @bind-Value=@Instance.QuestionTemplate class="form-control code" rows="25" />
+        <ValidationMessage For="@(() => Instance.QuestionTemplate)" />
+      </div>
+      <div class="col-sm">
+        <h5 class="text-center">Answer Template</h5>
+        <InputTextArea @bind-Value=@Instance.AnswerTemplate class="form-control code" rows="25" />
+        <ValidationMessage For="@(() => Instance.AnswerTemplate)" />
+      </div>
+      <div class="col-sm">
+        <h5 class="text-center">CSS</h5>
+        <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
+        <ValidationMessage For="@(() => Instance.Css)" />
+      </div>
+    </div>
+    <div class="float-right mt-3">
+      <div class="row">
+        <span class="btn-group">
+          <InputText @bind-Value=@Instance.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
+          <button type="submit" class="btn btn-primary">Save</button>
+        </span>
+      </div>
+      <div class="row">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+      </div>
+    </div>
+  </fieldset>
+</EditForm>
+
+@code {
+  [Parameter]
+  public ViewCardTemplateInstance Instance { get; set; }
+  [Parameter]
+  public bool IsDisabled { get; set; }
+  [CascadingParameter]
+  UserEntity User { get; set; }
+
+  async Task Submit() {
+    IsDisabled = true;
+    var x = SanitizeCardTemplate.Update(Service, User.Id, Instance);
+    if (x.IsOk) {
+      await x.ResultValue;
+      ToastService.ShowSuccess("Saved!");
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+      IsDisabled = false;
+    }
+  }
+
+  void DeleteField(int ordinal) {
+    Instance.Fields = Instance.Fields
+      .Where(x => x.Ordinal != ordinal).ToList();
+  }
+
+  void AddField() {
+    Instance.Fields.Add(new ViewField {
+      Ordinal = Instance.Fields.Max(x => x.Ordinal) + 1
+    });
+  }
+
+}

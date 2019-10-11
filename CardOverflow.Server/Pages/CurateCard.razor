@@ -17,39 +17,45 @@
   <p><em>@LoadingMessage</em></p>
 } else {
   <EditForm Model="@EditCard" OnValidSubmit="@UpdateCard">
-    <div class="form-group">
-      <div class="row">
-        <div class="col-sm">
-          @foreach (var field in EditCard.View.FieldValues) {
-            <label><b>@field.Field.Name: </b></label>
-            <EjsRichTextEditor @bind-Value=@field.Value>
-              <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
-            </EjsRichTextEditor>
-          }
-        </div>
-        <div class="col-sm">
-          <a href="CardTemplateInstance/@EditCard.View.TemplateInstance.Id">Card Template Instance</a>
-          <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back")></ResizingIframe>
-          Tags:
-          <ul>
-            @foreach (var tag in Card.Tags) {
-              <li>
-                @tag
-              </li>
+    <fieldset disabled=@IsSaved>
+      <div class="form-group">
+        <div class="row">
+          <div class="col-sm">
+            @foreach (var field in EditCard.View.FieldValues) {
+              <label><b>@field.Field.Name: </b></label>
+              <EjsRichTextEditor @bind-Value=@field.Value>
+                @* highTODO why doesn't iFrame work? *@
+                <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
+              </EjsRichTextEditor>
             }
-          </ul>
+          </div>
+          <div class="col-sm">
+            <a href="CardTemplate/@EditCard.View.TemplateInstance.CardTemplateId?InstanceId=@EditCard.View.TemplateInstance.Id">Card Template Instance</a>
+            <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back") />
+            Tags:
+            <ul>
+              @foreach (var tag in Card.Tags) {
+                <li>
+                  @tag
+                </li>
+              }
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <div class="row">
-        <button type="submit" class="btn btn-primary">Save</button>
+      <div class="float-right">
+        <div class="row">
+          <span class="btn-group">
+            <InputText @bind-Value=@EditCard.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
+            <button type="submit" class="btn btn-primary">Save</button>
+          </span>
+        </div>
+        <div class="row">
+          <DataAnnotationsValidator />
+          <ValidationSummary />
+        </div>
       </div>
-      <div class="row">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-      </div>
-    </div>
+    </fieldset>
   </EditForm>
 }
 
@@ -62,6 +68,7 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
+  bool IsSaved;
 
   protected override async Task OnInitializedAsync() {
     var x = await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id);
@@ -79,6 +86,7 @@
     if (result.IsOk) {
       await result.ResultValue;
       ToastService.ShowInfo("Saved!");
+      IsSaved = true;
     } else {
       ToastService.ShowError(result.ErrorValue);
     }
