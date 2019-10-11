@@ -1078,7 +1078,7 @@ CREATE NONCLUSTERED INDEX [IX_Vote_CommentCardTemplate_UserId] ON [dbo].[Vote_Co
 GO
 /****** Object:  FullTextIndex ******/
 CREATE FULLTEXT INDEX ON [dbo].[CardInstance](
-[FieldValues] LANGUAGE 'English' STATISTICAL_SEMANTICS)
+[FieldValues] LANGUAGE 'English')
 KEY INDEX [PK_CardInstance]ON ([CardInstanceFieldValueFullTextCatalog], FILEGROUP [PRIMARY])
 WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
 
