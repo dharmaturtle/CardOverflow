@@ -58,8 +58,6 @@ module CardTemplateRepository =
         }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) (instance: CardTemplateInstance) =
         task {
-            let! cardTemplate = db.CardTemplate.SingleAsync(fun x -> x.Id = instance.CardTemplateId)
-            //cardTemplate.Name <- instance.Name // medTODO
             let newTemplateInstance = instance.CopyToNewInstance instance.CardTemplateId
             db.CardTemplateInstance.AddI newTemplateInstance
             use hasher = SHA256.Create ()
@@ -240,10 +238,10 @@ module CardRepository =
                 }
             }
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (view: CardInstanceView) editSummary =
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) editSummary (view: CardInstanceView) =
         task {
             let! e = db.AcquiredCard.FirstAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
-            e.CardInstance <- view.CopyFieldsToNewInstance acquiredCard.CardId view.TemplateInstance.Id editSummary
+            e.CardInstance <- view.CopyFieldsToNewInstance acquiredCard.CardId editSummary
             return! db.SaveChangesAsyncI()
         }
 

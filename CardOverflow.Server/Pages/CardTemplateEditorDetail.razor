@@ -38,11 +38,11 @@
           <tr>
             <td>
               <InputText @bind-Value=@field.Name class="form-control" />
-              <ValidationMessage For="@(() => field.Name)" />
+              <ValidationMessage For=@(() => field.Name) />
             </td>
             <td>
               <InputNumber @bind-Value=@field.Ordinal class="form-control" />
-              <ValidationMessage For="@(() => field.Ordinal)" />
+              <ValidationMessage For=@(() => field.Ordinal) />
             </td>
             <td>
               <button type="button" class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
@@ -66,17 +66,17 @@
       <div class="col-sm">
         <h5 class="text-center">Question Template</h5>
         <InputTextArea @bind-Value=@Instance.QuestionTemplate class="form-control code" rows="25" />
-        <ValidationMessage For="@(() => Instance.QuestionTemplate)" />
+        <ValidationMessage For=@(() => Instance.QuestionTemplate) />
       </div>
       <div class="col-sm">
         <h5 class="text-center">Answer Template</h5>
         <InputTextArea @bind-Value=@Instance.AnswerTemplate class="form-control code" rows="25" />
-        <ValidationMessage For="@(() => Instance.AnswerTemplate)" />
+        <ValidationMessage For=@(() => Instance.AnswerTemplate) />
       </div>
       <div class="col-sm">
         <h5 class="text-center">CSS</h5>
         <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
-        <ValidationMessage For="@(() => Instance.Css)" />
+        <ValidationMessage For=@(() => Instance.Css) />
       </div>
     </div>
     <div class="float-right mt-3 mr-3">

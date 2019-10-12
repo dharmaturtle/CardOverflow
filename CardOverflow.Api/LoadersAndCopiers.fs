@@ -175,18 +175,18 @@ type CardInstanceView with
         TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
     member this.CopyTo (entity: CardInstanceEntity) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues 
+        entity.CardTemplateInstanceId <- this.TemplateInstance.Id
         use hasher = SHA256.Create()
         entity.AcquireHash <- CardInstanceEntity.acquireHash entity this.TemplateInstance.AcquireHash hasher
     member this.CopyToNew =
         let entity = CardInstanceEntity()
         this.CopyTo entity
         entity
-    member this.CopyFieldsToNewInstance cardId cardTemplateInstanceId editSummary =
+    member this.CopyFieldsToNewInstance cardId editSummary =
         let e = this.CopyToNew
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         e.CardId <- cardId
-        e.CardTemplateInstanceId <- cardTemplateInstanceId
         e.EditSummary <- editSummary
         e
 

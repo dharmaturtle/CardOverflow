@@ -35,7 +35,7 @@
               But I'm clicking this anyway
             </button>
           } else {
-            <button type="button" class="btn btn-primary" @onclick="@(() => Select(1))">
+            <button type="button" class="btn btn-primary" @onclick=@(() => Select(1))>
               I don't know you
             </button>
           }
@@ -56,7 +56,7 @@
               Cause I have way too many
             </button>
           } else {
-            <button type="button" class="btn btn-primary" @onclick="@(() => Select(2))">
+            <button type="button" class="btn btn-primary" @onclick=@(() => Select(2))>
               I want you to delete my cards
             </button>
           }
@@ -76,7 +76,7 @@
               Selected
             </button>
           } else {
-            <button type="button" class="btn btn-primary" @onclick="@(() => Select(3))">
+            <button type="button" class="btn btn-primary" @onclick=@(() => Select(3))>
               Dude, this is the only reasonable option
             </button>
           }
@@ -87,22 +87,22 @@
 
   <div class="row">
     <div class="col-lg-8 mx-auto">
-      <EditForm Model="@Form" OnValidSubmit=@Submit>
+      <EditForm Model=@Form OnValidSubmit=@Submit>
         <div class="control-group">
           <div class="form-group floating-label-form-group controls mb-0 pb-2">
             <div class="d-flex justify-content-between">
               <label>Email Address</label>
               <small id="emailHelp" class="form-text text-muted">I'll never share your email with anyone else.</small>
             </div>
-            <InputText @bind-Value="@Form.Email" class="form-control" type="email" placeholder="you@interested.com" disabled="@Submitted" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-            <ValidationMessage For="@(() => Form.Email)" />
+            <InputText @bind-Value=@Form.Email class="form-control" type="email" placeholder="you@interested.com" disabled=@Submitted /> @*this seems to break validation: @bind-Value:event="oninput"*@
+            <ValidationMessage For=@(() => Form.Email) />
           </div>
         </div>
         <div class="control-group">
           <div class="form-group floating-label-form-group controls mb-0 pb-2">
             <label>Optional Message</label>
-            <InputTextArea @bind-Value="@Form.Message" class="form-control" rows="4" placeholder="Feature requests, promises to not sue me, or ideas for a real name 🤨." disabled="@Submitted" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-            <ValidationMessage For="@(() => Form.Message)" />
+            <InputTextArea @bind-Value=@Form.Message class="form-control" rows="4" placeholder="Feature requests, promises to not sue me, or ideas for a real name 🤨." disabled=@Submitted /> @*this seems to break validation: @bind-Value:event="oninput"*@
+            <ValidationMessage For=@(() => Form.Message) />
           </div>
         </div>
         <div class="form-group">

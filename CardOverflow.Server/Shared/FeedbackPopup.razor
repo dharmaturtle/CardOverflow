@@ -10,7 +10,7 @@
 @inherits OwningComponentBase<CardOverflowDb>
 
 @if (User != null) {
-  <div style="position: fixed; bottom: 0px; right: 20px;">
+  <div style="position: fixed; bottom: 0px; left: 20px; z-index: 999;">
     @if (!isExpanded) {
       <button class="btn btn-secondary btn-sm" @onclick=ToggleExpand>
         Feedback <span class="oi oi-chevron-top"></span>
@@ -26,18 +26,18 @@
               <button class="btn btn-link text-danger" @onclick=ToggleExpand><span class="oi oi-x"></span></button>
             </div>
           </div>
-          <EditForm Model="@feedbackPayload" OnValidSubmit=@Save>
+          <EditForm Model=@feedbackPayload OnValidSubmit=@Save>
             <div class="form-group">
               <div class="control-group">
                 <div class="form-group floating-label-form-group controls mb-0 pb-2">
-                  <InputText @bind-Value="@feedbackPayload.Title" class="form-control" placeholder="Title" /> @*this seems to break validation: @bind-Value*@
-                  <ValidationMessage For="@(() => feedbackPayload.Title)" />
+                  <InputText @bind-Value=@feedbackPayload.Title class="form-control" placeholder="Title" /> @*this seems to break validation: @bind-Value*@
+                  <ValidationMessage For=@(() => feedbackPayload.Title) />
                 </div>
               </div>
               <div class="control-group">
                 <div class="form-group floating-label-form-group controls mb-0 pb-2">
-                  <InputTextArea @bind-Value="@feedbackPayload.Description" class="form-control" rows="6" placeholder="Description" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-                  <ValidationMessage For="@(() => feedbackPayload.Description)" />
+                  <InputTextArea @bind-Value=@feedbackPayload.Description class="form-control" rows="6" placeholder="Description" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+                  <ValidationMessage For=@(() => feedbackPayload.Description) />
                 </div>
               </div>
               <div class="form-group">
@@ -48,7 +48,7 @@
                   <option value="3">Nice to have</option>
                   <option value="4">Other</option>
                 </InputSelect>
-                <ValidationMessage For="@(() => feedbackPayload.Priority)" />
+                <ValidationMessage For=@(() => feedbackPayload.Priority) />
               </div>
               <div>
                 <button type="submit" class="btn btn-primary">Submit!</button>

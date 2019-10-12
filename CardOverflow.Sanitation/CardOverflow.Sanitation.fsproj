@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="SanitizeRepositories.fs" />
     <Compile Include="SanitizeCardTemplate.fs" />
+    <Compile Include="SanitizeRepositories.fs" />
     <Compile Include="Anki.fs" />
   </ItemGroup>
 

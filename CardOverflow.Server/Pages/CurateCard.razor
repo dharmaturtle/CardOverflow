@@ -16,12 +16,12 @@
 @if (Card == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditForm Model="@EditCard" OnValidSubmit="@UpdateCard">
+  <EditForm Model=@EditCard OnValidSubmit=@UpdateCard>
     <fieldset disabled=@IsSaved>
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @foreach (var field in EditCard.View.FieldValues) {
+            @foreach (var field in EditCard.FieldValues) {
               <label><b>@field.Field.Name: </b></label>
               <EjsRichTextEditor @bind-Value=@field.Value>
                 @* highTODO why doesn't iFrame work? *@
@@ -30,9 +30,26 @@
             }
           </div>
           <div class="col-sm">
-            <a href="CardTemplate/@EditCard.View.TemplateInstance.CardTemplateId?InstanceId=@EditCard.View.TemplateInstance.Id">
-              Card Template Instance
-            </a>
+            <div class="row">
+              <a href="CardTemplate/@SelectedTemplateId" class="col-sm-2 mt-2">
+                Card Template
+              </a>
+              <select value=@SelectedTemplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedTemplate(id)))>
+                @foreach (var template in Templates) {
+                  <option value=@template.Id>@template.Editable.Name</option>
+                }
+              </select>
+            </div>
+            <div class="row">
+              <a href="CardTemplate/@SelectedTemplateId?InstanceId=@SelectedTemplateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
+                Revision
+              </a>
+              <select value=@SelectedTemplateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedTemplateInstance))>
+                @foreach (var instance in SelectedTemplateInstances) {
+                  <option value=@instance.Id>@instance.Created - @instance.EditSummary</option>
+                }
+              </select>
+            </div>
             <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back") />
             Tags:
             <ul>
@@ -71,12 +88,18 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   bool IsSaved;
+  IEnumerable<ViewCardTemplateWithAllInstances> Templates;
+  IEnumerable<ViewCardTemplateInstance> SelectedTemplateInstances;
+  int SelectedTemplateId;
+  int SelectedTemplateInstanceId;
 
   protected override async Task OnInitializedAsync() {
     var x = await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id);
     if (x.IsOk) {
       Card = x.ResultValue;
+      Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
       EditCard = await SanitizeCardRepository.getEdit(Service, Card.CardInstanceMeta.Id);
+      UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
     } else {
       LoadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
@@ -92,6 +115,24 @@
     } else {
       ToastService.ShowError(result.ErrorValue);
     }
+  }
+
+  void UpdateSelectedTemplate(int templateId, int? instanceId = null) {
+    SelectedTemplateId = templateId;
+    SelectedTemplateInstances = Templates.Single(t => t.Id == templateId).Instances;
+    UpdateSelectedTemplateInstance(instanceId ?? SelectedTemplateInstances.First().Id);
+  }
+
+  void UpdateSelectedTemplateInstance(int instanceId) {
+    SelectedTemplateInstanceId = instanceId;
+    EditCard.TemplateInstance = Templates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
+    var valuesByField = EditCard.FieldValues.ToDictionary(fv => fv.Field.Name, fv => fv.Value);
+    EditCard.FieldValues = EditCard.TemplateInstance.Fields
+      .Select(ViewFieldModule.copyTo)
+      .Select(field =>
+        (valuesByField.ContainsKey(field.Name) ? valuesByField[field.Name] : "")
+          .Apply(value => new FieldAndValue(field, value))
+      ).ToList();
   }
 
 }
