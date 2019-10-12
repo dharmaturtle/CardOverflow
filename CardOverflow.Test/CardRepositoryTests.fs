@@ -24,7 +24,7 @@ let ``AcquireCards works``() = task {
     
     let c1 = 1
     let ci1_1 = 1
-    FacetRepositoryTests.addBasicCard c.Db authorId []
+    do! FacetRepositoryTests.addBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single().Users)
     Assert.Equal(1, c.Db.CardInstance.Single().Users)
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
@@ -32,7 +32,7 @@ let ``AcquireCards works``() = task {
     
     let c2 = 2
     let ci2_1 = 2
-    FacetRepositoryTests.addReversedBasicCard c.Db authorId []
+    do! FacetRepositoryTests.addReversedBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c2).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
     

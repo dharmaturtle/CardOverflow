@@ -188,9 +188,6 @@ module CardRepository =
                         .FirstAsync(fun x -> x.Id = cardId)
             return concept |> ExploreCard.load userId
         }
-    let CreateCard (db: CardOverflowDb) (concept: InitialCardInstance) fileCardInstances =
-        fileCardInstances |> concept.CopyToNew |> db.CardInstance.AddI
-        db.SaveChangesI ()
     let private get (db: CardOverflowDb) =
         db.AcquiredCard
             .Include(fun x -> x.CardInstance.CardTemplateInstance)
@@ -246,9 +243,30 @@ module CardRepository =
             }
         }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) editSummary (view: CardInstanceView) =
+        let getTagId (db: CardOverflowDb) (input: string) =
+            let r =
+                match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
+                | null ->
+                    let e = TagEntity(Name = input)
+                    db.Tag.AddI e
+                    e
+                | x -> x
+            db.SaveChangesI ()
+            r.Id
         task {
-            let! e = db.AcquiredCard.FirstAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
-            e.CardInstance <- view.CopyFieldsToNewInstance acquiredCard.CardId editSummary
+            let card =
+                if acquiredCard.CardId = 0 then
+                    Entity <| CardEntity(AuthorId = acquiredCard.UserId)
+                else
+                    Id <| acquiredCard.CardId
+            match! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId) with
+            | null ->
+                let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
+                let e = acquiredCard.copyToNew tags
+                e.CardInstance <- view.CopyFieldsToNewInstance card editSummary
+                db.AcquiredCard.AddI e
+            | e ->
+                e.CardInstance <- view.CopyFieldsToNewInstance card editSummary
             return! db.SaveChangesAsyncI()
         }
 

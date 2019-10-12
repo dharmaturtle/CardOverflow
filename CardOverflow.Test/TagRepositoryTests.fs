@@ -34,7 +34,7 @@ let ``When TagRepository adds a tag twice, only one is added``() =
 let ``TagRepository AddTo/DeleteFrom works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    FacetRepositoryTests.addBasicCard c.Db userId []
+    do! FacetRepositoryTests.addBasicCard c.Db userId []
     let cardId = 1
     let tagName = Guid.NewGuid().ToString()
 

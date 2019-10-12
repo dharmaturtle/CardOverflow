@@ -169,6 +169,10 @@ type CardTemplate with
         AuthorId = entity.AuthorId
         LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load }
 
+type IdOrEntity<'a> =
+    | Id of int
+    | Entity of 'a
+
 type CardInstanceView with
     static member load (entity: CardInstanceEntity) = {
         FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
@@ -182,11 +186,13 @@ type CardInstanceView with
         let entity = CardInstanceEntity()
         this.CopyTo entity
         entity
-    member this.CopyFieldsToNewInstance cardId editSummary =
+    member this.CopyFieldsToNewInstance card editSummary =
         let e = this.CopyToNew
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        e.CardId <- cardId
+        match card with
+        | Id id -> e.CardId <- id
+        | Entity entity -> e.Card <- entity
         e.EditSummary <- editSummary
         e
 
@@ -254,7 +260,7 @@ type AcquiredCard with
         let e = AcquiredCardEntity()
         this.copyTo e tagIds
         e
-    static member initialize userId cardOptionId (tagIds: int seq) =
+    static member initialize userId cardOptionId tags =
         {   CardId = 0
             AcquiredCardId = 0
             UserId = userId
@@ -265,7 +271,7 @@ type AcquiredCard with
             Due = DateTime.UtcNow
             CardOptionId = cardOptionId
             CardInstanceMeta = CardInstanceMeta.initialize
-            Tags = [] // medTODO
+            Tags = tags
         }
     static member load (entity: AcquiredCardEntity) = result {
         let! cardState = entity.CardState |> CardState.create
@@ -283,36 +289,6 @@ type AcquiredCard with
                 Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
             }
         }
-
-type InitialCardInstance = {
-    FieldValues: FieldAndValue seq
-    AuthorId: int
-    DefaultCardOptionId: int
-    Description: string
-    CardTemplateHash: byte[]
-    CardTemplateInstanceIdAndTags: int * int list
-    Created: DateTime
-} with
-    member this.CopyToNew fileCardInstances =
-        let cardTemplateInstanceId, tags = this.CardTemplateInstanceIdAndTags
-        let e =
-            CardInstanceEntity(
-                Created = this.Created,
-                CardTemplateInstanceId = cardTemplateInstanceId,
-                Card =
-                    CardEntity(
-                        AuthorId = this.AuthorId
-                    ),
-                FieldValues = FieldAndValue.join this.FieldValues,
-                File_CardInstances = fileCardInstances,
-                AcquiredCards = [
-                    AcquiredCard.initialize this.AuthorId this.DefaultCardOptionId tags |> fun x -> x.copyToNew tags // medTODO tags, tags? Why two
-                ].ToList(),
-                EditSummary = "Initial creation"
-            )
-        use hasher = SHA256.Create() // lowTODO pull this out
-        e.AcquireHash <- CardInstanceEntity.acquireHash e this.CardTemplateHash hasher
-        e
 
 type Comment with
     static member load (entity: CommentCardEntity) = {

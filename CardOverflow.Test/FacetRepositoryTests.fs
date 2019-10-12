@@ -11,38 +11,35 @@ open System
 open System.Linq
 open Xunit
 open CardOverflow.Pure
+open CardOverflow.Pure.Core
 open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 
-let add templateName fieldValues (db: CardOverflowDb) userId tags =
+let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
     let cardTemplateInstance =
         db.CardTemplateInstance
             .Include(fun x -> x.CardTemplate)
             .Include(fun x -> x.User_CardTemplateInstances)
             .First(fun x -> x.CardTemplate.CardTemplateInstances.Single().Name = templateName)
             |> AcquiredCardTemplateInstance.load
-    TagRepository.Add db userId tags
-    let tags = tags |> List.map (fun x -> (TagRepository.Search db x).Single().Id)
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    let initialCard = {
-        Created = DateTime.Now - TimeSpan.FromDays 1.
-        CardTemplateHash = cardTemplateInstance.CardTemplateInstance.AcquireHash
-        AuthorId = userId
-        Description = templateName
-        DefaultCardOptionId = cardTemplateInstance.DefaultCardOptionId
-        CardTemplateInstanceIdAndTags = cardTemplateInstance.CardTemplateInstance |> fun x -> x.Id, tags
-        FieldValues =
-            cardTemplateInstance.CardTemplateInstance.Fields
-            |> Seq.sortBy (fun x -> x.Ordinal)
-            |> Seq.mapi (fun i field -> { Field = field; Value = fieldValues.[i] })
+    let! ac = CardRepository.GetAcquired db userId 0
+    let ac = { (Result.getOk ac) with Tags = tags }
+    return!
+        {   TemplateInstance = cardTemplateInstance.CardTemplateInstance
+            FieldValues =
+                cardTemplateInstance.CardTemplateInstance.Fields
+                |> Seq.sortBy (fun x -> x.Ordinal)
+                |> Seq.mapi (fun i field -> { Field = field; Value = fieldValues.[i] })
+                |> toResizeArray
+        } |> CardRepository.UpdateFieldsToNewInstance db ac "Created"
     }
-    CardRepository.CreateCard db initialCard <| Seq.empty.ToList()
 
-let addReversedBasicCard: CardOverflowDb -> int -> string list -> unit =
+let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<unit> =
     add "Basic (and reversed card) - Card 2" []
 
 let addBasicCard =
@@ -57,7 +54,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task
     let userId = 3
     let tags = ["a"; "b"]
     
-    addBasicCard c.Db userId tags
+    do! addBasicCard c.Db userId tags
 
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.Card
@@ -193,7 +190,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
-    addBasicCard c.Db userId tags
+    do! addBasicCard c.Db userId tags
     let cardId = 1
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard = 
