@@ -137,10 +137,11 @@ module CardRepository =
         match! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardInstance.CardId) with
         | null ->
             let card =
-                AcquiredCard.InitialCopyTo
+                AcquiredCard.initialize
                     userId
                     defaultCardOption.Id
                     []
+                |> fun x -> x.copyToNew [] // medTODO get tags from template
             card.CardInstanceId <- cardInstanceId
             card |> db.AcquiredCard.AddI
         | x -> x.CardInstanceId <- cardInstanceId
@@ -196,10 +197,16 @@ module CardRepository =
             .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
-    let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) =
-        get(db)
-            .FirstAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId) // medTODO make SingleOrDefault
-            .ContinueWith(fun (x: Task<AcquiredCardEntity>) -> AcquiredCard.load x.Result)
+    let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
+        let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
+        let! r =
+            get(db)
+                .SingleOrDefaultAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId)
+        return
+            match r with
+            | null -> AcquiredCard.initialize userId option.Id [] |> Ok
+            | x -> x |> AcquiredCard.load
+        }
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) =
         task {
             let! r =

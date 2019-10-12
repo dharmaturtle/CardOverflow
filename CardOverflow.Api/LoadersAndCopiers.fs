@@ -201,9 +201,23 @@ type CardInstanceMeta with
             StrippedFront = MappingTools.stripHtmlTags front
             StrippedBack = MappingTools.stripHtmlTags back
         }
-        // temp copyTo
-        //entity.Created <- this.Created
-        //entity.Modified <- this.Modified |> Option.toNullable
+    static member initialize =
+        {   Id = 0
+            Created = DateTime.UtcNow
+            Modified = None
+            IsDmca = false
+            IsAcquired = true
+            StrippedFront = ""
+            StrippedBack = ""
+        }
+    member this.copyTo (entity: CardInstanceEntity) =
+        entity.Created <- this.Created
+        entity.Modified <- this.Modified |> Option.toNullable
+        entity.IsDmca <- this.IsDmca
+    member this.copyToNew =
+        let e = CardInstanceEntity()
+        this.copyTo e
+        e
 
 type QuizCard with
     static member load (entity: AcquiredCardEntity) =
@@ -227,24 +241,48 @@ type QuizCard with
         }
 
 type AcquiredCard with
-    member this.CopyTo (entity: AcquiredCardEntity) =
+    member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) =
         entity.UserId <- this.UserId
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
+        entity.CardOptionId <- this.CardOptionId
         entity.Due <- this.Due
-    static member InitialCopyTo userId cardOptionId (tagIds: int seq) =
-        AcquiredCardEntity(
-            Tag_AcquiredCards = tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList(),
-            CardState = CardState.toDb Normal,
-            IsLapsed = false,
-            EaseFactorInPermille = 0s,
-            IntervalOrStepsIndex = Int16.MinValue,
-            Due = DateTime.UtcNow,
-            CardOptionId = cardOptionId,
+        entity.Tag_AcquiredCards <- tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList()
+    member this.copyToNew tagIds =
+        let e = AcquiredCardEntity()
+        this.copyTo e tagIds
+        e
+    static member initialize userId cardOptionId (tagIds: int seq) =
+        {   CardId = 0
+            AcquiredCardId = 0
             UserId = userId
-        )
+            CardState = CardState.Normal
+            IsLapsed = false
+            EaseFactorInPermille = 0s
+            IntervalOrStepsIndex = NewStepsIndex 0uy
+            Due = DateTime.UtcNow
+            CardOptionId = cardOptionId
+            CardInstanceMeta = CardInstanceMeta.initialize
+            Tags = [] // medTODO
+        }
+    static member load (entity: AcquiredCardEntity) = result {
+        let! cardState = entity.CardState |> CardState.create
+        return
+            {   CardId = entity.CardInstance.CardId
+                AcquiredCardId = entity.Id
+                UserId = entity.UserId
+                CardState = cardState
+                IsLapsed = entity.IsLapsed
+                EaseFactorInPermille = entity.EaseFactorInPermille
+                IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
+                Due = entity.Due
+                CardOptionId = entity.CardOptionId
+                CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.CardInstance
+                Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
+            }
+        }
 
 type InitialCardInstance = {
     FieldValues: FieldAndValue seq
@@ -268,31 +306,13 @@ type InitialCardInstance = {
                 FieldValues = FieldAndValue.join this.FieldValues,
                 File_CardInstances = fileCardInstances,
                 AcquiredCards = [
-                    AcquiredCard.InitialCopyTo this.AuthorId this.DefaultCardOptionId tags
+                    AcquiredCard.initialize this.AuthorId this.DefaultCardOptionId tags |> fun x -> x.copyToNew tags // medTODO tags, tags? Why two
                 ].ToList(),
                 EditSummary = "Initial creation"
             )
         use hasher = SHA256.Create() // lowTODO pull this out
         e.AcquireHash <- CardInstanceEntity.acquireHash e this.CardTemplateHash hasher
         e
-
-type AcquiredCard with
-    static member load (entity: AcquiredCardEntity) = result {
-        let! cardState = entity.CardState |> CardState.create
-        return
-            {   CardId = entity.CardInstance.CardId
-                AcquiredCardId = entity.Id
-                UserId = entity.UserId
-                CardState = cardState
-                IsLapsed = entity.IsLapsed
-                EaseFactorInPermille = entity.EaseFactorInPermille
-                IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
-                Due = entity.Due
-                CardOptionId = entity.CardOptionId
-                CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.CardInstance
-                Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
-            }
-        }
 
 type Comment with
     static member load (entity: CommentCardEntity) = {
