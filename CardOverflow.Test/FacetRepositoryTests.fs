@@ -27,8 +27,8 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    let! ac = CardRepository.GetAcquired db userId 0
-    let ac = { (Result.getOk ac) with Tags = tags }
+    let! ac = CardRepository.getNew db userId
+    let ac = { ac with Tags = tags }
     return!
         {   TemplateInstance = cardTemplateInstance.CardTemplateInstance
             FieldValues =

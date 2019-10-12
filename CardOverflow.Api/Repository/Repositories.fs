@@ -195,14 +195,18 @@ module CardRepository =
                 .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
-        let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
         let! r =
             get(db)
                 .SingleOrDefaultAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId)
         return
             match r with
-            | null -> AcquiredCard.initialize userId option.Id [] |> Ok
-            | x -> x |> AcquiredCard.load
+            | null -> Error "That card doesn't exist!"
+            | x -> Ok x
+            |> Result.bind AcquiredCard.load
+        }
+    let getNew (db: CardOverflowDb) userId = task {
+        let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
+        return AcquiredCard.initialize userId option.Id []
         }
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) =
         task {
