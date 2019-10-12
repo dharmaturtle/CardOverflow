@@ -98,7 +98,10 @@
     if (x.IsOk) {
       Card = x.ResultValue;
       Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
-      EditCard = await SanitizeCardRepository.getEdit(Service, Card.CardInstanceMeta.Id);
+      EditCard =
+        Card.CardId == 0
+        ? new EditCardCommand("", new List<FieldAndValue>(), Templates.First().Instances.First())
+        : (await SanitizeCardRepository.getEdit(Service, Card.CardInstanceMeta.Id)).Value;
       UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
     } else {
       LoadingMessage = x.ErrorValue;
@@ -107,7 +110,7 @@
   }
 
   async Task UpdateCard() {
-    var result = SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
+    var result = await SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
     if (result.IsOk) {
       await result.ResultValue;
       ToastService.ShowInfo("Saved!");

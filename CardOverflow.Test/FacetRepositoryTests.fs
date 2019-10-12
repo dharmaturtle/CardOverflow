@@ -233,10 +233,10 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let! revisions = CardRepository.Revisions c.Db userId cardId
     Assert.Equal(2, revisions.SortedMeta.Count())
     let! instance = CardRepository.instance c.Db revisions.SortedMeta.[0].Id
-    let revision, _, _, _ = instance.FrontBackFrontSynthBackSynth
+    let revision, _, _, _ = instance.Value.FrontBackFrontSynthBackSynth
     Assert.Contains(newValue, revision)
     let! instance = CardRepository.instance c.Db revisions.SortedMeta.[1].Id
-    let original, _, _, _ = instance.FrontBackFrontSynthBackSynth
+    let original, _, _, _ = instance.Value.FrontBackFrontSynthBackSynth
     Assert.Contains("Front", original)
     }
     

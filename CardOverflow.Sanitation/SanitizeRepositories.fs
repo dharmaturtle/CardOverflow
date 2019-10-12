@@ -113,22 +113,30 @@ type EditCardCommand = {
 }
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) instanceId = task {
-        let! { FieldValues = fieldValues; TemplateInstance = templateInstance } = CardRepository.instance db instanceId
-        return {
-            EditSummary = ""
-            FieldValues = fieldValues
-            TemplateInstance = templateInstance |> ViewCardTemplateInstance.load
-        }
-    }
-    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: EditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let card = db.Card.First(fun x -> x.Id = acquiredCard.CardId)
-        if card.AuthorId = authorId
-        then
+        let! instance = CardRepository.instance db instanceId
+        return
+            instance |> Option.map (fun { FieldValues = fieldValues; TemplateInstance = templateInstance } ->
+                {   EditSummary = ""
+                    FieldValues = fieldValues
+                    TemplateInstance = templateInstance |> ViewCardTemplateInstance.load
+                }
+            )}
+    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: EditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+        let update () =
             {   FieldValues = command.FieldValues
                 TemplateInstance = command.TemplateInstance |> ViewCardTemplateInstance.copyTo
             } |> CardRepository.UpdateFieldsToNewInstance db acquiredCard command.EditSummary
             |> Ok
-        else Error "You aren't that card's author."
+        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId)
+        return
+            match card with
+            | null ->
+                update ()
+            | card ->
+                if card.AuthorId = authorId
+                then update ()
+                else Error "You aren't that card's author."
+        }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Query
 

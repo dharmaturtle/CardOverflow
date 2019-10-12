@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using CardOverflow.Api;
 using CardOverflow.Entity;
+using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CardOverflow.Server {
@@ -20,12 +21,16 @@ namespace CardOverflow.Server {
       Content((await CardRepository.getView(_db, id)).FrontBackFrontSynthBackSynth.Item2, "text/html");
 
     [HttpGet("cardinstance/{id}/front")] // highTODO move to another server
-    public async Task<IActionResult> InstanceFront(int id) =>
-      Content((await CardRepository.instance(_db, id)).FrontBackFrontSynthBackSynth.Item1, "text/html");
+    public async Task<IActionResult> InstanceFront(int id) {
+      var x = await CardRepository.instance(_db, id);
+      return (x == null ? "" : x.Value.FrontBackFrontSynthBackSynth.Item1).Apply(s => Content(s, "text/html"));
+    }
 
     [HttpGet("cardinstance/{id}/back")] // highTODO move to another server
-    public async Task<IActionResult> InstanceBack(int id) =>
-      Content((await CardRepository.instance(_db, id)).FrontBackFrontSynthBackSynth.Item2, "text/html");
+    public async Task<IActionResult> InstanceBack(int id) {
+      var x = await CardRepository.instance(_db, id);
+      return (x == null ? "" : x.Value.FrontBackFrontSynthBackSynth.Item2).Apply(s => Content(s, "text/html"));
+    }
 
   }
 }
