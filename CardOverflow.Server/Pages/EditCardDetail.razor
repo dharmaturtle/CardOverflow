@@ -85,13 +85,16 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   bool IsSaved;
-  IEnumerable<ViewCardTemplateWithAllInstances> Templates;
+  [Parameter]
+  public IEnumerable<ViewCardTemplateWithAllInstances> Templates { get; set; }
   IEnumerable<ViewCardTemplateInstance> SelectedTemplateInstances;
   int SelectedTemplateId;
   int SelectedTemplateInstanceId;
 
   protected override async Task OnInitializedAsync() {
-    Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
+    if (Templates == null) {
+      Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
+    }
     UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
   }
 
