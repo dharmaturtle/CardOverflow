@@ -19,6 +19,7 @@ open SimpleInjector.Lifestyles
 open CardOverflow.Sanitation
 open System.Threading.Tasks
 open FSharp.Control.Tasks
+open System.Security.Cryptography
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -33,6 +34,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -49,6 +51,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
 
 [<Fact>]
 let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` () =
@@ -90,7 +93,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     Assert.Equal<string list> (expected, actual)
 
 [<Fact>]
-let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
+let ``AnkiImporter import cards that have the same acquireHash as distinct cards`` () = // lowTODO, perhaps they should be the same card
     let userId = 3
     use c = new TestContainer()
     AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
@@ -100,8 +103,8 @@ let ``AnkiImporter.save can import cards that have the same acquireHash`` () =
     Assert.Equal<string seq>(
         ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
-    Assert.Equal("3/8/2018 23:47:38", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Created.ToString("M/d/yyyy HH:mm:ss"))
-    Assert.Equal("4/26/2018 02:54:15", c.Db.Card.Include(fun x -> x.CardInstances).Single().CardInstances.Single().Modified.Value.ToString("M/d/yyyy HH:mm:ss"))
+    Assert.Equal(3, c.Db.Card.Count())
+    Assert.Equal(3, c.Db.CardInstance.Count())
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
@@ -153,6 +156,38 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         [1; 1; 1; 1],
         card.Relationships.Select(fun x -> x.Users)
     )}
+
+[<Fact>]
+let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =
+    let c = new TestContainer()
+    let userId = 1
+    let toEntity (cardTemplate: AnkiCardTemplateInstance) =
+        cardTemplate.CopyToNew userId null
+    use hasher = SHA256.Create()
+    let dbidByHash =
+        Anki.parseModels
+            userId
+            InitializeDatabase.ankiModels
+        |> Result.getOk
+        |> List.collect (snd >> List.map toEntity)
+        |> List.mapi (fun i entity ->
+            CardTemplateInstanceEntity.acquireHash hasher entity, i + 1
+        ) |> Map.ofList
+    let actualDbIdByHash =
+        c.Db.CardTemplate
+            .Include(fun x -> x.CardTemplateInstances)
+            .AsEnumerable()
+            .Select(fun x -> x.CardTemplateInstances.Single())
+            .Select(fun x -> CardTemplateInstanceEntity.acquireHash hasher x, x.Id)
+            |> Map.ofSeq
+
+    dbidByHash |> Map.iter(fun hash expectedId ->
+        Assert.Equal(
+            expectedId,
+            actualDbIdByHash.[hash]))
+    Assert.Equal<Map<string, int>>(
+        dbidByHash,
+        AnkiDefaults.cardTemplateIdByHash)
 
 //[<Fact>]
 let ``Manual Anki import`` () =

@@ -6,6 +6,7 @@ open CardOverflow.Entity.Anki
 open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
+open CardOverflow.Pure.Core
 open System
 open System.Linq
 open LoadersAndCopiers
@@ -25,6 +26,7 @@ type SimpleAnkiDb = {
 }
 
 type AnkiCardTemplateInstance = {
+    AnkiId: int64
     AuthorId: int
     Name: string
     Css: string
@@ -41,6 +43,7 @@ type AnkiCardTemplateInstance = {
     ShortAnswerTemplate: string
     DeckId: int64
     IsCloze: bool
+    Ordinal: byte
 } with
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
         entity.Name <- this.Name
@@ -69,24 +72,25 @@ type AnkiCardTemplateInstance = {
             CardTemplateEntity(
                 AuthorId = this.AuthorId)
         this.CopyTo entity
-        use hasher = SHA256.Create() // lowTODO pull this out
-        entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
+        entity.AnkiId <- Nullable this.AnkiId
         entity
     
 type AnkiCardWrite = {
+    AnkiNoteId: int64
+    AnkiNoteOrd: Byte
     CardTemplate: CardTemplateInstanceEntity
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
     AuthorId: int
 } with
-    member this.CopyTo(entity: CardInstanceEntity, cardTemplateHash: byte[]) =
+    member this.CopyTo (entity: CardInstanceEntity) =
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.CardTemplateInstance <- this.CardTemplate
-        use hasher = SHA256.Create()
-        entity.AcquireHash <- CardInstanceEntity.acquireHash entity cardTemplateHash hasher
+        entity.AnkiNoteId <- Nullable this.AnkiNoteId
+        entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = CardInstanceEntity()
         entity.EditSummary <- "Imported from Anki"
@@ -101,13 +105,17 @@ type AnkiCardWrite = {
                     File = x
                 )
             ).ToList()
-        this.CopyTo(entity, this.CardTemplate.AcquireHash)
+        this.CopyTo entity
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.CardInstance
             .Include(fun x -> x.Card.RelationshipSources)
             .Include(fun x -> x.Card.RelationshipTargets)
-            .FirstOrDefault(fun c -> c.AcquireHash = (this.CopyToNew []).AcquireHash)
+            .FirstOrDefault(fun c ->
+                c.AnkiNoteId = Nullable this.AnkiNoteId &&
+                c.AnkiNoteOrd = Nullable this.AnkiNoteOrd &&
+                c.CardTemplateInstance.AnkiId = this.CardTemplate.AnkiId
+            ) // highTODO compare the actual values
 
 type AnkiAcquiredCard = {
     UserId: int
@@ -264,14 +272,16 @@ module Anki =
                               ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
                               Ordinal = g.Required.Field "ord" Decode.int |> byte|})
                               |> Decode.list )
-                |> Seq.sortBy (fun x -> x.Ordinal)
+                |> List.sortBy (fun x -> x.Ordinal)
             cardTemplates
-            |> Seq.map(fun cardTemplate ->
+            |> List.map(fun cardTemplate ->
                 let namePostfix =
                     if cardTemplates.Count() >= 2
                     then " - " + cardTemplate.Name
                     else ""
-                {   AuthorId = userId
+                {   AnkiId = get.Required.Field "id" Decode.int64
+                    Ordinal = cardTemplate.Ordinal
+                    AuthorId = userId
                     Name = get.Required.Field "name" Decode.string + namePostfix
                     Css = get.Required.Field "css" Decode.string
                     Fields =
@@ -333,7 +343,7 @@ module Anki =
         |> fun (files, fields) -> (files |> List.distinct, fields)
     
     let parseNotes
-        (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; IsCloze: bool |} list>)
+        (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; CardTemplate: AnkiCardTemplateInstance |} list>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -355,9 +365,11 @@ module Anki =
                 let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let cardTemplates = cardTemplatesByModelId.[string note.Mid]
                 let cards =
-                    let toCard fields (cardTemplate: CardTemplateInstanceEntity) =
+                    let toCard fields (cardTemplate: CardTemplateInstanceEntity) noteOrd =
                         let c =
-                            { CardTemplate = cardTemplate
+                            { AnkiNoteId = note.Id
+                              AnkiNoteOrd = noteOrd
+                              CardTemplate = cardTemplate
                               FieldValues = fields
                               Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                               Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
@@ -365,13 +377,14 @@ module Anki =
                         defaultArg
                             <| getCard c
                             <| c.CopyToNew files
-                    if cardTemplates.First().IsCloze then
+                    if cardTemplates.First().CardTemplate.IsCloze then
                         let cardTemplate = cardTemplates |> Seq.exactlyOne
                         let instances =
-                            [1 .. AnkiImportLogic.maxClozeIndex fields] |> List.map (fun i ->
+                            [1 .. AnkiImportLogic.maxClozeIndex fields] |> List.map byte |> List.map (fun clozeIndex ->
                                 toCard
-                                    <| AnkiImportLogic.multipleClozeToSingleCloze fields i
+                                    <| AnkiImportLogic.multipleClozeToSingleCloze fields clozeIndex
                                     <| cardTemplate.Entity
+                                    <| clozeIndex
                             )
                         Core.combination 2 instances
                         |> List.iter (fun instancePair ->
@@ -385,7 +398,7 @@ module Anki =
                             )
                         instances
                     else
-                        let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity)
+                        let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity x.CardTemplate.Ordinal)
                         Core.combination 2 instances
                         |> List.iter (fun instancePair ->
                                 if  instancePair.[0].Card.Id = 0 &&

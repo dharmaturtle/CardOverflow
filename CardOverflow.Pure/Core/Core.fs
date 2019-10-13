@@ -6,6 +6,15 @@ open System.Text
 open Microsoft.FSharp.Quotations
 open System
 
+[<CustomEquality; NoComparison>]
+type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
+    { v: 'T } 
+    override __.Equals(yobj) =
+        match yobj with
+        | :? StructurallyNull<'T> -> true
+        | _ -> false
+    override __.GetHashCode() = 0
+
 module Map =
     let overValue f =
         Seq.map (fun (KeyValue(_, v)) -> f v)

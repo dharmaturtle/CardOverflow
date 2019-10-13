@@ -325,6 +325,5 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     
     Assert.Equal(2, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
     let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
-    let newCardTemplateId = 8 // cause the TestContainer contains a bunch of defaults
-    Assert.True(myTemplates.Single(fun x -> x.Id = newCardTemplateId).Editable.Fields.Any(fun x -> x.Name = fieldName))
+    Assert.True(myTemplates.OrderBy(fun x -> x.Id).Last().Editable.Fields.Any(fun x -> x.Name = fieldName))
     }

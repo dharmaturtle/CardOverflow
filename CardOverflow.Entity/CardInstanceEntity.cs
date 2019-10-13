@@ -32,7 +32,8 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
-        public long? AnkiId { get; set; }
+        public long? AnkiNoteId { get; set; }
+        public byte? AnkiNoteOrd { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]

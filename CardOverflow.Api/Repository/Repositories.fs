@@ -64,7 +64,6 @@ module CardTemplateRepository =
                 Id <| instance.CardTemplateId
         let newTemplateInstance = instance.CopyToNewInstance cardTemplate
         db.CardTemplateInstance.AddI newTemplateInstance
-        use hasher = SHA256.Create ()
         db  
             .AcquiredCard
             .Include(fun x -> x.CardInstance)
@@ -76,7 +75,6 @@ module CardTemplateRepository =
                 ac.CardInstance.Created <- DateTime.UtcNow
                 ac.CardInstance.Modified <- Nullable()
                 ac.CardInstance.CardTemplateInstance <- newTemplateInstance
-                ac.CardInstance.AcquireHash <- CardInstanceEntity.acquireHash ac.CardInstance newTemplateInstance.AcquireHash hasher
             )
         return! db.SaveChangesAsyncI()
         }

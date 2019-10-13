@@ -7,6 +7,7 @@ open Xunit
 open System
 
 let run index before expected =
+    let index = byte index
     Assert.Equal(
         expected,
         AnkiImportLogic.multipleClozeToSingleCloze before index

@@ -60,7 +60,6 @@ type ViewCardTemplateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    AcquireHash: byte[]
     QuestionTemplate: string
     AnswerTemplate: string
     ShortQuestionTemplate: string
@@ -80,7 +79,6 @@ module ViewCardTemplateInstance =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        AcquireHash = bznz.AcquireHash
         QuestionTemplate = bznz.QuestionTemplate
         AnswerTemplate = bznz.AnswerTemplate
         ShortQuestionTemplate = bznz.ShortQuestionTemplate
@@ -97,7 +95,6 @@ module ViewCardTemplateInstance =
         Modified = view.Modified
         LatexPre = view.LatexPre
         LatexPost = view.LatexPost
-        AcquireHash = view.AcquireHash
         QuestionTemplate = view.QuestionTemplate
         AnswerTemplate = view.AnswerTemplate
         ShortQuestionTemplate = view.ShortQuestionTemplate

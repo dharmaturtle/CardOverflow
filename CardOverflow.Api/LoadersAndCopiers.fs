@@ -11,10 +11,14 @@ open FsToolkit.ErrorHandling
 open System.Security.Cryptography
 open System.Text
 open System.Collections.Generic
+open System.Text.RegularExpressions
 
 module CardTemplateInstanceEntity =
     let acquireHash (hasher: SHA256) (e: CardTemplateInstanceEntity) =
-        [   e.Css
+        let standardizeWhitespace x =
+            Regex.Replace(x, @"\s+", " ")
+        [   e.Name
+            e.Css
             e.LatexPre
             e.LatexPost
             e.QuestionTemplate
@@ -23,17 +27,11 @@ module CardTemplateInstanceEntity =
             e.ShortAnswerTemplate
             e.Fields
         ]
+        |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
         |> hasher.ComputeHash
-
-module CardInstanceEntity =
-    let acquireHash (e: CardInstanceEntity) (cardTemplateHash: byte[]) (hasher: SHA256) =
-        e.FieldValues
-        |> Encoding.Unicode.GetBytes
-        |> Seq.append cardTemplateHash
-        |> Seq.toArray
-        |> hasher.ComputeHash
+        |> Convert.ToBase64String
 
 type CardOption with
     member this.AcquireEquality (that: CardOption) =
@@ -132,14 +130,12 @@ type CardTemplateInstance with
         Modified = entity.Modified |> Option.ofNullable
         LatexPre = entity.LatexPre
         LatexPost = entity.LatexPost
-        AcquireHash = entity.AcquireHash
         QuestionTemplate = entity.QuestionTemplate
         AnswerTemplate = entity.AnswerTemplate
         ShortQuestionTemplate = entity.ShortQuestionTemplate
         ShortAnswerTemplate = entity.ShortAnswerTemplate
         EditSummary = entity.EditSummary }
     static member initialize = {
-        AcquireHash = Array.zeroCreate 0 // highTODO remove
         Id = 0
         Name = "New Template"
         CardTemplateId = 0
@@ -201,8 +197,6 @@ type CardTemplateInstance with
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
         entity.EditSummary <- this.EditSummary
-        use hasher = SHA256.Create()
-        entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
     member this.CopyToNewInstance cardTemplate =
         let e = CardTemplateInstanceEntity()
         this.CopyTo e
@@ -232,8 +226,6 @@ type CardInstanceView with
     member this.CopyTo (entity: CardInstanceEntity) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues 
         entity.CardTemplateInstanceId <- this.TemplateInstance.Id
-        use hasher = SHA256.Create()
-        entity.AcquireHash <- CardInstanceEntity.acquireHash entity this.TemplateInstance.AcquireHash hasher
     member this.CopyToNew =
         let entity = CardInstanceEntity()
         this.CopyTo entity

@@ -11,7 +11,7 @@ module AnkiImportLogic =
         ClozeRegex().TypedMatches fields
         |> Seq.map (fun x -> x.clozeIndex.Value |> int)
         |> Seq.max
-    let multipleClozeToSingleCloze fields (index: int) =
+    let multipleClozeToSingleCloze fields (index: byte) =
         (fields, ClozeRegex().TypedMatches fields)
         ||> Seq.fold (fun fields m -> 
             if m.clozeIndex.Value = string index then

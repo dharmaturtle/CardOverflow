@@ -115,7 +115,6 @@ type CardTemplateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    AcquireHash: byte[]
     QuestionTemplate: string
     AnswerTemplate: string
     ShortQuestionTemplate: string

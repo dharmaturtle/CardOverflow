@@ -23,8 +23,8 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     |> Assert.True
     Assert.Equal(2, c.Db.Card.Count())
     Assert.Equal(2, c.Db.CardInstance.Count())
-    Assert.Equal(7, c.Db.CardTemplate.Count())
-    Assert.Equal(7, c.Db.CardTemplateInstance.Count())
+    Assert.Equal(8, c.Db.CardTemplate.Count())
+    Assert.Equal(8, c.Db.CardTemplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
 
 let assertHasBasicInfo db ankiDb =
@@ -39,11 +39,13 @@ let assertHasBasicInfo db ankiDb =
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
+            "4/8/2019 02:14:29"
         ].ToList(),
         db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "6/16/2019 00:51:28"
+            "6/16/2019 00:51:28"
             "6/16/2019 00:51:32"
             "6/16/2019 00:51:32"
             "6/16/2019 00:51:46"
@@ -96,6 +98,7 @@ let assertHasBasicInfo db ankiDb =
             |> Seq.sort)
     Assert.Equal(2, db.Relationship.Count())
     Assert.Equal(2, db.Relationship.Count(fun x -> x.Name = "Linked"))
+    Assert.NotEmpty(db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -146,8 +149,8 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
 
     Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
     Assert.Equal(4, c.Db.Tag.Count())
-    Assert.Equal(6, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
-    Assert.Equal(6, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
+    Assert.Equal(7, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
+    Assert.Equal(7, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
     Assert.Equal(0, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = userId))
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
@@ -160,6 +163,7 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -181,3 +185,4 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` _ si
 
     Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))

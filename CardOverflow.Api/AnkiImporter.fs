@@ -17,6 +17,16 @@ open System.Security.Cryptography
 open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 
+module AnkiDefaults =
+    let cardTemplateIdByHash =
+        [("Pgevgl1Ndx4SfCTiS8ytr+tsdxqTZxl1qOoYbfmbSzo=", 1)
+         ("Z83cAQkktpO3obm5Mci5LiF3s3QkeG8VosGlr38h454=", 2)
+         ("gMdIAi+7mH4HIeSEmBUGZZS0q3SV96WHcilQe6j4oWk=", 3)
+         ("MtO96DMmyAAl4CuSj9UbquRkyV5VhjMS06WqGR//C8w=", 4)
+         ("5jCh7lUe86ifCVo4rUsStniC+C/tA6rG62gAJALvMy4=", 5)
+         ("+OjyChMNxhIJcrSsMDBf9C8yQjSMp7eN05kG61TwZxo=", 6)
+         ("s0P3gy9cP0gCQE6qqGbocZptlohfauH0qmB7v8SLUBs=", 7)] |> Map.ofSeq
+
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
         { Cards = db.Cards.ToList() |> List.ofSeq
@@ -115,13 +125,9 @@ module AnkiImporter =
                             |> e.User_CardTemplateInstances.Add
                         e
                     | None -> cardTemplate.CopyToNew userId defaultCardOption
-                    |> fun x -> {| Entity = x; IsCloze = cardTemplate.IsCloze |}
-                let toEntities _ =
-                    Seq.map toEntity
-                    >> Seq.distinctBy (fun x -> (System.Text.Encoding.UTF8.GetString x.Entity.AcquireHash))
-                    >> Seq.toList
+                    |> fun x -> {| Entity = x; CardTemplate = cardTemplate |}
                 Anki.parseModels userId col.Models
-                |> Result.map (fun x -> x |> Map.ofSeq |> Map.map toEntities)
+                |> Result.map (fun x -> x |> Map.ofList |> Map.map (fun _ x -> List.map toEntity x))
             let usersTags =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.overValue fst
@@ -144,33 +150,7 @@ module AnkiImporter =
                     noRelationship
                     getCard
                     ankiDb.Notes
-                |> List.ofSeq
-            let cardsAndTagsByNoteId =
-                let duplicates =
-                    cardsAndTagsByNoteId
-                    |> List.collect (fun (noteId, (cards, tags)) -> cards |> List.map (fun card -> (card, noteId, tags)))
-                    |> List.groupBy(fun (card, _, _) -> card.AcquireHash) // lowTODO optimization, does this use Span? https://stackoverflow.com/a/48599119
-                    |> List.filter(fun (_, x) -> x.Count() > 1)
-                    |> List.collect(fun (_, x) ->
-                        let tags = x |> List.collect(fun (_, _, tags) -> tags) |> List.groupBy(fun x -> x.Name) |> List.map(fun (x, y) -> y.First())
-                        let card, _, _ = x.First()
-                        card.Created <- x.Min(fun (card, _, _) -> card.Created)
-                        card.Modified <- x.Max(fun (card, _, _) -> card.Modified)
-                        x |> List.map (fun (_, noteId, _) -> noteId, (card, tags))
-                    )
-                    |> List.groupBy (fun (noteId, _) -> noteId)
-                    |> List.map (fun (noteId, xs) ->
-                        let cards = xs |> List.map (fun (_, (card, _)) -> card)
-                        let tags = xs |> List.collect (fun (_, (_, tags)) -> tags) |> List.groupBy(fun x -> x.Name) |> List.map(fun (x, y) -> y.First())
-                        noteId, (cards, tags)
-                    )
-                    |> Map.ofList
-                cardsAndTagsByNoteId
-                |> Seq.map (fun (noteId, tuple) ->
-                    if duplicates.ContainsKey noteId
-                    then noteId, duplicates.[noteId]
-                    else noteId, tuple
-                ) |> Map.ofSeq
+                |> Map.ofSeq
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
@@ -179,16 +159,25 @@ module AnkiImporter =
                 |> Result.map Map.ofSeq
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByNoteId getHistory) |> Result.consolidate
             return
-                cardByNoteId |> Map.overValue id |> Seq.distinctBy (fun x -> x.CardInstance.GetHashCode()), // duplicate anki notes share a CardInstance instance
+                cardByNoteId |> Map.overValue id,
                 histories |> Seq.choose id
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
-            let ti = templateInstance.CopyToNew userId null
-            db.CardTemplateInstance
-                .Include(fun x -> x.User_CardTemplateInstances)
-                .FirstOrDefault(fun x -> x.AcquireHash = ti.AcquireHash)
-                |> Option.ofObj
+            let ti = templateInstance.CopyToNew userId null // verylowTODO options isn't used so we're passing null... make a better way to calculate the hash
+            use hasher = SHA256.Create()
+            let hash = CardTemplateInstanceEntity.acquireHash hasher ti
+            AnkiDefaults.cardTemplateIdByHash.TryFind hash
+            |> function
+            | Some id ->
+                db.CardTemplateInstance
+                    .Include(fun x -> x.User_CardTemplateInstances)
+                    .Single(fun x -> x.Id = id)
+            | None ->
+                db.CardTemplateInstance
+                    .Include(fun x -> x.User_CardTemplateInstances)
+                    .FirstOrDefault(fun x -> x.AnkiId = ti.AnkiId) // highTODO compare the actual values
+            |> Option.ofObj
         let getCard (card: AnkiCardWrite) =
             card.AcquireEquality db
             |> Option.ofObj
