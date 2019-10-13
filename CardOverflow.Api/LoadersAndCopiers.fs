@@ -117,8 +117,12 @@ type FieldAndValue with
     static member join (fields: FieldAndValue seq) =
         fields |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
+type IdOrEntity<'a> =
+    | Id of int
+    | Entity of 'a
+
 type CardTemplateInstance with
-    static member load(entity: CardTemplateInstanceEntity) = {
+    static member load (entity: CardTemplateInstanceEntity) = {
         Id = entity.Id
         Name = entity.Name
         CardTemplateId = entity.CardTemplateId
@@ -134,6 +138,56 @@ type CardTemplateInstance with
         ShortQuestionTemplate = entity.ShortQuestionTemplate
         ShortAnswerTemplate = entity.ShortAnswerTemplate
         EditSummary = entity.EditSummary }
+    static member initialize = {
+        AcquireHash = Array.zeroCreate 0 // highTODO remove
+        Id = 0
+        Name = "New Template"
+        CardTemplateId = 0
+        Css = """.card {
+     font-family: arial;
+     font-size: 20px;
+     text-align: center;
+}"""
+        Fields = [
+        {   Name = "Front"
+            Font = "Arial"
+            FontSize = 20uy
+            IsRightToLeft = false
+            Ordinal = 0uy
+            IsSticky = false }
+        {   Name = "Back"
+            Font = "Arial"
+            FontSize = 20uy
+            IsRightToLeft = false
+            Ordinal = 1uy
+            IsSticky = false }
+        {   Name = "Source"
+            Font = "Arial"
+            FontSize = 20uy
+            IsRightToLeft = false
+            Ordinal = 2uy
+            IsSticky = true
+        }]
+        Created = DateTime.UtcNow
+        Modified = None
+        LatexPre = """\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+"""
+        LatexPost = """\end{document}"""
+        QuestionTemplate = """{{Front}}"""
+        AnswerTemplate = """{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}"""
+        ShortQuestionTemplate = ""
+        ShortAnswerTemplate = ""
+        EditSummary = "Initial creation" }
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
@@ -149,12 +203,14 @@ type CardTemplateInstance with
         entity.EditSummary <- this.EditSummary
         use hasher = SHA256.Create()
         entity.AcquireHash <- CardTemplateInstanceEntity.acquireHash hasher entity
-    member this.CopyToNewInstance cardTemplateId =
+    member this.CopyToNewInstance cardTemplate =
         let e = CardTemplateInstanceEntity()
         this.CopyTo e
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        e.CardTemplateId <- cardTemplateId
+        match cardTemplate with
+        | Id id -> e.CardTemplateId <- id
+        | Entity entity -> e.CardTemplate <- entity
         e
 
 type AcquiredCardTemplateInstance with
@@ -168,10 +224,6 @@ type CardTemplate with
         Id = entity.Id
         AuthorId = entity.AuthorId
         LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load }
-
-type IdOrEntity<'a> =
-    | Id of int
-    | Entity of 'a
 
 type CardInstanceView with
     static member load (entity: CardInstanceEntity) = {

@@ -48,7 +48,7 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
         } |> ViewCardTemplateInstance.copyTo
     
-    do! CardTemplateRepository.UpdateFieldsToNewInstance c.Db updated
+    do! CardTemplateRepository.UpdateFieldsToNewInstance c.Db userId updated
 
     let! cardTemplate = CardTemplateRepository.GetFromInstance c.Db templateId
     Assert.Equal(

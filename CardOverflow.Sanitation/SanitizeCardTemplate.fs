@@ -125,6 +125,13 @@ type ViewCardTemplateWithAllInstances = {
                 instances.First() with
                     Id = 0
                     EditSummary = "" }}
+    static member initialize userId =
+        let instance = CardTemplateInstance.initialize |> ViewCardTemplateInstance.load
+        {   Id = 0
+            AuthorId = userId
+            Instances = [instance].ToList()
+            Editable = instance
+        }
 
 module SanitizeCardTemplate =
     let AllInstances (db: CardOverflowDb) templateId = task {
@@ -141,12 +148,19 @@ module SanitizeCardTemplate =
         let! x =
             db.CardTemplate
                 .Include(fun x-> x.CardTemplateInstances)
-                .Where(fun x -> x.CardTemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId))))
+                .Where(fun x -> 
+                    x.AuthorId = userId ||
+                    x.CardTemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))
+                )
                 .ToListAsync()
         return x |> Seq.map ViewCardTemplateWithAllInstances.load
         }
     let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
-        let cardTemplate = db.CardTemplate.Single(fun x -> x.Id = instance.CardTemplateId)
-        if cardTemplate.AuthorId = userId
-        then Ok <| CardTemplateRepository.UpdateFieldsToNewInstance db (ViewCardTemplateInstance.copyTo instance)
-        else Error <| "You aren't that this template's author."
+        let update () = CardTemplateRepository.UpdateFieldsToNewInstance db userId (ViewCardTemplateInstance.copyTo instance) |> Ok
+        db.CardTemplate.SingleOrDefault(fun x -> x.Id = instance.CardTemplateId)
+        |> function
+        | null -> update ()
+        | cardTemplate ->
+            if cardTemplate.AuthorId = userId
+            then update ()
+            else Error <| "You aren't that this template's author."

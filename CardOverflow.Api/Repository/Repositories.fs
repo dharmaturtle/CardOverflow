@@ -56,25 +56,29 @@ module CardTemplateRepository =
                     .FirstAsync(fun x -> x.Id = instanceId)
             return instance.CardTemplate |> CardTemplate.load
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (instance: CardTemplateInstance) =
-        task {
-            let newTemplateInstance = instance.CopyToNewInstance instance.CardTemplateId
-            db.CardTemplateInstance.AddI newTemplateInstance
-            use hasher = SHA256.Create ()
-            db  
-                .AcquiredCard
-                .Include(fun x -> x.CardInstance)
-                .Where(fun x -> x.CardInstance.CardTemplateInstanceId = instance.Id)
-                |> Seq.iter(fun ac ->
-                    db.Entry(ac.CardInstance).State <- EntityState.Added
-                    ac.CardInstance.Id <- ac.CardInstance.GetHashCode()
-                    db.Entry(ac.CardInstance).Property(Core.nameof <@ any<CardInstanceEntity>.Id @>).IsTemporary <- true
-                    ac.CardInstance.Created <- DateTime.UtcNow
-                    ac.CardInstance.Modified <- Nullable()
-                    ac.CardInstance.CardTemplateInstance <- newTemplateInstance
-                    ac.CardInstance.AcquireHash <- CardInstanceEntity.acquireHash ac.CardInstance newTemplateInstance.AcquireHash hasher
-                )
-            return! db.SaveChangesAsyncI()
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: CardTemplateInstance) = task {
+        let cardTemplate =
+            if instance.CardTemplateId = 0 then
+                Entity <| CardTemplateEntity(AuthorId = userId)
+            else    
+                Id <| instance.CardTemplateId
+        let newTemplateInstance = instance.CopyToNewInstance cardTemplate
+        db.CardTemplateInstance.AddI newTemplateInstance
+        use hasher = SHA256.Create ()
+        db  
+            .AcquiredCard
+            .Include(fun x -> x.CardInstance)
+            .Where(fun x -> x.CardInstance.CardTemplateInstanceId = instance.Id)
+            |> Seq.iter(fun ac ->
+                db.Entry(ac.CardInstance).State <- EntityState.Added
+                ac.CardInstance.Id <- ac.CardInstance.GetHashCode()
+                db.Entry(ac.CardInstance).Property(Core.nameof <@ any<CardInstanceEntity>.Id @>).IsTemporary <- true
+                ac.CardInstance.Created <- DateTime.UtcNow
+                ac.CardInstance.Modified <- Nullable()
+                ac.CardInstance.CardTemplateInstance <- newTemplateInstance
+                ac.CardInstance.AcquireHash <- CardInstanceEntity.acquireHash ac.CardInstance newTemplateInstance.AcquireHash hasher
+            )
+        return! db.SaveChangesAsyncI()
         }
 
 module HistoryRepository =

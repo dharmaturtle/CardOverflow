@@ -295,3 +295,36 @@ let ``Card search works`` (): Task<unit> = task {
     let! cards = search back
     Assert.Equal(2, cards.Results.Single().Id)
     }
+
+[<Fact>]
+let ``Can create card template and insert a modified one`` (): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let initialCardTemplate = ViewCardTemplateWithAllInstances.initialize userId
+    
+    do! SanitizeCardTemplate.Update c.Db userId initialCardTemplate.Editable |> Result.getOk
+    let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
+    
+    Assert.True(myTemplates.Single().Editable.Fields.Any(fun x -> x.Name = initialCardTemplate.Editable.Fields.First().Name))
+    
+    // testing a brand new template, but slightly different
+    let fieldName = Guid.NewGuid().ToString()
+    let newEditable =
+        let newField =
+            {   Name = fieldName
+                Font = ""
+                FontSize = 0uy
+                IsRightToLeft = false
+                Ordinal = 0
+                IsSticky = false
+            }
+        {   initialCardTemplate.Editable with
+                Fields = initialCardTemplate.Editable.Fields.Append newField |> toResizeArray
+        }
+    do! SanitizeCardTemplate.Update c.Db userId newEditable |> Result.getOk
+    
+    Assert.Equal(2, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
+    let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
+    let newCardTemplateId = 8 // cause the TestContainer contains a bunch of defaults
+    Assert.True(myTemplates.Single(fun x -> x.Id = newCardTemplateId).Editable.Fields.Any(fun x -> x.Name = fieldName))
+    }
