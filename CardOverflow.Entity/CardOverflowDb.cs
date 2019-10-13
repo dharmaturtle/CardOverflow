@@ -94,9 +94,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.AcquireHash)
-                    .IsUnique();
-
                 entity.HasIndex(e => e.CardId);
 
                 entity.HasIndex(e => e.CardTemplateInstanceId);
@@ -140,9 +137,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTemplateInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.AcquireHash)
-                    .IsUnique();
-
                 entity.HasIndex(e => e.CardTemplateId);
 
                 entity.Property(e => e.Css).IsUnicode(false);

@@ -17,9 +17,6 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
         public int CardId { get; set; }
-        [Required]
-        [MaxLength(32)]
-        public byte[] AcquireHash { get; set; }
         public bool IsDmca { get; set; }
         [Required]
         public string FieldValues { get; set; }
@@ -35,6 +32,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
+        public long? AnkiId { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]

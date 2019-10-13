@@ -57,9 +57,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _LatexPost;
-        [Required]
-        [MaxLength(32)]
-        public byte[] AcquireHash { get; set; }
         public bool IsDmca { get; set; }
         [Required]
         [StringLength(4000)]
@@ -121,6 +118,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
+        public long? AnkiId { get; set; }
 
         [ForeignKey("CardTemplateId")]
         [InverseProperty("CardTemplateInstances")]
