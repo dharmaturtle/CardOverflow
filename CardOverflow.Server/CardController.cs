@@ -23,13 +23,13 @@ namespace CardOverflow.Server {
     [HttpGet("cardinstance/{id}/front")] // highTODO move to another server
     public async Task<IActionResult> InstanceFront(int id) {
       var x = await CardRepository.instance(_db, id);
-      return (x == null ? "" : x.Value.FrontBackFrontSynthBackSynth.Item1).Apply(s => Content(s, "text/html"));
+      return (x.IsError ? "" : x.ResultValue.FrontBackFrontSynthBackSynth.Item1).Apply(s => Content(s, "text/html"));
     }
 
     [HttpGet("cardinstance/{id}/back")] // highTODO move to another server
     public async Task<IActionResult> InstanceBack(int id) {
       var x = await CardRepository.instance(_db, id);
-      return (x == null ? "" : x.Value.FrontBackFrontSynthBackSynth.Item2).Apply(s => Content(s, "text/html"));
+      return (x.IsError ? "" : x.ResultValue.FrontBackFrontSynthBackSynth.Item2).Apply(s => Content(s, "text/html"));
     }
 
   }

@@ -88,7 +88,10 @@ module CardRepository =
             db.CardInstance
                 .Include(fun x -> x.CardTemplateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
-        return r |> Option.ofObj |> Option.map CardInstanceView.load
+        return
+            match r with
+            | null -> Error "Card instance not found"
+            | x -> Ok <| CardInstanceView.load x
     }
     let getView (db: CardOverflowDb) cardId = task {
         let! r =

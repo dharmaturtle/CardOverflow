@@ -115,7 +115,7 @@ module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) instanceId = task {
         let! instance = CardRepository.instance db instanceId
         return
-            instance |> Option.map (fun { FieldValues = fieldValues; TemplateInstance = templateInstance } ->
+            instance |> Result.map (fun { FieldValues = fieldValues; TemplateInstance = templateInstance } ->
                 {   EditSummary = ""
                     FieldValues = fieldValues
                     TemplateInstance = templateInstance |> ViewCardTemplateInstance.load

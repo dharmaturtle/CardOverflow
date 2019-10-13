@@ -1,0 +1,127 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using Syncfusion.EJ2.Blazor
+@using Syncfusion.EJ2.Blazor.RichTextEditor
+@inject IToastService ToastService
+@inherits OwningComponentBase<CardOverflowDb>
+
+@if (Templates == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <EditForm Model=@EditCard OnValidSubmit=@UpdateCard>
+    <fieldset disabled=@IsSaved>
+      <div class="form-group">
+        <div class="row">
+          <div class="col-sm">
+            @foreach (var field in EditCard.FieldValues) {
+              <label><b>@field.Field.Name: </b></label>
+              <EjsRichTextEditor @bind-Value=@field.Value>
+                @* highTODO why doesn't iFrame work? *@
+                <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
+              </EjsRichTextEditor>
+            }
+          </div>
+          <div class="col-sm">
+            <div class="row">
+              <a href="CardTemplate/@SelectedTemplateId" class="col-sm-2 mt-2">
+                Card Template
+              </a>
+              <select value=@SelectedTemplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedTemplate(id)))>
+                @foreach (var template in Templates) {
+                  <option value=@template.Id>@template.Editable.Name</option>
+                }
+              </select>
+            </div>
+            <div class="row">
+              <a href="CardTemplate/@SelectedTemplateId?InstanceId=@SelectedTemplateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
+                Revision
+              </a>
+              <select value=@SelectedTemplateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedTemplateInstance))>
+                @foreach (var instance in SelectedTemplateInstances) {
+                  <option value=@instance.Id>@instance.Created - @instance.EditSummary</option>
+                }
+              </select>
+            </div>
+            <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back") />
+            Tags:
+            <ul>
+              @foreach (var tag in Card.Tags) {
+                <li>
+                  @tag
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="float-right mr-3">
+        <div class="row">
+          <span class="btn-group">
+            <InputText @bind-Value=@EditCard.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
+            <button type="submit" class="btn btn-primary">Save</button>
+          </span>
+        </div>
+        <div class="row">
+          <DataAnnotationsValidator />
+          <ValidationSummary />
+        </div>
+      </div>
+    </fieldset>
+  </EditForm>
+}
+
+@code {
+  private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
+  [Parameter]
+  public AcquiredCard Card { get; set; }
+  [Parameter]
+  public EditCardCommand EditCard { get; set; }
+  [CascadingParameter]
+  UserEntity User { get; set; }
+  bool IsSaved;
+  IEnumerable<ViewCardTemplateWithAllInstances> Templates;
+  IEnumerable<ViewCardTemplateInstance> SelectedTemplateInstances;
+  int SelectedTemplateId;
+  int SelectedTemplateInstanceId;
+
+  protected override async Task OnInitializedAsync() {
+    Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
+    UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
+  }
+
+  async Task UpdateCard() {
+    var result = await SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
+    if (result.IsOk) {
+      await result.ResultValue;
+      ToastService.ShowInfo("Saved!");
+      IsSaved = true;
+    } else {
+      ToastService.ShowError(result.ErrorValue);
+    }
+  }
+
+  void UpdateSelectedTemplate(int templateId, int? instanceId = null) {
+    SelectedTemplateId = templateId;
+    SelectedTemplateInstances = Templates.Single(t => t.Id == templateId).Instances;
+    UpdateSelectedTemplateInstance(instanceId ?? SelectedTemplateInstances.First().Id);
+  }
+
+  void UpdateSelectedTemplateInstance(int instanceId) {
+    SelectedTemplateInstanceId = instanceId;
+    EditCard.TemplateInstance = Templates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
+    var valuesByField = EditCard.FieldValues.ToDictionary(fv => fv.Field.Name, fv => fv.Value);
+    EditCard.FieldValues = EditCard.TemplateInstance.Fields
+      .Select(ViewFieldModule.copyTo)
+      .Select(field =>
+        (valuesByField.ContainsKey(field.Name) ? valuesByField[field.Name] : "")
+          .Apply(value => new FieldAndValue(field, value))
+      ).ToList();
+  }
+
+}
