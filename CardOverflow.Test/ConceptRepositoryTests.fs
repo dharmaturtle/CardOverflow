@@ -26,7 +26,7 @@ open CardOverflow.Sanitation
 open System.Collections
 
 [<Fact>]
-let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() =
+let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``(): Task<unit> = task {
     use c = new Container()
     c.RegisterStuff
     c.RegisterStandardConnectionString
@@ -36,13 +36,10 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``() 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (CardRepository.GetAcquiredPages db userId i)
-            .GetAwaiter()
-            .GetResult()
-            .Results
-            .ToList()
-            |> ignore
+        let! _ = CardRepository.GetAcquiredPages db userId i
+        ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
+    }
 
 [<Fact>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
@@ -82,12 +79,8 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        (CardRepository.SearchAsync c.Db userId i "")
-            .GetAwaiter()
-            .GetResult()
-            .Results
-            .ToList()
-            |> ignore
+        let! _ = CardRepository.SearchAsync c.Db userId i ""
+        ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
     let! card = CardRepository.Get c.Db userId 1

@@ -163,9 +163,9 @@ module AnkiImporter =
                 histories |> Seq.choose id
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
+        use hasher = SHA256.Create()
         let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null // verylowTODO options isn't used so we're passing null... make a better way to calculate the hash
-            use hasher = SHA256.Create()
             let hash = CardTemplateInstanceEntity.acquireHash hasher ti
             AnkiDefaults.cardTemplateIdByHash.TryFind hash
             |> function
@@ -193,7 +193,7 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| db.Tag // medTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy... no actually you're loading the ENTIRE tag table
+                    <| db.Tag // highTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy... no actually you're loading the ENTIRE tag table
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
                     <| getCardTemplateInstance
