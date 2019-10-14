@@ -65,9 +65,8 @@
   }
 
   async Task SaveScore(Score score) {
-    var (interval, easeFactor) = Scheduler.interval(todaysCards.First().ResultValue, score);
-    await SanitizeHistoryRepository.AddAndSaveAsync(Service, todaysCards.First().ResultValue.AcquiredCardId, score, TimeProvider.utcNow, interval, easeFactor, TimeProvider.utcNow - frontVisible);
-    // medTODO also need to update the AcquiredCard with the new interval (and maybe other stuff), due to a denormalized db. Move the Scheduler to that new function
+    var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.interval(todaysCards.First().ResultValue, score);
+    await SanitizeHistoryRepository.AddAndSaveAsync(Service, todaysCards.First().ResultValue.AcquiredCardId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps);
     // medTODO needs `undo review` support
     todaysCards.RemoveAt(0);
     ShowFront();

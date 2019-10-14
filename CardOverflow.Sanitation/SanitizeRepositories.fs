@@ -55,14 +55,24 @@ module SanitizeTagRepository =
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
-        HistoryEntity(
-            AcquiredCardId = acquiredCardId,
-            Score = Score.toDb score,
-            Timestamp = timestamp,
-            IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
-            EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
-            TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
-        ) |> HistoryRepository.addAndSaveAsync db
+        let! card = db.AcquiredCard.SingleAsync(fun x -> x.Id = acquiredCardId)
+        card.Histories.Add
+        <|  HistoryEntity(
+                Score = Score.toDb score,
+                Timestamp = timestamp,
+                IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
+                EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
+                TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
+            )
+        card.IntervalOrStepsIndex <- intervalOrSteps |> IntervalOrStepsIndex.intervalToDb
+        card.Due <- DateTime.UtcNow + interval
+        card.EaseFactorInPermille <- easeFactor * 1000. |> Math.Round |> int16
+        card.IsLapsed <-
+            match intervalOrSteps with
+            | LapsedStepsIndex _ -> true
+            | _ -> false
+        do! db.SaveChangesAsyncI ()
+        }
 
 [<CLIMutable>]
 type AddRelationshipCommand = {
