@@ -24,21 +24,25 @@
   <div class="study-content" tabindex="0" @onkeydown=@OnKeyDown @onclick=@FocusButton>
     @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
     <iframe sandbox="allow-scripts" class="study-iframe" srcdoc=@iframeSrcdoc></iframe>
-    <div class="study-footer">
-      @if (isFront) {
-        <button class="btn btn-study btn-primary" @onclick=@ShowBack @ref="ShowAnswerButton">Show answer</button>
-      } else {
-        <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Again))>Again</button> @*medTODO show how long until this card comes back*@
-        <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Hard))>Hard</button>
-        <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Good)) @ref="GoodButton">Good</button>
-        <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Easy))>Easy</button>
-      }
-      @if (isBlindMode) {
-        <button class="btn btn-study btn-primary" @onclick=@DisableBlindMode>Disable blind mode</button>
-        @transcript
-      } else {
-        <button class="btn btn-study btn-primary" @onclick=@EnableBlindMode>Enable blind mode</button>
-      }
+    <div class="study-footer d-flex justify-content-between">
+      <div>
+        @if (isFront) {
+          <button class="btn btn-study btn-primary" @onclick=@ShowBack @ref="ShowAnswerButton">Show answer</button>
+        } else {
+          <button class="btn btn-study btn-danger" @onclick=@(() => SaveScore(Score.Again))>Again</button> @*medTODO show how long until this card comes back*@
+          <button class="btn btn-study btn-warning" @onclick=@(() => SaveScore(Score.Hard))>Hard</button>
+          <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Good)) @ref="GoodButton">Good</button>
+          <button class="btn btn-study btn-success" @onclick=@(() => SaveScore(Score.Easy))>Easy</button>
+        }
+      </div>
+      <div>
+        @if (isBlindMode) {
+          <button class="btn btn-study btn-primary" @onclick=@DisableBlindMode>Disable blind mode</button>
+          @transcript
+        } else {
+          <button class="btn btn-study btn-primary" @onclick=@EnableBlindMode>Enable blind mode</button>
+        }
+      </div>
     </div>
   </div>
 }
