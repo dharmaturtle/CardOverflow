@@ -109,6 +109,11 @@
     function resizeIframe(obj) {
       iFrameResize({ log: true }, obj)
     }
+    function focusElement(element) {
+      window.setTimeout(function () { // https://stackoverflow.com/questions/1096436/
+        element.focus();
+      }, 0);
+    }
   </script>
   <link href="https://cdn.syncfusion.com/ej2/17.3.10/material.css" rel="stylesheet" />
   <script src="https://cdn.syncfusion.com/ej2/17.3.10/dist/ej2.min.js"></script>

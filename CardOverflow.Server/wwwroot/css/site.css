@@ -24,6 +24,14 @@ html, body {
   height: 94%; /* minus 3 pts to hide scrollbar, lowTODO make this less stupid */
 }
 
+.btn-study {
+  margin: 3px
+}
+
+  .btn-study:focus {
+    outline: 3px solid black
+  }
+
 .curate-edit-inputtextarea {
   width: 100%;
   height: 107px; /* hack */
