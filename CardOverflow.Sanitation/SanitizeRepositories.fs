@@ -1,5 +1,6 @@
 namespace CardOverflow.Sanitation
 
+open System.Threading.Tasks
 open CardOverflow.Pure.Core
 open LoadersAndCopiers
 open FSharp.Control.Tasks
@@ -53,7 +54,7 @@ module SanitizeTagRepository =
             <| TagRepository.DeleteFrom db tag
 
 module SanitizeHistoryRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) =
+    let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
         HistoryEntity(
             AcquiredCardId = acquiredCardId,
             Score = Score.toDb score,

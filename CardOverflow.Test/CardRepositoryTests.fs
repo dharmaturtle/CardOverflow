@@ -15,6 +15,7 @@ open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Pure
+open CardOverflow.Sanitation
 
 [<Fact>]
 let ``AcquireCards works``() = task {

@@ -1,6 +1,5 @@
 namespace CardOverflow.Api
 
-open CardOverflow.Api
 open CardOverflow.Pure
 open System
 open Serilog
@@ -11,20 +10,21 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
     let equals a b threshold = abs(a-b) < threshold
 
     let rawInterval (card: QuizCard) score =
-        let calculateStepsInterval (steps: TimeSpan list) graduatingInterval easyInterval stepIndex =
+        let calculateStepsInterval toStep stepTimespans graduatingInterval easyInterval stepIndex =
             match score with
-            | Again -> steps.Head
+            | Again -> stepTimespans |> List.head, toStep 0uy
             | Hard ->
-                match steps |> List.tryItem (int stepIndex) with
-                | Some step -> step
+                match stepTimespans |> List.tryItem (int stepIndex) with
+                | Some span -> span, toStep stepIndex
                 | None ->
                     sprintf "Hard was chosen for QuizCard %A and it had %i as its stepIndex - an illegal value." card stepIndex |> Log.Error
-                    steps.Head
+                    stepTimespans.Head, toStep 0uy
             | Good ->
-                match steps |> List.tryItem (int stepIndex + 1) with
-                | Some step -> step
-                | None -> graduatingInterval
-            | Easy -> easyInterval
+                let stepIndex = stepIndex + 1uy
+                match stepTimespans |> List.tryItem (int stepIndex) with
+                | Some span -> span, toStep stepIndex
+                | None -> graduatingInterval, Interval graduatingInterval
+            | Easy -> easyInterval, Interval easyInterval
         let calculateInterval previousInterval =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
                 max (rawInterval * card.Options.MatureCardsIntervalFactor)
@@ -35,26 +35,30 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
             let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
             match score with
-            | Again -> (card.Options.NewCardsSteps.Head, 0.)
-            | Hard -> (hard, card.EaseFactor - 0.15)
-            | Good -> (good, card.EaseFactor)
-            | Easy -> (easy, max (card.EaseFactor + 0.15) 1.3)
+            | Again -> card.Options.NewCardsSteps.Head, 0.
+            | Hard -> hard, card.EaseFactor - 0.15
+            | Good -> good, card.EaseFactor
+            | Easy -> easy, max (card.EaseFactor + 0.15) 1.3
         match card.IntervalOrStepsIndex with
         | NewStepsIndex i ->
-            (calculateStepsInterval
+            calculateStepsInterval
+                NewStepsIndex
                 card.Options.NewCardsSteps
                 card.Options.NewCardsGraduatingInterval
                 card.Options.NewCardsEasyInterval
                 i,
-             card.Options.NewCardsStartingEaseFactor)
+            card.Options.NewCardsStartingEaseFactor
         | LapsedStepsIndex i ->
-            (calculateStepsInterval
+            calculateStepsInterval
+                LapsedStepsIndex
                 card.Options.LapsedCardsSteps
                 card.Options.NewCardsGraduatingInterval // medTODO consider an option for this
                 card.Options.NewCardsGraduatingInterval // medTODO actually the card options are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
                 i,
-             card.Options.LapsedCardsNewIntervalFactor)
-        | Interval i -> calculateInterval i
+            card.Options.LapsedCardsNewIntervalFactor
+        | Interval i ->
+            let interval, ease = calculateInterval i
+            (interval, Interval interval), ease
 
     let fuzz(interval: TimeSpan) =
         let fuzzRangeInDaysInclusive =
@@ -71,4 +75,4 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
 
     member __.interval (card: QuizCard) score =
         rawInterval card score
-        |> fun (interval, easeFactor) -> fuzz interval, easeFactor
+        |> fun ((interval, intervalOrSteps), easeFactor) -> fuzz interval, intervalOrSteps, easeFactor
