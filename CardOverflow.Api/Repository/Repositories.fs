@@ -117,23 +117,18 @@ module CardRepository =
         db.AcquiredCard
             .Include(fun x -> x.CardOption)
             .Include(fun x -> x.CardInstance.CardTemplateInstance)
-    let GetTodaysCards (db: CardOverflowDb) userId =
+    let GetQuizBach (db: CardOverflowDb) userId =
         let tomorrow = DateTime.UtcNow.AddDays 1.
         task {
             let! cards =
                 (getCompleteCards db)
                     .Where(fun x -> x.UserId = userId && x.Due < tomorrow)
                     .OrderBy(fun x -> x.Due)
-                    .Take(3) // highTODO fix
+                    .Take(5)
                     .ToListAsync()
             return
-                cards |> Seq.map QuizCard.load
+                cards |> Seq.map QuizCard.load |> toResizeArray
         }
-    let GetAllCards (db: CardOverflowDb) userId =
-        (getCompleteCards db)
-            .Where(fun x -> x.UserId = userId)
-            .AsEnumerable()
-        |> Seq.map QuizCard.load
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
         let! defaultCardOption =
             db.CardOption

@@ -59,7 +59,8 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.AcquiredCard
-    Assert.SingleI <| CardRepository.GetAllCards c.Db userId
+    let! cards = CardRepository.GetQuizBach c.Db userId
+    Assert.SingleI cards
     Assert.Equal(
         """<!DOCTYPE html>
     <head>
@@ -99,7 +100,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task
         <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
     </body>
 </html>""",
-        (CardRepository.GetTodaysCards c.Db userId).GetAwaiter().GetResult()
+        cards
         |> Seq.head
         |> Result.getOk
         |> fun x -> x.Front
@@ -147,7 +148,7 @@ Back
         <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
     </body>
 </html>""",
-        (CardRepository.GetTodaysCards c.Db userId).GetAwaiter().GetResult()
+        cards
         |> Seq.head
         |> Result.getOk
         |> fun x -> x.Back
