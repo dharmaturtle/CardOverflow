@@ -1,4 +1,4 @@
-@page "/study"
+﻿@page "/study"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -16,6 +16,9 @@
   <p><em>You aren't signed in dude.</em></p>
 } else if (todaysCards == null) {
   <p><em>Loading...</em></p>
+} else if (!todaysCards.Any()) {
+  <h1 class="text-center">No cards due!</h1>
+  <h1 class="text-center">👍</h1>
 } else {
   <div class="study-content">
     @if (error == null) {
@@ -61,7 +64,9 @@
   protected override async Task OnInitializedAsync() {
     if (User != null) {
       todaysCards = (await CardRepository.GetTodaysCards(Service, User.Id)).ToList();
-      ShowFront();
+      if (todaysCards.Any()) {
+        ShowFront();
+      }
     }
   }
 
