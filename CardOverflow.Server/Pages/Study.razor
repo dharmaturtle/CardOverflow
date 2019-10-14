@@ -11,6 +11,7 @@
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
+@inject IToastService ToastService
 
 @if (User == null) {
   <p><em>You aren't signed in dude.</em></p>
@@ -21,14 +22,8 @@
   <h1 class="text-center">👍</h1>
 } else {
   <div class="study-content">
-    @if (error == null) {
-      @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
-      <iframe sandbox allow-scripts class="study-iframe" srcdoc=@iframeSrcdoc></iframe>
-    } else {
-      <h2>Error!</h2>
-      <p>@error</p>
-      <p>If you're seeing this error message, please contact support with the error message to resolve this issue.</p> @*lowTODO show a better error message*@
-    }
+    @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
+    <iframe sandbox allow-scripts class="study-iframe" srcdoc=@iframeSrcdoc></iframe>
   </div>
   <div class="study-footer">
     @if (isFront == true) {
@@ -52,7 +47,6 @@
 
 @code {
   string iframeSrcdoc;
-  string error;
   bool? isFront;
   [CascadingParameter]
   UserEntity User { get; set; }
@@ -85,7 +79,7 @@
       isFront = true;
       iframeSrcdoc = todaysCards.First().ResultValue.Front;
     } else {
-      error = todaysCards.First().ErrorValue;
+      ToastService.ShowError(todaysCards.First().ErrorValue);
     }
     StateHasChanged();
   }
@@ -99,7 +93,6 @@
   void ShowNextCard() {
     todaysCards.RemoveAt(0);
     ShowFront();
-    error = null;
   }
 
   async Task EnableBlindMode() {
