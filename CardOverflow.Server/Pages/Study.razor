@@ -21,7 +21,7 @@
   <h1 class="text-center">No cards due!</h1>
   <h1 class="text-center">👍</h1>
 } else {
-  <div class="study-content" tabindex="0" @onkeydown=@OnKeyDown>
+  <div class="study-content" tabindex="0" @onkeydown=@OnKeyDown @onclick=@FocusButton>
     @* https://stackoverflow.com/questions/19739001/which-is-the-difference-between-srcdoc-and-src-datatext-html-in-an/ *@
     <iframe sandbox="allow-scripts" class="study-iframe" srcdoc=@iframeSrcdoc></iframe>
     <div class="study-footer">
@@ -75,6 +75,14 @@
     // medTODO needs `undo review` support
     batch.RemoveAt(0);
     await ShowFront();
+  }
+
+  async Task FocusButton() {
+    if (isFront) {
+      await Js.InvokeAsync<string>("focusElement", ShowAnswerButton);
+    } else {
+      await Js.InvokeAsync<string>("focusElement", GoodButton);
+    }
   }
 
   async Task ShowFront() {
