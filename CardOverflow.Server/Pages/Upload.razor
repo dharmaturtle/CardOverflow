@@ -21,6 +21,11 @@
   }
 </style>
 <h1>Anki Importer</h1>
+<div>Imports are currently limited to 1 megabyte files or less.</div>
+<div>This <a href="https://ankiweb.net/shared/info/1983204951">plugin</a> or this <a href="https://www.reddit.com/r/Anki/comments/daz4jg/sharing_cards/f1wuo3s/">post</a> may help with selecting what to export.</div>
+<div>Importing the same files, decks, or cards multiple times should <em>not</em> cause duplication or other adverse effects.</div>
+<div>However, the import process may take a while. My deck of 3600 cards with 30,000 reviews took ~10 minutes to import <em>after</em> the upload.</div>
+<div>Try something very small at first. Consider unchecking "Include scheduling information" and "Include media".</div>
 <div class=@DropClass
      @ref=@dropTargetElement
      @ondrop=@OnDrop
@@ -79,6 +84,10 @@
     var nl = Environment.NewLine;
     foreach (var file in await dropReference.EnumerateFilesAsync()) {
       var fileInfo = await file.ReadFileInfoAsync();
+      if (fileInfo.Size > 1000000) {
+        Output += $"{fileInfo.Name} is more than 1 megabyte! Skipping...";
+        continue;
+      }
       Output += $"{nameof(IFileInfo)}.{nameof(fileInfo.Name)}: {fileInfo.Name}{nl}";
       Output += $"{nameof(IFileInfo)}.{nameof(fileInfo.Size)}: {fileInfo.Size}{nl}";
       Output += $"{nameof(IFileInfo)}.{nameof(fileInfo.Type)}: {fileInfo.Type}{nl}";
@@ -102,11 +111,16 @@
       Output += $"Beginning import... this  may take a while.{nl}";
       this.StateHasChanged();
 
-      var x = SanitizeAnki.Import(Service, downloadPath, User.Id);
-      if (x.IsOk) {
-        Output += $"Import complete!.{nl}";
-      } else {
-        Output += $"Error(s) importing: " + x.ErrorValue;
+      try {
+        var x = SanitizeAnki.Import(Service, downloadPath, User.Id);
+        if (x.IsOk) {
+          await x.ResultValue;
+          Output += $"Import complete!.{nl}";
+        } else {
+          Output += $"Error(s) importing: " + x.ErrorValue;
+        }
+      } catch (Exception) {
+        Output += "Unexpected errors occured while importing. Please email me and attach the file that you tried to import. Thanks!";
       }
       this.StateHasChanged();
     }

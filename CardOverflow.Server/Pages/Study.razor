@@ -64,9 +64,9 @@
         }
       </div>
       <div>
+        @transcript
         @if (isBlindMode) {
           <button class="btn btn-study btn-primary" @onclick=@DisableBlindMode>Disable blind mode</button>
-          @transcript
         } else {
           <button class="btn btn-study btn-primary" @onclick=@EnableBlindMode>Enable blind mode</button>
         }
