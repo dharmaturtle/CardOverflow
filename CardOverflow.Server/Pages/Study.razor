@@ -29,10 +29,38 @@
         @if (isFront) {
           <button class="btn btn-study btn-primary" @onclick=@ShowBack @ref="ShowAnswerButton">Show answer</button>
         } else {
-          <button class="btn btn-study btn-danger" @onclick=@(() => SaveScore(Score.Again))>Again</button> @*medTODO show how long until this card comes back*@
-          <button class="btn btn-study btn-warning" @onclick=@(() => SaveScore(Score.Hard))>Hard</button>
-          <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Good)) @ref="GoodButton">Good</button>
-          <button class="btn btn-study btn-success" @onclick=@(() => SaveScore(Score.Easy))>Easy</button>
+          <button class="btn btn-study btn-danger" @onclick=@(() => SaveScore(Score.Again))>
+            <div>
+              Again
+            </div>
+            <div>
+              @AgainInterval
+            </div>
+          </button>
+          <button class="btn btn-study btn-warning" @onclick=@(() => SaveScore(Score.Hard))>
+            <div>
+              Hard
+            </div>
+            <div>
+              @HardInterval
+            </div>
+          </button>
+          <button class="btn btn-study btn-primary" @onclick=@(() => SaveScore(Score.Good)) @ref="GoodButton">
+            <div>
+              Good
+            </div>
+            <div>
+              @GoodInterval
+            </div>
+          </button>
+          <button class="btn btn-study btn-success" @onclick=@(() => SaveScore(Score.Easy))>
+            <div>
+              Easy
+            </div>
+            <div>
+              @EasyInterval
+            </div>
+          </button>
         }
       </div>
       <div>
@@ -59,6 +87,10 @@
   ElementReference GoodButton;
   ElementReference ShowAnswerButton;
   bool isRendered;
+  string AgainInterval;
+  string HardInterval;
+  string GoodInterval;
+  string EasyInterval;
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
@@ -74,7 +106,7 @@
   }
 
   async Task SaveScore(Score score) {
-    var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.interval(batch.First().ResultValue, score);
+    var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.Calculate(batch.First().ResultValue, score);
     await SanitizeHistoryRepository.AddAndSaveAsync(Service, batch.First().ResultValue.AcquiredCardId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps);
     // medTODO needs `undo review` support
     batch.RemoveAt(0);
@@ -110,6 +142,11 @@
   async Task ShowBack() {
     isFront = false;
     iframeSrcdoc = batch.First().ResultValue.Back;
+    var (again, hard, good, easy) = Scheduler.Intervals(batch.First().ResultValue);
+    AgainInterval = again;
+    HardInterval = hard;
+    GoodInterval = good;
+    EasyInterval = easy;
     if (isRendered) {
       await Task.Delay(50); // focusElement needs this. lowTODO put focusElement in OnAfterRenderAsync
       await Js.InvokeAsync<string>("focusElement", GoodButton);

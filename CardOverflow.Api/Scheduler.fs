@@ -73,6 +73,12 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
         // lowTODO find an implementation that is max inclusive
         randomProvider.float fuzzRangeInDaysInclusive |> TimeSpan.FromDays
 
-    member __.interval (card: QuizCard) score =
+    member __.Calculate (card: QuizCard) score =
         rawInterval card score
         |> fun ((interval, intervalOrSteps), easeFactor) -> fuzz interval, intervalOrSteps, easeFactor
+
+    member __.Intervals (card: QuizCard) =
+        rawInterval card Again |> fst |> fst |> ViewLogic.toString,
+        rawInterval card Hard |> fst |> fst |> ViewLogic.toString,
+        rawInterval card Good |> fst |> fst |> ViewLogic.toString,
+        rawInterval card Easy |> fst |> fst |> ViewLogic.toString

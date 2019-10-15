@@ -47,6 +47,7 @@
     <Compile Include="AnkiImportLogicTests.fs" />
     <Compile Include="ResultTests.fs" />
     <Compile Include="MappingToolsTests.fs" />
+    <Compile Include="ViewLogicTests.fs" />
     <Compile Include="InitializeDatabase.fs" />
     <Compile Include="TestDbServices.fs" />
     <Compile Include="LoadersAndCopiersTests.fs" />

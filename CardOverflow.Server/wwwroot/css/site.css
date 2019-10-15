@@ -21,7 +21,7 @@ html, body {
 
 .study-iframe {
   width: 100%;
-  height: 94%; /* minus 3 pts to hide scrollbar, lowTODO make this less stupid */
+  height: 90%; /* minus 10 pts to hide scrollbar, lowTODO make this less stupid */
 }
 
 .btn-study {
