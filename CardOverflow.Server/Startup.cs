@@ -40,6 +40,10 @@ namespace CardOverflow.Server {
       services.AddDbContext<CardOverflowDb>();
       services.AddDefaultIdentity<UserEntity>(options => {
         options.User.RequireUniqueEmail = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequiredLength = 6;
         options.Password.RequireNonAlphanumeric = false;
         //options.SignIn.RequireConfirmedEmail = true; // medTODO
       }).AddEntityFrameworkStores<CardOverflowDb>();
