@@ -353,7 +353,10 @@ type ExploreCardSummary with
             if actual = entity.Users then
                 actual
             else
-                failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
+                if actual = 0 then
+                    entity.Users
+                else
+                    failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
         LatestMeta = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstanceMeta.load userId
     }
 

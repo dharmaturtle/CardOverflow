@@ -44,7 +44,7 @@
           </span>
           @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
         </button>
-        <a href="/card/@relationship.CardId">@htmlByCardId[relationship.CardId]</a>
+        <a href="/card/@relationship.CardId">@getHtml(relationship.CardId)</a>
       </li>
     }
   </ul>
@@ -88,6 +88,11 @@
       .ToDictionary(x => x.CardId, x => x.Item2);
     StateHasChanged();
   }
+
+  string getHtml(int cardId) =>
+    htmlByCardId.ContainsKey(cardId)
+    ? htmlByCardId[cardId]
+    : "Loading...";
 
   async Task Add() {
     var x = SanitizeRelationshipRepository.Add(Service, User.Id, Command);
