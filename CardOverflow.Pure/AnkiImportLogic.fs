@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open FsToolkit.ErrorHandling
 open FSharp.Text.RegexProvider
 open System
 open Microsoft.FSharp.Core.Operators.Checked
@@ -7,10 +8,18 @@ open System.ComponentModel.DataAnnotations
 
 module AnkiImportLogic =
     type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-    let maxClozeIndex fields =
-        ClozeRegex().TypedMatches fields
-        |> Seq.map (fun x -> x.clozeIndex.Value |> int)
-        |> Seq.max
+    let maxClozeIndex fields noteId = result {
+        let! r =
+            ClozeRegex().TypedMatches fields
+            |> List.ofSeq
+            |> function
+            | [] -> Error <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" noteId fields
+            | x -> Ok x
+        return
+            r
+            |> Seq.map (fun x -> x.clozeIndex.Value |> int)
+            |> Seq.max
+    }
     let multipleClozeToSingleCloze fields (index: byte) =
         (fields, ClozeRegex().TypedMatches fields)
         ||> Seq.fold (fun fields m -> 

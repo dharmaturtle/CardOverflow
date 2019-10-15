@@ -364,57 +364,63 @@ module Anki =
                     |> List.map (fun (_, x) -> x.First())
                 let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let cardTemplates = cardTemplatesByModelId.[string note.Mid]
-                let cards =
-                    let toCard fields (cardTemplate: CardTemplateInstanceEntity) noteOrd =
-                        let c =
-                            { AnkiNoteId = note.Id
-                              AnkiNoteOrd = noteOrd
-                              CardTemplate = cardTemplate
-                              FieldValues = fields
-                              Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
-                              Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
-                              AuthorId = userId }
-                        defaultArg
-                            <| getCard c
-                            <| c.CopyToNew files
-                    if cardTemplates.First().CardTemplate.IsCloze then
-                        let cardTemplate = cardTemplates |> Seq.exactlyOne
-                        let instances =
-                            [1 .. AnkiImportLogic.maxClozeIndex fields] |> List.map byte |> List.map (fun clozeIndex ->
-                                toCard
-                                    <| AnkiImportLogic.multipleClozeToSingleCloze fields clozeIndex
-                                    <| cardTemplate.Entity
-                                    <| clozeIndex
-                            )
-                        Core.combination 2 instances
-                        |> List.iter (fun instancePair ->
-                                if  instancePair.[0].Card.Id = 0 &&
-                                    instancePair.[1].Card.Id = 0 &&
-                                    noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Cloze"
-                                then
-                                    let r = RelationshipEntity(Name = "Cloze", UserId = userId)
-                                    instancePair.[0].Card.RelationshipSources.Add r
-                                    instancePair.[1].Card.RelationshipTargets.Add r
-                            )
-                        instances
-                    else
-                        let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity x.CardTemplate.Ordinal)
-                        Core.combination 2 instances
-                        |> List.iter (fun instancePair ->
-                                if  instancePair.[0].Card.Id = 0 &&
-                                    instancePair.[1].Card.Id = 0 &&
-                                    noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked"
-                                then
-                                    let r = RelationshipEntity(Name = "Linked", UserId = userId)
-                                    instancePair.[0].Card.RelationshipSources.Add r
-                                    instancePair.[1].Card.RelationshipTargets.Add r
-                            )
-                        instances
-                let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
+                let toCard fields (cardTemplate: CardTemplateInstanceEntity) noteOrd =
+                    let c = {
+                        AnkiNoteId = note.Id
+                        AnkiNoteOrd = noteOrd
+                        CardTemplate = cardTemplate
+                        FieldValues = fields
+                        Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
+                        Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
+                        AuthorId = userId }
+                    defaultArg
+                        <| getCard c
+                        <| c.CopyToNew files
+                let noteIdCardsAndTags =
+                    result {
+                        let! cards =
+                            if cardTemplates.First().CardTemplate.IsCloze then result {
+                                let cardTemplate = cardTemplates |> Seq.exactlyOne
+                                let! max = AnkiImportLogic.maxClozeIndex fields (string note.Id)
+                                let instances =
+                                    [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
+                                        toCard
+                                            <| AnkiImportLogic.multipleClozeToSingleCloze fields clozeIndex
+                                            <| cardTemplate.Entity
+                                            <| clozeIndex
+                                    )
+                                Core.combination 2 instances
+                                |> List.iter (fun instancePair ->
+                                        if  instancePair.[0].Card.Id = 0 &&
+                                            instancePair.[1].Card.Id = 0 &&
+                                            noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Cloze"
+                                        then
+                                            let r = RelationshipEntity(Name = "Cloze", UserId = userId)
+                                            instancePair.[0].Card.RelationshipSources.Add r
+                                            instancePair.[1].Card.RelationshipTargets.Add r
+                                    )
+                                return instances
+                                }
+                            else
+                                let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity x.CardTemplate.Ordinal)
+                                Core.combination 2 instances
+                                |> List.iter (fun instancePair ->
+                                        if  instancePair.[0].Card.Id = 0 &&
+                                            instancePair.[1].Card.Id = 0 &&
+                                            noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked"
+                                        then
+                                            let r = RelationshipEntity(Name = "Linked", UserId = userId)
+                                            instancePair.[0].Card.RelationshipSources.Add r
+                                            instancePair.[1].Card.RelationshipTargets.Add r
+                                    )
+                                instances |> Ok
+                        let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
+                        return (note.Id, (cards, relevantTags))
+                    }
                 parseNotesRec
                     allTags
                     (Seq.append
-                        [note.Id, (cards, relevantTags)]
+                        [noteIdCardsAndTags]
                         cardsAndTagsByNoteId)
                     tail
             | _ ->

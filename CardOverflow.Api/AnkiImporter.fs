@@ -141,7 +141,7 @@ module AnkiImporter =
                     | None -> TagEntity(Name = deckTag))
                 |> Seq.append usersTags
                 |> Seq.toList
-            let cardsAndTagsByNoteId =
+            let! cardsAndTagsByNoteId =
                 Anki.parseNotes
                     cardTemplatesByModelId
                     usersTags
@@ -150,6 +150,9 @@ module AnkiImporter =
                     noRelationship
                     getCard
                     ankiDb.Notes
+                |> Result.consolidate
+            let cardsAndTagsByNoteId =
+                cardsAndTagsByNoteId
                 |> Map.ofSeq
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
