@@ -1,5 +1,7 @@
 module AnkiImportTests
 
+open System.Threading.Tasks
+open FSharp.Control.Tasks
 open CardOverflow.Api
 open LoadersAndCopiers
 open CardOverflow.Debug
@@ -15,23 +17,25 @@ open AnkiImportTestData
 open System.Collections.Generic
 
 [<Fact>]
-let ``Can import myHighPriority, but really testing duplicate card templates`` () =
+let ``Can import myHighPriority, but really testing duplicate card templates`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
-    |> Result.isOk
-    |> Assert.True
+    do!
+        AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
+        |> Result.getOk
+    
     Assert.Equal(2, c.Db.Card.Count())
     Assert.Equal(2, c.Db.CardInstance.Count())
     Assert.Equal(8, c.Db.CardTemplate.Count())
     Assert.Equal(8, c.Db.CardTemplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
+    }
 
-let assertHasBasicInfo db ankiDb =
+let assertHasBasicInfo db ankiDb: Task<unit> = task {
     let userId = 3
-    AnkiImporter.save db ankiDb userId Map.empty
-    |> Result.isOk
-    |> Assert.True
+    do!
+        AnkiImporter.save db ankiDb userId Map.empty
+        |> Result.getOk
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
@@ -99,19 +103,22 @@ let assertHasBasicInfo db ankiDb =
     Assert.Equal(2, db.Relationship.Count())
     Assert.Equal(2, db.Relationship.Count(fun x -> x.Name = "Linked"))
     Assert.NotEmpty(db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb =
+let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = task {
     use c = new TestContainer()
-    assertHasBasicInfo c.Db ankiDb
+    do! assertHasBasicInfo c.Db ankiDb
+    }
 
-let assertHasHistory db ankiDb =
+let assertHasHistory db ankiDb: Task<unit> = task {
     let userId = 3
-    AnkiImporter.save db ankiDb userId Map.empty
-    |> Result.isOk
-    |> Assert.True
+    do!
+        AnkiImporter.save db ankiDb userId Map.empty
+        |> Result.getOk
     Assert.Equal(110, db.History.Count(fun x -> x.AcquiredCard.UserId = userId))
+    }
 
 type AllRandomReviews () =
     inherit XunitClassDataBase
@@ -121,11 +128,13 @@ type AllRandomReviews () =
 
 [<Theory>]
 [<ClassData(typeof<AllRandomReviews>)>]
-let ``AnkiImporter imports RandomReviews`` randomReviews =
+let ``AnkiImporter imports RandomReviews`` randomReviews: Task<unit> = task {
     use c = new AnkiTestContainer(randomReviews)
-    c.AnkiDb()
-    |> AnkiImporter.getSimpleAnkiDb
-    |> assertHasHistory c.Db
+    do!
+        c.AnkiDb()
+        |> AnkiImporter.getSimpleAnkiDb
+        |> assertHasHistory c.Db
+    }
 
 [<Theory>]
 [<ClassData(typeof<AllRandomReviews>)>]
@@ -138,14 +147,14 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews =
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ simpleAnkiDb =
+let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ simpleAnkiDb: Task<unit> = task {
     use c = new TestContainer()
     let theCollectiveId = 2
     let userId = 3
     for _ in [1..5] do
-        AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
-        |> Result.isOk
-        |> Assert.True
+        do!
+            AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+            |> Result.getOk
 
     Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
     Assert.Equal(4, c.Db.Tag.Count())
@@ -164,25 +173,27 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Importing AnkiDb, then again with different card lapses, updates db`` _ simpleAnkiDb =
+let ``Importing AnkiDb, then again with different card lapses, updates db`` _ simpleAnkiDb: Task<unit> = task {
     let easeFactorA = 13s
     let easeFactorB = 45s
     use c = new TestContainer()
     let userId = 3
-    AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
-    |> Result.isOk
-    |> Assert.True
+    do!
+        AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+        |> Result.getOk
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = 0s))
     simpleAnkiDb.Cards |> List.iter (fun x -> x.Factor <- int64 easeFactorA)
     simpleAnkiDb.Cards.[0].Factor <- int64 easeFactorB
 
-    AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
-    |> Result.isOk
-    |> Assert.True
+    do!
+        AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+        |> Result.getOk
 
     Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    }

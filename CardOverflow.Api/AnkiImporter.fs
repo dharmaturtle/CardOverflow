@@ -218,7 +218,7 @@ module AnkiImporter =
                     if isNull e.Source || isNull e.Target then
                         x.State <- EntityState.Detached
                 )
-            db.SaveChangesI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
+            return db.SaveChangesAsyncI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
         }
         
 // lowTODO consider just generating a temporary guid code side to serve as a lookupID for the record types, then build the entities at the very end.

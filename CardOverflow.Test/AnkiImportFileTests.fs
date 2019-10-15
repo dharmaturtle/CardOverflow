@@ -23,35 +23,38 @@ open System.Security.Cryptography
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``AnkiImporter.save saves three files`` ankiFileName ankiDb =
+let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = task {
     let userId = 3
     use c = new TestContainer(ankiFileName)
     
-    SanitizeAnki.ankiExportsDir +/ ankiFileName
-    |> AnkiImporter.loadFiles (fun _ -> None)
-    |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
-    |> Result.getOk
+    do!
+        SanitizeAnki.ankiExportsDir +/ ankiFileName
+        |> AnkiImporter.loadFiles (fun _ -> None)
+        |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
+        |> Result.getOk
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb =
+let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = task {
     let userId = 3
     use c = new TestContainer(ankiFileName)
 
     for _ in [1..3] do
-        SanitizeAnki.ankiExportsDir +/ ankiFileName
-        |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File.FirstOrDefault(fun f -> f.Sha256 = sha256) |> Option.ofObj)
-        |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
-        |> Result.isOk
-        |> Assert.True
+        do!
+            SanitizeAnki.ankiExportsDir +/ ankiFileName
+            |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File.FirstOrDefault(fun f -> f.Sha256 = sha256) |> Option.ofObj)
+            |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
+            |> Result.getOk
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    }
 
 [<Fact>]
 let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` () =
@@ -93,27 +96,26 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     Assert.Equal<string list> (expected, actual)
 
 [<Fact>]
-let ``AnkiImporter import cards that have the same acquireHash as distinct cards`` () = // lowTODO, perhaps they should be the same card
+let ``AnkiImporter import cards that have the same acquireHash as distinct cards`` (): Task<unit> = task { // lowTODO, perhaps they should be the same card
     let userId = 3
     use c = new TestContainer()
-    AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
-    |> function
-    | Ok () -> ()
-    | Error x -> failwith x
+    do!
+        AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
+        |> Result.getOk
     Assert.Equal<string seq>(
         ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.CardInstance.Count())
+    }
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
-    AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
-    |> function
-    | Ok () -> ()
-    | Error x -> failwith x
+    do!
+        AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
+        |> Result.getOk
     Assert.Equal(
         5,
         c.Db.CardInstance
@@ -190,7 +192,7 @@ let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =
         AnkiDefaults.cardTemplateIdByHash)
 
 //[<Fact>]
-let ``Manual Anki import`` () =
+let ``Manual Anki import`` (): Task<unit> = task {
     let userId = 3
     let pathToCollection = @""
     
@@ -202,13 +204,15 @@ let ``Manual Anki import`` () =
     //c.RegisterStandardConnectionString
     //use __ = AsyncScopedLifestyle.BeginScope c
     //let db = c.GetInstance<CardOverflowDb>()
-    
-    let ankiDb =
-        AnkiImporter.getSimpleAnkiDb
-        |> using(SanitizeAnki.ankiDb pathToCollection)
-    pathToCollection
-    |> AnkiImporter.loadFiles (fun sha256 -> db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
-    |> Result.bind (AnkiImporter.save db ankiDb userId)
-    |> function
-    | Ok () -> ()
-    | Error x -> failwith x
+
+    do!    
+        let ankiDb =
+            AnkiImporter.getSimpleAnkiDb
+            |> using(SanitizeAnki.ankiDb pathToCollection)
+        pathToCollection
+        |> AnkiImporter.loadFiles (fun sha256 -> db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
+        |> Result.bind (AnkiImporter.save db ankiDb userId)
+        |> function
+        | Ok x -> x
+        | Error x -> failwith x
+    }
