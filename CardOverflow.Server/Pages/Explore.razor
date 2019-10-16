@@ -1,6 +1,6 @@
 @page "/explore"
 @page "/card"
-@page "/card/{SelectedCardId:int}"
+@page "/card/{SelectedId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,11 +11,11 @@
 @using CardOverflow.Sanitation
 @inherits OwningComponentBase<CardOverflowDb>
 
-@if (cards == null) {
-  <p><em>Loading...</em></p>
-} else {
-  <SearchBar SearchClicked="@SearchClicked" LinkPrefix="/card/" Ids=@cards.Select(x => x.Id.ToString()).ToList() SelectedId=@SelectedCardId.ToString() />
-  if (SelectedCardId == null) {
+<SearchBar SearchClicked="@SearchClicked" LinkPrefix="/card/" Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+@if (SelectedId == null) {
+  @if (cards == null) {
+    <p><em>Loading...</em></p>
+  } else {
     <table class="table">
       <tr>
         <th></th>
@@ -45,10 +45,10 @@
         </tr>
       }
     </table>
-    <Pager Details=@details PageChanged=@PageChanged />
-  } else {
-    <ExploreCard Id=@SelectedCardId.Value />
   }
+  <Pager Details=@details PageChanged=@PageChanged />
+} else {
+  <ExploreCard Id=@SelectedId.Value />
 }
 
 @code {
@@ -57,11 +57,15 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   [Parameter]
-  public int? SelectedCardId { get; set; }
+  public int? SelectedId { get; set; }
   SearchCommand search = new SearchCommand { Query = "" };
 
-  protected override Task OnInitializedAsync() {
-    return PageChanged(1);
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    if (SelectedId == null && cards == null) {
+      await PageChanged(1);
+      StateHasChanged();
+    }
   }
 
   async Task PageChanged(int pageNumber) {
@@ -71,7 +75,7 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedCardId = null;
+    SelectedId = null;
     search = newSearch;
     return PageChanged(1);
   }
