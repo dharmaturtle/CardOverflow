@@ -1,4 +1,5 @@
-@page "/Explore"
+@page "/explore"
+@page "/card/{SelectedCardId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -13,10 +14,10 @@
   <p><em>Loading...</em></p>
 } else {
   <div class="d-flex justify-content-between align-items-center">
-    @if (selectedCardId != null) {
+    @if (SelectedCardId != null) {
       <span style="min-width: fit-content;">
         @*see if you can remove this span... only here since the if breaks the nbsp*@
-        <a href="javascript:void(0);" @onclick=@(() => CardClick(null))>
+        <a href="/explore">
           <span class="oi oi-arrow-circle-left"></span>
         </a>
         &nbsp;
@@ -28,21 +29,25 @@
       <DataAnnotationsValidator />
       <ValidationSummary />
     </EditForm>
-    @if (selectedCardId != null) {
+    @if (SelectedCardId != null) {
       <span style="min-width: fit-content;">
         @*see if you can remove this span... only here since the if breaks the nbsp*@
         &nbsp;
-        <a href="javascript:void(0);" @onclick=@(() => CardClick(selectedCardId - 1))>
-          <span class="oi oi-chevron-left"></span>
-        </a>
+        @if (Before != null) {
+          <a href="/card/@Before">
+            <span class="oi oi-chevron-left"></span>
+          </a>
+        }
         &nbsp;
-        <a href="javascript:void(0);" @onclick=@(() => CardClick(selectedCardId + 1))>
-          <span class="oi oi-chevron-right"></span>
-        </a>
+        @if (After != null) {
+          <a href="/card/@After">
+            <span class="oi oi-chevron-right"></span>
+          </a>
+        }
       </span>
     }
   </div>
-  if (selectedCardId == null) {
+  if (SelectedCardId == null) {
     <table class="table">
       <tr>
         <th></th>
@@ -65,7 +70,7 @@
             @card.Users
           </td>
           <td>
-            <a href="javascript:void(0);" @onclick=@(() => CardClick(card.Id))>
+            <a href="/card/@card.Id">
               @card.LatestMeta.StrippedFront
             </a>
           </td>
@@ -74,7 +79,7 @@
     </table>
     <Pager Details=@details PageChanged=@PageChanged />
   } else {
-    <ExploreCard Id="selectedCardId.Value" />
+    <ExploreCard Id=@SelectedCardId.Value />
   }
 }
 
@@ -83,16 +88,14 @@
   PagedListDetails details;
   [CascadingParameter]
   UserEntity User { get; set; }
-  int? selectedCardId;
+  [Parameter]
+  public int? SelectedCardId { get; set; }
+  int? After => cards.SkipWhile(x => x.Id != SelectedCardId).Skip(1).FirstOrDefault()?.Id;
+  int? Before => cards.TakeWhile(x => x.Id != SelectedCardId).LastOrDefault()?.Id; // https://stackoverflow.com/a/10600012
   SearchCommand query = new SearchCommand { Query = "" };
 
   protected override async Task OnInitializedAsync() {
     await PageChanged(1);
-  }
-
-  void CardClick(int? cardId) {
-    selectedCardId = cardId;
-    StateHasChanged();
   }
 
   async Task PageChanged(int pageNumber) {
