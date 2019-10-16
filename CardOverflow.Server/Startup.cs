@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -58,6 +59,9 @@ namespace CardOverflow.Server {
         .ReadFrom
         .Configuration(Configuration)
         .CreateLogger();
+      services.AddLogging(x => x
+        .AddFilter("Microsoft.AspNetCore", LogLevel.Warning)
+      );
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
