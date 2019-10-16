@@ -36,7 +36,7 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``():
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        let! _ = CardRepository.GetAcquiredPages db userId i
+        let! _ = CardRepository.GetAcquiredPages db userId i ""
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     }
@@ -101,7 +101,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     let userId = 1 // creates the card
     for addCard in addCards do
         do! addCard c.Db userId ["a"]
-    let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1
+    let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(
         cardIds.Count(),
         acquiredCards.Results.Count()

@@ -1,4 +1,6 @@
 @page "/Curate"
+@page "/Curate/Card"
+@page "/Curate/Card/{SelectedId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -10,61 +12,73 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-@if (cards == null) {
-  <p><em>Loading...</em></p>
-} else {
+<SearchBar SearchClicked="@SearchClicked" LinkPrefix="/curate/card/" Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+@if (SelectedId == null) {
   <div>
-    <table class="table">
-      <tr>
-        <th>Preview</th>
-        <th>Name</th>
-        <th>Tags</th>
-      </tr>
-      @foreach (var card in cards) {
+    @if (cards == null) {
+      <p><em>Loading...</em></p>
+    } else {
+      <table class="table">
         <tr>
-          <td>
-            <div class="curate-tooltip-target">
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <div class="oi oi-eye@(card.CardInstanceMeta.IsAcquired ? " text-success" : "")" aria-hidden="true"></div>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <div class="curate-tooltip-content">
-                <ResizingIframe SrcUrl=@("/cardinstance/" + card.CardInstanceMeta.Id + "/front")></ResizingIframe>
-              </div>
-            </div>
-          </td>
-          <td>
-            <a href="/Curate/Card/@card.CardId">
-              @card.CardInstanceMeta.StrippedFront
-            </a>
-          </td>
-          <td>
-            <ul class="d-flex flex-wrap list-unstyled">
-              @foreach (var tag in @card.Tags) {
-                <li class="m-1">
-                  @tag,
-                </li>
-              }
-            </ul>
-          </td>
+          <th>Preview</th>
+          <th>Name</th>
+          <th>Tags</th>
         </tr>
-      }
-    </table>
+        @foreach (var card in cards) {
+          <tr>
+            <td>
+              <div class="curate-tooltip-target">
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div class="oi oi-eye@(card.CardInstanceMeta.IsAcquired ? " text-success" : "")" aria-hidden="true"></div>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div class="curate-tooltip-content">
+                  <ResizingIframe SrcUrl=@("/cardinstance/" + card.CardInstanceMeta.Id + "/front")></ResizingIframe>
+                </div>
+              </div>
+            </td>
+            <td>
+              <a href="/Curate/Card/@card.CardId">
+                @card.CardInstanceMeta.StrippedFront
+              </a>
+            </td>
+            <td>
+              <ul class="d-flex flex-wrap list-unstyled">
+                @foreach (var tag in @card.Tags) {
+                  <li class="m-1">
+                    @tag,
+                  </li>
+                }
+              </ul>
+            </td>
+          </tr>
+        }
+      </table>
+    }
     <Pager Details=@details PageChanged=@PageChanged />
   </div>
+} else {
+  <CurateCard Id=SelectedId.Value />
 }
 
 @code {
   [CascadingParameter]
   UserEntity User { get; set; }
-  IList<AcquiredCard> cards;
+  [Parameter]
+  public int? SelectedId { get; set; }
+  SearchCommand search = new SearchCommand { Query = "" };
+  List<AcquiredCard> cards;
   PagedListDetails details;
 
-  protected override async Task OnInitializedAsync() {
-    await PageChanged(1);
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    if (SelectedId == null && cards == null) {
+      await PageChanged(1);
+      StateHasChanged();
+    }
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await CardRepository.GetAcquiredPages(Service, User?.Id ?? 0, pageNumber);
+    var pagedList = await SanitizeCardRepository.GetAcquiredPages(Service, User?.Id ?? 0, pageNumber, search);
     details = pagedList.Details;
     cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
     if (pagedList.Results.Any(x => x.IsError)) {
@@ -73,6 +87,12 @@
       }
       ToastService.ShowError("Please contact us with these errors.");
     }
+  }
+
+  Task SearchClicked(SearchCommand newSearch) {
+    SelectedId = null;
+    search = newSearch;
+    return PageChanged(1);
   }
 
 }

@@ -39,9 +39,11 @@
   int FinishIndex;
 
   protected override void OnParametersSet() {
-    StartIndex = Math.Max(Details.CurrentPage - 5, 1);
-    FinishIndex = Math.Min(Details.CurrentPage + 5, Details.PageCount);
     base.OnParametersSet();
+    if (Details != null) {
+      StartIndex = Math.Max(Details.CurrentPage - 5, 1);
+      FinishIndex = Math.Min(Details.CurrentPage + 5, Details.PageCount);
+    }
   }
 
   protected async Task PagerButtonClicked(int page) =>

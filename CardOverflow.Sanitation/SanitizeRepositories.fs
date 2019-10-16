@@ -149,6 +149,8 @@ module SanitizeCardRepository =
         }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Query
+    let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =
+        CardRepository.GetAcquiredPages db userId pageNumber searchCommand.Query
 
 [<CLIMutable>]
 type PotentialSignupCommand = {

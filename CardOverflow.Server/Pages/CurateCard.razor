@@ -1,4 +1,3 @@
-@page "/Curate/Card/{Id:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,6 +10,7 @@
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 @*medTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
 @if (Card == null) {
@@ -28,10 +28,11 @@
   AcquiredCard Card;
   EditCardCommand EditCard;
 
-  protected override async Task OnInitializedAsync() {
-    var x = await CardRepository.GetAcquired(Service, User?.Id ?? 0, Id);
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    var x = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User?.Id ?? 0, Id));
     if (x.IsOk) {
-      var xx = await SanitizeCardRepository.getEdit(Service, x.ResultValue.CardInstanceMeta.Id);
+      var xx = await DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, x.ResultValue.CardInstanceMeta.Id));
       if (xx.IsOk) {
         Card = x.ResultValue;
         EditCard = xx.ResultValue;
@@ -43,6 +44,7 @@
       LoadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
     }
+    StateHasChanged();
   }
 
 }

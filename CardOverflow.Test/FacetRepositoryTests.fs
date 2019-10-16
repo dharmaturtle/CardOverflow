@@ -176,7 +176,7 @@ Back
     )
     Assert.Equal<string seq>(
         tags,
-        (CardRepository.GetAcquiredPages c.Db userId 1)
+        (CardRepository.GetAcquiredPages c.Db userId 1 "")
             .GetAwaiter()
             .GetResult()
             .Results

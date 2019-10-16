@@ -208,11 +208,16 @@ module CardRepository =
         let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
         return AcquiredCard.initialize userId option.Id []
         }
-    let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) =
+    let private emptyStringCheck searchTerm = if String.IsNullOrWhiteSpace searchTerm then "\"\"" else searchTerm // https://stackoverflow.com/a/347232
+    let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
                 get(db)
                     .Where(fun x -> x.UserId = userId)
+                    .Where(fun x ->
+                        x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
+                        EF.Functions.FreeText(x.CardInstance.FieldValues, emptyStringCheck searchTerm)
+                    )
                     .ToPagedListAsync(pageNumber, 15)
             return {
                 Results = r |> Seq.map AcquiredCard.load
@@ -224,12 +229,11 @@ module CardRepository =
         } 
     let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) (searchTerm: string) =
         task {
-            let emptyStringCheck = if String.IsNullOrWhiteSpace searchTerm then "\"\"" else searchTerm // https://stackoverflow.com/a/347232
             let! r =
                 db.Card
                     .Where(fun x ->
                         x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm))) ||
-                        x.CardInstances.Any(fun x -> EF.Functions.FreeText(x.FieldValues, emptyStringCheck))
+                        x.CardInstances.Any(fun x -> EF.Functions.FreeText(x.FieldValues, emptyStringCheck searchTerm))
                     )
                     .Include(fun x -> x.Author)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)
