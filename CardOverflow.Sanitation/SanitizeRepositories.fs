@@ -110,7 +110,6 @@ module SanitizeRelationshipRepository =
 
 [<CLIMutable>]
 type SearchCommand = {
-    [<Required>]
     [<StringLength(250, ErrorMessage = "Query must be less than 250 characters.")>]
     Query: string
 }

@@ -1,0 +1,59 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@inherits OwningComponentBase<CardOverflowDb>
+
+<div class="d-flex justify-content-between align-items-center">
+  @if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
+    <span style="min-width: fit-content;">
+      @*see if you can remove this span... only here since the if breaks the nbsp*@
+      <a href=@LinkPrefix>
+        <span class="oi oi-arrow-circle-left"></span>
+      </a>
+      &nbsp;
+    </span>
+  }
+  <EditForm OnValidSubmit=@(() => SearchClicked.InvokeAsync(search)) Model=@search class="form-inline input-group">
+    <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-Value=@search.Query />
+    <button class="btn btn-primary" type="submit">Search</button>
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+  </EditForm>
+  <span style="min-width: fit-content;">
+    @*see if you can remove this span... only here since the if breaks the nbsp*@
+    &nbsp;
+    @if (!String.IsNullOrWhiteSpace(BeforeId)) {
+      <a href=@(LinkPrefix + BeforeId)>
+        <span class="oi oi-chevron-left"></span>
+      </a>
+    }
+    &nbsp;
+    @if (!String.IsNullOrWhiteSpace(AfterId)) {
+      <a href=@(LinkPrefix + AfterId)>
+        <span class="oi oi-chevron-right"></span>
+      </a>
+    }
+  </span>
+</div>
+
+@code {
+  [Parameter]
+  public EventCallback<SearchCommand> SearchClicked { get; set; }
+  [Parameter]
+  public string LinkPrefix { get; set; }
+  [Parameter]
+  public List<string> Ids { get; set; }
+  [Parameter]
+  public string SelectedId { get; set; }
+  
+  string BeforeId => Ids.AsEnumerable().Reverse() // https://stackoverflow.com/a/10600012
+    .SkipWhile(x => x != SelectedId).Skip(1).FirstOrDefault();
+  string AfterId => Ids
+    .SkipWhile(x => x != SelectedId).Skip(1).FirstOrDefault();
+  SearchCommand search = new SearchCommand { Query = "" };
+}
