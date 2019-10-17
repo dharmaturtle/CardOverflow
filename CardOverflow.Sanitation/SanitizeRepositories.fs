@@ -22,11 +22,19 @@ open System.ComponentModel.DataAnnotations
 type ViewDeck = {
     Id: int
     UserId: int
-    [<StringLength(128, ErrorMessage = "Name must be less than 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string
     [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Query: string
-}
+} with
+    member this.copyTo (e: DeckEntity) =
+        e.UserId <- this.UserId
+        e.Name <- this.Name
+        e.Query <- this.Query
+    member this.copyToNew =
+        let e = DeckEntity()
+        this.copyTo e
+        e
 
 module ViewDeck =
     let load (e: DeckEntity) = {
@@ -39,7 +47,7 @@ module ViewDeck =
 type ViewDeckWithDue = {
     Id: int
     UserId: int
-    [<StringLength(128, ErrorMessage = "Name must be less than 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string
     [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Query: string
@@ -56,8 +64,25 @@ module ViewDeckWithDue =
     }
 
 module SanitizeDeckRepository =
-    let CreateAndSaveAsync (db: CardOverflowDb) (deck: ViewDeck) =
-        DeckRepository.Create db deck.UserId deck.Name deck.Query
+    let UpsertAsync (db: CardOverflowDb) (deck: ViewDeck) = task {
+        let! d = db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deck.Id)
+        let deck =
+            match d with
+            | null ->
+                let d = deck.copyToNew
+                db.Deck.AddI d
+                d
+            | d ->
+                deck.copyTo d
+                d
+        do! db.SaveChangesAsyncI ()
+        return deck.Id
+        }
+    let Delete (db: CardOverflowDb) userId (deck: ViewDeck) =
+        let d = db.Deck.Single(fun x -> x.Id = deck.Id)
+        if d.UserId = userId
+        then Ok <| DeckRepository.Delete db d
+        else Error <| "That isn't your deck"
     let Get (db: CardOverflowDb) userId = task {
         let! r = DeckRepository.Get db userId
         return r |> Seq.map ViewDeck.load |> toResizeArray

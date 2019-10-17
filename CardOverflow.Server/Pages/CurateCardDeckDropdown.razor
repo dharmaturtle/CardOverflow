@@ -9,44 +9,75 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-<BSDropdown>
-  <BSDropdownToggle Color="Color.Primary">Deck</BSDropdownToggle>
-  <BSDropdownMenu>
+<style>
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+</style>
+
+<div class="dropdown">
+  <span class="btn btn-primary">
+    Deck
+  </span>
+  <div class="dropdown-content card p-2" style="min-width: 20rem;">
     @foreach (var deck in decks) {
-      <BSDropdownItem @onclick=@(() =>new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync))>@deck.Name</BSDropdownItem>
+      <div class="d-flex justify-content-between">
+        <button @onclick=@(() => new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light">@deck.Name</button>
+        <button @onclick=@(() => Edit(deck)) class="oi oi-pencil btn btn-light"></button>
+      </div>
     }
-    <BSDropdownItem OnClick=NewDeckModal.Show><i class="fas fa-save"></i> Save</BSDropdownItem>
-  </BSDropdownMenu>
-</BSDropdown>
-<BSModal @ref=NewDeckModal>
-  <EditForm Model=NewDeck OnValidSubmit=SaveNewDeck>
-    <BSModalHeader OnClick=NewDeckModal.Hide>Create a new deck</BSModalHeader>
+    <button class="btn btn-success float-right mt-2" @onclick=@Create>
+      Create
+    </button>
+  </div>
+</div>
+
+<BSModal @ref=Modal>
+  <EditForm Model=ActiveDeck OnValidSubmit=Save>
+    <BSModalHeader OnClick=Modal.Hide>
+      @if (ActiveDeck.Id == 0) {
+        <span>Create a new deck</span>
+      } else {
+        <span>Edit deck</span>
+      }
+    </BSModalHeader>
     <BSModalBody>
       <div class="form-group">
         <label for="newDeckNameInput">Name</label>
-        <InputText @bind-Value=NewDeck.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <ValidationMessage For=@(() => NewDeck.Name) />
+        <InputText @bind-Value=ActiveDeck.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <ValidationMessage For=@(() => ActiveDeck.Name) />
       </div>
       <div class="form-group">
         <label for="newDeckQueryInput">Query</label>
-        <InputText @bind-Value=NewDeck.Query class="form-control" id="newDeckQueryInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <ValidationMessage For=@(() => NewDeck.Query) />
+        <InputText @bind-Value=ActiveDeck.Query class="form-control" id="newDeckQueryInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <ValidationMessage For=@(() => ActiveDeck.Query) />
       </div>
       <DataAnnotationsValidator />
     </BSModalBody>
-    <BSModalFooter>
-      <BSButton Color="Color.Secondary" OnClick=NewDeckModal.Hide type="button">
-        Cancel
+    <BSModalFooter Class="d-flex justify-content-between">
+      <BSButton Color="Color.Danger" OnClick=@Delete type="button">
+        <span class="oi oi-trash"></span>
       </BSButton>
-      <BSButton Color="Color.Primary" type="submit">
-        Save
-      </BSButton>
+      <div>
+        <BSButton Color="Color.Secondary" OnClick=Modal.Hide type="button">
+          Cancel
+        </BSButton>
+        <BSButton Color="Color.Primary" type="submit">
+          Save
+        </BSButton>
+      </div>
     </BSModalFooter>
   </EditForm>
 </BSModal>
 
 @code {
-  BSModal NewDeckModal;
+  BSModal Modal;
   [CascadingParameter]
   UserEntity User { get; set; }
   [Parameter]
@@ -54,20 +85,41 @@
   [Parameter]
   public EventCallback<SearchCommand> DeckClicked { get; set; }
   List<ViewDeck> decks = new List<ViewDeck>();
-  ViewDeck NewDeck = new ViewDeck();
+  ViewDeck ActiveDeck = new ViewDeck();
 
-  public override async Task SetParametersAsync(ParameterView parameters) {
-    await base.SetParametersAsync(parameters);
-    NewDeck = new ViewDeck(0, User.Id, "New Deck", Query);
+  protected override async Task OnInitializedAsync() {
+    decks = await SanitizeDeckRepository.Get(Service, User?.Id ?? 0);
   }
 
-  protected override async Task OnInitializedAsync() =>
-    decks = await SanitizeDeckRepository.Get(Service, User?.Id ?? 0);
+  async Task Save() {
+    var newId = await SanitizeDeckRepository.UpsertAsync(Service, ActiveDeck);
+    if (ActiveDeck.Id == 0) {
+      ActiveDeck.Id = newId;
+      decks.Add(ActiveDeck);
+    }
+    Modal.Hide();
+  }
 
-  Task SaveNewDeck() {
-    NewDeckModal.Hide();
-    decks.Add(NewDeck);
-    return SanitizeDeckRepository.CreateAndSaveAsync(Service, NewDeck);
+  async Task Delete() {
+    decks.Remove(ActiveDeck);
+    var x = SanitizeDeckRepository.Delete(Service, User.Id, ActiveDeck);
+    if (x.IsOk) {
+      await x.ResultValue;
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+    Modal.Hide();
+  }
+
+  void Create() {
+    ActiveDeck = new ViewDeck(0, User.Id, "New Deck", Query);
+    Modal.Show();
+  }
+
+  Task Edit(ViewDeck deck) {
+    ActiveDeck = deck;
+    Modal.Show();
+    return DeckClicked.InvokeAsync(new SearchCommand(deck.Query));
   }
 
 }

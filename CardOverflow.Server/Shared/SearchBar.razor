@@ -8,7 +8,6 @@
 @using CardOverflow.Sanitation
 @inherits OwningComponentBase<CardOverflowDb>
 
-<div class="d-flex justify-content-between align-items-center">
   @if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
     <span style="min-width: fit-content;">
       @*see if you can remove this span... only here since the if breaks the nbsp*@
@@ -39,7 +38,6 @@
       </a>
     }
   </span>
-</div>
 
 @code {
   [Parameter]

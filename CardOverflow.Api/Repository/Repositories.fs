@@ -418,4 +418,4 @@ module DeckRepository =
 
     let Delete (db: CardOverflowDb) deck =
         db.Deck.RemoveI deck
-        db.SaveChangesI ()
+        db.SaveChangesAsyncI ()
