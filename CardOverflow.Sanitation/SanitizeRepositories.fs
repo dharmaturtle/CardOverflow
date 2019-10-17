@@ -19,6 +19,32 @@ open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 
 [<CLIMutable>]
+type ViewDeck = {
+    Id: int
+    UserId: int
+    [<StringLength(128, ErrorMessage = "Name must be less than 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Name: string
+    [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Query: string
+}
+
+module ViewDeck =
+    let load (e: DeckEntity) = {
+        Id = e.Id
+        UserId = e.UserId
+        Name = e.Name
+        Query = e.Query
+    }
+
+module SanitizeDeckRepository =
+    let CreateAndSaveAsync (db: CardOverflowDb) deck =
+        DeckRepository.Create db deck.UserId deck.Name deck.Query
+    let Get (db: CardOverflowDb) userId = task {
+        let! r = DeckRepository.Get db userId
+        return r |> Seq.map ViewDeck.load |> toResizeArray
+    }
+        
+[<CLIMutable>]
 type CommentText = {
     [<StringLength(500, ErrorMessage = "Comment must be less than 500 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Text: string

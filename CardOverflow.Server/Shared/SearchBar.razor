@@ -50,6 +50,15 @@
   public List<string> Ids { get; set; }
   [Parameter]
   public string SelectedId { get; set; }
+  [Parameter]
+  public string Query { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    if (Query != null) {
+      search.Query = Query;
+    }
+  }
 
   string BeforeId => Ids?.AsEnumerable()?.Reverse() // https://stackoverflow.com/a/10600012
     ?.SkipWhile(x => x != SelectedId)?.Skip(1)?.FirstOrDefault();

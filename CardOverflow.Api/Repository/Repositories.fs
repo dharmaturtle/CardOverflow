@@ -391,12 +391,16 @@ module TagRepository =
         db.SaveChangesI ()
 
 module DeckRepository =
-    let Create (db: CardOverflowDb) deck =
-        db.Deck.AddI deck
-        db.SaveChangesI ()
+    let Create (db: CardOverflowDb) userId name query =
+        DeckEntity(
+            UserId = userId,
+            Name = name,
+            Query = query
+        ) |> db.Deck.AddI
+        db.SaveChangesAsyncI ()
 
     let Get (db: CardOverflowDb) userId =
-        db.Deck.Where(fun d -> d.UserId = userId).ToList()
+        db.Deck.Where(fun d -> d.UserId = userId).ToListAsync()
         
     let Update (db: CardOverflowDb) deck =
         db.Deck.UpdateI deck

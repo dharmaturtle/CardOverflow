@@ -12,7 +12,8 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-<SearchBar SearchClicked="@SearchClicked" LinkPrefix="/curate/card/" Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+<CurateCardDeckDropdown Query=@search.Query DeckClicked=@SearchClicked />
+<SearchBar SearchClicked="@SearchClicked" LinkPrefix="/curate/card/" Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() Query=@search.Query />
 @if (SelectedId == null) {
   <div>
     @if (cards == null) {

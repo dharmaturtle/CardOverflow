@@ -20,11 +20,11 @@ namespace CardOverflow.Entity
         private string _Name;
         public int UserId { get; set; }
         [Required]
-        [StringLength(100)]
+        [StringLength(256)]
         public string Query {
             get => _Query;
             set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Query has a maximum length of 100. Attempted value: {value}");
+                if (value.Length > 256) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Query has a maximum length of 256. Attempted value: {value}");
                 _Query = value;
             }
         }

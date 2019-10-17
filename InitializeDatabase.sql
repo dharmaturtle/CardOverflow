@@ -389,7 +389,7 @@ CREATE TABLE [dbo].[Deck](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [nvarchar](128) NOT NULL,
 	[UserId] [int] NOT NULL,
-	[Query] [nvarchar](100) NOT NULL,
+	[Query] [nvarchar](256) NOT NULL,
  CONSTRAINT [PK_Deck] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
