@@ -15,16 +15,46 @@
 
 @if (User == null) {
   <p><em>You aren't signed in dude.</em></p>
+} else if (SelectedDeck == null) {
+  <div class="container">
+    <table class="table">
+      <tr>
+        <th></th>
+        <th>Due</th>
+      </tr>
+      @foreach (var deck in Decks) {
+        <tr>
+          <td>
+            <button @onclick=@(() => SelectedDeck = deck) class="btn btn-link">
+              @deck.Name
+            </button>
+          </td>
+          <td>
+            @deck.Due
+          </td>
+        </tr>
+      }
+    </table>
+  </div>
 } else {
-  <StudyDetail />
+  <StudyDetail Query=@SelectedDeck.Query />
 }
 
 @code {
   [CascadingParameter]
   UserEntity User { get; set; }
+  List<ViewDeckWithDue> Decks = new List<ViewDeckWithDue>();
+  ViewDeckWithDue SelectedDeck;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    SelectedDeck = null;
+  }
 
   protected override async Task OnInitializedAsync() {
-
+    if (User != null) {
+      Decks = await SanitizeDeckRepository.GetWithDue(Service, User.Id);
+    }
   }
 
 }

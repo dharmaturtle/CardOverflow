@@ -113,22 +113,6 @@ module CardRepository =
                 .SingleAsync(fun x -> x.Id = cardId)
         return CardRevision.load userId r
     }
-    let private getCompleteCards (db: CardOverflowDb) =
-        db.AcquiredCard
-            .Include(fun x -> x.CardOption)
-            .Include(fun x -> x.CardInstance.CardTemplateInstance)
-    let GetQuizBach (db: CardOverflowDb) userId =
-        let tomorrow = DateTime.UtcNow.AddDays 1.
-        task {
-            let! cards =
-                (getCompleteCards db)
-                    .Where(fun x -> x.UserId = userId && x.Due < tomorrow)
-                    .OrderBy(fun x -> x.Due)
-                    .Take(5)
-                    .ToListAsync()
-            return
-                cards |> Seq.map QuizCard.load |> toResizeArray
-        }
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
         let! defaultCardOption =
             db.CardOption
@@ -188,15 +172,13 @@ module CardRepository =
                         .FirstAsync(fun x -> x.Id = cardId)
             return concept |> ExploreCard.load userId
         }
-    let private get (db: CardOverflowDb) =
-        db.AcquiredCard
-            .Include(fun x -> x.CardInstance.CardTemplateInstance)
-            .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
-                .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
-                .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
         let! r =
-            get(db)
+            db.AcquiredCard
+                .Include(fun x -> x.CardInstance.CardTemplateInstance)
+                .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
+                    .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
+                    .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                 .SingleOrDefaultAsync(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId)
         return
             match r with
@@ -208,16 +190,23 @@ module CardRepository =
         let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
         return AcquiredCard.initialize userId option.Id []
         }
-    let private emptyStringCheck searchTerm = if String.IsNullOrWhiteSpace searchTerm then "\"\"" else searchTerm // https://stackoverflow.com/a/347232
+    let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
+        db.AcquiredCard
+            .Include(fun x -> x.CardInstance.CardTemplateInstance)
+            .Where(fun x -> x.UserId = userId)
+            .Where(fun x ->
+                x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
+                if String.IsNullOrWhiteSpace searchTerm then 
+                    true
+                else
+                    EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+            )
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
-                get(db)
-                    .Where(fun x -> x.UserId = userId)
-                    .Where(fun x ->
-                        x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
-                        EF.Functions.FreeText(x.CardInstance.FieldValues, emptyStringCheck searchTerm)
-                    )
+                (searchAcquired db userId searchTerm)
+                    .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
             return {
                 Results = r |> Seq.map AcquiredCard.load
@@ -226,14 +215,35 @@ module CardRepository =
                     PageCount = r.PageCount
                 }
             }
-        } 
+        }
+    let GetQuizBatch (db: CardOverflowDb) userId query =
+        let tomorrow = DateTime.UtcNow.AddDays 1.
+        task {
+            let! cards =
+                (searchAcquired db userId query)
+                    .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
+                    .Include(fun x -> x.CardOption)
+                    .OrderBy(fun x -> x.Due)
+                    .Take(5)
+                    .ToListAsync()
+            return
+                cards |> Seq.map QuizCard.load |> toResizeArray
+        }
+    let GetDueCount (db: CardOverflowDb) userId query =
+        let tomorrow = DateTime.UtcNow.AddDays 1.
+        (searchAcquired db userId query)
+            .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
+            .Count()
     let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
                 db.Card
                     .Where(fun x ->
                         x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm))) ||
-                        x.CardInstances.Any(fun x -> EF.Functions.FreeText(x.FieldValues, emptyStringCheck searchTerm))
+                        if String.IsNullOrWhiteSpace searchTerm then 
+                            true
+                        else
+                            x.CardInstances.Any(fun x -> EF.Functions.FreeText(x.FieldValues, searchTerm))
                     )
                     .Include(fun x -> x.Author)
                     .Include(fun x -> x.CardInstances :> IEnumerable<_>)

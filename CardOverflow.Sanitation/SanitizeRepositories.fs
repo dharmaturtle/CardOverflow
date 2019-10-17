@@ -36,12 +36,35 @@ module ViewDeck =
         Query = e.Query
     }
 
+type ViewDeckWithDue = {
+    Id: int
+    UserId: int
+    [<StringLength(128, ErrorMessage = "Name must be less than 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Name: string
+    [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    Query: string
+    Due: int
+}
+
+module ViewDeckWithDue =
+    let load (db: CardOverflowDb) (e: DeckEntity) = {
+        Id = e.Id
+        UserId = e.UserId
+        Name = e.Name
+        Query = e.Query
+        Due = CardRepository.GetDueCount db e.UserId e.Query
+    }
+
 module SanitizeDeckRepository =
-    let CreateAndSaveAsync (db: CardOverflowDb) deck =
+    let CreateAndSaveAsync (db: CardOverflowDb) (deck: ViewDeck) =
         DeckRepository.Create db deck.UserId deck.Name deck.Query
     let Get (db: CardOverflowDb) userId = task {
         let! r = DeckRepository.Get db userId
         return r |> Seq.map ViewDeck.load |> toResizeArray
+    }
+    let GetWithDue (db: CardOverflowDb) userId = task {
+        let! r = DeckRepository.Get db userId
+        return r |> Seq.map (ViewDeckWithDue.load db) |> toResizeArray
     }
         
 [<CLIMutable>]

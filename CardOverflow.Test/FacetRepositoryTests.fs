@@ -59,7 +59,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.AcquiredCard
-    let! cards = CardRepository.GetQuizBach c.Db userId
+    let! cards = CardRepository.GetQuizBatch c.Db userId ""
     Assert.SingleI cards
     Assert.Equal(
         """<!DOCTYPE html>

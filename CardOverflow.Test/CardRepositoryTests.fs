@@ -78,10 +78,18 @@ let ``AcquireCards works``() = task {
     Assert.Equal(3, c.Db.AcquiredCard.Count())
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
 
-    let! a = CardRepository.GetQuizBach c.Db acquirerId
+    let count = CardRepository.GetDueCount c.Db acquirerId ""
+    Assert.Equal(2, count)
+    let count = CardRepository.GetDueCount c.Db authorId ""
+    Assert.Equal(1, count)
+
+    let! a = CardRepository.GetQuizBatch c.Db acquirerId ""
     let getId (x: Result<QuizCard, string> seq) = x.First() |> Result.getOk |> fun x -> x.AcquiredCardId
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
-    let! b = CardRepository.GetQuizBach c.Db acquirerId
+    let! b = CardRepository.GetQuizBatch c.Db acquirerId ""
     Assert.NotEqual(getId a, getId b)
     Assert.NotEmpty(c.Db.History)
+
+    let count = CardRepository.GetDueCount c.Db acquirerId ""
+    Assert.Equal(1, count)
     }

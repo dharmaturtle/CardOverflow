@@ -79,6 +79,8 @@
   bool isFront;
   [CascadingParameter]
   UserEntity User { get; set; }
+  [Parameter]
+  public string Query { get; set; }
   List<FSharpResult<QuizCard, string>> batch;
   DateTime frontVisible;
   string transcript;
@@ -93,7 +95,7 @@
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      batch = await CardRepository.GetQuizBach(Service, User.Id);
+      batch = await CardRepository.GetQuizBatch(Service, User.Id, Query);
       if (batch.Any()) {
         await ShowFront();
       }
@@ -134,7 +136,7 @@
     }
     StateHasChanged();
     if (batch.Count() <= 1) {
-      batch.AddRange(await CardRepository.GetQuizBach(Service, User.Id));
+      batch.AddRange(await CardRepository.GetQuizBatch(Service, User.Id, Query));
     }
   }
 
