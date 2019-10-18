@@ -117,7 +117,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             SourceId = 1
             TargetLink = "2"
         }
-    if cardIds.Length <> 1 then
+    if cardIds.Length = 2 then
         do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1 |> Result.getOk
         let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(1, card.Relationships.Single().Users)

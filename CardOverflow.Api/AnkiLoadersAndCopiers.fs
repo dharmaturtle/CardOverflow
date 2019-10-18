@@ -109,8 +109,10 @@ type AnkiCardWrite = {
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.CardInstance
-            .Include(fun x -> x.Card.RelationshipSources)
-            .Include(fun x -> x.Card.RelationshipTargets)
+            .Include(fun x -> x.Card.CardInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: CardInstanceEntity) -> x.RelationshipSources)
+            .Include(fun x -> x.Card.CardInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: CardInstanceEntity) -> x.RelationshipTargets)
             .FirstOrDefault(fun c ->
                 c.AnkiNoteId = Nullable this.AnkiNoteId &&
                 c.AnkiNoteOrd = Nullable this.AnkiNoteOrd &&
@@ -396,8 +398,8 @@ module Anki =
                                             noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Cloze"
                                         then
                                             let r = RelationshipEntity(Name = "Cloze", UserId = userId)
-                                            instancePair.[0].Card.RelationshipSources.Add r
-                                            instancePair.[1].Card.RelationshipTargets.Add r
+                                            instancePair.[0].RelationshipSources.Add r
+                                            instancePair.[1].RelationshipTargets.Add r
                                     )
                                 return instances
                                 }
@@ -410,8 +412,8 @@ module Anki =
                                             noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked"
                                         then
                                             let r = RelationshipEntity(Name = "Linked", UserId = userId)
-                                            instancePair.[0].Card.RelationshipSources.Add r
-                                            instancePair.[1].Card.RelationshipTargets.Add r
+                                            instancePair.[0].RelationshipSources.Add r
+                                            instancePair.[1].RelationshipTargets.Add r
                                     )
                                 instances |> Ok
                         let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)

@@ -11,6 +11,8 @@ namespace CardOverflow.Entity
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             File_CardInstances = new HashSet<File_CardInstanceEntity>();
+            RelationshipSources = new HashSet<RelationshipEntity>();
+            RelationshipTargets = new HashSet<RelationshipEntity>();
         }
 
         public int Id { get; set; }
@@ -45,5 +47,9 @@ namespace CardOverflow.Entity
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("CardInstance")]
         public virtual ICollection<File_CardInstanceEntity> File_CardInstances { get; set; }
+        [InverseProperty("Source")]
+        public virtual ICollection<RelationshipEntity> RelationshipSources { get; set; }
+        [InverseProperty("Target")]
+        public virtual ICollection<RelationshipEntity> RelationshipTargets { get; set; }
     }
 }
