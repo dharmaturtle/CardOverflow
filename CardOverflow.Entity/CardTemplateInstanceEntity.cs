@@ -99,11 +99,11 @@ namespace CardOverflow.Entity
         }
         private string _ShortAnswerTemplate;
         [Required]
-        [StringLength(1000)]
+        [StringLength(4000)]
         public string Fields {
             get => _Fields;
             set {
-                if (value.Length > 1000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Fields has a maximum length of 1000. Attempted value: {value}");
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Fields has a maximum length of 4000. Attempted value: {value}");
                 _Fields = value;
             }
         }

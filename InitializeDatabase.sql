@@ -335,7 +335,7 @@ CREATE TABLE [dbo].[CardTemplateInstance](
 	[AnswerTemplate] [nvarchar](4000) NOT NULL,
 	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
 	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
-	[Fields] [nvarchar](1000) NOT NULL,
+	[Fields] [nvarchar](4000) NOT NULL,
 	[EditSummary] [nvarchar](200) NOT NULL,
 	[AnkiId] [bigint] NULL,
  CONSTRAINT [PK_CardTemplateInstance] PRIMARY KEY CLUSTERED 
