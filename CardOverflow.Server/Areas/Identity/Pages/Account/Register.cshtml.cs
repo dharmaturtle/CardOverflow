@@ -82,7 +82,13 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
       ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
       var key = _db.AlphaBetaKey.SingleOrDefault(x => x.Key == Input.InviteCode && !x.IsUsed);
       if (ModelState.IsValid && key != null) {
-        var user = new UserEntity { UserName = Input.Email, Email = Input.Email, DisplayName = Input.DisplayName, CardOptions = new List<CardOptionEntity> { CardOptionsRepository.defaultCardOptionsEntity.Invoke(0) } };
+        var user = new UserEntity {
+          UserName = Input.Email,
+          Email = Input.Email,
+          DisplayName = Input.DisplayName,
+          CardOptions = new List<CardOptionEntity> { CardOptionsRepository.defaultCardOptionsEntity.Invoke(0) },
+          Decks = new List<DeckEntity> { new DeckEntity { Name = "All", Query = "" } },
+        };
         var result = await _userManager.CreateAsync(user, Input.Password);
         if (result.Succeeded) {
           _logger.LogInformation("User created a new account with password.");
