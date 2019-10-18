@@ -12,12 +12,12 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-  <div class="d-flex justify-content-between align-items-center">
-    @if (SelectedId == null) {
-      <CurateCardDeckDropdown Query=@search.Query DeckClicked=@SearchClicked />
-    }
-    <SearchBar SearchClicked="@SearchClicked" LinkPrefix="/curate/card/" Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() Query=@search.Query />
-  </div>
+<div class="d-flex justify-content-between align-items-center">
+  @if (SelectedId == null) {
+    <CurateCardDeckDropdown Query=@search.Query DeckClicked=@SearchClicked />
+  }
+  <SearchBar SearchClicked="@SearchClicked" LinkPrefix="/curate/card/" Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() Query=@search.Query />
+</div>
 @if (SelectedId == null) {
   <div>
     @if (cards == null) {
@@ -27,6 +27,7 @@
         <tr>
           <th>Preview</th>
           <th>Name</th>
+          <th style="min-width: 4rem;">Due</th>
           <th>Tags</th>
         </tr>
         @foreach (var card in cards) {
@@ -47,13 +48,12 @@
               </a>
             </td>
             <td>
-              <ul class="d-flex flex-wrap list-unstyled">
-                @foreach (var tag in @card.Tags) {
-                  <li class="m-1">
-                    @tag,
-                  </li>
-                }
-              </ul>
+              <span class="@((card.Due - DateTime.UtcNow) >= TimeSpan.Zero ? "" : "text-danger" )">
+                @(ViewLogic.toString(card.Due - DateTime.UtcNow))
+              </span>
+            </td>
+            <td>
+              @(String.Join(", ", card.Tags))
             </td>
           </tr>
         }

@@ -8,36 +8,38 @@
 @using CardOverflow.Sanitation
 @inherits OwningComponentBase<CardOverflowDb>
 
-  @if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
-    <span style="min-width: fit-content;">
-      @*see if you can remove this span... only here since the if breaks the nbsp*@
-      <a href=@LinkPrefix>
-        <span class="oi oi-arrow-circle-left"></span>
-      </a>
-      &nbsp;
-    </span>
-  }
-  <EditForm OnValidSubmit=@(() => SearchClicked.InvokeAsync(search)) Model=@search class="form-inline input-group">
-    <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-Value=@search.Query />
-    <button class="btn btn-primary" type="submit">Search</button>
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-  </EditForm>
+@if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
   <span style="min-width: fit-content;">
     @*see if you can remove this span... only here since the if breaks the nbsp*@
+    <a href=@LinkPrefix>
+      <span class="oi oi-arrow-circle-left"></span>
+    </a>
     &nbsp;
-    @if (!String.IsNullOrWhiteSpace(BeforeId)) {
-      <a href=@(LinkPrefix + BeforeId)>
-        <span class="oi oi-chevron-left"></span>
-      </a>
-    }
-    &nbsp;
-    @if (!String.IsNullOrWhiteSpace(AfterId)) {
-      <a href=@(LinkPrefix + AfterId)>
-        <span class="oi oi-chevron-right"></span>
-      </a>
-    }
   </span>
+}
+<EditForm OnValidSubmit=@(() => SearchClicked.InvokeAsync(search)) Model=@search class="form-inline input-group">
+  <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-Value=@search.Query />
+  <button class="btn btn-primary" type="submit">
+    <span class="oi oi-magnifying-glass"></span>
+  </button>
+  <DataAnnotationsValidator />
+  <ValidationSummary />
+</EditForm>
+<span style="min-width: fit-content;">
+  @*see if you can remove this span... only here since the if breaks the nbsp*@
+  &nbsp;
+  @if (!String.IsNullOrWhiteSpace(BeforeId)) {
+    <a href=@(LinkPrefix + BeforeId)>
+      <span class="oi oi-chevron-left"></span>
+    </a>
+  }
+  &nbsp;
+  @if (!String.IsNullOrWhiteSpace(AfterId)) {
+    <a href=@(LinkPrefix + AfterId)>
+      <span class="oi oi-chevron-right"></span>
+    </a>
+  }
+</span>
 
 @code {
   [Parameter]
