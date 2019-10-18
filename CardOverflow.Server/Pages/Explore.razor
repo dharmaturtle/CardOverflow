@@ -11,7 +11,9 @@
 @using CardOverflow.Sanitation
 @inherits OwningComponentBase<CardOverflowDb>
 
-<SearchBar SearchClicked="@SearchClicked" LinkPrefix="/card/" Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+<div class="d-flex justify-content-between align-items-center">
+  <SearchBar SearchClicked="@SearchClicked" LinkPrefix="/card/" Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+</div>
 @if (SelectedId == null) {
   @if (cards == null) {
     <p><em>Loading...</em></p>
