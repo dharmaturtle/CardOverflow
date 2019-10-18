@@ -48,7 +48,7 @@
                 }
               </select>
             </div>
-            <ResizingIframe SrcUrl=@("/cardinstance/" + Card.CardInstanceMeta.Id + "/back") />
+            <iframe sandbox="allow-scripts" srcdoc=@EditCard.FrontBackFrontSynthBackSynth.Item2 style="height: 100vh; width: 100%;"></iframe>
             Tags:
             <ul>
               @foreach (var tag in Card.Tags) {

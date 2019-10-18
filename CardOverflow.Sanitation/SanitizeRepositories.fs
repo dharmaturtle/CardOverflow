@@ -194,7 +194,14 @@ type EditCardCommand = {
     EditSummary: string
     FieldValues: FieldAndValue ResizeArray
     TemplateInstance: ViewCardTemplateInstance
-}
+} with
+    member this.FrontBackFrontSynthBackSynth = // medTODO split this up
+        CardHtml.generate
+            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "")
+            <| this.TemplateInstance.QuestionTemplate
+            <| this.TemplateInstance.AnswerTemplate
+            <| this.TemplateInstance.Css
+
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) instanceId = task {
         let! instance = CardRepository.instance db instanceId
