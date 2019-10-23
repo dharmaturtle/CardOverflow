@@ -647,8 +647,6 @@ INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (2, 2)
 INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (3, 2)
 INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (4, 2)
 INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (5, 2)
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (6, 2)
-INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (7, 2)
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] ON 
 
@@ -690,26 +688,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 <hr id=answer>
 
 {{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669577)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (3, N'Basic (and reversed card) - Card 2', 3, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', CAST(N'2019-04-08T02:14:29.5770000' AS DateTime2), CAST(N'2019-06-16T00:51:28.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{Back}}', N'{{FrontSide}}
-
-<hr id=answer>
-
-{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669577)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (4, N'Basic (optional reversed card) - Card 1', 4, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (3, N'Basic (optional reversed card) - Card 1', 3, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -728,26 +707,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 <hr id=answer>
 
 {{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki', 1554689669572)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (5, N'Basic (optional reversed card) - Card 2', 5, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', CAST(N'2019-04-08T02:14:29.5720000' AS DateTime2), CAST(N'2019-06-16T00:51:32.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{#Add Reverse}}{{Back}}{{/Add Reverse}}', N'{{FrontSide}}
-
-<hr id=answer>
-
-{{Front}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki', 1554689669572)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (6, N'Basic (type in the answer)', 6, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (4, N'Basic (type in the answer)', 4, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -767,7 +727,7 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 <hr id=answer>
 
 {{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669571)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (7, N'Cloze', 7, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (5, N'Cloze', 5, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -802,8 +762,6 @@ INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [D
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 3, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 4, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 5, 2)
-INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 6, 2)
-INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 7, 2)
 /****** Object:  Index [IX_AcquiredCard_CardInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardInstanceId] ON [dbo].[AcquiredCard]
 (

@@ -15,8 +15,6 @@ open System.Text.RegularExpressions
 
 module CardTemplateInstanceEntity =
     let acquireHash (hasher: SHA256) (e: CardTemplateInstanceEntity) =
-        let standardizeWhitespace x =
-            Regex.Replace(x, @"\s+", " ")
         [   e.Name
             e.Css
             e.LatexPre
@@ -108,7 +106,7 @@ type CardOption with
 
 type FieldAndValue with
     static member load (fields: Field seq) fieldValues =
-        fieldValues |> MappingTools.splitByUnitSeparator |> Seq.indexed |> Seq.map (fun (i, x) -> {
+        fieldValues |> MappingTools.splitByUnitSeparator |> List.mapi (fun i x -> {
             Field = fields.Single(fun x -> int x.Ordinal = i)
             Value = x
         }) |> toResizeArray

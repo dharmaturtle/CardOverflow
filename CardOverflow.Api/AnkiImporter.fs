@@ -19,13 +19,11 @@ open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
     let cardTemplateIdByHash =
-        [("Pgevgl1Ndx4SfCTiS8ytr+tsdxqTZxl1qOoYbfmbSzo=", 1)
-         ("Z83cAQkktpO3obm5Mci5LiF3s3QkeG8VosGlr38h454=", 2)
-         ("gMdIAi+7mH4HIeSEmBUGZZS0q3SV96WHcilQe6j4oWk=", 3)
-         ("MtO96DMmyAAl4CuSj9UbquRkyV5VhjMS06WqGR//C8w=", 4)
-         ("5jCh7lUe86ifCVo4rUsStniC+C/tA6rG62gAJALvMy4=", 5)
-         ("+OjyChMNxhIJcrSsMDBf9C8yQjSMp7eN05kG61TwZxo=", 6)
-         ("s0P3gy9cP0gCQE6qqGbocZptlohfauH0qmB7v8SLUBs=", 7)] |> Map.ofSeq
+        [("BCYOZW4LNxaL7eRtLkWR6KlDbAzqCFRfjZhivlY+p0E=", 1)
+         ("Vq8SdXBAWwR6qpaVJtmYlxpJaHApbAklv6Cz2Zd28H8=", 3)
+         ("diho6Lrz6gbKyVrmEUl5jr8M/RFmPuU/Jz0telNZeGw=", 2)
+         ("g3UsJzTPZhLyY6rP08RxpcS7X9wLuZJ2gxtuCqgxP00=", 5)
+         ("sk0Te8QcFS96w/FjUdYiJ4Ui/j29RrHsjHOxFzf75Rk=", 4)] |> Map.ofSeq
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -151,9 +149,7 @@ module AnkiImporter =
                     getCard
                     ankiDb.Notes
                 |> Result.consolidate
-            let cardsAndTagsByNoteId =
-                cardsAndTagsByNoteId
-                |> Map.ofSeq
+                |> Result.map Map.ofSeq
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards

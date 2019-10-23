@@ -3,6 +3,7 @@ module MappingTools
 open System
 open HtmlAgilityPack
 open System.Web
+open System.Text.RegularExpressions
 
 let delimiter = ' '
 
@@ -77,3 +78,6 @@ let stripHtmlTags html =
     doc.DocumentNode.InnerText
     |> HttpUtility.HtmlDecode
     |> fun x -> x.Trim()
+
+let standardizeWhitespace x =
+    Regex.Replace(x, @"\s+", " ", RegexOptions.Compiled).Trim()

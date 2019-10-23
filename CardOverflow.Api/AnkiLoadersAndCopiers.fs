@@ -7,6 +7,7 @@ open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
 open CardOverflow.Pure.Core
+open MappingTools
 open System
 open System.Linq
 open LoadersAndCopiers
@@ -30,7 +31,7 @@ type AnkiCardTemplateInstance = {
     AuthorId: int
     Name: string
     Css: string
-    Fields: Field seq
+    Fields: Field list
     Created: DateTime
     Modified: DateTime option
     DefaultTags: int list
@@ -44,6 +45,8 @@ type AnkiCardTemplateInstance = {
     DeckId: int64
     IsCloze: bool
     Ordinal: byte
+    NewByOldField: Map<Field, Field>
+    FieldsByOrdinal: Map<byte, Field list>
 } with
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
         entity.Name <- this.Name
@@ -263,7 +266,111 @@ module Anki =
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
+    type BraceRegex = Regex< """{{(?<fieldName>.*?)}}""" >
+    type TempTemplate = {
+        Template: AnkiCardTemplateInstance
+        NewByOldField: (Field * Field) list
+        ReducedFields: Field list
+        FieldsByOrdinal: (byte * Field list) list
+    } with
+        member this.QuestionTemplate = this.Template.QuestionTemplate
+        member this.AnswerTemplate = this.Template.AnswerTemplate
+        member this.Ordinal = this.Template.Ordinal
     let parseModels userId =
+        let reduceCardTemplate (templates: AnkiCardTemplateInstance list) =
+            let templates = templates |> List.map (fun x -> { Template = x; NewByOldField = []; ReducedFields = x.Fields; FieldsByOrdinal = [] })
+            let communalFields =
+                templates.Head.ReducedFields
+                |> List.filter (fun x ->
+                    templates.Count(fun t -> (t.QuestionTemplate + t.AnswerTemplate).Contains("{{" + x.Name + "}}"))
+                    |> function
+                    | 1 -> false
+                    | _ -> true)
+            let communalFieldNames = communalFields |> List.map (fun x -> x.Name)
+            let rec reduceLoop templates =
+                let combine (newT: TempTemplate) (oldT: TempTemplate) =
+                    let newQA = [newT.QuestionTemplate; newT.AnswerTemplate] |> joinByUnitSeparator
+                    let oldQA = [oldT.QuestionTemplate; oldT.AnswerTemplate] |> joinByUnitSeparator
+                    if  standardizeWhitespace (BraceRegex().Replace(newQA, "")) =
+                        standardizeWhitespace (BraceRegex().Replace(oldQA, "")) then
+                        let getFields x =
+                            BraceRegex().TypedMatches(x)
+                                |> List.ofSeq
+                                |> List.map(fun x -> x.fieldName.Value)
+                                |> List.filter(fun x ->
+                                    if x.[0] = '^' then failwith "medTODO fix this"
+                                    x.[0] <> '#' &&
+                                    x.[0] <> '/' &&
+                                    not <| String.Equals(x, "FrontSide", StringComparison.OrdinalIgnoreCase) &&
+                                    not <| x.StartsWith("hint:", StringComparison.OrdinalIgnoreCase))
+                                |> List.distinct
+                        let fieldByName = oldT.ReducedFields |> List.map (fun x -> x.Name, x) |> Map.ofList
+                        let newFields = getFields newQA |> List.map (fun m -> fieldByName.[m])
+                        let oldFields = getFields oldQA |> List.map (fun m -> fieldByName.[m])
+                        if newFields.Length <> oldFields.Length then failwith "Field counts should be the same"
+                        { newT with
+                            ReducedFields =
+                                oldT.ReducedFields
+                                |> List.filter (fun f ->
+                                    not <| oldFields.Any(fun x -> x.Name = f.Name) ||
+                                    communalFieldNames.Contains f.Name)
+                            NewByOldField =
+                                newT.NewByOldField @
+                                oldT.NewByOldField @
+                                List.zip communalFields communalFields @
+                                List.zip oldFields newFields
+                            FieldsByOrdinal =
+                                newT.FieldsByOrdinal @
+                                oldT.FieldsByOrdinal @
+                                [newT.Ordinal, newFields @ communalFields |> List.distinct] @
+                                [oldT.Ordinal, oldFields @ communalFields |> List.distinct]
+                        } |> Some
+                    else
+                        None
+                combination 2 templates
+                |> Seq.tryPick (fun x ->
+                    let a = x.[0]
+                    let b = x.[1]
+                    combine a b
+                    |> Option.map (fun x -> x :: templates |> List.filter(fun x -> x <> a && x <> b)))
+                |> function
+                | Some x -> reduceLoop x
+                | None -> templates
+            let templates = reduceLoop templates
+            let templateSpecificFieldsByTemplate =
+                let usedFieldsByTemplate =
+                    templates |> List.map(fun t ->
+                        let qa = [t.QuestionTemplate; t.AnswerTemplate] |> joinByUnitSeparator
+                        t, BraceRegex().TypedMatches(qa).Select(fun x -> x.fieldName.Value) |> List.ofSeq
+                    ) |> Map.ofList
+                templates |> List.map(fun t ->
+                    let otherTemplatesUsedFields = usedFieldsByTemplate |> Map.toList |> List.filter (fun (x, _) -> x <> t) |> List.collect snd
+                    t, usedFieldsByTemplate.[t] |> List.filter (fun x -> not <| otherTemplatesUsedFields.Contains x))
+            let oldFields = templates |> List.collect (fun x -> x.NewByOldField) |> List.map fst
+            templates |> List.map (fun t ->
+                let otherTemplateSpecificFields = templateSpecificFieldsByTemplate |> List.filter (fun (x, _) -> x <> t) |> List.collect snd
+                let fields =
+                    t.ReducedFields
+                    |> List.filter (fun x ->
+                        (not <| otherTemplateSpecificFields.Contains x.Name && not <| oldFields.Contains x) ||
+                        communalFieldNames.Contains x.Name
+                    )
+                    |> List.sortBy (fun x -> x.Ordinal)
+                    |> List.mapi (fun i x -> { x with Ordinal = byte i})
+                { t.Template with
+                    NewByOldField =
+                        if List.isEmpty t.NewByOldField then
+                            List.zip t.Template.Fields t.Template.Fields
+                        else
+                            t.NewByOldField
+                        |> Map.ofList
+                    FieldsByOrdinal =
+                        if List.isEmpty t.FieldsByOrdinal then
+                            [(t.Ordinal, fields)]
+                        else
+                            t.FieldsByOrdinal
+                        |> Map.ofList
+                    Fields = fields})
         Decode.object(fun get ->
             let cardTemplates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
@@ -287,14 +394,14 @@ module Anki =
                     Name = get.Required.Field "name" Decode.string + namePostfix
                     Css = get.Required.Field "css" Decode.string
                     Fields =
-                      get.Required.Field "flds" (Decode.object(fun get ->
-                          { Name = get.Required.Field "name" Decode.string
-                            Font = get.Required.Field "font" Decode.string
-                            FontSize = get.Required.Field "size" Decode.int |> byte
-                            IsRightToLeft = get.Required.Field "rtl" Decode.bool
-                            Ordinal = get.Required.Field "ord" Decode.int |> byte
-                            IsSticky = get.Required.Field "sticky" Decode.bool })
-                          |> Decode.list )
+                        get.Required.Field "flds" (Decode.object(fun get ->
+                            { Name = get.Required.Field "name" Decode.string
+                              Font = get.Required.Field "font" Decode.string
+                              FontSize = get.Required.Field "size" Decode.int |> byte
+                              IsRightToLeft = get.Required.Field "rtl" Decode.bool
+                              Ordinal = get.Required.Field "ord" Decode.int |> byte
+                              IsSticky = get.Required.Field "sticky" Decode.bool })
+                            |> Decode.list)
                     QuestionTemplate = cardTemplate.QuestionTemplate
                     AnswerTemplate = cardTemplate.AnswerTemplate
                     ShortQuestionTemplate = cardTemplate.ShortQuestionTemplate
@@ -307,7 +414,9 @@ module Anki =
                     LatexPost = get.Required.Field "latexPost" Decode.string
                     DeckId = get.Required.Field "did" Decode.int64
                     IsCloze = get.Required.Field "type" ankiIntToBool
-                }))
+                    NewByOldField = Map.empty
+                    FieldsByOrdinal = Map.empty
+                }) |> reduceCardTemplate)
         |> Decode.keyValuePairs
         |> Decode.fromString
     type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
@@ -364,7 +473,7 @@ module Anki =
                     |> List.append tags
                     |> List.groupBy (fun x -> x.Name.ToLower())
                     |> List.map (fun (_, x) -> x.First())
-                let files, fields = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
+                let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let cardTemplates = cardTemplatesByModelId.[string note.Mid]
                 let toCard fields (cardTemplate: CardTemplateInstanceEntity) noteOrd =
                     let c = {
@@ -383,15 +492,15 @@ module Anki =
                         let! cards =
                             if cardTemplates.First().CardTemplate.IsCloze then result {
                                 let cardTemplate = cardTemplates |> Seq.exactlyOne
-                                let! max = AnkiImportLogic.maxClozeIndex fields (string note.Id)
+                                let! max = AnkiImportLogic.maxClozeIndex fieldValues (string note.Id)
                                 let instances =
                                     [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
                                         toCard
-                                            <| AnkiImportLogic.multipleClozeToSingleCloze fields clozeIndex
+                                            <| AnkiImportLogic.multipleClozeToSingleCloze fieldValues clozeIndex
                                             <| cardTemplate.Entity
-                                            <| clozeIndex
+                                            <| clozeIndex - 1uy
                                     )
-                                Core.combination 2 instances
+                                combination 2 instances
                                 |> List.iter (fun instancePair ->
                                         if  instancePair.[0].Card.Id = 0 &&
                                             instancePair.[1].Card.Id = 0 &&
@@ -404,8 +513,36 @@ module Anki =
                                 return instances
                                 }
                             else
-                                let instances = cardTemplates |> List.map (fun x -> toCard fields x.Entity x.CardTemplate.Ordinal)
-                                Core.combination 2 instances
+                                let instances = cardTemplates |> List.collect (fun anon ->
+                                    let cardTemplate = anon.CardTemplate
+                                    let newByOldField = cardTemplate.NewByOldField
+                                    let oldFields = newByOldField |> Map.toList |> List.map fst
+                                    let newFields = newByOldField |> Map.toList |> List.map snd
+                                    let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
+                                    cardTemplate.FieldsByOrdinal
+                                    |> Map.toList
+                                    |> List.map (fun (templateOrdinal, fields) ->
+                                        let fields =
+                                            fields |> List.map (fun f ->
+                                                oldFields
+                                                |> Seq.filter (fun x -> x.Name = f.Name)
+                                                |> Seq.tryExactlyOne
+                                                |> function
+                                                | None ->
+                                                    let field =
+                                                        newFields
+                                                        |> Seq.filter (fun x -> x.Name = f.Name)
+                                                        |> Seq.tryHead
+                                                        |> Option.defaultValue f
+                                                    field.Ordinal, field.Ordinal
+                                                | Some field ->
+                                                    newByOldField.[field].Ordinal, field.Ordinal
+                                            ) |> List.sortBy (fun (newOrdinal, _) -> newOrdinal)
+                                            |> List.map (fun (_, oldOrdinal) -> fieldValues.[int oldOrdinal])
+                                            |> MappingTools.joinByUnitSeparator
+                                        toCard fields anon.Entity templateOrdinal
+                                    ))
+                                combination 2 instances
                                 |> List.iter (fun instancePair ->
                                         if  instancePair.[0].Card.Id = 0 &&
                                             instancePair.[1].Card.Id = 0 &&
@@ -439,7 +576,7 @@ module Anki =
         let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
-        let card = cards.ElementAt(ankiCard.Ord |> int)
+        let card = cards.Single(fun x -> x.AnkiNoteOrd = (ankiCard.Ord |> byte |> Nullable))
         let cti = card.CardTemplateInstance
         match ankiCard.Type with
         | 0L -> Ok New

@@ -1,10 +1,10 @@
 namespace CardOverflow.Pure
 
+open System
 open System.Linq
 open System.Security.Cryptography
 open System.Text
 open Microsoft.FSharp.Quotations
-open System
 
 [<CustomEquality; NoComparison>]
 type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
@@ -26,7 +26,7 @@ module Result =
 
     let getOk = function
         | Ok ok -> ok
-        | Error _ -> failwith "Not ok"
+        | Error x -> failwithf "Error: %A" x
 
     let getError = function
         | Ok _ -> failwith "Not error"

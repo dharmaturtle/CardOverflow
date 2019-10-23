@@ -40,7 +40,7 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
     }
 
 let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<unit> =
-    add "Basic (and reversed card) - Card 2" []
+    add "Basic (and reversed card) - Card 1" []
 
 let addBasicCard =
     add "Basic" []

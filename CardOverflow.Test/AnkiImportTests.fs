@@ -15,6 +15,172 @@ open Xunit
 open System
 open AnkiImportTestData
 open System.Collections.Generic
+open FSharp.Text.RegexProvider
+
+[<Fact>]
+let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` () =
+    let userId = 3
+    let templates =
+        AnkiImportTestData.relationships.Cols.Single().Models
+        |> Anki.parseModels userId
+        |> Result.getOk
+        |> List.collect snd
+        |> List.groupBy (fun x -> x.AnkiId)
+        |> List.map snd
+    
+    let myBasic = templates.[0].Single()
+    Assert.Equal(
+        "Basic (optional reversed custom card) with source - ReversibleForward",
+        myBasic.Name)
+    Assert.Equal<string seq>(
+        ["Front"; "Back"; "Source"],
+        myBasic.Fields.Select(fun x -> x.Name))
+    Assert.Equal(
+        "{{Front}}\n\n<script>\nlet uls = document.getElementsByClassName(\"random\");\nlet ulsArray = Array.prototype.slice.call(uls);\n\nlet arrayLength = ulsArray.length;\nfor (let i = 0; i < arrayLength; i++) {\n  let lis = ulsArray[i].getElementsByTagName(\"li\");\n  let lisArray = Array.prototype.slice.call(lis);\n  shuffle(lisArray);\n\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\n    return node.outerHTML;\n  }).join(\"\");\n}\n\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\nfunction shuffle(a) {\n  let j, x, i;\n  for (i = a.length; i; i -= 1) {\n    j = Math.floor(Math.random() * i);\n    x = a[i - 1];\n    a[i - 1] = a[j];\n    a[j] = x;\n  }\n}\n\ndocument.onkeydown = function(evt) {\n  if (evt.keyCode == 90) {\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \n\n    let allDetails = document.getElementsByTagName('details');\n    for (i = 0; i < allDetails.length; i++) {\n      if (!allDetails[i].hasAttribute(\"open\")) {\n        allDetails[i].setAttribute('open', '');\n        break;\n      }\n    }\n  }\n};\n\n</script>",
+        myBasic.QuestionTemplate)
+    Assert.Equal(
+        "<div id=\"front\">\n{{FrontSide}}\n</div>\n\n<hr id=answer>\n\n{{Back}}\n\n<script>\nlet uls = document.getElementsByClassName(\"random\");\nlet ulsArray = Array.prototype.slice.call(uls);\n\nlet arrayLength = ulsArray.length;\nfor (let i = 0; i < arrayLength; i++) {\n  let lis = ulsArray[i].getElementsByTagName(\"li\");\n  let lisArray = Array.prototype.slice.call(lis);\n  shuffle(lisArray);\n\t\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\n    return node.outerHTML;\n  }).join(\"\");\n}\n\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\nfunction shuffle(a) {\n  let j, x, i;\n  for (i = a.length; i; i -= 1) {\n    j = Math.floor(Math.random() * i);\n    x = a[i - 1];\n    a[i - 1] = a[j];\n    a[j] = x;\n  }\n}\n\ndocument.onkeydown = function(evt) {\n  if (evt.keyCode == 90) {\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \n\n    let allDetails = document.getElementsByTagName('details');\n    for (i = 0; i < allDetails.length; i++) {\n      if (!allDetails[i].hasAttribute(\"open\")) {\n        allDetails[i].setAttribute('open', '');\n        break;\n      }\n    }\n  }\n};\n\nlet frontDetails = document.getElementById(\"front\").getElementsByTagName('details')\nfor (i = 0; i < frontDetails.length; i++) {\n  frontDetails[i].setAttribute('open', '');\n}\n\n</script>",
+        myBasic.AnswerTemplate)
+
+    let sketchy = templates.[1]
+    Assert.Equal<string seq>(
+        ["SketchyPharm - Card 36"; "SketchyPharm - Card 16"; "SketchyPharm - Card 30"],
+        sketchy.Select(fun x -> x.Name))
+    Assert.Equal<string seq seq>(
+        [ seq["Extra Q3"; "Extra A3"; "Extra 3"; "More About This Topic"; "Entire Sketch"]
+          seq["Extra Q"; "Extra A"; "Extra"; "More About This Topic"; "Entire Sketch"]
+          seq["Extra Q2"; "Extra A2"; "Extra 2"; "More About This Topic"; "Entire Sketch"]],
+        sketchy.Select(fun x -> x.Fields.Select(fun x -> x.Name)))
+    Assert.Equal<string seq>(
+        [   "<div class=textstyling>\n<font color=\"#DC143C\"></font><br><u>{{Extra Q3}}</u>\n<br>\n<br>\n{{Extra A3}}\n</div>\n\n<hr>\n<p style=\"font-size: 85%\"><i>\n{{Extra 3}}\n</i><br>\n<hr color=\"white\">\n<div class=entiresketchstyle>\n{{Entire Sketch}}\n<br>\n{{hint:More About This Topic}}\n</div>\n\n\n\n\n\n\n"
+            "<div class=textstyling>\n<font color=\"#DC143C\"></font><br><u>{{Extra Q}}</u>\n<br>\n<br>\n{{Extra A}}\n</div>\n\n\t\t\t\n<hr>\n<p style=\"font-size: 92%\"><i>\n{{Extra}}\n</i></hr>\n<hr color=\"white\">\n\n<div class=entiresketchstyle>\n{{Entire Sketch}}\n<br>\n{{hint:More About This Topic}}\n</div>\n\n\n\n\n\n\n\n\n"
+            "<div class=textstyling>\n<font color=\"#DC143C\"></font><br><u>{{Extra Q2}}</u>\n<br>\n<br>\n{{Extra A2}}\n</div>\n\n<hr>\n<p style=\"font-size: 85%\"><i>\n{{Extra 2}}\n</i><br>\n<hr color=\"white\">\n\n<div class=entiresketchstyle>\n{{Entire Sketch}}\n<br>\n{{hint:More About This Topic}}\n</div>\n\n\n\n\n\n\n\n" ],
+        sketchy.Select(fun x -> x.AnswerTemplate))
+    Assert.Equal<string seq>(
+        [   "<div class=textstyling>\t\t\n{{#Extra Q3}}<font color=\"#DC143C\"></font><br>\n<center>{{Extra Q3}}</center>\n{{/Extra Q3}}\n</div>\n\n"
+            "<div class=textstyling>\n{{#Extra Q}}<font color=\"#DC143C\"></font>\n<center>{{Extra Q}}</center>\n{{/Extra Q}}\n</div>\n\n"
+            "<div class=textstyling>\n{{#Extra Q2}}<font color=\"#DC143C\"></font><br>\n<center>{{Extra Q2}} </center>\n{{/Extra Q2}}\n</div>\n\n" ],
+        sketchy.Select(fun x -> x.QuestionTemplate))
+
+    let cloze = templates.[2].Single()
+    Assert.Equal(
+        "Cloze-Lightyear",
+        cloze.Name)
+    Assert.Equal<string seq>(
+        ["Text"; "Extra"],
+         cloze.Fields.Select(fun x -> x.Name))
+    Assert.Equal(
+        "{{cloze:Text}}",
+        cloze.QuestionTemplate)
+    Assert.Equal(
+        "{{cloze:Text}}<br>\n\n\n{{Extra}}\n",
+        cloze.AnswerTemplate)
+
+    let cards, _ =
+        AnkiImporter.load
+            AnkiImportTestData.relationships
+            userId
+            Map.empty
+            []
+            [CardOptionsRepository.defaultCardOptionsEntity userId]
+            (fun _ -> None)
+            (fun _ -> None)
+            (fun _ _ _ _ -> false)
+            (fun _ -> None)
+            (fun _ -> None)
+        |> Result.getOk
+    let getFieldValues (templateName: string) =
+        cards
+            .Where(fun x -> x.CardInstance.CardTemplateInstance.Name.Contains templateName)
+            .Select(fun x -> (CardInstanceView.load x.CardInstance).FieldValues.Select(fun x -> x.Value))
+
+    Assert.Equal<string seq>(
+        [ seq["What is the null hypothesis for the slope?";        @"[$]H_0: \beta_1 = 0[/$]";   "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"]
+          seq["What is the alternative hypothesis for the slope?"; @"[$]H_0: \beta_1 \ne 0[/$]"; "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"]],
+        getFieldValues "Basic")
+    Assert.Equal<string seq>(
+        [ seq["Toxic adenomas are thyroid nodules that usually contain a mutated {{c::TSH receptor}}"; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"]
+          seq["{{c::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"]],
+        getFieldValues "Cloze")
+    let assertEqual (expectedss: string list list) (actualss: string seq seq) =
+        for (expecteds, actuals) in Seq.zip expectedss actualss do
+            for (expected, actual) in Seq.zip expecteds actuals do
+                let stripUnicodeAndQuestionMark x = Regex.Replace(x, @"(?:[^\u0000-\u007F]|\?)+", "") // NCrunch can't deal with unicode here... seems to replace them with question marks
+                Assert.Equal(
+                    stripUnicodeAndQuestionMark expected,
+                    stripUnicodeAndQuestionMark actual)
+    ([  ["""How does a cytomegalovirus infection usually present in an HIV patient?"""
+         """Retinitis ⇒ Hemorrhages and infiltrates"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""<b style="font-weight: bold; ">CD4</b>:&nbsp;CMV"""
+         """CD4 &lt; 50"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""Why does Ganciclovir preferentially target CMV infected cells?&nbsp;"""
+         """Activated by Viral Kinase UL97"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""What enzyme activates Ganciclovir?"""
+         """Viral Kinase UL97<div><i><sup><br></sup></i></div><div><i><sup>(For first phosphorylation, then cellular kinase for second and third)</sup></i></div>"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""<b>MOA</b>: Ganciclovir"""
+         """Guanosine nucleo<font color="#ff0000">s</font>ide analog<div><i><sup><br></sup></i></div><div><i><sup>(⇒ Inhibition of Viral DNA polymerase)</sup></i></div>"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" />&nbsp;"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""What is an orally administered version of Ganciclovir?"""
+         """Valganciclovir<div><br></div><div><i><sup>(Val- prefix = prodrug)</sup></i></div>"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""Who is Ganciclovir indicated for?"""
+         """High-risk transplant patients"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""<b>Adverse Effect</b>: Ganciclovir"""
+         """Myelosuppression"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""An HIV patient is on Zidovudine as an anti-retroviral and Ganciclovir as prophylaxis for CMV. What lab values must you constantly follow?"""
+         """WBC/RBC counts"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""What viruses is Foscarnet active against?"""
+         """(1) HSV<div>(2) VZV</div><div>(3) CMV</div>"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""What organ does Cidofovir commonly damage?"""
+         """Kidney<div><br></div><div><i><sup>(Foscarnet also commonly damages the kidney)</sup></i></div>"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""What electrolyte abnormalities are common with Foscarnet?"""
+         """(1) ↓ Ca<sup>2+</sup><div>(2) ↓ Mg<sup>2+</sup></div><div>(3) ↓ K<sup>+</sup></div>"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""What antiviral is always administered with Probenecid?"""
+         """Cidofovir"""
+         """<img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["""How does Probenecid protect the kidney from Cidofovir?"""
+         """Inhibits tubular secretion<div><i><sup><br /></sup></i></div><div><i><sup>(∴ Reduced intra-lumenal Cidofovir concentration ⇒ Reduced toxicity)</sup></i></div>"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]]
+    , getFieldValues "Sketchy")
+    ||> assertEqual
 
 [<Fact>]
 let ``Can import myHighPriority, but really testing duplicate card templates`` (): Task<unit> = task {
@@ -26,8 +192,8 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     
     Assert.Equal(2, c.Db.Card.Count())
     Assert.Equal(2, c.Db.CardInstance.Count())
-    Assert.Equal(8, c.Db.CardTemplate.Count())
-    Assert.Equal(8, c.Db.CardTemplateInstance.Count())
+    Assert.Equal(6, c.Db.CardTemplate.Count())
+    Assert.Equal(6, c.Db.CardTemplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
     }
 
@@ -42,15 +208,11 @@ let assertHasBasicInfo db ankiDb: Task<unit> = task {
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
         ].ToList(),
         db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "6/16/2019 00:51:28"
-            "6/16/2019 00:51:28"
-            "6/16/2019 00:51:32"
             "6/16/2019 00:51:32"
             "6/16/2019 00:51:46"
             "6/16/2019 00:51:55"
@@ -158,8 +320,8 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
 
     Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
     Assert.Equal(4, c.Db.Tag.Count())
-    Assert.Equal(7, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
-    Assert.Equal(7, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
+    Assert.Equal(5, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
+    Assert.Equal(5, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
     Assert.Equal(0, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = userId))
     Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
