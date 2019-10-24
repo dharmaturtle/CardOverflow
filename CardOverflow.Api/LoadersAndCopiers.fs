@@ -386,7 +386,7 @@ type ExploreCard with
                     let sourceId = r.First().SourceId
                     let targetId = r.First().TargetId
                     {   Name = name
-                        CardId = targetId
+                        CardId = r.First().Target.CardId
                         IsAcquired = r.Any(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.UserId = userId && x.Name = name)
                         Users = r.Count(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.Name = name)
                     }) |> Seq.toList
@@ -396,7 +396,7 @@ type ExploreCard with
                     let sourceId = r.First().SourceId
                     let targetId = r.First().TargetId
                     {   Name = Relationship.flipName name
-                        CardId = sourceId
+                        CardId = r.First().Source.CardId
                         IsAcquired = r.Any(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.UserId = userId && x.Name = name)
                         Users = r.Count(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.Name = name)
                     }) |> Seq.toList

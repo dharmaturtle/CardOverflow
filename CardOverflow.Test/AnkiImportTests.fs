@@ -16,6 +16,9 @@ open System
 open AnkiImportTestData
 open System.Collections.Generic
 open FSharp.Text.RegexProvider
+open ContainerExtensions
+open SimpleInjector
+open SimpleInjector.Lifestyles
 
 [<Fact>]
 let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` () =
@@ -181,6 +184,43 @@ let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` ()
          """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]]
     , getFieldValues "Sketchy")
     ||> assertEqual
+
+[<Fact>]
+let ``Import relationships has relationships`` (): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    do!
+        AnkiImporter.save c.Db AnkiImportTestData.relationships userId Map.empty
+        |> Result.getOk
+    
+    Assert.Equal(18, c.Db.Card.Count())
+    Assert.Equal(18, c.Db.CardInstance.Count())
+    Assert.Equal(AnkiDefaults.cardTemplateIdByHash.Count + 5, c.Db.CardTemplate.Count())
+    Assert.Equal(AnkiDefaults.cardTemplateIdByHash.Count + 5, c.Db.CardTemplateInstance.Count())
+
+    let getInstances (templateName: string) =
+        c.Db.CardTemplateInstance
+            .Include(fun x -> x.CardInstances)
+            .Where(fun x -> x.Name.Contains templateName)
+            .SelectMany(fun x -> x.CardInstances :> IEnumerable<_>)
+            .ToListAsync()
+    
+    let! basicCards = getInstances "Basic"
+    for instance in basicCards do
+        let! card = CardRepository.Get c.Db userId instance.CardId
+        card.Relationships.Single().CardId |> basicCards.Select(fun x -> x.CardId).Contains |> Assert.True
+    
+    let! sketchy = getInstances "Basic"
+    for instance in sketchy do
+        let! card = CardRepository.Get c.Db userId instance.CardId
+        for r in card.Relationships do
+            sketchy.Select(fun x -> x.CardId).Contains(r.CardId) |> Assert.True
+
+    let! cloze = getInstances "Cloze"
+    for instance in cloze do
+        let! card = CardRepository.Get c.Db userId instance.CardId
+        card.Relationships.Single().CardId |> cloze.Select(fun x -> x.CardId).Contains |> Assert.True
+    }
 
 [<Fact>]
 let ``Can import myHighPriority, but really testing duplicate card templates`` (): Task<unit> = task {
