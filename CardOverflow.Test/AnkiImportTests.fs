@@ -208,18 +208,57 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     let! basicCards = getInstances "Basic"
     for instance in basicCards do
         let! card = CardRepository.Get c.Db userId instance.CardId
-        card.Relationships.Single().CardId |> basicCards.Select(fun x -> x.CardId).Contains |> Assert.True
+        let relationship = card.Relationships.Single()
+        Assert.Contains(relationship.CardId, basicCards.Select(fun x -> x.CardId))
+        let sourceId = 1
+        if instance.Id = sourceId then
+            Assert.Equal({
+                Name = "x/Inherit:Source"
+                CardId = basicCards.Single(fun x -> x.CardId <> sourceId).CardId
+                IsAcquired = true
+                Users = 1 },
+                relationship)
+        else
+            Assert.Equal({
+                Name = "Inherit:Source/x"
+                CardId = sourceId
+                IsAcquired = true
+                Users = 1 },
+                relationship)
     
-    let! sketchy = getInstances "Basic"
-    for instance in sketchy do
-        let! card = CardRepository.Get c.Db userId instance.CardId
+    let! sketchyEntities = getInstances "Sketchy"
+    let sketchy = sketchyEntities |> Seq.toList |> List.map (fun instance -> (CardRepository.Get c.Db userId instance.CardId).GetAwaiter().GetResult()) // lowTODO replace with an API
+    let communalSource = sketchy |> List.maxBy (fun x -> x.Relationships.Count)
+    for card in sketchy do
         for r in card.Relationships do
-            sketchy.Select(fun x -> x.CardId).Contains(r.CardId) |> Assert.True
+            sketchyEntities.Select(fun x -> x.CardId).Contains(r.CardId) |> Assert.True
+        let sourceFields = ["x/Inherit:More About This Topic"; "x/Inherit:Entire Sketch"]
+        let targetFields = ["Inherit:More About This Topic/x"; "Inherit:Entire Sketch/x"]
+        let relationships = card.Relationships.Select(fun x -> x.Name)
+        let inheritCount = 2
+        if card = communalSource then
+            Assert.Equal((sketchy.Length - 1) * inheritCount, card.Relationships.Count)
+            for cardId in card.Relationships.Select(fun r -> r.CardId) do
+                Assert.Contains(cardId, sketchy.Where(fun x -> x.Relationships.Count = inheritCount).Select(fun x -> x.Id))
+            for f in sourceFields do Assert.Contains(f, relationships)
+            for f in targetFields do Assert.DoesNotContain(f, relationships)
+        else
+            Assert.Equal(inheritCount, card.Relationships.Count)
+            Assert.Equal(communalSource.Id, card.Relationships.Select(fun r -> r.CardId).Distinct().Single())
+            for f in sourceFields do Assert.DoesNotContain(f, relationships)
+            for f in targetFields do Assert.Contains(f, relationships)
 
     let! cloze = getInstances "Cloze"
     for instance in cloze do
         let! card = CardRepository.Get c.Db userId instance.CardId
-        card.Relationships.Single().CardId |> cloze.Select(fun x -> x.CardId).Contains |> Assert.True
+        let relationship = card.Relationships.Single()
+        relationship.CardId |> cloze.Select(fun x -> x.CardId).Contains |> Assert.True
+        Assert.Equal({
+            Name = "Cloze"
+            CardId =  cloze.Single(fun x -> x.CardId <> card.Id).CardId
+            IsAcquired = true
+            Users = 1 },
+            relationship)
     }
 
 [<Fact>]

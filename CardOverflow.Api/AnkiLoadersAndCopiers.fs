@@ -47,6 +47,7 @@ type AnkiCardTemplateInstance = {
     Ordinal: byte
     NewByOldField: Map<Field, Field>
     FieldsByOrdinal: Map<byte, Field list>
+    CommunalFields: Field list
 } with
     member this.CopyTo (entity: CardTemplateInstanceEntity) =
         entity.Name <- this.Name
@@ -370,7 +371,8 @@ module Anki =
                         else
                             t.FieldsByOrdinal
                         |> Map.ofList
-                    Fields = fields})
+                    Fields = fields
+                    CommunalFields = communalFields})
         Decode.object(fun get ->
             let cardTemplates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
@@ -416,6 +418,7 @@ module Anki =
                     IsCloze = get.Required.Field "type" ankiIntToBool
                     NewByOldField = Map.empty
                     FieldsByOrdinal = Map.empty
+                    CommunalFields = []
                 }) |> reduceCardTemplate)
         |> Decode.keyValuePairs
         |> Decode.fromString
@@ -453,6 +456,7 @@ module Anki =
         )
         |> fun (files, fields) -> (files |> List.distinct, fields)
     
+    let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
         (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; CardTemplate: AnkiCardTemplateInstance |} list>)
         initialTags
@@ -542,14 +546,25 @@ module Anki =
                                             |> MappingTools.joinByUnitSeparator
                                         toCard fields anon.Entity templateOrdinal
                                     ))
+                                let mutable communalSource = None
+                                for field in cardTemplates |> List.collect (fun x -> x.CardTemplate.CommunalFields) |> List.distinct do
+                                    if communalSource.IsNone then
+                                        communalSource <- Some instances.Head
+                                    for communalTarget in instances do
+                                        if communalSource.Value <> communalTarget then
+                                            let r = RelationshipEntity(Name = fieldInheritPrefix + field.Name, UserId = userId)
+                                            communalSource.Value.RelationshipSources.Add r
+                                            communalTarget.RelationshipTargets.Add r
                                 combination 2 instances
                                 |> List.iter (fun instancePair ->
-                                        if  instancePair.[0].Card.Id = 0 &&
-                                            instancePair.[1].Card.Id = 0 &&
-                                            noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked"
-                                        then
-                                            let r = RelationshipEntity(Name = "Linked", UserId = userId)
-                                            instancePair.[0].RelationshipSources.Add r
+                                    if  instancePair.[0].Card.Id = 0 &&
+                                        instancePair.[1].Card.Id = 0 &&
+                                        noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked" &&
+                                        not <| instancePair.[0].RelationshipSources.Any(fun x -> x.Name.StartsWith fieldInheritPrefix) &&
+                                        not <| instancePair.[0].RelationshipTargets.Any(fun x -> x.Name.StartsWith fieldInheritPrefix)
+                                    then
+                                        let r = RelationshipEntity(Name = "Linked", UserId = userId)
+                                        instancePair.[0].RelationshipSources.Add r
                                             instancePair.[1].RelationshipTargets.Add r
                                     )
                                 instances |> Ok

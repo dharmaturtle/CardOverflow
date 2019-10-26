@@ -401,9 +401,9 @@ type ExploreCard with
                         Users = r.Count(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.Name = name)
                     }) |> Seq.toList
             sources @ targets
-            |> List.groupBy (fun x -> x.CardId)
-            |> List.map (fun (cardId, relationships) -> 
-                {   Name = relationships.First().Name
+            |> List.groupBy (fun x -> x.CardId, x.Name)
+            |> List.map (fun ((cardId, name), relationships) -> 
+                {   Name = name
                     CardId = cardId
                     IsAcquired = relationships.Any(fun x -> x.IsAcquired)
                     Users = relationships.Sum(fun x -> x.Users)
