@@ -550,23 +550,24 @@ module Anki =
                                 for field in cardTemplates |> List.collect (fun x -> x.CardTemplate.CommunalFields) |> List.distinct do
                                     if communalSource.IsNone then
                                         communalSource <- Some instances.Head
+                                    let relationshipName = fieldInheritPrefix + field.Name
                                     for communalTarget in instances do
-                                        if communalSource.Value <> communalTarget then
-                                            let r = RelationshipEntity(Name = fieldInheritPrefix + field.Name, UserId = userId)
+                                        if  communalSource.Value <> communalTarget &&
+                                            noRelationship communalSource.Value.Id communalTarget.Id userId relationshipName
+                                        then
+                                            let r = RelationshipEntity(Name = relationshipName, UserId = userId)
                                             communalSource.Value.RelationshipSources.Add r
                                             communalTarget.RelationshipTargets.Add r
-                                combination 2 instances
-                                |> List.iter (fun instancePair ->
+                                for instancePair in combination 2 instances do
                                     if  instancePair.[0].Card.Id = 0 &&
                                         instancePair.[1].Card.Id = 0 &&
-                                        noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Linked" &&
+                                        noRelationship instancePair.[0].Id instancePair.[1].Id userId "Linked" &&
                                         not <| instancePair.[0].RelationshipSources.Any(fun x -> x.Name.StartsWith fieldInheritPrefix) &&
                                         not <| instancePair.[0].RelationshipTargets.Any(fun x -> x.Name.StartsWith fieldInheritPrefix)
                                     then
                                         let r = RelationshipEntity(Name = "Linked", UserId = userId)
                                         instancePair.[0].RelationshipSources.Add r
-                                            instancePair.[1].RelationshipTargets.Add r
-                                    )
+                                        instancePair.[1].RelationshipTargets.Add r
                                 instances |> Ok
                         let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
                         return (note.Id, (cards, relevantTags))

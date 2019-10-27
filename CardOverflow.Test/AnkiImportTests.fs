@@ -276,10 +276,13 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     Assert.Equal(0, c.Db.Relationship.Count())
     }
 
-let assertHasBasicInfo db ankiDb: Task<unit> = task {
+[<Theory>]
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = task {
+    use c = new TestContainer()
     let userId = 3
     do!
-        AnkiImporter.save db ankiDb userId Map.empty
+        AnkiImporter.save c.Db ankiDb userId Map.empty
         |> Result.getOk
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:29"
@@ -288,7 +291,7 @@ let assertHasBasicInfo db ankiDb: Task<unit> = task {
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
         ].ToList(),
-        db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "6/16/2019 00:51:28"
@@ -297,7 +300,7 @@ let assertHasBasicInfo db ankiDb: Task<unit> = task {
             "6/16/2019 00:51:55"
             "6/16/2019 00:53:30"
         ].ToList(),
-        db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.CardTemplateInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32"
@@ -311,7 +314,7 @@ let assertHasBasicInfo db ankiDb: Task<unit> = task {
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
         ].ToList(),
-        db.CardInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.CardInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53"
@@ -325,32 +328,60 @@ let assertHasBasicInfo db ankiDb: Task<unit> = task {
             "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
         ].ToList(),
-        db.CardInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.CardInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
-    Assert.Equal(10, db.Card.Count())
-    Assert.Equal(10, db.AcquiredCard.Count(fun x -> x.UserId = userId))
-    Assert.Equal(10, db.User.First(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
-    Assert.Equal(2, db.CardOption.Count(fun db -> db.UserId = userId))
+    Assert.Equal(10, c.Db.Card.Count())
+    Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
+    Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
+    Assert.Equal(2, c.Db.CardOption.Count(fun db -> db.UserId = userId))
     //Assert.Equal(4, db.User_CardTemplateInstance.Count(fun x -> x.UserId = userId)) // I think this should be 5, but we'll be changing this table later anyway. medTODO
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
-        (db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
+        (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string>(
         [ "Deck:Default"; "OtherTag" ],
-        db.AcquiredCard
+        c.Db.AcquiredCard
+            .Include(fun x -> x.CardInstance)
+            .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
+                .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
             .Single(fun c -> c.CardInstance.FieldValues.Contains("mp3"))
             .Tag_AcquiredCards.Select(fun t -> t.Tag.Name)
             |> Seq.sort)
-    Assert.Equal(2, db.Relationship.Count())
-    Assert.Equal(2, db.Relationship.Count(fun x -> x.Name = "Linked"))
-    Assert.NotEmpty(db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-    }
 
-[<Theory>]
-[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = task {
-    use c = new TestContainer()
-    do! assertHasBasicInfo c.Db ankiDb
+    let getInstances (templateName: string) =
+        c.Db.CardTemplateInstance
+            .Include(fun x -> x.CardInstances)
+            .Where(fun x -> x.Name.Contains templateName)
+            .SelectMany(fun x -> x.CardInstances :> IEnumerable<_>)
+            .ToListAsync()
+
+    let testRelationships relationshipNames relationshipCardId (actualRelationships: ViewRelationship list) =
+        let expectedRelationships =
+            relationshipNames |> List.map (fun name -> {
+                Name = name
+                CardId = relationshipCardId
+                IsAcquired = true
+                Users = 1 })
+        Assert.Equal(expectedRelationships.Length, actualRelationships.Length)
+        for (expected, actual) in List.zip expectedRelationships actualRelationships do
+            Assert.Equal(expected, actual)
+    
+    let! instances = getInstances "optional"
+    let cards = instances |> Seq.toList |> List.map (fun instance -> (CardRepository.Get c.Db userId instance.CardId).GetAwaiter().GetResult())
+    let source = cards.Single(fun x -> x.Relationships.Any(fun x -> x.Name = "x/Inherit:Front"))
+    let target = cards.Single(fun x -> x.Id <> source.Id)
+    testRelationships [ "x/Inherit:Front"; "x/Inherit:Back"; "x/Inherit:Add Reverse" ] target.Id (source.Relationships |> Seq.toList)
+    testRelationships [ "Inherit:Front/x"; "Inherit:Back/x"; "Inherit:Add Reverse/x" ] source.Id (target.Relationships |> Seq.toList)
+
+    let! instances = getInstances "and reversed card)"
+    let cards = instances |> Seq.toList |> List.map (fun instance -> (CardRepository.Get c.Db userId instance.CardId).GetAwaiter().GetResult())
+    let source = cards.Single(fun x -> x.Relationships.Any(fun x -> x.Name = "x/Inherit:Front"))
+    let target = cards.Single(fun x -> x.Id <> source.Id)
+    testRelationships [ "x/Inherit:Front"; "x/Inherit:Back" ] target.Id (source.Relationships |> Seq.toList)
+    testRelationships [ "Inherit:Front/x"; "Inherit:Back/x" ] source.Id (target.Relationships |> Seq.toList)
+
+    Assert.Equal(5, c.Db.Relationship.Count())
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
     }
 
 let assertHasHistory db ankiDb: Task<unit> = task {
