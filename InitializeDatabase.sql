@@ -380,6 +380,54 @@ CREATE TABLE [dbo].[CommentCardTemplate](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[CommunalField] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CommunalField](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[AuthorId] [int] NOT NULL,
+ CONSTRAINT [PK_CommunalField] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[CommunalFieldInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CommunalFieldInstance](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[CommunalFieldId] [int] NOT NULL,
+	[FieldName] [nvarchar](200) NOT NULL,
+	[Value] [nvarchar](500) NOT NULL,
+	[Created] [datetime2](7) NOT NULL,
+	[Modified] [datetime2](7) NULL,
+	[EditSummary] [nvarchar](200) NOT NULL,
+ CONSTRAINT [PK_CommunalFieldInstance] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[CommunalFieldInstance_CardInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CommunalFieldInstance_CardInstance](
+	[CardInstanceId] [int] NOT NULL,
+	[CommunalFieldInstanceId] [int] NOT NULL,
+ CONSTRAINT [PK_CommunalFieldInstance_CardInstance] PRIMARY KEY CLUSTERED 
+(
+	[CommunalFieldInstanceId] ASC,
+	[CardInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[Deck] ******/
 SET ANSI_NULLS ON
 GO
@@ -891,6 +939,24 @@ CREATE NONCLUSTERED INDEX [IX_CommentCardTemplate_UserId] ON [dbo].[CommentCardT
 	[UserId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_CommunalField_AuthorId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommunalField_AuthorId] ON [dbo].[CommunalField]
+(
+	[AuthorId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_CommunalFieldInstance_CommunalFieldId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CommunalFieldId] ON [dbo].[CommunalFieldInstance]
+(
+	[CommunalFieldId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ******/
+CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ON [dbo].[CommunalFieldInstance_CardInstance]
+(
+	[CardInstanceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_Deck_UserId] ******/
 CREATE NONCLUSTERED INDEX [IX_Deck_UserId] ON [dbo].[Deck]
 (
@@ -1153,6 +1219,26 @@ ALTER TABLE [dbo].[CommentCardTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentC
 REFERENCES [dbo].[User] ([Id])
 GO
 ALTER TABLE [dbo].[CommentCardTemplate] CHECK CONSTRAINT [FK_CommentCardTemplate_User_UserId]
+GO
+ALTER TABLE [dbo].[CommunalField]  WITH CHECK ADD  CONSTRAINT [FK_CommunalField_User_AuthorId] FOREIGN KEY([AuthorId])
+REFERENCES [dbo].[User] ([Id])
+GO
+ALTER TABLE [dbo].[CommunalField] CHECK CONSTRAINT [FK_CommunalField_User_AuthorId]
+GO
+ALTER TABLE [dbo].[CommunalFieldInstance]  WITH CHECK ADD  CONSTRAINT [FK_CommunalFieldInstance_CommunalField_CommunalFieldId] FOREIGN KEY([CommunalFieldId])
+REFERENCES [dbo].[CommunalField] ([Id])
+GO
+ALTER TABLE [dbo].[CommunalFieldInstance] CHECK CONSTRAINT [FK_CommunalFieldInstance_CommunalField_CommunalFieldId]
+GO
+ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
+REFERENCES [dbo].[CardInstance] ([Id])
+GO
+ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance] CHECK CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CardInstance_CardInstanceId]
+GO
+ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CommunalFieldInstance_CommunalFieldInstanceId] FOREIGN KEY([CommunalFieldInstanceId])
+REFERENCES [dbo].[CommunalFieldInstance] ([Id])
+GO
+ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance] CHECK CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CommunalFieldInstance_CommunalFieldInstanceId]
 GO
 ALTER TABLE [dbo].[Deck]  WITH CHECK ADD  CONSTRAINT [FK_Deck_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])

@@ -17,6 +17,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<CardTemplateInstanceEntity> CardTemplateInstance { get; set; }
         public virtual DbSet<CommentCardEntity> CommentCard { get; set; }
         public virtual DbSet<CommentCardTemplateEntity> CommentCardTemplate { get; set; }
+        public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
+        public virtual DbSet<CommunalFieldInstanceEntity> CommunalFieldInstance { get; set; }
+        public virtual DbSet<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstance { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
@@ -178,6 +181,43 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.CommentCardTemplates)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<CommunalFieldEntity>(entity =>
+            {
+                entity.HasIndex(e => e.AuthorId);
+
+                entity.HasOne(d => d.Author)
+                    .WithMany(p => p.CommunalFields)
+                    .HasForeignKey(d => d.AuthorId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<CommunalFieldInstanceEntity>(entity =>
+            {
+                entity.HasIndex(e => e.CommunalFieldId);
+
+                entity.HasOne(d => d.CommunalField)
+                    .WithMany(p => p.CommunalFieldInstances)
+                    .HasForeignKey(d => d.CommunalFieldId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<CommunalFieldInstance_CardInstanceEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.CommunalFieldInstanceId, e.CardInstanceId });
+
+                entity.HasIndex(e => e.CardInstanceId);
+
+                entity.HasOne(d => d.CardInstance)
+                    .WithMany(p => p.CommunalFieldInstance_CardInstances)
+                    .HasForeignKey(d => d.CardInstanceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.CommunalFieldInstance)
+                    .WithMany(p => p.CommunalFieldInstance_CardInstances)
+                    .HasForeignKey(d => d.CommunalFieldInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
