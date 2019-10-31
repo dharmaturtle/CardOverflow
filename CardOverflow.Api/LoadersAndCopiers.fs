@@ -238,6 +238,12 @@ type CardInstanceView with
         e.EditSummary <- editSummary
         e
 
+type CommunalFieldInstance with
+    static member load (entity: CommunalFieldInstanceEntity) = {   
+        Id = entity.Id
+        FieldName = entity.FieldName
+        Value = entity.Value }
+
 type CardInstanceMeta with
     static member load userId (entity: CardInstanceEntity) =
         let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
@@ -248,6 +254,7 @@ type CardInstanceMeta with
             IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
             StrippedFront = MappingTools.stripHtmlTags front
             StrippedBack = MappingTools.stripHtmlTags back
+            CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
         }
     static member initialize =
         {   Id = 0
@@ -257,6 +264,7 @@ type CardInstanceMeta with
             IsAcquired = true
             StrippedFront = ""
             StrippedBack = ""
+            CommunalFields = [].ToList()
         }
     member this.copyTo (entity: CardInstanceEntity) =
         entity.Created <- this.Created

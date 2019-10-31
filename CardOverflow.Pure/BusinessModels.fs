@@ -236,6 +236,12 @@ type CardInstanceView = {
             <| this.TemplateInstance.AnswerTemplate
             <| this.TemplateInstance.Css
 
+type CommunalFieldInstance = {
+    Id: int
+    FieldName: string
+    Value: string
+}
+
 [<CLIMutable>]
 type CardInstanceMeta = {
     Id: int
@@ -245,6 +251,7 @@ type CardInstanceMeta = {
     IsAcquired: bool
     StrippedFront: string
     StrippedBack: string
+    CommunalFields: CommunalFieldInstance ResizeArray
 }
 
 type AcquiredCard = {

@@ -205,52 +205,33 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             .SelectMany(fun x -> x.CardInstances :> IEnumerable<_>)
             .ToListAsync()
     
-    let! basicCards = getInstances "Basic"
-    for instance in basicCards do
-        let! card = CardRepository.Get c.Db userId instance.CardId
-        let relationship = card.Relationships.Single()
-        Assert.Contains(relationship.CardId, basicCards.Select(fun x -> x.CardId))
-        let sourceId = 1
-        if instance.Id = sourceId then
-            Assert.Equal({
-                Name = "x/Inherit:Source"
-                CardId = basicCards.Single(fun x -> x.CardId <> sourceId).CardId
-                IsAcquired = true
-                Users = 1 },
-                relationship)
-        else
-            Assert.Equal({
-                Name = "Inherit:Source/x"
-                CardId = sourceId
-                IsAcquired = true
-                Users = 1 },
-                relationship)
+    let! basic = getInstances "Basic"
+    for card in basic do
+        let! card = CardRepository.Get c.Db userId card.CardId
+        Assert.Empty card.Relationships
+        Assert.Equal(
+            { Id = 1
+              FieldName = "Source"
+              Value = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#" },
+            card.LatestMeta.CommunalFields.Single())
     
-    let! sketchyEntities = getInstances "Sketchy"
-    let sketchy = sketchyEntities |> Seq.toList |> List.map (fun instance -> (CardRepository.Get c.Db userId instance.CardId).GetAwaiter().GetResult()) // lowTODO replace with an API
-    let communalSource = sketchy |> List.maxBy (fun x -> x.Relationships.Count)
+    let! sketchy = getInstances "Sketchy"
     for card in sketchy do
-        for r in card.Relationships do
-            sketchyEntities.Select(fun x -> x.CardId).Contains(r.CardId) |> Assert.True
-        let sourceFields = ["x/Inherit:More About This Topic"; "x/Inherit:Entire Sketch"]
-        let targetFields = ["Inherit:More About This Topic/x"; "Inherit:Entire Sketch/x"]
-        let relationships = card.Relationships.Select(fun x -> x.Name)
-        let inheritCount = 2
-        if card = communalSource then
-            Assert.Equal((sketchy.Length - 1) * inheritCount, card.Relationships.Count)
-            for cardId in card.Relationships.Select(fun r -> r.CardId) do
-                Assert.Contains(cardId, sketchy.Where(fun x -> x.Relationships.Count = inheritCount).Select(fun x -> x.Id))
-            for f in sourceFields do Assert.Contains(f, relationships)
-            for f in targetFields do Assert.DoesNotContain(f, relationships)
-        else
-            Assert.Equal(inheritCount, card.Relationships.Count)
-            Assert.Equal(communalSource.Id, card.Relationships.Select(fun r -> r.CardId).Distinct().Single())
-            for f in sourceFields do Assert.DoesNotContain(f, relationships)
-            for f in targetFields do Assert.Contains(f, relationships)
+        let! card = CardRepository.Get c.Db userId card.CardId
+        Assert.Empty card.Relationships
+        Assert.Equal(
+            [ { Id = 2
+                FieldName = "More About This Topic"
+                Value = """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />""" }
+              { Id = 3
+                FieldName = "Entire Sketch"
+                Value = """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />""" }],
+            card.LatestMeta.CommunalFields
+        )
 
     let! cloze = getInstances "Cloze"
-    for instance in cloze do
-        let! card = CardRepository.Get c.Db userId instance.CardId
+    for card in cloze do
+        let! card = CardRepository.Get c.Db userId card.CardId
         let relationship = card.Relationships.Single()
         relationship.CardId |> cloze.Select(fun x -> x.CardId).Contains |> Assert.True
         Assert.Equal({
@@ -355,32 +336,35 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
             .SelectMany(fun x -> x.CardInstances :> IEnumerable<_>)
             .ToListAsync()
 
-    let testRelationships relationshipNames relationshipCardId (actualRelationships: ViewRelationship list) =
-        let expectedRelationships =
-            relationshipNames |> List.map (fun name -> {
-                Name = name
-                CardId = relationshipCardId
-                IsAcquired = true
-                Users = 1 })
-        Assert.Equal(expectedRelationships.Length, actualRelationships.Length)
-        for (expected, actual) in List.zip expectedRelationships actualRelationships do
-            Assert.Equal(expected, actual)
-    
     let! instances = getInstances "optional"
-    let cards = instances |> Seq.toList |> List.map (fun instance -> (CardRepository.Get c.Db userId instance.CardId).GetAwaiter().GetResult())
-    let source = cards.Single(fun x -> x.Relationships.Any(fun x -> x.Name = "x/Inherit:Front"))
-    let target = cards.Single(fun x -> x.Id <> source.Id)
-    testRelationships [ "x/Inherit:Front"; "x/Inherit:Back"; "x/Inherit:Add Reverse" ] target.Id (source.Relationships |> Seq.toList)
-    testRelationships [ "Inherit:Front/x"; "Inherit:Back/x"; "Inherit:Add Reverse/x" ] source.Id (target.Relationships |> Seq.toList)
+    for instance in instances do
+        let! card = CardRepository.Get c.Db userId instance.CardId
+        Assert.Empty <| card.Relationships
+        Assert.Equal(
+            [ { Id = 2
+                FieldName = "Front"
+                Value = "Basic (optional reversed card) front" }
+              { Id = 3
+                FieldName = "Back"
+                Value = "Basic (optional reversed card) back" }
+              { Id = 4
+                FieldName = "Add Reverse"
+                Value = "Basic (optional reversed card) reverse" }],
+            card.LatestMeta.CommunalFields)
 
     let! instances = getInstances "and reversed card)"
-    let cards = instances |> Seq.toList |> List.map (fun instance -> (CardRepository.Get c.Db userId instance.CardId).GetAwaiter().GetResult())
-    let source = cards.Single(fun x -> x.Relationships.Any(fun x -> x.Name = "x/Inherit:Front"))
-    let target = cards.Single(fun x -> x.Id <> source.Id)
-    testRelationships [ "x/Inherit:Front"; "x/Inherit:Back" ] target.Id (source.Relationships |> Seq.toList)
-    testRelationships [ "Inherit:Front/x"; "Inherit:Back/x" ] source.Id (target.Relationships |> Seq.toList)
+    for instance in instances do
+        let! card = CardRepository.Get c.Db userId instance.CardId
+        Assert.Empty <| card.Relationships
+        Assert.Equal(
+            [ { Id = 1
+                FieldName = "Back"
+                Value = "Basic (and reversed card) back" }
+              { Id = 5
+                FieldName = "Front"
+                Value = "Basic (and reversed card) front" }],
+            card.LatestMeta.CommunalFields)
 
-    Assert.Equal(5, c.Db.Relationship.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
     }
 

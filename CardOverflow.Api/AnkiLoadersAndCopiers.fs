@@ -517,12 +517,24 @@ module Anki =
                                 return instances
                                 }
                             else
+                                let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
+                                let communalFields =
+                                    cardTemplates
+                                    |> List.collect(fun x -> x.CardTemplate.CommunalFields)
+                                    |> List.distinct
+                                    |> List.map (fun field ->
+                                        CommunalFieldInstanceEntity(
+                                            FieldName = field.Name,
+                                            Value = fieldValues.[int field.Ordinal],
+                                            EditSummary = "Imported from Anki",
+                                            CommunalField = CommunalFieldEntity(AuthorId = userId),
+                                            Created = DateTime.UtcNow,
+                                            CommunalFieldInstance_CardInstances = [].ToList()))
                                 let instances = cardTemplates |> List.collect (fun anon ->
                                     let cardTemplate = anon.CardTemplate
                                     let newByOldField = cardTemplate.NewByOldField
                                     let oldFields = newByOldField |> Map.toList |> List.map fst
                                     let newFields = newByOldField |> Map.toList |> List.map snd
-                                    let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
                                     cardTemplate.FieldsByOrdinal
                                     |> Map.toList
                                     |> List.map (fun (templateOrdinal, fields) ->
@@ -544,26 +556,24 @@ module Anki =
                                             ) |> List.sortBy (fun (newOrdinal, _) -> newOrdinal)
                                             |> List.map (fun (_, oldOrdinal) -> fieldValues.[int oldOrdinal])
                                             |> MappingTools.joinByUnitSeparator
-                                        toCard fields anon.Entity templateOrdinal
+                                        let card = toCard fields anon.Entity templateOrdinal
+                                        card.CommunalFieldInstance_CardInstances <-
+                                            communalFields
+                                            |> List.map (fun cf -> CommunalFieldInstance_CardInstanceEntity(CardInstance = card, CommunalFieldInstance = cf))
+                                            |> toResizeArray
+                                        card
                                     ))
-                                let mutable communalSource = None
-                                for field in cardTemplates |> List.collect (fun x -> x.CardTemplate.CommunalFields) |> List.distinct do
-                                    if communalSource.IsNone then
-                                        communalSource <- Some instances.Head
-                                    let relationshipName = fieldInheritPrefix + field.Name
-                                    for communalTarget in instances do
-                                        if  communalSource.Value <> communalTarget &&
-                                            noRelationship communalSource.Value.Id communalTarget.Id userId relationshipName
-                                        then
-                                            let r = RelationshipEntity(Name = relationshipName, UserId = userId)
-                                            communalSource.Value.RelationshipSources.Add r
-                                            communalTarget.RelationshipTargets.Add r
                                 for instancePair in combination 2 instances do
-                                    if  instancePair.[0].Card.Id = 0 &&
-                                        instancePair.[1].Card.Id = 0 &&
-                                        noRelationship instancePair.[0].Id instancePair.[1].Id userId "Linked" &&
-                                        not <| instancePair.[0].RelationshipSources.Any(fun x -> x.Name.StartsWith fieldInheritPrefix) &&
-                                        not <| instancePair.[0].RelationshipTargets.Any(fun x -> x.Name.StartsWith fieldInheritPrefix)
+                                    let a = instancePair.[0]
+                                    let b = instancePair.[1]
+                                    let shareCommunalField =
+                                        a.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance).Intersect(
+                                            b.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
+                                        ).Any()
+                                    if  a.Card.Id = 0 &&
+                                        b.Card.Id = 0 &&
+                                        noRelationship a.Id b.Id userId "Linked" &&
+                                        not shareCommunalField
                                     then
                                         let r = RelationshipEntity(Name = "Linked", UserId = userId)
                                         instancePair.[0].RelationshipSources.Add r
