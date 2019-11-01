@@ -403,7 +403,7 @@ CREATE TABLE [dbo].[CommunalFieldInstance](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[CommunalFieldId] [int] NOT NULL,
 	[FieldName] [nvarchar](200) NOT NULL,
-	[Value] [nvarchar](500) NOT NULL,
+	[Value] [nvarchar](max) NOT NULL,
 	[Created] [datetime2](7) NOT NULL,
 	[Modified] [datetime2](7) NULL,
 	[EditSummary] [nvarchar](200) NOT NULL,
