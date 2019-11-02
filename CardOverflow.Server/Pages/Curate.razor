@@ -1,6 +1,6 @@
-@page "/Curate"
-@page "/Curate/Card"
-@page "/Curate/Card/{SelectedId:int}"
+@page "/curate"
+@page "/card/curate"
+@page "/card/{SelectedId:int}/curate"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -43,7 +43,7 @@
               </div>
             </td>
             <td>
-              <a href="/Curate/Card/@card.CardId">
+              <a href="/card/@card.CardId/curate">
                 @card.CardInstanceMeta.StrippedFront
               </a>
             </td>
