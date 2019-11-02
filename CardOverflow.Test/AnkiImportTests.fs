@@ -102,8 +102,8 @@ let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` ()
           seq["What is the alternative hypothesis for the slope?"; @"[$]H_0: \beta_1 \ne 0[/$]"; "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"]],
         getFieldValues "Basic")
     Assert.Equal<string seq>(
-        [ seq["Toxic adenomas are thyroid nodules that usually contain a mutated {{c::TSH receptor}}"; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"]
-          seq["{{c::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"]],
+        [ seq["Toxic adenomas are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"]
+          seq["{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"]],
         getFieldValues "Cloze")
     let assertEqual (expectedss: string list list) (actualss: string seq seq) =
         for (expecteds, actuals) in Seq.zip expectedss actualss do
@@ -216,30 +216,34 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             card.LatestMeta.CommunalFields.Single())
     
     let! sketchy = getInstances "Sketchy"
+    let expectedFieldAndValues =
+        ["More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
+         "Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
     for card in sketchy do
         let! card = CardRepository.Get c.Db userId card.CardId
         Assert.Empty card.Relationships
         Assert.Equal(
-            [ { Id = 2
-                FieldName = "More About This Topic"
-                Value = """<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />""" }
-              { Id = 3
-                FieldName = "Entire Sketch"
-                Value = """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />""" }],
-            card.LatestMeta.CommunalFields
-        )
+            expectedFieldAndValues,
+            card.LatestMeta.CommunalFields.Select(fun x -> x.FieldName, x.Value))
+        let! view = CardRepository.getView c.Db card.Id
+        Assert.Equal(
+            expectedFieldAndValues,
+            view.FieldValues
+                .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
+                .Select(fun x -> x.Field.Name, x.Value))
 
     let! cloze = getInstances "Cloze"
     for card in cloze do
         let! card = CardRepository.Get c.Db userId card.CardId
-        let relationship = card.Relationships.Single()
-        relationship.CardId |> cloze.Select(fun x -> x.CardId).Contains |> Assert.True
-        Assert.Equal({
-            Name = "Cloze"
-            CardId =  cloze.Single(fun x -> x.CardId <> card.Id).CardId
-            IsAcquired = true
-            Users = 1 },
-            relationship)
+        Assert.Equal(
+            {   Id = 4
+                FieldName = "Text"
+                Value = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}" },
+            card.LatestMeta.CommunalFields.Single())
+        if card.Id = 2 then
+            Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.LatestMeta.StrippedFront)
+        else
+            Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.LatestMeta.StrippedFront)
     }
 
 [<Fact>]
@@ -360,7 +364,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
             [ { Id = 1
                 FieldName = "Back"
                 Value = "Basic (and reversed card) back" }
-              { Id = 5
+              { Id = 6
                 FieldName = "Front"
                 Value = "Basic (and reversed card) front" }],
             card.LatestMeta.CommunalFields)
@@ -408,27 +412,27 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
     let theCollectiveId = 2
     let userId = 3
     for _ in [1..5] do
-        do!
-            AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+        do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
             |> Result.getOk
-
-    Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
-    Assert.Equal(4, c.Db.Tag.Count())
-    Assert.Equal(5, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
-    Assert.Equal(5, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
-    Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
-    Assert.Equal(0, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = userId))
-    Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
-    Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
-    Assert.Equal(10, c.Db.Card.Count())
-    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic Front")))
-    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (and reversed card) front")))
-    Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (optional reversed card) front")))
-    Assert.Equal(10, c.Db.AcquiredCard.Count())
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+        Assert.Equal(2, c.Db.CardOption.Count(fun x -> x.UserId = userId))
+        Assert.Equal(4, c.Db.Tag.Count())
+        Assert.Equal(5, c.Db.CardTemplate.Count(fun x -> x.AuthorId = theCollectiveId))
+        Assert.Equal(5, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = theCollectiveId))
+        Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(0, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplate.AuthorId = userId))
+        Assert.Equal(0, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(10, c.Db.Card.Count())
+        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic Front")))
+        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (and reversed card) front")))
+        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (optional reversed card) front")))
+        Assert.Equal(10, c.Db.AcquiredCard.Count())
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
+        Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+        Assert.Equal(6, c.Db.CommunalFieldInstance.Count())
+        Assert.Equal(6, c.Db.CommunalField.Count())
     }
 
 [<Theory>]

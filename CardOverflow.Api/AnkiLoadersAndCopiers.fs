@@ -82,6 +82,7 @@ type AnkiCardTemplateInstance = {
 type AnkiCardWrite = {
     AnkiNoteId: int64
     AnkiNoteOrd: Byte
+    CommunalFields: CommunalFieldInstanceEntity list
     CardTemplate: CardTemplateInstanceEntity
     FieldValues: string
     Created: DateTime
@@ -95,6 +96,10 @@ type AnkiCardWrite = {
         entity.CardTemplateInstance <- this.CardTemplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
+        entity.CommunalFieldInstance_CardInstances <-
+            this.CommunalFields
+            |> List.map (fun cf -> CommunalFieldInstance_CardInstanceEntity(CardInstance = entity, CommunalFieldInstance = cf))
+            |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = CardInstanceEntity()
         entity.EditSummary <- "Imported from Anki"
@@ -283,10 +288,11 @@ module Anki =
             let communalFields =
                 templates.Head.ReducedFields
                 |> List.filter (fun x ->
-                    templates.Count(fun t -> (t.QuestionTemplate + t.AnswerTemplate).Contains("{{" + x.Name + "}}"))
+                    templates.Count(fun t -> (MappingTools.joinByUnitSeparator [t.QuestionTemplate; t.AnswerTemplate]).Contains("{{" + x.Name + "}}"))
                     |> function
                     | 1 -> false
-                    | _ -> true)
+                    | _ -> true
+                    || templates.Any(fun t -> t.Template.IsCloze && t.QuestionTemplate.Contains("{{cloze:" + x.Name + "}}")))
             let communalFieldNames = communalFields |> List.map (fun x -> x.Name)
             let rec reduceLoop templates =
                 let combine (newT: TempTemplate) (oldT: TempTemplate) =
@@ -478,13 +484,27 @@ module Anki =
                     |> List.groupBy (fun x -> x.Name.ToLower())
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
+                let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
                 let cardTemplates = cardTemplatesByModelId.[string note.Mid]
-                let toCard fields (cardTemplate: CardTemplateInstanceEntity) noteOrd =
+                let communalFields =
+                    cardTemplates
+                    |> List.collect(fun x -> x.CardTemplate.CommunalFields)
+                    |> List.distinct
+                    |> List.map (fun field ->
+                        CommunalFieldInstanceEntity(
+                            FieldName = field.Name,
+                            Value = fieldValues.[int field.Ordinal],
+                            EditSummary = "Imported from Anki",
+                            CommunalField = CommunalFieldEntity(AuthorId = userId),
+                            Created = DateTime.UtcNow,
+                            CommunalFieldInstance_CardInstances = [].ToList()))
+                let toCard fields cardTemplate noteOrd =
                     let c = {
                         AnkiNoteId = note.Id
                         AnkiNoteOrd = noteOrd
                         CardTemplate = cardTemplate
-                        FieldValues = fields
+                        CommunalFields = communalFields
+                        FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                         Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
                         AuthorId = userId }
@@ -497,39 +517,13 @@ module Anki =
                             if cardTemplates.First().CardTemplate.IsCloze then result {
                                 let cardTemplate = cardTemplates |> Seq.exactlyOne
                                 let! max = AnkiImportLogic.maxClozeIndex fieldValues (string note.Id)
-                                let instances =
-                                    [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
-                                        toCard
-                                            <| AnkiImportLogic.multipleClozeToSingleCloze fieldValues clozeIndex
-                                            <| cardTemplate.Entity
-                                            <| clozeIndex - 1uy
-                                    )
-                                combination 2 instances
-                                |> List.iter (fun instancePair ->
-                                        if  instancePair.[0].Card.Id = 0 &&
-                                            instancePair.[1].Card.Id = 0 &&
-                                            noRelationship instancePair.[0].Card.Id instancePair.[1].Card.Id userId "Cloze"
-                                        then
-                                            let r = RelationshipEntity(Name = "Cloze", UserId = userId)
-                                            instancePair.[0].RelationshipSources.Add r
-                                            instancePair.[1].RelationshipTargets.Add r
-                                    )
-                                return instances
-                                }
+                                return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
+                                    toCard
+                                        <| AnkiImportLogic.multipleClozeToSingleCloze clozeIndex fieldValues
+                                        <| cardTemplate.Entity
+                                        <| clozeIndex - 1uy
+                                )}
                             else
-                                let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
-                                let communalFields =
-                                    cardTemplates
-                                    |> List.collect(fun x -> x.CardTemplate.CommunalFields)
-                                    |> List.distinct
-                                    |> List.map (fun field ->
-                                        CommunalFieldInstanceEntity(
-                                            FieldName = field.Name,
-                                            Value = fieldValues.[int field.Ordinal],
-                                            EditSummary = "Imported from Anki",
-                                            CommunalField = CommunalFieldEntity(AuthorId = userId),
-                                            Created = DateTime.UtcNow,
-                                            CommunalFieldInstance_CardInstances = [].ToList()))
                                 let instances = cardTemplates |> List.collect (fun anon ->
                                     let cardTemplate = anon.CardTemplate
                                     let newByOldField = cardTemplate.NewByOldField
@@ -555,13 +549,7 @@ module Anki =
                                                     newByOldField.[field].Ordinal, field.Ordinal
                                             ) |> List.sortBy (fun (newOrdinal, _) -> newOrdinal)
                                             |> List.map (fun (_, oldOrdinal) -> fieldValues.[int oldOrdinal])
-                                            |> MappingTools.joinByUnitSeparator
-                                        let card = toCard fields anon.Entity templateOrdinal
-                                        card.CommunalFieldInstance_CardInstances <-
-                                            communalFields
-                                            |> List.map (fun cf -> CommunalFieldInstance_CardInstanceEntity(CardInstance = card, CommunalFieldInstance = cf))
-                                            |> toResizeArray
-                                        card
+                                        toCard fields anon.Entity templateOrdinal
                                     ))
                                 for instancePair in combination 2 instances do
                                     let a = instancePair.[0]

@@ -230,7 +230,7 @@ let ``CardHtml renders {{text:FieldName}} properly``(): unit =
 let ``CardHtml renders {{cloze:FieldName}} properly``(): unit =
     let front, back, _, _ =
         CardHtml.generate
-            [("Text", "Canberra was founded in {{c::1913}}.")
+            [("Text", "Canberra was founded in {{c1::1913}}.")
              ("Extra", "Some extra stuff.")
             ]
             "{{cloze:Text}}"

@@ -8,27 +8,26 @@ open System.ComponentModel.DataAnnotations
 
 module AnkiImportLogic =
     type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-    let maxClozeIndex fields noteId = result {
-        let! r =
-            ClozeRegex().TypedMatches fields
-            |> List.ofSeq
-            |> function
-            | [] -> Error <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" noteId fields
-            | x -> Ok x
-        return
-            r
+    let maxClozeIndex fields noteId =
+        fields
+        |> List.map (ClozeRegex().TypedMatches)
+        |> function
+        | [] -> Error <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" noteId (String.Join(',', fields))
+        | x -> x
+            |> Seq.collect id
             |> Seq.map (fun x -> x.clozeIndex.Value |> int)
             |> Seq.max
-    }
-    let multipleClozeToSingleCloze fields (index: byte) =
-        (fields, ClozeRegex().TypedMatches fields)
-        ||> Seq.fold (fun fields m -> 
-            if m.clozeIndex.Value = string index then
-                let hint =
-                    if String.IsNullOrWhiteSpace m.hint.Value
-                    then ""
-                    else "::" + m.hint.Value
-                fields.Replace(m.Value, "{{c::" + m.answer.Value + hint + "}}")
-            else
-                fields.Replace(m.Value, m.answer.Value)
-        )
+            |> Ok
+    let multipleClozeToSingleCloze (index: byte) =
+        List.map (fun field ->
+            (field, ClozeRegex().TypedMatches field)
+            ||> Seq.fold (fun field m -> 
+                if m.clozeIndex.Value = string index then
+                    let hint =
+                        if String.IsNullOrWhiteSpace m.hint.Value
+                        then ""
+                        else "::" + m.hint.Value
+                    field.Replace(m.Value, "{{c" + string index + "::" + m.answer.Value + hint + "}}")
+                else
+                    field.Replace(m.Value, m.answer.Value)
+        ))

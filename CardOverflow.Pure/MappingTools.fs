@@ -72,12 +72,12 @@ let round (dt: DateTime) (d: TimeSpan) = // https://stackoverflow.com/a/20046261
     let offset = if roundUp then d.Ticks else 0L
     DateTime(dt.Ticks + offset - delta, dt.Kind)
 
+let standardizeWhitespace x =
+    Regex.Replace(x, @"\s+", " ", RegexOptions.Compiled).Trim()
+
 let stripHtmlTags html =
     let doc = HtmlDocument()
     doc.LoadHtml html
     doc.DocumentNode.InnerText
     |> HttpUtility.HtmlDecode
-    |> fun x -> x.Trim()
-
-let standardizeWhitespace x =
-    Regex.Replace(x, @"\s+", " ", RegexOptions.Compiled).Trim()
+    |> standardizeWhitespace
