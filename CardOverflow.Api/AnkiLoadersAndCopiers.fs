@@ -562,8 +562,8 @@ module Anki =
                                         not shareCommunalField
                                     then
                                         let r = RelationshipEntity(Name = "Linked", UserId = userId)
-                                        instancePair.[0].RelationshipSources.Add r
-                                        instancePair.[1].RelationshipTargets.Add r
+                                        instancePair.[0].Card.RelationshipSources.Add r
+                                        instancePair.[1].Card.RelationshipTargets.Add r
                                 instances |> Ok
                         let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
                         return (note.Id, (cards, relevantTags))
