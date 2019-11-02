@@ -118,10 +118,8 @@ type AnkiCardWrite = {
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.CardInstance
-            .Include(fun x -> x.Card.CardInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: CardInstanceEntity) -> x.RelationshipSources)
-            .Include(fun x -> x.Card.CardInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: CardInstanceEntity) -> x.RelationshipTargets)
+            .Include(fun x -> x.Card.RelationshipSources)
+            .Include(fun x -> x.Card.RelationshipTargets)
             .FirstOrDefault(fun c ->
                 c.AnkiNoteId = Nullable this.AnkiNoteId &&
                 c.AnkiNoteOrd = Nullable this.AnkiNoteOrd &&

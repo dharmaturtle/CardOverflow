@@ -8,7 +8,6 @@ namespace CardOverflow.Entity
     public partial class RelationshipEntity
     {
         public int Id { get; set; }
-        public int UserId { get; set; }
         public int SourceId { get; set; }
         public int TargetId { get; set; }
         [Required]
@@ -21,13 +20,14 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
+        public int UserId { get; set; }
 
         [ForeignKey("SourceId")]
         [InverseProperty("RelationshipSources")]
-        public virtual CardInstanceEntity Source { get; set; }
+        public virtual CardEntity Source { get; set; }
         [ForeignKey("TargetId")]
         [InverseProperty("RelationshipTargets")]
-        public virtual CardInstanceEntity Target { get; set; }
+        public virtual CardEntity Target { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("Relationships")]
         public virtual UserEntity User { get; set; }

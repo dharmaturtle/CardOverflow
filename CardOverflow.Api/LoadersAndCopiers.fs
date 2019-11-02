@@ -389,7 +389,7 @@ type ExploreCard with
                  |> List.ofSeq
         Relationships =
             let sources =
-                entity.CardInstances.SelectMany(fun x -> x.RelationshipSources :> IEnumerable<_>).GroupBy(fun x -> x.Name, x.Source.CardId, x.Target.CardId).Select(fun r ->
+                entity.RelationshipSources.GroupBy(fun x -> x.Name, x.SourceId, x.TargetId).Select(fun r ->
                     let name = r.First().Name
                     let sourceId = r.First().SourceId
                     let targetId = r.First().TargetId
@@ -399,7 +399,7 @@ type ExploreCard with
                         Users = r.Count(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.Name = name)
                     }) |> Seq.toList
             let targets =
-                entity.CardInstances.SelectMany(fun x -> x.RelationshipTargets :> IEnumerable<_>).GroupBy(fun x -> x.Name, x.Source.CardId, x.Target.CardId).Select(fun r ->
+                entity.RelationshipTargets.GroupBy(fun x -> x.Name, x.SourceId, x.TargetId).Select(fun r ->
                     let name = r.First().Name
                     let sourceId = r.First().SourceId
                     let targetId = r.First().TargetId

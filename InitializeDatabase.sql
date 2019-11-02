@@ -537,10 +537,10 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[Relationship](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
 	[SourceId] [int] NOT NULL,
 	[TargetId] [int] NOT NULL,
 	[Name] [nvarchar](250) NOT NULL,
+	[UserId] [int] NOT NULL,
  CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -1271,15 +1271,15 @@ ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId]
 GO
-ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_CardInstance_SourceId] FOREIGN KEY([SourceId])
-REFERENCES [dbo].[CardInstance] ([Id])
+ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Card_SourceId] FOREIGN KEY([SourceId])
+REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_CardInstance_SourceId]
+ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Card_SourceId]
 GO
-ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_CardInstance_TargetId] FOREIGN KEY([TargetId])
-REFERENCES [dbo].[CardInstance] ([Id])
+ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_Card_TargetId] FOREIGN KEY([TargetId])
+REFERENCES [dbo].[Card] ([Id])
 GO
-ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_CardInstance_TargetId]
+ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_Card_TargetId]
 GO
 ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_User_UserId] FOREIGN KEY([UserId])
 REFERENCES [dbo].[User] ([Id])
