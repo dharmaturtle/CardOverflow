@@ -11,7 +11,6 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 @inject DbExecutor DbExecutor
-@*medTODO add "next" and "previous" navigation buttons that move up/down the list, and it'll need to remember the search parameters*@
 
 @if (Card == null) {
   <p><em>@LoadingMessage</em></p>

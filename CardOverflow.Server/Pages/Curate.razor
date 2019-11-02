@@ -1,5 +1,4 @@
 @page "/curate"
-@page "/card/curate"
 @page "/card/{SelectedId:int}/curate"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -16,7 +15,7 @@
   @if (SelectedId == null) {
     <CurateCardDeckDropdown Query=@search.Query DeckClicked=@SearchClicked />
   }
-  <SearchBar SearchClicked="@SearchClicked" LinkPrefix="/curate/card/" Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() Query=@search.Query />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/curate/" CreateLink=@(x => $"/card/{x}/curate/") Ids=@cards?.Select(x => x.CardId.ToString())?.ToList() SelectedId=@SelectedId.ToString() Query=@search.Query />
 </div>
 @if (SelectedId == null) {
   <div>

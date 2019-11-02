@@ -8,10 +8,10 @@
 @using CardOverflow.Sanitation
 @inherits OwningComponentBase<CardOverflowDb>
 
+@* lowTODO this doesn't appear if there's only 1 search result *@
 @if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
   <span style="min-width: fit-content;">
-    @*see if you can remove this span... only here since the if breaks the nbsp*@
-    <a href=@LinkPrefix>
+    <a href=@BackLink>
       <span class="oi oi-arrow-circle-left"></span>
     </a>
     &nbsp;
@@ -26,16 +26,15 @@
   <ValidationSummary />
 </EditForm>
 <span style="min-width: fit-content;">
-  @*see if you can remove this span... only here since the if breaks the nbsp*@
   &nbsp;
   @if (!String.IsNullOrWhiteSpace(BeforeId)) {
-    <a href=@(LinkPrefix + BeforeId)>
+    <a href=@CreateLink(BeforeId)>
       <span class="oi oi-chevron-left"></span>
     </a>
   }
   &nbsp;
   @if (!String.IsNullOrWhiteSpace(AfterId)) {
-    <a href=@(LinkPrefix + AfterId)>
+    <a href=@CreateLink(AfterId)>
       <span class="oi oi-chevron-right"></span>
     </a>
   }
@@ -45,7 +44,9 @@
   [Parameter]
   public EventCallback<SearchCommand> SearchClicked { get; set; }
   [Parameter]
-  public string LinkPrefix { get; set; }
+  public string BackLink { get; set; }
+  [Parameter]
+  public Func<string, string> CreateLink { get; set; }
   [Parameter]
   public List<string> Ids { get; set; }
   [Parameter]

@@ -186,8 +186,7 @@ module CardRepository =
         return
             match r with
             | null -> Error "That card doesn't exist!"
-            | x -> Ok x
-            |> Result.bind AcquiredCard.load
+            | x -> AcquiredCard.load x
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)

@@ -1,5 +1,4 @@
 @page "/explore"
-@page "/card"
 @page "/card/{SelectedId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -12,7 +11,7 @@
 @inherits OwningComponentBase<CardOverflowDb>
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" LinkPrefix="/card/" Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/card/{x}") Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
   @if (cards == null) {
