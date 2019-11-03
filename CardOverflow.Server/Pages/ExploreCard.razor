@@ -14,30 +14,37 @@
 @if (Card == null) {
   <p><em>Loading...</em></p>
 } else {
-  <div>
-    Gotten by <span class="badge badge-success">@Card.Summary.Users</span>
-    @if (User == null) {
-      <p>Log in to Get</p>
-    } else {
-      @if (Card.LatestMeta.IsAcquired) {
-        <button class="btn btn-secondary" disabled>
-          Gotten
-        </button>
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      Gotten by <span class="badge badge-success">@Card.Summary.Users</span>
+      @if (User == null) {
+        <p>Log in to Get</p>
       } else {
-        <button class="btn btn-primary" @onclick=@(() => Acquire(Card.LatestMeta.Id))>
-          Get
-        </button>
+        @if (Card.LatestMeta.IsAcquired) {
+          <button class="btn btn-secondary" disabled>
+            Gotten
+          </button>
+        } else {
+          <button class="btn btn-primary" @onclick=@(() => Acquire(Card.LatestMeta.Id))>
+            Get
+          </button>
+        }
       }
-    }
+    </div>
+    <div>
+      By @Card.Author
+      @if (Card.AuthorId == User.Id) {
+        <a href="card/@Card.Id/edit" title="Edit">
+          <span class="oi oi-pencil"></span>
+        </a>
+      }
+      <a href="/card/@Card.Id/revision">
+        <i class="fas fa-history"></i>
+      </a>
+    </div>
   </div>
   <div>
     <ResizingIframe SrcUrl=@("/card/" + @Id + "/back/")></ResizingIframe>
-  </div>
-  <div class="text-right">
-    By @Card.Author
-    <div>
-      <a href="/card/@Card.Id/revision">Revisions</a>
-    </div>
   </div>
   <div>
     <h3>Tags</h3>

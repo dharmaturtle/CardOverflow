@@ -1,3 +1,4 @@
+@page "/card/{Id:int}/edit"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -15,7 +16,7 @@
 @if (Card == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@Card EditCard=@EditCard />
+  <EditCardDetail Card=@Card EditCard=@Command />
 }
 
 @code {
@@ -25,7 +26,7 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
-  EditCardCommand EditCard;
+  EditCardCommand Command;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -34,7 +35,7 @@
       var xx = await DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, x.ResultValue.CardInstanceMeta.Id));
       if (xx.IsOk) {
         Card = x.ResultValue;
-        EditCard = xx.ResultValue;
+        Command = xx.ResultValue;
       } else {
         LoadingMessage = x.ErrorValue;
         ToastService.ShowError(x.ErrorValue);

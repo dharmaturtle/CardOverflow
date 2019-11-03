@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 @if (Revision == null) {
   <p><em>Loading...</em></p>
@@ -37,7 +37,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Revision = await CardRepository.Revisions(Service, User?.Id ?? 0, Id);
+    Revision = await DbExecutor.QueryAsync(db => CardRepository.Revisions(db, User?.Id ?? 0, Id));
     StateHasChanged();
   }
 
