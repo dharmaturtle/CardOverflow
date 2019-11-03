@@ -1,5 +1,6 @@
 module AnkiImportTests
 
+open CardOverflow.Sanitation
 open System.Threading.Tasks
 open FSharp.Control.Tasks
 open CardOverflow.Api
@@ -214,6 +215,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
               FieldName = "Source"
               Value = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#" },
             card.LatestMeta.CommunalFields.Single())
+        let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        Assert.Equal(
+            basic.Select(fun x -> x.Id).Single(fun x -> x <> card.LatestMeta.Id),
+            Result.getOk command |> fun x -> x.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
@@ -231,6 +236,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             view.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value))
+        let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        Assert.Equal<int seq>(
+            sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x).Where(fun x -> x <> card.LatestMeta.Id),
+            Result.getOk command |> fun x -> x.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).SelectMany(fun x -> x.CommunalCardInstanceIds :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
 
     let! cloze = getInstances "Cloze"
     for card in cloze do
@@ -244,6 +253,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.LatestMeta.StrippedFront)
         else
             Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.LatestMeta.StrippedFront)
+        let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        Assert.Equal(
+            cloze.Select(fun x -> x.Id).Single(fun x -> x <> card.LatestMeta.Id),
+            Result.getOk command |> fun x -> x.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
     }
 
 [<Fact>]

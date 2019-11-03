@@ -113,6 +113,19 @@ type FieldAndValue with
     static member join (fields: FieldAndValue seq) =
         fields |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
+type EditFieldAndValue with
+    static member load (fields: Field list) fieldValues communalCardIdsByField =
+        FieldAndValue.load fields fieldValues
+        |> Seq.map (fun { Field = field; Value = value } -> {
+            Field = field
+            Value = value
+            CommunalCardInstanceIds =
+                Map.tryFind
+                    field.Name
+                    communalCardIdsByField
+                |> Option.defaultValue [] }
+        ) |> toResizeArray
+
 type IdOrEntity<'a> =
     | Id of int
     | Entity of 'a

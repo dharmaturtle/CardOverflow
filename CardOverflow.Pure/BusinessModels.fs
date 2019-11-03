@@ -225,6 +225,13 @@ type PagedList<'T> = {
     Details: PagedListDetails
 }
 
+[<CLIMutable>]
+type EditFieldAndValue = {
+    Field: Field
+    Value: string
+    CommunalCardInstanceIds: int list
+}
+
 type CardInstanceView = {
     FieldValues: FieldAndValue ResizeArray
     TemplateInstance: CardTemplateInstance

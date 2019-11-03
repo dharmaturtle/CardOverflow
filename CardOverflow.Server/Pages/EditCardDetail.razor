@@ -1,6 +1,7 @@
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
+@using Microsoft.FSharp.Collections
 @using CardOverflow.Pure
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
@@ -20,7 +21,22 @@
         <div class="row">
           <div class="col-sm">
             @foreach (var field in EditCard.FieldValues) {
-              <label><b>@field.Field.Name: </b></label>
+              <div class="d-flex justify-content-between">
+                <label><b>@field.Field.Name: </b></label>
+                @if (field.CommunalCardInstanceIds.Any()) {
+                  <div>
+                    <span>Shared with:</span>
+                    @foreach (var instanceId in field.CommunalCardInstanceIds) {
+                      <span class="curate-tooltip-target">
+                        <span class="oi oi-eye" aria-hidden="true"></span>
+                        <div class="curate-tooltip-content">
+                          <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front")></ResizingIframe>
+                        </div>
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
               <EjsRichTextEditor @bind-Value=@field.Value>
                 @* highTODO why doesn't iFrame work? *@
                 <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
@@ -115,8 +131,12 @@
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name) ? valuesByField[field.Name] : "")
-          .Apply(value => new FieldAndValue(field, value))
-      ).ToList();
+          .Apply(value =>
+            new EditFieldAndValue(
+              field,
+              value,
+              EditCard.FieldValues.SingleOrDefault(x => x.Field.Name == field.Name)?.CommunalCardInstanceIds ?? ListModule.Empty<int>())
+      )).ToList();
   }
 
 }

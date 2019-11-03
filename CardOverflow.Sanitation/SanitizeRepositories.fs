@@ -187,12 +187,13 @@ type SearchCommand = {
     [<StringLength(250, ErrorMessage = "Query must be less than 250 characters.")>]
     Query: string
 }
+
 [<CLIMutable>]
 type EditCardCommand = {
     [<Required>]
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
-    FieldValues: FieldAndValue ResizeArray
+    FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: ViewCardTemplateInstance
 } with
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
@@ -203,18 +204,34 @@ type EditCardCommand = {
             <| this.TemplateInstance.Css
 
 module SanitizeCardRepository =
-    let getEdit (db: CardOverflowDb) instanceId = task {
-        let! instance = CardRepository.instance db instanceId
+    let getEdit (db: CardOverflowDb) cardInstanceId = task {
+        let! instance =
+            db.CardInstance
+                .Include(fun x -> x.CardTemplateInstance)
+                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
+                .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
         return
-            instance |> Result.map (fun { FieldValues = fieldValues; TemplateInstance = templateInstance } ->
+            match instance with
+            | null -> Error "Card instance not found"
+            | instance ->
+                let communalCardIdsByField =
+                    instance.CommunalFieldInstance_CardInstances
+                        .Select(fun x ->
+                            x.CommunalFieldInstance.FieldName,
+                            x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).Where(fun x -> x <> instance.Id) |> List.ofSeq)
+                    |> Map.ofSeq
                 {   EditSummary = ""
-                    FieldValues = fieldValues
-                    TemplateInstance = templateInstance |> ViewCardTemplateInstance.load
-                }
-            )}
+                    FieldValues =
+                        EditFieldAndValue.load
+                            <| Fields.fromString instance.CardTemplateInstance.Fields
+                            <| instance.FieldValues
+                            <| communalCardIdsByField
+                    TemplateInstance = instance.CardTemplateInstance |> CardTemplateInstance.load |> ViewCardTemplateInstance.load
+                } |> Ok }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: EditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let update () =
-            {   FieldValues = command.FieldValues
+            {   FieldValues = command.FieldValues.Select(fun x -> { Field = x.Field; Value = x.Value}).ToList()
                 TemplateInstance = command.TemplateInstance |> ViewCardTemplateInstance.copyTo
             } |> CardRepository.UpdateFieldsToNewInstance db acquiredCard command.EditSummary
             |> Ok

@@ -67,6 +67,7 @@ html, body {
 
   .curate-tooltip-target:hover .curate-tooltip-content {
     visibility: visible;
+    z-index: 102; /* puts it over the toolbar of Syncfusion's rich text editor on the edit page */
   }
 
 a, .btn-link {

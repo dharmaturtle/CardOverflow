@@ -30,7 +30,7 @@
   protected override async Task OnInitializedAsync() {
     Card = await CardRepository.getNew(Service, User?.Id ?? 0);
     Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
-    EditCard = new EditCardCommand("Initial creation", new List<FieldAndValue>(), Templates.First().Instances.First());
+    EditCard = new EditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
   }
 
 }
