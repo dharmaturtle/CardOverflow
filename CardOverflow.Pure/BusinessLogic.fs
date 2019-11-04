@@ -25,16 +25,16 @@ module CardHtml =
     let generate fieldNameValueMap questionTemplate answerTemplate css =
         let replaceFields isFront template =
             (template, fieldNameValueMap)
-            ||> Seq.fold(fun (previous: string) (fieldName, value) -> 
+            ||> List.fold(fun (previous: string) (fieldName, value) -> 
                 let simple =
                     previous.Replace("{{" + fieldName + "}}", value)
                 let showIfHasText =
-                    let regex = Regex("{{#" + fieldName + @"}}(.*?){{\/" + fieldName + "}}")
+                    let regex = Regex <| "{{#" + fieldName + @"}}(.*?){{\/" + fieldName + "}}"
                     if String.IsNullOrWhiteSpace value
                     then regex.Replace(simple, "")
                     else regex.Replace(simple, "$1")
                 let showIfEmpty =
-                    let regex = Regex(@"{{\^" + fieldName + @"}}(.*?){{\/" + fieldName + "}}")
+                    let regex = Regex <| @"{{\^" + fieldName + @"}}(.*?){{\/" + fieldName + "}}"
                     if String.IsNullOrWhiteSpace value
                     then regex.Replace(showIfHasText, "$1")
                     else regex.Replace(showIfHasText, "")

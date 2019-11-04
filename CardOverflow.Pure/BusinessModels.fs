@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open CardOverflow.Pure.Extensions
 open CardOverflow.Pure.Core
 open System
 open System.Linq
@@ -238,7 +239,7 @@ type CardInstanceView = {
 } with
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         CardHtml.generate
-            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "")
+            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
             <| this.TemplateInstance.QuestionTemplate
             <| this.TemplateInstance.AnswerTemplate
             <| this.TemplateInstance.Css

@@ -514,7 +514,7 @@ module Anki =
                         let! cards =
                             if cardTemplates.First().CardTemplate.IsCloze then result {
                                 let cardTemplate = cardTemplates |> Seq.exactlyOne
-                                let! max = AnkiImportLogic.maxClozeIndex fieldValues (string note.Id)
+                                let! max = AnkiImportLogic.maxClozeIndex fieldValues <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
                                 return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
                                     toCard
                                         <| AnkiImportLogic.multipleClozeToSingleCloze clozeIndex fieldValues

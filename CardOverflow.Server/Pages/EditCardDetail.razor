@@ -64,7 +64,15 @@
                 }
               </select>
             </div>
-            <iframe sandbox="allow-scripts" srcdoc=@EditCard.FrontBackFrontSynthBackSynth.Item2 style="height: 100vh; width: 100%;"></iframe>
+            @if (EditCard.Backs.IsOk) {
+              @foreach (var back in EditCard.Backs.ResultValue) {
+                <iframe sandbox="allow-scripts" srcdoc=@back style="height: 80vh; width: 100%;"></iframe>
+              }
+            } else {
+              <span>
+                Error: @EditCard.Backs.ErrorValue
+              </span>
+            }
           </div>
         </div>
       </div>

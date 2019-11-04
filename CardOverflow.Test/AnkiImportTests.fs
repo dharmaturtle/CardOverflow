@@ -210,15 +210,20 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     for card in basic do
         let! card = CardRepository.Get c.Db userId card.CardId
         Assert.Empty card.Relationships
+        let communalValue = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"
         Assert.Equal(
             { Id = 1
               FieldName = "Source"
-              Value = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#" },
+              Value = communalValue },
             card.LatestMeta.CommunalFields.Single())
         let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        let command = Result.getOk command
         Assert.Equal(
-            basic.Select(fun x -> x.Id).Single(fun x -> x <> card.LatestMeta.Id),
-            Result.getOk command |> fun x -> x.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
+            basic.Single(fun x -> x.Id <> card.LatestMeta.Id).Id,
+            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
+        Assert.Equal(
+            communalValue,
+            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).Value)
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
@@ -237,26 +242,35 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value))
         let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        let command = Result.getOk command
         Assert.Equal<int seq>(
             sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x).Where(fun x -> x <> card.LatestMeta.Id),
-            Result.getOk command |> fun x -> x.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).SelectMany(fun x -> x.CommunalCardInstanceIds :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
+            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).SelectMany(fun x -> x.CommunalCardInstanceIds :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
+        Assert.Equal<string seq>(
+            expectedFieldAndValues |> List.map snd,
+            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).Select(fun x -> x.Value))
 
     let! cloze = getInstances "Cloze"
     for card in cloze do
         let! card = CardRepository.Get c.Db userId card.CardId
+        let communalValue = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
         Assert.Equal(
             {   Id = 4
                 FieldName = "Text"
-                Value = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}" },
+                Value = communalValue },
             card.LatestMeta.CommunalFields.Single())
         if card.Id = 2 then
             Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.LatestMeta.StrippedFront)
         else
             Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.LatestMeta.StrippedFront)
         let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        let command = Result.getOk command
         Assert.Equal(
-            cloze.Select(fun x -> x.Id).Single(fun x -> x <> card.LatestMeta.Id),
-            Result.getOk command |> fun x -> x.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
+            cloze.Single(fun x -> x.Id <> card.LatestMeta.Id).Id,
+            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
+        Assert.Equal(
+            communalValue,
+            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).Value)
     }
 
 [<Fact>]

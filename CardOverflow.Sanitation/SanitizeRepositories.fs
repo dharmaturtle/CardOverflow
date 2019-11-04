@@ -196,12 +196,22 @@ type EditCardCommand = {
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: ViewCardTemplateInstance
 } with
-    member this.FrontBackFrontSynthBackSynth = // medTODO split this up
-        CardHtml.generate
-            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "")
-            <| this.TemplateInstance.QuestionTemplate
-            <| this.TemplateInstance.AnswerTemplate
-            <| this.TemplateInstance.Css
+    member this.Backs = result {
+        let values = this.FieldValues.Select(fun x -> x.Value) |> List.ofSeq
+        let! max = AnkiImportLogic.maxClozeIndex values "Something's wrong with your cloze indexes."
+        return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
+            let zip =
+                Seq.zip
+                    <| this.FieldValues.Select(fun x -> x.Field.Name)
+                    <| AnkiImportLogic.multipleClozeToSingleCloze clozeIndex values
+                |> List.ofSeq
+            CardHtml.generate
+                zip
+                this.TemplateInstance.QuestionTemplate
+                this.TemplateInstance.AnswerTemplate
+                this.TemplateInstance.Css
+            |> fun (_, back, _, _) -> back
+            ) |> toResizeArray }
 
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) cardInstanceId = task {
@@ -215,18 +225,19 @@ module SanitizeCardRepository =
             match instance with
             | null -> Error "Card instance not found"
             | instance ->
-                let communalCardIdsByField =
+                let communalCardInstanceIdsAndValueByField =
                     instance.CommunalFieldInstance_CardInstances
                         .Select(fun x ->
                             x.CommunalFieldInstance.FieldName,
-                            x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).Where(fun x -> x <> instance.Id) |> List.ofSeq)
+                            ( x.CommunalFieldInstance.Value,
+                              x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).Where(fun x -> x <> instance.Id) |> List.ofSeq))
                     |> Map.ofSeq
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
                             <| Fields.fromString instance.CardTemplateInstance.Fields
                             <| instance.FieldValues
-                            <| communalCardIdsByField
+                            <| communalCardInstanceIdsAndValueByField
                     TemplateInstance = instance.CardTemplateInstance |> CardTemplateInstance.load |> ViewCardTemplateInstance.load
                 } |> Ok }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: EditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id

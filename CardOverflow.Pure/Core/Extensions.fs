@@ -31,7 +31,11 @@ module Extensions =
                 let o = create item
                 update o item
                 add o
-    
+
+    type IEnumerable<'T> with
+        member this.ToFList () = 
+            this |> List.ofSeq
+
     [<Extension>]
     let Apply(input, (func: Func<'TInput, 'TOutput>)) = 
         func.Invoke(input)

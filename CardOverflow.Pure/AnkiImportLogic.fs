@@ -8,11 +8,11 @@ open System.ComponentModel.DataAnnotations
 
 module AnkiImportLogic =
     type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-    let maxClozeIndex fields noteId =
+    let maxClozeIndex fields errorMessage =
         fields
         |> List.map (ClozeRegex().TypedMatches)
         |> function
-        | [] -> Error <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" noteId (String.Join(',', fields))
+        | [] -> Error errorMessage
         | x -> x
             |> Seq.collect id
             |> Seq.map (fun x -> x.clozeIndex.Value |> int)
