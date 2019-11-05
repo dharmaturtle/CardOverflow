@@ -218,9 +218,9 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             card.LatestMeta.CommunalFields.Single())
         let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
         let command = Result.getOk command
-        Assert.Equal(
-            basic.Single(fun x -> x.Id <> card.LatestMeta.Id).Id,
-            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
+        Assert.Equal<int seq>(
+            basic.Select(fun x -> x.Id) |> Seq.sort,
+            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> Seq.collect (fun x -> x.CommunalCardInstanceIds)  |> Seq.sort)
         Assert.Equal(
             communalValue,
             command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).Value)
@@ -244,7 +244,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
         let command = Result.getOk command
         Assert.Equal<int seq>(
-            sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x).Where(fun x -> x <> card.LatestMeta.Id),
+            sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
             command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).SelectMany(fun x -> x.CommunalCardInstanceIds :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
         Assert.Equal<string seq>(
             expectedFieldAndValues |> List.map snd,
@@ -265,9 +265,9 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.LatestMeta.StrippedFront)
         let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
         let command = Result.getOk command
-        Assert.Equal(
-            cloze.Single(fun x -> x.Id <> card.LatestMeta.Id).Id,
-            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).CommunalCardInstanceIds.Single())
+        Assert.Equal<int seq>(
+            cloze.Select(fun x -> x.Id) |> Seq.sort,
+            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> Seq.collect (fun x -> x.CommunalCardInstanceIds)  |> Seq.sort)
         Assert.Equal(
             communalValue,
             command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).Value)

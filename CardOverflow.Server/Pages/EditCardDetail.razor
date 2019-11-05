@@ -23,10 +23,10 @@
             @foreach (var field in EditCard.FieldValues) {
               <div class="d-flex justify-content-between">
                 <label><b>@field.Field.Name: </b></label>
-                @if (field.CommunalCardInstanceIds.Any()) {
+                @if (field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id).Any()) {
                   <div>
                     <span>Shared with:</span>
-                    @foreach (var instanceId in field.CommunalCardInstanceIds) {
+                    @foreach (var instanceId in field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id)) {
                       <span class="curate-tooltip-target">
                         <span class="oi oi-eye" aria-hidden="true"></span>
                         <div class="curate-tooltip-content">

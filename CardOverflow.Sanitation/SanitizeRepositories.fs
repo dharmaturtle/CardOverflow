@@ -230,7 +230,7 @@ module SanitizeCardRepository =
                         .Select(fun x ->
                             x.CommunalFieldInstance.FieldName,
                             ( x.CommunalFieldInstance.Value,
-                              x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).Where(fun x -> x <> instance.Id) |> List.ofSeq))
+                              x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId) |> List.ofSeq))
                     |> Map.ofSeq
                 {   EditSummary = ""
                     FieldValues =
