@@ -1,4 +1,4 @@
-﻿module AnkiImportFileTests
+module AnkiImportFileTests
 
 open CardOverflow.Api
 open ContainerExtensions
@@ -142,7 +142,30 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         card.LatestMeta.StrippedFront)
     let! card = CardRepository.Get c.Db userId 1
     Assert.Empty card.Relationships
-    Assert.Empty c.Db.Relationship }
+    Assert.Empty c.Db.Relationship
+
+    let testCommunalFields cardId expected = task {
+        let! acquired = CardRepository.GetAcquired c.Db userId cardId
+        let acquired = Result.getOk acquired
+        Assert.Equal(
+            expected,
+            acquired.CardInstanceMeta.CommunalFields.Single().Value |> MappingTools.stripHtmlTags)}
+    let initialInstance = c.Db.CardInstance.First(fun x -> x.FieldValues.Contains "mnemonic")
+    do! testCommunalFields initialInstance.CardId longThing
+
+    let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
+    let editCommand = editCommand |> Result.getOk
+    let normalFields = editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any())
+    let updatedValue = Guid.NewGuid().ToString() + longThing
+    let updatedCommunalField = {
+        editCommand.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()) with
+            Value = updatedValue }
+    let updatedCommand = { editCommand with FieldValues = normalFields.Append(updatedCommunalField).ToList() }
+    let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
+    let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
+    do! Result.getOk x
+
+    do! testCommunalFields initialInstance.CardId updatedValue}
 
 [<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =

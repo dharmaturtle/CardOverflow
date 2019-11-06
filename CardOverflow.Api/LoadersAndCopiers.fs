@@ -235,15 +235,19 @@ type CardInstanceView with
     static member load (entity: CardInstanceEntity) = {
         FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
         TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
-    member this.CopyTo (entity: CardInstanceEntity) =
-        entity.FieldValues <- FieldAndValue.join this.FieldValues 
+    member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
+        entity.FieldValues <- FieldAndValue.join this.FieldValues
+        entity.CommunalFieldInstance_CardInstances <-
+            communalFields.Select(fun x -> CommunalFieldInstance_CardInstanceEntity(CommunalFieldInstance = x))
+            |> entity.CommunalFieldInstance_CardInstances.Concat
+            |> toResizeArray
         entity.CardTemplateInstanceId <- this.TemplateInstance.Id
-    member this.CopyToNew =
+    member this.CopyToNew communalFields =
         let entity = CardInstanceEntity()
-        this.CopyTo entity
+        this.CopyToX entity communalFields
         entity
-    member this.CopyFieldsToNewInstance card editSummary =
-        let e = this.CopyToNew
+    member this.CopyFieldsToNewInstance card editSummary communalFields =
+        let e = this.CopyToNew communalFields
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         match card with
