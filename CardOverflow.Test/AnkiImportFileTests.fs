@@ -148,24 +148,49 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         let! acquired = CardRepository.GetAcquired c.Db userId cardId
         let acquired = Result.getOk acquired
         Assert.Equal(
-            expected,
+            expected |> MappingTools.stripHtmlTags,
             acquired.CardInstanceMeta.CommunalFields.Single().Value |> MappingTools.stripHtmlTags)}
-    let initialInstance = c.Db.CardInstance.First(fun x -> x.FieldValues.Contains "mnemonic")
-    do! testCommunalFields initialInstance.CardId longThing
+    let! clozes = c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains "mnemonic").ToListAsync()
+    let initialInstance = clozes.First()
+    for instance in clozes do
+        do! testCommunalFields instance.CardId longThing
 
     let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
     let normalFields = editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any())
-    let updatedValue = Guid.NewGuid().ToString() + longThing
-    let updatedCommunalField = {
-        editCommand.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()) with
-            Value = updatedValue }
+    let communalField = editCommand.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any())
+    let updatedValue = Guid.NewGuid().ToString() + communalField.Value
+    let updatedCommunalField = { communalField with Value = updatedValue }
     let updatedCommand = { editCommand with FieldValues = normalFields.Append(updatedCommunalField).ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     do! Result.getOk x
+    for instance in clozes do
+        do! testCommunalFields instance.CardId updatedValue
 
-    do! testCommunalFields initialInstance.CardId updatedValue}
+    let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
+    let! editCommand = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+    let editCommand = editCommand |> Result.getOk
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any())
+    let normalField = editCommand.FieldValues.Single(fun x -> not <| x.CommunalCardInstanceIds.Any())
+    let updatedNormalField = { normalField with Value = Guid.NewGuid().ToString() + normalField.Value }
+    let updatedCommand = { editCommand with FieldValues = communalFields.Append(updatedNormalField).ToList() }
+    let! acquired = CardRepository.GetAcquired c.Db userId card.Id
+    let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
+    do! Result.getOk x
+    let! card = CardRepository.Get c.Db userId card.Id
+    let! view = CardRepository.instance c.Db card.LatestMeta.Id
+    let view = Result.getOk view
+    Assert.Equal(
+        updatedNormalField.Value,
+        view.FieldValues.Single(fun x -> x.Field.Name = normalField.Field.Name).Value)
+    for unchanged in clozes.Skip 1 do
+        let! card = CardRepository.Get c.Db userId unchanged.CardId
+        let! view = CardRepository.instance c.Db card.LatestMeta.Id
+        let view = Result.getOk view
+        Assert.Equal(
+            normalField.Value,
+            view.FieldValues.Single(fun x -> x.Field.Name = normalField.Field.Name).Value)}
 
 [<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =

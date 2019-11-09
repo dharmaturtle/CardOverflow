@@ -285,6 +285,8 @@ module CardRepository =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
+                    .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                     .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId) with
             | null ->
                 let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
@@ -294,18 +296,30 @@ module CardRepository =
             | e ->
                 let communalFields =
                     e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
-                    |> Seq.map (fun old -> 
+                    |> Seq.map (fun old ->
                         let newValue = view.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
                         if old.Value = newValue then
                             old
                         else
-                            CommunalFieldInstanceEntity(
-                                CommunalField = old.CommunalField,
-                                FieldName = old.FieldName,
-                                Value = newValue,
-                                Created = DateTime.UtcNow,
-                                EditSummary = editSummary
-                            ))
+                            let r =
+                                CommunalFieldInstanceEntity(
+                                    CommunalField = old.CommunalField,
+                                    FieldName = old.FieldName,
+                                    Value = newValue,
+                                    Created = DateTime.UtcNow,
+                                    EditSummary = editSummary
+                                )
+                            let instanceIds =
+                                old.CommunalFieldInstance_CardInstances
+                                    .Select(fun x -> x.CardInstanceId)
+                                    .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
+                            for instanceId in instanceIds do
+                                let acquiredCard =
+                                    db.AcquiredCard
+                                        .Include(fun x -> x.CardInstance)
+                                        .Single(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
+                                acquiredCard.CardInstance <- view.CopyFieldsToNewInstance (Id acquiredCard.CardInstance.CardId) editSummary [r]
+                            r)
                 e.CardInstance <- view.CopyFieldsToNewInstance card editSummary communalFields
             return! db.SaveChangesAsyncI()
         }

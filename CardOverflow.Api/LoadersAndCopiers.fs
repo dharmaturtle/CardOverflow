@@ -111,7 +111,7 @@ type FieldAndValue with
             Value = x
         }) |> toResizeArray
     static member join (fields: FieldAndValue seq) =
-        fields |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
+        fields |> Seq.sortBy (fun x -> x.Field.Ordinal) |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
 type EditFieldAndValue with
     static member load (fields: Field list) fieldValues communalCardInstanceIdsAndValueByField =
