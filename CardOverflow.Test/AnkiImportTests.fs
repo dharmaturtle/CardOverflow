@@ -258,7 +258,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             {   Id = 4
                 FieldName = "Text"
                 Value = communalValue },
-            card.LatestMeta.CommunalFields.Single())
+            card.LatestMeta.CommunalFields.Single(fun x -> x.FieldName = "Text"))
         if card.Id = 2 then
             Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.LatestMeta.StrippedFront)
         else
@@ -267,10 +267,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let command = Result.getOk command
         Assert.Equal<int seq>(
             cloze.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> Seq.collect (fun x -> x.CommunalCardInstanceIds)  |> Seq.sort)
-        Assert.Equal(
-            communalValue,
-            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).Value)
+            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.sort |> Seq.distinct)
+        Assert.Equal<string seq>(
+            [communalValue; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"],
+            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).Select(fun x -> x.Value))
     }
 
 [<Fact>]
@@ -391,7 +391,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
             [ { Id = 1
                 FieldName = "Back"
                 Value = "Basic (and reversed card) back" }
-              { Id = 6
+              { Id = 7
                 FieldName = "Front"
                 Value = "Basic (and reversed card) front" }],
             card.LatestMeta.CommunalFields)
@@ -458,8 +458,8 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
         Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-        Assert.Equal(6, c.Db.CommunalFieldInstance.Count())
-        Assert.Equal(6, c.Db.CommunalField.Count())
+        Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
+        Assert.Equal(7, c.Db.CommunalField.Count())
     }
 
 [<Theory>]

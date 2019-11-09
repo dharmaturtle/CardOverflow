@@ -131,12 +131,14 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let longThing = """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: {{c2::Griseofulvin (antifungal)}} C: {{c3::Colchicine (antigout)}} V: {{c4::Vincristine/Vinblastine (anticancer)}}P: {{c5::Palcitaxel (anticancer)}}"""
     Assert.Equal<string seq>(
         [   longThing
-            "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis"],
+            ""
+            "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis"
+            "Image here"],
         c.Db.CommunalFieldInstance.Select(fun x -> MappingTools.stripHtmlTags x.Value))
     let! card = CardRepository.Get c.Db userId 1
-    Assert.Equal(
-        longThing,
-        card.LatestMeta.CommunalFields.Single().Value |> MappingTools.stripHtmlTags)
+    Assert.Equal<string seq>(
+        [longThing; ""],
+        card.LatestMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags))
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
         card.LatestMeta.StrippedFront)
@@ -147,50 +149,45 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let testCommunalFields cardId expected = task {
         let! acquired = CardRepository.GetAcquired c.Db userId cardId
         let acquired = Result.getOk acquired
-        Assert.Equal(
-            expected |> MappingTools.stripHtmlTags,
-            acquired.CardInstanceMeta.CommunalFields.Single().Value |> MappingTools.stripHtmlTags)}
+        Assert.Equal<string seq>(
+            expected |> List.map MappingTools.stripHtmlTags |> List.sort,
+            acquired.CardInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
     let! clozes = c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains "mnemonic").ToListAsync()
     let initialInstance = clozes.First()
     for instance in clozes do
-        do! testCommunalFields instance.CardId longThing
+        do! testCommunalFields instance.CardId [longThing; ""]
 
     let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
-    let normalFields = editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any())
-    let communalField = editCommand.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any())
-    let updatedValue = Guid.NewGuid().ToString() + communalField.Value
-    let updatedCommunalField = { communalField with Value = updatedValue }
-    let updatedCommand = { editCommand with FieldValues = normalFields.Append(updatedCommunalField).ToList() }
+    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any()))
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> List.ofSeq
+    let updatedCommunalField = communalFields.[0]
+    Assert.Contains("microtubules", updatedCommunalField.Value)
+    let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
+    let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     do! Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId updatedValue
+        do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
     let! editCommand = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
     let editCommand = editCommand |> Result.getOk
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any())
-    let normalField = editCommand.FieldValues.Single(fun x -> not <| x.CommunalCardInstanceIds.Any())
-    let updatedNormalField = { normalField with Value = Guid.NewGuid().ToString() + normalField.Value }
-    let updatedCommand = { editCommand with FieldValues = communalFields.Append(updatedNormalField).ToList() }
-    let! acquired = CardRepository.GetAcquired c.Db userId card.Id
+    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any()))
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> List.ofSeq
+    let updatedCommunalField0 = communalFields.[0]
+    let updatedCommunalField1 = communalFields.[1]
+    Assert.Contains("microtubules", updatedCommunalField0.Value)
+    Assert.Equal("<b><br /></b>", updatedCommunalField1.Value)
+    let updatedCommunalField0 = { updatedCommunalField0 with Value = Guid.NewGuid().ToString() + updatedCommunalField0.Value }
+    let updatedCommunalField1 = { updatedCommunalField1 with Value = Guid.NewGuid().ToString() + updatedCommunalField1.Value }
+    let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
+    let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     do! Result.getOk x
-    let! card = CardRepository.Get c.Db userId card.Id
-    let! view = CardRepository.instance c.Db card.LatestMeta.Id
-    let view = Result.getOk view
-    Assert.Equal(
-        updatedNormalField.Value,
-        view.FieldValues.Single(fun x -> x.Field.Name = normalField.Field.Name).Value)
-    for unchanged in clozes.Skip 1 do
-        let! card = CardRepository.Get c.Db userId unchanged.CardId
-        let! view = CardRepository.instance c.Db card.LatestMeta.Id
-        let view = Result.getOk view
-        Assert.Equal(
-            normalField.Value,
-            view.FieldValues.Single(fun x -> x.Field.Name = normalField.Field.Name).Value)}
+    for instance in clozes do
+        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value]}
 
 [<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =

@@ -290,7 +290,7 @@ module Anki =
                     |> function
                     | 1 -> false
                     | _ -> true
-                    || templates.Any(fun t -> t.Template.IsCloze && t.QuestionTemplate.Contains("{{cloze:" + x.Name + "}}")))
+                    || templates.Any(fun t -> t.Template.IsCloze))
             let communalFieldNames = communalFields |> List.map (fun x -> x.Name)
             let rec reduceLoop templates =
                 let combine (newT: TempTemplate) (oldT: TempTemplate) =

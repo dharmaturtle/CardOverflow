@@ -307,19 +307,19 @@ module CardRepository =
                                 FieldName = old.FieldName,
                                 Value = newValue,
                                 Created = DateTime.UtcNow,
-                                EditSummary = editSummary
-                            ), 
+                                EditSummary = editSummary),
                             old.CommunalFieldInstance_CardInstances
                                 .Select(fun x -> x.CardInstanceId)
                                 .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
                             |> List.ofSeq)
                     |> List.unzip
                 for instanceId in instanceIds |> List.collect id |> List.distinct do
-                    let acquiredCard =
-                        db.AcquiredCard
-                            .Include(fun x -> x.CardInstance)
-                            .Single(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
-                    acquiredCard.CardInstance <- view.CopyFieldsToNewInstance (Id acquiredCard.CardInstance.CardId) editSummary communalFields
+                    db.AcquiredCard
+                        .Include(fun x -> x.CardInstance)
+                        .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
+                    |> function
+                    | null -> () // null when its an instance that isn't acquired, veryLowTODO filter out the unacquired instances
+                    | ac -> ac.CardInstance <- view.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) editSummary communalFields
                 e.CardInstance <- view.CopyFieldsToNewInstance card editSummary communalFields
             return! db.SaveChangesAsyncI()
         }
