@@ -294,32 +294,32 @@ module CardRepository =
                 e.CardInstance <- view.CopyFieldsToNewInstance card editSummary []
                 db.AcquiredCard.AddI e
             | e ->
-                let communalFields =
+                let communalFields, instanceIds =
                     e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
-                    |> Seq.map (fun old ->
+                    |> List.ofSeq
+                    |> List.map (fun old ->
                         let newValue = view.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
                         if old.Value = newValue then
-                            old
+                            old, []
                         else
-                            let r =
-                                CommunalFieldInstanceEntity(
-                                    CommunalField = old.CommunalField,
-                                    FieldName = old.FieldName,
-                                    Value = newValue,
-                                    Created = DateTime.UtcNow,
-                                    EditSummary = editSummary
-                                )
-                            let instanceIds =
-                                old.CommunalFieldInstance_CardInstances
-                                    .Select(fun x -> x.CardInstanceId)
-                                    .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
-                            for instanceId in instanceIds do
-                                let acquiredCard =
-                                    db.AcquiredCard
-                                        .Include(fun x -> x.CardInstance)
-                                        .Single(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
-                                acquiredCard.CardInstance <- view.CopyFieldsToNewInstance (Id acquiredCard.CardInstance.CardId) editSummary [r]
-                            r)
+                            CommunalFieldInstanceEntity(
+                                CommunalField = old.CommunalField,
+                                FieldName = old.FieldName,
+                                Value = newValue,
+                                Created = DateTime.UtcNow,
+                                EditSummary = editSummary
+                            ), 
+                            old.CommunalFieldInstance_CardInstances
+                                .Select(fun x -> x.CardInstanceId)
+                                .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
+                            |> List.ofSeq)
+                    |> List.unzip
+                for instanceId in instanceIds |> List.collect id |> List.distinct do
+                    let acquiredCard =
+                        db.AcquiredCard
+                            .Include(fun x -> x.CardInstance)
+                            .Single(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
+                    acquiredCard.CardInstance <- view.CopyFieldsToNewInstance (Id acquiredCard.CardInstance.CardId) editSummary communalFields
                 e.CardInstance <- view.CopyFieldsToNewInstance card editSummary communalFields
             return! db.SaveChangesAsyncI()
         }
