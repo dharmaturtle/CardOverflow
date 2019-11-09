@@ -6,12 +6,17 @@ open CardOverflow.Debug
 open Xunit
 open System
 
+[<Fact>]
+let ``maxClozeIndex doesn't throw given bad data``(): unit =
+    let expected = Guid.NewGuid()
+    let actual = AnkiImportLogic.maxClozeIndex [""; ""] expected |> Result.getError
+    Assert.Equal(expected, actual)
+
 let run index before expected =
     let index = byte index
     Assert.Equal<string seq>(
         [expected],
-        AnkiImportLogic.multipleClozeToSingleCloze index [before]
-    )
+        AnkiImportLogic.multipleClozeToSingleCloze index [before])
 
 [<Fact>]
 let ``Cloze: c1 is transformed into my cloze``(): unit =

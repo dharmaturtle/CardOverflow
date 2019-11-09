@@ -11,12 +11,13 @@ module AnkiImportLogic =
     let maxClozeIndex fields errorMessage =
         fields
         |> List.map (ClozeRegex().TypedMatches)
+        |> Seq.collect id
+        |> List.ofSeq
         |> function
         | [] -> Error errorMessage
         | x -> x
-            |> Seq.collect id
-            |> Seq.map (fun x -> x.clozeIndex.Value |> int)
-            |> Seq.max
+            |> List.map (fun x -> x.clozeIndex.Value |> int)
+            |> List.max
             |> Ok
     let multipleClozeToSingleCloze (index: byte) =
         List.map (fun field ->
