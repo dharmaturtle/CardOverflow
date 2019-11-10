@@ -140,7 +140,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTemplateInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CardTemplateId);
+                entity.HasIndex(e => e.CardTemplateId)
+                    .IsUnique()
+                    .HasFilter("([IsLatest]=(1))");
 
                 entity.Property(e => e.Css).IsUnicode(false);
 
