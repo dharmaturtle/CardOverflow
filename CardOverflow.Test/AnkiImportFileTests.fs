@@ -200,27 +200,31 @@ let ``Create cloze card works`` (): Task<unit> = task {
     let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
     let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
 
-    let updateCommand = {
-        EditSummary = "Initial creation"
-        FieldValues =
-            clozeTemplate.Fields.Select(fun f -> {
-                Field = ViewField.copyTo f
-                Value =
-                    if f.Name = "Text" then
-                        "Canberra was founded in {{c1::1913}}."
-                    else
-                        "Extra"
-                CommunalCardInstanceIds = []
-            }).ToList()
-        TemplateInstance = clozeTemplate }
-    let! card = CardRepository.getNew c.Db userId
-    let! x = SanitizeCardRepository.Update c.Db userId card updateCommand
-    do! Result.getOk x
-    let clozeText = updateCommand.FieldValues.Single(fun x -> x.Field.Name = "Text").Value
-    let clozeExtra = updateCommand.FieldValues.Single(fun x -> x.Field.Name = "Extra").Value
-    let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
-    do! testCommunalFields cardId [clozeText; clozeExtra]
-    Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText)) }
+    let test clozeText clozeExtra otherTest = task {
+        let updateCommand = {
+            EditSummary = "Initial creation"
+            FieldValues =
+                clozeTemplate.Fields.Select(fun f -> {
+                    Field = ViewField.copyTo f
+                    Value =
+                        if f.Name = "Text" then
+                            clozeText
+                        else
+                            clozeExtra
+                    CommunalCardInstanceIds = []
+                }).ToList()
+            TemplateInstance = clozeTemplate }
+        let! card = CardRepository.getNew c.Db userId
+        let! x = SanitizeCardRepository.Update c.Db userId card updateCommand
+        do! Result.getOk x
+        let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
+        do! testCommunalFields cardId [clozeText; clozeExtra]
+        otherTest clozeText }
+    do! test "Canberra was founded in {{c1::1913}}." "extra"
+        <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))
+    do! test "{{c1::Canberra::city}} was founded in {{c1::1913}}." "extra"
+        <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))
+    }
 
 [<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =
