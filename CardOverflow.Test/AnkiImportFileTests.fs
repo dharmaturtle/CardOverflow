@@ -20,6 +20,7 @@ open CardOverflow.Sanitation
 open System.Threading.Tasks
 open FSharp.Control.Tasks
 open System.Security.Cryptography
+open System.Collections.Generic
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -187,7 +188,26 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     do! Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value]}
+        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value]
+    
+    let! card = CardRepository.getNew c.Db userId
+    let! templates = SanitizeCardTemplate.GetMine c.Db userId
+    let clozeTemplate = templates.SelectMany(fun x -> x.Instances :> IEnumerable<_>).Single(fun x -> x.Name = "Cloze-88141")
+    let updateCommand = {
+        EditSummary = "Initial creation"
+        FieldValues =
+            clozeTemplate.Fields.Select(fun f -> {
+                Field = ViewField.copyTo f
+                Value = f.Name + Guid.NewGuid().ToString()
+                CommunalCardInstanceIds = []
+            }).ToList()
+        TemplateInstance = clozeTemplate }
+    let! x = SanitizeCardRepository.Update c.Db userId card updateCommand
+    do! Result.getOk x
+    let clozeText = updateCommand.FieldValues.Single(fun x -> x.Field.Name = "Text").Value
+    let clozeExtra = updateCommand.FieldValues.Single(fun x -> x.Field.Name = "Extra").Value
+    let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
+    do! testCommunalFields cardId [clozeText; clozeExtra] }
 
 [<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =

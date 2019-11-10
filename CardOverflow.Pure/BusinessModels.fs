@@ -121,7 +121,9 @@ type CardTemplateInstance = {
     ShortQuestionTemplate: string
     ShortAnswerTemplate: string
     EditSummary: string
-}
+} with
+    member this.isCloze =
+        this.Fields.Any(fun x -> this.QuestionTemplate.Contains("{{cloze:" + x.Name + "}}"))
 
 type AcquiredCardTemplateInstance = {
     DefaultTags: int seq

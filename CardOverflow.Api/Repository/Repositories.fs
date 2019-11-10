@@ -291,7 +291,17 @@ module CardRepository =
             | null ->
                 let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
                 let e = acquiredCard.copyToNew tags
-                e.CardInstance <- view.CopyFieldsToNewInstance card editSummary []
+                e.CardInstance <-
+                    if view.TemplateInstance.isCloze then
+                        view.TemplateInstance.Fields.Select(fun f ->
+                        CommunalFieldInstanceEntity(
+                            CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                            FieldName = f.Name,
+                            Value = view.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
+                            Created = DateTime.UtcNow,
+                            EditSummary = editSummary)) |> List.ofSeq
+                    else []
+                    |> view.CopyFieldsToNewInstance card editSummary
                 db.AcquiredCard.AddI e
             | e ->
                 let communalFields, instanceIds =
