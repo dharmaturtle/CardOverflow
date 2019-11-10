@@ -191,8 +191,8 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value]
     
     let! card = CardRepository.getNew c.Db userId
-    let! templates = SanitizeCardTemplate.GetMine c.Db userId
-    let clozeTemplate = templates.SelectMany(fun x -> x.Instances :> IEnumerable<_>).Single(fun x -> x.Name = "Cloze-88141")
+    let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
+    let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
     let updateCommand = {
         EditSummary = "Initial creation"
         FieldValues =

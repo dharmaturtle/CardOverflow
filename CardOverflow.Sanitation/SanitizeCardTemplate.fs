@@ -141,6 +141,14 @@ module SanitizeCardTemplate =
             | null -> Error "That template doesn't exist"
             | x -> Ok <| ViewCardTemplateWithAllInstances.load x
         }
+    let Search (db: CardOverflowDb) (query: string) = task {
+        let! x =
+            db.CardTemplateInstance
+                .Include(fun x-> x.CardTemplate)
+                .Where(fun x -> x.Name.Contains query && x.IsLatest)
+                .ToListAsync()
+        return x |> Seq.map (CardTemplateInstance.load >> ViewCardTemplateInstance.load) |> toResizeArray
+        }
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
             db.CardTemplate
@@ -150,7 +158,7 @@ module SanitizeCardTemplate =
                     x.CardTemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))
                 )
                 .ToListAsync()
-        return x |> Seq.map ViewCardTemplateWithAllInstances.load
+        return x |> Seq.map ViewCardTemplateWithAllInstances.load |> toResizeArray
         }
     let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
         let update () = CardTemplateRepository.UpdateFieldsToNewInstance db userId (ViewCardTemplateInstance.copyTo instance) |> Ok
