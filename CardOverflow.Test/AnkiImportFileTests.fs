@@ -110,10 +110,18 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     Assert.Equal(3, c.Db.CardInstance.Count())
     }
 
+let testCommunalFields (c: TestContainer) userId cardId expected = task {
+    let! acquired = CardRepository.GetAcquired c.Db userId cardId
+    let acquired = Result.getOk acquired
+    Assert.Equal<string seq>(
+        expected |> List.map MappingTools.stripHtmlTags |> List.sort,
+        acquired.CardInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
+
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
+    let testCommunalFields = testCommunalFields c userId
     do!
         AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
         |> Result.getOk
@@ -147,12 +155,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Empty card.Relationships
     Assert.Empty c.Db.Relationship
 
-    let testCommunalFields cardId expected = task {
-        let! acquired = CardRepository.GetAcquired c.Db userId cardId
-        let acquired = Result.getOk acquired
-        Assert.Equal<string seq>(
-            expected |> List.map MappingTools.stripHtmlTags |> List.sort,
-            acquired.CardInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
     let! clozes = c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains "mnemonic").ToListAsync()
     let initialInstance = clozes.First()
     for instance in clozes do
@@ -188,8 +190,14 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     do! Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value]
-    
+        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
+
+[<Fact>]
+let ``Create cloze card works`` (): Task<unit> = task {
+    let userId = 3
+    use c = new TestContainer()
+    let testCommunalFields = testCommunalFields c userId
+
     let! card = CardRepository.getNew c.Db userId
     let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
     let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
