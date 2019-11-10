@@ -8,9 +8,9 @@ open System
 
 [<Fact>]
 let ``maxClozeIndex doesn't throw given bad data``(): unit =
-    let expected = Guid.NewGuid()
-    let actual = AnkiImportLogic.maxClozeIndex [""; ""] expected |> Result.getError
-    Assert.Equal(expected, actual)
+    let expectedErrorMessage = Guid.NewGuid()
+    let actualErrorMessage = AnkiImportLogic.maxClozeIndex expectedErrorMessage [""; ""] |> Result.getError
+    Assert.Equal(expectedErrorMessage, actualErrorMessage)
 
 let run index before expected =
     let index = byte index

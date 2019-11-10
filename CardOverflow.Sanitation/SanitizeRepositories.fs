@@ -198,7 +198,7 @@ type EditCardCommand = {
 } with
     member this.Backs = result {
         let values = this.FieldValues.Select(fun x -> x.Value) |> List.ofSeq
-        let! max = AnkiImportLogic.maxClozeIndex values "Something's wrong with your cloze indexes."
+        let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." values
         return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
             let zip =
                 Seq.zip

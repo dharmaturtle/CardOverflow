@@ -8,12 +8,11 @@ open System.ComponentModel.DataAnnotations
 
 module AnkiImportLogic =
     type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-    let maxClozeIndex fields errorMessage =
-        fields
-        |> List.map (ClozeRegex().TypedMatches)
-        |> Seq.collect id
-        |> List.ofSeq
-        |> function
+    let maxClozeIndex errorMessage =
+        List.map (ClozeRegex().TypedMatches)
+        >> Seq.collect id
+        >> List.ofSeq
+        >> function
         | [] -> Error errorMessage
         | x -> x
             |> List.map (fun x -> x.clozeIndex.Value |> int)
