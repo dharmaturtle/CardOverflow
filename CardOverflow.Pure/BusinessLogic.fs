@@ -39,7 +39,7 @@ module CardHtml =
                     then regex.Replace(showIfHasText, "$1")
                     else regex.Replace(showIfHasText, "")
                 let stripHtml =
-                    Regex("{{text:" + fieldName + "}}").Replace(showIfEmpty, MappingTools.stripHtmlTags value)
+                    showIfEmpty.Replace("{{text:" + fieldName + "}}", MappingTools.stripHtmlTags value)
                 let cloze =
                     if isFront then
                         let brackets = """
@@ -48,7 +48,7 @@ module CardHtml =
         <span class="cloze-brackets-front">]</span>
         """
                         let hidden = ClozeRegex().Replace(value, brackets) // medTODO show the hint
-                        Regex("{{cloze:" + fieldName + "}}").Replace(stripHtml, hidden)
+                        stripHtml.Replace("{{cloze:" + fieldName + "}}", hidden)
                     else
                         let html =
                             sprintf """
@@ -57,7 +57,7 @@ module CardHtml =
         <span class="cloze-brackets-back">]</span>
         """
                         let answer = ClozeRegex().Replace(value, html <| ClozeRegex().TypedMatch(value).answer.Value)
-                        Regex("{{cloze:" + fieldName + "}}").Replace(stripHtml, answer)
+                        stripHtml.Replace("{{cloze:" + fieldName + "}}", answer)
                 cloze
             )
         let frontSide =
