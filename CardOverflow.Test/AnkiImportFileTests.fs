@@ -227,6 +227,36 @@ let ``Create cloze card works`` (): Task<unit> = task {
     }
 
 [<Fact>]
+let ``EditCardCommand's back works with cloze`` () =
+    let testCloze text expected =
+        {   EditSummary = ""
+            FieldValues =
+                CardTemplateInstance.initialize.Fields.Select(fun f -> {
+                    Field = f
+                    Value =
+                        if f.Name = "Front" then
+                            text
+                        else
+                            f.Name
+                    CommunalCardInstanceIds = []
+                }).ToList()
+            TemplateInstance =
+                { CardTemplateInstance.initialize with
+                    QuestionTemplate = "{{cloze:Front}}"
+                } |> ViewCardTemplateInstance.load
+        }.Backs
+        |> Result.getOk
+        |> Seq.map MappingTools.stripHtmlTags
+        |> fun x -> Assert.Equal<string seq>(expected, x)
+    testCloze
+        "{{c1::Canberra::city}} was founded in {{c1::1913}}."
+        [   "[ ... ] was founded in [ ... ] . Back" ]
+    testCloze
+        "{{c2::Canberra::city}} was founded in {{c1::1913}}."
+        [   "Canberra was founded in [ ... ] . Back"
+            "[ ... ] was founded in 1913. Back" ]
+
+[<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =
     let c = new TestContainer()
     let userId = 1

@@ -4,12 +4,13 @@ open FsToolkit.ErrorHandling
 open FSharp.Text.RegexProvider
 open System
 open Microsoft.FSharp.Core.Operators.Checked
-open System.ComponentModel.DataAnnotations
 
 module AnkiImportLogic =
     type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-    let maxClozeIndex errorMessage =
-        List.map (ClozeRegex().TypedMatches)
+    type ClozeTemplateRegex = Regex< """{{cloze:(?<fieldName>.*?)}}""" >
+    let maxClozeIndex errorMessage (valuesByFieldName: Map<string, string>) =
+        ClozeTemplateRegex().TypedMatches
+        >> Seq.map (fun m -> valuesByFieldName.[m.fieldName.Value] |> ClozeRegex().TypedMatches)
         >> Seq.collect id
         >> List.ofSeq
         >> function

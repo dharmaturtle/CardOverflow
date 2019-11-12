@@ -197,13 +197,13 @@ type EditCardCommand = {
     TemplateInstance: ViewCardTemplateInstance
 } with
     member this.Backs = result {
-        let values = this.FieldValues.Select(fun x -> x.Value) |> List.ofSeq
-        let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." values
+        let valueByFieldName = this.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
+        let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
         return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
             let zip =
                 Seq.zip
-                    <| this.FieldValues.Select(fun x -> x.Field.Name)
-                    <| AnkiImportLogic.multipleClozeToSingleCloze clozeIndex values
+                    <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                    <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
                 |> List.ofSeq
             CardHtml.generate
                 zip
