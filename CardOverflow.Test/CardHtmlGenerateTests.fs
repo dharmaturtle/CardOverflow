@@ -251,3 +251,59 @@ let ``CardHtml renders {{cloze:FieldName}} properly``(): unit =
         <span class="cloze-brackets-back">]</span>
         .<br>Some extra stuff."""
         back
+
+let assertStripped expected actual =
+    Assert.Equal(
+        MappingTools.stripHtmlTags expected,
+        MappingTools.stripHtmlTags actual)
+
+[<Fact>]
+let ``CardHtml renders multiple cloze templates properly 1``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
+                "Field2", "In 1492, Columbus sailed the ocean blue."
+                "Extra", "Some extra info" ]
+            "{{cloze:Field1}}{{cloze:Field2}}"
+            "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+            ""
+    assertStripped
+        "Columbus first crossed the Atlantic in [ ... ]"
+        front
+    assertStripped
+        "Columbus first crossed the Atlantic in [ 1492 ] Some extra info"
+        back
+
+[<Fact>]
+let ``CardHtml renders multiple cloze templates properly 2``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [   "Field1", "Columbus first crossed the Atlantic in 1492"
+                "Field2", "In {{c2::1492}}, Columbus sailed the ocean blue."
+                "Extra", "Some extra info" ]
+            "{{cloze:Field1}}{{cloze:Field2}}"
+            "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+            ""
+    assertStripped
+        "In [ ... ] , Columbus sailed the ocean blue."
+        front
+    assertStripped
+        "In [ 1492 ] , Columbus sailed the ocean blue.Some extra info"
+        back
+
+[<Fact>]
+let ``CardHtml renders multiple cloze templates properly 3``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [   "Field1", "Columbus first crossed the Atlantic in 1492"
+                "Field2", "In 1492, Columbus sailed the ocean {{c3::blue}}."
+                "Extra", "Some extra info" ]
+            "{{cloze:Field1}}{{cloze:Field2}}"
+            "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+            ""
+    assertStripped
+        "In 1492, Columbus sailed the ocean [ ... ] ."
+        front
+    assertStripped
+        "In 1492, Columbus sailed the ocean [ blue ] .Some extra info"
+        back

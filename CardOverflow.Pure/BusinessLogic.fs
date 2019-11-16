@@ -23,6 +23,15 @@ module Relationship =
 module CardHtml =
     type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c\d+::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
     let generate fieldNameValueMap questionTemplate answerTemplate css =
+        let questionTemplate, answerTemplate =
+            fieldNameValueMap
+            |> List.filter(fun (_, value) -> ClozeRegex().IsMatch value)
+            |> List.tryExactlyOne
+            |> function
+            | None -> questionTemplate, answerTemplate
+            | Some (fieldName, _) ->
+                let irrelevantCloze = Regex <| "{{cloze:(?!" + fieldName + ").+?}}"
+                irrelevantCloze.Replace(questionTemplate, ""), irrelevantCloze.Replace(answerTemplate, "")
         let replaceFields isFront template =
             (template, fieldNameValueMap)
             ||> List.fold(fun (previous: string) (fieldName, value) -> 

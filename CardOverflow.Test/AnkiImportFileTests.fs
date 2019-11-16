@@ -256,6 +256,38 @@ let ``EditCardCommand's back works with cloze`` () =
         [   "Canberra was founded in [ ... ] . Back"
             "[ ... ] was founded in 1913. Back" ]
 
+    let testMultiCloze front back expectedBack = // https://eshapard.github.io/anki/the-power-of-making-new-cards-on-the-fly-in-anki.html
+        {   EditSummary = ""
+            FieldValues =
+                CardTemplateInstance.initialize.Fields.Select(fun f -> {
+                    Field = f
+                    Value =
+                        match f.Name with
+                        | "Front" -> front
+                        | "Back" -> back
+                        | _ -> "Source goes here"
+                    CommunalCardInstanceIds = []
+                }).ToList()
+            TemplateInstance =
+                { CardTemplateInstance.initialize with
+                    QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
+                    AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
+                } |> ViewCardTemplateInstance.load
+        }.Backs
+        |> Result.getOk
+        |> Seq.map MappingTools.stripHtmlTags
+        |> fun x -> Assert.Equal<string seq>(expectedBack, x)
+    testMultiCloze
+        "Columbus first crossed the Atlantic in {{c1::1492}}"
+        ""
+        ["Columbus first crossed the Atlantic in [ 1492 ] Source goes here"]
+    testMultiCloze
+        "Columbus first crossed the Atlantic in {{c1::1492}}"
+        "In {{c2::1492}}, Columbus sailed the ocean {{c3::blue}}."
+        [   "Columbus first crossed the Atlantic in [ 1492 ] Source goes here"
+            "In [ 1492 ] , Columbus sailed the ocean blue.Source goes here"
+            "In 1492, Columbus sailed the ocean [ blue ] .Source goes here" ]
+
 [<Fact>]
 let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =
     let c = new TestContainer()
