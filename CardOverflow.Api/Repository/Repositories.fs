@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open FsToolkit.ErrorHandling
 open CardOverflow.Pure.Core
 open System.Security.Cryptography
 open System
@@ -278,7 +279,7 @@ module CardRepository =
         task {
             let card =
                 if acquiredCard.CardId = 0 then
-                    Entity <| CardEntity(AuthorId = acquiredCard.UserId)
+                    Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId)
                 else
                     Id <| acquiredCard.CardId
             match!
@@ -290,19 +291,39 @@ module CardRepository =
                     .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId) with
             | null ->
                 let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
-                let e = acquiredCard.copyToNew tags
-                e.CardInstance <-
-                    if view.TemplateInstance.isCloze then
-                        view.TemplateInstance.Fields.Select(fun f ->
-                        CommunalFieldInstanceEntity(
-                            CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                            FieldName = f.Name,
-                            Value = view.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
-                            Created = DateTime.UtcNow,
-                            EditSummary = editSummary)) |> List.ofSeq
-                    else []
-                    |> view.CopyFieldsToNewInstance card editSummary
-                db.AcquiredCard.AddI e
+                if view.TemplateInstance.isCloze then
+                    let valueByFieldName = view.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
+                    let max =
+                        AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName view.TemplateInstance.QuestionTemplate
+                        |> Result.getOk
+                        |> byte
+                    [1uy .. max] |> List.map (fun clozeIndex ->
+                        let zip =
+                            Seq.zip
+                                (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                                (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
+                            |> Map.ofSeq
+                        { view with
+                            FieldValues =
+                                view.FieldValues.Select(fun { Field = f; Value = _ } -> {
+                                    Field = f
+                                    Value = zip.[f.Name]
+                                }).ToList() })
+                else [ view ]
+                |> List.iter (fun view ->
+                    let e = acquiredCard.copyToNew tags
+                    e.CardInstance <-
+                        if view.TemplateInstance.isCloze then
+                            view.TemplateInstance.Fields.Select(fun f ->
+                            CommunalFieldInstanceEntity(
+                                CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                                FieldName = f.Name,
+                                Value = view.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
+                                Created = DateTime.UtcNow,
+                                EditSummary = editSummary)) |> List.ofSeq
+                        else []
+                        |> view.CopyFieldsToNewInstance card editSummary
+                    db.AcquiredCard.AddI e)
             | e ->
                 let communalFields, instanceIds =
                     e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)

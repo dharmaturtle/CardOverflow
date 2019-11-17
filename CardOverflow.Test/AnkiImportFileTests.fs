@@ -200,7 +200,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
     let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
     let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
 
-    let test clozeText clozeExtra otherTest = task {
+    let test clozeMaxIndex clozeText clozeExtra otherTest = task {
         let updateCommand = {
             EditSummary = "Initial creation"
             FieldValues =
@@ -217,13 +217,20 @@ let ``Create cloze card works`` (): Task<unit> = task {
         let! card = CardRepository.getNew c.Db userId
         let! x = SanitizeCardRepository.Update c.Db userId card updateCommand
         do! Result.getOk x
-        let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
-        do! testCommunalFields cardId [clozeText; clozeExtra]
+        for i in [1 .. clozeMaxIndex] |> List.map byte do
+            let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
+            let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
+            do! testCommunalFields cardId [clozeText; clozeExtra]
         otherTest clozeText }
-    do! test "Canberra was founded in {{c1::1913}}." "extra"
+    do! test 1 "Canberra was founded in {{c1::1913}}." "extra"
         <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))
-    do! test "{{c1::Canberra::city}} was founded in {{c1::1913}}." "extra"
+    do! test 1 "{{c1::Canberra::city}} was founded in {{c1::1913}}." "extra"
         <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))
+    do! test 2 "{{c1::Portland::city}} was founded in {{c2::1845}}." "extra"
+        <| fun clozeText -> 
+            Assert.Equal(0, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains clozeText))
+            Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains "Portland was founded in {{c2::1845}}."))
+            Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains "{{c1::Portland::city}} was founded in 1845."))
     }
 
 [<Fact>]

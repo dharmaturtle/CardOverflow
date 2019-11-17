@@ -252,7 +252,7 @@ type CardInstanceView with
         e.Modified <- Nullable()
         match card with
         | Id id -> e.CardId <- id
-        | Entity entity -> e.Card <- entity
+        | Entity entity -> e.Card <- entity ()
         e.EditSummary <- editSummary
         e
 
