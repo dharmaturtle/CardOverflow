@@ -155,6 +155,7 @@ module SanitizeCardTemplate =
                 .Include(fun x-> x.CardTemplateInstances)
                 .Where(fun x -> 
                     x.AuthorId = userId ||
+                    x.AuthorId = 2 ||
                     x.CardTemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))
                 )
                 .ToListAsync()

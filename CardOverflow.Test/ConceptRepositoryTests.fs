@@ -290,15 +290,25 @@ let ``Card search works`` (): Task<unit> = task {
     }
 
 [<Fact>]
+let ``New user has TheCollective's card templates`` (): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
+    let theCollectiveId = c.Db.User.Single(fun x -> x.DisplayName = "The Collective").Id
+    for template in myTemplates do
+        Assert.Equal(theCollectiveId, template.AuthorId)
+    }
+
+[<Fact>]
 let ``Can create card template and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let initialCardTemplate = ViewCardTemplateWithAllInstances.initialize userId
-    
+
     do! SanitizeCardTemplate.Update c.Db userId initialCardTemplate.Editable |> Result.getOk
     let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
-    
-    Assert.True(myTemplates.Single().Editable.Fields.Any(fun x -> x.Name = initialCardTemplate.Editable.Fields.First().Name))
+
+    Assert.True(myTemplates.Single(fun x -> x.AuthorId = userId).Editable.Fields.Any(fun x -> x.Name = initialCardTemplate.Editable.Fields.First().Name))
     
     // testing a brand new template, but slightly different
     let fieldName = Guid.NewGuid().ToString()
