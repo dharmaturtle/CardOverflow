@@ -20,6 +20,10 @@ module Relationship =
         else
             name
 
+module Cloze =
+    let isCloze questionTemplate =
+        AnkiImportLogic.ClozeTemplateRegex().IsMatch questionTemplate
+
 module CardHtml =
     type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c\d+::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
     let generate fieldNameValueMap questionTemplate answerTemplate css =

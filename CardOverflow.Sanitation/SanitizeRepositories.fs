@@ -1,5 +1,6 @@
 namespace CardOverflow.Sanitation
 
+open CardOverflow.Pure.Extensions
 open System.Threading.Tasks
 open CardOverflow.Pure.Core
 open LoadersAndCopiers
@@ -196,22 +197,34 @@ type EditCardCommand = {
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: ViewCardTemplateInstance
 } with
-    member this.Backs = result {
+    member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
-        let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
-        return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
-            let zip =
-                Seq.zip
-                    <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                    <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
-                |> List.ofSeq
+        if this.TemplateInstance.IsCloze then
+            result {
+                let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
+                return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
+                    let zip =
+                        Seq.zip
+                            <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                            <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
+                        |> List.ofSeq
+                    CardHtml.generate
+                        zip
+                        this.TemplateInstance.QuestionTemplate
+                        this.TemplateInstance.AnswerTemplate
+                        this.TemplateInstance.Css
+                    |> fun (_, back, _, _) -> back
+                    ) |> toResizeArray
+            }
+        else
             CardHtml.generate
-                zip
-                this.TemplateInstance.QuestionTemplate
-                this.TemplateInstance.AnswerTemplate
-                this.TemplateInstance.Css
-            |> fun (_, back, _, _) -> back
-            ) |> toResizeArray }
+                <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
+                <| this.TemplateInstance.QuestionTemplate
+                <| this.TemplateInstance.AnswerTemplate
+                <| this.TemplateInstance.Css
+            |> fun (_, back, _, _) -> [back].ToList()
+            |> Ok
+        
 
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) cardInstanceId = task {

@@ -235,7 +235,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
 
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` () =
-    let testCloze text expected =
+    let test text expected questionTemplate =
         {   EditSummary = ""
             FieldValues =
                 CardTemplateInstance.initialize.Fields.Select(fun f -> {
@@ -249,12 +249,19 @@ let ``EditCardCommand's back works with cloze`` () =
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with
-                    QuestionTemplate = "{{cloze:Front}}"
+                    QuestionTemplate = questionTemplate
                 } |> ViewCardTemplateInstance.load
         }.Backs
         |> Result.getOk
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expected, x)
+    let testOrdinary text expected =
+        test text expected "{{Front}}"
+    testOrdinary
+        "The front"
+        [ "The front Back" ]
+    let testCloze text expected =
+        test text expected "{{cloze:Front}}"
     testCloze
         "{{c1::Canberra::city}} was founded in {{c1::1913}}."
         [   "[ ... ] was founded in [ ... ] . Back" ]

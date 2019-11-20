@@ -66,7 +66,9 @@ type ViewCardTemplateInstance = {
     ShortAnswerTemplate: string
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
-}
+} with
+    member this.IsCloze =
+        Cloze.isCloze this.QuestionTemplate
 
 module ViewCardTemplateInstance =
     let load (bznz: CardTemplateInstance) = {
