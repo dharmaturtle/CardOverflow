@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CardOverflow.Legacy\CardOverflow.Legacy.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="4.7.0" />
   </ItemGroup>
 

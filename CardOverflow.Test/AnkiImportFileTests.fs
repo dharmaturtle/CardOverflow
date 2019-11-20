@@ -264,11 +264,11 @@ let ``EditCardCommand's back works with cloze`` () =
         test text expected "{{cloze:Front}}"
     testCloze
         "{{c1::Canberra::city}} was founded in {{c1::1913}}."
-        [   "[ ... ] was founded in [ ... ] . Back" ]
+        [   "[ Canberra ] was founded in [ 1913 ] . Back" ]
     testCloze
         "{{c2::Canberra::city}} was founded in {{c1::1913}}."
-        [   "Canberra was founded in [ ... ] . Back"
-            "[ ... ] was founded in 1913. Back" ]
+        [   "Canberra was founded in [ 1913 ] . Back"
+            "[ Canberra ] was founded in 1913. Back" ]
 
     let testMultiCloze front back expectedBack = // https://eshapard.github.io/anki/the-power-of-making-new-cards-on-the-fly-in-anki.html
         {   EditSummary = ""

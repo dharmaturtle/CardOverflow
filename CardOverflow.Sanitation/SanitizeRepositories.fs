@@ -224,7 +224,6 @@ type EditCardCommand = {
                 <| this.TemplateInstance.Css
             |> fun (_, back, _, _) -> [back].ToList()
             |> Ok
-        
 
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) cardInstanceId = task {

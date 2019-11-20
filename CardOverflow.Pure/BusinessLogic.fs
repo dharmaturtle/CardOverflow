@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open CardOverflow.Debug
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
@@ -69,14 +70,14 @@ module CardHtml =
         %s
         <span class="cloze-brackets-back">]</span>
         """
-                        let answer = ClozeRegex().Replace(value, html <| ClozeRegex().TypedMatch(value).answer.Value)
+                        let answer = ClozeRegex().TypedReplace(value, fun f -> html f.answer.Value)
                         stripHtml.Replace("{{cloze:" + fieldName + "}}", answer)
                 cloze
             )
         let frontSide =
             replaceFields true questionTemplate
         let backSide =
-            (replaceFields false answerTemplate).Replace("{{FrontSide}}", frontSide)
+            (replaceFields false answerTemplate).Replace("{{FrontSide}}", replaceFields false questionTemplate)
         let htmlBase =
             sprintf """<!DOCTYPE html>
     <head>
