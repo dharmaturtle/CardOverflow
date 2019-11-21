@@ -53,7 +53,8 @@ let ``AcquireCards works``() = task {
     let ac = Result.getOk ac
     let! v = CardRepository.getView c.Db c1
     let v = { v with FieldValues = [].ToList() }
-    do! CardRepository.UpdateFieldsToNewInstance c.Db ac "" v
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac "" v
+    Result.getOk x
     let ci1_2 = 3
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)

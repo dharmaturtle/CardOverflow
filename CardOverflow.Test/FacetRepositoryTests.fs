@@ -29,7 +29,7 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
         | _ -> fieldValues
     let! ac = CardRepository.getNew db userId
     let ac = { ac with Tags = tags }
-    return!
+    let! r =
         {   TemplateInstance = cardTemplateInstance.CardTemplateInstance
             FieldValues =
                 cardTemplateInstance.CardTemplateInstance.Fields
@@ -37,6 +37,7 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
                 |> Seq.mapi (fun i field -> { Field = field; Value = fieldValues.[i] })
                 |> toResizeArray
         } |> CardRepository.UpdateFieldsToNewInstance db ac "Created"
+    return Result.getOk r
     }
 
 let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<unit> =
@@ -206,7 +207,8 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
                 ).ToList()
         }
     
-    do! CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard "" updated
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard "" updated
+    Result.getOk x
     
     let! refreshed = CardRepository.getView c.Db cardId
     Assert.Equal<string seq>(

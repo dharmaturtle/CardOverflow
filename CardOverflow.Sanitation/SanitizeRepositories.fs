@@ -257,16 +257,15 @@ module SanitizeCardRepository =
             {   FieldValues = command.FieldValues.Select(fun x -> { Field = x.Field; Value = x.Value}).ToList()
                 TemplateInstance = command.TemplateInstance |> ViewCardTemplateInstance.copyTo
             } |> CardRepository.UpdateFieldsToNewInstance db acquiredCard command.EditSummary
-            |> Ok
         let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId)
-        return
+        return!
             match card with
             | null ->
                 update ()
             | card ->
                 if card.AuthorId = authorId
                 then update ()
-                else Error "You aren't that card's author."
+                else "You aren't that card's author." |> Error |> Task.FromResult
         }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Query

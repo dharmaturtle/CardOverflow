@@ -282,77 +282,79 @@ module CardRepository =
                     Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId)
                 else
                     Id <| acquiredCard.CardId
-            match!
+            let! entity =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
-                    .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId) with
-            | null ->
-                let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
-                if view.TemplateInstance.isCloze then
-                    let valueByFieldName = view.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
-                    let max =
+                    .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
+            let r =
+                match entity with
+                | null ->
+                    let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
+                    if view.TemplateInstance.isCloze then
+                        let valueByFieldName = view.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
                         AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName view.TemplateInstance.QuestionTemplate
-                        |> Result.getOk
-                        |> byte
-                    [1uy .. max] |> List.map (fun clozeIndex ->
-                        let zip =
-                            Seq.zip
-                                (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                                (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
-                            |> Map.ofSeq
-                        { view with
-                            FieldValues =
-                                view.FieldValues.Select(fun { Field = f; Value = _ } -> {
-                                    Field = f
-                                    Value = zip.[f.Name]
-                                }).ToList() })
-                else [ view ]
-                |> List.iter (fun view ->
-                    let e = acquiredCard.copyToNew tags
-                    e.CardInstance <-
-                        if view.TemplateInstance.isCloze then
-                            view.TemplateInstance.Fields.Select(fun f ->
-                            CommunalFieldInstanceEntity(
-                                CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                                FieldName = f.Name,
-                                Value = view.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
-                                Created = DateTime.UtcNow,
-                                EditSummary = editSummary)) |> List.ofSeq
-                        else []
-                        |> view.CopyFieldsToNewInstance card editSummary
-                    db.AcquiredCard.AddI e)
-            | e ->
-                let communalFields, instanceIds =
-                    e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
-                    |> List.ofSeq
-                    |> List.map (fun old ->
-                        let newValue = view.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
-                        if old.Value = newValue then
-                            old, []
-                        else
-                            CommunalFieldInstanceEntity(
-                                CommunalField = old.CommunalField,
-                                FieldName = old.FieldName,
-                                Value = newValue,
-                                Created = DateTime.UtcNow,
-                                EditSummary = editSummary),
-                            old.CommunalFieldInstance_CardInstances
-                                .Select(fun x -> x.CardInstanceId)
-                                .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
-                            |> List.ofSeq)
-                    |> List.unzip
-                for instanceId in instanceIds |> List.collect id |> List.distinct do
-                    db.AcquiredCard
-                        .Include(fun x -> x.CardInstance)
-                        .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
-                    |> function
-                    | null -> () // null when its an instance that isn't acquired, veryLowTODO filter out the unacquired instances
-                    | ac -> ac.CardInstance <- view.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) editSummary communalFields
-                e.CardInstance <- view.CopyFieldsToNewInstance card editSummary communalFields
-            return! db.SaveChangesAsyncI()
+                        |> Result.map (fun max ->
+                        [1uy .. byte max] |> List.map (fun clozeIndex ->
+                            let zip =
+                                Seq.zip
+                                    (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                                    (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
+                                |> Map.ofSeq
+                            { view with
+                                FieldValues =
+                                    view.FieldValues.Select(fun { Field = f; Value = _ } -> {
+                                        Field = f
+                                        Value = zip.[f.Name]
+                                    }).ToList() }))
+                    else Ok [ view ]
+                    |> Result.map (List.iter (fun view ->
+                        let e = acquiredCard.copyToNew tags
+                        e.CardInstance <-
+                            if view.TemplateInstance.isCloze then
+                                view.TemplateInstance.Fields.Select(fun f ->
+                                CommunalFieldInstanceEntity(
+                                    CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                                    FieldName = f.Name,
+                                    Value = view.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
+                                    Created = DateTime.UtcNow,
+                                    EditSummary = editSummary)) |> List.ofSeq
+                            else []
+                            |> view.CopyFieldsToNewInstance card editSummary
+                        db.AcquiredCard.AddI e))
+                | e ->
+                    let communalFields, instanceIds =
+                        e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
+                        |> List.ofSeq
+                        |> List.map (fun old ->
+                            let newValue = view.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
+                            if old.Value = newValue then
+                                old, []
+                            else
+                                CommunalFieldInstanceEntity(
+                                    CommunalField = old.CommunalField,
+                                    FieldName = old.FieldName,
+                                    Value = newValue,
+                                    Created = DateTime.UtcNow,
+                                    EditSummary = editSummary),
+                                old.CommunalFieldInstance_CardInstances
+                                    .Select(fun x -> x.CardInstanceId)
+                                    .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
+                                |> List.ofSeq)
+                        |> List.unzip
+                    for instanceId in instanceIds |> List.collect id |> List.distinct do
+                        db.AcquiredCard
+                            .Include(fun x -> x.CardInstance)
+                            .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
+                        |> function
+                        | null -> () // null when its an instance that isn't acquired, veryLowTODO filter out the unacquired instances
+                        | ac -> ac.CardInstance <- view.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) editSummary communalFields
+                    e.CardInstance <- view.CopyFieldsToNewInstance card editSummary communalFields
+                    Ok ()
+            do! db.SaveChangesAsyncI()
+            return r
         }
 
 module CardOptionsRepository =

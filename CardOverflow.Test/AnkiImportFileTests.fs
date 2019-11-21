@@ -170,7 +170,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    do! Result.getOk x
+    Result.getOk x
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
@@ -188,7 +188,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    do! Result.getOk x
+    Result.getOk x
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 
@@ -216,7 +216,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
             TemplateInstance = clozeTemplate }
         let! card = CardRepository.getNew c.Db userId
         let! x = SanitizeCardRepository.Update c.Db userId card updateCommand
-        do! Result.getOk x
+        Result.getOk x
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
             let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
