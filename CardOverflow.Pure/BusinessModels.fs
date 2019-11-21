@@ -231,7 +231,7 @@ type PagedList<'T> = {
 [<CLIMutable>]
 type EditFieldAndValue = {
     Field: Field
-    [<Required>]
+    [<StringLength(10000)>]
     Value: string
     CommunalCardInstanceIds: int list
 }

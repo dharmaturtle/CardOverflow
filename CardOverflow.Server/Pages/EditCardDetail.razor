@@ -41,6 +41,7 @@
                 @* highTODO why doesn't iFrame work? *@
                 <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
               </EjsRichTextEditor>
+              <ValidationMessage For=@(() => field.Value) />
             }
           </div>
           <div class="col-sm">
@@ -137,11 +138,13 @@
     EditCard.FieldValues = EditCard.TemplateInstance.Fields
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
-        (valuesByField.ContainsKey(field.Name) ? valuesByField[field.Name] : "")
+        (valuesByField.ContainsKey(field.Name)
+          ? valuesByField[field.Name] ?? ""
+          : "")
           .Apply(value =>
             new EditFieldAndValue(
               field,
-              value,
+              value ?? "",
               EditCard.FieldValues.SingleOrDefault(x => x.Field.Name == field.Name)?.CommunalCardInstanceIds ?? ListModule.Empty<int>())
       )).ToList();
   }
