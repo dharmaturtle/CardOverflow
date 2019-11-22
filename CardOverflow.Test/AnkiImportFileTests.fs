@@ -211,7 +211,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
                             clozeText
                         else
                             clozeExtra
-                    CommunalCardInstanceIds = []
+                    CommunalCardInstanceIds = [].ToList()
                 }).ToList()
             TemplateInstance = clozeTemplate }
         let! card = CardRepository.getNew c.Db userId
@@ -245,7 +245,7 @@ let ``EditCardCommand's back works with cloze`` () =
                             text
                         else
                             f.Name
-                    CommunalCardInstanceIds = []
+                    CommunalCardInstanceIds = [].ToList()
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with
@@ -280,7 +280,7 @@ let ``EditCardCommand's back works with cloze`` () =
                         | "Front" -> front
                         | "Back" -> back
                         | _ -> "Source goes here"
-                    CommunalCardInstanceIds = []
+                    CommunalCardInstanceIds = [].ToList()
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with

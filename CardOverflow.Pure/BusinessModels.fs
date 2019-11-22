@@ -233,7 +233,7 @@ type EditFieldAndValue = {
     Field: Field
     [<StringLength(10000)>]
     Value: string
-    CommunalCardInstanceIds: int list
+    CommunalCardInstanceIds: int ResizeArray
 }
 
 type CardInstanceView = {

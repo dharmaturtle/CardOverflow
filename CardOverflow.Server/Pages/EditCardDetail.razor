@@ -23,6 +23,12 @@
             @foreach (var field in EditCard.FieldValues) {
               <div class="d-flex justify-content-between">
                 <label><b>@field.Field.Name: </b></label>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" @onclick=@(() => ToggleCommunal(field))/>
+                    Communal
+                  </label>
+                </div>
                 @if (field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id).Any()) {
                   <div>
                     <span>Shared with:</span>
@@ -145,8 +151,12 @@
             new EditFieldAndValue(
               field,
               value ?? "",
-              EditCard.FieldValues.SingleOrDefault(x => x.Field.Name == field.Name)?.CommunalCardInstanceIds ?? ListModule.Empty<int>())
+              EditCard.FieldValues.SingleOrDefault(x => x.Field.Name == field.Name)?.CommunalCardInstanceIds ?? new List<int>())
       )).ToList();
+  }
+
+  void ToggleCommunal(EditFieldAndValue pair) {
+    pair.CommunalCardInstanceIds = pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList(); // highTODO new ones append 0, which needs to be handled
   }
 
 }

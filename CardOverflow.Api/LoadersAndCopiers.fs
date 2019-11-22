@@ -124,7 +124,7 @@ type EditFieldAndValue with
                 |> Option.defaultValue (value, [])
             {   Field = field
                 Value = value
-                CommunalCardInstanceIds = communalCardInstanceIds }
+                CommunalCardInstanceIds = communalCardInstanceIds.ToList() }
         ) |> toResizeArray
 
 type IdOrEntity<'a> =
