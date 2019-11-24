@@ -26,7 +26,7 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
-  EditCardCommand Command;
+  ViewEditCardCommand Command;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

@@ -190,7 +190,7 @@ type SearchCommand = {
 }
 
 [<CLIMutable>]
-type EditCardCommand = {
+type ViewEditCardCommand = {
     [<Required>]
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
@@ -224,6 +224,11 @@ type EditCardCommand = {
                 <| this.TemplateInstance.Css
             |> fun (_, back, _, _) -> [back].ToList()
             |> Ok
+    member this.load =
+        {   EditCardCommand.EditSummary = this.EditSummary
+            FieldValues = this.FieldValues
+            TemplateInstance = this.TemplateInstance |> ViewCardTemplateInstance.copyTo
+        }
 
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) cardInstanceId = task {
@@ -252,11 +257,8 @@ module SanitizeCardRepository =
                             <| communalCardInstanceIdsAndValueByField
                     TemplateInstance = instance.CardTemplateInstance |> CardTemplateInstance.load |> ViewCardTemplateInstance.load
                 } |> Ok }
-    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: EditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let update () =
-            {   FieldValues = command.FieldValues.Select(fun x -> { Field = x.Field; Value = x.Value}).ToList()
-                TemplateInstance = command.TemplateInstance |> ViewCardTemplateInstance.copyTo
-            } |> CardRepository.UpdateFieldsToNewInstance db acquiredCard command.EditSummary
+    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+        let update () = CardRepository.UpdateFieldsToNewInstance db acquiredCard command.load
         let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId)
         return!
             match card with

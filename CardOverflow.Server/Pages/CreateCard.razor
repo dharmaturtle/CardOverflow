@@ -23,13 +23,13 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
-  EditCardCommand EditCard;
+  ViewEditCardCommand EditCard;
   IEnumerable<ViewCardTemplateWithAllInstances> Templates;
 
   protected override async Task OnInitializedAsync() {
     Card = await CardRepository.getNew(Service, User?.Id ?? 0);
     Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
-    EditCard = new EditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
+    EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
   }
 
 }

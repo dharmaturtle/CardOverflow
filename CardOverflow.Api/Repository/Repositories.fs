@@ -265,7 +265,7 @@ module CardRepository =
                 }
             }
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) editSummary (view: CardInstanceView) =
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
         let getTagId (db: CardOverflowDb) (input: string) =
             let r =
                 match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
@@ -293,9 +293,9 @@ module CardRepository =
                 match entity with
                 | null ->
                     let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
-                    if view.TemplateInstance.isCloze then
-                        let valueByFieldName = view.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
-                        AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName view.TemplateInstance.QuestionTemplate
+                    if command.TemplateInstance.isCloze then
+                        let valueByFieldName = command.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
+                        AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
                         |> Result.map (fun max ->
                         [1uy .. byte max] |> List.map (fun clozeIndex ->
                             let zip =
@@ -303,33 +303,32 @@ module CardRepository =
                                     (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
                                     (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
                                 |> Map.ofSeq
-                            { view with
+                            { command with
                                 FieldValues =
-                                    view.FieldValues.Select(fun { Field = f; Value = _ } -> {
-                                        Field = f
-                                        Value = zip.[f.Name]
-                                    }).ToList() }))
-                    else Ok [ view ]
-                    |> Result.map (List.iter (fun view ->
+                                    command.FieldValues.Select(fun x ->
+                                    { x with
+                                        Value = zip.[x.Field.Name]}).ToList() }))
+                    else Ok [ command ]
+                    |> Result.map (List.iter (fun c ->
                         let e = acquiredCard.copyToNew tags
                         e.CardInstance <-
-                            if view.TemplateInstance.isCloze then
-                                view.TemplateInstance.Fields.Select(fun f ->
+                            if c.TemplateInstance.isCloze then
+                                c.TemplateInstance.Fields.Select(fun f ->
                                 CommunalFieldInstanceEntity(
                                     CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
                                     FieldName = f.Name,
-                                    Value = view.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
+                                    Value = c.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
                                     Created = DateTime.UtcNow,
-                                    EditSummary = editSummary)) |> List.ofSeq
+                                    EditSummary = c.EditSummary)) |> List.ofSeq
                             else []
-                            |> view.CopyFieldsToNewInstance card editSummary
+                            |> c.CardView.CopyFieldsToNewInstance card c.EditSummary
                         db.AcquiredCard.AddI e))
                 | e ->
                     let communalFields, instanceIds =
                         e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
                         |> List.ofSeq
                         |> List.map (fun old ->
-                            let newValue = view.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
+                            let newValue = command.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
                             if old.Value = newValue then
                                 old, []
                             else
@@ -338,7 +337,7 @@ module CardRepository =
                                     FieldName = old.FieldName,
                                     Value = newValue,
                                     Created = DateTime.UtcNow,
-                                    EditSummary = editSummary),
+                                    EditSummary = command.EditSummary),
                                 old.CommunalFieldInstance_CardInstances
                                     .Select(fun x -> x.CardInstanceId)
                                     .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
@@ -350,8 +349,8 @@ module CardRepository =
                             .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
                         |> function
                         | null -> () // null when its an instance that isn't acquired, veryLowTODO filter out the unacquired instances
-                        | ac -> ac.CardInstance <- view.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) editSummary communalFields
-                    e.CardInstance <- view.CopyFieldsToNewInstance card editSummary communalFields
+                        | ac -> ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
+                    e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
                     Ok ()
             do! db.SaveChangesAsyncI()
             return r

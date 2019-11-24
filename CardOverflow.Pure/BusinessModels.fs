@@ -334,3 +334,12 @@ type CardRevision = {
     AuthorId: int
     SortedMeta: CardInstanceMeta list
 }
+
+type EditCardCommand = {
+    EditSummary: string
+    FieldValues: EditFieldAndValue ResizeArray
+    TemplateInstance: CardTemplateInstance
+} with
+    member this.CardView = {   
+        FieldValues = this.FieldValues.Select(fun x -> { Field = x.Field; Value = x.Value}).ToList()
+        TemplateInstance = this.TemplateInstance }

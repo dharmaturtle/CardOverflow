@@ -34,9 +34,13 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
             FieldValues =
                 cardTemplateInstance.CardTemplateInstance.Fields
                 |> Seq.sortBy (fun x -> x.Ordinal)
-                |> Seq.mapi (fun i field -> { Field = field; Value = fieldValues.[i] })
-                |> toResizeArray
-        } |> CardRepository.UpdateFieldsToNewInstance db ac "Created"
+                |> Seq.mapi (fun i field -> {
+                    Field = field
+                    Value = fieldValues.[i]
+                    CommunalCardInstanceIds = [].ToList()
+                }) |> toResizeArray
+            EditSummary = "Initial creation"
+        } |> CardRepository.UpdateFieldsToNewInstance db ac
     return Result.getOk r
     }
 
@@ -187,6 +191,7 @@ Back
     )
     }
 
+open CardOverflow.Sanitation
 [<Fact>]
 let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the fields``() : Task<unit> = task {
     use c = new TestContainer()
@@ -198,16 +203,17 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
-    let! old = CardRepository.getView c.Db cardId
+    let! old = SanitizeCardRepository.getEdit c.Db cardId
+    let old = Result.getOk old
     let updated = {
         old with
             FieldValues =
                 old.FieldValues.Select(fun x ->
                     { x with Value = newValue }
                 ).ToList()
-        }
+    }
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard "" updated
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
     Result.getOk x
     
     let! refreshed = CardRepository.getView c.Db cardId
