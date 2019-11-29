@@ -320,7 +320,15 @@ module CardRepository =
                                     Value = c.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
                                     Created = DateTime.UtcNow,
                                     EditSummary = c.EditSummary)) |> List.ofSeq
-                            else []
+                            else
+                                c.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Contains 0).Select(fun x ->
+                                    let name = x.Field.Name
+                                    CommunalFieldInstanceEntity(
+                                        CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                                        FieldName = name,
+                                        Value = c.FieldValues.Single(fun x -> x.Field.Name = name).Value,
+                                        Created = DateTime.UtcNow,
+                                        EditSummary = c.EditSummary)) |> List.ofSeq
                             |> c.CardView.CopyFieldsToNewInstance card c.EditSummary
                         db.AcquiredCard.AddI e))
                 | e ->

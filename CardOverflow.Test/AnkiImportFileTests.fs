@@ -234,6 +234,50 @@ let ``Create cloze card works`` (): Task<unit> = task {
     }
 
 [<Fact>]
+let ``Creating card with shared "Back" field works`` (): Task<unit> = task {
+    let userId = 3
+    use c = new TestContainer()
+    let! template =
+        SanitizeCardTemplate.Search c.Db "Basic"
+        |> TaskX.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
+    let editSummary = Guid.NewGuid().ToString()
+    
+    let! acquired = CardRepository.getNew c.Db userId
+    do! SanitizeCardRepository.Update
+            c.Db
+            userId
+            acquired
+            {   EditSummary = editSummary
+                FieldValues =
+                    template
+                        .Fields
+                        .Select(fun f ->
+                            {   Field = ViewField.copyTo f
+                                Value = f.Name
+                                CommunalCardInstanceIds =
+                                    if f.Name = "Front" then
+                                        [].ToList()
+                                    else
+                                        [0].ToList()
+                            })
+                        .ToList()
+                TemplateInstance = template }
+        |> TaskX.map Result.getOk
+    
+    let! field = c.Db.CommunalField.SingleAsync()
+    Assert.Equal(1, field.Id)
+    Assert.Equal(3, field.AuthorId)
+    let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_CardInstances).SingleAsync()
+    Assert.Equal(1, instance.Id)
+    Assert.Equal(1, instance.CommunalFieldId)
+    Assert.Equal("Back", instance.FieldName)
+    Assert.Equal("Back", instance.Value)
+    Assert.Null instance.Modified
+    Assert.Equal(editSummary, instance.EditSummary)
+    Assert.Equal(1, instance.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
+    Assert.Equal(1, instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId) }
+
+[<Fact>]
 let ``EditCardCommand's back works with cloze`` () =
     let test text expected questionTemplate =
         {   EditSummary = ""
