@@ -294,7 +294,7 @@ module CardRepository =
                 | null ->
                     let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
                     if command.TemplateInstance.isCloze then
-                        let valueByFieldName = command.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
+                        let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value.StringValue) |> Map.ofSeq
                         AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
                         |> Result.map (fun max ->
                         [1uy .. byte max] |> List.map (fun clozeIndex ->
@@ -307,7 +307,7 @@ module CardRepository =
                                 FieldValues =
                                     command.FieldValues.Select(fun x ->
                                     { x with
-                                        Value = zip.[x.Field.Name]}).ToList() }))
+                                        Value = Value zip.[x.EditField.Name]}).ToList() }))
                     else Ok [ command ]
                     |> Result.map (List.iter (fun c ->
                         let e = acquiredCard.copyToNew tags
@@ -317,18 +317,26 @@ module CardRepository =
                                 CommunalFieldInstanceEntity(
                                     CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
                                     FieldName = f.Name,
-                                    Value = c.FieldValues.Single(fun x -> x.Field.Name = f.Name).Value,
+                                    Value = c.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value.StringValue,
                                     Created = DateTime.UtcNow,
                                     EditSummary = c.EditSummary)) |> List.ofSeq
                             else
-                                c.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Contains 0).Select(fun x ->
-                                    let name = x.Field.Name
-                                    CommunalFieldInstanceEntity(
-                                        CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                                        FieldName = name,
-                                        Value = c.FieldValues.Single(fun x -> x.Field.Name = name).Value,
-                                        Created = DateTime.UtcNow,
-                                        EditSummary = c.EditSummary)) |> List.ofSeq
+                                c.FieldValues.Select(fun edit ->
+                                    let fieldName = edit.EditField.Name
+                                    match edit.Value with
+                                    | Value _ -> None
+                                    | CommunalValue value ->
+                                        if value.CommunalCardInstanceIds.Contains 0 then
+                                            CommunalFieldInstanceEntity(
+                                                CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                                                FieldName = fieldName,
+                                                Value = c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value.StringValue,
+                                                Created = DateTime.UtcNow,
+                                                EditSummary = c.EditSummary)
+                                            |> Some
+                                        else
+                                            None
+                                    ) |> List.ofSeq |> List.choose id
                             |> c.CardView.CopyFieldsToNewInstance card c.EditSummary
                         db.AcquiredCard.AddI e))
                 | e ->
@@ -336,7 +344,7 @@ module CardRepository =
                         e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
                         |> List.ofSeq
                         |> List.map (fun old ->
-                            let newValue = command.FieldValues.Single(fun x -> x.Field.Name = old.FieldName).Value
+                            let newValue = command.FieldValues.Single(fun x -> x.EditField.Name = old.FieldName).Value.StringValue
                             if old.Value = newValue then
                                 old, []
                             else

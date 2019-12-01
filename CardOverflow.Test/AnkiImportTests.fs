@@ -220,10 +220,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let command = Result.getOk command
         Assert.Equal<int seq>(
             basic.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> Seq.collect (fun x -> x.CommunalCardInstanceIds)  |> Seq.sort)
+            command.FieldValues |> Seq.collect (fun x -> x.Value.CommunalCardInstanceIds) |> Seq.sort)
         Assert.Equal(
             communalValue,
-            command.FieldValues.Single(fun x -> x.CommunalCardInstanceIds.Any()).Value)
+            command.FieldValues.Single(fun x -> x.Value.IsCommunal).Value.StringValue)
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
@@ -245,10 +245,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let command = Result.getOk command
         Assert.Equal<int seq>(
             sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
-            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).SelectMany(fun x -> x.CommunalCardInstanceIds :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
+            command.FieldValues |> Seq.collect (fun x -> x.Value.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
         Assert.Equal<string seq>(
             expectedFieldAndValues |> List.map snd,
-            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).Select(fun x -> x.Value))
+            command.FieldValues.Where(fun x -> x.Value.IsCommunal).Select(fun x -> x.Value.StringValue))
 
     let! cloze = getInstances "Cloze"
     for card in cloze do
@@ -267,10 +267,10 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let command = Result.getOk command
         Assert.Equal<int seq>(
             cloze.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.sort |> Seq.distinct)
+            command.FieldValues |> Seq.collect (fun x -> x.Value.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
         Assert.Equal<string seq>(
             [communalValue; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"],
-            command.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()).Select(fun x -> x.Value))
+            command.FieldValues.Where(fun x -> x.Value.IsCommunal).Select(fun x -> x.Value.StringValue))
     }
 
 [<Fact>]

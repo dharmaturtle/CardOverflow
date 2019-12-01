@@ -114,17 +114,14 @@ type FieldAndValue with
         fields |> Seq.sortBy (fun x -> x.Field.Ordinal) |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
 type EditFieldAndValue with
-    static member load (fields: Field list) fieldValues communalCardInstanceIdsAndValueByField =
+    static member load (fields: Field list) fieldValues valuesByFieldName =
         FieldAndValue.load fields fieldValues
         |> Seq.map (fun { Field = field; Value = value } ->
-            let value, communalCardInstanceIds =
-                Map.tryFind
-                    field.Name
-                    communalCardInstanceIdsAndValueByField
-                |> Option.defaultValue (value, [])
-            {   Field = field
-                Value = value
-                CommunalCardInstanceIds = communalCardInstanceIds.ToList() }
+            {   EditField = field
+                Value =
+                    valuesByFieldName
+                    |> Map.tryFind field.Name
+                    |> Option.defaultValue (Value value) }
         ) |> toResizeArray
 
 type IdOrEntity<'a> =

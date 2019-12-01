@@ -162,35 +162,35 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
 
     let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
-    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any()))
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> List.ofSeq
+    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.Value.IsCommunal))
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.Value.IsCommunal) |> List.ofSeq
     let updatedCommunalField = communalFields.[0]
-    Assert.Contains("microtubules", updatedCommunalField.Value)
-    let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
+    Assert.Contains("microtubules", updatedCommunalField.Value.StringValue)
+    let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value.StringValue |> Value}
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
+        do! testCommunalFields instance.CardId [updatedCommunalField.Value.StringValue; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
     let! editCommand = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
     let editCommand = editCommand |> Result.getOk
-    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.CommunalCardInstanceIds.Any()))
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.CommunalCardInstanceIds.Any()) |> List.ofSeq
+    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.Value.IsCommunal))
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.Value.IsCommunal) |> List.ofSeq
     let updatedCommunalField0 = communalFields.[0]
     let updatedCommunalField1 = communalFields.[1]
-    Assert.Contains("microtubules", updatedCommunalField0.Value)
-    Assert.Equal("<b><br /></b>", updatedCommunalField1.Value)
-    let updatedCommunalField0 = { updatedCommunalField0 with Value = Guid.NewGuid().ToString() + updatedCommunalField0.Value }
-    let updatedCommunalField1 = { updatedCommunalField1 with Value = Guid.NewGuid().ToString() + updatedCommunalField1.Value }
+    Assert.Contains("microtubules", updatedCommunalField0.Value.StringValue)
+    Assert.Equal("<b><br /></b>", updatedCommunalField1.Value.StringValue)
+    let updatedCommunalField0 = { updatedCommunalField0 with Value = Guid.NewGuid().ToString() + updatedCommunalField0.Value.StringValue |> Value }
+    let updatedCommunalField1 = { updatedCommunalField1 with Value = Guid.NewGuid().ToString() + updatedCommunalField1.Value.StringValue |> Value }
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
+        do! testCommunalFields instance.CardId [updatedCommunalField0.Value.StringValue; updatedCommunalField1.Value.StringValue] }
 
 [<Fact>]
 let ``Create cloze card works`` (): Task<unit> = task {
@@ -205,13 +205,13 @@ let ``Create cloze card works`` (): Task<unit> = task {
             EditSummary = "Initial creation"
             FieldValues =
                 clozeTemplate.Fields.Select(fun f -> {
-                    Field = ViewField.copyTo f
+                    EditField = ViewField.copyTo f
                     Value =
                         if f.Name = "Text" then
                             clozeText
                         else
                             clozeExtra
-                    CommunalCardInstanceIds = [].ToList()
+                        |> Value
                 }).ToList()
             TemplateInstance = clozeTemplate }
         let! card = CardRepository.getNew c.Db userId
@@ -234,17 +234,17 @@ let ``Create cloze card works`` (): Task<unit> = task {
     }
 
 [<Fact>]
-let ``Creating card with shared "Back" field works`` (): Task<unit> = task {
+let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
     let! template =
         SanitizeCardTemplate.Search c.Db "Basic"
         |> TaskX.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
-    let editSummary = Guid.NewGuid().ToString()
     
-    let! acquired = CardRepository.getNew c.Db userId
-    do! SanitizeCardRepository.Update
-            c.Db
+    let test communalValue id editSummary = task {
+        let! acquired = CardRepository.getNew c.Db userId
+        do! SanitizeCardRepository.Update
+                c.Db
             userId
             acquired
             {   EditSummary = editSummary
@@ -252,30 +252,33 @@ let ``Creating card with shared "Back" field works`` (): Task<unit> = task {
                     template
                         .Fields
                         .Select(fun f ->
-                            {   Field = ViewField.copyTo f
-                                Value = f.Name
-                                CommunalCardInstanceIds =
+                            {   EditField = ViewField.copyTo f
+                                Value =
                                     if f.Name = "Front" then
-                                        [].ToList()
+                                        Value "Front"
                                     else
-                                        [0].ToList()
-                            })
-                        .ToList()
-                TemplateInstance = template }
-        |> TaskX.map Result.getOk
+                                            {   Value = communalValue
+                                                CommunalCardInstanceIds = [0].ToList()
+                                            } |> CommunalValue })
+                            .ToList()
+                    TemplateInstance = template }
+            |> TaskX.map Result.getOk
     
-    let! field = c.Db.CommunalField.SingleAsync()
-    Assert.Equal(1, field.Id)
-    Assert.Equal(3, field.AuthorId)
-    let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_CardInstances).SingleAsync()
-    Assert.Equal(1, instance.Id)
-    Assert.Equal(1, instance.CommunalFieldId)
-    Assert.Equal("Back", instance.FieldName)
-    Assert.Equal("Back", instance.Value)
-    Assert.Null instance.Modified
-    Assert.Equal(editSummary, instance.EditSummary)
-    Assert.Equal(1, instance.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
-    Assert.Equal(1, instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId) }
+        let! field = c.Db.CommunalField.SingleAsync(fun x -> x.Id = id)
+        Assert.Equal(id, field.Id)
+        Assert.Equal(3, field.AuthorId)
+        let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_CardInstances).SingleAsync(fun x -> x.Value = communalValue)
+        let communalFieldInstanceId = id
+        Assert.Equal(communalFieldInstanceId, instance.Id)
+        Assert.Equal(id, instance.CommunalFieldId)
+        Assert.Equal("Back", instance.FieldName)
+        Assert.Equal(communalValue, instance.Value)
+        Assert.Null instance.Modified
+        Assert.Equal(editSummary, instance.EditSummary)
+        Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
+        Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId) }
+    do! test "a" 1 <| Guid.NewGuid().ToString()
+    do! test "b" 2 <| Guid.NewGuid().ToString() }
 
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` () =
@@ -283,13 +286,13 @@ let ``EditCardCommand's back works with cloze`` () =
         {   EditSummary = ""
             FieldValues =
                 CardTemplateInstance.initialize.Fields.Select(fun f -> {
-                    Field = f
+                    EditField = f
                     Value =
                         if f.Name = "Front" then
                             text
                         else
                             f.Name
-                    CommunalCardInstanceIds = [].ToList()
+                        |> Value
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with
@@ -318,13 +321,13 @@ let ``EditCardCommand's back works with cloze`` () =
         {   EditSummary = ""
             FieldValues =
                 CardTemplateInstance.initialize.Fields.Select(fun f -> {
-                    Field = f
+                    EditField = f
                     Value =
                         match f.Name with
                         | "Front" -> front
                         | "Back" -> back
                         | _ -> "Source goes here"
-                    CommunalCardInstanceIds = [].ToList()
+                        |> Value
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with

@@ -198,7 +198,7 @@ type ViewEditCardCommand = {
     TemplateInstance: ViewCardTemplateInstance
 } with
     member this.Backs = 
-        let valueByFieldName = this.FieldValues.Select(fun x -> x.Field.Name, x.Value) |> Map.ofSeq
+        let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value.StringValue) |> Map.ofSeq
         if this.TemplateInstance.IsCloze then
             result {
                 let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
@@ -218,7 +218,7 @@ type ViewEditCardCommand = {
             }
         else
             CardHtml.generate
-                <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
+                <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value.StringValue |?? lazy "").ToFList()
                 <| this.TemplateInstance.QuestionTemplate
                 <| this.TemplateInstance.AnswerTemplate
                 <| this.TemplateInstance.Css
@@ -246,8 +246,10 @@ module SanitizeCardRepository =
                     instance.CommunalFieldInstance_CardInstances
                         .Select(fun x ->
                             x.CommunalFieldInstance.FieldName,
-                            ( x.CommunalFieldInstance.Value,
-                              x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId) |> List.ofSeq))
+                            {   Value = x.CommunalFieldInstance.Value
+                                CommunalCardInstanceIds =
+                                    x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).ToList()
+                            } |> CommunalValue )
                     |> Map.ofSeq
                 {   EditSummary = ""
                     FieldValues =
