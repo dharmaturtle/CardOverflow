@@ -198,7 +198,7 @@ type ViewEditCardCommand = {
     TemplateInstance: ViewCardTemplateInstance
 } with
     member this.Backs = 
-        let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value.StringValue) |> Map.ofSeq
+        let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
         if this.TemplateInstance.IsCloze then
             result {
                 let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
@@ -218,7 +218,7 @@ type ViewEditCardCommand = {
             }
         else
             CardHtml.generate
-                <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value.StringValue |?? lazy "").ToFList()
+                <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
                 <| this.TemplateInstance.QuestionTemplate
                 <| this.TemplateInstance.AnswerTemplate
                 <| this.TemplateInstance.Css
@@ -245,11 +245,12 @@ module SanitizeCardRepository =
                 let communalCardInstanceIdsAndValueByField =
                     instance.CommunalFieldInstance_CardInstances
                         .Select(fun x ->
+                            let ids = x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).ToList()
                             x.CommunalFieldInstance.FieldName,
-                            {   Value = x.CommunalFieldInstance.Value
-                                CommunalCardInstanceIds =
-                                    x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).ToList()
-                            } |> CommunalValue )
+                            (   x.CommunalFieldInstance.Value,
+                                if ids.Any() then
+                                     { CommunalCardInstanceIds = ids } |> Some
+                                else None))
                     |> Map.ofSeq
                 {   EditSummary = ""
                     FieldValues =

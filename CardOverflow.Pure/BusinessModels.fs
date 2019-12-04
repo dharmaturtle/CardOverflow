@@ -229,33 +229,24 @@ type PagedList<'T> = {
 }
 
 type CommunalFieldValue = {
-    Value: string
     CommunalCardInstanceIds: int ResizeArray
 }
-
-type FieldValue =
-    | Value of string
-    | CommunalValue of CommunalFieldValue
-with
-    member this.StringValue =
-        match this with
-        | Value x -> x
-        | CommunalValue x -> x.Value
-    member this.IsCommunal =
-        match this with
-        | CommunalValue _ -> true
-        | _ -> false
-    member this.CommunalCardInstanceIds =
-        match this with
-        | Value _ -> [].ToList()
-        | CommunalValue x -> x.CommunalCardInstanceIds
 
 [<CLIMutable>]
 type EditFieldAndValue = {
     EditField: Field
     [<StringLength(10000)>]
-    Value: FieldValue
-}
+    Value: string
+    Communal: CommunalFieldValue Option
+} with
+    member this.IsCommunal =
+        match this.Communal with
+        | Some _ -> true
+        | _ -> false
+    member this.CommunalCardInstanceIds =
+        match this.Communal with
+        | Some x -> x.CommunalCardInstanceIds
+        | None -> [].ToList()
 
 type CardInstanceView = {
     FieldValues: FieldAndValue ResizeArray
@@ -365,6 +356,6 @@ type EditCardCommand = {
         FieldValues =
             this.FieldValues.Select(fun x ->
                 {   Field = x.EditField
-                    Value =  x.Value.StringValue
+                    Value =  x.Value
                 }).ToList()
         TemplateInstance = this.TemplateInstance }

@@ -36,7 +36,8 @@ let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
                 |> Seq.sortBy (fun x -> x.Ordinal)
                 |> Seq.mapi (fun i field -> {
                     EditField = field
-                    Value = Value fieldValues.[i]
+                    Value = fieldValues.[i]
+                    Communal = None
                 }) |> toResizeArray
             EditSummary = "Initial creation"
         } |> CardRepository.UpdateFieldsToNewInstance db ac
@@ -208,7 +209,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
         old with
             FieldValues =
                 old.FieldValues.Select(fun x ->
-                    { x with Value = Value newValue }
+                    { x with Value = newValue }
                 ).ToList()
     }
     

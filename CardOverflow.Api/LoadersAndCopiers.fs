@@ -117,11 +117,13 @@ type EditFieldAndValue with
     static member load (fields: Field list) fieldValues valuesByFieldName =
         FieldAndValue.load fields fieldValues
         |> Seq.map (fun { Field = field; Value = value } ->
+            let value, communalValue =
+                valuesByFieldName
+                |> Map.tryFind field.Name
+                |> Option.defaultValue (value, None)
             {   EditField = field
-                Value =
-                    valuesByFieldName
-                    |> Map.tryFind field.Name
-                    |> Option.defaultValue (Value value) }
+                Communal = communalValue
+                Value = value }
         ) |> toResizeArray
 
 type IdOrEntity<'a> =

@@ -162,35 +162,35 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
 
     let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
-    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.Value.IsCommunal))
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.Value.IsCommunal) |> List.ofSeq
+    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.IsCommunal) |> List.ofSeq
     let updatedCommunalField = communalFields.[0]
-    Assert.Contains("microtubules", updatedCommunalField.Value.StringValue)
-    let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value.StringValue |> Value}
+    Assert.Contains("microtubules", updatedCommunalField.Value)
+    let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField.Value.StringValue; ""]
+        do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
     let! editCommand = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
     let editCommand = editCommand |> Result.getOk
-    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.Value.IsCommunal))
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.Value.IsCommunal) |> List.ofSeq
+    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
+    let communalFields = editCommand.FieldValues.Where(fun x -> x.IsCommunal) |> List.ofSeq
     let updatedCommunalField0 = communalFields.[0]
     let updatedCommunalField1 = communalFields.[1]
-    Assert.Contains("microtubules", updatedCommunalField0.Value.StringValue)
-    Assert.Equal("<b><br /></b>", updatedCommunalField1.Value.StringValue)
-    let updatedCommunalField0 = { updatedCommunalField0 with Value = Guid.NewGuid().ToString() + updatedCommunalField0.Value.StringValue |> Value }
-    let updatedCommunalField1 = { updatedCommunalField1 with Value = Guid.NewGuid().ToString() + updatedCommunalField1.Value.StringValue |> Value }
+    Assert.Contains("microtubules", updatedCommunalField0.Value)
+    Assert.Equal("<b><br /></b>", updatedCommunalField1.Value)
+    let updatedCommunalField0 = { updatedCommunalField0 with Value = Guid.NewGuid().ToString() + updatedCommunalField0.Value }
+    let updatedCommunalField1 = { updatedCommunalField1 with Value = Guid.NewGuid().ToString() + updatedCommunalField1.Value }
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
     Result.getOk x
     for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField0.Value.StringValue; updatedCommunalField1.Value.StringValue] }
+        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 
 [<Fact>]
 let ``Create cloze card works`` (): Task<unit> = task {
@@ -211,7 +211,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
                             clozeText
                         else
                             clozeExtra
-                        |> Value
+                    Communal = None
                 }).ToList()
             TemplateInstance = clozeTemplate }
         let! card = CardRepository.getNew c.Db userId
@@ -245,21 +245,22 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         let! acquired = CardRepository.getNew c.Db userId
         do! SanitizeCardRepository.Update
                 c.Db
-            userId
-            acquired
-            {   EditSummary = editSummary
-                FieldValues =
-                    template
-                        .Fields
-                        .Select(fun f ->
-                            {   EditField = ViewField.copyTo f
-                                Value =
+                userId
+                acquired
+                {   EditSummary = editSummary
+                    FieldValues =
+                        template
+                            .Fields
+                            .Select(fun f ->
+                                let value, communal =
                                     if f.Name = "Front" then
-                                        Value "Front"
+                                        "Front", None
                                     else
-                                            {   Value = communalValue
-                                                CommunalCardInstanceIds = [0].ToList()
-                                            } |> CommunalValue })
+                                        communalValue, Some { CommunalCardInstanceIds = [0].ToList() }
+                                {   EditField = ViewField.copyTo f
+                                    Value = value
+                                    Communal = communal
+                                })
                             .ToList()
                     TemplateInstance = template }
             |> TaskX.map Result.getOk
@@ -292,7 +293,7 @@ let ``EditCardCommand's back works with cloze`` () =
                             text
                         else
                             f.Name
-                        |> Value
+                    Communal = None
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with
@@ -327,7 +328,7 @@ let ``EditCardCommand's back works with cloze`` () =
                         | "Front" -> front
                         | "Back" -> back
                         | _ -> "Source goes here"
-                        |> Value
+                    Communal = None
                 }).ToList()
             TemplateInstance =
                 { CardTemplateInstance.initialize with
