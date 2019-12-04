@@ -21,33 +21,7 @@
         <div class="row">
           <div class="col-sm">
             @foreach (var field in EditCard.FieldValues) {
-              <div class="d-flex justify-content-between">
-                <label><b>@field.EditField.Name: </b></label>
-                <div class="form-check">
-                  <label class="form-check-label">
-                    <input type="checkbox" class="form-check-input" @onclick=@(() => ToggleCommunal(field))/>
-                    Communal
-                  </label>
-                </div>
-                @if (field.IsCommunal) {
-                  <div>
-                    <span>Shared with:</span>
-                    @foreach (var instanceId in field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id)) {
-                      <span class="curate-tooltip-target">
-                        <span class="oi oi-eye" aria-hidden="true"></span>
-                        <div class="curate-tooltip-content">
-                          <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front")></ResizingIframe>
-                        </div>
-                      </span>
-                    }
-                  </div>
-                }
-              </div>
-              <EjsRichTextEditor @bind-Value=@field.Value>
-                @* highTODO why doesn't iFrame work? *@
-                <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
-              </EjsRichTextEditor>
-              <ValidationMessage For=@(() => field.Value) />
+              <EditCardField Field=@field Card=@Card />
             }
           </div>
           <div class="col-sm">
@@ -100,7 +74,6 @@
 }
 
 @code {
-  private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   [Parameter]
   public AcquiredCard Card { get; set; }
   [Parameter]
@@ -154,10 +127,6 @@
               (EditCard.FieldValues.SingleOrDefault(x => x.EditField.Name == field.Name)?.CommunalCardInstanceIds ?? new List<int>())
               .Apply(x => new CommunalFieldValue(x)))
       )).ToList();
-  }
-
-  void ToggleCommunal(EditFieldAndValue pair) {
-    pair.Communal = pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(x)); // highTODO new ones append 0, which needs to be handled
   }
 
 }
