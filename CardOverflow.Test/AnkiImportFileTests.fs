@@ -220,7 +220,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
             let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
-            do! testCommunalFields cardId [clozeText; clozeExtra]
+            do! testCommunalFields cardId [clozeText]
         otherTest clozeText }
     do! test 1 "Canberra was founded in {{c1::1913}}." "extra"
         <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))

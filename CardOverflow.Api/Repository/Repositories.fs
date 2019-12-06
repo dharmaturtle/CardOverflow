@@ -313,13 +313,19 @@ module CardRepository =
                         let e = acquiredCard.copyToNew tags
                         e.CardInstance <-
                             if c.TemplateInstance.isCloze then
-                                c.TemplateInstance.Fields.Select(fun f ->
-                                CommunalFieldInstanceEntity(
-                                    CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                                    FieldName = f.Name,
-                                    Value = c.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
-                                    Created = DateTime.UtcNow,
-                                    EditSummary = c.EditSummary)) |> List.ofSeq
+                                let clozeFields =
+                                    AnkiImportLogic.ClozeTemplateRegex()
+                                        .TypedMatches(c.TemplateInstance.QuestionTemplate)
+                                        .Select(fun x -> x.fieldName.Value)
+                                c.TemplateInstance.Fields
+                                    .Where(fun f -> clozeFields.Contains f.Name)
+                                    .Select(fun f ->
+                                        CommunalFieldInstanceEntity(
+                                            CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                                            FieldName = f.Name,
+                                            Value = c.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
+                                            Created = DateTime.UtcNow,
+                                            EditSummary = c.EditSummary)) |> List.ofSeq
                             else
                                 c.FieldValues.Select(fun edit ->
                                     let fieldName = edit.EditField.Name
