@@ -120,12 +120,13 @@
         (valuesByField.ContainsKey(field.Name)
           ? valuesByField[field.Name] ?? ""
           : "")
-          .Apply(value =>
-            new EditFieldAndValue(
+          .Apply(value => {
+            var ids = (EditCard.FieldValues.SingleOrDefault(x => x.EditField.Name == field.Name)?.CommunalCardInstanceIds ?? new List<int>());
+            return new EditFieldAndValue(
               field,
               value ?? "",
-              (EditCard.FieldValues.SingleOrDefault(x => x.EditField.Name == field.Name)?.CommunalCardInstanceIds ?? new List<int>())
-              .Apply(x => new CommunalFieldValue(x)))
+              ids.Any() ? new CommunalFieldValue(ids) : FSharpOption<CommunalFieldValue>.None);
+          }
       )).ToList();
   }
 

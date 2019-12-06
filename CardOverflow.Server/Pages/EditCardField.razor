@@ -19,20 +19,20 @@
       Communal
     </label>
   </div>
-  @if (Field.IsCommunal) {
-    <div>
-      <span>Shared with:</span>
-      @foreach (var instanceId in Field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id)) {
-        <span class="curate-tooltip-target">
-          <span class="oi oi-eye" aria-hidden="true"></span>
-          <div class="curate-tooltip-content">
-            <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front")></ResizingIframe>
-          </div>
-        </span>
-      }
-    </div>
-  }
 </div>
+@if (Field.IsCommunal) {
+  <div>
+    <span>Shared with:</span>
+    @foreach (var instanceId in Field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id)) {
+      <span class="curate-tooltip-target">
+        <span class="oi oi-eye" aria-hidden="true"></span>
+        <div class="curate-tooltip-content">
+          <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front")></ResizingIframe>
+        </div>
+      </span>
+    }
+  </div>
+}
 <EjsRichTextEditor @bind-Value=@Field.Value>
   @* highTODO why doesn't iFrame work? *@
   <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
@@ -46,8 +46,10 @@
   public AcquiredCard Card { get; set; }
   private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
 
-  void ToggleCommunal(EditFieldAndValue pair) {
-    pair.Communal = pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(x)); // highTODO new ones append 0, which needs to be handled
-  }
+  void ToggleCommunal(EditFieldAndValue pair) =>
+    pair.Communal =
+      pair.IsCommunal
+      ? FSharpOption<CommunalFieldValue>.None
+      : pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(x)); // highTODO new ones append 0, which needs to be handled
 
 }
