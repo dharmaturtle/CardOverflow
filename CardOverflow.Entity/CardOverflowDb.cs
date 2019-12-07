@@ -97,7 +97,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CardId);
+                entity.HasIndex(e => e.CardId)
+                    .IsUnique()
+                    .HasFilter("([IsLatest]=(1))");
 
                 entity.HasIndex(e => e.CardTemplateInstanceId);
 
@@ -198,7 +200,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CommunalFieldInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CommunalFieldId);
+                entity.HasIndex(e => e.CommunalFieldId)
+                    .IsUnique()
+                    .HasFilter("([IsLatest]=(1))");
 
                 entity.HasOne(d => d.CommunalField)
                     .WithMany(p => p.CommunalFieldInstances)

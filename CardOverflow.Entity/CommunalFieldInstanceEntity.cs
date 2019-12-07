@@ -38,6 +38,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
+        public bool IsLatest { get; set; }
 
         [ForeignKey("CommunalFieldId")]
         [InverseProperty("CommunalFieldInstances")]

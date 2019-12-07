@@ -261,6 +261,7 @@ CREATE TABLE [dbo].[CardInstance](
 	[EditSummary] [nvarchar](200) NOT NULL,
 	[AnkiNoteId] [bigint] NULL,
 	[AnkiNoteOrd] [tinyint] NULL,
+	[IsLatest] [bit] NOT NULL,
  CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -408,6 +409,7 @@ CREATE TABLE [dbo].[CommunalFieldInstance](
 	[Created] [datetime2](7) NOT NULL,
 	[Modified] [datetime2](7) NULL,
 	[EditSummary] [nvarchar](200) NOT NULL,
+	[IsLatest] [bit] NOT NULL,
  CONSTRAINT [PK_CommunalFieldInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -885,10 +887,12 @@ CREATE NONCLUSTERED INDEX [IX_Card_AuthorId] ON [dbo].[Card]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CardInstance_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_CardInstance_CardId] ON [dbo].[CardInstance]
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CardInstance_CardId] ON [dbo].[CardInstance]
 (
 	[CardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)
+WHERE ([IsLatest]=(1))
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CardInstance_CardTemplateInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_CardInstance_CardTemplateInstanceId] ON [dbo].[CardInstance]
@@ -949,10 +953,12 @@ CREATE NONCLUSTERED INDEX [IX_CommunalField_AuthorId] ON [dbo].[CommunalField]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CommunalFieldInstance_CommunalFieldId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CommunalFieldId] ON [dbo].[CommunalFieldInstance]
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CommunalFieldId] ON [dbo].[CommunalFieldInstance]
 (
 	[CommunalFieldId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+)
+WHERE ([IsLatest]=(1))
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ON [dbo].[CommunalFieldInstance_CardInstance]
