@@ -59,7 +59,7 @@ let deleteAndRecreateDb dbName baseConnectionString =
         END
         GO
         """
-        File.ReadAllText @"..\netcoreapp3.0\Stuff\InitializeDatabase.sql"
+        File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql"
         // https://stackoverflow.com/questions/25845836/could-not-obtain-information-about-windows-nt-group-user
         """
         USE [CardOverflow]
