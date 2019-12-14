@@ -495,7 +495,8 @@ module Anki =
                             EditSummary = "Imported from Anki",
                             CommunalField = CommunalFieldEntity(AuthorId = userId),
                             Created = DateTime.UtcNow,
-                            CommunalFieldInstance_CardInstances = [].ToList()))
+                            CommunalFieldInstance_CardInstances = [].ToList(),
+                            IsLatest = true))
                 let toCard fields cardTemplate noteOrd =
                     let c = {
                         AnkiNoteId = note.Id

@@ -219,6 +219,11 @@ let ``Create cloze card works`` (): Task<unit> = task {
         Result.getOk x
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
+            Assert.True(
+                c.Db.CardInstance
+                    .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                    .Single(fun x -> x.FieldValues.Contains(clozeText)).CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.IsLatest)
             let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
             do! testCommunalFields cardId [clozeText]
         otherTest clozeText }
@@ -277,7 +282,8 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         Assert.Null instance.Modified
         Assert.Equal(editSummary, instance.EditSummary)
         Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
-        Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId) }
+        Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
+        Assert.True(instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.IsLatest) }
     do! test "a" 1 <| Guid.NewGuid().ToString()
     do! test "b" 2 <| Guid.NewGuid().ToString() }
 

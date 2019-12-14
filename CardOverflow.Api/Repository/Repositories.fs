@@ -325,7 +325,8 @@ module CardRepository =
                                             FieldName = f.Name,
                                             Value = c.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
                                             Created = DateTime.UtcNow,
-                                            EditSummary = c.EditSummary)) |> List.ofSeq
+                                            EditSummary = c.EditSummary,
+                                            IsLatest = true)) |> List.ofSeq
                             else
                                 c.FieldValues.Select(fun edit ->
                                     let fieldName = edit.EditField.Name
@@ -338,7 +339,8 @@ module CardRepository =
                                                 FieldName = fieldName,
                                                 Value = c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value,
                                                 Created = DateTime.UtcNow,
-                                                EditSummary = c.EditSummary)
+                                                EditSummary = c.EditSummary,
+                                                IsLatest = true)
                                             |> Some
                                         else
                                             None
@@ -354,12 +356,14 @@ module CardRepository =
                             if old.Value = newValue then
                                 old, []
                             else
+                                old.IsLatest <- false
                                 CommunalFieldInstanceEntity(
                                     CommunalField = old.CommunalField,
                                     FieldName = old.FieldName,
                                     Value = newValue,
                                     Created = DateTime.UtcNow,
-                                    EditSummary = command.EditSummary),
+                                    EditSummary = command.EditSummary,
+                                    IsLatest = true),
                                 old.CommunalFieldInstance_CardInstances
                                     .Select(fun x -> x.CardInstanceId)
                                     .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
