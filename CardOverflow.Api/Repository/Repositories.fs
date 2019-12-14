@@ -17,6 +17,23 @@ open X.PagedList
 open System.Threading.Tasks
 open Microsoft.FSharp.Core
 
+module CommunalFieldRepository =
+    let get (db: CardOverflowDb) fieldId = task {
+        let! x = db.CommunalFieldInstance.SingleAsync(fun x -> x.CommunalFieldId = fieldId && x.IsLatest)
+        return x.Value
+    }
+    let getInstance (db: CardOverflowDb) instanceId = task {
+        let! x = db.CommunalFieldInstance.SingleAsync(fun x -> x.Id = instanceId)
+        return x.Value
+    }
+    let Search (db: CardOverflowDb) (query: string) = task {
+        let! x =
+            db.CommunalFieldInstance
+                .Where(fun x -> x.Value.Contains query && x.IsLatest)
+                .ToListAsync()
+        return x |> Seq.map CommunalFieldInstance.load |> toResizeArray
+        }
+
 module FeedbackRepository =
     let addAndSaveAsync (db: CardOverflowDb) userId title description priority =
         FeedbackEntity(
