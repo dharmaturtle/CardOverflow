@@ -351,13 +351,16 @@ module CardRepository =
                                     | None -> None
                                     | Some value ->
                                         if value.CommunalCardInstanceIds.Contains 0 then
-                                            CommunalFieldInstanceEntity(
-                                                CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                                                FieldName = fieldName,
-                                                Value = c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value,
-                                                Created = DateTime.UtcNow,
-                                                EditSummary = c.EditSummary,
-                                                IsLatest = true)
+                                            match value.InstanceId with
+                                            | Some id -> db.CommunalFieldInstance.Single(fun x -> x.Id = id)
+                                            | None ->
+                                                CommunalFieldInstanceEntity(
+                                                    CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                                                    FieldName = fieldName,
+                                                    Value = c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value,
+                                                    Created = DateTime.UtcNow,
+                                                    EditSummary = c.EditSummary,
+                                                    IsLatest = true)
                                             |> Some
                                         else
                                             None

@@ -229,6 +229,7 @@ type PagedList<'T> = {
 }
 
 type CommunalFieldValue = {
+    InstanceId: int Option
     CommunalCardInstanceIds: int ResizeArray
 }
 

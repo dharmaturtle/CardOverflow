@@ -125,7 +125,7 @@
             return new EditFieldAndValue(
               field,
               value ?? "",
-              ids.Any() ? new CommunalFieldValue(ids) : FSharpOption<CommunalFieldValue>.None);
+              ids.Any() ? new CommunalFieldValue(FSharpOption<int>.None, ids) : FSharpOption<CommunalFieldValue>.None);
           }
       )).ToList();
   }

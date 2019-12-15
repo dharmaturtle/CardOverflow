@@ -27,7 +27,7 @@
       <span class="curate-tooltip-target">
         <span class="oi oi-eye" aria-hidden="true"></span>
         <div class="curate-tooltip-content">
-          <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front")></ResizingIframe>
+          <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front") />
         </div>
       </span>
     }
@@ -50,6 +50,6 @@
     pair.Communal =
       pair.IsCommunal
       ? FSharpOption<CommunalFieldValue>.None
-      : pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(x)); // highTODO new ones append 0, which needs to be handled
+      : pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(FSharpOption<int>.None, x)); // highTODO new ones append 0, which needs to be handled
 
 }

@@ -245,8 +245,11 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let! template =
         SanitizeCardTemplate.Search c.Db "Basic"
         |> TaskX.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
-    
-    let test communalValue id editSummary = task {
+    let editSummary = Guid.NewGuid().ToString()
+    let communalValue = Guid.NewGuid().ToString()
+    let id = 1
+
+    let test instanceId customTest = task {
         let! acquired = CardRepository.getNew c.Db userId
         do! SanitizeCardRepository.Update
                 c.Db
@@ -261,7 +264,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     if f.Name = "Front" then
                                         "Front", None
                                     else
-                                        communalValue, Some { CommunalCardInstanceIds = [0].ToList() }
+                                        communalValue, Some { CommunalCardInstanceIds = [0].ToList(); InstanceId = instanceId }
                                 {   EditField = ViewField.copyTo f
                                     Value = value
                                     Communal = communal
@@ -270,22 +273,27 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                     TemplateInstance = template }
             |> TaskX.map Result.getOk
     
-        let! field = c.Db.CommunalField.SingleAsync(fun x -> x.Id = id)
+        let! field = c.Db.CommunalField.SingleAsync()
         Assert.Equal(id, field.Id)
         Assert.Equal(3, field.AuthorId)
         let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_CardInstances).SingleAsync(fun x -> x.Value = communalValue)
-        let communalFieldInstanceId = id
-        Assert.Equal(communalFieldInstanceId, instance.Id)
+        Assert.Equal(id, instance.Id)
         Assert.Equal(id, instance.CommunalFieldId)
         Assert.Equal("Back", instance.FieldName)
         Assert.Equal(communalValue, instance.Value)
         Assert.Null instance.Modified
         Assert.Equal(editSummary, instance.EditSummary)
-        Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
-        Assert.Equal(id, instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
-        Assert.True(instance.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.IsLatest) }
-    do! test "a" 1 <| Guid.NewGuid().ToString()
-    do! test "b" 2 <| Guid.NewGuid().ToString() }
+        customTest instance }
+    do! test <| None <| fun i ->
+            Assert.Equal(1,  i.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
+            Assert.Equal(id, i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
+            Assert.True(i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.IsLatest)
+    do! test <| Some id <| fun i ->
+            Assert.Equal([1;  2],  i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId))
+            Assert.Equal([id; id], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstanceId))
+            Assert.True(i.CommunalFieldInstance_CardInstances.Skip(1).Single().CommunalFieldInstance.IsLatest)
+    Assert.SingleI c.Db.CommunalField
+    Assert.SingleI c.Db.CommunalFieldInstance }
 
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` () =

@@ -249,7 +249,9 @@ module SanitizeCardRepository =
                             x.CommunalFieldInstance.FieldName,
                             (   x.CommunalFieldInstance.Value,
                                 if ids.Any() then
-                                     { CommunalCardInstanceIds = ids } |> Some
+                                    {   CommunalCardInstanceIds = ids
+                                        InstanceId = None
+                                    } |> Some
                                 else None))
                     |> Map.ofSeq
                 {   EditSummary = ""
