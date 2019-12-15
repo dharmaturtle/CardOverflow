@@ -10,12 +10,13 @@
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
+@inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between">
   <label><b>@Field.EditField.Name: </b></label>
   <div class="form-check">
     <label class="form-check-label">
-      <input type="checkbox" class="form-check-input" @onclick=@(() => ToggleCommunal(Field))/>
+      <input type="checkbox" class="form-check-input" @onclick=@ToggleCommunal />
       Communal
     </label>
   </div>
@@ -32,24 +33,90 @@
       </span>
     }
   </div>
+  <div class="d-flex justify-content-between">
+    <button type="button" class="btn btn-primary" @onclick="@newClicked">
+      New
+    </button>
+    <EditForm OnValidSubmit=@(() => Search(_searchCommand)) Model=@_searchCommand class="form-inline input-group">
+      <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-Value=@_searchCommand.Query />
+      <button class="btn btn-primary" type="submit">
+        <span class="oi oi-magnifying-glass"></span>
+      </button>
+      <DataAnnotationsValidator />
+      <ValidationSummary />
+    </EditForm>
+  </div>
+  @if (_isNew) {
+    <EjsRichTextEditor @bind-Value=@Field.Value>
+      @* highTODO why doesn't iFrame work? *@
+      <RichTextEditorToolbarSettings Items=@_tools />
+      <RichTextEditorEvents ValueChange=@valueChanged />
+    </EjsRichTextEditor>
+    <ValidationMessage For=@(() => Field.Value) />
+  } else {
+    @foreach (var communalFieldInstance in _searchResults) {
+      <div>
+        <button type="button" class="btn btn-outline-success" @onclick=@(() => SearchResultClicked(communalFieldInstance)) style="position: absolute; right: 15px;">
+          ✔
+        </button>
+        <ResizingIframe SrcUrl=@("/communalfieldinstance/" + communalFieldInstance.Id) />
+      </div>
+    }
+    @if (_selectedSearchResult != null) {
+      <iframe srcdoc=@Field.Value style="width: 100%" />
+    }
+  }
+} else {
+  <EjsRichTextEditor @bind-Value=@Field.Value>
+    @* highTODO why doesn't iFrame work? *@
+    <RichTextEditorToolbarSettings Items=@_tools />
+    <RichTextEditorEvents ValueChange=@valueChanged />
+  </EjsRichTextEditor>
+  <ValidationMessage For=@(() => Field.Value) />
 }
-<EjsRichTextEditor @bind-Value=@Field.Value>
-  @* highTODO why doesn't iFrame work? *@
-  <RichTextEditorToolbarSettings Items=@Tools></RichTextEditorToolbarSettings>
-</EjsRichTextEditor>
-<ValidationMessage For=@(() => Field.Value) />
 
 @code {
   [Parameter]
   public EditFieldAndValue Field { get; set; }
   [Parameter]
   public AcquiredCard Card { get; set; }
-  private object[] Tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
+  [Parameter]
+  public EventCallback<string> ValueUpdated { get; set; }
+  private object[] _tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
+  private List<CommunalFieldInstance> _searchResults = new List<CommunalFieldInstance>();
+  private CommunalFieldInstance _selectedSearchResult;
+  private SearchCommand _searchCommand = new SearchCommand("");
+  private bool _isNew = true;
 
-  void ToggleCommunal(EditFieldAndValue pair) =>
-    pair.Communal =
-      pair.IsCommunal
+  private void ToggleCommunal() =>
+    Field.Communal =
+      Field.IsCommunal
       ? FSharpOption<CommunalFieldValue>.None
-      : pair.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(FSharpOption<int>.None, x)); // highTODO new ones append 0, which needs to be handled
+      : getFieldCommunal(FSharpOption<int>.None);
+
+  private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> id) =>
+    Field.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(id, x)); // highTODO new ones append 0, which needs to be handled
+
+  private async Task Search(SearchCommand searchCommand) {
+    _searchResults = await DbExecutor.QueryAsync(db => CommunalFieldRepository.Search(db, searchCommand.Query));
+    _isNew = false;
+    _selectedSearchResult = null;
+  }
+
+  private void newClicked() {
+    _isNew = true;
+    Field.Communal = getFieldCommunal(FSharpOption<int>.None);
+  }
+
+  private Task valueChanged(Syncfusion.EJ2.Blazor.RichTextEditor.ChangeEventArgs args) =>
+    ValueUpdated.InvokeAsync(args.Value);
+
+  private async Task SearchResultClicked(CommunalFieldInstance instance) {
+    Field.Value = instance.Value;
+    await ValueUpdated.InvokeAsync(instance.Value);
+    Field.Communal = getFieldCommunal(instance.Id);
+    _selectedSearchResult = instance;
+    _searchResults = new List<CommunalFieldInstance>();
+  }
 
 }

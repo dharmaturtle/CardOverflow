@@ -21,7 +21,7 @@
         <div class="row">
           <div class="col-sm">
             @foreach (var field in EditCard.FieldValues) {
-              <EditCardField Field=@field Card=@Card />
+              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) />
             }
           </div>
           <div class="col-sm">
