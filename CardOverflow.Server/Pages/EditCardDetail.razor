@@ -15,7 +15,7 @@
 @if (Templates == null) {
   <p><em>Loading...</em></p>
 } else {
-  <EditForm Model=@EditCard OnValidSubmit=@UpdateCard>
+  <EditForm Model=@EditCard OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
     <fieldset disabled=@IsSaved>
       <div class="form-group">
         <div class="row">
@@ -61,7 +61,7 @@
         <div class="row">
           <span class="btn-group">
             <InputText @bind-Value=@EditCard.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-primary">Save</button>
           </span>
         </div>
         <div class="row">
@@ -129,5 +129,10 @@
           }
       )).ToList();
   }
+
+  Task OnKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs eventArgs) =>
+    eventArgs.CtrlKey && eventArgs.Key == "Enter"
+      ? UpdateCard()
+      : Task.CompletedTask;
 
 }

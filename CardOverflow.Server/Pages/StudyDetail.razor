@@ -20,7 +20,7 @@
   <h1 class="text-center">No cards due!</h1>
   <h1 class="text-center">👍</h1>
 } else {
-  <div class="study-content" tabindex="0" @onkeydown=@OnKeyDown @onclick=@FocusButton>
+  <div class="study-content" tabindex="0" style="outline: none;" @onkeydown=@OnKeyDown @onclick=@FocusButton>
     <iframe sandbox="allow-scripts" class="study-iframe" srcdoc=@iframeSrcdoc></iframe>
     <div class="study-footer d-flex justify-content-between">
       <div>
