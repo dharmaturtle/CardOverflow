@@ -14,12 +14,9 @@
 
 <div class="d-flex justify-content-between">
   <label><b>@Field.EditField.Name: </b></label>
-  <div class="form-check">
-    <label class="form-check-label">
-      <input type="checkbox" class="form-check-input" @onclick=@ToggleCommunal />
-      Communal
-    </label>
-  </div>
+  <button class=@(Field.IsCommunal ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-primary" ) @onclick=@ToggleCommunal type="button">
+    Communal
+  </button>
 </div>
 @if (Field.IsCommunal) {
   <div>
