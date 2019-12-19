@@ -44,7 +44,7 @@
     </EditForm>
   </div>
   @if (_isNew) {
-    <EjsRichTextEditor @bind-Value=@Field.Value>
+    <EjsRichTextEditor @bind-Value=@Field.Value SaveInterval="10">
       @* highTODO why doesn't iFrame work? *@
       <RichTextEditorToolbarSettings Items=@_tools />
       <RichTextEditorEvents ValueChange=@valueChanged />
@@ -64,7 +64,7 @@
     }
   }
 } else {
-  <EjsRichTextEditor @bind-Value=@Field.Value>
+  <EjsRichTextEditor @bind-Value=@Field.Value SaveInterval="10">
     @* highTODO why doesn't iFrame work? *@
     <RichTextEditorToolbarSettings Items=@_tools />
     <RichTextEditorEvents ValueChange=@valueChanged />
