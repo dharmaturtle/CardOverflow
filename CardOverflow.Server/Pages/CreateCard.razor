@@ -12,10 +12,10 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-@if (Card == null || Templates == null || EditCard == null) {
+@if (Card == null || Templates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@Card EditCard=@EditCard Templates=@Templates />
+  <EditCardDetail Card=@Card Templates=@Templates />
 }
 
 @code {
@@ -23,13 +23,11 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
-  ViewEditCardCommand EditCard;
   IEnumerable<ViewCardTemplateWithAllInstances> Templates;
 
   protected override async Task OnInitializedAsync() {
     Card = await CardRepository.getNew(Service, User?.Id ?? 0);
     Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
-    EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
   }
 
 }

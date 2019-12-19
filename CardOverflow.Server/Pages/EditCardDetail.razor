@@ -16,7 +16,7 @@
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@EditCard OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
-    <fieldset disabled=@IsSaved>
+    <fieldset>
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
@@ -61,7 +61,7 @@
         <div class="row">
           <span class="btn-group">
             <InputText @bind-Value=@EditCard.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
-            <button type="button" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-primary" @onclick=@UpdateCard>Save</button>
           </span>
         </div>
         <div class="row">
@@ -80,16 +80,20 @@
   public ViewEditCardCommand EditCard { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
-  bool IsSaved;
   [Parameter]
   public IEnumerable<ViewCardTemplateWithAllInstances> Templates { get; set; }
-  IEnumerable<ViewCardTemplateInstance> SelectedTemplateInstances;
-  int SelectedTemplateId;
-  int SelectedTemplateInstanceId;
+  private IEnumerable<ViewCardTemplateInstance> SelectedTemplateInstances;
+  private int SelectedTemplateId;
+  private int SelectedTemplateInstanceId;
+  private bool NewEditCardOnSave;
 
   protected override async Task OnInitializedAsync() {
     if (Templates == null) {
       Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
+    }
+    if (EditCard == null) {
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
+      NewEditCardOnSave = true;
     }
     UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
   }
@@ -98,7 +102,10 @@
     var result = await SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
-      IsSaved = true;
+      if (NewEditCardOnSave) {
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, new List<EditFieldAndValue>(), EditCard.TemplateInstance);
+        UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
+      }
     } else {
       ToastService.ShowError(result.ErrorValue);
     }
