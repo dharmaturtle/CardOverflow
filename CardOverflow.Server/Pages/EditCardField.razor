@@ -45,7 +45,7 @@
   </div>
   @if (_isNew) {
     <EjsRichTextEditor @bind-Value=@Field.Value SaveInterval="10">
-      @* highTODO why doesn't iFrame work? *@
+      <RichTextEditorIFrameSettings Enable="true"/>
       <RichTextEditorToolbarSettings Items=@_tools />
       <RichTextEditorEvents ValueChange=@valueChanged />
     </EjsRichTextEditor>
@@ -65,7 +65,7 @@
   }
 } else {
   <EjsRichTextEditor @bind-Value=@Field.Value SaveInterval="10">
-    @* highTODO why doesn't iFrame work? *@
+    <RichTextEditorIFrameSettings Enable="true" />
     <RichTextEditorToolbarSettings Items=@_tools />
     <RichTextEditorEvents ValueChange=@valueChanged />
   </EjsRichTextEditor>
@@ -92,7 +92,7 @@
       : getFieldCommunal(FSharpOption<int>.None);
 
   private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> id) =>
-    Field.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(id, x)); // highTODO new ones append 0, which needs to be handled
+    Field.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(id, x));
 
   private async Task Search(SearchCommand searchCommand) {
     _searchResults = await DbExecutor.QueryAsync(db => CommunalFieldRepository.Search(db, searchCommand.Query));
