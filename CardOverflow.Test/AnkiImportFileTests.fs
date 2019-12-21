@@ -219,6 +219,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
         Result.getOk x
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
+            c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).IsLatest |> Assert.True
             Assert.True(
                 c.Db.CardInstance
                     .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)

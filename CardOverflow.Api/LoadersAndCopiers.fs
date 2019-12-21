@@ -253,6 +253,7 @@ type CardInstanceView with
         | Id id -> e.CardId <- id
         | Entity entity -> e.Card <- entity ()
         e.EditSummary <- editSummary
+        e.IsLatest <- true
         e
 
 type CommunalFieldInstance with

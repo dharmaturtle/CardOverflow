@@ -87,6 +87,7 @@ module CardTemplateRepository =
             .Include(fun x -> x.CardInstance)
             .Where(fun x -> x.CardInstance.CardTemplateInstanceId = instance.Id)
             |> Seq.iter(fun ac ->
+                ac.CardInstance.IsLatest <- false
                 db.Entry(ac.CardInstance).State <- EntityState.Added
                 ac.CardInstance.Id <- ac.CardInstance.GetHashCode()
                 db.Entry(ac.CardInstance).Property(Core.nameof <@ any<CardInstanceEntity>.Id @>).IsTemporary <- true
@@ -394,8 +395,11 @@ module CardRepository =
                             .Include(fun x -> x.CardInstance)
                             .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
                         |> function
-                        | null -> () // null when its an instance that isn't acquired, veryLowTODO filter out the unacquired instances
-                        | ac -> ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
+                        | null -> () // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
+                        | ac ->
+                            ac.CardInstance.IsLatest <- false
+                            ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
+                    e.CardInstance.IsLatest <- false
                     e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
                     Ok ()
             do! db.SaveChangesAsyncI()
