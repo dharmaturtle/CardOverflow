@@ -1,5 +1,6 @@
 namespace CardOverflow.Sanitation
 
+open System
 open CardOverflow.Pure.Extensions
 open System.Threading.Tasks
 open CardOverflow.Pure.Core
@@ -313,3 +314,101 @@ type Feedback = {
 module SanitizeFeedback =
     let addAndSaveAsync (db: CardOverflowDb) userId feedback =
         FeedbackRepository.addAndSaveAsync db userId feedback.Title feedback.Description (feedback.Priority |> byte |> Nullable)
+
+module Minutes =
+    let private intString (f: float) = f |> Convert.ToInt32 |> string
+    let toString (timespan: TimeSpan) =
+        intString timespan.TotalMinutes
+    let fromString raw =
+        raw |> int |> float |> TimeSpan.FromMinutes
+    let toStringList (timespans: TimeSpan list) =
+        timespans |> List.map toString |> fun x -> String.Join(' ', x)
+    let fromStringList (raw: string) =
+        raw.Split ' ' |> Seq.map fromString |> List.ofSeq
+
+module Convert =
+    let toPercent (x: float) =
+        x * 100. |> Math.Round |> int
+    let fromPercent (x: int) =
+        (float  x) / 100.
+
+[<CLIMutable>]
+type ViewCardOption = {
+    Id: int
+    Name: string
+    IsDefault: bool
+    [<RegularExpression(@"[\d ]+", ErrorMessage = "Steps must be digits separated by spaces")>]
+    NewCardsSteps: string
+    NewCardsMaxPerDay: int
+    NewCardsGraduatingInterval: int
+    NewCardsEasyInterval: int
+    NewCardsStartingEaseFactor: int
+    NewCardsBuryRelated: bool
+    MatureCardsMaxPerDay: int
+    MatureCardsEaseFactorEasyBonusFactor: int
+    MatureCardsIntervalFactor: int
+    MatureCardsMaximumInterval: int
+    MatureCardsHardInterval: int
+    MatureCardsBuryRelated: bool
+    [<RegularExpression(@"[\d ]+", ErrorMessage = "Steps must be digits separated by spaces")>]
+    LapsedCardsSteps: string
+    LapsedCardsNewIntervalFactor: int
+    LapsedCardsMinimumInterval: int
+    LapsedCardsLeechThreshold: int
+    ShowAnswerTimer: bool
+    AutomaticallyPlayAudio: bool
+    ReplayQuestionAudioOnAnswer: bool
+} with
+    static member load (bznz: CardOption) = {
+        Id = bznz.Id
+        Name = bznz.Name
+        IsDefault = bznz.IsDefault
+        NewCardsSteps = bznz.NewCardsSteps |> Minutes.toStringList
+        NewCardsMaxPerDay = bznz.NewCardsMaxPerDay |> int
+        NewCardsGraduatingInterval = bznz.NewCardsGraduatingInterval.TotalDays |> Convert.ToInt32
+        NewCardsEasyInterval = bznz.NewCardsEasyInterval.TotalDays |> Convert.ToInt32
+        NewCardsStartingEaseFactor = bznz.NewCardsStartingEaseFactor |> Convert.toPercent
+        NewCardsBuryRelated = bznz.NewCardsBuryRelated
+        MatureCardsMaxPerDay = bznz.MatureCardsMaxPerDay |> int
+        MatureCardsEaseFactorEasyBonusFactor = bznz.MatureCardsEaseFactorEasyBonusFactor |> Convert.toPercent
+        MatureCardsIntervalFactor = bznz.MatureCardsIntervalFactor |> Convert.toPercent
+        MatureCardsMaximumInterval = (TimeSpanInt16.value bznz.MatureCardsMaximumInterval).TotalDays |> Math.Round |> int
+        MatureCardsHardInterval = bznz.MatureCardsHardInterval |> Convert.toPercent
+        MatureCardsBuryRelated = bznz.MatureCardsBuryRelated
+        LapsedCardsSteps = bznz.LapsedCardsSteps |> Minutes.toStringList
+        LapsedCardsNewIntervalFactor = bznz.LapsedCardsNewIntervalFactor |> Convert.toPercent
+        LapsedCardsMinimumInterval = bznz.LapsedCardsMinimumInterval.TotalDays |> Convert.ToInt32
+        LapsedCardsLeechThreshold = bznz.LapsedCardsLeechThreshold |> int
+        ShowAnswerTimer = bznz.ShowAnswerTimer
+        AutomaticallyPlayAudio = bznz.AutomaticallyPlayAudio
+        ReplayQuestionAudioOnAnswer = bznz.ReplayQuestionAudioOnAnswer
+    }
+    member this.copyTo: CardOption = {
+        Id = this.Id
+        Name = this.Name
+        IsDefault = this.IsDefault
+        NewCardsSteps = this.NewCardsSteps |> Minutes.fromStringList
+        NewCardsMaxPerDay = this.NewCardsMaxPerDay |> int16
+        NewCardsGraduatingInterval = this.NewCardsGraduatingInterval |> float |> TimeSpan.FromDays
+        NewCardsEasyInterval = this.NewCardsEasyInterval |> float |> TimeSpan.FromDays
+        NewCardsStartingEaseFactor = this.NewCardsStartingEaseFactor |> Convert.fromPercent
+        NewCardsBuryRelated = this.NewCardsBuryRelated
+        MatureCardsMaxPerDay = this.MatureCardsMaxPerDay |> int16
+        MatureCardsEaseFactorEasyBonusFactor = this.MatureCardsEaseFactorEasyBonusFactor |> Convert.fromPercent
+        MatureCardsIntervalFactor = this.MatureCardsIntervalFactor |> Convert.fromPercent
+        MatureCardsMaximumInterval = this.MatureCardsMaximumInterval |> float |> TimeSpanInt16.fromDays
+        MatureCardsHardInterval = this.MatureCardsHardInterval |> Convert.fromPercent
+        MatureCardsBuryRelated = this.MatureCardsBuryRelated
+        LapsedCardsSteps = this.LapsedCardsSteps |> Minutes.fromStringList
+        LapsedCardsNewIntervalFactor = this.LapsedCardsNewIntervalFactor |> Convert.fromPercent
+        LapsedCardsMinimumInterval = this.LapsedCardsMinimumInterval |> float |> TimeSpan.FromDays
+        LapsedCardsLeechThreshold = this.LapsedCardsLeechThreshold |> byte
+        ShowAnswerTimer = this.ShowAnswerTimer
+        AutomaticallyPlayAudio = this.AutomaticallyPlayAudio
+        ReplayQuestionAudioOnAnswer = this.ReplayQuestionAudioOnAnswer
+    }
+
+module SanitizeCardOption =
+    let getAll (db: CardOverflowDb) userId = task {
+        let! x = CardOptionsRepository.getAll db userId
+        return x |> Seq.map ViewCardOption.load |> toResizeArray }

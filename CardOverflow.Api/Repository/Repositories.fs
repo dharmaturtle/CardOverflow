@@ -454,6 +454,10 @@ module CardOptionsRepository =
     //      ShowAnswerTimer = false
     //      AutomaticallyPlayAudio = false
     //      ReplayQuestionAudioOnAnswer = false }
+    let getAll (db: CardOverflowDb) userId = task {
+            let! r = db.CardOption.Where(fun x -> x.UserId = userId).ToListAsync()
+            return r |> Seq.map CardOption.load
+        }
 
 module UserRepository =
     let add (db: CardOverflowDb) name email =

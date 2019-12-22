@@ -1,0 +1,54 @@
+﻿
+@page "/cardoption"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inherits OwningComponentBase<CardOverflowDb>
+
+@if (User == null) {
+  <span>You need to log in dude.</span>
+} else if (_options == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <div class="row">
+    <div class="col-sm-11">
+      <CardOptionEditorDetail Option=@_selected />
+    </div>
+    <div class="col-sm-1 list-group">
+      <h5>Card Options</h5>
+      @foreach (var option in _options) {
+        <button class="list-group-item list-group-item-action @(_selected.Id == option.Id ? "active" : "")"
+                @onclick=@(() => _Select(option.Id))>
+          @if (option.IsDefault) {
+            <span class="oi oi-star"></span>
+          }
+          @option.Name
+        </button>
+      }
+    </div>
+  </div>
+}
+
+@code {
+  [CascadingParameter]
+  public UserEntity User { get; set; }
+  private List<ViewCardOption> _options;
+  private ViewCardOption _selected;
+
+  protected override async Task OnInitializedAsync() {
+    if (User != null) {
+      _options = await SanitizeCardOption.getAll(Service, User.Id);
+      _selected = _options.Single(x => x.IsDefault);
+    }
+  }
+
+  private void _Select(int optionId) =>
+    _selected = _options.Single(x => x.Id == optionId);
+
+}

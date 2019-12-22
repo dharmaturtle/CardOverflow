@@ -1,0 +1,173 @@
+﻿@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+
+<EditForm Model=@Option OnValidSubmit=@Save>
+  <div class="form-group">
+    
+    <InputText @bind-Value=@Option.Name class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+
+    <div class="form-check">
+      <label class="form-check-label">
+        <InputCheckbox @bind-Value=@Option.IsDefault class="form-check-input" />
+        Is default
+      </label>
+    </div>
+    <div class="form-check">
+      <label class="form-check-label">
+        <InputCheckbox @bind-Value=@Option.ShowAnswerTimer class="form-check-input" />
+        Show answer timer
+      </label>
+    </div>
+    <div class="form-check">
+      <label class="form-check-label">
+        <InputCheckbox @bind-Value=@Option.AutomaticallyPlayAudio class="form-check-input" />
+        Automatically play audio
+      </label>
+    </div>
+    <div class="form-check">
+      <label class="form-check-label">
+        <InputCheckbox @bind-Value=@Option.ReplayQuestionAudioOnAnswer class="form-check-input" />
+        Replay question audio on answer
+      </label>
+    </div>
+
+    <div class="card-deck">
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>New Cards</h3>
+        </div>
+        <div class="card-body">
+          <table class="table-borderless">
+            <tbody>
+              <tr>
+                <th scope="row">Steps <span class="small">(in minutes)</span></th>
+                <td><InputText @bind-Value=@Option.NewCardsSteps class="form-control" /></td>
+              </tr>
+              <tr>
+                <th scope="row">Max Per Day</th>
+                <td><InputNumber @bind-Value=@Option.NewCardsMaxPerDay class="form-control" /></td>
+                <td>cards</td>
+              </tr>
+              <tr>
+                <th scope="row">Graduating Interval</th>
+                <td><InputNumber @bind-Value=@Option.NewCardsGraduatingInterval class="form-control" /></td>
+                <td>days</td>
+              </tr>
+              <tr>
+                <th scope="row">Easy Interval</th>
+                <td><InputNumber @bind-Value=@Option.NewCardsEasyInterval class="form-control" /></td>
+                <td>days</td>
+              </tr>
+              <tr>
+                <th scope="row">Starting Ease Factor</th>
+                <td><InputNumber @bind-Value=@Option.NewCardsStartingEaseFactor class="form-control" /></td>
+                <td>%</td>
+              </tr>
+              <tr>
+                <th scope="row">Bury Related</th>
+                <td><InputCheckbox @bind-Value=@Option.NewCardsBuryRelated class="form-control" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Mature Cards</h3>
+        </div>
+        <div class="card-body">
+          <table class="table-borderless">
+            <tbody>
+              <tr>
+                <th scope="row">Max Per Day</th>
+                <td><InputNumber @bind-Value=@Option.MatureCardsMaxPerDay class="form-control" /></td>
+                <td>cards</td>
+              </tr>
+              <tr>
+                <th scope="row">Ease Factor Easy Bonus Factor</th>
+                <td><InputNumber @bind-Value=@Option.MatureCardsEaseFactorEasyBonusFactor class="form-control" /></td>
+                <td>%</td>
+              </tr>
+              <tr>
+                <th scope="row">Interval factor</th>
+                <td><InputNumber @bind-Value=@Option.MatureCardsIntervalFactor class="form-control" /></td>
+                <td>%</td>
+              </tr>
+              <tr>
+                <th scope="row">Maximum Interval</th>
+                <td><InputNumber @bind-Value=@Option.MatureCardsMaximumInterval class="form-control" /></td>
+                <td>days</td>
+              </tr>
+              <tr>
+                <th scope="row">Hard factor</th>
+                <td><InputNumber @bind-Value=@Option.MatureCardsHardInterval class="form-control" /></td>
+                <td>%</td>
+              </tr>
+              <tr>
+                <th scope="row">Bury Related</th>
+                <td><InputCheckbox @bind-Value=@Option.MatureCardsBuryRelated class="form-control" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Lapsed Cards</h3>
+        </div>
+        <div class="card-body">
+          <table class="table-borderless">
+            <tbody>
+              <tr>
+                <th scope="row">Steps <span class="small">(in minutes)</span></th>
+                <td><InputText @bind-Value=@Option.LapsedCardsSteps class="form-control" /></td>
+              </tr>
+              <tr>
+                <th scope="row">New interval factor</th>
+                <td><InputNumber @bind-Value=@Option.LapsedCardsNewIntervalFactor class="form-control" /></td>
+                <td>%</td>
+              </tr>
+              <tr>
+                <th scope="row">Minimum interval</th>
+                <td><InputNumber @bind-Value=@Option.LapsedCardsMinimumInterval class="form-control" /></td>
+                <td>days</td>
+              </tr>
+              <tr>
+                <th scope="row">Leech threshold</th>
+                <td><InputNumber @bind-Value=@Option.LapsedCardsLeechThreshold class="form-control" /></td>
+                <td>lapses</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+  </div>
+</EditForm>
+
+@code {
+  [CascadingParameter]
+  public UserEntity User { get; set; }
+  [Parameter]
+  public ViewCardOption Option { get; set; }
+
+  void Save() {
+
+  }
+
+}
