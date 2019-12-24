@@ -7,6 +7,7 @@ namespace CardOverflow.Entity
 {
     public partial class DeckEntity
     {
+        [Key]
         public int Id { get; set; }
         [Required]
         [StringLength(128)]

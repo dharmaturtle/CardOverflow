@@ -7,7 +7,9 @@ namespace CardOverflow.Entity
 {
     public partial class File_CardInstanceEntity
     {
+        [Key]
         public int CardInstanceId { get; set; }
+        [Key]
         public int FileId { get; set; }
 
         [ForeignKey("CardInstanceId")]

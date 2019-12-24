@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
             Vote_CommentCards = new HashSet<Vote_CommentCardEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         public int CardId { get; set; }
         public int UserId { get; set; }

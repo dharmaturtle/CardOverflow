@@ -13,6 +13,7 @@ namespace CardOverflow.Entity
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         [Required]
         [StringLength(50)]

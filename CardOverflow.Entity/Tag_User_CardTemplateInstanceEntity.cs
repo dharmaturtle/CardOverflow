@@ -7,8 +7,11 @@ namespace CardOverflow.Entity
 {
     public partial class Tag_User_CardTemplateInstanceEntity
     {
+        [Key]
         public int UserId { get; set; }
+        [Key]
         public int CardTemplateInstanceId { get; set; }
+        [Key]
         public int DefaultTagId { get; set; }
 
         [ForeignKey("DefaultTagId")]

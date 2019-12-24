@@ -26,6 +26,7 @@ namespace CardOverflow.Entity
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
+        [Key]
         //[Required] // medTODO make this not nullable
         [StringLength(32)]
         public string DisplayName {

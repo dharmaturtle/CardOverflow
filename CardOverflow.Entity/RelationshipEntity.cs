@@ -7,6 +7,7 @@ namespace CardOverflow.Entity
 {
     public partial class RelationshipEntity
     {
+        [Key]
         public int Id { get; set; }
         public int SourceId { get; set; }
         public int TargetId { get; set; }

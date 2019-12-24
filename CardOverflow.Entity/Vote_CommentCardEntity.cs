@@ -7,7 +7,9 @@ namespace CardOverflow.Entity
 {
     public partial class Vote_CommentCardEntity
     {
+        [Key]
         public int CommentCardId { get; set; }
+        [Key]
         public int UserId { get; set; }
 
         [ForeignKey("CommentCardId")]

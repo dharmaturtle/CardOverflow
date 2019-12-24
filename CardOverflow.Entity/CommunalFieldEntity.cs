@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
             CommunalFieldInstances = new HashSet<CommunalFieldInstanceEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         public int AuthorId { get; set; }
 

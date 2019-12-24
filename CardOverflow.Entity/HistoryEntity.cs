@@ -7,6 +7,7 @@ namespace CardOverflow.Entity
 {
     public partial class HistoryEntity
     {
+        [Key]
         public int Id { get; set; }
         public int AcquiredCardId { get; set; }
         public byte Score { get; set; }

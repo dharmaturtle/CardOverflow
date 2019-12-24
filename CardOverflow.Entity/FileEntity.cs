@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
             File_CardInstances = new HashSet<File_CardInstanceEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         [Required]
         [StringLength(200)]

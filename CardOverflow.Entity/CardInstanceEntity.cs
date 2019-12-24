@@ -14,6 +14,7 @@ namespace CardOverflow.Entity
             File_CardInstances = new HashSet<File_CardInstanceEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }

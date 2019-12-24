@@ -425,10 +425,10 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            OnModelCreatingExt(modelBuilder);
+            OnModelCreatingPartial(modelBuilder);
         }
 
-        partial void OnModelCreatingExt(ModelBuilder modelBuilder);
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
 

@@ -13,6 +13,7 @@ namespace CardOverflow.Entity
             CommentCardTemplates = new HashSet<CommentCardTemplateEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         public int AuthorId { get; set; }
 

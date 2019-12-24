@@ -7,7 +7,9 @@ namespace CardOverflow.Entity
 {
     public partial class CommunalFieldInstance_CardInstanceEntity
     {
+        [Key]
         public int CardInstanceId { get; set; }
+        [Key]
         public int CommunalFieldInstanceId { get; set; }
 
         [ForeignKey("CardInstanceId")]

@@ -13,6 +13,7 @@ namespace CardOverflow.Entity
             Tag_User_CardTemplateInstances = new HashSet<Tag_User_CardTemplateInstanceEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         [Required]
         [StringLength(250)]

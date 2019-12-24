@@ -7,7 +7,9 @@ namespace CardOverflow.Entity
 {
     public partial class Tag_AcquiredCardEntity
     {
+        [Key]
         public int TagId { get; set; }
+        [Key]
         public int AcquiredCardId { get; set; }
 
         [ForeignKey("AcquiredCardId")]

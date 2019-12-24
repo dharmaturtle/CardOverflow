@@ -15,6 +15,7 @@ namespace CardOverflow.Entity
             RelationshipTargets = new HashSet<RelationshipEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         public int AuthorId { get; set; }
         public int Users { get; set; }

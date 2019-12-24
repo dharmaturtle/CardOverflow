@@ -13,6 +13,7 @@ namespace CardOverflow.Entity
             Tag_AcquiredCards = new HashSet<Tag_AcquiredCardEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
         public int CardInstanceId { get; set; }
