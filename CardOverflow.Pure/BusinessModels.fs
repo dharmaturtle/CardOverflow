@@ -61,7 +61,7 @@ type CardOption = {
     MatureCardsEaseFactorEasyBonusFactor: float
     MatureCardsIntervalFactor: float // medTODO unused
     MatureCardsMaximumInterval: TimeSpanInt16.TimeSpanInt16
-    MatureCardsHardInterval: float
+    MatureCardsHardIntervalFactor: float
     MatureCardsBuryRelated: bool
     LapsedCardsSteps: TimeSpan list
     LapsedCardsNewIntervalFactor: float // percent by which to multiply the current interval when a card goes has lapsed, called "new interval" in anki gui

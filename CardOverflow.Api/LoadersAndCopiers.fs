@@ -44,7 +44,7 @@ type CardOption with
         this.MatureCardsEaseFactorEasyBonusFactor = that.MatureCardsEaseFactorEasyBonusFactor &&
         this.MatureCardsIntervalFactor = that.MatureCardsIntervalFactor &&
         this.MatureCardsMaximumInterval = that.MatureCardsMaximumInterval &&
-        this.MatureCardsHardInterval = that.MatureCardsHardInterval &&
+        this.MatureCardsHardIntervalFactor = that.MatureCardsHardIntervalFactor &&
         this.MatureCardsBuryRelated = that.MatureCardsBuryRelated &&
         this.LapsedCardsSteps = that.LapsedCardsSteps &&
         this.LapsedCardsNewIntervalFactor = that.LapsedCardsNewIntervalFactor &&
@@ -67,7 +67,7 @@ type CardOption with
           MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.
           MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.
           MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpanInt16.fromDays
-          MatureCardsHardInterval = float entity.MatureCardsHardIntervalFactorInPermille / 1000.
+          MatureCardsHardIntervalFactor = float entity.MatureCardsHardIntervalFactorInPermille / 1000.
           MatureCardsBuryRelated = entity.MatureCardsBuryRelated
           LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
           LapsedCardsNewIntervalFactor = float entity.LapsedCardsNewIntervalFactorInPermille / 1000.
@@ -89,7 +89,7 @@ type CardOption with
         entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsMaximumIntervalInDays <- TimeSpanInt16.totalDays this.MatureCardsMaximumInterval
-        entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardInterval * 1000. |> Math.Round |> int16
+        entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardIntervalFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
         entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
         entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000. |> Math.Round |> int16

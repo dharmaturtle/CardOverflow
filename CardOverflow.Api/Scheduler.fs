@@ -31,7 +31,7 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
                     (TimeSpan.FromDays 1. |> previousInterval.Add)
                 |> min (TimeSpanInt16.value card.Options.MatureCardsMaximumInterval)
             let delta = time.utcNow - card.Due |> max TimeSpan.Zero
-            let hard = interval previousInterval <| previousInterval * card.Options.MatureCardsHardInterval
+            let hard = interval previousInterval <| previousInterval * card.Options.MatureCardsHardIntervalFactor
             let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
             let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
             match score with
