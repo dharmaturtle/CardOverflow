@@ -16,13 +16,13 @@ open System.Linq
 open SimpleInjector.Lifestyles
 
 [<Fact>]
-let ``CardOptions load and copy defaultCardOptions are equal``() =
+let ``CardOptions load and copy defaultCardOptions are equal`` (): unit =
     let record = CardOptionsRepository.defaultCardOptions.CopyToNew 3 |> CardOption.load
 
     Assert.Equal(CardOptionsRepository.defaultCardOptions, record)
 
 [<Fact>]
-let ``Interval, all NewStepsIndexes map to db and back``() =
+let ``Interval, all NewStepsIndexes map to db and back`` (): unit =
     // lowTODO assert that the type of NewStepsIndex is a unsigned byte
     for i in [ Byte.MinValue .. Byte.MaxValue ] do
         NewStepsIndex i
@@ -34,7 +34,7 @@ let ``Interval, all NewStepsIndexes map to db and back``() =
         | Interval x -> failwithf "%A" x
 
 [<Fact>]
-let ``Interval, all LapsedStepsIndexes map to db and back``() =
+let ``Interval, all LapsedStepsIndexes map to db and back`` (): unit =
     // lowTODO assert that the type of LapsedStepsIndex is a unsigned byte
     for i in [ Byte.MinValue .. Byte.MaxValue ] do
         LapsedStepsIndex i
@@ -46,7 +46,7 @@ let ``Interval, all LapsedStepsIndexes map to db and back``() =
         | Interval x -> failwithf "%A" x
 
 [<Fact>]
-let ``Interval, all minutes map to db and back``() =
+let ``Interval, all minutes map to db and back`` (): unit =
     for i in [ 0. .. 1440. ] do
         let i = TimeSpan.FromMinutes i
         Interval i
@@ -58,7 +58,7 @@ let ``Interval, all minutes map to db and back``() =
         | Interval x -> Assert.Equal(i, x)
 
 [<Fact>]
-let ``Interval, first 100 days map to db and back``() =
+let ``Interval, first 100 days map to db and back`` (): unit =
     for i in [ 1. .. 100. ] do
         let i = TimeSpan.FromDays i
         Interval i
@@ -70,7 +70,7 @@ let ``Interval, first 100 days map to db and back``() =
         | Interval x -> Assert.Equal(i, x)
 
 [<Fact>]
-let ``Interval, last 100 days map to db and back``() =
+let ``Interval, last 100 days map to db and back`` (): unit =
     let minutesInADay = TimeSpan.FromDays(1.).TotalMinutes
     let n1 = Int16.MinValue + int16 Byte.MaxValue |> float
     let l0 = n1 + 1.

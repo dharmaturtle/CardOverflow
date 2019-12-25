@@ -6,7 +6,7 @@ open Xunit
 open System
 
 [<Fact>]
-let ``Random.cryptographicString is somewhat random``() =
+let ``Random.cryptographicString is somewhat random``(): unit =
     let l = 10
     
     let s1 = Random.cryptographicString l
@@ -15,7 +15,7 @@ let ``Random.cryptographicString is somewhat random``() =
     Assert.NotEqual<string>(s1, s2)
 
 [<Fact>]
-let ``Random.cryptographicString of sufficient length contains A, a, 1, _, and -``() =
+let ``Random.cryptographicString of sufficient length contains A, a, 1, _, and -``(): unit =
     let l = 1000
 
     let s = Random.cryptographicString l
@@ -27,7 +27,7 @@ let ``Random.cryptographicString of sufficient length contains A, a, 1, _, and -
     Assert.Contains("_", s)
 
 [<Fact>]
-let ``Random.cryptographicString produces a string of the specified length``() =
+let ``Random.cryptographicString produces a string of the specified length``(): unit =
     let r = new Random()
     let l = r.Next(1, 1000)
     

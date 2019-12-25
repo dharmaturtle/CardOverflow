@@ -7,7 +7,7 @@ open ContainerExtensions
 open Serilog
 
 [<Fact>]
-let ``RegisterStuff verifies``() =
+let ``RegisterStuff verifies`` (): unit =
     use c = new Container()
     
     c.RegisterStuff
@@ -16,7 +16,7 @@ let ``RegisterStuff verifies``() =
     c.Verify()
 
 [<Fact>]
-let ``Testing logging, needs manual checking``() =
+let ``Testing logging, needs manual checking`` (): unit =
     use c = new Container()
     
     c.RegisterStuff

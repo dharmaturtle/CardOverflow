@@ -18,7 +18,7 @@ open CardOverflow.Pure
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``AcquireCards works``() = task {
+let ``AcquireCards works``(): Task<unit> = task {
     use c = new TestContainer()
     
     let authorId = 3

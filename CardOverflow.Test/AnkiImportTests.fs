@@ -22,7 +22,7 @@ open SimpleInjector
 open SimpleInjector.Lifestyles
 
 [<Fact>]
-let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` () =
+let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` (): unit =
     let userId = 3
     let templates =
         AnkiImportTestData.relationships.Cols.Single().Models
@@ -425,12 +425,14 @@ let ``AnkiImporter imports RandomReviews`` randomReviews: Task<unit> = task {
 
 [<Theory>]
 [<ClassData(typeof<AllRandomReviews>)>]
-let ``Importing AllRandomReviews reuses previous History`` randomReviews =
+let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<unit> = task {
     use c = new AnkiTestContainer(randomReviews)
     for _ in [1..5] do
-        c.AnkiDb()
-        |> AnkiImporter.getSimpleAnkiDb
-        |> assertHasHistory c.Db
+        do!
+            c.AnkiDb()
+            |> AnkiImporter.getSimpleAnkiDb
+            |> assertHasHistory c.Db
+    }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]

@@ -13,7 +13,7 @@ open CardOverflow.Entity
 open MappingTools
 
 [<Fact>]
-let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expected``() =
+let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expected`` (): unit =
     let expected =
         {   Id = 0
             Name = "Default"

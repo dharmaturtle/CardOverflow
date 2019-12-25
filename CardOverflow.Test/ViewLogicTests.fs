@@ -4,7 +4,7 @@ open Xunit
 open System
 
 [<Fact>]
-let ``TimeSpan to string looks pretty``() =
+let ``TimeSpan to string looks pretty`` (): unit =
     TimeSpan.FromSeconds 10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("1 min", x)
     TimeSpan.FromMinutes 10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("10 min", x)
     TimeSpan.FromHours   10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("10 h", x)

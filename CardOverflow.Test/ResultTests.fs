@@ -5,7 +5,7 @@ open Xunit
 open CardOverflow.Pure
 
 [<Fact>]
-let ``Consolidating list of Ok ints is Ok``() =
+let ``Consolidating list of Ok ints is Ok`` (): unit =
     [ 0; 1 ] |> List.map Ok
     
     |> Result.consolidate
@@ -13,7 +13,7 @@ let ``Consolidating list of Ok ints is Ok``() =
     |> Result.isOk |> Assert.True
 
 [<Fact>]
-let ``Consolidating list of Ok ints yields ints``() =
+let ``Consolidating list of Ok ints yields ints`` (): unit =
     let expected = [ 0; 1 ]
     
     let actual = expected |> List.map Ok |> Result.consolidate
@@ -21,7 +21,7 @@ let ``Consolidating list of Ok ints yields ints``() =
     Assert.Equal<int>(expected, actual |> Result.getOk)
 
 [<Fact>]
-let ``Consolidating list of Errors is not Ok``() =
+let ``Consolidating list of Errors is not Ok`` (): unit =
     ["A"; "B"] |> List.map Error
     
     |> Result.consolidate |> Result.isOk
@@ -29,7 +29,7 @@ let ``Consolidating list of Errors is not Ok``() =
     |> Assert.False
 
 [<Fact>]
-let ``Consolidating list of Errors yields concatenated errors``() =
+let ``Consolidating list of Errors yields concatenated errors`` (): unit =
     let actual =
         ["A"; "B"]
         |> List.map Error
@@ -38,7 +38,7 @@ let ``Consolidating list of Errors yields concatenated errors``() =
     Assert.Equal("A\r\nB", actual |> Result.getError)
 
 [<Fact>]
-let ``Consolidating list of int and Error is not Ok``() =
+let ``Consolidating list of int and Error is not Ok``(): unit =
     [ Ok 0; Error "" ]
     
     |> Result.consolidate |> Result.isOk
@@ -46,7 +46,7 @@ let ``Consolidating list of int and Error is not Ok``() =
     |> Assert.False
 
 [<Fact>]
-let ``Consolidating list of int and Errors yields concatenated errors``() =
+let ``Consolidating list of int and Errors yields concatenated errors``(): unit =
     let actual =
         [ Ok 0
           Error "B"

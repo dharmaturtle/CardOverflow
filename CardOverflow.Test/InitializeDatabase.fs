@@ -38,7 +38,7 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
     db.SaveChangesI ()
 
 //[<Fact>]
-let ``Delete and Recreate localhost's CardOverflow Database via EF``() =
+let ``Delete and Recreate localhost's CardOverflow Database via EF`` (): unit =
     use c = new Container()
     c.RegisterStuff
     c.RegisterStandardConnectionString
@@ -89,7 +89,7 @@ let deleteAndRecreateDb dbName baseConnectionString =
     conn.Close()
 
 //[<Fact>]
-let ``Delete and Recreate localhost's CardOverflow Database via SqlScript``() =
+let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): unit =
     use c = new Container()
     c.RegisterStuff
     c.RegisterStandardConnectionString

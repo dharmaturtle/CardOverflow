@@ -58,7 +58,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
     }
 
 [<Fact>]
-let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` () =
+let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (): unit =
     let expected = [
         "Basic FrontBasic Back"
         "Basic (and reversed card) frontBasic (and reversed card) back"
@@ -297,7 +297,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     Assert.SingleI c.Db.CommunalFieldInstance }
 
 [<Fact>]
-let ``EditCardCommand's back works with cloze`` () =
+let ``EditCardCommand's back works with cloze`` (): unit =
     let test text expected questionTemplate =
         {   EditSummary = ""
             FieldValues =
@@ -366,7 +366,7 @@ let ``EditCardCommand's back works with cloze`` () =
             "In 1492, Columbus sailed the ocean [ blue ] .Source goes here" ]
 
 [<Fact>]
-let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` () =
+let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` (): unit =
     let c = new TestContainer()
     let userId = 1
     let toEntity (cardTemplate: AnkiCardTemplateInstance) =

@@ -4,5 +4,5 @@ open MappingTools
 open Xunit
 
 [<Fact>]
-let ``stringOfIntsToIntList with empty string returns empty list``() =
+let ``stringOfIntsToIntList with empty string returns empty list`` (): unit =
     stringOfIntsToIntList "" |> Assert.Empty
