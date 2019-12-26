@@ -56,6 +56,7 @@
     <Compile Include="CardRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="FacetTemplateRepositoryTests.fs" />
+    <Compile Include="CardOptionTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />
     <Compile Include="AnkiImportTests.fs" />

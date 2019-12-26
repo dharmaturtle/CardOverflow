@@ -412,3 +412,30 @@ module SanitizeCardOption =
     let getAll (db: CardOverflowDb) userId = task {
         let! x = CardOptionsRepository.getAll db userId
         return x |> Seq.map ViewCardOption.load |> toResizeArray }
+    let upsert (db: CardOverflowDb) userId (option: ViewCardOption) = task {
+        let option = option.copyTo
+        let! r =
+            if option.Id = 0 then
+                let e = option.CopyToNew userId
+                db.CardOption.AddI e
+                Ok e |> Task.FromResult
+            else
+                task {
+                    let! r = db.CardOption.SingleOrDefaultAsync(fun x -> x.Id = option.Id && x.UserId = userId)
+                    return
+                        match r with
+                        | null -> Error "Card option not found (or doesn't belong to you.)"
+                        | e ->
+                            option.CopyTo e
+                            Ok e
+                }
+        return!
+            match r with
+            | Ok e ->
+                task {
+                    do! db.SaveChangesAsyncI()
+                    return Ok e.Id
+                }
+            | Error x ->
+                Error x |> Task.FromResult
+        }
