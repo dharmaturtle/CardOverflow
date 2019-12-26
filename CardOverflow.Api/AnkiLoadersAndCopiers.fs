@@ -77,6 +77,7 @@ type AnkiCardTemplateInstance = {
                 AuthorId = this.AuthorId)
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
+        entity.IsLatest <- true
         entity
     
 type AnkiCardWrite = {

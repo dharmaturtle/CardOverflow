@@ -397,6 +397,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
             card.LatestMeta.CommunalFields)
 
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest))
     }
 
 let assertHasHistory db ankiDb: Task<unit> = task {
@@ -462,6 +463,7 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
         Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
         Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(7, c.Db.CommunalField.Count())
+        Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest))
     }
 
 [<Theory>]
