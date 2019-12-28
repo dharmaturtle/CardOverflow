@@ -1,4 +1,4 @@
-
+﻿
 @page "/cardoption"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -17,18 +17,21 @@
   <p><em>Loading...</em></p>
 } else {
   <div class="row">
-    <div class="col-sm-11">
+    <div class="col-sm-10">
       <CardOptionEditorDetail Option=@_selected />
     </div>
-    <div class="col-sm-1 list-group">
+    <div class="col-sm-2 list-group">
       <h5>Card Options</h5>
-      @foreach (var option in _options) {
-        <button class="list-group-item list-group-item-action @(_selected.Id == option.Id ? "active" : "")"
-                @onclick=@(() => _Select(option.Id))>
-          @if (option.IsDefault) {
+      <button type="button" class="btn btn-success" @onclick=@_Add>
+        Add
+      </button>
+      @foreach (var x in _options.Select((x, i) => new { Option = x, Index = i })) {
+        <button class="list-group-item list-group-item-action @(_selected.Id == x.Option.Id ? "active" : "")"
+                @onclick=@(() => _Select(x.Index))>
+          @if (x.Option.IsDefault) {
             <span class="oi oi-star"></span>
           }
-          @option.Name
+          @x.Option.Name
         </button>
       }
     </div>
@@ -48,7 +51,15 @@
     }
   }
 
-  private void _Select(int optionId) =>
-    _selected = _options.Single(x => x.Id == optionId);
+  private void _Select(int index) =>
+    _selected = _options.ElementAt(index);
+
+  private void _Add() {
+    var option = CardOptionsRepository.defaultCardOptions.Apply(ViewCardOption.load);
+    option.Name = "New Card Options";
+    option.IsDefault = false;
+    _options.Add(option);
+    _selected = option;
+  }
 
 }

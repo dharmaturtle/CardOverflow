@@ -7,6 +7,8 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
 
 <EditForm Model=@Option OnValidSubmit=@Save>
   <div class="form-group">
@@ -166,8 +168,14 @@
   [Parameter]
   public ViewCardOption Option { get; set; }
 
-  void Save() {
-
+  private async Task Save() {
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.upsert(db, User.Id, Option));
+    if (r.IsOk) {
+      Option.Id = r.ResultValue;
+      ToastService.ShowInfo("Saved!");
+    } else {
+      ToastService.ShowError(r.ErrorValue);
+    }
   }
 
 }
