@@ -408,7 +408,7 @@ type ViewCardOption = {
         ReplayQuestionAudioOnAnswer = this.ReplayQuestionAudioOnAnswer
     }
 
-module SanitizeCardOption =
+module SanitizeCardOptionRepository =
     let getAll (db: CardOverflowDb) userId = task {
         let! x = CardOptionsRepository.getAll db userId
         return x |> Seq.map ViewCardOption.load |> toResizeArray }

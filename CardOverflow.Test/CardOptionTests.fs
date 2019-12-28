@@ -26,7 +26,7 @@ let ``SanitizeCardOption.upsert can save new option``(): Task<unit> = task {
             IsDefault = false }
     let newId = userId + 1
 
-    let! id = SanitizeCardOption.upsert c.Db userId option
+    let! id = SanitizeCardOptionRepository.upsert c.Db userId option
     
     let id = Result.getOk id
     Assert.Equal(newId, id)
@@ -34,11 +34,11 @@ let ``SanitizeCardOption.upsert can save new option``(): Task<unit> = task {
     Assert.False option.IsDefault
 
     // can update
-    let! options = SanitizeCardOption.getAll c.Db userId
+    let! options = SanitizeCardOptionRepository.getAll c.Db userId
     let newName = Guid.NewGuid().ToString()
     
     let! id =
-        SanitizeCardOption.upsert c.Db userId
+        SanitizeCardOptionRepository.upsert c.Db userId
             { options.Single(fun x -> x.Id = newId) with Name = newName }
     
     let id = Result.getOk id

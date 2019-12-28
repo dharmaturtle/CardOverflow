@@ -1,4 +1,4 @@
-﻿
+
 @page "/cardoption"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -43,7 +43,7 @@
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      _options = await SanitizeCardOption.getAll(Service, User.Id);
+      _options = await SanitizeCardOptionRepository.getAll(Service, User.Id);
       _selected = _options.Single(x => x.IsDefault);
     }
   }
