@@ -412,30 +412,29 @@ module SanitizeCardOptionRepository =
     let getAll (db: CardOverflowDb) userId = task {
         let! x = CardOptionsRepository.getAll db userId
         return x |> Seq.map ViewCardOption.load |> toResizeArray }
-    let upsert (db: CardOverflowDb) userId (option: ViewCardOption) = task {
-        let option = option.copyTo
-        let! r =
-            if option.Id = 0 then
-                let e = option.CopyToNew userId
-                db.CardOption.AddI e
-                Ok e |> Task.FromResult
-            else
-                task {
-                    let! r = db.CardOption.SingleOrDefaultAsync(fun x -> x.Id = option.Id && x.UserId = userId)
-                    return
-                        match r with
-                        | null -> Error "Card option not found (or doesn't belong to you.)"
-                        | e ->
-                            option.CopyTo e
-                            Ok e
-                }
+    let upsertMany (db: CardOverflowDb) userId (options: ViewCardOption ResizeArray) = task {
+        let options = options.Select(fun x -> x.copyTo) |> List.ofSeq
+        let oldOptionIds = options.Select(fun x -> x.Id).Where(fun x -> x <> 0).ToList()
+        let! oldOptions = db.CardOption.Where(fun x -> oldOptionIds.Contains x.Id && x.UserId = userId).ToListAsync()
         return!
-            match r with
+            options |> List.map (fun option ->
+                if option.Id = 0 then
+                    let e = option.CopyToNew userId
+                    db.CardOption.AddI e
+                    Ok e
+                else
+                    match oldOptions.SingleOrDefault(fun x -> x.Id = option.Id) with
+                    | null -> Error "Card option not found (or doesn't belong to you.)"
+                    | e ->
+                        option.CopyTo e
+                        Ok e
+            ) |> Result.consolidate
+            |> function
             | Ok e ->
                 task {
                     do! db.SaveChangesAsyncI()
-                    return Ok e.Id
+                    return e |> List.ofSeq |> List.map (fun x -> x.Id) |> Ok
                 }
-            | Error x ->
-                Error x |> Task.FromResult
-        }
+            | Error e ->
+                Error e |> Task.FromResult
+    }
