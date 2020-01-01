@@ -51,4 +51,18 @@ let ``SanitizeCardOption.upsertMany can add/update new option``(): Task<unit> = 
     let id = (Result.getOk id).Single(fun x -> x  <> defaultId)
     Assert.Equal(newId, id)
     Assert.Equal(newName, c.Db.CardOption.Single(fun x -> x.Id = id).Name)
+
+    let canUpdateIsDefault defaultIsDefault newIsDefault = task {
+        let! options = SanitizeCardOptionRepository.getAll c.Db userId
+    
+        let! _ =
+            SanitizeCardOptionRepository.upsertMany c.Db userId
+                <| [{ options.Single(fun x -> x.Id = defaultId) with IsDefault = defaultIsDefault }
+                    { options.Single(fun x -> x.Id = newId)     with IsDefault = newIsDefault }
+                   ].ToList()
+    
+        Assert.Equal(defaultIsDefault, c.Db.CardOption.Single(fun x -> x.Id = defaultId).IsDefault)
+        Assert.Equal(newIsDefault,     c.Db.CardOption.Single(fun x -> x.Id = newId).IsDefault) }
+    do! canUpdateIsDefault false true
+    do! canUpdateIsDefault true false
     }
