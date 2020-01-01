@@ -19,7 +19,7 @@
 } else {
   <div class="row">
     <div class="col-sm-10">
-      <CardOptionEditorDetail Option=@_selected Save=@Save />
+      <CardOptionEditorDetail Option=@_selected Save=@Save SetAsDefault=@_SetSelectedAsDefault />
     </div>
     <div class="col-sm-2 list-group">
       <h5>Card Options</h5>
@@ -62,6 +62,11 @@
     option.IsDefault = false;
     _options.Add(option);
     _selected = option;
+  }
+
+  private void _SetSelectedAsDefault() {
+    _options.Single(x => x.IsDefault).IsDefault = false;
+    _selected.IsDefault = true;
   }
 
   private async Task Save() {
