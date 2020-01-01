@@ -10,7 +10,7 @@ open Serilog
 let ``RegisterStuff verifies`` (): unit =
     use c = new Container()
     
-    c.RegisterStuff
+    c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
     
     c.Verify()
@@ -19,7 +19,7 @@ let ``RegisterStuff verifies`` (): unit =
 let ``Testing logging, needs manual checking`` (): unit =
     use c = new Container()
     
-    c.RegisterStuff
+    c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
     c.Verify()
     

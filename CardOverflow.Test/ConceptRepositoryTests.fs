@@ -28,7 +28,7 @@ open System.Collections
 [<Fact>]
 let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``(): Task<unit> = task {
     use c = new Container()
-    c.RegisterStuff
+    c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
     use __ = AsyncScopedLifestyle.BeginScope c
     let db = c.GetInstance<CardOverflowDb>()

@@ -40,7 +40,7 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) =
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via EF`` (): unit =
     use c = new Container()
-    c.RegisterStuff
+    c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
     use __ = AsyncScopedLifestyle.BeginScope c
     c.GetInstance<CardOverflowDb>() |> deleteAndRecreateDatabase
@@ -91,6 +91,6 @@ let deleteAndRecreateDb dbName baseConnectionString =
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): unit =
     use c = new Container()
-    c.RegisterStuff
+    c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
     c.GetInstance<ConnectionString>() |> deleteAndRecreateDb "CardOverflow"

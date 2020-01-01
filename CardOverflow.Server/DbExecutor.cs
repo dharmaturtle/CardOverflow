@@ -11,21 +11,18 @@ namespace CardOverflow.Server {
       _options = options;
 
     public void Command(Action<CardOverflowDb> command) {
-      using (var db = new CardOverflowDb(_options)) {
-        command(db);
-      }
+      using var db = new CardOverflowDb(_options);
+      command(db);
     }
 
     public T Query<T>(Func<CardOverflowDb, T> query) {
-      using (var db = new CardOverflowDb(_options)) {
-        return query(db);
-      }
+      using var db = new CardOverflowDb(_options);
+      return query(db);
     }
 
     public async Task<T> QueryAsync<T>(Func<CardOverflowDb, Task<T>> query) {
-      using (var db = new CardOverflowDb(_options)) {
-        return await query(db);
-      }
+      using var db = new CardOverflowDb(_options);
+      return await query(db);
     }
 
   }

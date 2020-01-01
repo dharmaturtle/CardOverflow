@@ -37,15 +37,18 @@ module Logger =
             .CreateLogger()
 
 type Container with
-    member container.RegisterStuff =
+    member container.RegisterStuffTestOnly =
         container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle()
         container.RegisterInstance<IConfiguration>(Environment.get |> Configuration.get)
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
-
+        
         container.RegisterSingleton<DbContextOptions<CardOverflowDb>>(fun () ->
+            let loggerFactory = new Microsoft.Extensions.Logging.LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
+            loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
             DbContextOptionsBuilder<CardOverflowDb>()
-                .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value )
+                .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value)
+                .UseLoggerFactory(loggerFactory)
                 //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3, medTODO actually test this
                 //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                 //.EnableSensitiveDataLogging(true)

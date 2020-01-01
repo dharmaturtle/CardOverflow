@@ -22,8 +22,9 @@ type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: 
                 else memberName.Value
             Regex.Replace(temp, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
             |> sprintf "CardOverflow_%s"
-        container.RegisterStuff
+        container.RegisterStuffTestOnly
         container.RegisterTestConnectionString dbName
+        container.Verify()
         container.GetInstance<IConfiguration>().GetConnectionString "BaseTestConnection" |> ConnectionString |> InitializeDatabase.deleteAndRecreateDb dbName
 
     interface IDisposable with
