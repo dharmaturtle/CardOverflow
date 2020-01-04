@@ -409,6 +409,19 @@ type ViewCardOption = {
     }
 
 module SanitizeCardOptionRepository =
+    let setCard (db: CardOverflowDb) userId acquiredCardId newCardOptionId = task {
+        let! option = db.CardOption.SingleOrDefaultAsync(fun x -> x.Id = newCardOptionId && x.UserId = userId)
+        let! card = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+        return!
+            match option, card with
+            | null, _
+            | _, null -> Error "Something's null" |> Task.FromResult
+            | option, card -> task {
+                card.CardOptionId <- option.Id
+                do! db.SaveChangesAsyncI()
+                return Ok ()
+            }
+    }
     let getAll (db: CardOverflowDb) userId = task {
         let! x = CardOptionsRepository.getAll db userId
         return x |> Seq.map ViewCardOption.load |> toResizeArray }

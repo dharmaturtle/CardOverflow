@@ -65,4 +65,36 @@ let ``SanitizeCardOption.upsertMany can add/update new option``(): Task<unit> = 
         Assert.Equal(newIsDefault,     c.Db.CardOption.Single(fun x -> x.Id = newId).IsDefault) }
     do! canUpdateIsDefault false true
     do! canUpdateIsDefault true false
+
+    // Insert new card
+    let! templates = SanitizeCardTemplate.Search c.Db "Basic"
+    let template = templates.Single(fun x -> x.Name = "Basic")
+    let! card = CardRepository.getNew c.Db userId
+    let! r =
+        SanitizeCardRepository.Update c.Db userId card
+            {   EditSummary = "Initial creation"
+                FieldValues =
+                    template.Fields.Select(fun f -> {
+                        EditField = ViewField.copyTo f
+                        Value = Guid.NewGuid().ToString()
+                        Communal = None
+                    }).ToList()
+                TemplateInstance = template
+            }
+    r |> Result.getOk
+
+    // new card has default option
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)
+    let! options = SanitizeCardOptionRepository.getAll c.Db userId
+    let defaultId = options.Single(fun x -> x.IsDefault).Id
+    let otherId = options.Single(fun x -> not x.IsDefault).Id
+    
+    Assert.Equal(defaultId, ac.CardOptionId)
+
+    // can set new option
+    let! r = SanitizeCardOptionRepository.setCard c.Db userId ac.Id otherId
+    r |> Result.getOk
+    
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)
+    Assert.Equal(otherId, ac.CardOptionId)
     }
