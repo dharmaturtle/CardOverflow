@@ -1,0 +1,43 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+
+<h3>Card Options</h3>
+<select value=@_selectedId class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
+  @foreach (var option in _options) {
+    <option value=@option.Id>@option.Name</option>
+  }
+</select>
+
+@code {
+  [CascadingParameter]
+  UserEntity User { get; set; }
+  [Parameter]
+  public AcquiredCard AcquiredCard { get; set; }
+  private List<ViewCardOption> _options = new List<ViewCardOption>();
+  private int _selectedId;
+
+  protected override async Task OnInitializedAsync() {
+    _options = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.getAll(db, User.Id));
+    _selectedId = AcquiredCard.CardOptionId;
+  }
+
+  private async Task _SetSelected(int newId) {
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.setCard(db, User.Id, AcquiredCard.AcquiredCardId, newId));
+    if (r.IsOk) {
+      ToastService.ShowInfo("Card option saved!");
+      _selectedId = newId;
+    } else {
+      ToastService.ShowError(r.ErrorValue);
+    }
+  }
+
+}
