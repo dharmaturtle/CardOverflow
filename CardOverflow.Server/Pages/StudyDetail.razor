@@ -181,7 +181,7 @@
         }
         break;
       case "tell me":
-        ShowBack();
+        await ShowBack();
         await Speak(batch.First().ResultValue.BackSynthVoice);
         break;
       case "again":
@@ -209,10 +209,9 @@
   Task OnKeyDown(KeyboardEventArgs eventArgs) {
     eventArgs.CDump();
     if (isFront && (eventArgs.Key == "ArrowDown" || eventArgs.Key == "ArrowRight")) {
-      ShowBack();
+      return ShowBack();
     } else if (!isFront) {
-      return eventArgs.Key switch
-      {
+      return eventArgs.Key switch {
         "0" => SaveScore(Score.Again),
         "1" => SaveScore(Score.Hard),
         "2" => SaveScore(Score.Good),

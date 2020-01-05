@@ -25,7 +25,7 @@
   string LoadingMessage = "Loading...";
   ViewCardTemplateInstance Editable;
 
-  protected override async Task OnInitializedAsync() {
+  protected override void OnInitialized() {
     if (User == null) {
       LoadingMessage = "You need to log in.";
     } else {
