@@ -98,7 +98,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 let testGetAcquired (cardIds: int list) addCards name = task {
     use c = new TestContainer(name)
     
-    let userId = 1 // creates the card
+    let userId = 1 // this user creates the card
     for addCard in addCards do
         do! addCard c.Db userId ["a"]
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
@@ -107,10 +107,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         acquiredCards.Results.Count()
     )
     let! card = CardRepository.GetAcquired c.Db userId 1
-    Assert.Equal(
-        userId,
-        card |> Result.getOk |> fun x -> x.UserId
-    )
+    let card = card |> Result.getOk
+    Assert.Equal(userId, card.UserId)
     let relationshipName = "test relationship"
     let addRelationshipCommand1 =
         {   Name = relationshipName
@@ -137,13 +135,14 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         let! card = CardRepository.Get c.Db userId 2
         Assert.Equal(0, card.Relationships.Count)
     
-    let userId = 2 // acquires the card
+    let userId = 2 // this user acquires the card
     if cardIds.Length = 1 then
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
     else
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
     let! card = CardRepository.Get c.Db userId 1
+    Assert.Equal(card.LatestMeta.Id, card.AcquiredMeta.Value.Id)
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
@@ -205,7 +204,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         do! testRelationships commands.[1]
         do! testRelationships commands.[2]
         do! testRelationships commands.[3]
-    let userId = 3 // never acquires the card
+    let userId = 3 // this user never acquires the card
     if cardIds.Length = 1 then
         let! cards = CardRepository.SearchAsync c.Db userId 1 ""
         Assert.Equal(

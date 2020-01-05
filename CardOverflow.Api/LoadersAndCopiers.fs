@@ -382,6 +382,7 @@ type ExploreCardSummary with
                 else
                     failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
         LatestMeta = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstanceMeta.load userId
+        AcquiredMeta = entity.CardInstances.SingleOrDefault(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)) |> Option.ofObj |> Option.map (CardInstanceMeta.load userId)
     }
 
 type ExploreCard with

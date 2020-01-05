@@ -326,6 +326,7 @@ type ExploreCardSummary = {
     Author: string
     AuthorId: int
     LatestMeta: CardInstanceMeta
+    AcquiredMeta: CardInstanceMeta Option
 }
 
 [<CLIMutable>]
@@ -340,6 +341,7 @@ type ExploreCard = {
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
     member this.LatestMeta = this.Summary.LatestMeta
+    member this.AcquiredMeta = this.Summary.AcquiredMeta
 
 type CardRevision = {
     Id: int
