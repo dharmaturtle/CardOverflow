@@ -1,4 +1,5 @@
 module D
+#nowarn "64"
 
 open System
 open CardOverflow.Debug
