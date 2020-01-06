@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="4.7.0" />
     <PackageReference Include="ObjectDumper.NET" Version="2.4.19218.1" />
   </ItemGroup>
 
