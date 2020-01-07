@@ -49,7 +49,7 @@
     }
   </ul>
 }
-@if (Card.LatestMeta.IsAcquired) {
+@if (Card.IsAcquired) {
   <EditForm Model=@Command OnValidSubmit=@Add>
     <div class="form-row">
       <div class="form-group col-md-4">

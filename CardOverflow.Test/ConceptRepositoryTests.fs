@@ -61,6 +61,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| card.Comments
     Assert.True card.LatestMeta.IsAcquired
+    Assert.True card.IsAcquired
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1

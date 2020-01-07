@@ -28,7 +28,7 @@
           <td>
             <div class="curate-tooltip-target">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="oi oi-eye@(card.LatestMeta.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+              <span class="oi oi-eye@(card.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
                 <ResizingIframe SrcUrl=@("/card/" + card.Id + "/front")></ResizingIframe>

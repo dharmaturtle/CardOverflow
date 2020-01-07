@@ -327,7 +327,8 @@ type ExploreCardSummary = {
     AuthorId: int
     LatestMeta: CardInstanceMeta
     AcquiredMeta: CardInstanceMeta Option
-}
+} with
+    member this.IsAcquired = this.AcquiredMeta |> Option.isSome
 
 [<CLIMutable>]
 type ExploreCard = {
@@ -342,6 +343,7 @@ type ExploreCard = {
     member this.AuthorId = this.Summary.AuthorId
     member this.LatestMeta = this.Summary.LatestMeta
     member this.AcquiredMeta = this.Summary.AcquiredMeta
+    member this.IsAcquired = this.Summary.AcquiredMeta |> Option.isSome
 
 type CardRevision = {
     Id: int

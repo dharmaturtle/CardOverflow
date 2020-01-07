@@ -1,5 +1,6 @@
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
+@using CardOverflow.Legacy
 @using CardOverflow.Debug
 @using CardOverflow.Pure
 @using CardOverflow.Api
@@ -20,7 +21,7 @@
       @if (User == null) {
         <p>Log in to Get</p>
       } else {
-        @if (Card.LatestMeta.IsAcquired) {
+        @if (Card.IsAcquired) {
           <button class="btn btn-secondary" disabled>
             Gotten
           </button>
@@ -47,7 +48,7 @@
     <ResizingIframe SrcUrl=@("/card/" + @Id + "/back/")></ResizingIframe>
   </div>
   <div>
-    @if (Card.LatestMeta.IsAcquired) {
+    @if (Card.IsAcquired) {
       <CardOptionSelector AcquiredCard=@AcquiredCard />
     }
     <h3>Tags</h3>
@@ -70,7 +71,7 @@
             </button>
           </li>
         }
-        @if (Card.LatestMeta.IsAcquired) {
+        @if (Card.IsAcquired) {
           <TagAdder CardId=@Card.Id />
         }
       </ul>
@@ -113,6 +114,7 @@
   async Task Acquire(int cardId) {
     await CardRepository.AcquireCardAsync(Service, User.Id, cardId);
     Card.LatestMeta.IsAcquired = true;
+    Card.Summary.AcquiredMeta = FSharpOption.Create(Card.LatestMeta);
     Card.Summary.Users++;
     StateHasChanged();
   }
