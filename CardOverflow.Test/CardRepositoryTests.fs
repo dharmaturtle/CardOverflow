@@ -50,10 +50,9 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_1));
 
     let! ac = CardRepository.GetAcquired c.Db authorId c1
-    let ac = Result.getOk ac
     let! v = SanitizeCardRepository.getEdit c.Db c1
-    let v = { Result.getOk v with FieldValues = [].ToList() }
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac v.load
+    let v = { v.Value with FieldValues = [].ToList() }
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac.Value v.load
     Result.getOk x
     let ci1_2 = 3
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
@@ -71,7 +70,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(4, c.Db.AcquiredCard.Count())
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
 
-    do! CardRepository.UnacquireCardAsync c.Db ac.AcquiredCardId
+    do! CardRepository.UnacquireCardAsync c.Db ac.Value.AcquiredCardId
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

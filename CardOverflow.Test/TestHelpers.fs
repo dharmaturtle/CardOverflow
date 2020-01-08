@@ -23,3 +23,9 @@ type XunitClassDataBase(generator : obj [] seq) = // https://stackoverflow.com/q
         member __.GetEnumerator() = generator.GetEnumerator()
         member __.GetEnumerator() = 
             generator.GetEnumerator() :> System.Collections.IEnumerator
+
+[<AutoOpen>]
+module Extensions =
+    type Result<'a, 'b> with
+        member this.Value =
+            Result.getOk this

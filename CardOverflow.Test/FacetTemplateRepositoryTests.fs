@@ -24,11 +24,11 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     use c = new TestContainer()
     
     let! cardTemplate = SanitizeCardTemplate.AllInstances c.Db templateId
-    let latestInstance = cardTemplate |> Result.getOk |> fun x -> x.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
+    let latestInstance = cardTemplate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
-        cardTemplate |> Result.getOk |> fun x -> x.Instances.Single().Name)
+        cardTemplate.Value.Instances.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
