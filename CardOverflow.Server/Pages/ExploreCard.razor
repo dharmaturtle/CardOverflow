@@ -113,6 +113,12 @@
 
   async Task Acquire(int cardId) {
     await CardRepository.AcquireCardAsync(Service, User.Id, cardId);
+    var ac = await CardRepository.GetAcquired(Service, User.Id, cardId);
+    if (ac.IsOk) {
+      AcquiredCard = ac.ResultValue;
+    } else {
+      ToastService.ShowError(ac.ErrorValue);
+    }
     Card.LatestMeta.IsAcquired = true;
     Card.Summary.AcquiredMeta = FSharpOption.Create(Card.LatestMeta);
     Card.Summary.Users++;

@@ -164,7 +164,7 @@ module CardRepository =
                             .ThenInclude(fun (x: CommentCardEntity) -> x.User )
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
-                        .FirstAsync(fun x -> x.Id = cardId)
+                        .SingleAsync(fun x -> x.Id = cardId)
                 else
                     db.Card
                         .Include(fun x -> x.Author)
@@ -191,7 +191,7 @@ module CardRepository =
                         .Include(fun x -> x.RelationshipTargets :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
-                        .FirstAsync(fun x -> x.Id = cardId)
+                        .SingleAsync(fun x -> x.Id = cardId)
             return concept |> ExploreCard.load userId
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
