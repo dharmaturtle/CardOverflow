@@ -29,7 +29,7 @@
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="Serilog.Sinks.Seq" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Trace" Version="2.1.0" />
-    <PackageReference Include="SimpleInjector" Version="4.8.1" />
+    <PackageReference Include="SimpleInjector" Version="4.9.0" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.0" />
     <PackageReference Include="UrlBase64" Version="0.1.2" />
     <PackageReference Include="X.PagedList" Version="7.9.0" />
