@@ -60,7 +60,6 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = view.FrontBackFrontSynthBackSynth
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| card.Comments
-    Assert.True card.LatestMeta.IsAcquired
     Assert.True card.IsAcquired
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
@@ -143,7 +142,6 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
         do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
     let! card = CardRepository.Get c.Db userId 1
-    Assert.Equal(card.LatestMeta.Id, card.AcquiredMeta.Value.Id)
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1

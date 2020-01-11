@@ -273,6 +273,7 @@ type CardInstanceMeta = {
     Modified: DateTime option
     IsDmca: bool
     IsAcquired: bool
+    IsLatest: bool
     StrippedFront: string
     StrippedBack: string
     CommunalFields: CommunalFieldInstance ResizeArray
@@ -325,10 +326,9 @@ type ExploreCardSummary = {
     Users: int
     Author: string
     AuthorId: int
-    LatestMeta: CardInstanceMeta
-    AcquiredMeta: CardInstanceMeta Option
+    Instance: CardInstanceMeta
 } with
-    member this.IsAcquired = this.AcquiredMeta |> Option.isSome
+    member this.IsAcquired = this.Instance.IsAcquired
 
 [<CLIMutable>]
 type ExploreCard = {
@@ -341,9 +341,8 @@ type ExploreCard = {
     //don't add users - the UI needs it to be mutable
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
-    member this.LatestMeta = this.Summary.LatestMeta
-    member this.AcquiredMeta = this.Summary.AcquiredMeta
-    member this.IsAcquired = this.Summary.AcquiredMeta |> Option.isSome
+    member this.Instance = this.Summary.Instance
+    member this.IsAcquired = this.Instance.IsAcquired
 
 type CardRevision = {
     Id: int

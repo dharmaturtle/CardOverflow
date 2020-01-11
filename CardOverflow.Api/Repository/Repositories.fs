@@ -156,6 +156,11 @@ module CardRepository =
         db.SaveChangesAsyncI ()
     let Get (db: CardOverflowDb) userId cardId =
         task {
+            let latestInstance =
+                db.CardInstance
+                    .Include(fun x -> x.CardTemplateInstance)
+                    .Single(fun x -> x.CardId = cardId && x.IsLatest)
+                |> CardInstanceMeta.load userId
             let! concept =
                 if userId = 0 then
                     db.Card
@@ -170,8 +175,6 @@ module CardRepository =
                         .Include(fun x -> x.Author)
                         .Include(fun x -> x.CommentCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: CommentCardEntity) -> x.User )
-                        .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
                         .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
@@ -192,7 +195,7 @@ module CardRepository =
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
                         .SingleAsync(fun x -> x.Id = cardId)
-            return concept |> ExploreCard.load userId
+            return concept |> ExploreCard.load userId latestInstance
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
         let! r =
@@ -276,7 +279,7 @@ module CardRepository =
                     .OrderByDescending(fun x -> x.Users)
                     .ToPagedListAsync(pageNumber, 15)
             return {
-                Results = r |> Seq.map (ExploreCardSummary.load userId)
+                Results = r |> Seq.map (fun c -> ExploreCardSummary.load (db.CardInstance.Include(fun x -> x.CardTemplateInstance).Single(fun x -> x.CardId = c.Id && x.IsLatest) |> CardInstanceMeta.load userId) c) // highTODO fix
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount

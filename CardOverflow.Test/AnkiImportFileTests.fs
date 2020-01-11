@@ -148,10 +148,10 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! card = CardRepository.Get c.Db userId 1
     Assert.Equal<string seq>(
         [longThing; ""],
-        card.LatestMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags))
+        card.Instance.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags))
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        card.LatestMeta.StrippedFront)
+        card.Instance.StrippedFront)
     let! card = CardRepository.Get c.Db userId 1
     Assert.Empty card.Relationships
     Assert.Empty c.Db.Relationship
@@ -176,7 +176,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
-    let! editCommand = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Instance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.FieldValues.Where(fun x -> x.IsCommunal) |> List.ofSeq

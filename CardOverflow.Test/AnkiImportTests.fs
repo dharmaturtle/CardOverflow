@@ -215,8 +215,8 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             { Id = 1
               FieldName = "Source"
               Value = communalValue },
-            card.LatestMeta.CommunalFields.Single())
-        let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+            card.Instance.CommunalFields.Single())
+        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
         let command = Result.getOk command
         Assert.Equal<int seq>(
             basic.Select(fun x -> x.Id) |> Seq.sort,
@@ -234,14 +234,14 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         Assert.Empty card.Relationships
         Assert.Equal(
             expectedFieldAndValues,
-            card.LatestMeta.CommunalFields.Select(fun x -> x.FieldName, x.Value))
+            card.Instance.CommunalFields.Select(fun x -> x.FieldName, x.Value))
         let! view = CardRepository.getView c.Db card.Id
         Assert.Equal(
             expectedFieldAndValues,
             view.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value))
-        let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
         Assert.Equal<int seq>(
             sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
             command.Value.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
@@ -257,12 +257,12 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             {   Id = 4
                 FieldName = "Text"
                 Value = communalValue },
-            card.LatestMeta.CommunalFields.Single(fun x -> x.FieldName = "Text"))
+            card.Instance.CommunalFields.Single(fun x -> x.FieldName = "Text"))
         if card.Id = 2 then
-            Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.LatestMeta.StrippedFront)
+            Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.Instance.StrippedFront)
         else
-            Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.LatestMeta.StrippedFront)
-        let! command = SanitizeCardRepository.getEdit c.Db card.LatestMeta.Id
+            Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.Instance.StrippedFront)
+        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
         let command = Result.getOk command
         Assert.Equal<int seq>(
             cloze.Select(fun x -> x.Id) |> Seq.sort,
@@ -380,7 +380,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
               { Id = 4
                 FieldName = "Add Reverse"
                 Value = "Basic (optional reversed card) reverse" }],
-            card.LatestMeta.CommunalFields)
+            card.Instance.CommunalFields)
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
@@ -393,7 +393,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
               { Id = 7
                 FieldName = "Front"
                 Value = "Basic (and reversed card) front" }],
-            card.LatestMeta.CommunalFields)
+            card.Instance.CommunalFields)
 
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
     Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest))

@@ -228,7 +228,7 @@ type CardTemplate with
     static member load (entity: CardTemplateEntity) = {
         Id = entity.Id
         AuthorId = entity.AuthorId
-        LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load }
+        LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load } // highTODO remove
 
 type CardInstanceView with
     static member load (entity: CardInstanceEntity) = {
@@ -269,6 +269,7 @@ type CardInstanceMeta with
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
+            IsLatest = entity.IsLatest
             IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
             StrippedFront = MappingTools.stripHtmlTags front
             StrippedBack = MappingTools.stripHtmlTags back
@@ -279,6 +280,7 @@ type CardInstanceMeta with
             Created = DateTime.UtcNow
             Modified = None
             IsDmca = false
+            IsLatest = true
             IsAcquired = true
             StrippedFront = ""
             StrippedBack = ""
@@ -368,7 +370,7 @@ type Comment with
     }
 
 type ExploreCardSummary with
-    static member load userId (entity: CardEntity) = {
+    static member load instance (entity: CardEntity) = {
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
@@ -381,13 +383,12 @@ type ExploreCardSummary with
                     entity.Users
                 else
                     failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
-        LatestMeta = entity.CardInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardInstanceMeta.load userId
-        AcquiredMeta = entity.CardInstances.SingleOrDefault(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)) |> Option.ofObj |> Option.map (CardInstanceMeta.load userId)
+        Instance = instance
     }
 
 type ExploreCard with
-    static member load userId (entity: CardEntity) = {
-        Summary = ExploreCardSummary.load userId entity
+    static member load userId instance (entity: CardEntity) = {
+        Summary = ExploreCardSummary.load instance entity
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
         Tags =
             entity.CardInstances
