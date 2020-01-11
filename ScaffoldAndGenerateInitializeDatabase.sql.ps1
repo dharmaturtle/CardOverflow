@@ -17,13 +17,9 @@ function Replace-TextInFile {
     )
 }
 
-git checkout 2d8fb8279152cbaee0697136c605b5f34969965e -- "CardOverflow.Entity\CardOverflow.Entity.csproj" # resets the entity proj back to August 2nd 2019
-git reset HEAD "CardOverflow.Entity\CardOverflow.Entity.csproj"
-
 Remove-Item CardOverflow.Entity\* -Include *entity.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
-git checkout -- "CardOverflow.Entity\CardOverflow.Entity.csproj"
 
 Remove-Item CardOverflow.Entity\* -Include AspNet*entity.cs
 
