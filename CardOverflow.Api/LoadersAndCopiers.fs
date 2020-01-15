@@ -53,10 +53,10 @@ type CardOption with
         this.ShowAnswerTimer = that.ShowAnswerTimer &&
         this.AutomaticallyPlayAudio = that.AutomaticallyPlayAudio &&
         this.ReplayQuestionAudioOnAnswer = that.ReplayQuestionAudioOnAnswer
-    static member load(entity: CardOptionEntity) =
+    static member load isDefault (entity: CardOptionEntity) =
         { Id = entity.Id
           Name = entity.Name
-          IsDefault = entity.IsDefault
+          IsDefault = isDefault
           NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
           NewCardsMaxPerDay = entity.NewCardsMaxPerDay
           NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
@@ -78,7 +78,6 @@ type CardOption with
           ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
     member this.CopyTo(entity: CardOptionEntity) =
         entity.Name <- this.Name
-        entity.IsDefault <- this.IsDefault
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
         entity.NewCardsGraduatingIntervalInDays <- this.NewCardsGraduatingInterval.TotalDays |> Math.Round |> byte
@@ -133,6 +132,21 @@ type IdOrEntity<'a> =
 type CardTemplateInstance with
     static member load (entity: CardTemplateInstanceEntity) = {
         Id = entity.Id
+        Name = entity.Name
+        CardTemplateId = entity.CardTemplateId
+        Css = entity.Css
+        Fields = Fields.fromString entity.Fields
+        Created = entity.Created
+        Modified = entity.Modified |> Option.ofNullable
+        LatexPre = entity.LatexPre
+        LatexPost = entity.LatexPost
+        QuestionTemplate = entity.QuestionTemplate
+        AnswerTemplate = entity.AnswerTemplate
+        ShortQuestionTemplate = entity.ShortQuestionTemplate
+        ShortAnswerTemplate = entity.ShortAnswerTemplate
+        EditSummary = entity.EditSummary }
+    static member loadLatest (entity: LatestCardTemplateInstanceEntity) = {
+        Id = entity.CardTemplateInstanceId
         Name = entity.Name
         CardTemplateId = entity.CardTemplateId
         Css = entity.Css
@@ -234,6 +248,9 @@ type CardInstanceView with
     static member load (entity: CardInstanceEntity) = {
         FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
         TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
+    static member loadLatest (entity: LatestCardInstanceEntity) = {
+        FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
+        TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
     member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
         entity.CommunalFieldInstance_CardInstances <-
@@ -253,7 +270,6 @@ type CardInstanceView with
         | Id id -> e.CardId <- id
         | Entity entity -> e.Card <- entity ()
         e.EditSummary <- editSummary
-        e.IsLatest <- true
         e
 
 type CommunalFieldInstance with
@@ -261,19 +277,35 @@ type CommunalFieldInstance with
         Id = entity.Id
         FieldName = entity.FieldName
         Value = entity.Value }
+    static member loadLatest (entity: LatestCommunalFieldInstanceEntity) = {   
+        Id = entity.CommunalFieldInstanceId
+        FieldName = entity.FieldName
+        Value = entity.Value }
 
 type CardInstanceMeta with
-    static member load userId (entity: CardInstanceEntity) =
+    static member load userId isLatest (entity: CardInstanceEntity) =
         let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
-            IsLatest = entity.IsLatest
+            IsLatest = isLatest
             IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
             StrippedFront = MappingTools.stripHtmlTags front
             StrippedBack = MappingTools.stripHtmlTags back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
+        }
+    static member loadLatest isAcquired communalFieldInstances (entity: LatestCardInstanceEntity) =
+        let front, back, _, _ = entity |> CardInstanceView.loadLatest |> fun x -> x.FrontBackFrontSynthBackSynth
+        {   Id = entity.CardInstanceId
+            Created = entity.Created
+            Modified = entity.Modified |> Option.ofNullable
+            IsDmca = entity.IsDmca
+            IsLatest = true
+            IsAcquired = isAcquired
+            StrippedFront = MappingTools.stripHtmlTags front
+            StrippedBack = MappingTools.stripHtmlTags back
+            CommunalFields = communalFieldInstances // lowTODO figure out how to .Include this to reduce the number of queries. THe fact that its a view is proving annoying
         }
     static member initialize =
         {   Id = 0
@@ -313,7 +345,7 @@ type QuizCard with
                 IsLapsed = entity.IsLapsed
                 EaseFactor = float entity.EaseFactorInPermille / 1000.
                 IntervalOrStepsIndex = IntervalOrStepsIndex.intervalFromDb entity.IntervalOrStepsIndex
-                Options = CardOption.load entity.CardOption }
+                Options = CardOption.load false entity.CardOption } // lowTODO false exists to make the syntax work; it is semantically useless. Remove.
         }
 
 type AcquiredCard with
@@ -355,7 +387,7 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardOptionId = entity.CardOptionId
-                CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.CardInstance
+                CardInstanceMeta = CardInstanceMeta.load entity.UserId false entity.CardInstance // highTODO make an AcquiredCard view that has a bool describing if its the latest
                 Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
             }
         }
@@ -444,5 +476,5 @@ type CardRevision with
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
-        SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.map (CardInstanceMeta.load userId) |> Seq.toList
+        SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.mapi (fun i e -> CardInstanceMeta.load userId (i = 0) e) |> Seq.toList
     }

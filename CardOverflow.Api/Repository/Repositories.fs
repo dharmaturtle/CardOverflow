@@ -19,7 +19,7 @@ open Microsoft.FSharp.Core
 
 module CommunalFieldRepository =
     let get (db: CardOverflowDb) fieldId = task {
-        let! x = db.CommunalFieldInstance.SingleAsync(fun x -> x.CommunalFieldId = fieldId && x.IsLatest)
+        let! x = db.LatestCommunalFieldInstance.SingleAsync(fun x -> x.CommunalFieldId = fieldId)
         return x.Value
     }
     let getInstance (db: CardOverflowDb) instanceId = task {
@@ -28,10 +28,10 @@ module CommunalFieldRepository =
     }
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.CommunalFieldInstance
-                .Where(fun x -> x.Value.Contains query && x.IsLatest)
+            db.LatestCommunalFieldInstance
+                .Where(fun x -> x.Value.Contains query)
                 .ToListAsync()
-        return x |> Seq.map CommunalFieldInstance.load |> toResizeArray
+        return x |> Seq.map CommunalFieldInstance.loadLatest |> toResizeArray
         }
 
 module FeedbackRepository =
@@ -87,7 +87,6 @@ module CardTemplateRepository =
             .Include(fun x -> x.CardInstance)
             .Where(fun x -> x.CardInstance.CardTemplateInstanceId = instance.Id)
             |> Seq.iter(fun ac ->
-                ac.CardInstance.IsLatest <- false
                 db.Entry(ac.CardInstance).State <- EntityState.Added
                 ac.CardInstance.Id <- ac.CardInstance.GetHashCode()
                 db.Entry(ac.CardInstance).Property(Core.nameof <@ any<CardInstanceEntity>.Id @>).IsTemporary <- true
@@ -133,16 +132,14 @@ module CardRepository =
         return CardRevision.load userId r
     }
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
-        let! defaultCardOption =
-            db.CardOption
-                .SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
+        let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         let! cardInstance = db.CardInstance.SingleAsync(fun x -> x.Id = cardInstanceId)
         match! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardInstance.CardId) with
         | null ->
             let card =
                 AcquiredCard.initialize
                     userId
-                    defaultCardOption.Id
+                    user.DefaultCardOptionId.Value // medTODO handle the null case
                     []
                 |> fun x -> x.copyToNew [] // medTODO get tags from template
             card.CardInstanceId <- cardInstanceId
@@ -156,11 +153,19 @@ module CardRepository =
         db.SaveChangesAsyncI ()
     let Get (db: CardOverflowDb) userId cardId =
         task {
-            let latestInstance =
-                db.CardInstance
+            let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+            let! e =
+                db.LatestCardInstance
                     .Include(fun x -> x.CardTemplateInstance)
-                    .Single(fun x -> x.CardId = cardId && x.IsLatest)
-                |> CardInstanceMeta.load userId
+                    .SingleAsync(fun x -> x.CardId = cardId)
+            let! communalFields =
+                db.CommunalFieldInstance_CardInstance
+                    .Include(fun x -> x.CommunalFieldInstance)
+                    .Where(fun x -> x.CardInstanceId = e.CardInstanceId)
+                    .AsEnumerable()
+                    .Select(fun x -> x.CommunalFieldInstance |> CommunalFieldInstance.load)
+                    .ToListAsync()
+            let latestInstance = CardInstanceMeta.loadLatest isAcquired communalFields e
             let! concept =
                 if userId = 0 then
                     db.Card
@@ -213,8 +218,8 @@ module CardRepository =
             | x -> AcquiredCard.load x
         }
     let getNew (db: CardOverflowDb) userId = task {
-        let! option = db.CardOption.SingleAsync(fun x -> x.UserId = userId && x.IsDefault)
-        return AcquiredCard.initialize userId option.Id []
+        let! user = db.User.SingleAsync(fun x -> x.Id = userId)
+        return AcquiredCard.initialize userId user.DefaultCardOptionId.Value [] // medTODO handle the null
         }
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
         db.AcquiredCard
@@ -279,7 +284,18 @@ module CardRepository =
                     .OrderByDescending(fun x -> x.Users)
                     .ToPagedListAsync(pageNumber, 15)
             return {
-                Results = r |> Seq.map (fun c -> ExploreCardSummary.load (db.CardInstance.Include(fun x -> x.CardTemplateInstance).Single(fun x -> x.CardId = c.Id && x.IsLatest) |> CardInstanceMeta.load userId) c) // highTODO fix
+                Results =
+                    r |> Seq.map (fun c ->
+                        let isAcquired = db.AcquiredCard.Any(fun x -> x.UserId = userId && x.CardInstance.CardId = c.Id)
+                        let getCommunalFields cardInstanceId =
+                            db.CommunalFieldInstance_CardInstance
+                                .Include(fun x -> x.CommunalFieldInstance)
+                                .Where(fun x -> x.CardInstanceId = cardInstanceId)
+                                .AsEnumerable()
+                                .Select(fun x -> x.CommunalFieldInstance |> CommunalFieldInstance.load)
+                                .ToList()
+                        ExploreCardSummary.load (db.LatestCardInstance.Include(fun x -> x.CardTemplateInstance).Single(fun x -> x.CardId = c.Id) |> fun x -> CardInstanceMeta.loadLatest isAcquired (getCommunalFields x.CardInstanceId) x) c
+                    ) // medTODO optimize
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount
@@ -346,8 +362,7 @@ module CardRepository =
                                             FieldName = f.Name,
                                             Value = c.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
                                             Created = DateTime.UtcNow,
-                                            EditSummary = c.EditSummary,
-                                            IsLatest = true)) |> List.ofSeq
+                                            EditSummary = c.EditSummary)) |> List.ofSeq
                             else
                                 c.FieldValues.Select(fun edit ->
                                     let fieldName = edit.EditField.Name
@@ -363,8 +378,7 @@ module CardRepository =
                                                     FieldName = fieldName,
                                                     Value = c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value,
                                                     Created = DateTime.UtcNow,
-                                                    EditSummary = c.EditSummary,
-                                                    IsLatest = true)
+                                                    EditSummary = c.EditSummary)
                                             |> Some
                                         else
                                             None
@@ -380,14 +394,12 @@ module CardRepository =
                             if old.Value = newValue then
                                 old, []
                             else
-                                old.IsLatest <- false
                                 CommunalFieldInstanceEntity(
                                     CommunalField = old.CommunalField,
                                     FieldName = old.FieldName,
                                     Value = newValue,
                                     Created = DateTime.UtcNow,
-                                    EditSummary = command.EditSummary,
-                                    IsLatest = true),
+                                    EditSummary = command.EditSummary),
                                 old.CommunalFieldInstance_CardInstances
                                     .Select(fun x -> x.CardInstanceId)
                                     .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
@@ -400,9 +412,7 @@ module CardRepository =
                         |> function
                         | null -> () // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
                         | ac ->
-                            ac.CardInstance.IsLatest <- false
                             ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
-                    e.CardInstance.IsLatest <- false
                     e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
                     Ok ()
             do! db.SaveChangesAsyncI()
@@ -458,20 +468,24 @@ module CardOptionsRepository =
     //      AutomaticallyPlayAudio = false
     //      ReplayQuestionAudioOnAnswer = false }
     let getAll (db: CardOverflowDb) userId = task {
+            let! user = db.User.SingleAsync(fun x -> x.Id = userId)
             let! r = db.CardOption.Where(fun x -> x.UserId = userId).ToListAsync()
-            return r |> Seq.map CardOption.load
+            return r |> Seq.map (fun o -> CardOption.load (o.Id = user.DefaultCardOptionId.Value) o)
         }
 
 module UserRepository =
-    let add (db: CardOverflowDb) name email =
+    let add (db: CardOverflowDb) name email = task {
         let cardOption = CardOptionsRepository.defaultCardOptions.CopyToNew 0
-        cardOption.IsDefault <- true
-        UserEntity(
-            DisplayName = name,
-            Email = email,
-            CardOptions = (cardOption |> Seq.singleton |> fun x -> x.ToList())
-        ) |> db.User.AddI
-        db.SaveChangesI ()
+        let user =
+            UserEntity(
+                DisplayName = name,
+                Email = email,
+                CardOptions = [cardOption].ToList()
+            )
+        db.User.AddI user
+        do! db.SaveChangesAsyncI ()
+        user.DefaultCardOption <- cardOption
+        return! db.SaveChangesAsyncI () }
     let Get (db: CardOverflowDb) email =
         db.User.FirstOrDefault(fun x -> x.Email = email)
 

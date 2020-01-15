@@ -77,7 +77,6 @@ type AnkiCardTemplateInstance = {
                 AuthorId = this.AuthorId)
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
-        entity.IsLatest <- true
         entity
     
 type AnkiCardWrite = {
@@ -496,8 +495,7 @@ module Anki =
                             EditSummary = "Imported from Anki",
                             CommunalField = CommunalFieldEntity(AuthorId = userId),
                             Created = DateTime.UtcNow,
-                            CommunalFieldInstance_CardInstances = [].ToList(),
-                            IsLatest = true))
+                            CommunalFieldInstance_CardInstances = [].ToList()))
                 let toCard fields cardTemplate noteOrd =
                     let c = {
                         AnkiNoteId = note.Id

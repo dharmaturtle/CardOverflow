@@ -37,11 +37,13 @@ namespace CardOverflow.Entity
             }
         }
         private string _DisplayName;
+        public int? DefaultCardOptionId { get; set; }
 
-        [InverseProperty("User")]
-        public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
+        public virtual CardOptionEntity DefaultCardOption { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<CardTemplateEntity> CardTemplates { get; set; }
         [InverseProperty("Author")]

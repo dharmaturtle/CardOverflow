@@ -32,11 +32,11 @@ let ``SanitizeCardOption.upsertMany can add/update new option``(): Task<unit> = 
         |> toResizeArray
     let newId = oldId + 1
 
-    let! id = SanitizeCardOptionRepository.upsertMany c.Db userId options
+    let! ids = SanitizeCardOptionRepository.upsertMany c.Db userId options
     
-    Assert.Equal(newId, (Result.getOk id).Single(fun x -> x  <> oldId))
-    let! option = c.Db.CardOption.SingleAsync(fun x -> x.Id = newId)
-    Assert.False option.IsDefault
+    Assert.Equal(newId, ids.Value.Single(fun x -> x <> oldId))
+    let! user = c.Db.User.SingleAsync(fun x -> x.Id = userId)
+    Assert.Equal(oldId, user.DefaultCardOptionId.Value)
 
     // can update
     let! options = SanitizeCardOptionRepository.getAll c.Db userId
@@ -52,19 +52,19 @@ let ``SanitizeCardOption.upsertMany can add/update new option``(): Task<unit> = 
     Assert.Equal(newId, id)
     Assert.Equal(newName, c.Db.CardOption.Single(fun x -> x.Id = id).Name)
 
-    let canUpdateIsDefault oldIsDefault newIsDefault = task {
+    let canUpdateIsDefault expectedDefaultId = task {
         let! options = SanitizeCardOptionRepository.getAll c.Db userId
     
         let! _ =
             SanitizeCardOptionRepository.upsertMany c.Db userId
-                <| [{ options.Single(fun x -> x.Id = oldId) with IsDefault = oldIsDefault }
-                    { options.Single(fun x -> x.Id = newId) with IsDefault = newIsDefault }
+                <| [{ options.Single(fun x -> x.Id = oldId) with IsDefault = oldId = expectedDefaultId }
+                    { options.Single(fun x -> x.Id = newId) with IsDefault = newId = expectedDefaultId }
                    ].ToList()
     
-        Assert.Equal(oldIsDefault, c.Db.CardOption.Single(fun x -> x.Id = oldId).IsDefault)
-        Assert.Equal(newIsDefault,     c.Db.CardOption.Single(fun x -> x.Id = newId).IsDefault) }
-    do! canUpdateIsDefault false true
-    do! canUpdateIsDefault true false
+        let! user = c.Db.User.SingleAsync(fun x -> x.Id = userId)
+        Assert.Equal(expectedDefaultId, user.DefaultCardOptionId.Value) }
+    do! canUpdateIsDefault oldId
+    do! canUpdateIsDefault newId
 
     // Insert new card
     let! templates = SanitizeCardTemplate.Search c.Db "Basic"

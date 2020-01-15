@@ -247,6 +247,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let! instance = CardRepository.instance c.Db revisions.SortedMeta.[1].Id
     let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
     Assert.Contains("Front", original)
+    Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest
     }
     
 // fuck merge

@@ -81,12 +81,14 @@ let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` ()
         cloze.AnswerTemplate)
 
     let cards, _ =
+        let option = CardOptionsRepository.defaultCardOptionsEntity userId
         AnkiImporter.load
             AnkiImportTestData.relationships
             userId
             Map.empty
             []
-            [CardOptionsRepository.defaultCardOptionsEntity userId]
+            [option]
+            option
             (fun _ -> None)
             (fun _ -> None)
             (fun _ _ _ _ -> false)
@@ -396,7 +398,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
             card.Instance.CommunalFields)
 
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-    Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest))
+    Assert.Equal(c.Db.LatestCardTemplateInstance.Count(), c.Db.CardTemplateInstance.Count())
     }
 
 let assertHasHistory db ankiDb: Task<unit> = task {
@@ -462,7 +464,7 @@ let ``Importing AnkiDb reuses previous CardOptions, Tags, and CardTemplates`` _ 
         Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
         Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(7, c.Db.CommunalField.Count())
-        Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest))
+        Assert.Equal(c.Db.LatestCardTemplateInstance.Count(), c.Db.CardTemplateInstance.Count())
     }
 
 [<Theory>]

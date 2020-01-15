@@ -69,6 +69,7 @@ module AnkiImporter =
         fileEntityByAnkiFileName
         (usersTags: TagEntity seq)
         (cardOptions: CardOptionEntity seq)
+        defaultCardOption
         getCardTemplates
         getCard
         noRelationship
@@ -79,7 +80,7 @@ module AnkiImporter =
             let! cardOptionByDeckConfigurationId =
                 let toEntity _ (cardOption: CardOption) =
                     cardOptions
-                    |> Seq.map CardOption.load
+                    |> Seq.map (CardOption.load false)
                     |> Seq.filter (fun x -> x.AcquireEquality cardOption)
                     |> Seq.tryHead
                     |> Option.defaultValue cardOption
@@ -108,7 +109,7 @@ module AnkiImporter =
                         cardOptionAndDeckNameByDeckId.TryFind cardTemplate.DeckId
                         |> function
                         | Some (cardOption, _) -> cardOption
-                        | None -> cardOptions.First(fun x -> x.IsDefault) // veryLowTODO some anki models have invalid deck ids. Perhaps log this
+                        | None -> defaultCardOption // veryLowTODO some anki models have invalid deck ids. Perhaps log this
                     getCardTemplates cardTemplate
                     |> function
                     | Some (e: CardTemplateInstanceEntity) ->
@@ -195,6 +196,7 @@ module AnkiImporter =
                     <| db.Tag // highTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy... no actually you're loading the ENTIRE tag table
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
+                    <| db.User.Include(fun x -> x.DefaultCardOption).Single(fun x -> x.Id = userId).DefaultCardOption
                     <| getCardTemplateInstance
                     <| getCard
                     <| noRelationship

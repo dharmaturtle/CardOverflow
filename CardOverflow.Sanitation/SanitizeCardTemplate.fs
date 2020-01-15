@@ -145,11 +145,10 @@ module SanitizeCardTemplate =
         }
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.CardTemplateInstance
-                .Include(fun x-> x.CardTemplate)
-                .Where(fun x -> x.Name.Contains query && x.IsLatest)
+            db.LatestCardTemplateInstance
+                .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (CardTemplateInstance.load >> ViewCardTemplateInstance.load) |> toResizeArray
+        return x |> Seq.map (CardTemplateInstance.loadLatest >> ViewCardTemplateInstance.load) |> toResizeArray
         }
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =

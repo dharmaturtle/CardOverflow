@@ -95,6 +95,196 @@ GO
 /****** Object:  FullTextCatalog [CardInstanceFieldValueFullTextCatalog] ******/
 CREATE FULLTEXT CATALOG [CardInstanceFieldValueFullTextCatalog] WITH ACCENT_SENSITIVITY = ON
 GO
+/****** Object:  Table [dbo].[Card] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Card](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[AuthorId] [int] NOT NULL,
+	[Users] [int] NOT NULL,
+ CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[CardInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CardInstance](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Created] [datetime2](7) NOT NULL,
+	[Modified] [datetime2](7) NULL,
+	[CardId] [int] NOT NULL,
+	[IsDmca] [bit] NOT NULL,
+	[FieldValues] [nvarchar](max) NOT NULL,
+	[CardTemplateInstanceId] [int] NOT NULL,
+	[Users] [int] NOT NULL,
+	[EditSummary] [nvarchar](200) NOT NULL,
+	[AnkiNoteId] [bigint] NULL,
+	[AnkiNoteOrd] [tinyint] NULL,
+ CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[LatestCardInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   VIEW [dbo].[LatestCardInstance] AS
+--https://stackoverflow.com/a/2111420
+SELECT c.AuthorId
+      ,c.Users as CardUsers
+      ,i1.Id as CardInstanceId
+	  ,i1.CardId
+      ,i1.Created
+      ,i1.Modified
+      ,i1.IsDmca
+      ,i1.FieldValues
+      ,i1.CardTemplateInstanceId
+      ,i1.Users as InstanceUsers
+      ,i1.EditSummary
+      ,i1.AnkiNoteId
+      ,i1.AnkiNoteOrd
+  FROM [Card] c
+  JOIN [CardInstance] i1 on (c.Id = i1.CardId)
+  LEFT OUTER JOIN [CardInstance] i2 ON (c.Id = i2.CardId AND 
+    (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
+WHERE i2.id IS NULL;
+GO
+/****** Object:  Table [dbo].[CardTemplate] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CardTemplate](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[AuthorId] [int] NOT NULL,
+ CONSTRAINT [PK_CardTemplate] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[CardTemplateInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CardTemplateInstance](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](100) NOT NULL,
+	[CardTemplateId] [int] NOT NULL,
+	[Css] [varchar](4000) NOT NULL,
+	[Created] [datetime2](7) NOT NULL,
+	[Modified] [datetime2](7) NULL,
+	[LatexPre] [nvarchar](500) NOT NULL,
+	[LatexPost] [nvarchar](500) NOT NULL,
+	[IsDmca] [bit] NOT NULL,
+	[QuestionTemplate] [nvarchar](4000) NOT NULL,
+	[AnswerTemplate] [nvarchar](4000) NOT NULL,
+	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
+	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
+	[Fields] [nvarchar](4000) NOT NULL,
+	[EditSummary] [nvarchar](200) NOT NULL,
+	[AnkiId] [bigint] NULL,
+ CONSTRAINT [PK_CardTemplateInstance] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[LatestCardTemplateInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   VIEW [dbo].[LatestCardTemplateInstance] AS
+--https://stackoverflow.com/a/2111420
+SELECT c.AuthorId
+      ,i1.Id as CardTemplateInstanceId
+      ,i1.CardTemplateId
+      ,i1.Name
+      ,i1.Css
+      ,i1.Created
+      ,i1.Modified
+      ,i1.LatexPre
+      ,i1.LatexPost
+      ,i1.IsDmca
+      ,i1.QuestionTemplate
+      ,i1.AnswerTemplate
+      ,i1.ShortQuestionTemplate
+      ,i1.ShortAnswerTemplate
+      ,i1.Fields
+      ,i1.EditSummary
+      ,i1.AnkiId
+  FROM [CardTemplate] c
+  JOIN [CardTemplateInstance] i1 on (c.Id = i1.CardTemplateId)
+  LEFT OUTER JOIN [CardTemplateInstance] i2 ON (c.Id = i2.CardTemplateId AND 
+    (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
+WHERE i2.id IS NULL;
+GO
+/****** Object:  Table [dbo].[CommunalField] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CommunalField](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[AuthorId] [int] NOT NULL,
+ CONSTRAINT [PK_CommunalField] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[CommunalFieldInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[CommunalFieldInstance](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[CommunalFieldId] [int] NOT NULL,
+	[FieldName] [nvarchar](200) NOT NULL,
+	[Value] [nvarchar](max) NOT NULL,
+	[Created] [datetime2](7) NOT NULL,
+	[Modified] [datetime2](7) NULL,
+	[EditSummary] [nvarchar](200) NOT NULL,
+ CONSTRAINT [PK_CommunalFieldInstance] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[LatestCommunalFieldInstance] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   VIEW [dbo].[LatestCommunalFieldInstance] AS
+--https://stackoverflow.com/a/2111420
+SELECT c.AuthorId
+      ,i1.Id as CommunalFieldInstanceId
+      ,i1.CommunalFieldId
+      ,i1.FieldName
+      ,i1.Value
+      ,i1.Created
+      ,i1.Modified
+      ,i1.EditSummary
+  FROM [CommunalField] c
+  JOIN [CommunalFieldInstance] i1 on (c.Id = i1.CommunalFieldId)
+  LEFT OUTER JOIN [CommunalFieldInstance] i2 ON (c.Id = i2.CommunalFieldId AND 
+    (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
+WHERE i2.id IS NULL;
+GO
 /****** Object:  Table [dbo].[AcquiredCard] ******/
 SET ANSI_NULLS ON
 GO
@@ -229,45 +419,6 @@ CREATE TABLE [dbo].[AspNetUserTokens](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Card] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Card](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AuthorId] [int] NOT NULL,
-	[Users] [int] NOT NULL,
- CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CardInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CardInstance](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Created] [datetime2](7) NOT NULL,
-	[Modified] [datetime2](7) NULL,
-	[CardId] [int] NOT NULL,
-	[IsDmca] [bit] NOT NULL,
-	[FieldValues] [nvarchar](max) NOT NULL,
-	[CardTemplateInstanceId] [int] NOT NULL,
-	[Users] [int] NOT NULL,
-	[EditSummary] [nvarchar](200) NOT NULL,
-	[AnkiNoteId] [bigint] NULL,
-	[AnkiNoteOrd] [tinyint] NULL,
-	[IsLatest] [bit] NOT NULL,
- CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
 /****** Object:  Table [dbo].[CardOption] ******/
 SET ANSI_NULLS ON
 GO
@@ -276,7 +427,6 @@ GO
 CREATE TABLE [dbo].[CardOption](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[UserId] [int] NOT NULL,
-	[IsDefault] [bit] NOT NULL,
 	[Name] [nvarchar](100) NOT NULL,
 	[NewCardsStepsInMinutes] [varchar](100) NOT NULL,
 	[NewCardsMaxPerDay] [smallint] NOT NULL,
@@ -298,49 +448,6 @@ CREATE TABLE [dbo].[CardOption](
 	[AutomaticallyPlayAudio] [bit] NOT NULL,
 	[ReplayQuestionAudioOnAnswer] [bit] NOT NULL,
  CONSTRAINT [PK_CardOption] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CardTemplate] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CardTemplate](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AuthorId] [int] NOT NULL,
- CONSTRAINT [PK_CardTemplate] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CardTemplateInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CardTemplateInstance](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](100) NOT NULL,
-	[CardTemplateId] [int] NOT NULL,
-	[Css] [varchar](4000) NOT NULL,
-	[Created] [datetime2](7) NOT NULL,
-	[Modified] [datetime2](7) NULL,
-	[LatexPre] [nvarchar](500) NOT NULL,
-	[LatexPost] [nvarchar](500) NOT NULL,
-	[IsDmca] [bit] NOT NULL,
-	[QuestionTemplate] [nvarchar](4000) NOT NULL,
-	[AnswerTemplate] [nvarchar](4000) NOT NULL,
-	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
-	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
-	[Fields] [nvarchar](4000) NOT NULL,
-	[EditSummary] [nvarchar](200) NOT NULL,
-	[AnkiId] [bigint] NULL,
-	[IsLatest] [bit] NOT NULL,
- CONSTRAINT [PK_CardTemplateInstance] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -381,40 +488,6 @@ CREATE TABLE [dbo].[CommentCardTemplate](
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CommunalField] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommunalField](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AuthorId] [int] NOT NULL,
- CONSTRAINT [PK_CommunalField] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CommunalFieldInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommunalFieldInstance](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[CommunalFieldId] [int] NOT NULL,
-	[FieldName] [nvarchar](200) NOT NULL,
-	[Value] [nvarchar](max) NOT NULL,
-	[Created] [datetime2](7) NOT NULL,
-	[Modified] [datetime2](7) NULL,
-	[EditSummary] [nvarchar](200) NOT NULL,
-	[IsLatest] [bit] NOT NULL,
- CONSTRAINT [PK_CommunalFieldInstance] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[CommunalFieldInstance_CardInstance] ******/
 SET ANSI_NULLS ON
@@ -618,6 +691,7 @@ CREATE TABLE [dbo].[User](
 	[LockoutEnabled] [bit] NOT NULL,
 	[AccessFailedCount] [int] NOT NULL,
 	[DisplayName] [nvarchar](32) NULL,
+	[DefaultCardOptionId] [int] NULL,
  CONSTRAINT [PK_User] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -687,9 +761,9 @@ CREATE TABLE [dbo].[Vote_Feedback](
 GO
 SET IDENTITY_INSERT [dbo].[CardOption] ON 
 
-INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (1, 1, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
-INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (2, 2, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
-INSERT [dbo].[CardOption] ([Id], [UserId], [IsDefault], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (3, 3, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
+INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (1, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
+INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (2, 2, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
+INSERT [dbo].[CardOption] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (3, 3, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
 SET IDENTITY_INSERT [dbo].[CardOption] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplate] ON 
 
@@ -701,7 +775,7 @@ INSERT [dbo].[CardTemplate] ([Id], [AuthorId]) VALUES (5, 2)
 SET IDENTITY_INSERT [dbo].[CardTemplate] OFF
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] ON 
 
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [IsLatest]) VALUES (1, N'Basic', 1, N'.card {
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (1, N'Basic', 1, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -719,8 +793,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669581, 1)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [IsLatest]) VALUES (2, N'Basic (and reversed card) - Card 1', 2, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669581)
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (2, N'Basic (and reversed card) - Card 1', 2, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -738,8 +812,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669577, 1)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [IsLatest]) VALUES (3, N'Basic (optional reversed card) - Card 1', 3, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669577)
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (3, N'Basic (optional reversed card) - Card 1', 3, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -757,8 +831,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki', 1554689669572, 1)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [IsLatest]) VALUES (4, N'Basic (type in the answer)', 4, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki', 1554689669572)
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (4, N'Basic (type in the answer)', 4, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -777,8 +851,8 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 
 <hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669571, 1)
-INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [IsLatest]) VALUES (5, N'Cloze', 5, N'.card {
+{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669571)
+INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId]) VALUES (5, N'Cloze', 5, N'.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -800,13 +874,13 @@ INSERT [dbo].[CardTemplateInstance] ([Id], [Name], [CardTemplateId], [Css], [Cre
 \setlength{\parindent}{0in}
 \begin{document}
 ', N'\end{document}', 0, N'{{cloze:Text}}', N'{{cloze:Text}}<br>
-{{Extra}}', N'', N'', N'TextArial20False0FalseExtraArial20False1False', N'Imported from Anki', 1554689669570, 1)
+{{Extra}}', N'', N'', N'TextArial20False0FalseExtraArial20False1False', N'Imported from Anki', 1554689669570)
 SET IDENTITY_INSERT [dbo].[CardTemplateInstance] OFF
 SET IDENTITY_INSERT [dbo].[User] ON 
 
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'4934a9df-035b-4216-a8d7-cf00510a16ff', NULL, 0, 0, NULL, 0, 0, N'Admin')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'7f15011b-1605-4b2c-ba98-af5659739d60', NULL, 0, 0, NULL, 0, 0, N'The Collective')
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'd622b1ce-0c3b-48a3-9851-506e17bd04ec', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle')
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardOptionId]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'4934a9df-035b-4216-a8d7-cf00510a16ff', NULL, 0, 0, NULL, 0, 0, N'Admin', 1)
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardOptionId]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'7f15011b-1605-4b2c-ba98-af5659739d60', NULL, 0, 0, NULL, 0, 0, N'The Collective', 2)
+INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardOptionId]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'd622b1ce-0c3b-48a3-9851-506e17bd04ec', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle', 3)
 SET IDENTITY_INSERT [dbo].[User] OFF
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 1, 2)
 INSERT [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId], [DefaultCardOptionId]) VALUES (2, 2, 2)
@@ -886,41 +960,17 @@ CREATE NONCLUSTERED INDEX [IX_Card_AuthorId] ON [dbo].[Card]
 	[AuthorId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_CardInstance_CardId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_CardInstance_CardId] ON [dbo].[CardInstance]
-(
-	[CardId] ASC
-)
-WHERE ([IsLatest]=(1))
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
 /****** Object:  Index [IX_CardInstance_CardTemplateInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_CardInstance_CardTemplateInstanceId] ON [dbo].[CardInstance]
 (
 	[CardTemplateInstanceId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_CardOption_UserId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_CardOption_UserId] ON [dbo].[CardOption]
-(
-	[UserId] ASC
-)
-WHERE ([IsDefault]=(1))
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
 /****** Object:  Index [IX_CardTemplate_AuthorId] ******/
 CREATE NONCLUSTERED INDEX [IX_CardTemplate_AuthorId] ON [dbo].[CardTemplate]
 (
 	[AuthorId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CardTemplateInstance_CardTemplateId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_CardTemplateInstance_CardTemplateId] ON [dbo].[CardTemplateInstance]
-(
-	[CardTemplateId] ASC
-)
-WHERE ([IsLatest]=(1))
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CommentCard_CardId] ******/
 CREATE NONCLUSTERED INDEX [IX_CommentCard_CardId] ON [dbo].[CommentCard]
@@ -951,14 +1001,6 @@ CREATE NONCLUSTERED INDEX [IX_CommunalField_AuthorId] ON [dbo].[CommunalField]
 (
 	[AuthorId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommunalFieldInstance_CommunalFieldId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CommunalFieldId] ON [dbo].[CommunalFieldInstance]
-(
-	[CommunalFieldId] ASC
-)
-WHERE ([IsLatest]=(1))
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ON [dbo].[CommunalFieldInstance_CardInstance]
@@ -1315,6 +1357,11 @@ ALTER TABLE [dbo].[Tag_User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [F
 REFERENCES [dbo].[User_CardTemplateInstance] ([UserId], [CardTemplateInstanceId])
 GO
 ALTER TABLE [dbo].[Tag_User_CardTemplateInstance] CHECK CONSTRAINT [FK_Tag_User_CardTemplateInstance_User_CardTemplateInstance_UserId_CardTemplateInstanceId]
+GO
+ALTER TABLE [dbo].[User]  WITH CHECK ADD  CONSTRAINT [FK_User_CardOption_DefaultCardOptionId] FOREIGN KEY([DefaultCardOptionId])
+REFERENCES [dbo].[CardOption] ([Id])
+GO
+ALTER TABLE [dbo].[User] CHECK CONSTRAINT [FK_User_CardOption_DefaultCardOptionId]
 GO
 ALTER TABLE [dbo].[User_CardTemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_CardTemplateInstance_CardOption_DefaultCardOptionId] FOREIGN KEY([DefaultCardOptionId])
 REFERENCES [dbo].[CardOption] ([Id])

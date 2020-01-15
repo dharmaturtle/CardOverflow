@@ -5,15 +5,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommunalFieldInstanceEntity
+    public partial class LatestCommunalFieldInstanceEntity
     {
-        public CommunalFieldInstanceEntity()
-        {
-            CommunalFieldInstance_CardInstances = new HashSet<CommunalFieldInstance_CardInstanceEntity>();
-        }
-
-        [Key]
-        public int Id { get; set; }
+        public int AuthorId { get; set; }
+        public int CommunalFieldInstanceId { get; set; }
         public int CommunalFieldId { get; set; }
         [Required]
         [StringLength(200)]
@@ -39,11 +34,5 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
-
-        [ForeignKey("CommunalFieldId")]
-        [InverseProperty("CommunalFieldInstances")]
-        public virtual CommunalFieldEntity CommunalField { get; set; }
-        [InverseProperty("CommunalFieldInstance")]
-        public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
     }
 }

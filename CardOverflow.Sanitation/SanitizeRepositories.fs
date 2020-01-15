@@ -429,23 +429,23 @@ module SanitizeCardOptionRepository =
         let options = options.Select(fun x -> x.copyTo) |> List.ofSeq
         let oldOptionIds = options.Select(fun x -> x.Id).Where(fun x -> x <> 0).ToList()
         let! oldOptions = db.CardOption.Where(fun x -> oldOptionIds.Contains x.Id && x.UserId = userId).ToListAsync()
-        
-        // hack
-        oldOptions.Single(fun x -> x.IsDefault).IsDefault <- false
-        do! db.SaveChangesAsyncI()
-        // kcah
-
+        let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return!
             options |> List.map (fun option ->
+                let maybeSetDefault e =
+                    if option.IsDefault then
+                        user.DefaultCardOption <- e
                 if option.Id = 0 then
                     let e = option.CopyToNew userId
                     db.CardOption.AddI e
+                    maybeSetDefault e
                     Ok e
                 else
                     match oldOptions.SingleOrDefault(fun x -> x.Id = option.Id) with
                     | null -> Error "Card option not found (or doesn't belong to you.)"
                     | e ->
                         option.CopyTo e
+                        maybeSetDefault e
                         Ok e
             ) |> Result.consolidate
             |> function

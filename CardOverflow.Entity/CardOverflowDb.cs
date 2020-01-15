@@ -25,6 +25,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
+        public virtual DbSet<LatestCardInstanceEntity> LatestCardInstance { get; set; }
+        public virtual DbSet<LatestCardTemplateInstanceEntity> LatestCardTemplateInstance { get; set; }
+        public virtual DbSet<LatestCommunalFieldInstanceEntity> LatestCommunalFieldInstance { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
@@ -97,10 +100,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CardId)
-                    .IsUnique()
-                    .HasFilter("([IsLatest]=(1))");
-
                 entity.HasIndex(e => e.CardTemplateInstanceId);
 
                 entity.HasOne(d => d.Card)
@@ -116,10 +115,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardOptionEntity>(entity =>
             {
-                entity.HasIndex(e => e.UserId)
-                    .IsUnique()
-                    .HasFilter("([IsDefault]=(1))");
-
                 entity.Property(e => e.LapsedCardsStepsInMinutes).IsUnicode(false);
 
                 entity.Property(e => e.NewCardsStepsInMinutes).IsUnicode(false);
@@ -142,10 +137,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTemplateInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CardTemplateId)
-                    .IsUnique()
-                    .HasFilter("([IsLatest]=(1))");
-
                 entity.Property(e => e.Css).IsUnicode(false);
 
                 entity.HasOne(d => d.CardTemplate)
@@ -200,10 +191,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CommunalFieldInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CommunalFieldId)
-                    .IsUnique()
-                    .HasFilter("([IsLatest]=(1))");
-
                 entity.HasOne(d => d.CommunalField)
                     .WithMany(p => p.CommunalFieldInstances)
                     .HasForeignKey(d => d.CommunalFieldId)
@@ -253,6 +240,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.Sha256)
                     .IsUnique();
+
+                entity.Property(e => e.Sha256).IsFixedLength();
             });
 
             modelBuilder.Entity<File_CardInstanceEntity>(entity =>
@@ -275,6 +264,29 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
                 entity.HasIndex(e => e.AcquiredCardId);
+            });
+
+            modelBuilder.Entity<LatestCardInstanceEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("LatestCardInstance");
+            });
+
+            modelBuilder.Entity<LatestCardTemplateInstanceEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("LatestCardTemplateInstance");
+
+                entity.Property(e => e.Css).IsUnicode(false);
+            });
+
+            modelBuilder.Entity<LatestCommunalFieldInstanceEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("LatestCommunalFieldInstance");
             });
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
@@ -348,6 +360,8 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.Email)
                     .IsUnique();
+
+                entity.HasOne(d => d.DefaultCardOption);
             });
 
             modelBuilder.Entity<User_CardTemplateInstanceEntity>(entity =>

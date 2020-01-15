@@ -37,7 +37,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = ta
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-    Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest)) }
+    Assert.Equal(c.Db.LatestCardTemplateInstance.Count(), c.Db.CardTemplateInstance.Count()) }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -108,8 +108,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.CardInstance.Count())
-    Assert.True(c.Db.CardTemplateInstance.All(fun x -> x.IsLatest))
-    }
+    Assert.Equal(c.Db.LatestCardTemplateInstance.Count(), c.Db.CardTemplateInstance.Count()) }
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let! acquired = CardRepository.GetAcquired c.Db userId cardId
@@ -220,12 +219,13 @@ let ``Create cloze card works`` (): Task<unit> = task {
         Result.getOk x
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
-            c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).IsLatest |> Assert.True
-            Assert.True(
+            c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains(clozeText)) |> Assert.SingleI
+            let communalFieldInstanceId =
                 c.Db.CardInstance
                     .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
-                    .Single(fun x -> x.FieldValues.Contains(clozeText)).CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.IsLatest)
+                    .Single(fun x -> x.FieldValues.Contains(clozeText)).CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.Id
+            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = communalFieldInstanceId))
             let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
             do! testCommunalFields cardId [clozeText]
         otherTest clozeText }
@@ -289,11 +289,11 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     do! test <| None <| fun i ->
             Assert.Equal(1,  i.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
             Assert.Equal(id, i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
-            Assert.True(i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.IsLatest)
+            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = i.Id))
     do! test <| Some id <| fun i ->
             Assert.Equal([1;  2],  i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId))
             Assert.Equal([id; id], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstanceId))
-            Assert.True(i.CommunalFieldInstance_CardInstances.Skip(1).Single().CommunalFieldInstance.IsLatest)
+            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = i.Id))
     Assert.SingleI c.Db.CommunalField
     Assert.SingleI c.Db.CommunalFieldInstance }
 
