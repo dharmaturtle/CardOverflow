@@ -204,7 +204,7 @@ module CardRepository =
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
         let! r =
-            db.AcquiredCard
+            db.AcquiredCardIsLatest
                 .Include(fun x -> x.CardInstance.CardTemplateInstance)
                 .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
@@ -232,10 +232,21 @@ module CardRepository =
                 else
                     EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
+    let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
+        db.AcquiredCardIsLatest
+            .Include(fun x -> x.CardInstance.CardTemplateInstance)
+            .Where(fun x -> x.UserId = userId)
+            .Where(fun x ->
+                x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
+                if String.IsNullOrWhiteSpace searchTerm then 
+                    true
+                else
+                    EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+            )
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
-                (searchAcquired db userId searchTerm)
+                (searchAcquiredIsLatest db userId searchTerm)
                     .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)

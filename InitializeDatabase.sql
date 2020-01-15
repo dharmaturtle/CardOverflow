@@ -159,6 +159,44 @@ SELECT c.AuthorId
     (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
 WHERE i2.id IS NULL;
 GO
+/****** Object:  Table [dbo].[AcquiredCard] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AcquiredCard](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[CardInstanceId] [int] NOT NULL,
+	[CardState] [tinyint] NOT NULL,
+	[EaseFactorInPermille] [smallint] NOT NULL,
+	[IntervalOrStepsIndex] [smallint] NOT NULL,
+	[Due] [smalldatetime] NOT NULL,
+	[CardOptionId] [int] NOT NULL,
+	[IsLapsed] [bit] NOT NULL,
+ CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[AcquiredCardIsLatest] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE   VIEW [dbo].[AcquiredCardIsLatest] AS
+SELECT a.*,
+	CAST(
+		CASE
+			WHEN l.CardInstanceId IS NULL
+			THEN 0
+			ELSE 1
+		END
+	AS BIT) AS IsLatest
+FROM [AcquiredCard] a
+LEFT JOIN [LatestCardInstance] l on (l.CardInstanceId = a.CardInstanceId)
+GO
 /****** Object:  Table [dbo].[CardTemplate] ******/
 SET ANSI_NULLS ON
 GO
@@ -284,27 +322,6 @@ SELECT c.AuthorId
   LEFT OUTER JOIN [CommunalFieldInstance] i2 ON (c.Id = i2.CommunalFieldId AND 
     (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
 WHERE i2.id IS NULL;
-GO
-/****** Object:  Table [dbo].[AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AcquiredCard](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[CardInstanceId] [int] NOT NULL,
-	[CardState] [tinyint] NOT NULL,
-	[EaseFactorInPermille] [smallint] NOT NULL,
-	[IntervalOrStepsIndex] [smallint] NOT NULL,
-	[Due] [smalldatetime] NOT NULL,
-	[CardOptionId] [int] NOT NULL,
-	[IsLapsed] [bit] NOT NULL,
- CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[AlphaBetaKey] ******/
 SET ANSI_NULLS ON

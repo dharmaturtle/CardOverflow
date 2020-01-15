@@ -9,6 +9,7 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int>
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
+        public virtual DbSet<AcquiredCardIsLatestEntity> AcquiredCardIsLatest { get; set; }
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<CardEntity> Card { get; set; }
         public virtual DbSet<CardInstanceEntity> CardInstance { get; set; }
@@ -80,6 +81,15 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.AcquiredCards)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<AcquiredCardIsLatestEntity>(entity =>
+            {
+                entity.ToView("AcquiredCardIsLatest");
+                
+                entity.HasMany(x => x.Tag_AcquiredCards)
+                    .WithOne()
+                    .HasForeignKey(x => x.AcquiredCardId);
             });
 
             modelBuilder.Entity<AlphaBetaKeyEntity>(entity =>

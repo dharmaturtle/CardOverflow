@@ -375,7 +375,7 @@ type AcquiredCard with
             CardInstanceMeta = CardInstanceMeta.initialize
             Tags = tags
         }
-    static member load (entity: AcquiredCardEntity) = result {
+    static member load (entity: AcquiredCardIsLatestEntity) = result {
         let! cardState = entity.CardState |> CardState.create
         return
             {   CardId = entity.CardInstance.CardId
@@ -387,7 +387,7 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardOptionId = entity.CardOptionId
-                CardInstanceMeta = CardInstanceMeta.load entity.UserId false entity.CardInstance // highTODO make an AcquiredCard view that has a bool describing if its the latest
+                CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.IsLatest entity.CardInstance
                 Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
             }
         }
