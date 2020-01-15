@@ -26,7 +26,7 @@
             Gotten
           </button>
         } else {
-          <button class="btn btn-primary" @onclick=@(() => Acquire(Card.LatestMeta.Id))>
+          <button class="btn btn-primary" @onclick=@(() => Acquire(Card.Instance.Id))>
             Get
           </button>
         }
@@ -55,7 +55,7 @@
     <ul class="d-flex flex-wrap list-unstyled">
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.LatestMeta?.IsAcquired ?? true)>
+          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.Instance?.IsAcquired ?? true)>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -119,8 +119,7 @@
     } else {
       ToastService.ShowError(ac.ErrorValue);
     }
-    Card.LatestMeta.IsAcquired = true;
-    Card.Summary.AcquiredMeta = FSharpOption.Create(Card.LatestMeta);
+    Card.Instance.IsAcquired = true;
     Card.Summary.Users++;
     StateHasChanged();
   }
