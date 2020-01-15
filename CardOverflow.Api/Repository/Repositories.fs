@@ -156,16 +156,11 @@ module CardRepository =
             let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
             let! e =
                 db.LatestCardInstance
+                    .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                     .Include(fun x -> x.CardTemplateInstance)
                     .SingleAsync(fun x -> x.CardId = cardId)
-            let! communalFields =
-                db.CommunalFieldInstance_CardInstance
-                    .Include(fun x -> x.CommunalFieldInstance)
-                    .Where(fun x -> x.CardInstanceId = e.CardInstanceId)
-                    .AsEnumerable()
-                    .Select(fun x -> x.CommunalFieldInstance |> CommunalFieldInstance.load)
-                    .ToListAsync()
-            let latestInstance = CardInstanceMeta.loadLatest isAcquired communalFields e
+            let latestInstance = CardInstanceMeta.loadLatest isAcquired e
             let! concept =
                 if userId = 0 then
                     db.Card
@@ -298,14 +293,7 @@ module CardRepository =
                 Results =
                     r |> Seq.map (fun c ->
                         let isAcquired = db.AcquiredCard.Any(fun x -> x.UserId = userId && x.CardInstance.CardId = c.Id)
-                        let getCommunalFields cardInstanceId =
-                            db.CommunalFieldInstance_CardInstance
-                                .Include(fun x -> x.CommunalFieldInstance)
-                                .Where(fun x -> x.CardInstanceId = cardInstanceId)
-                                .AsEnumerable()
-                                .Select(fun x -> x.CommunalFieldInstance |> CommunalFieldInstance.load)
-                                .ToList()
-                        ExploreCardSummary.load (db.LatestCardInstance.Include(fun x -> x.CardTemplateInstance).Single(fun x -> x.CardId = c.Id) |> fun x -> CardInstanceMeta.loadLatest isAcquired (getCommunalFields x.CardInstanceId) x) c
+                        ExploreCardSummary.load (db.LatestCardInstance.Include(fun x -> x.CardTemplateInstance).Single(fun x -> x.CardId = c.Id) |> CardInstanceMeta.loadLatest isAcquired) c
                     ) // medTODO optimize
                 Details = {
                     CurrentPage = r.PageNumber

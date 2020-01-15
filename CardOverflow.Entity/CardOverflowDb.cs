@@ -278,9 +278,11 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<LatestCardInstanceEntity>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToView("LatestCardInstance");
+                
+                entity.HasMany(x => x.CommunalFieldInstance_CardInstances)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardInstanceId);
             });
 
             modelBuilder.Entity<LatestCardTemplateInstanceEntity>(entity =>

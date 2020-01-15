@@ -295,7 +295,7 @@ type CardInstanceMeta with
             StrippedBack = MappingTools.stripHtmlTags back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
         }
-    static member loadLatest isAcquired communalFieldInstances (entity: LatestCardInstanceEntity) =
+    static member loadLatest isAcquired (entity: LatestCardInstanceEntity) =
         let front, back, _, _ = entity |> CardInstanceView.loadLatest |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.CardInstanceId
             Created = entity.Created
@@ -305,7 +305,7 @@ type CardInstanceMeta with
             IsAcquired = isAcquired
             StrippedFront = MappingTools.stripHtmlTags front
             StrippedBack = MappingTools.stripHtmlTags back
-            CommunalFields = communalFieldInstances // lowTODO figure out how to .Include this to reduce the number of queries. THe fact that its a view is proving annoying
+            CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
         }
     static member initialize =
         {   Id = 0

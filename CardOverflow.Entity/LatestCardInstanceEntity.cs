@@ -7,8 +7,14 @@ namespace CardOverflow.Entity
 {
     public partial class LatestCardInstanceEntity
     {
+        public LatestCardInstanceEntity()
+        {
+            CommunalFieldInstance_CardInstances = new HashSet<CommunalFieldInstance_CardInstanceEntity>();
+        }
+
         public int AuthorId { get; set; }
         public int CardUsers { get; set; }
+        [Key]
         public int CardInstanceId { get; set; }
         public int CardId { get; set; }
         public DateTime Created { get; set; }
@@ -31,5 +37,6 @@ namespace CardOverflow.Entity
         public long? AnkiNoteId { get; set; }
         public byte? AnkiNoteOrd { get; set; }
         public virtual CardTemplateInstanceEntity CardTemplateInstance { get; set; }
+        public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
     }
 }
