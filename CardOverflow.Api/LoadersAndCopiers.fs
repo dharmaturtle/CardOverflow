@@ -238,12 +238,6 @@ type AcquiredCardTemplateInstance with
           DefaultCardOptionId = entity.User_CardTemplateInstances.Single().DefaultCardOptionId
           CardTemplateInstance = CardTemplateInstance.load entity }
 
-type CardTemplate with
-    static member load (entity: CardTemplateEntity) = {
-        Id = entity.Id
-        AuthorId = entity.AuthorId
-        LatestInstance = entity.CardTemplateInstances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created) |> CardTemplateInstance.load } // highTODO remove
-
 type CardInstanceView with
     static member load (entity: CardInstanceEntity) = {
         FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues

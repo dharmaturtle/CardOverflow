@@ -66,14 +66,6 @@ module CommentRepository =
         db.SaveChangesAsyncI ()
 
 module CardTemplateRepository =
-    let GetFromInstance (db: CardOverflowDb) instanceId =
-        task {
-            let! instance =
-                db.CardTemplateInstance
-                    .Include(fun x -> x.CardTemplate.CardTemplateInstances)
-                    .SingleAsync(fun x -> x.Id = instanceId)
-            return instance.CardTemplate |> CardTemplate.load
-        }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: CardTemplateInstance) = task {
         let cardTemplate =
             if instance.CardTemplateId = 0 then

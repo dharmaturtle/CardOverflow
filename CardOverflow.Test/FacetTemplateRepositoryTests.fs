@@ -18,7 +18,7 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task {
+let ``CardTemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     let templateId = 1
     let userId = 3
     use c = new TestContainer()
@@ -50,20 +50,21 @@ let ``CardTemplateRepository.GetFromInstance isn't empty``(): Task<unit> = task 
     
     do! CardTemplateRepository.UpdateFieldsToNewInstance c.Db userId updated
 
-    let! cardTemplate = CardTemplateRepository.GetFromInstance c.Db templateId
+    let! cardTemplate = SanitizeCardTemplate.AllInstances c.Db templateId
+    let latestInstance = cardTemplate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
     Assert.Equal(
         newQuestionTemplate,
-        cardTemplate.LatestInstance.QuestionTemplate)
+        latestInstance.QuestionTemplate)
     Assert.Equal(
         newTemplateName,
-        cardTemplate.LatestInstance.Name)
+        latestInstance.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
-        cardTemplate.LatestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
+        latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.AcquiredCard.Single().UserId)
     Assert.Equal(2, c.Db.AcquiredCard.Single().CardInstanceId)
     Assert.Equal(
-        cardTemplate.LatestInstance.Id,
+        latestInstance.Id,
         c.Db.AcquiredCard.Include(fun x -> x.CardInstance).Single().CardInstance.CardTemplateInstanceId)
     Assert.Equal(2, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplateId = templateId))
     Assert.Equal(2, c.Db.CardInstance.Count())
