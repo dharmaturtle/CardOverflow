@@ -71,7 +71,7 @@ module CardTemplateRepository =
             let! instance =
                 db.CardTemplateInstance
                     .Include(fun x -> x.CardTemplate.CardTemplateInstances)
-                    .FirstAsync(fun x -> x.Id = instanceId)
+                    .SingleAsync(fun x -> x.Id = instanceId)
             return instance.CardTemplate |> CardTemplate.load
         }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: CardTemplateInstance) = task {

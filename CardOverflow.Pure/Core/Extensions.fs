@@ -38,8 +38,8 @@ module Extensions =
 
     [<Extension>]
     let Apply(input, (func: Func<'TInput, 'TOutput>)) = 
-        func.Invoke(input)
+        func.Invoke input
 
     [<Extension>]
     let Do(input, (action: Action<'TInput>)) = 
-        action.Invoke(input)
+        action.Invoke input
