@@ -86,8 +86,8 @@ let ``Import relationships has reduced CardTemplates, also fieldvalue tests`` ()
             AnkiImportTestData.relationships
             userId
             Map.empty
-            []
-            [option]
+            (fun _ -> [])
+            ([option].ToList())
             option
             (fun _ -> None)
             (fun _ -> None)
@@ -435,6 +435,29 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<u
             |> AnkiImporter.getSimpleAnkiDb
             |> assertHasHistory c.Db
     }
+
+[<Fact>]
+let ``Tag collation is case insensitive and .Contains works as expected``() : Task<unit> = task { // if we ever change the collation, make sure all .Contains everywhere also work (like the one in AnkiImporter)
+    use c = new TestContainer()
+    let userId = 3
+    let upperGuid = Guid.NewGuid().ToString().ToUpper()
+    TagRepository.Add c.Db userId [ upperGuid ]
+
+    c.Db.Tag.Where(fun t -> [ upperGuid.ToLower() ].Contains t.Name) |> Assert.SingleI
+    }
+
+[<Theory>]
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``Importing AnkiDb reuses old tags`` _ simpleAnkiDb: Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    TagRepository.Add c.Db userId [ "Tag"; "Deck:Default" ]
+    Assert.Equal(2, c.Db.Tag.Count())
+
+    do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
+        |> Result.getOk
+
+    Assert.Equal(4, c.Db.Tag.Count()) }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]

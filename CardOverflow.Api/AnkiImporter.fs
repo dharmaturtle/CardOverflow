@@ -67,8 +67,8 @@ module AnkiImporter =
         ankiDb
         userId
         fileEntityByAnkiFileName
-        (usersTags: TagEntity seq)
-        (cardOptions: CardOptionEntity seq)
+        (getTags: string list -> TagEntity list)
+        (cardOptions: CardOptionEntity ResizeArray)
         defaultCardOption
         getCardTemplates
         getCard
@@ -76,6 +76,14 @@ module AnkiImporter =
         getAcquiredCard
         getHistory =
         let col = ankiDb.Cols.Single()
+        let usersTags =
+            ankiDb.Notes
+                .Select(fun x ->
+                    x.Tags.Split(" ").Where(not << String.IsNullOrWhiteSpace))
+                .SelectMany(id)
+                .Distinct()
+                |> Seq.toList
+                |> getTags
         result {
             let! cardOptionByDeckConfigurationId =
                 let toEntity _ (cardOption: CardOption) =
@@ -133,11 +141,11 @@ module AnkiImporter =
                 |> Seq.distinct
                 |> Seq.map ((+) "Deck:")
                 |> Seq.map (fun deckTag -> 
-                    usersTags.Where(fun x -> x.Name = deckTag)
-                    |> Seq.tryHead
+                    getTags [ deckTag ] // lowTODO only query once when you have all the deck names
                     |> function
-                    | Some e -> e
-                    | None -> TagEntity(Name = deckTag))
+                    | [ e ] -> e
+                    | [] -> TagEntity(Name = deckTag)
+                    | _ -> failwith "This should be impossible" )
                 |> Seq.append usersTags
                 |> Seq.toList
             let! cardsAndTagsByNoteId =
@@ -193,9 +201,10 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| db.Tag // highTODO loading all of a user's tags, cardoptions, and cardtemplates is heavy... no actually you're loading the ENTIRE tag table
+                    <| (fun s -> db.Tag.Where(fun t -> s.Contains t.Name) |> Seq.toList) // collation is case insensitive, and .Contains seems to generate the appropriate SQL
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
+                        .ToList()
                     <| db.User.Include(fun x -> x.DefaultCardOption).Single(fun x -> x.Id = userId).DefaultCardOption
                     <| getCardTemplateInstance
                     <| getCard
@@ -205,12 +214,10 @@ module AnkiImporter =
             acquiredCardEntities |> Seq.iter (fun x ->
                 if x.CardInstance <> null && x.CardInstanceId = 0
                 then db.AcquiredCard.AddI x
-                //else db.AcquiredCard.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
             histories |> Seq.iter (fun x ->
                 if x.Id = 0
                 then db.History.AddI x
-                //else db.Histories.UpdateI x // this line is superfluous as long as we're on the same dbContext https://www.mikesdotnetting.com/article/303/entity-framework-core-trackgraph-for-disconnected-data
             )
             db.ChangeTracker.Entries() // CardInstances may be unused if they're duplicates; this removes their orphaned Relationships
                 |> Seq.filter (fun e -> e.State = EntityState.Added && e.Entity :? RelationshipEntity)
