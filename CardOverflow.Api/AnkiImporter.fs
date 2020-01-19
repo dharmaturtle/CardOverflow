@@ -185,7 +185,8 @@ module AnkiImporter =
             | None ->
                 db.CardTemplateInstance
                     .Include(fun x -> x.User_CardTemplateInstances)
-                    .FirstOrDefault(fun x -> x.AnkiId = ti.AnkiId) // highTODO compare the actual values
+                    .OrderBy(fun x -> x.Created)
+                    .FirstOrDefault(fun x -> x.Hash = ti.Hash)
             |> Option.ofObj
         let getCard (card: AnkiCardWrite) =
             card.AcquireEquality db hasher
