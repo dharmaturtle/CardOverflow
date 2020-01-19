@@ -107,12 +107,10 @@ module CardRepository =
     }
     let getView (db: CardOverflowDb) cardId = task {
         let! r =
-            db.CardInstance
+            db.LatestCardInstance
                 .Include(fun x -> x.CardTemplateInstance)
-                .Where(fun x -> x.CardId = cardId)
-                .OrderByDescending(fun x -> x.Created) // medTODO how can we also sort by modified? `|??` and `if x.Modified = Nullable()` don't translate
-                .FirstAsync()
-        return CardInstanceView.load r
+                .SingleAsync(fun x -> x.CardId = cardId)
+        return CardInstanceView.loadLatest r
     }
     let Revisions (db: CardOverflowDb) userId cardId = task {
         let! r =
