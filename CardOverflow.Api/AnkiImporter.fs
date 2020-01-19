@@ -187,7 +187,7 @@ module AnkiImporter =
                     .FirstOrDefault(fun x -> x.AnkiId = ti.AnkiId) // highTODO compare the actual values
             |> Option.ofObj
         let getCard (card: AnkiCardWrite) =
-            card.AcquireEquality db
+            card.AcquireEquality db hasher
         let getAcquiredCard (card: AnkiAcquiredCard) =
             card.AcquireEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =

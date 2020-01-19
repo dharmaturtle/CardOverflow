@@ -116,15 +116,17 @@ type AnkiCardWrite = {
             ).ToList()
         this.CopyTo entity
         entity
-    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+    member this.AcquireEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+        let templateHash = this.CardTemplate |> CardTemplateInstanceEntity.hash hasher
+        let hash = this.CopyToNew [] |> CardInstanceEntity.hash templateHash hasher
         db.CardInstance
             .Include(fun x -> x.Card.RelationshipSources)
             .Include(fun x -> x.Card.RelationshipTargets)
-            .FirstOrDefault(fun c ->
-                c.AnkiNoteId = Nullable this.AnkiNoteId &&
-                c.AnkiNoteOrd = Nullable this.AnkiNoteOrd &&
-                c.CardTemplateInstance.AnkiId = this.CardTemplate.AnkiId
-            ) |> Option.ofObj // highTODO compare the actual values
+            .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+            .OrderBy(fun x -> x.Created)
+            .FirstOrDefault(fun c -> c.Hash = hash)
+        |> Option.ofObj
 
 type AnkiAcquiredCard = {
     UserId: int

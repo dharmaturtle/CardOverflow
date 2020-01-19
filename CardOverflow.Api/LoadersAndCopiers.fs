@@ -33,10 +33,18 @@ module CardTemplateInstanceEntity =
 
 module CardInstanceEntity =
     let hash (cardTemplateHash: byte[]) (hasher: SHA512) (e: CardInstanceEntity) =
-        e.FieldValues
+        e.CommunalFieldInstance_CardInstances
+            .Select(fun x -> x.CommunalFieldInstance.Value)
+            .OrderBy(fun x -> x)
+            .Append(e.FieldValues)
+            .Append(e.AnkiNoteId.ToString())
+            .Append(e.AnkiNoteOrd.ToString())
+            .Append(e.CardTemplateInstance.AnkiId.ToString())
+        |> Seq.toList
+        |> List.map standardizeWhitespace
+        |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Seq.append cardTemplateHash
-        |> Seq.toArray
+        |> Array.append cardTemplateHash
         |> hasher.ComputeHash
 
 type CardOption with
