@@ -120,6 +120,9 @@ namespace CardOverflow.Entity
         }
         private string _EditSummary;
         public long? AnkiId { get; set; }
+        [Required]
+        [MaxLength(64)]
+        public byte[] Hash { get; set; }
 
         [ForeignKey("CardTemplateId")]
         [InverseProperty("CardTemplateInstances")]

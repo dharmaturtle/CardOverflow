@@ -372,7 +372,7 @@ let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` (): unit =
     let userId = 1
     let toEntity (cardTemplate: AnkiCardTemplateInstance) =
         cardTemplate.CopyToNew userId null
-    use hasher = SHA256.Create()
+    use hasher = SHA512.Create()
     let dbidByHash =
         Anki.parseModels
             userId
@@ -380,14 +380,14 @@ let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` (): unit =
         |> Result.getOk
         |> List.collect (snd >> List.map toEntity)
         |> List.mapi (fun i entity ->
-            CardTemplateInstanceEntity.acquireHash hasher entity, i + 1
+            CardTemplateInstanceEntity.hashBase64 hasher entity, i + 1
         ) |> Map.ofList
     let actualDbIdByHash =
         c.Db.CardTemplate
             .Include(fun x -> x.CardTemplateInstances)
             .AsEnumerable()
             .Select(fun x -> x.CardTemplateInstances.Single())
-            .Select(fun x -> CardTemplateInstanceEntity.acquireHash hasher x, x.Id)
+            .Select(fun x -> CardTemplateInstanceEntity.hashBase64 hasher x, x.Id)
             |> Map.ofSeq
 
     dbidByHash |> Map.iter(fun hash expectedId ->

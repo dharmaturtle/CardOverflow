@@ -124,7 +124,7 @@ type AnkiCardWrite = {
                 c.AnkiNoteId = Nullable this.AnkiNoteId &&
                 c.AnkiNoteOrd = Nullable this.AnkiNoteOrd &&
                 c.CardTemplateInstance.AnkiId = this.CardTemplate.AnkiId
-            ) // highTODO compare the actual values
+            ) |> Option.ofObj // highTODO compare the actual values
 
 type AnkiAcquiredCard = {
     UserId: int

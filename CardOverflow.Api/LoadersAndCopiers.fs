@@ -14,7 +14,7 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 
 module CardTemplateInstanceEntity =
-    let acquireHash (hasher: SHA256) (e: CardTemplateInstanceEntity) =
+    let hash (hasher: SHA512) (e: CardTemplateInstanceEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -29,7 +29,15 @@ module CardTemplateInstanceEntity =
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
         |> hasher.ComputeHash
-        |> Convert.ToBase64String
+    let hashBase64 hasher entity = hash hasher entity |> Convert.ToBase64String
+
+module CardInstanceEntity =
+    let hash (e: CardInstanceEntity) (cardTemplateHash: byte[]) (hasher: SHA512) =
+        e.FieldValues
+        |> Encoding.Unicode.GetBytes
+        |> Seq.append cardTemplateHash
+        |> Seq.toArray
+        |> hasher.ComputeHash
 
 type CardOption with
     member this.AcquireEquality (that: CardOption) =

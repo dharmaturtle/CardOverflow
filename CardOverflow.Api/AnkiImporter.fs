@@ -18,7 +18,7 @@ open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
-    let cardTemplateIdByHash =
+    let cardTemplateIdByHash = // lowTODO could make this a byte array
         [("BCYOZW4LNxaL7eRtLkWR6KlDbAzqCFRfjZhivlY+p0E=", 1)
          ("Vq8SdXBAWwR6qpaVJtmYlxpJaHApbAklv6Cz2Zd28H8=", 3)
          ("diho6Lrz6gbKyVrmEUl5jr8M/RFmPuU/Jz0telNZeGw=", 2)
@@ -171,10 +171,10 @@ module AnkiImporter =
                 histories |> Seq.choose id
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
-        use hasher = SHA256.Create()
+        use hasher = SHA512.Create()
         let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
             let ti = templateInstance.CopyToNew userId null // verylowTODO options isn't used so we're passing null... make a better way to calculate the hash
-            let hash = CardTemplateInstanceEntity.acquireHash hasher ti
+            let hash = CardTemplateInstanceEntity.hashBase64 hasher ti
             AnkiDefaults.cardTemplateIdByHash.TryFind hash
             |> function
             | Some id ->
@@ -188,7 +188,6 @@ module AnkiImporter =
             |> Option.ofObj
         let getCard (card: AnkiCardWrite) =
             card.AcquireEquality db
-            |> Option.ofObj
         let getAcquiredCard (card: AnkiAcquiredCard) =
             card.AcquireEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =

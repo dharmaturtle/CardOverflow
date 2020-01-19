@@ -40,10 +40,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<Vote_CommentCardTemplateEntity> Vote_CommentCardTemplate { get; set; }
         public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
 
-        public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options)
-        {
-        }
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
@@ -85,11 +81,11 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<AcquiredCardIsLatestEntity>(entity =>
             {
-                entity.ToView("AcquiredCardIsLatest");
-                
                 entity.HasMany(x => x.Tag_AcquiredCards)
                     .WithOne()
                     .HasForeignKey(x => x.AcquiredCardId);
+                
+                entity.ToView("AcquiredCardIsLatest");
             });
 
             modelBuilder.Entity<AlphaBetaKeyEntity>(entity =>
@@ -110,7 +106,13 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.CardId);
+
                 entity.HasIndex(e => e.CardTemplateInstanceId);
+
+                entity.HasIndex(e => e.Hash);
+
+                entity.Property(e => e.Hash).IsFixedLength();
 
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.CardInstances)
@@ -125,6 +127,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardOptionEntity>(entity =>
             {
+                entity.HasIndex(e => e.UserId);
+
                 entity.Property(e => e.LapsedCardsStepsInMinutes).IsUnicode(false);
 
                 entity.Property(e => e.NewCardsStepsInMinutes).IsUnicode(false);
@@ -147,7 +151,13 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTemplateInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.CardTemplateId);
+
+                entity.HasIndex(e => e.Hash);
+
                 entity.Property(e => e.Css).IsUnicode(false);
+
+                entity.Property(e => e.Hash).IsFixedLength();
 
                 entity.HasOne(d => d.CardTemplate)
                     .WithMany(p => p.CardTemplateInstances)
@@ -201,6 +211,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CommunalFieldInstanceEntity>(entity =>
             {
+                entity.HasIndex(e => e.CommunalFieldId);
+
                 entity.HasOne(d => d.CommunalField)
                     .WithMany(p => p.CommunalFieldInstances)
                     .HasForeignKey(d => d.CommunalFieldId)
@@ -278,11 +290,11 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<LatestCardInstanceEntity>(entity =>
             {
-                entity.ToView("LatestCardInstance");
-                
                 entity.HasMany(x => x.CommunalFieldInstance_CardInstances)
                     .WithOne()
                     .HasForeignKey(x => x.CardInstanceId);
+                
+                entity.ToView("LatestCardInstance");
             });
 
             modelBuilder.Entity<LatestCardTemplateInstanceEntity>(entity =>

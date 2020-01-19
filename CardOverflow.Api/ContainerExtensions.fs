@@ -10,6 +10,8 @@ open System.IO
 open System
 open Serilog
 open Microsoft.EntityFrameworkCore.Diagnostics
+open System.Security.Cryptography
+open LoadersAndCopiers
 
 module Environment =
     let get =
@@ -36,9 +38,17 @@ module Logger =
             .Configuration(configuration)
             .CreateLogger()
 
+type EntityHasher () =
+    interface IEntityHasher with
+        member val CardInstanceHasher =
+            fun struct (cardInstance, cardTemplateInstanceHash, sha512) -> CardInstanceEntity.hash cardInstance cardTemplateInstanceHash sha512
+        member val CardTemplateInstanceHasher =
+            fun struct (instance, sha512) -> CardTemplateInstanceEntity.hash sha512 instance
+
 type Container with
     member container.RegisterStuffTestOnly =
         container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle()
+        container.RegisterSingleton<IEntityHasher, EntityHasher>()
         container.RegisterInstance<IConfiguration>(Environment.get |> Configuration.get)
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
@@ -48,7 +58,7 @@ type Container with
             loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
             DbContextOptionsBuilder<CardOverflowDb>()
                 .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value)
-                .UseLoggerFactory(loggerFactory)
+                //.UseLoggerFactory(loggerFactory)
                 //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3, medTODO actually test this
                 //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                 //.EnableSensitiveDataLogging(true)
