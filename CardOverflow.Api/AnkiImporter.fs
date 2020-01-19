@@ -172,8 +172,9 @@ module AnkiImporter =
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()
+        let defaultCardOption = db.User.Include(fun x -> x.DefaultCardOption).Single(fun x -> x.Id = userId).DefaultCardOption
         let getCardTemplateInstance (templateInstance: AnkiCardTemplateInstance) =
-            let ti = templateInstance.CopyToNew userId null // verylowTODO options isn't used so we're passing null... make a better way to calculate the hash
+            let ti = templateInstance.CopyToNew userId defaultCardOption
             let hash = CardTemplateInstanceEntity.hashBase64 hasher ti
             AnkiDefaults.cardTemplateIdByHash.TryFind hash
             |> function
@@ -204,7 +205,7 @@ module AnkiImporter =
                     <| db.CardOption
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
-                    <| db.User.Include(fun x -> x.DefaultCardOption).Single(fun x -> x.Id = userId).DefaultCardOption
+                    <| defaultCardOption
                     <| getCardTemplateInstance
                     <| getCard
                     <| noRelationship
