@@ -19,11 +19,11 @@ open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
     let cardTemplateIdByHash = // lowTODO could make this a byte array
-        [("BCYOZW4LNxaL7eRtLkWR6KlDbAzqCFRfjZhivlY+p0E=", 1)
-         ("Vq8SdXBAWwR6qpaVJtmYlxpJaHApbAklv6Cz2Zd28H8=", 3)
-         ("diho6Lrz6gbKyVrmEUl5jr8M/RFmPuU/Jz0telNZeGw=", 2)
-         ("g3UsJzTPZhLyY6rP08RxpcS7X9wLuZJ2gxtuCqgxP00=", 5)
-         ("sk0Te8QcFS96w/FjUdYiJ4Ui/j29RrHsjHOxFzf75Rk=", 4)] |> Map.ofSeq
+        [("ywoGEFssvi4t3nnwGoizNtb4mjt8XiN1PvkvwFvu/v785psdidQLKG3lN/aCPxwYs29/TxeRJRjs69qa7Ymsvg==", 1)
+         ("vgZiAPZFIxuapH1N8OgD+Z4Rl3ZdyqzaRe5eACnygT8EQDiLTpnqcqMrsLoW2PheQMYUma7NZaXVzA4oWpFqjw==", 3)
+         ("eGXsWXGAsQAfHgUGk4JLIQ3uaF687zrsHYD/PoPn2dzmpYb2vMdxqt1IznkD351frGc9G/1avQ+loJ1EzeSPuw==", 2)
+         ("PEPG/kewldTi4S2NsbkREMcgkK2zg/0E/G1shopZHmhA1H904wEDUzOlWnoW3G5dpenk/K6BxOZOZsNKA6+qwg==", 5)
+         ("HcNXVOVXUWnT4aP/gBO+CtuA6x2nvXSRAPCSeYXoSxm8gae4nyMtVbF+LcD4zh3sikh8d6+dr0stK/NjJEUzJg==", 4)] |> Map.ofSeq
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =

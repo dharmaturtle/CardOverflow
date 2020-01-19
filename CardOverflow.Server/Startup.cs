@@ -38,6 +38,7 @@ namespace CardOverflow.Server {
           .Options
         );
       services.AddSingleton<DbExecutor>();
+      services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
       services.AddDbContext<CardOverflowDb>();
       services.AddDefaultIdentity<UserEntity>(options => {
         options.User.RequireUniqueEmail = true;
@@ -46,7 +47,7 @@ namespace CardOverflow.Server {
         options.Password.RequireUppercase = true;
         options.Password.RequiredLength = 6;
         options.Password.RequireNonAlphanumeric = false;
-        //options.SignIn.RequireConfirmedEmail = true; // medTODO
+        //options.SignIn.RequireConfirmedEmail = true; // highTODO
       }).AddEntityFrameworkStores<CardOverflowDb>();
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
