@@ -261,6 +261,7 @@ let rec ``GetAcquired works when acquiring 2 cards of a pair; also a lot of rela
         [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair; also a lot of relationship tests`` @>
 
+[<NCrunch.Framework.Serial>]
 [<Fact>]
 let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
