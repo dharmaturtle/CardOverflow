@@ -24,6 +24,7 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Sanitation
 open System.Collections
+open System.Security.Cryptography
 
 [<Fact>]
 let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``(): Task<unit> = task {
@@ -328,3 +329,20 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
     Assert.True(myTemplates.OrderBy(fun x -> x.Id).Last().Editable.Fields.Any(fun x -> x.Name = fieldName))
     }
+
+[<Fact>]
+let ``New card template has correct hash`` (): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let initialCardTemplate = ViewCardTemplateWithAllInstances.initialize userId
+    use sha512 = SHA512.Create()
+    do! SanitizeCardTemplate.Update c.Db userId initialCardTemplate.Editable |> Result.getOk
+    let! dbTemplate = c.Db.CardTemplateInstance.SingleAsync(fun x -> x.CardTemplate.AuthorId = userId)
+    
+    let computedHash =
+        initialCardTemplate.Editable
+        |> ViewCardTemplateInstance.copyTo
+        |> fun x -> CardTemplateEntity() |> Entity |> x.CopyToNewInstance
+        |> CardTemplateInstanceEntity.hash sha512
+    
+    Assert.Equal<byte[]>(dbTemplate.Hash, computedHash) }

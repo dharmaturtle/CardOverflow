@@ -32,7 +32,7 @@ module CardTemplateInstanceEntity =
     let hashBase64 hasher entity = hash hasher entity |> Convert.ToBase64String
 
 module CardInstanceEntity =
-    let hash (e: CardInstanceEntity) (cardTemplateHash: byte[]) (hasher: SHA512) =
+    let hash (cardTemplateHash: byte[]) (hasher: SHA512) (e: CardInstanceEntity) =
         e.FieldValues
         |> Encoding.Unicode.GetBytes
         |> Seq.append cardTemplateHash

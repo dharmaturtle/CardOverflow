@@ -163,7 +163,7 @@ module SanitizeCardTemplate =
         return x |> Seq.map ViewCardTemplateWithAllInstances.load |> toResizeArray
         }
     let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
-        let update () = CardTemplateRepository.UpdateFieldsToNewInstance db userId (ViewCardTemplateInstance.copyTo instance) |> Ok
+        let update () = ViewCardTemplateInstance.copyTo instance |> CardTemplateRepository.UpdateFieldsToNewInstance db userId |> Ok
         db.CardTemplate.SingleOrDefault(fun x -> x.Id = instance.CardTemplateId)
         |> function
         | null -> update ()
