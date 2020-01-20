@@ -192,6 +192,45 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 
+let updateCommand clozeTemplate clozeText = {
+    EditSummary = "Initial creation"
+    FieldValues =
+        clozeTemplate.Fields.Select(fun f -> {
+            EditField = ViewField.copyTo f
+            Value =
+                if f.Name = "Text" then
+                    clozeText
+                else
+                    "extra"
+            Communal =
+                if f.Name = "Text" then
+                    {   InstanceId = None
+                        CommunalCardInstanceIds = [].ToList()
+                    } |> Some
+                else None
+        }).ToList()
+    TemplateInstance = clozeTemplate }
+
+[<Fact>]
+let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
+    let userId = 3
+    use c = new TestContainer()
+    let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
+    let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
+    
+    let! card = CardRepository.getNew c.Db userId
+    let! x = updateCommand clozeTemplate "{{c1::Portland::city}} was founded in {{c2::1845}}." |> SanitizeCardRepository.Update c.Db userId card
+    Result.getOk x
+
+    let! view = CardRepository.instance c.Db 1
+    Assert.Equal<string seq>(
+        ["{{c1::Portland::city}} was founded in 1845."; "extra"],
+        view.Value.FieldValues.Select(fun x -> x.Value))
+    let! view = CardRepository.instance c.Db 2
+    Assert.Equal<string seq>(
+        ["Portland was founded in {{c2::1845}}."; "extra"],
+        view.Value.FieldValues.Select(fun x -> x.Value))}
+
 [<Fact>]
 let ``Create cloze card works`` (): Task<unit> = task {
     let userId = 3
@@ -200,44 +239,41 @@ let ``Create cloze card works`` (): Task<unit> = task {
     let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
     let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
 
-    let test clozeMaxIndex clozeText clozeExtra otherTest = task {
-        let updateCommand = {
-            EditSummary = "Initial creation"
-            FieldValues =
-                clozeTemplate.Fields.Select(fun f -> {
-                    EditField = ViewField.copyTo f
-                    Value =
-                        if f.Name = "Text" then
-                            clozeText
-                        else
-                            clozeExtra
-                    Communal = None
-                }).ToList()
-            TemplateInstance = clozeTemplate }
+    let getCardInstances clozeText = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText))
+    let test clozeMaxIndex clozeText otherTest = task {
         let! card = CardRepository.getNew c.Db userId
-        let! x = SanitizeCardRepository.Update c.Db userId card updateCommand
+        let! x = updateCommand clozeTemplate clozeText |> SanitizeCardRepository.Update c.Db userId card
         Result.getOk x
         for i in [1 .. clozeMaxIndex] |> List.map byte do
-            let clozeText = AnkiImportLogic.multipleClozeToSingleCloze i [clozeText] |> Seq.exactlyOne
-            c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains(clozeText)) |> Assert.SingleI
-            let communalFieldInstanceId =
-                c.Db.CardInstance
-                    .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
-                    .Single(fun x -> x.FieldValues.Contains(clozeText)).CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.Id
-            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = communalFieldInstanceId))
-            let cardId = c.Db.CardInstance.Single(fun x -> x.FieldValues.Contains(clozeText)).CardId
-            do! testCommunalFields cardId [clozeText]
+            Assert.Equal(clozeMaxIndex, c.Db.LatestCardInstance.Count(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))
+            let! communalFieldInstanceIds =
+                (getCardInstances clozeText)
+                    .Select(fun x -> x.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.Id)
+                    .ToListAsync()
+            for id in communalFieldInstanceIds do
+                Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = id))
+            let! cardIds = (getCardInstances clozeText).Select(fun x -> x.CardId).ToListAsync()
+            for id in cardIds do
+                do! testCommunalFields id [clozeText]
         otherTest clozeText }
-    do! test 1 "Canberra was founded in {{c1::1913}}." "extra"
-        <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))
-    do! test 1 "{{c1::Canberra::city}} was founded in {{c1::1913}}." "extra"
-        <| fun clozeText -> Assert.SingleI(c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains clozeText))
-    do! test 2 "{{c1::Portland::city}} was founded in {{c2::1845}}." "extra"
-        <| fun clozeText -> 
-            Assert.Equal(0, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains clozeText))
-            Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains "Portland was founded in {{c2::1845}}."))
-            Assert.Equal(1, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains "{{c1::Portland::city}} was founded in 1845."))
+    let assertCount expected (clozeText: string) =
+        c.Db.CardInstance
+            .Include(fun x -> x.CardTemplateInstance)
+            .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+            .ToList()
+            .Select(CardInstanceView.load)
+            .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
+            |> fun x -> Assert.Equal(expected, x)
+    do! test 1 "Canberra was founded in {{c1::1913}}."
+        <| assertCount 1
+    do! test 1 "{{c1::Canberra::city}} was founded in {{c1::1913}}."
+        <| assertCount 1
+    do! test 2 "{{c1::Portland::city}} was founded in {{c2::1845}}."
+        <| fun clozeText ->
+            assertCount 0 clozeText
+            assertCount 1 "Portland was founded in {{c2::1845}}."
+            assertCount 1 "{{c1::Portland::city}} was founded in 1845."
     }
 
 [<Fact>]

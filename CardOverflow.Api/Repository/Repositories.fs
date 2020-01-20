@@ -99,6 +99,8 @@ module CardRepository =
         let! r =
             db.CardInstance
                 .Include(fun x -> x.CardTemplateInstance)
+                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
         return
             match r with
@@ -324,16 +326,13 @@ module CardRepository =
                         AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
                         |> Result.map (fun max ->
                         [1uy .. byte max] |> List.map (fun clozeIndex ->
-                            let zip =
-                                Seq.zip
-                                    (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                                    (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
-                                |> Map.ofSeq
                             { command with
                                 FieldValues =
                                     command.FieldValues.Select(fun x ->
-                                    { x with
-                                        Value = zip.[x.EditField.Name]}).ToList() }))
+                                        if x.IsCommunal then
+                                            { x with Value = MappingTools.semanticString + clozeIndex.ToString() }
+                                        else x
+                                    ).ToList() }))
                     else Ok [ command ]
                     |> Result.map (List.iter (fun c ->
                         let e = acquiredCard.copyToNew tags
@@ -349,7 +348,7 @@ module CardRepository =
                                         CommunalFieldInstanceEntity(
                                             CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
                                             FieldName = f.Name,
-                                            Value = c.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
+                                            Value = command.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
                                             Created = DateTime.UtcNow,
                                             EditSummary = c.EditSummary)) |> List.ofSeq
                             else

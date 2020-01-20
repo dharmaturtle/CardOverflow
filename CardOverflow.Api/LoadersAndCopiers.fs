@@ -255,9 +255,18 @@ type AcquiredCardTemplateInstance with
           CardTemplateInstance = CardTemplateInstance.load entity }
 
 type CardInstanceView with
-    static member load (entity: CardInstanceEntity) = {
-        FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
-        TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
+    static member load (entity: CardInstanceEntity) =
+        {   FieldValues =
+                FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
+                |> Seq.map (fun fieldAndValue ->
+                    if fieldAndValue.Value.StartsWith MappingTools.semanticCharacter then
+                        let clozeIndex = fieldAndValue.Value.Trim MappingTools.semanticCharacter |> byte
+                        let value = entity.CommunalFieldInstance_CardInstances.Single(fun j -> j.CommunalFieldInstance.FieldName = fieldAndValue.Field.Name).CommunalFieldInstance.Value
+                        { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze clozeIndex [ value ] |> List.exactlyOne }
+                    else
+                        fieldAndValue
+                ) |> toResizeArray
+            TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
     static member loadLatest (entity: LatestCardInstanceEntity) = {
         FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
         TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
