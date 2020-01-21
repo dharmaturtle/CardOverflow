@@ -125,13 +125,15 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     do!
         AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
         |> Result.getOk
-    let assertCount expected (clozeText: string) =
+    let allCardInstanceViews =
         c.Db.CardInstance
             .Include(fun x -> x.CardTemplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
             .Select(CardInstanceView.load)
+    let assertCount expected (clozeText: string) =
+        allCardInstanceViews
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
     assertCount 5 "may be remembered with the mnemonic"
@@ -145,6 +147,26 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             "5"],
         c.Db.CardInstance.Select(fun x -> x.FieldValues).ToList().OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
+    Assert.Equal<string seq>(
+        [   "<b><br /></b>"
+            "<b><br /></b>"
+            "<b><br /></b>"
+            "<b><br /></b>"
+            "<b><br /></b>"
+            "<br /><div><br /></div><div>Image here</div>" ],
+        allCardInstanceViews
+            .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value))
+    )
+    Assert.Equal<string seq>(
+        [   """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)"""
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: {{c2::Griseofulvin (antifungal)}} C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)"""
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: {{c3::Colchicine (antigout)}} V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)"""
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: {{c4::Vincristine/Vinblastine (anticancer)}}P: Palcitaxel (anticancer)"""
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: {{c5::Palcitaxel (anticancer)}}"""
+            "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ],
+        allCardInstanceViews
+            .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value))
+    )
     Assert.SingleI
         <| c.Db.CardInstance
             .Where(fun x -> x.FieldValues.Contains("acute"))
