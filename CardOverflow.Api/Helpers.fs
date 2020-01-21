@@ -6,7 +6,7 @@ open System
 open FSharp.Control.Tasks
 
 type DbContext with
-    [<ObsoleteAttribute>] // medTODO delete this function
+    [<ObsoleteAttribute>] // lowTODO delete this function
     member dbContext.SaveChangesI () =
         dbContext.SaveChanges () |> ignore
     member dbSet.SaveChangesAsyncI () =

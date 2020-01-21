@@ -478,12 +478,11 @@ module UserRepository =
         db.User.FirstOrDefault(fun x -> x.Email = email)
 
 module TagRepository =
-    let tagEntities (db: CardOverflowDb) newTags =
-        let newTags = newTags |> Seq.distinct // https://stackoverflow.com/a/18113534
-        db.Tag // medTODO there's no filter, you're .ToListing all tags into memory
+    let tagEntities (db: CardOverflowDb) (newTags: string seq) =
+        let newTags = newTags.Distinct().ToList() // https://stackoverflow.com/a/18113534
+        db.Tag
             .Select(fun x -> x.Name)
-            .AsEnumerable()
-            .Where(newTags.Contains)
+            .Where(fun x -> newTags.Contains x)
             .ToList()
             .Contains >> not
         |> newTags.Where
