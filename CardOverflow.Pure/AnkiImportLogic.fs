@@ -5,9 +5,10 @@ open FSharp.Text.RegexProvider
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 
+type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
+type ClozeTemplateRegex = Regex< """{{cloze:(?<fieldName>.*?)}}""" >
+
 module AnkiImportLogic =
-    type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-    type ClozeTemplateRegex = Regex< """{{cloze:(?<fieldName>.*?)}}""" >
     let maxClozeIndex errorMessage (valuesByFieldName: Map<string, string>) =
         ClozeTemplateRegex().TypedMatches
         >> Seq.map (fun m -> valuesByFieldName.[m.fieldName.Value] |> ClozeRegex().TypedMatches)

@@ -260,15 +260,30 @@ type CardInstanceView with
                 FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
                 |> Seq.map (fun fieldAndValue ->
                     if fieldAndValue.Value.StartsWith MappingTools.semanticCharacter then
-                        let clozeIndex = fieldAndValue.Value.Trim MappingTools.semanticCharacter |> byte
                         let value = entity.CommunalFieldInstance_CardInstances.Single(fun j -> j.CommunalFieldInstance.FieldName = fieldAndValue.Field.Name).CommunalFieldInstance.Value
-                        { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze clozeIndex [ value ] |> List.exactlyOne }
+                        let clozeIndex = fieldAndValue.Value.Trim MappingTools.semanticCharacter
+                        if String.IsNullOrWhiteSpace clozeIndex then
+                            { fieldAndValue with Value = value }
+                        else
+                            { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze (byte clozeIndex) [ value ] |> List.exactlyOne }
                     else
                         fieldAndValue
                 ) |> toResizeArray
             TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
     static member loadLatest (entity: LatestCardInstanceEntity) = {
-        FieldValues = FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
+        FieldValues =
+            FieldAndValue.load (Fields.fromString entity.CardTemplateInstance.Fields) entity.FieldValues
+            |> Seq.map (fun fieldAndValue ->
+                if fieldAndValue.Value.StartsWith MappingTools.semanticCharacter then
+                    let value = entity.CommunalFieldInstance_CardInstances.Single(fun j -> j.CommunalFieldInstance.FieldName = fieldAndValue.Field.Name).CommunalFieldInstance.Value
+                    let clozeIndex = fieldAndValue.Value.Trim MappingTools.semanticCharacter
+                    if String.IsNullOrWhiteSpace clozeIndex then
+                        { fieldAndValue with Value = value }
+                    else
+                        { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze (byte clozeIndex) [ value ] |> List.exactlyOne }
+                else
+                    fieldAndValue
+            ) |> toResizeArray
         TemplateInstance = CardTemplateInstance.load entity.CardTemplateInstance }
     member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues

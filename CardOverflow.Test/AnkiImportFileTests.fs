@@ -125,14 +125,26 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     do!
         AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
         |> Result.getOk
-    Assert.Equal(
-        5,
+    let assertCount expected (clozeText: string) =
         c.Db.CardInstance
-            .Count(fun x -> x.FieldValues.Contains("may be remembered with the mnemonic"))
-        )
-    Assert.SingleI
-        <| c.Db.CardInstance
-            .Where(fun x -> x.FieldValues.Contains("Fibrosis"))
+            .Include(fun x -> x.CardTemplateInstance)
+            .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+            .ToList()
+            .Select(CardInstanceView.load)
+            .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
+            |> fun x -> Assert.Equal(expected, x)
+    assertCount 5 "may be remembered with the mnemonic"
+    Assert.Equal<string seq>(
+        [   """↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia<img src="/missingImage.jpg">"""
+            "1"
+            "1"
+            "2"
+            "3"
+            "4"
+            "5"],
+        c.Db.CardInstance.Select(fun x -> x.FieldValues).ToList().OrderBy(fun x -> x))
+    assertCount 1 "Fibrosis"
     Assert.SingleI
         <| c.Db.CardInstance
             .Where(fun x -> x.FieldValues.Contains("acute"))
@@ -155,11 +167,11 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Empty card.Relationships
     Assert.Empty c.Db.Relationship
 
-    let! clozes = c.Db.CardInstance.Where(fun x -> x.FieldValues.Contains "mnemonic").ToListAsync()
-    let initialInstance = clozes.First()
+    let! clozes = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()
     for instance in clozes do
         do! testCommunalFields instance.CardId [longThing; ""]
 
+    let initialInstance = clozes.First()
     let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))

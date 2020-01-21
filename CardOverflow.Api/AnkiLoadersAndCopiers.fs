@@ -516,11 +516,19 @@ module Anki =
                         let! cards =
                             if cardTemplates.First().CardTemplate.IsCloze then result {
                                 let cardTemplate = cardTemplates |> Seq.exactlyOne
-                                let valueByFieldName =
+                                let fieldNamesAndValues =
                                     Seq.zip
                                         <| cardTemplate.CardTemplate.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
                                         <| fieldValues
-                                    |> Map.ofSeq
+                                    |> List.ofSeq
+                                let valueByFieldName = fieldNamesAndValues |> Map.ofList
+                                let getFields clozeIndex =
+                                    fieldNamesAndValues |> List.map (fun (fieldName, value) ->
+                                        if communalFields.Any(fun x -> x.FieldName = fieldName) then
+                                            if ClozeRegex().IsMatch value then
+                                                MappingTools.semanticString + clozeIndex.ToString()
+                                            else MappingTools.semanticString
+                                        else value)
                                 let! max =
                                     AnkiImportLogic.maxClozeIndex
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
@@ -528,9 +536,9 @@ module Anki =
                                         <| cardTemplate.CardTemplate.QuestionTemplate
                                 return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
                                     toCard
-                                        <| AnkiImportLogic.multipleClozeToSingleCloze clozeIndex fieldValues
+                                        <| getFields clozeIndex
                                         <| cardTemplate.Entity
-                                        <| clozeIndex - 1uy
+                                        <| clozeIndex - 1uy // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}
                             else
                                 let instances = cardTemplates |> List.collect (fun anon ->

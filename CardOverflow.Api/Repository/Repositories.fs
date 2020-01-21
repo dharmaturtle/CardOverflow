@@ -339,7 +339,7 @@ module CardRepository =
                         e.CardInstance <-
                             if c.TemplateInstance.isCloze then
                                 let clozeFields =
-                                    AnkiImportLogic.ClozeTemplateRegex()
+                                    ClozeTemplateRegex()
                                         .TypedMatches(c.TemplateInstance.QuestionTemplate)
                                         .Select(fun x -> x.fieldName.Value)
                                 c.TemplateInstance.Fields
