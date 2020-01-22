@@ -347,7 +347,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardOption.Count(fun db -> db.UserId = userId))
-    //Assert.Equal(4, db.User_CardTemplateInstance.Count(fun x -> x.UserId = userId)) // I think this should be 5, but we'll be changing this table later anyway. medTODO
+    Assert.Equal(5, c.Db.User_CardTemplateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
         (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
