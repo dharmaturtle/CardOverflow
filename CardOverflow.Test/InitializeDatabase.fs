@@ -49,10 +49,7 @@ let ``Delete and Recreate localhost's CardOverflow Database via EF`` (): Task<un
     use __ = AsyncScopedLifestyle.BeginScope c
     do! c.GetInstance<CardOverflowDb>() |> deleteAndRecreateDatabase }
 
-let deleteAndRecreateDb dbName baseConnectionString =
-    use conn = new SqlConnection(ConnectionString.value baseConnectionString)
-    conn.Open()
-    let server = conn |> ServerConnection |> Server
+let deleteAndRecreateDbScript =
     [
         """
         USE [master]
@@ -84,8 +81,14 @@ let deleteAndRecreateDb dbName baseConnectionString =
         """
     ]
     |> String.concat "\r\n"
-    |> fun s -> s.Replace("[CardOverflow]", sprintf "[%s]" dbName)
-                 .Replace("'CardOverflow'", sprintf "'%s'" dbName)
+
+let runScript dbName (script: string) baseConnectionString =
+    use conn = new SqlConnection(ConnectionString.value baseConnectionString)
+    conn.Open()
+    let server = conn |> ServerConnection |> Server
+    script
+        .Replace("[CardOverflow]", sprintf "[%s]" dbName)
+        .Replace("'CardOverflow'", sprintf "'%s'" dbName)
     |> server.ConnectionContext.ExecuteNonQuery
     |> ignore
     conn.Close()
@@ -95,4 +98,4 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): 
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
-    c.GetInstance<ConnectionString>() |> deleteAndRecreateDb "CardOverflow"
+    c.GetInstance<ConnectionString>() |> runScript "CardOverflow" deleteAndRecreateDbScript

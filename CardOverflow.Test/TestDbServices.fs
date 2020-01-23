@@ -25,7 +25,7 @@ type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: 
         container.RegisterStuffTestOnly
         container.RegisterTestConnectionString dbName
         container.Verify()
-        container.GetInstance<IConfiguration>().GetConnectionString "ServerConnection" |> ConnectionString |> InitializeDatabase.deleteAndRecreateDb dbName
+        container.GetInstance<IConfiguration>().GetConnectionString "ServerConnection" |> ConnectionString |> InitializeDatabase.runScript dbName InitializeDatabase.deleteAndRecreateDbScript
 
     interface IDisposable with
         member this.Dispose() =
