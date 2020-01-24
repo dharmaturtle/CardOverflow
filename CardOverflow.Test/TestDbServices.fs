@@ -11,7 +11,7 @@ open ContainerExtensions
 open SimpleInjector.Lifestyles
 open Microsoft.Extensions.Configuration
 
-type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
+type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
     let mutable scope = AsyncScopedLifestyle.BeginScope container
     do
@@ -25,15 +25,23 @@ type TestContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: 
         container.RegisterStuffTestOnly
         container.RegisterTestConnectionString dbName
         container.Verify()
-        container.GetInstance<IConfiguration>().GetConnectionString "ServerConnection" |> ConnectionString |> InitializeDatabase.runScript dbName InitializeDatabase.deleteAndRecreateDbScript
+        match newDb with
+        | Some newDb ->
+            if newDb then
+                InitializeDatabase.fullReset
+            else
+                InitializeDatabase.fastReset
+        | None ->
+            InitializeDatabase.fastReset
+        |> fun reset -> container.GetInstance<IConfiguration>().GetConnectionString "ServerConnection" |> ConnectionString |> reset dbName
 
     interface IDisposable with
         member this.Dispose() =
-            this.Db.Database.EnsureDeleted() |> ignore
+            //this.Db.Database.EnsureDeleted() |> ignore
             container.Dispose()
             scope.Dispose()
 
-    member __.Db = // medTODO this should take unit
+    member __.Db = // lowTODO this should take unit
         scope.Dispose()
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<CardOverflowDb>()

@@ -26,7 +26,7 @@ open System.Collections.Generic
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = task {
     let userId = 3
-    use c = new TestContainer(ankiFileName)
+    use c = new TestContainer(false, ankiFileName)
     
     do!
         SanitizeAnki.ankiExportsDir +/ ankiFileName
@@ -43,7 +43,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = ta
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = task {
     let userId = 3
-    use c = new TestContainer(ankiFileName)
+    use c = new TestContainer(false, ankiFileName)
 
     for _ in [1..3] do
         do!

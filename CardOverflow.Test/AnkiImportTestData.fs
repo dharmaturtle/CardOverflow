@@ -1462,7 +1462,7 @@ let ``Actual AllDefaultTemplatesAndImageAndMp3 matches mock`` fileName mock =
     serialize actualDb.Cards = serialize mock.Cards |> Assert.True
 
 type AnkiTestContainer(ankiFileName: string, [<CallerMemberName>] ?memberName: string) =
-    let container = new TestContainer(ankiFileName, memberName.Value)
+    let container = new TestContainer(false, ankiFileName, memberName.Value)
     interface IDisposable with
         member __.Dispose() =
             (container :> IDisposable).Dispose()

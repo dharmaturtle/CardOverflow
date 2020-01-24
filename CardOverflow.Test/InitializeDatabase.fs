@@ -51,9 +51,7 @@ let ``Delete and Recreate localhost's CardOverflow Database via EF`` (): Task<un
     do! c.GetInstance<CardOverflowDb>() |> deleteAndRecreateDatabase }
 
 let deleteAndRecreateDbScript =
-    [
-        """
-        USE [master]
+    [   """USE [master]
         GO
         IF EXISTS (SELECT name FROM sys.databases WHERE name = N'CardOverflow')
         BEGIN
@@ -78,10 +76,8 @@ let deleteAndRecreateDbScript =
         sp_configure 'clr enabled', 1; 
         GO 
         RECONFIGURE; 
-        GO
-        """
-    ]
-    |> String.concat "\r\n"
+        GO"""
+    ] |> String.concat "\r\n"
 
 let runScript dbName (script: string) baseConnectionString =
     use conn = new SqlConnection(ConnectionString.value baseConnectionString)
@@ -94,38 +90,58 @@ let runScript dbName (script: string) baseConnectionString =
     |> ignore
     conn.Close()
 
+let fullReset databaseName connectionString =
+    deleteAndRecreateDbScript
+    |> runScript databaseName
+    <| connectionString
+
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): unit =
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
-    c.GetInstance<ConnectionString>() |> runScript "CardOverflow" deleteAndRecreateDbScript
+    c.GetInstance<ConnectionString>() |> fullReset "CardOverflow"
 
 let fastResetScript =
     let insertMasterData =
         Regex("""SET IDENTITY_INSERT.*INSERT \[.*?$""", RegexOptions.Singleline + RegexOptions.Multiline)
             .Match(File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql")
             .Value
-    sprintf
-        """
+    sprintf // https://stackoverflow.com/a/39511982 https://stackoverflow.com/a/49735672
+        """USE [CardOverflow]
+        GO
         EXEC sp_MSForEachTable 'DISABLE TRIGGER ALL ON ?'
         GO
         EXEC sp_MSForEachTable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL'
         GO
         EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; DELETE FROM ?'
         GO
+        exec sp_MSforeachtable 'dbcc checkident(''?'', reseed, 0)', @whereand='and exists(select 1 from sys.columns c where c.object_id = o.id and is_identity = 1)'
+        GO
         %s
         EXEC sp_MSForEachTable 'ALTER TABLE ? CHECK CONSTRAINT ALL'
         GO
         EXEC sp_MSForEachTable 'ENABLE TRIGGER ALL ON ?'
-        GO
-        """
+        GO"""
         insertMasterData
+    
+let databaseExists databaseName connectionString =
+    use connection = new SqlConnection(ConnectionString.value connectionString)
+    use command = new SqlCommand("SELECT db_id('" + databaseName + "')", connection) // sql injection vector - do not use in prod https://stackoverflow.com/a/33782992
+    connection.Open()
+    DBNull.Value :> obj <> command.ExecuteScalar()
+
+let fastReset databaseName connectionString =
+    if databaseExists databaseName connectionString then
+        fastResetScript
+    else
+        deleteAndRecreateDbScript
+    |> runScript databaseName
+    <| connectionString
 
 //[<Fact>]
 let ``Delete all rows and reinsert master data into localhost's CardOverflow Database`` (): unit =
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
-    c.GetInstance<ConnectionString>() |> runScript "CardOverflow" fastResetScript
-    
+    c.GetInstance<ConnectionString>() |> fastReset "CardOverflow"

@@ -97,7 +97,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     )}
 
 let testGetAcquired (cardIds: int list) addCards name = task {
-    use c = new TestContainer(name)
+    use c = new TestContainer(false, name)
     
     let userId = 1 // this user creates the card
     for addCard in addCards do
