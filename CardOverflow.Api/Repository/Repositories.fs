@@ -111,6 +111,8 @@ module CardRepository =
         let! r =
             db.LatestCardInstance
                 .Include(fun x -> x.CardTemplateInstance)
+                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                 .SingleAsync(fun x -> x.CardId = cardId)
         return CardInstanceView.loadLatest r
     }
@@ -234,6 +236,8 @@ module CardRepository =
         task {
             let! r =
                 (searchAcquiredIsLatest db userId searchTerm)
+                    .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                     .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)

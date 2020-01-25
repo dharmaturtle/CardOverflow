@@ -308,6 +308,14 @@ let ``Create cloze card works`` (): Task<unit> = task {
             assertCount 0 clozeText
             assertCount 1 "Portland was founded in {{c2::1845}}."
             assertCount 1 "{{c1::Portland::city}} was founded in 1845."
+
+    let! e = CardRepository.GetAcquiredPages c.Db userId 1 ""
+    let expected =
+        [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
+            "[ ... ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
+            "[ ... ] was founded in 1845.", "[ Portland ] was founded in 1845. extra"
+            "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
+    Assert.Equal(expected, e.Results.Select(fun x -> x.Value.CardInstanceMeta.StrippedFront, x.Value.CardInstanceMeta.StrippedBack))
     }
 
 [<Fact>]
