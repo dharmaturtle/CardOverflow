@@ -266,26 +266,28 @@ module CardRepository =
     let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
-                db.Card
+                db.LatestCardInstance
                     .Where(fun x ->
-                        x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm))) ||
+                        x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm)) ||
                         if String.IsNullOrWhiteSpace searchTerm then 
                             true
                         else
-                            x.CardInstances.Any(fun x -> EF.Functions.FreeText(x.FieldValues, searchTerm))
+                            EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
                     )
+                    .Include(fun x -> x.CardTemplateInstance)
                     .Include(fun x -> x.Author)
-                    .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardInstanceEntity) -> x.CardTemplateInstance)
-                    .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
-                    .OrderByDescending(fun x -> x.Users)
+                    .OrderByDescending(fun x -> x.CardUsers)
                     .ToPagedListAsync(pageNumber, 15)
             return {
                 Results =
                     r |> Seq.map (fun c ->
-                        let isAcquired = db.AcquiredCard.Any(fun x -> x.UserId = userId && x.CardInstance.CardId = c.Id)
-                        ExploreCardSummary.load (db.LatestCardInstance.Include(fun x -> x.CardTemplateInstance).Single(fun x -> x.CardId = c.Id) |> CardInstanceMeta.loadLatest isAcquired) c
+                        let isAcquired = db.AcquiredCard.Any(fun x -> x.UserId = userId && x.CardInstance.CardId = c.CardId)
+                        {   Id = c.CardId
+                            Author = c.Author.DisplayName
+                            AuthorId = c.AuthorId
+                            Users = c.CardUsers
+                            Instance = CardInstanceMeta.loadLatest isAcquired c
+                        }
                     ) // medTODO optimize
                 Details = {
                     CurrentPage = r.PageNumber

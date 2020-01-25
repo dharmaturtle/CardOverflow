@@ -38,5 +38,8 @@ namespace CardOverflow.Entity
         public byte? AnkiNoteOrd { get; set; }
         public virtual CardTemplateInstanceEntity CardTemplateInstance { get; set; }
         public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
+        public virtual UserEntity Author { get; set; }
+        [ForeignKey("CardInstanceId")]
+        public virtual CardInstanceEntity CardInstance { get; set; }
     }
 }

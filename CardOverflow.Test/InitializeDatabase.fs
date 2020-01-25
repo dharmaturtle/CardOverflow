@@ -107,7 +107,7 @@ let fastResetScript =
         Regex("""SET IDENTITY_INSERT.*INSERT \[.*?$""", RegexOptions.Singleline + RegexOptions.Multiline)
             .Match(File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql")
             .Value
-    sprintf // https://stackoverflow.com/a/39511982 https://stackoverflow.com/a/49735672
+    sprintf // https://stackoverflow.com/a/39511982 https://stackoverflow.com/a/49735672 Full text index stuff: https://stackoverflow.com/q/1091812/ https://stackoverflow.com/a/12183863
         """USE [CardOverflow]
         GO
         EXEC sp_MSForEachTable 'DISABLE TRIGGER ALL ON ?'
@@ -119,6 +119,9 @@ let fastResetScript =
         exec sp_MSforeachtable 'dbcc checkident(''?'', reseed, 0)', @whereand='and exists(select 1 from sys.columns c where c.object_id = o.id and is_identity = 1)'
         GO
         %s
+        GO
+        ALTER FULLTEXT CATALOG CardInstanceFieldValueFullTextCatalog REBUILD
+        GO
         EXEC sp_MSForEachTable 'ALTER TABLE ? CHECK CONSTRAINT ALL'
         GO
         EXEC sp_MSForEachTable 'ENABLE TRIGGER ALL ON ?'
