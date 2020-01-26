@@ -14,7 +14,7 @@
 
 <div class="d-flex justify-content-between">
   <label><b>@Field.EditField.Name: </b></label>
-  <button class=@(Field.IsCommunal ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-primary" ) @onclick=@ToggleCommunal type="button">
+  <button class=@(Field.IsCommunal ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-primary" ) @onclick=@ToggleCommunal type="button" disabled=@MustBeCommunal>
     Communal
   </button>
 </div>
@@ -78,6 +78,8 @@
   [Parameter]
   public AcquiredCard Card { get; set; }
   [Parameter]
+  public bool MustBeCommunal { get; set; }
+  [Parameter]
   public EventCallback<string> ValueUpdated { get; set; }
   private object[] _tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   private List<CommunalFieldInstance> _searchResults = new List<CommunalFieldInstance>();
@@ -85,14 +87,21 @@
   private SearchCommand _searchCommand = new SearchCommand("");
   private bool _isNew = true;
 
-  private void ToggleCommunal() =>
-    Field.Communal =
-      Field.IsCommunal
-      ? FSharpOption<CommunalFieldValue>.None
-      : getFieldCommunal(FSharpOption<int>.None);
+  protected override void OnParametersSet() {
+    base.OnParametersSet();
+    if (MustBeCommunal) {
+      Field.Communal = getFieldCommunal(FSharpOption<int>.None);
+    }
+  }
 
-  private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> id) =>
-    Field.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(id, x));
+  private void ToggleCommunal() =>
+Field.Communal =
+  Field.IsCommunal
+  ? FSharpOption<CommunalFieldValue>.None
+  : getFieldCommunal(FSharpOption<int>.None);
+
+  private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> instanceId) =>
+    Field.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(instanceId, x));
 
   private async Task Search(SearchCommand searchCommand) {
     _searchResults = await DbExecutor.QueryAsync(db => CommunalFieldRepository.Search(db, searchCommand.Query));
