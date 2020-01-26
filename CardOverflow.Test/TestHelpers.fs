@@ -29,3 +29,5 @@ module Extensions =
     type Result<'a, 'b> with
         member this.Value =
             Result.getOk this
+        member this.error =
+            Result.getError this

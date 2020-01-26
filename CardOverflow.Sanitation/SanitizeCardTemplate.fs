@@ -69,6 +69,8 @@ type ViewCardTemplateInstance = {
 } with
     member this.IsCloze =
         Cloze.isCloze this.QuestionTemplate
+    member this.ClozeFields =
+        AnkiImportLogic.clozeFields this.QuestionTemplate
 
 module ViewCardTemplateInstance =
     let load (bznz: CardTemplateInstance) = {

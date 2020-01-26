@@ -246,6 +246,21 @@ let updateCommand clozeTemplate clozeText = {
     TemplateInstance = clozeTemplate }
 
 [<Fact>]
+let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (): Task<unit> = task {
+    let userId = 3
+    use c = new TestContainer()
+    let! card = CardRepository.getNew c.Db userId
+    let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
+    let malformedUpdateCommand =
+        let command = updateCommand (templates.Single(fun x -> x.Name = "Cloze")) "Canberra was founded in {{c1::1913}}."
+        { command with FieldValues = command.FieldValues.Select(fun x -> { x with Communal = None }).ToList() }
+
+    let! r = SanitizeCardRepository.Update c.Db userId card malformedUpdateCommand
+
+    Assert.Equal("The following cloze fields must be communal: Text", r.error)
+    }
+
+[<Fact>]
 let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()

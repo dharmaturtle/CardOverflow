@@ -264,16 +264,21 @@ module SanitizeCardRepository =
                     TemplateInstance = instance.CardTemplateInstance |> CardTemplateInstance.load |> ViewCardTemplateInstance.load
                 } |> Ok }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let update () = CardRepository.UpdateFieldsToNewInstance db acquiredCard command.load
-        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId)
+        let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
+        let actual = command.FieldValues.Where(fun x -> x.IsCommunal).Select(fun x -> x.EditField.Name) |> Set.ofSeq
+        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId) // lowTODO optimize by moving into `else`
         return!
-            match card with
-            | null ->
-                update ()
-            | card ->
-                if card.AuthorId = authorId
-                then update ()
-                else "You aren't that card's author." |> Error |> Task.FromResult
+            if Set.isSubset required actual then
+                let update () = CardRepository.UpdateFieldsToNewInstance db acquiredCard command.load
+                match card with
+                | null ->
+                    update ()
+                | card ->
+                    if card.AuthorId = authorId
+                    then update ()
+                    else "You aren't that card's author." |> Error |> Task.FromResult
+            else
+                Set.difference required actual |> String.concat ", " |> sprintf "The following cloze fields must be communal: %s" |> Error |> Task.FromResult
         }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Query
