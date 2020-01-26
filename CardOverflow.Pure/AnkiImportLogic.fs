@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open System.Linq
 open FsToolkit.ErrorHandling
 open FSharp.Text.RegexProvider
 open System
@@ -33,3 +34,7 @@ module AnkiImportLogic =
                 else
                     field.Replace(m.Value, m.answer.Value)
         ))
+    let clozeFields questionTemplate =
+        ClozeTemplateRegex().TypedMatches questionTemplate
+        |> Seq.map(fun x -> x.fieldName.Value)
+        |> List.ofSeq

@@ -7,6 +7,24 @@ open Xunit
 open System
 
 [<Fact>]
+let ``AnkiImportLogic.clozeFields works with one cloze``(): unit =
+    let questionTemplate = "{{cloze:Text}}<br>{{Extra}}"
+    let expected = "Text"
+    
+    let actal = AnkiImportLogic.clozeFields questionTemplate |> Seq.exactlyOne
+    
+    Assert.Equal(expected, actal)
+
+[<Fact>]
+let ``AnkiImportLogic.clozeFields works with two clozes``(): unit =
+    let questionTemplate = "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+    let expected = ["Field1"; "Field2"]
+    
+    let actual = AnkiImportLogic.clozeFields questionTemplate
+    
+    Assert.Equal<string seq>(expected, actual)
+
+[<Fact>]
 let ``maxClozeIndex doesn't throw given bad data``(): unit =
     let expectedErrorMessage = Guid.NewGuid()
     let actualErrorMessage = AnkiImportLogic.maxClozeIndex expectedErrorMessage Map.empty "" |> Result.getError

@@ -378,23 +378,26 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` (): unit =
     let test text expected questionTemplate =
-        {   EditSummary = ""
-            FieldValues =
-                CardTemplateInstance.initialize.Fields.Select(fun f -> {
-                    EditField = f
-                    Value =
-                        if f.Name = "Front" then
-                            text
-                        else
-                            f.Name
-                    Communal = None
-                }).ToList()
-            TemplateInstance =
-                { CardTemplateInstance.initialize with
-                    QuestionTemplate = questionTemplate
-                } |> ViewCardTemplateInstance.load
-        }.Backs
-        |> Result.getOk
+        let view =
+            {   EditSummary = ""
+                FieldValues =
+                    CardTemplateInstance.initialize.Fields.Select(fun f -> {
+                        EditField = f
+                        Value =
+                            if f.Name = "Front" then
+                                text
+                            else
+                                f.Name
+                        Communal = None
+                    }).ToList()
+                TemplateInstance =
+                    { CardTemplateInstance.initialize with
+                        QuestionTemplate = questionTemplate
+                    } |> ViewCardTemplateInstance.load
+            }
+        if questionTemplate.Contains "cloze" then
+            Assert.Equal<string seq>(["Front"], view.TemplateInstance.ClozeFields)
+        view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expected, x)
     let testOrdinary text expected =
@@ -413,24 +416,26 @@ let ``EditCardCommand's back works with cloze`` (): unit =
             "[ Canberra ] was founded in 1913. Back" ]
 
     let testMultiCloze front back expectedBack = // https://eshapard.github.io/anki/the-power-of-making-new-cards-on-the-fly-in-anki.html
-        {   EditSummary = ""
-            FieldValues =
-                CardTemplateInstance.initialize.Fields.Select(fun f -> {
-                    EditField = f
-                    Value =
-                        match f.Name with
-                        | "Front" -> front
-                        | "Back" -> back
-                        | _ -> "Source goes here"
-                    Communal = None
-                }).ToList()
-            TemplateInstance =
-                { CardTemplateInstance.initialize with
-                    QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
-                    AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
-                } |> ViewCardTemplateInstance.load
-        }.Backs
-        |> Result.getOk
+        let view =
+            {   EditSummary = ""
+                FieldValues =
+                    CardTemplateInstance.initialize.Fields.Select(fun f -> {
+                        EditField = f
+                        Value =
+                            match f.Name with
+                            | "Front" -> front
+                            | "Back" -> back
+                            | _ -> "Source goes here"
+                        Communal = None
+                    }).ToList()
+                TemplateInstance =
+                    { CardTemplateInstance.initialize with
+                        QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
+                        AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
+                    } |> ViewCardTemplateInstance.load
+            }
+        Assert.Equal<string seq>(["Front"; "Back"], view.TemplateInstance.ClozeFields)
+        view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expectedBack, x)
     testMultiCloze
