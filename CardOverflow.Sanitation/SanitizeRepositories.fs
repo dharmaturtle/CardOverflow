@@ -207,7 +207,7 @@ type ViewEditCardCommand = {
                     let zip =
                         Seq.zip
                             <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                            <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleCloze clozeIndex)
+                            <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
                         |> List.ofSeq
                     CardHtml.generate
                         zip

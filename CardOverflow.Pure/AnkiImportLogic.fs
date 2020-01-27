@@ -21,19 +21,19 @@ module AnkiImportLogic =
             |> List.map (fun x -> x.clozeIndex.Value |> int)
             |> List.max
             |> Ok
-    let multipleClozeToSingleCloze (index: byte) =
-        List.map (fun field ->
-            (field, ClozeRegex().TypedMatches field)
-            ||> Seq.fold (fun field m -> 
-                if m.clozeIndex.Value = string index then
-                    let hint =
-                        if String.IsNullOrWhiteSpace m.hint.Value
-                        then ""
-                        else "::" + m.hint.Value
-                    field.Replace(m.Value, "{{c" + string index + "::" + m.answer.Value + hint + "}}")
-                else
-                    field.Replace(m.Value, m.answer.Value)
-        ))
+    let multipleClozeToSingleCloze (index: byte) field =
+        (field, ClozeRegex().TypedMatches field)
+        ||> Seq.fold (fun field m -> 
+            if m.clozeIndex.Value = string index then
+                let hint =
+                    if String.IsNullOrWhiteSpace m.hint.Value
+                    then ""
+                    else "::" + m.hint.Value
+                field.Replace(m.Value, "{{c" + string index + "::" + m.answer.Value + hint + "}}")
+            else
+                field.Replace(m.Value, m.answer.Value))
+    let multipleClozeToSingleClozeList (index: byte) =
+        List.map (multipleClozeToSingleCloze index)
     let clozeFields questionTemplate =
         ClozeTemplateRegex().TypedMatches questionTemplate
         |> Seq.map(fun x -> x.fieldName.Value)

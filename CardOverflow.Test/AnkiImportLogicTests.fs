@@ -32,9 +32,9 @@ let ``maxClozeIndex doesn't throw given bad data``(): unit =
 
 let run index before expected =
     let index = byte index
-    Assert.Equal<string seq>(
-        [expected],
-        AnkiImportLogic.multipleClozeToSingleCloze index [before])
+    Assert.Equal(
+        expected,
+        AnkiImportLogic.multipleClozeToSingleCloze index before)
 
 [<Fact>]
 let ``Cloze: c1 is transformed into my cloze``(): unit =

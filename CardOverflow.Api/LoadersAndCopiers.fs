@@ -265,7 +265,7 @@ type CardInstanceView with
                         if String.IsNullOrWhiteSpace clozeIndex then
                             { fieldAndValue with Value = value }
                         else
-                            { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze (byte clozeIndex) [ value ] |> List.exactlyOne }
+                            { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze (byte clozeIndex) value }
                     else
                         fieldAndValue
                 ) |> toResizeArray
