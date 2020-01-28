@@ -15,32 +15,33 @@ open CardOverflow.Pure.Core
 open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
+open CardOverflow.Sanitation
 
-let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
-    let cardTemplateInstance =
-        db.CardTemplateInstance
-            .Include(fun x -> x.CardTemplate)
-            .Include(fun x -> x.User_CardTemplateInstances)
-            .First(fun x -> x.CardTemplate.CardTemplateInstances.Single().Name = templateName)
-            |> AcquiredCardTemplateInstance.load
+let normalCommand cardTemplateInstance fieldValues =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    let! ac = CardRepository.getNew db userId
-    let ac = { ac with Tags = tags }
-    let! r =
-        {   TemplateInstance = cardTemplateInstance.CardTemplateInstance
+    {   TemplateInstance = cardTemplateInstance
             FieldValues =
-                cardTemplateInstance.CardTemplateInstance.Fields
+            cardTemplateInstance.Fields
                 |> Seq.sortBy (fun x -> x.Ordinal)
                 |> Seq.mapi (fun i field -> {
-                    EditField = field
+                EditField = ViewField.copyTo field
                     Value = fieldValues.[i]
                     Communal = None
                 }) |> toResizeArray
             EditSummary = "Initial creation"
-        } |> CardRepository.UpdateFieldsToNewInstance db ac
+    }
+
+let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
+    let! templates = SanitizeCardTemplate.Search db templateName
+    let template = templates.Single(fun x -> x.Name = templateName)
+    let! ac = CardRepository.getNew db userId
+    let ac = { ac with Tags = tags }
+    let! r =
+        normalCommand template fieldValues
+        |> SanitizeCardRepository.Update db userId ac
     return Result.getOk r
     }
 
