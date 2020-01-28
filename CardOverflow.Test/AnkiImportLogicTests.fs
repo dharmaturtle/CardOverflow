@@ -44,6 +44,18 @@ let ``maxClozeIndex has error with nonconsecutive cloze``(): unit =
     
     Assert.Equal(expectedErrorMessage, actualErrorMessage)
 
+[<Fact>]
+let ``maxClozeIndex has error with 0``(): unit =
+    let expectedErrorMessage = Guid.NewGuid()
+    let keyvalues =
+        [   "Extra", ""
+            "Text", "{{c0::stuff}}" ]
+        |> Map.ofSeq
+
+    let actualErrorMessage = AnkiImportLogic.maxClozeIndex expectedErrorMessage keyvalues "{{cloze:Text}}" |> Result.getError
+    
+    Assert.Equal(expectedErrorMessage, actualErrorMessage)
+
 let run index before expected =
     let index = byte index
     Assert.Equal(

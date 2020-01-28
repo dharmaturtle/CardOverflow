@@ -25,7 +25,7 @@ module AnkiImportLogic =
                 [ 1 .. max ]
                 indexes
             |> Seq.forall(fun (x, y) -> x = y)
-            |> function
+            |> fun isConsecutive -> match isConsecutive && max > 0 with
             | true -> Ok max
             | false -> Error errorMessage
     let multipleClozeToSingleCloze (index: byte) field =
