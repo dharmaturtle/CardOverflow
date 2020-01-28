@@ -138,14 +138,14 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             |> fun x -> Assert.Equal(expected, x)
     assertCount 5 "may be remembered with the mnemonic"
     Assert.Equal<string seq>(
-        [   """↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia<img src="/missingImage.jpg">"""
-            "1"
-            "1"
-            "2"
-            "3"
-            "4"
-            "5"],
-        c.Db.CardInstance.Select(fun x -> x.FieldValues).ToList().OrderBy(fun x -> x))
+        [   """↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic FibrosisImage here"""
+            """↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia"""
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: {{c2::Griseofulvin (antifungal)}} C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: {{c3::Colchicine (antigout)}} V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: {{c4::Vincristine/Vinblastine (anticancer)}}P: Palcitaxel (anticancer) """
+            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: {{c5::Palcitaxel (anticancer)}} """],
+        c.Db.CardInstance.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
     Assert.Equal<string seq>(
         [   "<b><br /></b>"
@@ -294,6 +294,8 @@ let ``Create cloze card works`` (): Task<unit> = task {
         let! x = updateCommand clozeTemplate clozeText |> SanitizeCardRepository.Update c.Db userId card
         Result.getOk x
         for i in [1 .. clozeMaxIndex] |> List.map byte do
+            let singleCloze = AnkiImportLogic.multipleClozeToSingleCloze i clozeText
+            Assert.SingleI <| c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
             Assert.Equal(clozeMaxIndex, c.Db.LatestCardInstance.Count(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))
             let! communalFieldInstanceIds =
                 (getCardInstances clozeText)

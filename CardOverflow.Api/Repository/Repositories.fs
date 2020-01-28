@@ -99,8 +99,6 @@ module CardRepository =
         let! r =
             db.CardInstance
                 .Include(fun x -> x.CardTemplateInstance)
-                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
         return
             match r with
@@ -111,8 +109,6 @@ module CardRepository =
         let! r =
             db.LatestCardInstance
                 .Include(fun x -> x.CardTemplateInstance)
-                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                 .SingleAsync(fun x -> x.CardId = cardId)
         return CardInstanceView.loadLatest r
     }
@@ -236,8 +232,6 @@ module CardRepository =
         task {
             let! r =
                 (searchAcquiredIsLatest db userId searchTerm)
-                    .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                     .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
@@ -332,13 +326,16 @@ module CardRepository =
                         AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
                         |> Result.map (fun max ->
                         [1uy .. byte max] |> List.map (fun clozeIndex ->
+                            let zip =
+                                Seq.zip
+                                    (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                                    (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
+                                |> Map.ofSeq
                             { command with
                                 FieldValues =
                                     command.FieldValues.Select(fun x ->
-                                        if x.IsCommunal then
-                                            { x with Value = MappingTools.semanticString + clozeIndex.ToString() }
-                                        else x
-                                    ).ToList() }))
+                                    { x with
+                                        Value = zip.[x.EditField.Name]}).ToList() }))
                     else Ok [ command ]
                     |> Result.map (List.iter (fun c ->
                         let e = acquiredCard.copyToNew tags

@@ -81,6 +81,3 @@ let stripHtmlTags html =
     doc.DocumentNode.InnerText
     |> HttpUtility.HtmlDecode
     |> standardizeWhitespace
-
-let semanticCharacter = '\x07' // Used to indicate special database semantics https://en.wikipedia.org/wiki/Bell_character
-let semanticString = semanticCharacter.ToString()

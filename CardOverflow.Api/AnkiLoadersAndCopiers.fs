@@ -516,19 +516,11 @@ module Anki =
                         let! cards =
                             if cardTemplates.First().CardTemplate.IsCloze then result {
                                 let cardTemplate = cardTemplates |> Seq.exactlyOne
-                                let fieldNamesAndValues =
+                                let valueByFieldName =
                                     Seq.zip
                                         <| cardTemplate.CardTemplate.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
                                         <| fieldValues
-                                    |> List.ofSeq
-                                let valueByFieldName = fieldNamesAndValues |> Map.ofList
-                                let getFields clozeIndex =
-                                    fieldNamesAndValues |> List.map (fun (fieldName, value) ->
-                                        if communalFields.Any(fun x -> x.FieldName = fieldName) then
-                                            if ClozeRegex().IsMatch value then
-                                                MappingTools.semanticString + clozeIndex.ToString()
-                                            else MappingTools.semanticString
-                                        else value)
+                                    |> Map.ofSeq
                                 let! max =
                                     AnkiImportLogic.maxClozeIndex
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
@@ -536,7 +528,7 @@ module Anki =
                                         <| cardTemplate.CardTemplate.QuestionTemplate
                                 return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
                                     toCard
-                                        <| getFields clozeIndex
+                                        <| AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex fieldValues
                                         <| cardTemplate.Entity
                                         <| clozeIndex - 1uy // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}

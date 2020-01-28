@@ -255,31 +255,17 @@ type AcquiredCardTemplateInstance with
           CardTemplateInstance = CardTemplateInstance.load entity }
 
 type CardInstanceView with
-    static member private toView (cardTemplateInstance: CardTemplateInstanceEntity) (fieldValues: string) (communals: CommunalFieldInstance_CardInstanceEntity ICollection)=
-        {   FieldValues =
-                FieldAndValue.load (Fields.fromString cardTemplateInstance.Fields) fieldValues
-                |> Seq.map (fun fieldAndValue ->
-                    if fieldAndValue.Value.StartsWith MappingTools.semanticCharacter then
-                        let value = communals.Single(fun j -> j.CommunalFieldInstance.FieldName = fieldAndValue.Field.Name).CommunalFieldInstance.Value
-                        let clozeIndex = fieldAndValue.Value.Trim MappingTools.semanticCharacter
-                        if String.IsNullOrWhiteSpace clozeIndex then
-                            { fieldAndValue with Value = value }
-                        else
-                            { fieldAndValue with Value = AnkiImportLogic.multipleClozeToSingleCloze (byte clozeIndex) value }
-                    else
-                        fieldAndValue
-                ) |> toResizeArray
+    static member private toView (cardTemplateInstance: CardTemplateInstanceEntity) (fieldValues: string)=
+        {   FieldValues = FieldAndValue.load (Fields.fromString cardTemplateInstance.Fields) fieldValues
             TemplateInstance = CardTemplateInstance.load cardTemplateInstance }
     static member load (entity: CardInstanceEntity) =
         CardInstanceView.toView
             entity.CardTemplateInstance
             entity.FieldValues
-            entity.CommunalFieldInstance_CardInstances
     static member loadLatest (entity: LatestCardInstanceEntity) =
         CardInstanceView.toView
             entity.CardTemplateInstance
             entity.FieldValues
-            entity.CommunalFieldInstance_CardInstances
     member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
         entity.CommunalFieldInstance_CardInstances <-
