@@ -271,12 +271,13 @@ let ``Card search works`` (): Task<unit> = task {
     let front = Guid.NewGuid().ToString()
     let back = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom tag"]
+    let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
+    do! FacetRepositoryTests.addCloze clozeText c.Db userId []
     do! Task.Delay 10000 // give the full text index time to rebuild
-
     let search = CardRepository.SearchAsync c.Db userId 1
     
     let! cards = search ""
-    Assert.Equal(2, cards.Results.Count())
+    Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
     Assert.Equal(1, cards.Results.Single().Id)
     let! cards = search "Front"
@@ -287,6 +288,8 @@ let ``Card search works`` (): Task<unit> = task {
     Assert.Equal(2, cards.Results.Single().Id)
     let! cards = search back
     Assert.Equal(2, cards.Results.Single().Id)
+    let! cards = search clozeText
+    Assert.Equal(3, cards.Results.Single().Id)
     }
 
 [<Fact>]
