@@ -303,6 +303,17 @@ let ``New user has TheCollective's card templates`` (): Task<unit> = task {
     }
 
 [<Fact>]
+let ``Updating card template with duplicate field names yields error`` (): unit =
+    let userId = 3
+    let fieldName = Guid.NewGuid().ToString()
+    let template = CardTemplateInstance.initialize |> ViewCardTemplateInstance.load
+    let template = { template with Fields = template.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
+    
+    let error = SanitizeCardTemplate.Update null userId template |> Result.getError
+    
+    Assert.Equal("Field names must differ", error)
+
+[<Fact>]
 let ``Can create card template and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3

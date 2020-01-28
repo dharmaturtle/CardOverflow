@@ -166,10 +166,13 @@ module SanitizeCardTemplate =
         }
     let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
         let update () = ViewCardTemplateInstance.copyTo instance |> CardTemplateRepository.UpdateFieldsToNewInstance db userId |> Ok
-        db.CardTemplate.SingleOrDefault(fun x -> x.Id = instance.CardTemplateId)
-        |> function
-        | null -> update ()
-        | cardTemplate ->
-            if cardTemplate.AuthorId = userId
-            then update ()
-            else Error <| "You aren't that this template's author."
+        if instance.Fields.Count = instance.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
+            db.CardTemplate.SingleOrDefault(fun x -> x.Id = instance.CardTemplateId)
+            |> function
+            | null -> update ()
+            | cardTemplate ->
+                if cardTemplate.AuthorId = userId
+                then update ()
+                else Error <| "You aren't that this template's author."
+        else
+            Error "Field names must differ"
