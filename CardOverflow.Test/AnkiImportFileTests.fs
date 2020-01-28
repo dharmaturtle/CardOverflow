@@ -226,25 +226,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 
-let updateCommand clozeTemplate clozeText = {
-    EditSummary = "Initial creation"
-    FieldValues =
-        clozeTemplate.Fields.Select(fun f -> {
-            EditField = ViewField.copyTo f
-            Value =
-                if f.Name = "Text" then
-                    clozeText
-                else
-                    "extra"
-            Communal =
-                if f.Name = "Text" then
-                    {   InstanceId = None
-                        CommunalCardInstanceIds = [].ToList()
-                    } |> Some
-                else None
-        }).ToList()
-    TemplateInstance = clozeTemplate }
-
 [<Fact>]
 let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (): Task<unit> = task {
     let userId = 3
@@ -252,7 +233,7 @@ let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (
     let! card = CardRepository.getNew c.Db userId
     let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
     let malformedUpdateCommand =
-        let command = updateCommand (templates.Single(fun x -> x.Name = "Cloze")) "Canberra was founded in {{c1::1913}}."
+        let command = FacetRepositoryTests.clozeCommand "Canberra was founded in {{c1::1913}}." (templates.Single(fun x -> x.Name = "Cloze"))
         { command with FieldValues = command.FieldValues.Select(fun x -> { x with Communal = None }).ToList() }
 
     let! r = SanitizeCardRepository.Update c.Db userId card malformedUpdateCommand
@@ -264,12 +245,7 @@ let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (
 let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
-    let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
-    let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
-    
-    let! card = CardRepository.getNew c.Db userId
-    let! x = updateCommand clozeTemplate "{{c1::Portland::city}} was founded in {{c2::1845}}." |> SanitizeCardRepository.Update c.Db userId card
-    Result.getOk x
+    do! FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
 
     let! view = CardRepository.instance c.Db 1
     Assert.Equal<string seq>(
@@ -285,14 +261,10 @@ let ``Create cloze card works`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
     let testCommunalFields = testCommunalFields c userId
-    let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
-    let clozeTemplate = templates.Single(fun x -> x.Name = "Cloze")
 
     let getCardInstances clozeText = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
-        let! card = CardRepository.getNew c.Db userId
-        let! x = updateCommand clozeTemplate clozeText |> SanitizeCardRepository.Update c.Db userId card
-        Result.getOk x
+        do! FacetRepositoryTests.addCloze clozeText c.Db userId []
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let singleCloze = AnkiImportLogic.multipleClozeToSingleCloze i clozeText
             Assert.SingleI <| c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
