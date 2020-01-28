@@ -17,42 +17,42 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Sanitation
 
-let normalCommand cardTemplateInstance fieldValues =
+let normalCommand fieldValues cardTemplateInstance =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
     {   TemplateInstance = cardTemplateInstance
-            FieldValues =
+        FieldValues =
             cardTemplateInstance.Fields
-                |> Seq.sortBy (fun x -> x.Ordinal)
-                |> Seq.mapi (fun i field -> {
+            |> Seq.sortBy (fun x -> x.Ordinal)
+            |> Seq.mapi (fun i field -> {
                 EditField = ViewField.copyTo field
-                    Value = fieldValues.[i]
-                    Communal = None
-                }) |> toResizeArray
-            EditSummary = "Initial creation"
+                Value = fieldValues.[i]
+                Communal = None
+            }) |> toResizeArray
+        EditSummary = "Initial creation"
     }
 
-let add templateName fieldValues createCommand (db: CardOverflowDb) userId tags = task {
+let add templateName createCommand (db: CardOverflowDb) userId tags = task {
     let! templates = SanitizeCardTemplate.Search db templateName
     let template = templates.Single(fun x -> x.Name = templateName)
     let! ac = CardRepository.getNew db userId
     let ac = { ac with Tags = tags }
     let! r =
-        createCommand template fieldValues
+        createCommand template
         |> SanitizeCardRepository.Update db userId ac
     return Result.getOk r
     }
 
 let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<unit> =
-    add "Basic (and reversed card) - Card 1" [] normalCommand
+    add "Basic (and reversed card) - Card 1" <| normalCommand []
 
 let addBasicCard =
-    add "Basic" [] normalCommand
+    add "Basic" <| normalCommand []
 
-let addBasicCustomCard x =
-    add "Basic" x normalCommand
+let addBasicCustomCard fieldValues =
+    add "Basic" <| normalCommand fieldValues
 
 [<Fact>]
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
