@@ -34,25 +34,25 @@ let normalCommand cardTemplateInstance fieldValues =
             EditSummary = "Initial creation"
     }
 
-let add templateName fieldValues (db: CardOverflowDb) userId tags = task {
+let add templateName fieldValues createCommand (db: CardOverflowDb) userId tags = task {
     let! templates = SanitizeCardTemplate.Search db templateName
     let template = templates.Single(fun x -> x.Name = templateName)
     let! ac = CardRepository.getNew db userId
     let ac = { ac with Tags = tags }
     let! r =
-        normalCommand template fieldValues
+        createCommand template fieldValues
         |> SanitizeCardRepository.Update db userId ac
     return Result.getOk r
     }
 
 let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<unit> =
-    add "Basic (and reversed card) - Card 1" []
+    add "Basic (and reversed card) - Card 1" [] normalCommand
 
 let addBasicCard =
-    add "Basic" []
+    add "Basic" [] normalCommand
 
 let addBasicCustomCard x =
-    add "Basic" x
+    add "Basic" x normalCommand
 
 [<Fact>]
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
