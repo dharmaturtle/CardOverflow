@@ -27,7 +27,21 @@ let ``AnkiImportLogic.clozeFields works with two clozes``(): unit =
 [<Fact>]
 let ``maxClozeIndex doesn't throw given bad data``(): unit =
     let expectedErrorMessage = Guid.NewGuid()
+
     let actualErrorMessage = AnkiImportLogic.maxClozeIndex expectedErrorMessage Map.empty "" |> Result.getError
+    
+    Assert.Equal(expectedErrorMessage, actualErrorMessage)
+
+[<Fact>]
+let ``maxClozeIndex has error with nonconsecutive cloze``(): unit =
+    let expectedErrorMessage = Guid.NewGuid()
+    let keyvalues =
+        [   "Extra", ""
+            "Text", "{{c2::stuff}}" ]
+        |> Map.ofSeq
+
+    let actualErrorMessage = AnkiImportLogic.maxClozeIndex expectedErrorMessage keyvalues "{{cloze:Text}}" |> Result.getError
+    
     Assert.Equal(expectedErrorMessage, actualErrorMessage)
 
 let run index before expected =

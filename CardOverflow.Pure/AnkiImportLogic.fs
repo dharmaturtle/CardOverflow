@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open CardOverflow.Debug
 open System.Linq
 open FsToolkit.ErrorHandling
 open FSharp.Text.RegexProvider
@@ -17,10 +18,16 @@ module AnkiImportLogic =
         >> List.ofSeq
         >> function
         | [] -> Error errorMessage
-        | x -> x
-            |> List.map (fun x -> x.clozeIndex.Value |> int)
-            |> List.max
-            |> Ok
+        | x ->
+            let indexes = x |> List.map (fun x -> x.clozeIndex.Value |> int) |> List.sort
+            let max = indexes.Last()
+            Seq.zip
+                [ 1 .. max ]
+                indexes
+            |> Seq.forall(fun (x, y) -> x = y)
+            |> function
+            | true -> Ok max
+            | false -> Error errorMessage
     let multipleClozeToSingleCloze (index: byte) field =
         (field, ClozeRegex().TypedMatches field)
         ||> Seq.fold (fun field m -> 
