@@ -279,6 +279,7 @@ type CardInstanceMeta = {
     CommunalFields: CommunalFieldInstance ResizeArray
 }
 
+[<CLIMutable>]
 type AcquiredCard = {
     CardId: int
     AcquiredCardId: int

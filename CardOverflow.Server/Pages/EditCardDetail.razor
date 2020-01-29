@@ -26,6 +26,14 @@
           </div>
           <div class="col-sm">
             <div class="row">
+              <a href="cardoption" class="col-sm-2 mt-2">
+                Card Option
+              </a>
+              <div class="col-sm-10 px-0">
+                <CardOptionSelector OptionSelected=_SetOption SelectedId=_SelectedCardOptionId />
+              </div>
+            </div>
+            <div class="row">
               <a href="CardTemplate/@SelectedTemplateId" class="col-sm-2 mt-2">
                 Card Template
               </a>
@@ -86,6 +94,7 @@
   private int SelectedTemplateId;
   private int SelectedTemplateInstanceId;
   private bool NewEditCardOnSave;
+  private int _SelectedCardOptionId;
 
   protected override async Task OnInitializedAsync() {
     if (Templates == null) {
@@ -95,7 +104,13 @@
       EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
       NewEditCardOnSave = true;
     }
+    _SelectedCardOptionId = User.DefaultCardOptionId.Value;
     UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
+  }
+
+  private void _SetOption(int newId) {
+    _SelectedCardOptionId = newId;
+    Card.CardOptionId = newId;
   }
 
   async Task UpdateCard() {
