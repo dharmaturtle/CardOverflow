@@ -49,7 +49,8 @@
   </div>
   <div>
     @if (Card.IsAcquired) {
-      <CardOptionSelector AcquiredCard=@AcquiredCard />
+      <h3>Card Options</h3>
+      <CardOptionSelector OptionSelected=_SetOption SelectedId=@AcquiredCard.CardOptionId />
     }
     <h3>Tags</h3>
     <ul class="d-flex flex-wrap list-unstyled">
@@ -109,6 +110,15 @@
       }
     }
     StateHasChanged();
+  }
+
+  private async Task _SetOption(int newId) {
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.setCard(db, User.Id, AcquiredCard.AcquiredCardId, newId));
+    if (r.IsOk) {
+      ToastService.ShowInfo("Card option saved!");
+    } else {
+      ToastService.ShowError(r.ErrorValue);
+    }
   }
 
   async Task Acquire(int cardId) {
