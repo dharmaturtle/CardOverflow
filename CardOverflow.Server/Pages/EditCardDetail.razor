@@ -118,7 +118,15 @@
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       if (NewEditCardOnSave) {
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, new List<EditFieldAndValue>(), EditCard.TemplateInstance);
+        var fieldValues = EditCard.FieldValues.Select(x => {
+          if (x.IsCommunal) {
+            var communalInstanceId = result.ResultValue.Single(xx => x.EditField.Name == xx.Item1).Item2;
+            return new EditFieldAndValue(x.EditField, x.Value, new CommunalFieldValue(communalInstanceId, new List<int> { Card.CardInstanceMeta.Id }));
+          } else {
+            return new EditFieldAndValue(x.EditField, "", x.Communal);
+          }
+        }).ToList();
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance);
         UpdateSelectedTemplate(EditCard.TemplateInstance.CardTemplateId, EditCard.TemplateInstance.Id);
       }
     } else {
@@ -143,11 +151,10 @@
           ? valuesByField[field.Name] ?? ""
           : "")
           .Apply(value => {
-            var ids = (EditCard.FieldValues.SingleOrDefault(x => x.EditField.Name == field.Name)?.CommunalCardInstanceIds ?? new List<int>());
             return new EditFieldAndValue(
               field,
               value ?? "",
-              ids.Any() ? new CommunalFieldValue(FSharpOption<int>.None, ids) : FSharpOption<CommunalFieldValue>.None);
+              EditCard.FieldValues.SingleOrDefault(x => x.EditField.Name == field.Name)?.Communal ?? FSharpOption<CommunalFieldValue>.None);
           }
       )).ToList();
   }

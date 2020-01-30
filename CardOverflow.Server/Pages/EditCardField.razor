@@ -45,7 +45,7 @@
   </div>
   @if (_isNew) {
     <EjsRichTextEditor @bind-Value=@Field.Value SaveInterval="10">
-      <RichTextEditorIFrameSettings Enable="true"/>
+      <RichTextEditorIFrameSettings Enable="true" />
       <RichTextEditorToolbarSettings Items=@_tools />
       <RichTextEditorEvents ValueChange=@valueChanged />
     </EjsRichTextEditor>
@@ -59,7 +59,7 @@
         <ResizingIframe SrcUrl=@("/communalfieldinstance/" + communalFieldInstance.Id) />
       </div>
     }
-    @if (_selectedSearchResult != null) {
+    @if (_readOnlyIsVisible) {
       <iframe srcdoc=@Field.Value style="width: 100%" />
     }
   }
@@ -83,7 +83,7 @@
   public EventCallback<string> ValueUpdated { get; set; }
   private object[] _tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   private List<CommunalFieldInstance> _searchResults = new List<CommunalFieldInstance>();
-  private CommunalFieldInstance _selectedSearchResult;
+  private bool _readOnlyIsVisible;
   private SearchCommand _searchCommand = new SearchCommand("");
   private bool _isNew = true;
 
@@ -91,6 +91,10 @@
     base.OnParametersSet();
     if (MustBeCommunal) {
       Field.Communal = getFieldCommunal(FSharpOption<int>.None);
+    }
+    if ((Field.Communal?.Value?.InstanceId?.Value ?? 0) != 0) {
+      _isNew = false;
+      _readOnlyIsVisible = true;
     }
   }
 
@@ -106,7 +110,7 @@ Field.Communal =
   private async Task Search(SearchCommand searchCommand) {
     _searchResults = await DbExecutor.QueryAsync(db => CommunalFieldRepository.Search(db, searchCommand.Query));
     _isNew = false;
-    _selectedSearchResult = null;
+    _readOnlyIsVisible = false;
   }
 
   private void newClicked() {
@@ -121,7 +125,7 @@ Field.Communal =
     Field.Value = instance.Value;
     await ValueUpdated.InvokeAsync(instance.Value);
     Field.Communal = getFieldCommunal(instance.Id);
-    _selectedSearchResult = instance;
+    _readOnlyIsVisible = true;
     _searchResults = new List<CommunalFieldInstance>();
   }
 
