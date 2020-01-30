@@ -64,7 +64,7 @@ let add templateName createCommand (db: CardOverflowDb) userId tags = task {
     return Result.getOk r
     }
 
-let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<unit> =
+let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>> =
     add "Basic (and reversed card) - Card 1" <| normalCommand []
 
 let addBasicCard =
@@ -82,7 +82,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task
     let userId = 3
     let tags = ["a"; "b"]
     
-    do! addBasicCard c.Db userId tags
+    let! _ = addBasicCard c.Db userId tags
 
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.Card
@@ -220,7 +220,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
-    do! addBasicCard c.Db userId tags
+    let! _ = addBasicCard c.Db userId tags
     let cardId = 1
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard = 

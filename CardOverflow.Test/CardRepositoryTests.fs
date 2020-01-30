@@ -25,7 +25,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     
     let c1 = 1
     let ci1_1 = 1
-    do! FacetRepositoryTests.addBasicCard c.Db authorId []
+    let! _ = FacetRepositoryTests.addBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single().Users)
     Assert.Equal(1, c.Db.CardInstance.Single().Users)
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
@@ -33,7 +33,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     
     let c2 = 2
     let ci2_1 = 2
-    do! FacetRepositoryTests.addReversedBasicCard c.Db authorId []
+    let! _ = FacetRepositoryTests.addReversedBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c2).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
     
@@ -53,7 +53,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     let! v = SanitizeCardRepository.getEdit c.Db c1
     let v = { v.Value with FieldValues = [].ToList() }
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac.Value v.load
-    Result.getOk x
+    Assert.Empty x.Value
     let ci1_2 = 3
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)

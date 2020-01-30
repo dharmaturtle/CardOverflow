@@ -337,9 +337,9 @@ module CardRepository =
                                     { x with
                                         Value = zip.[x.EditField.Name]}).ToList() }))
                     else Ok [ command ]
-                    |> Result.map (List.iter (fun c ->
+                    |> Result.map (List.map (fun c ->
                         let e = acquiredCard.copyToNew tags
-                        e.CardInstance <-
+                        let communalInstances =
                             if c.TemplateInstance.isCloze then
                                 let clozeFields =
                                     ClozeTemplateRegex()
@@ -374,8 +374,10 @@ module CardRepository =
                                         else
                                             None
                                     ) |> List.ofSeq |> List.choose id
-                            |> c.CardView.CopyFieldsToNewInstance card c.EditSummary
-                        db.AcquiredCard.AddI e))
+                        e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                        db.AcquiredCard.AddI e
+                        communalInstances
+                        ) >> Seq.collect id >> toResizeArray)
                 | e ->
                     let communalFields, instanceIds =
                         e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
@@ -405,9 +407,9 @@ module CardRepository =
                         | ac ->
                             ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
                     e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
-                    Ok ()
+                    Ok <| communalFields.ToList()
             do! db.SaveChangesAsyncI()
-            return r
+            return r |> Result.map (fun x -> x.Select(fun x -> x.FieldName, x.Id).ToList())
         }
 
 module CardOptionsRepository =

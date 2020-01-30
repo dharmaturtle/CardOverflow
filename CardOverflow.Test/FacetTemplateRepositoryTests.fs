@@ -38,7 +38,7 @@ let ``CardTemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = t
     Assert.Equal(1, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplateId = templateId))
 
     // Testing UpdateFieldsToNewInstance
-    do! FacetRepositoryTests.addBasicCard c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
     let newQuestionTemplate = "modified {{Front mutated}}"
     let newTemplateName = "new name"
     let updated =

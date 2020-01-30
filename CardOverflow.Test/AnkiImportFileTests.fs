@@ -245,7 +245,7 @@ let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (
 let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
-    do! FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
+    let! _ = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
 
     let! view = CardRepository.instance c.Db 1
     Assert.Equal<string seq>(
@@ -264,7 +264,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
 
     let getCardInstances clozeText = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
-        do! FacetRepositoryTests.addCloze clozeText c.Db userId []
+        let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
         for i in [1 .. clozeMaxIndex] |> List.map byte do
             let singleCloze = AnkiImportLogic.multipleClozeToSingleCloze i clozeText
             Assert.SingleI <| c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
@@ -320,7 +320,8 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 
     let test instanceId customTest = task {
         let! acquired = CardRepository.getNew c.Db userId
-        do! SanitizeCardRepository.Update
+        let! communals =
+            SanitizeCardRepository.Update
                 c.Db
                 userId
                 acquired
@@ -341,7 +342,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                             .ToList()
                     TemplateInstance = template }
             |> TaskX.map Result.getOk
-    
+        Assert.Equal<seq<string * int>>(["Back", 1], communals)
         let! field = c.Db.CommunalField.SingleAsync()
         Assert.Equal(id, field.Id)
         Assert.Equal(3, field.AuthorId)

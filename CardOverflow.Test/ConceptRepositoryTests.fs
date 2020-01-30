@@ -46,7 +46,7 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``():
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    do! FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
     do! CommentCardEntity (
             CardId = 1,
             UserId = userId,
@@ -76,7 +76,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    do! FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
@@ -100,8 +100,9 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     use c = new TestContainer(false, name)
     
     let userId = 1 // this user creates the card
-    for addCard in addCards do
-        do! addCard c.Db userId ["a"]
+    for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>>) in addCards do
+        let! _ = addCard c.Db userId ["a"]
+        ()
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(
         cardIds.Count(),
@@ -267,12 +268,12 @@ let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let basicTag = "basic tag"
-    do! FacetRepositoryTests.addBasicCard c.Db userId [basicTag]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId [basicTag]
     let front = Guid.NewGuid().ToString()
     let back = Guid.NewGuid().ToString()
-    do! FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom tag"]
+    let! _ = FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom tag"]
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
-    do! FacetRepositoryTests.addCloze clozeText c.Db userId []
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
     do! Task.Delay 10000 // give the full text index time to rebuild
     let search = CardRepository.SearchAsync c.Db userId 1
     
