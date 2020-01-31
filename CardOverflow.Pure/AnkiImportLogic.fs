@@ -11,7 +11,7 @@ type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*
 type ClozeTemplateRegex = Regex< """{{cloze:(?<fieldName>.*?)}}""" >
 
 module AnkiImportLogic =
-    let maxClozeIndex errorMessage (valuesByFieldName: Map<string, string>) =
+    let maxClozeIndex errorMessage (valuesByFieldName: Map<string, string>) = // veryLowTodo option - no need to make this a Result
         ClozeTemplateRegex().TypedMatches
         >> Seq.map (fun m -> valuesByFieldName.[m.fieldName.Value] |> ClozeRegex().TypedMatches)
         >> Seq.collect id

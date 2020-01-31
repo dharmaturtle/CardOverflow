@@ -367,3 +367,9 @@ type EditCardCommand = {
                     Value =  x.Value
                 }).ToList()
         TemplateInstance = this.TemplateInstance }
+    member this.CommunalFieldValues =
+        this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
+    member this.CommunalNonClozeFieldValues =
+        this.CommunalFieldValues
+            .Where(fun x -> not <| this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+            .ToList()

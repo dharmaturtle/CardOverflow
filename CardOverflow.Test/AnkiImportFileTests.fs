@@ -197,7 +197,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.IsCommunal) |> List.ofSeq
+    let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
     let updatedCommunalField = communalFields.[0]
     Assert.Contains("microtubules", updatedCommunalField.Value)
     let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
@@ -212,7 +212,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! editCommand = SanitizeCardRepository.getEdit c.Db card.Instance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
-    let communalFields = editCommand.FieldValues.Where(fun x -> x.IsCommunal) |> List.ofSeq
+    let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
     let updatedCommunalField0 = communalFields.[0]
     let updatedCommunalField1 = communalFields.[1]
     Assert.Contains("microtubules", updatedCommunalField0.Value)

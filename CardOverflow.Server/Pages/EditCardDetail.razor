@@ -119,7 +119,7 @@
       ToastService.ShowInfo("Saved!");
       if (NewEditCardOnSave) {
         var fieldValues = EditCard.FieldValues.Select(x => {
-          if (x.IsCommunal && !EditCard.TemplateInstance.ClozeFields.Contains(x.EditField.Name)) {
+          if (EditCard.CommunalNonClozeFieldValues.Contains(x)) {
             var communalInstanceId = result.ResultValue.Single(xx => x.EditField.Name == xx.Item1).Item2;
             return new EditFieldAndValue(x.EditField, x.Value, new CommunalFieldValue(communalInstanceId, new List<int> { Card.CardInstanceMeta.Id }));
           } else {

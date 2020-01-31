@@ -330,8 +330,7 @@ module CardRepository =
                     Created = DateTime.UtcNow,
                     EditSummary = c.EditSummary)
             let nonClozeCommunals =
-                command.FieldValues
-                    .Where(fun x -> x.IsCommunal && not <| command.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+                command.CommunalNonClozeFieldValues
                     .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
                     .ToList()
             let r =

@@ -230,6 +230,12 @@ type ViewEditCardCommand = {
             FieldValues = this.FieldValues
             TemplateInstance = this.TemplateInstance |> ViewCardTemplateInstance.copyTo
         }
+    member this.CommunalFieldValues =
+        this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
+    member this.CommunalNonClozeFieldValues =
+        this.CommunalFieldValues
+            .Where(fun x -> not <| this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+            .ToList()
 
 module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) cardInstanceId = task {
@@ -265,7 +271,7 @@ module SanitizeCardRepository =
                 } |> Ok }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
-        let actual = command.FieldValues.Where(fun x -> x.IsCommunal).Select(fun x -> x.EditField.Name) |> Set.ofSeq
+        let actual = command.CommunalFieldValues.Select(fun x -> x.EditField.Name) |> Set.ofSeq
         let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId) // lowTODO optimize by moving into `else`
         return!
             if Set.isSubset required actual then
