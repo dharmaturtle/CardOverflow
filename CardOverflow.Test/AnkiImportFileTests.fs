@@ -308,13 +308,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
     
     // c1 and c2 cloze pair with communal Extra creates one Extra instance
     let! actual = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
-    Assert.Equal(
-        [   "Text", 5
-            "Extra", 6
-            "Text", 7
-            "Extra", 6
-        ] , actual)
-    }
+    Assert.Equal([ "Extra", 6 ] , actual)}
 
 [<Fact>]
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
