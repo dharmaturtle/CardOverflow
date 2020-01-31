@@ -305,6 +305,15 @@ let ``Create cloze card works`` (): Task<unit> = task {
             "[ ... ] was founded in 1845.", "[ Portland ] was founded in 1845. extra"
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
     Assert.Equal(expected, e.Results.Select(fun x -> x.Value.CardInstanceMeta.StrippedFront, x.Value.CardInstanceMeta.StrippedBack))
+    
+    // c1 and c2 cloze pair with communal Extra creates one Extra instance
+    let! actual = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
+    Assert.Equal(
+        [   "Text", 5
+            "Extra", 6
+            "Text", 7
+            "Extra", 6
+        ] , actual)
     }
 
 [<Fact>]

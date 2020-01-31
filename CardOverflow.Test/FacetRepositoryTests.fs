@@ -47,11 +47,32 @@ let clozeCommand clozeText clozeTemplate = {
             Communal =
                 if f.Name = "Text" then
                     {   InstanceId = None
-                        CommunalCardInstanceIds = [].ToList()
+                        CommunalCardInstanceIds = [0].ToList()
                     } |> Some
                 else None
         }).ToList()
     TemplateInstance = clozeTemplate }
+
+let clozeCommandWithSharedExtra clozeText clozeTemplate = {
+    clozeCommand clozeText clozeTemplate with
+        FieldValues =
+            clozeTemplate.Fields.Select(fun f -> {
+                EditField = ViewField.copyTo f
+                Value =
+                    if f.Name = "Text" then
+                        clozeText
+                    else
+                        "extra"
+                Communal =
+                    if f.Name = "Text" then
+                        {   InstanceId = None
+                            CommunalCardInstanceIds = [0].ToList()
+                        } |> Some
+                    else
+                        {   InstanceId = None
+                            CommunalCardInstanceIds = [0].ToList()
+                        } |> Some
+            }).ToList() }
 
 let add templateName createCommand (db: CardOverflowDb) userId tags = task {
     let! templates = SanitizeCardTemplate.Search db templateName
@@ -75,6 +96,9 @@ let addBasicCustomCard fieldValues =
 
 let addCloze fieldValues =
     add "Cloze" <| clozeCommand fieldValues
+
+let addClozeWithSharedExtra fieldValues =
+    add "Cloze" <| clozeCommandWithSharedExtra fieldValues
 
 [<Fact>]
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {

@@ -122,8 +122,10 @@ type CardTemplateInstance = {
     ShortAnswerTemplate: string
     EditSummary: string
 } with
-    member this.isCloze =
-        this.Fields.Any(fun x -> this.QuestionTemplate.Contains("{{cloze:" + x.Name + "}}"))
+    member this.IsCloze =
+        Cloze.isCloze this.QuestionTemplate
+    member this.ClozeFields =
+        AnkiImportLogic.clozeFields this.QuestionTemplate
 
 type AcquiredCardTemplateInstance = {
     DefaultTags: int seq
@@ -230,7 +232,7 @@ type PagedList<'T> = {
 
 [<CLIMutable>]
 type CommunalFieldValue = {
-    InstanceId: int Option
+    InstanceId: int option
     CommunalCardInstanceIds: int ResizeArray
 }
 
@@ -239,7 +241,7 @@ type EditFieldAndValue = {
     EditField: Field
     [<StringLength(10000)>]
     Value: string
-    Communal: CommunalFieldValue Option
+    Communal: CommunalFieldValue option
 } with
     member this.IsCommunal =
         match this.Communal with

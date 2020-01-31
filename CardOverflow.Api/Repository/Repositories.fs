@@ -318,10 +318,27 @@ module CardRepository =
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                     .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
             let r =
+                let createCommunalFieldInstanceEntity c fieldName =
+                    CommunalFieldInstanceEntity(
+                        CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                        FieldName = fieldName,
+                        Value =
+                            if c.TemplateInstance.IsCloze then
+                                command.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
+                            else
+                                c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
+                            ,
+                        Created = DateTime.UtcNow,
+                        EditSummary = c.EditSummary)
+                let nonClozeCommunals =
+                    command.FieldValues
+                        .Where(fun x -> x.IsCommunal && not <| command.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+                        .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
+                        .ToList()
                 match entity with
                 | null ->
                     let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
-                    if command.TemplateInstance.isCloze then
+                    if command.TemplateInstance.IsCloze then
                         let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
                         AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
                         |> Result.map (fun max ->
@@ -338,42 +355,24 @@ module CardRepository =
                                         Value = zip.[x.EditField.Name]}).ToList() }))
                     else Ok [ command ]
                     |> Result.map (List.map (fun c ->
-                        let e = acquiredCard.copyToNew tags
                         let communalInstances =
-                            if c.TemplateInstance.isCloze then
-                                let clozeFields =
-                                    ClozeTemplateRegex()
-                                        .TypedMatches(c.TemplateInstance.QuestionTemplate)
-                                        .Select(fun x -> x.fieldName.Value)
-                                c.TemplateInstance.Fields
-                                    .Where(fun f -> clozeFields.Contains f.Name)
-                                    .Select(fun f ->
-                                        CommunalFieldInstanceEntity(
-                                            CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                                            FieldName = f.Name,
-                                            Value = command.FieldValues.Single(fun x -> x.EditField.Name = f.Name).Value,
-                                            Created = DateTime.UtcNow,
-                                            EditSummary = c.EditSummary)) |> List.ofSeq
-                            else
-                                c.FieldValues.Select(fun edit ->
-                                    let fieldName = edit.EditField.Name
-                                    match edit.Communal with
-                                    | None -> None
-                                    | Some value ->
-                                        if value.CommunalCardInstanceIds.Contains 0 then
-                                            match value.InstanceId with
-                                            | Some id -> db.CommunalFieldInstance.Single(fun x -> x.Id = id)
-                                            | None ->
-                                                CommunalFieldInstanceEntity(
-                                                    CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                                                    FieldName = fieldName,
-                                                    Value = c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value,
-                                                    Created = DateTime.UtcNow,
-                                                    EditSummary = c.EditSummary)
-                                            |> Some
-                                        else
-                                            None
-                                    ) |> List.ofSeq |> List.choose id
+                            c.FieldValues.Select(fun edit ->
+                                let fieldName = edit.EditField.Name
+                                match edit.Communal with
+                                | None -> None
+                                | Some value ->
+                                    if value.CommunalCardInstanceIds.Contains 0 then
+                                        match value.InstanceId with
+                                        | Some id -> db.CommunalFieldInstance.Single(fun x -> x.Id = id)
+                                        | None ->
+                                            nonClozeCommunals.SingleOrDefault(fun x -> x.FieldName = fieldName)
+                                            |> Option.ofObj
+                                            |> Option.defaultValue (createCommunalFieldInstanceEntity c fieldName)
+                                        |> Some
+                                    else
+                                        None
+                                ) |> List.ofSeq |> List.choose id
+                        let e = acquiredCard.copyToNew tags
                         e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
                         db.AcquiredCard.AddI e
                         communalInstances
