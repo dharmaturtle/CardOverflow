@@ -94,3 +94,8 @@ module Core =
 
     let toResizeArray (xs: 'a seq) =
         xs.ToList()
+
+    let toOption (a: 'a) = // stackoverflow.com/a/26008852
+        match obj.ReferenceEquals(a, null) with
+        | true -> None
+        | false -> Some a

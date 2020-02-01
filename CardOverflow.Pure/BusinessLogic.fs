@@ -1,6 +1,8 @@
 namespace CardOverflow.Pure
 
 open CardOverflow.Debug
+open System.Linq
+open CardOverflow.Pure.Core
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
@@ -115,6 +117,10 @@ module CardHtml =
         MappingTools.stripHtmlTags <| frontSide,
         MappingTools.stripHtmlTags <| (replaceFields false answerTemplate).Replace("{{FrontSide}}", "")
 
+type DateCount = {
+    Date: DateTime
+    Count: int
+}
 module Heatmap =
     let maxConseuctive =
         let rec maxConseuctive localMax globalMax =
@@ -127,3 +133,15 @@ module Heatmap =
                     maxConseuctive localMax (max localMax globalMax) t
             | [] -> globalMax
         maxConseuctive 0 0
+    let allDateCounts startDate (endDate: DateTime) (dateCounts: DateCount list) =
+        let allDatesSorted = startDate |> List.unfold (fun x -> if x <= endDate then Some(x, x.AddDays 1.) else None) // https://stackoverflow.com/a/20362003
+        query { // https://stackoverflow.com/a/26008852
+            for date in allDatesSorted do
+            leftOuterJoin dateCount in dateCounts
+                on (date = dateCount.Date) into result
+            for dateCount in result do
+            select {
+                Date = date
+                Count = dateCount |> toOption |> Option.map (fun x -> x.Count) |> Option.defaultValue 0
+            }
+        } |> List.ofSeq

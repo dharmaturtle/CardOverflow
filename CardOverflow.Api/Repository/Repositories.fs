@@ -89,28 +89,19 @@ module CardTemplateRepository =
         return! db.SaveChangesAsyncI()
         }
 
-type DateCount = {
-    Date: DateTime
-    Count: int
-}
-
 module HistoryRepository =
     let addAndSaveAsync (db: CardOverflowDb) e =
         db.History.AddI e
         db.SaveChangesAsyncI ()
     let getHeatmap (db: CardOverflowDb) userId = task {
-            let oneYearAgo = DateTime.UtcNow - TimeSpan.FromDays 365.
-            return!
-                (query {
-                    for h in db.History do
-                    where (h.Timestamp > oneYearAgo && h.AcquiredCard.UserId = userId)
-                    groupValBy h h.Timestamp.Date into g
-                    select {
-                        Date  = g.Key
-                        Count = g.Count()
-                    }
-                }).ToListAsync()
-        }
+        let oneYearAgo = DateTime.UtcNow - TimeSpan.FromDays 365.
+        return!
+            (query {
+                for h in db.History do
+                where (h.Timestamp > oneYearAgo && h.AcquiredCard.UserId = userId)
+                groupValBy h h.Timestamp.Date into g
+                select { Date = g.Key; Count = g.Count() }
+            }).ToListAsync()}
 
 module CardRepository =
     let instance (db: CardOverflowDb) instanceId = task {
