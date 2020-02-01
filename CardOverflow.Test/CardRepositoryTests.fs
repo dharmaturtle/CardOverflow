@@ -88,8 +88,14 @@ let ``AcquireCards works``(): Task<unit> = task {
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     let! b = CardRepository.GetQuizBatch c.Db acquirerId ""
     Assert.NotEqual(getId a, getId b)
-    Assert.NotEmpty(c.Db.History)
 
     let count = CardRepository.GetDueCount c.Db acquirerId ""
     Assert.Equal(1, count)
-    }
+
+    // getHeatmap returns one for today
+    let! actual = HistoryRepository.getHeatmap c.Db acquirerId
+    Assert.Equal(
+        {   Date = DateTime.UtcNow.Date
+            Count = 1 },
+        actual.Single()
+    )}
