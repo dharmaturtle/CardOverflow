@@ -114,3 +114,16 @@ module CardHtml =
         htmlBase backSide,
         MappingTools.stripHtmlTags <| frontSide,
         MappingTools.stripHtmlTags <| (replaceFields false answerTemplate).Replace("{{FrontSide}}", "")
+
+module Heatmap =
+    let maxConseuctive =
+        let rec maxConseuctive localMax globalMax =
+            function
+            | h :: t ->
+                if h = 0 then
+                    maxConseuctive 0 globalMax t
+                else
+                    let localMax = localMax + 1
+                    maxConseuctive localMax (max localMax globalMax) t
+            | [] -> globalMax
+        maxConseuctive 0 0

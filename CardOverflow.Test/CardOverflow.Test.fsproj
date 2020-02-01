@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
@@ -40,6 +41,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="TestHelpers.fs" />
+    <Compile Include="HeatmapTests.fs" />
     <Compile Include="CoreTests.fs" />
     <Compile Include="RelationshipTests.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
