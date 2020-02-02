@@ -1,0 +1,63 @@
+﻿@page "/CardTemplate/"
+@page "/CardTemplate/{TemplateId:int}"
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject DbExecutor DbExecutor
+
+<h1>Card Template</h1>
+@if (_templates == null) {
+  <p><em>"Loading..."</em></p>
+} else {
+  <div class="row">
+    <div class="col-sm-10">
+      <CardTemplateEditor Template=@_templates[_selectedIndex] />
+    </div>
+    <div class="col-sm-2 list-group">
+      <h5>Card Templates</h5>
+      @foreach (var x in _templates.Select((t, i) => new { Template = t, Index = i })) {
+        <button class="list-group-item list-group-item-action @(x.Index == _selectedIndex ? "active" : "")"
+                @onclick=@(() => _selectedIndex = x.Index)>
+          @x.Template.Editable.Name
+        </button>
+      }
+      <button type="button" class="list-group-item list-group-item-action list-group-item-success" @onclick=@_Add>
+        Add
+      </button>
+    </div>
+  </div>
+}
+
+@code {
+  [Parameter]
+  public int TemplateId { get; set; }
+  [CascadingParameter]
+  UserEntity User { get; set; }
+  private List<ViewCardTemplateWithAllInstances> _templates;
+  private int _selectedIndex;
+
+  protected override async Task OnInitializedAsync() {
+    if (User != null) {
+      _templates = await DbExecutor.QueryAsync(db => SanitizeCardTemplate.GetMine(db, User.Id));
+      _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
+        .Apply(_templates.IndexOf); // medTODO support viewing templates that don't belong to you
+    }
+  }
+
+  private void _Add() {
+    var t = ViewCardTemplateWithAllInstances.initialize(User.Id);
+    _templates.Add(t);
+    _selectedIndex = _templates.IndexOf(t);
+  }
+
+}

@@ -1,5 +1,4 @@
-﻿@page "/CardTemplate/{TemplateId:int}"
-@using Microsoft.AspNetCore.Mvc
+﻿@using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -14,11 +13,10 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-<h1>Card Template</h1>
 @if (Template == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <di class="row">
+  <div class="row">
     <div class="col-sm">
       @if (SelectedInstance == 0) {
         <CardTemplateEditorDetail IsDisabled=false Instance=@Editable />
@@ -40,7 +38,7 @@
         </button>
       }
     </div>
-  </di>
+  </div>
 }
 
 @code {
@@ -49,12 +47,16 @@
   [CascadingParameter]
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  ViewCardTemplateWithAllInstances Template;
+  [Parameter]
+  public ViewCardTemplateWithAllInstances Template { get; set; }
   ViewCardTemplateInstance Editable;
   int SelectedInstance;
 
-  protected override async Task OnInitializedAsync() {
-    var x = await SanitizeCardTemplate.AllInstances(Service, TemplateId);
+  protected override async Task OnParametersSetAsync() {
+    await base.OnParametersSetAsync();
+    var x = Template == null
+      ? await SanitizeCardTemplate.AllInstances(Service, TemplateId)
+      : FSharpResult<ViewCardTemplateWithAllInstances, string>.NewOk(Template);
     if (x.IsOk) {
       Template = x.ResultValue;
       Editable = Template.Editable;

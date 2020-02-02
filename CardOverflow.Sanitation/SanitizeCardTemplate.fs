@@ -171,8 +171,8 @@ module SanitizeCardTemplate =
             |> function
             | null -> update ()
             | cardTemplate ->
-                if cardTemplate.AuthorId = userId
-                then update ()
-                else Error <| "You aren't that this template's author."
+                if cardTemplate.AuthorId = userId then 
+                    update ()
+                else Error "You aren't that this template's author."
         else
             Error "Field names must differ"
