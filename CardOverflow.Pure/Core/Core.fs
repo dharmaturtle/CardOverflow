@@ -58,7 +58,7 @@ module Random =
         use crypto = new RNGCryptoServiceProvider()
         crypto.GetBytes data
         let sb = StringBuilder length
-        data |> Seq.iter(fun b -> sb.Append(chars.[int b % chars.Length]) |> ignore)
+        data |> Array.iter(fun b -> sb.Append(chars.[int b % chars.Length]) |> ignore)
         sb.ToString()
 
 module Core =
@@ -78,10 +78,10 @@ module Core =
         static member Coalesce(a: 'a Nullable, b: 'a Lazy) = 
             if a.HasValue then a.Value
             else b.Value
-        static member Coalesce(a: 'a when 'a:null, b: 'a Lazy) = 
-            match a with 
-            | null -> b.Value 
-            | _ -> a
+        static member Coalesce(a: 'a, b: 'a Lazy) = 
+            match obj.ReferenceEquals(a, null) with
+            | true -> b.Value
+            | false -> a
     let inline nullCoalesceHelper< ^t, ^a, ^b, ^c when (^t or ^a) : (static member Coalesce : ^a * ^b -> ^c)> a b = 
             // calling the statically inferred member
             ((^t or ^a) : (static member Coalesce : ^a * ^b -> ^c) (a, b))
