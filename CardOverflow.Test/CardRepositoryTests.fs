@@ -96,6 +96,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     let! actual = HistoryRepository.getHeatmap c.Db acquirerId
     Assert.Equal(
         {   Date = DateTime.UtcNow.Date
-            Count = 1 },
-        actual.Single()
+            Count = 1
+            Level = 10 },
+        actual.DateCountLevels.Single(fun x -> x.Count <> 0)
     )}

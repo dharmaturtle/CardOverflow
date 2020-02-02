@@ -7,6 +7,7 @@ open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
+open CardOverflow.Debug
 
 module Relationship =
     type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
@@ -121,6 +122,18 @@ type DateCount = {
     Date: DateTime
     Count: int
 }
+type DateCountLevel = {
+    Date: DateTime
+    Count: int
+    Level: int
+}
+type Heatmap = {
+    DateCountLevels: DateCountLevel list
+    DailyAverageReviews: int
+    DaysLearnedPercent: int
+    LongestStreakDays: int
+    CurrentStreakDays: int
+}
 module Heatmap =
     let maxConseuctive =
         let rec maxConseuctive localMax globalMax =
@@ -145,3 +158,21 @@ module Heatmap =
                 Count = dateCount |> toOption |> Option.map (fun x -> x.Count) |> Option.defaultValue 0
             }
         } |> List.ofSeq
+    let addLevels (dateCounts: DateCount list) =
+        let levelCount = 11. // 0 to 10 is 11
+        let maxCount = dateCounts |> List.map (fun x -> x.Count) |> List.ifEmptyThen 0 |> List.max |> max 1 |> float
+        dateCounts |> List.map (fun { Date = date; Count = count } ->
+        {   Date = date
+            Count = count
+            Level = float count / maxCount * (levelCount - 1.) |> round // -1 to remove 0
+        })
+    let get (startDate: DateTime) (endDate: DateTime) (dateCounts: DateCount list) =
+        let dateCounts = allDateCounts startDate.Date endDate.Date dateCounts
+        let counts = dateCounts |> List.map (fun x -> x.Count)
+        let relevantRange = counts |> List.skipWhile (fun x -> x = 0) |> List.ifEmptyThen 0
+        {   DateCountLevels = addLevels dateCounts
+            DailyAverageReviews = relevantRange |> List.averageBy (fun x -> float x) |> round
+            DaysLearnedPercent = float (relevantRange.Count(fun x -> x <> 0)) / float relevantRange.Length * 100. |> round 
+            LongestStreakDays = counts |> maxConseuctive
+            CurrentStreakDays = counts |> Seq.rev |> Seq.takeWhile (fun x -> x <> 0) |> Seq.length
+        }

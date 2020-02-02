@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open CardOverflow.Debug
 open System
 open System.Linq
 open System.Security.Cryptography
@@ -99,3 +100,14 @@ module Core =
         match obj.ReferenceEquals(a, null) with
         | true -> None
         | false -> Some a
+
+    type WriteAnyOverloads = WriteAnyOverloads with // https://www.youtube.com/watch?v=j7wOpye8ygM see comments
+        static member inline ($) (x: float, _) = System.Math.Round(x, MidpointRounding.AwayFromZero) |> int
+        static member inline ($) (x: decimal, _) = System.Math.Round(x, MidpointRounding.AwayFromZero) |> int
+    let inline round x = x $ WriteAnyOverloads
+
+module List =
+    let ifEmptyThen x xs =
+        match xs with
+        | [] -> [x]
+        | _  -> xs
