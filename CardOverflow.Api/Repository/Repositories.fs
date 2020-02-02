@@ -94,15 +94,15 @@ module HistoryRepository =
         db.History.AddI e
         db.SaveChangesAsyncI ()
     let getHeatmap (db: CardOverflowDb) userId = task {
-        let oneYearAgo = DateTime.UtcNow - TimeSpan.FromDays 365.
+        let oneYearishAgo = DateTime.UtcNow - TimeSpan.FromDays (53. * 7. - 1.) // always show full weeks; -1 is from allDateCounts being inclusive
         let! dateCounts =
             (query {
                 for h in db.History do
-                where (h.Timestamp >= oneYearAgo && h.AcquiredCard.UserId = userId)
+                where (h.Timestamp >= oneYearishAgo && h.AcquiredCard.UserId = userId)
                 groupValBy h h.Timestamp.Date into g
                 select { Date = g.Key; Count = g.Count() }
             }).ToListAsync()
-        return Heatmap.get oneYearAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
+        return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module CardRepository =
     let instance (db: CardOverflowDb) instanceId = task {

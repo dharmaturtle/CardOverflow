@@ -78,6 +78,8 @@ body {
 
 .squares li[data-level="0"] { /* https://stackoverflow.com/a/14482323 https://meyerweb.com/eric/tools/color-blend/#FFFFFF:004700:9:hex */
   background-color: #FFFFFF;
+  border: inset;
+  border-width: 1px;
 }
 
 .squares li[data-level="1"] {

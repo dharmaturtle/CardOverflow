@@ -94,6 +94,7 @@ let ``AcquireCards works``(): Task<unit> = task {
 
     // getHeatmap returns one for today
     let! actual = HistoryRepository.getHeatmap c.Db acquirerId
+    Assert.Equal(0, actual.DateCountLevels.Length % 7) // returns full weeks; not partial weeks
     Assert.Equal(
         {   Date = DateTime.UtcNow.Date
             Count = 1
