@@ -66,7 +66,6 @@ body {
 .graph {
   padding: 20px;
   border: 1px #e1e4e8 solid;
-  margin: 20px;
 }
 
   .graph li {
@@ -77,18 +76,83 @@ body {
   visibility: hidden;
 }
 
-.squares li {
-  background-color: #ebedf0;
+.squares li[data-level="0"] { /* https://stackoverflow.com/a/14482323 https://meyerweb.com/eric/tools/color-blend/#FFFFFF:004700:9:hex */
+  background-color: #FFFFFF;
 }
 
-  .squares li[data-level="1"] {
-    background-color: #c6e48b;
+.squares li[data-level="1"] {
+  background-color: #E6EDE6;
+}
+
+.squares li[data-level="2"] {
+  background-color: #CCDACC;
+}
+
+.squares li[data-level="3"] {
+  background-color: #B3C8B3;
+}
+
+.squares li[data-level="4"] {
+  background-color: #99B599;
+}
+
+.squares li[data-level="5"] {
+  background-color: #80A380;
+}
+
+.squares li[data-level="6"] {
+  background-color: #669166;
+}
+
+.squares li[data-level="7"] {
+  background-color: #4D7E4D;
+}
+
+.squares li[data-level="8"] {
+  background-color: #336C33;
+}
+
+.squares li[data-level="9"] {
+  background-color: #1A591A;
+}
+
+.squares li[data-level="10"] {
+  background-color: #004700;
+}
+
+/* https://www.w3schools.com/css/css_tooltip.asp */
+
+.calendar-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+  .calendar-tooltip .calendar-tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -60px;
   }
 
-  .squares li[data-level="2"] {
-    background-color: #7bc96f;
-  }
+    .calendar-tooltip .calendar-tooltiptext::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: black transparent transparent transparent;
+    }
 
-  .squares li[data-level="3"] {
-    background-color: #196127;
+  .calendar-tooltip:hover .calendar-tooltiptext {
+    visibility: visible;
   }

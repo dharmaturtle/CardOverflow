@@ -1,4 +1,4 @@
-﻿@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
@@ -6,49 +6,60 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
+@using Microsoft.FSharp.Collections
 @inject DbExecutor DbExecutor
-
 @* https://bitsofco.de/github-contribution-graph-css-grid/ *@
 <div class="graph">
-  <ul class="months">
-    <li>Jan</li>
-    <li>Feb</li>
-    <li>Mar</li>
-    <li>Apr</li>
-    <li>May</li>
-    <li>Jun</li>
-    <li>Jul</li>
-    <li>Aug</li>
-    <li>Sep</li>
-    <li>Oct</li>
-    <li>Nov</li>
-    <li>Dec</li>
-  </ul>
-  <ul class="days">
-    <li>Sun</li>
-    <li>Mon</li>
-    <li>Tue</li>
-    <li>Wed</li>
-    <li>Thu</li>
-    <li>Fri</li>
-    <li>Sat</li>
-  </ul>
+  @*<ul class="months">
+      <li>Jan</li>
+      <li>Feb</li>
+      <li>Mar</li>
+      <li>Apr</li>
+      <li>May</li>
+      <li>Jun</li>
+      <li>Jul</li>
+      <li>Aug</li>
+      <li>Sep</li>
+      <li>Oct</li>
+      <li>Nov</li>
+      <li>Dec</li>
+    </ul>
+    <ul class="days">
+      <li>Sun</li>
+      <li>Mon</li>
+      <li>Tue</li>
+      <li>Wed</li>
+      <li>Thu</li>
+      <li>Fri</li>
+      <li>Sat</li>
+    </ul>*@
   <ul class="squares">
-    @foreach (var dateCount in _dateCounts) {
-      <li data-level="@dateCount.Count"></li>
+    @foreach (var dateCountLevel in _heatmap.DateCountLevels) {
+      <li data-level="@dateCountLevel.Level" class="calendar-tooltip">
+        <div class="calendar-tooltiptext">
+          <p class="mb-0">@dateCountLevel.Count reviews</p>
+          <p class="mb-0">@dateCountLevel.Date.ToString("ddd, d MMM")</p>
+        </div>
+      </li>
     }
   </ul>
 </div>
+<ul class="list-group list-group-horizontal row d-flex justify-content-center">
+  <li class="list-group-item border-0">Daily average: @_heatmap.DailyAverageReviews reviews</li>
+  <li class="list-group-item border-0">Days learned: @_heatmap.DaysLearnedPercent%</li>
+  <li class="list-group-item border-0">Longest streak: @_heatmap.LongestStreakDays days</li>
+  <li class="list-group-item border-0">Current streak: @_heatmap.CurrentStreakDays days</li>
+</ul>
 
 @code {
   [CascadingParameter]
   UserEntity User { get; set; }
 
-  private List<DateCount> _dateCounts = new List<DateCount>();
+  private CardOverflow.Pure.Heatmap _heatmap = new CardOverflow.Pure.Heatmap(ListModule.Empty<DateCountLevel>(), 0, 0, 0, 0);
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      _dateCounts = await DbExecutor.QueryAsync(x => HistoryRepository.getHeatmap(x, User.Id));
+      _heatmap = await DbExecutor.QueryAsync(x => HistoryRepository.getHeatmap(x, User.Id));
     }
   }
 
