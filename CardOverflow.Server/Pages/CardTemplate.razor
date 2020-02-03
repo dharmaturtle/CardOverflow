@@ -1,4 +1,4 @@
-﻿@page "/CardTemplate/"
+@page "/CardTemplate/"
 @page "/CardTemplate/{TemplateId:int}"
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
@@ -15,7 +15,6 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-<h1>Card Template</h1>
 @if (_templates == null) {
   <p><em>"Loading..."</em></p>
 } else {
@@ -49,8 +48,20 @@
   protected override async Task OnInitializedAsync() {
     if (User != null) {
       _templates = await DbExecutor.QueryAsync(db => SanitizeCardTemplate.GetMine(db, User.Id));
-      _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
-        .Apply(_templates.IndexOf); // medTODO support viewing templates that don't belong to you
+      var selected = TemplateId == 0
+        ? _templates.First()
+        : _templates.SingleOrDefault(x => x.Id == TemplateId);
+      if (selected == null) {
+        var r = await DbExecutor.QueryAsync(db => SanitizeCardTemplate.AllInstances(db, TemplateId));
+        if (r.IsOk) {
+          selected = r.ResultValue;
+          _templates = _templates.Prepend(selected).ToList();
+        } else {
+          ToastService.ShowError(r.ErrorValue);
+          selected = _templates.First();
+        }
+      }
+      _selectedIndex = _templates.IndexOf(selected);
     }
   }
 
