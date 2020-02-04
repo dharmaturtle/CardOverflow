@@ -23,16 +23,16 @@
       <CardTemplateEditor Template=@_templates[_selectedIndex] />
     </div>
     <div class="col-sm-2 list-group">
-      <h5>Card Templates</h5>
+      <h5 class="text-center">Card Templates</h5>
+      <button type="button" class="btn btn-success mb-2" @onclick=@_Add>
+        <span class="oi oi-plus"></span>
+      </button>
       @foreach (var x in _templates.Select((t, i) => new { Template = t, Index = i })) {
         <button class="list-group-item list-group-item-action @(x.Index == _selectedIndex ? "active" : "")"
                 @onclick=@(() => _selectedIndex = x.Index)>
           @x.Template.Editable.Name
         </button>
       }
-      <button type="button" class="list-group-item list-group-item-action list-group-item-success" @onclick=@_Add>
-        Add
-      </button>
     </div>
   </div>
 }
@@ -67,7 +67,7 @@
 
   private void _Add() {
     var t = ViewCardTemplateWithAllInstances.initialize(User.Id);
-    _templates.Add(t);
+    _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }
 
