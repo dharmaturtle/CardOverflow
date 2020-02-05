@@ -9,18 +9,18 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-<span class="btn btn-primary">
+<h5>
   Filters
-</span>
+</h5>
 <div class="list-group">
   @foreach (var deck in decks) {
     <div class="list-group-item d-flex justify-content-between p-0 border-0">
-      <button @onclick=@(() => new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill">@deck.Name</button>
+      <button @onclick=@(() => new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill text-left">@deck.Name</button>
       <button @onclick=@(() => Edit(deck)) class="oi oi-pencil btn btn-light"></button>
     </div>
   }
   <button class="btn btn-success" @onclick=@Create>
-    Create
+    <span class="oi oi-plus"></span>
   </button>
 </div>
 
