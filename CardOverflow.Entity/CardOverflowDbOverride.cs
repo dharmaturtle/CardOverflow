@@ -14,7 +14,7 @@ namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
     FSharpFunc<(CardInstanceEntity, byte[], SHA512), byte[]> CardInstanceHasher { get; }
-    FSharpFunc<(CardTemplateInstanceEntity, SHA512), byte[]> CardTemplateInstanceHasher { get; }
+    FSharpFunc<(TemplateInstanceEntity, SHA512), byte[]> TemplateInstanceHasher { get; }
   }
 
   public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int> {
@@ -37,13 +37,13 @@ namespace CardOverflow.Entity {
     private void _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var x in entries.Where(x => x.Entity is CardTemplateInstanceEntity)) {
-        var template = (CardTemplateInstanceEntity) x.Entity;
-        template.Hash = _entityHasher.CardTemplateInstanceHasher.Invoke((template, sha512));
+      foreach (var x in entries.Where(x => x.Entity is TemplateInstanceEntity)) {
+        var template = (TemplateInstanceEntity) x.Entity;
+        template.Hash = _entityHasher.TemplateInstanceHasher.Invoke((template, sha512));
       }
       foreach (var x in entries.Where(x => x.Entity is CardInstanceEntity)) {
         var card = (CardInstanceEntity) x.Entity;
-        var templateHash = card.CardTemplateInstance?.Hash ?? CardTemplateInstance.Find(card.CardTemplateInstanceId).Hash;
+        var templateHash = card.TemplateInstance?.Hash ?? TemplateInstance.Find(card.TemplateInstanceId).Hash;
         card.Hash = _entityHasher.CardInstanceHasher.Invoke((card, templateHash, sha512));
       }
     }

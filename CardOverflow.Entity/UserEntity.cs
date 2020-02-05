@@ -11,18 +11,18 @@ namespace CardOverflow.Entity
         public UserEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
-            CardOptions = new HashSet<CardOptionEntity>();
-            CardTemplates = new HashSet<CardTemplateEntity>();
+            CardSettings = new HashSet<CardSettingEntity>();
             Cards = new HashSet<CardEntity>();
-            CommentCardTemplates = new HashSet<CommentCardTemplateEntity>();
             CommentCards = new HashSet<CommentCardEntity>();
+            CommentTemplates = new HashSet<CommentTemplateEntity>();
             CommunalFields = new HashSet<CommunalFieldEntity>();
-            Decks = new HashSet<DeckEntity>();
             Feedbacks = new HashSet<FeedbackEntity>();
+            Filters = new HashSet<FilterEntity>();
             Relationships = new HashSet<RelationshipEntity>();
-            User_CardTemplateInstances = new HashSet<User_CardTemplateInstanceEntity>();
-            Vote_CommentCardTemplates = new HashSet<Vote_CommentCardTemplateEntity>();
+            Templates = new HashSet<TemplateEntity>();
+            User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
             Vote_CommentCards = new HashSet<Vote_CommentCardEntity>();
+            Vote_CommentTemplates = new HashSet<Vote_CommentTemplateEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
@@ -37,35 +37,42 @@ namespace CardOverflow.Entity
             }
         }
         private string _DisplayName;
-        public int? DefaultCardOptionId { get; set; }
+        public int? DefaultCardSettingId { get; set; }
+        public bool ShowNextReviewTime { get; set; }
+        public bool ShowRemainingCardCount { get; set; }
+        public byte MixNewAndReview { get; set; }
+        public byte NextDayStartsAtXHoursPastMidnight { get; set; }
+        public byte LearnAheadLimitInMinutes { get; set; }
+        public byte TimeboxTimeLimitInMinutes { get; set; }
+        public bool IsNightMode { get; set; }
 
-        public virtual CardOptionEntity DefaultCardOption { get; set; }
+        public virtual CardSettingEntity DefaultCardSetting { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CardOptionEntity> CardOptions { get; set; }
-        [InverseProperty("Author")]
-        public virtual ICollection<CardTemplateEntity> CardTemplates { get; set; }
+        public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentCardTemplateEntity> CommentCardTemplates { get; set; }
-        [InverseProperty("User")]
         public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<CommentTemplateEntity> CommentTemplates { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<CommunalFieldEntity> CommunalFields { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<DeckEntity> Decks { get; set; }
-        [InverseProperty("User")]
         public virtual ICollection<FeedbackEntity> Feedbacks { get; set; }
         [InverseProperty("User")]
+        public virtual ICollection<FilterEntity> Filters { get; set; }
+        [InverseProperty("User")]
         public virtual ICollection<RelationshipEntity> Relationships { get; set; }
+        [InverseProperty("Author")]
+        public virtual ICollection<TemplateEntity> Templates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<User_CardTemplateInstanceEntity> User_CardTemplateInstances { get; set; }
-        [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentCardTemplateEntity> Vote_CommentCardTemplates { get; set; }
+        public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentCardEntity> Vote_CommentCards { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<Vote_CommentTemplateEntity> Vote_CommentTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_FeedbackEntity> Vote_Feedbacks { get; set; }
     }

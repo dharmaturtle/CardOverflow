@@ -22,15 +22,15 @@ namespace CardOverflow.Entity
         public short IntervalOrStepsIndex { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
-        public int CardOptionId { get; set; }
+        public int CardSettingId { get; set; }
         public bool IsLapsed { get; set; }
 
         [ForeignKey("CardInstanceId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardInstanceEntity CardInstance { get; set; }
-        [ForeignKey("CardOptionId")]
+        [ForeignKey("CardSettingId")]
         [InverseProperty("AcquiredCards")]
-        public virtual CardOptionEntity CardOption { get; set; }
+        public virtual CardSettingEntity CardSetting { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("AcquiredCards")]
         public virtual UserEntity User { get; set; }

@@ -20,7 +20,7 @@ namespace CardOverflow.Entity
         public short IntervalOrStepsIndex { get; set; }
         [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
-        public int CardOptionId { get; set; }
+        public int CardSettingId { get; set; }
         public bool IsLapsed { get; set; }
         public bool IsLatest { get; set; }
         public virtual CardInstanceEntity CardInstance { get; set; }

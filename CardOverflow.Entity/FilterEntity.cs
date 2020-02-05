@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class DeckEntity
+    public partial class FilterEntity
     {
         [Key]
         public int Id { get; set; }
@@ -32,7 +32,7 @@ namespace CardOverflow.Entity
         private string _Query;
 
         [ForeignKey("UserId")]
-        [InverseProperty("Decks")]
+        [InverseProperty("Filters")]
         public virtual UserEntity User { get; set; }
     }
 }

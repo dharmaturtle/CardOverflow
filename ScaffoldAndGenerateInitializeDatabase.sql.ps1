@@ -32,12 +32,12 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
 # https://github.com/aspnet/EntityFrameworkCore/issues/11298
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\UserEntity.cs") {
     (Get-Content $file.PSPath) `
-    -replace "public virtual CardOptionEntity CardOption", "public virtual ICollection<CardOptionEntity> CardOptions" `
-    -replace [regex] "HashSet<AcquiredCardEntity>\(\)\;", "HashSet<AcquiredCardEntity>();`r`n            CardOptions = new HashSet<CardOptionEntity>();" |
+    -replace "public virtual CardSettingEntity CardSetting", "public virtual ICollection<CardSettingEntity> CardSettings" `
+    -replace [regex] "HashSet<AcquiredCardEntity>\(\)\;", "HashSet<AcquiredCardEntity>();`r`n            CardSettings = new HashSet<CardSettingEntity>();" |
     Set-Content $file.PSPath
 }
-foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOptionEntity.cs") {
-    ([regex] 'InverseProperty\("CardOption"\)').Replace((Get-Content $file.PSPath -Raw), 'InverseProperty("CardOptions")', 1) |
+foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardSettingEntity.cs") {
+    ([regex] 'InverseProperty\("CardSetting"\)').Replace((Get-Content $file.PSPath -Raw), 'InverseProperty("CardSettings")', 1) |
     Set-Content $file.PSPath
 }
 
@@ -52,8 +52,8 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     -replace [regex] "entity.HasIndex\(e => e.DisplayName\)", "entity.ToTable(`"User`");`r`n`r`n                entity.HasIndex(e => e.DisplayName)" `
     -replace [regex] '\s+\.HasFilter\("\(\[DisplayName\] IS NOT NULL\)"\)', '' `
     -replace [regex] '(?sm)\s+.HasFilter\("\(\[Email\] IS NOT NULL\)"\);.*?NULL\S+', ";" `
-    -replace [regex] ".WithOne\(p => p.CardOption\)", ".WithMany(p => p.CardOptions)" `
-    -replace [regex] ".HasForeignKey<CardOption>\(d => d.UserId\)", ".HasForeignKey(d => d.UserId)" `
+    -replace [regex] ".WithOne\(p => p.CardSetting\)", ".WithMany(p => p.CardSettings)" `
+    -replace [regex] ".HasForeignKey<CardSetting>\(d => d.UserId\)", ".HasForeignKey(d => d.UserId)" `
     -replace [regex] "(?m)#warning.*?\n", "" `
     -replace [regex] "optionsBuilder.Use.*", "throw new ArgumentOutOfRangeException();" `
     -replace [regex] "(?sm)modelBuilder\.HasAnnotation\(\`"ProductVersion.*?  +", "" |

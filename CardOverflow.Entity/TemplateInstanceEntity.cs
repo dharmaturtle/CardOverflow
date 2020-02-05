@@ -5,11 +5,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class LatestCardTemplateInstanceEntity
+    public partial class TemplateInstanceEntity
     {
-        public int AuthorId { get; set; }
-        public int CardTemplateInstanceId { get; set; }
-        public int CardTemplateId { get; set; }
+        public TemplateInstanceEntity()
+        {
+            CardInstances = new HashSet<CardInstanceEntity>();
+            User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
+        }
+
+        [Key]
+        public int Id { get; set; }
         [Required]
         [StringLength(100)]
         public string Name {
@@ -20,6 +25,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
+        public int TemplateId { get; set; }
         [Required]
         [StringLength(4000)]
         public string Css {
@@ -114,5 +120,16 @@ namespace CardOverflow.Entity
         }
         private string _EditSummary;
         public long? AnkiId { get; set; }
+        [Required]
+        [MaxLength(64)]
+        public byte[] Hash { get; set; }
+
+        [ForeignKey("TemplateId")]
+        [InverseProperty("TemplateInstances")]
+        public virtual TemplateEntity Template { get; set; }
+        [InverseProperty("TemplateInstance")]
+        public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
+        [InverseProperty("TemplateInstance")]
+        public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
     }
 }
