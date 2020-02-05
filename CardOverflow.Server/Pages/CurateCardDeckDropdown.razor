@@ -9,33 +9,19 @@
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
 
-<style>
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    z-index: 1;
+<span class="btn btn-primary">
+  Deck
+</span>
+<div class="list-group">
+  @foreach (var deck in decks) {
+    <div class="list-group-item d-flex justify-content-between p-0 border-0">
+      <button @onclick=@(() => new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill">@deck.Name</button>
+      <button @onclick=@(() => Edit(deck)) class="oi oi-pencil btn btn-light"></button>
+    </div>
   }
-
-  .dropdown:hover .dropdown-content {
-    display: block;
-  }
-</style>
-
-<div class="dropdown">
-  <span class="btn btn-primary">
-    Deck
-  </span>
-  <div class="dropdown-content card p-2" style="min-width: 20rem;">
-    @foreach (var deck in decks) {
-      <div class="d-flex justify-content-between">
-        <button @onclick=@(() => new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light">@deck.Name</button>
-        <button @onclick=@(() => Edit(deck)) class="oi oi-pencil btn btn-light"></button>
-      </div>
-    }
-    <button class="btn btn-success float-right mt-2" @onclick=@Create>
-      Create
-    </button>
-  </div>
+  <button class="btn btn-success" @onclick=@Create>
+    Create
+  </button>
 </div>
 
 <BSModal @ref=Modal>
