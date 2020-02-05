@@ -2,6 +2,7 @@ namespace CardOverflow.Test
 
 open CardOverflow.Api
 open System
+open System.Linq
 open System.Runtime.CompilerServices
 open System.Text.RegularExpressions
 open Xunit
@@ -10,6 +11,12 @@ open SimpleInjector
 open ContainerExtensions
 open SimpleInjector.Lifestyles
 open Microsoft.Extensions.Configuration
+open FSharp.Control.Tasks
+open LoadersAndCopiers
+open Microsoft.EntityFrameworkCore
+open CardOverflow.Sanitation
+open CardOverflow.Pure
+open CardOverflow.Pure.Core
 
 type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
@@ -45,6 +52,15 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         scope.Dispose()
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<CardOverflowDb>()
+
+module TestTemplateRepo =
+    let Search (db: CardOverflowDb) (query: string) = task {
+        let! x =
+            db.LatestCardTemplateInstance
+                .Where(fun x -> x.Name.Contains query)
+                .ToListAsync()
+        return x |> Seq.map (CardTemplateInstance.loadLatest >> ViewCardTemplateInstance.load) |> toResizeArray
+        }
 
 // Sqlite
 

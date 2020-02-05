@@ -67,7 +67,7 @@ let ``SanitizeCardOption.upsertMany can add/update new option``(): Task<unit> = 
     do! canUpdateIsDefault newId
 
     // Insert new card
-    let! templates = SanitizeCardTemplate.Search c.Db "Basic"
+    let! templates = TestTemplateRepo.Search c.Db "Basic"
     let template = templates.Single(fun x -> x.Name = "Basic")
     let! card = CardRepository.getNew c.Db userId
     let! r =

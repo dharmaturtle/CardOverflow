@@ -231,7 +231,7 @@ let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (
     let userId = 3
     use c = new TestContainer()
     let! card = CardRepository.getNew c.Db userId
-    let! templates = SanitizeCardTemplate.Search c.Db "Cloze"
+    let! templates = TestTemplateRepo.Search c.Db "Cloze"
     let malformedUpdateCommand =
         let command = FacetRepositoryTests.clozeCommand "Canberra was founded in {{c1::1913}}." (templates.Single(fun x -> x.Name = "Cloze"))
         { command with FieldValues = command.FieldValues.Select(fun x -> { x with Communal = None }).ToList() }
@@ -315,7 +315,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let userId = 3
     use c = new TestContainer()
     let! template =
-        SanitizeCardTemplate.Search c.Db "Basic"
+        TestTemplateRepo.Search c.Db "Basic"
         |> TaskX.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
