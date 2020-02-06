@@ -114,5 +114,7 @@ namespace CardOverflow.Entity
         }
         private string _EditSummary;
         public long? AnkiId { get; set; }
+        [ForeignKey("TemplateInstanceId")]
+        public virtual TemplateInstanceEntity TemplateInstance { get; set; }
     }
 }

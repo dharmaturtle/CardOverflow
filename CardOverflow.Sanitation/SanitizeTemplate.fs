@@ -1,5 +1,6 @@
 namespace CardOverflow.Sanitation
 
+open X.PagedList
 open FSharp.Control.Tasks
 open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
@@ -145,13 +146,28 @@ module SanitizeTemplate =
             | null -> Error "That template doesn't exist"
             | x -> Ok <| ViewTemplateWithAllInstances.load x
         }
-    let Search (db: CardOverflowDb) (query: string) = task {
-        let! x =
+    let Search (db: CardOverflowDb) (pageNumber: int) (searchTerm: string) = task {
+        let! r =
             db.LatestTemplateInstance
-                .Where(fun x -> x.Name.Contains query)
-                .ToListAsync()
-        return x |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
-        }
+                .Where(fun x ->
+                    String.IsNullOrWhiteSpace searchTerm ||
+                    EF.Functions.FreeText(x.TemplateInstance.AnswerTemplate, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.Css, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.Fields, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.LatexPost, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.LatexPre, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.Name, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.QuestionTemplate, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.ShortAnswerTemplate, searchTerm) ||
+                    EF.Functions.FreeText(x.TemplateInstance.ShortQuestionTemplate, searchTerm)
+                ).ToPagedListAsync(pageNumber, 15)
+        return {
+            Results = r |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
+            Details = {
+                CurrentPage = r.PageNumber
+                PageCount = r.PageCount
+            }
+        }}
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
             db.Template

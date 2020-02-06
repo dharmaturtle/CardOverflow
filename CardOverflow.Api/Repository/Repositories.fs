@@ -222,10 +222,8 @@ module CardRepository =
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
-                if String.IsNullOrWhiteSpace searchTerm then 
-                    true
-                else
-                    EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                String.IsNullOrWhiteSpace searchTerm ||
+                EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
     let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         db.AcquiredCardIsLatest
@@ -233,10 +231,8 @@ module CardRepository =
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
-                if String.IsNullOrWhiteSpace searchTerm then 
-                    true
-                else
-                    EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                String.IsNullOrWhiteSpace searchTerm ||
+                EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
@@ -277,10 +273,8 @@ module CardRepository =
                 db.LatestCardInstance
                     .Where(fun x ->
                         x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm)) ||
-                        if String.IsNullOrWhiteSpace searchTerm then 
-                            true
-                        else
-                            EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                        String.IsNullOrWhiteSpace searchTerm ||
+                        EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
                     )
                     .Include(fun x -> x.TemplateInstance)
                     .Include(fun x -> x.Author)

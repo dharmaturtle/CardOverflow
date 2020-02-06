@@ -291,6 +291,14 @@ let ``Card search works`` (): Task<unit> = task {
     Assert.Equal(2, cards.Results.Single().Id)
     let! cards = search clozeText
     Assert.Equal(3, cards.Results.Single().Id)
+
+    let search = SanitizeTemplate.Search c.Db 1
+    let! templates = search "Cloze"
+    Assert.Equal("Cloze", templates.Results.Single().Name)
+    let! templates = search "type"
+    Assert.Equal("Basic (type in the answer)", templates.Results.Single().Name)
+    let! templates = search "Basic"
+    Assert.Equal(4, templates.Results.Count())
     }
 
 [<Fact>]
