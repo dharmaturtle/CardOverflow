@@ -31,15 +31,15 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) = task {
     do! UserRepository.add db "Admin" "admin@cardoverflow.io"
     do! UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
     do! UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
-    let theCollective = db.User.Include(fun x -> x.DefaultCardOption).Single(fun x -> x.DisplayName = "The Collective")
-    let toEntity (cardTemplate: AnkiCardTemplateInstance) =
-        cardTemplate.CopyToNew theCollective.Id <| theCollective.DefaultCardOption
+    let theCollective = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.DisplayName = "The Collective")
+    let toEntity (template: AnkiTemplateInstance) =
+        template.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting
     Anki.parseModels
         theCollective.Id
         ankiModels
     |> Result.getOk
     |> Seq.collect (snd >> Seq.map toEntity)
-    |> db.CardTemplateInstance.AddRange
+    |> db.TemplateInstance.AddRange
     do! db.SaveChangesAsyncI () }
 
 //[<Fact>]

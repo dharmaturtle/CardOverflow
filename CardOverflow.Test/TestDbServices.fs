@@ -56,10 +56,10 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
 module TestTemplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.LatestCardTemplateInstance
+            db.LatestTemplateInstance
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (CardTemplateInstance.loadLatest >> ViewCardTemplateInstance.load) |> toResizeArray
+        return x |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
         }
 
 // Sqlite

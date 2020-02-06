@@ -26,7 +26,7 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiCardTemplateInstance = {
+type AnkiTemplateInstance = {
     AnkiId: int64
     AuthorId: int
     Name: string
@@ -35,7 +35,7 @@ type AnkiCardTemplateInstance = {
     Created: DateTime
     Modified: DateTime option
     DefaultTags: int list
-    DefaultCardOptionId: int
+    DefaultCardSettingId: int
     LatexPre: string
     LatexPost: string
     QuestionTemplate: string
@@ -49,7 +49,7 @@ type AnkiCardTemplateInstance = {
     FieldsByOrdinal: Map<byte, Field list>
     CommunalFields: Field list
 } with
-    member this.CopyTo (entity: CardTemplateInstanceEntity) =
+    member this.CopyTo (entity: TemplateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -62,18 +62,18 @@ type AnkiCardTemplateInstance = {
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
         entity.EditSummary <- "Imported from Anki"
-    member this.CopyToNew userId defaultCardOption =
-        let entity = CardTemplateInstanceEntity()
-        entity.User_CardTemplateInstances <-
-            [User_CardTemplateInstanceEntity(
+    member this.CopyToNew userId defaultCardSetting =
+        let entity = TemplateInstanceEntity()
+        entity.User_TemplateInstances <-
+            [User_TemplateInstanceEntity(
                 UserId = userId,
-                Tag_User_CardTemplateInstances =
+                Tag_User_TemplateInstances =
                     (this.DefaultTags
-                        .Select(fun x -> Tag_User_CardTemplateInstanceEntity(UserId = userId, DefaultTagId = x))
+                        .Select(fun x -> Tag_User_TemplateInstanceEntity(UserId = userId, DefaultTagId = x))
                         .ToList()),
-                DefaultCardOption = defaultCardOption)].ToList()
-        entity.CardTemplate <-
-            CardTemplateEntity(
+                DefaultCardSetting = defaultCardSetting)].ToList()
+        entity.Template <-
+            TemplateEntity(
                 AuthorId = this.AuthorId)
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
@@ -83,7 +83,7 @@ type AnkiCardWrite = {
     AnkiNoteId: int64
     AnkiNoteOrd: Byte
     CommunalFields: CommunalFieldInstanceEntity list
-    CardTemplate: CardTemplateInstanceEntity
+    Template: TemplateInstanceEntity
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
@@ -93,7 +93,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.CardTemplateInstance <- this.CardTemplate
+        entity.TemplateInstance <- this.Template
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
         entity.CommunalFieldInstance_CardInstances <-
@@ -117,7 +117,7 @@ type AnkiCardWrite = {
         this.CopyTo entity
         entity
     member this.AcquireEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let templateHash = this.CardTemplate |> CardTemplateInstanceEntity.hash hasher
+        let templateHash = this.Template |> TemplateInstanceEntity.hash hasher
         let hash = this.CopyToNew [] |> CardInstanceEntity.hash templateHash hasher
         db.CardInstance
             .Include(fun x -> x.Card.RelationshipSources)
@@ -131,14 +131,14 @@ type AnkiCardWrite = {
 type AnkiAcquiredCard = {
     UserId: int
     CardInstance: CardInstanceEntity
-    CardTemplateInstance: CardTemplateInstanceEntity
+    TemplateInstance: TemplateInstanceEntity
     CardState: CardState
     IsLapsed: bool
     LapseCount: byte
     EaseFactorInPermille: int16
     IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
-    CardOption: CardOptionEntity
+    CardSetting: CardSettingEntity
 } with
     member this.CopyTo (entity: AcquiredCardEntity) =
         entity.UserId <- this.UserId
@@ -151,7 +151,7 @@ type AnkiAcquiredCard = {
         let entity = AcquiredCardEntity ()
         this.CopyTo entity
         entity.CardInstance <- this.CardInstance
-        entity.CardOption <- this.CardOption
+        entity.CardSetting <- this.CardSetting
         entity.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(AcquiredCard = entity, Tag = x)).ToList()
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
@@ -159,7 +159,7 @@ type AnkiAcquiredCard = {
             .FirstOrDefault(fun c -> 
                 this.UserId = c.UserId &&
                 this.CardInstance.Id = c.CardInstanceId &&
-                this.CardTemplateInstance.Id = c.CardInstance.CardTemplateInstanceId
+                this.TemplateInstance.Id = c.CardInstance.TemplateInstanceId
             )
 
 type AnkiHistory = {
@@ -176,7 +176,7 @@ type AnkiHistory = {
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
             this.AcquiredCard.CardInstanceId = h.AcquiredCard.CardInstanceId &&
-            this.AcquiredCard.CardInstance.CardTemplateInstanceId = h.AcquiredCard.CardInstance.CardTemplateInstanceId &&
+            this.AcquiredCard.CardInstance.TemplateInstanceId = h.AcquiredCard.CardInstance.TemplateInstanceId &&
             this.Score = h.Score &&
             roundedTimeStamp = h.Timestamp &&
             interval = h.IntervalWithUnusedStepsIndex &&
@@ -239,7 +239,7 @@ module Anki =
             | 0 -> Decode.succeed false
             | 1 -> Decode.succeed true
             | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
-    let parseCardOptions =
+    let parseCardSettings =
         Decode.object(fun get ->
             { Id = 0 // lowTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
@@ -274,7 +274,7 @@ module Anki =
         |> Decode.fromString
     type BraceRegex = Regex< """{{(?<fieldName>.*?)}}""" >
     type TempTemplate = {
-        Template: AnkiCardTemplateInstance
+        Template: AnkiTemplateInstance
         NewByOldField: (Field * Field) list
         ReducedFields: Field list
         FieldsByOrdinal: (byte * Field list) list
@@ -283,7 +283,7 @@ module Anki =
         member this.AnswerTemplate = this.Template.AnswerTemplate
         member this.Ordinal = this.Template.Ordinal
     let parseModels userId =
-        let reduceCardTemplate (templates: AnkiCardTemplateInstance list) =
+        let reduceTemplate (templates: AnkiTemplateInstance list) =
             let templates = templates |> List.map (fun x -> { Template = x; NewByOldField = []; ReducedFields = x.Fields; FieldsByOrdinal = [] })
             let communalFields =
                 templates.Head.ReducedFields
@@ -380,7 +380,7 @@ module Anki =
                     Fields = fields
                     CommunalFields = communalFields})
         Decode.object(fun get ->
-            let cardTemplates =
+            let templates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
                             {|Name = g.Required.Field "name" Decode.string
                               QuestionTemplate = g.Required.Field "qfmt" Decode.string
@@ -390,14 +390,14 @@ module Anki =
                               Ordinal = g.Required.Field "ord" Decode.int |> byte|})
                               |> Decode.list )
                 |> List.sortBy (fun x -> x.Ordinal)
-            cardTemplates
-            |> List.map(fun cardTemplate ->
+            templates
+            |> List.map(fun template ->
                 let namePostfix =
-                    if cardTemplates.Count() >= 2
-                    then " - " + cardTemplate.Name
+                    if templates.Count() >= 2
+                    then " - " + template.Name
                     else ""
                 {   AnkiId = get.Required.Field "id" Decode.int64
-                    Ordinal = cardTemplate.Ordinal
+                    Ordinal = template.Ordinal
                     AuthorId = userId
                     Name = get.Required.Field "name" Decode.string + namePostfix
                     Css = get.Required.Field "css" Decode.string
@@ -410,14 +410,14 @@ module Anki =
                               Ordinal = get.Required.Field "ord" Decode.int |> byte
                               IsSticky = get.Required.Field "sticky" Decode.bool })
                             |> Decode.list)
-                    QuestionTemplate = cardTemplate.QuestionTemplate
-                    AnswerTemplate = cardTemplate.AnswerTemplate
-                    ShortQuestionTemplate = cardTemplate.ShortQuestionTemplate
-                    ShortAnswerTemplate = cardTemplate.ShortAnswerTemplate
+                    QuestionTemplate = template.QuestionTemplate
+                    AnswerTemplate = template.AnswerTemplate
+                    ShortQuestionTemplate = template.ShortQuestionTemplate
+                    ShortAnswerTemplate = template.ShortAnswerTemplate
                     Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
                     Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
                     DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
-                    DefaultCardOptionId = 0
+                    DefaultCardSettingId = 0
                     LatexPre = get.Required.Field "latexPre" Decode.string
                     LatexPost = get.Required.Field "latexPost" Decode.string
                     DeckId = get.Required.Field "did" Decode.int64
@@ -425,7 +425,7 @@ module Anki =
                     NewByOldField = Map.empty
                     FieldsByOrdinal = Map.empty
                     CommunalFields = []
-                }) |> reduceCardTemplate)
+                }) |> reduceTemplate)
         |> Decode.keyValuePairs
         |> Decode.fromString
     type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
@@ -464,7 +464,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (cardTemplatesByModelId: Map<string, {| Entity: CardTemplateInstanceEntity; CardTemplate: AnkiCardTemplateInstance |} list>)
+        (templatesByModelId: Map<string, {| Entity: TemplateInstanceEntity; Template: AnkiTemplateInstance |} list>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -485,10 +485,10 @@ module Anki =
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
-                let cardTemplates = cardTemplatesByModelId.[string note.Mid]
+                let templates = templatesByModelId.[string note.Mid]
                 let communalFields =
-                    cardTemplates
-                    |> List.collect(fun x -> x.CardTemplate.CommunalFields)
+                    templates
+                    |> List.collect(fun x -> x.Template.CommunalFields)
                     |> List.distinct
                     |> List.map (fun field ->
                         CommunalFieldInstanceEntity(
@@ -498,11 +498,11 @@ module Anki =
                             CommunalField = CommunalFieldEntity(AuthorId = userId),
                             Created = DateTime.UtcNow,
                             CommunalFieldInstance_CardInstances = [].ToList()))
-                let toCard fields cardTemplate noteOrd =
+                let toCard fields template noteOrd =
                     let c = {
                         AnkiNoteId = note.Id
                         AnkiNoteOrd = noteOrd
-                        CardTemplate = cardTemplate
+                        Template = template
                         CommunalFields = communalFields
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
@@ -514,31 +514,31 @@ module Anki =
                 let noteIdCardsAndTags =
                     result {
                         let! cards =
-                            if cardTemplates.First().CardTemplate.IsCloze then result {
-                                let cardTemplate = cardTemplates |> Seq.exactlyOne
+                            if templates.First().Template.IsCloze then result {
+                                let template = templates |> Seq.exactlyOne
                                 let valueByFieldName =
                                     Seq.zip
-                                        <| cardTemplate.CardTemplate.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
+                                        <| template.Template.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
                                         <| fieldValues
                                     |> Map.ofSeq
                                 let! max =
                                     AnkiImportLogic.maxClozeIndex
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
                                         <| valueByFieldName
-                                        <| cardTemplate.CardTemplate.QuestionTemplate
+                                        <| template.Template.QuestionTemplate
                                 return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
                                     toCard
                                         <| AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex fieldValues
-                                        <| cardTemplate.Entity
+                                        <| template.Entity
                                         <| clozeIndex - 1uy // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}
                             else
-                                let instances = cardTemplates |> List.collect (fun anon ->
-                                    let cardTemplate = anon.CardTemplate
-                                    let newByOldField = cardTemplate.NewByOldField
+                                let instances = templates |> List.collect (fun anon ->
+                                    let template = anon.Template
+                                    let newByOldField = template.NewByOldField
                                     let oldFields = newByOldField |> Map.toList |> List.map fst
                                     let newFields = newByOldField |> Map.toList |> List.map snd
-                                    cardTemplate.FieldsByOrdinal
+                                    template.FieldsByOrdinal
                                     |> Map.toList
                                     |> List.map (fun (templateOrdinal, fields) ->
                                         let fields =
@@ -589,18 +589,18 @@ module Anki =
                 cardsAndTagsByNoteId
         parseNotesRec initialTags []
     let mapCard
-        (cardOptionAndDeckTagByDeckId: Map<int64, CardOptionEntity * string>)
+        (cardSettingAndDeckTagByDeckId: Map<int64, CardSettingEntity * string>)
         (cardsAndTagsByNoteId: Map<int64, CardInstanceEntity list * TagEntity list>)
         (colCreateDate: DateTime)
         userId
         (usersTags: TagEntity list)
         getCard
         (ankiCard: Anki.CardEntity) =
-        let cardOption, deckTag = cardOptionAndDeckTagByDeckId.[ankiCard.Did]
+        let cardSetting, deckTag = cardSettingAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
         let card = cards.Single(fun x -> x.AnkiNoteOrd = (ankiCard.Ord |> byte |> Nullable))
-        let cti = card.CardTemplateInstance
+        let cti = card.TemplateInstance
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
@@ -612,7 +612,7 @@ module Anki =
                 let c: AnkiAcquiredCard =
                     { UserId = userId
                       CardInstance = card
-                      CardTemplateInstance = cti
+                      TemplateInstance = cti
                       CardState =
                         match ankiCard.Queue with
                         | -3L -> UserBuried
@@ -628,7 +628,7 @@ module Anki =
                         | Learning ->
                             if ankiCard.Left = 0L
                             then 0
-                            else cardOption.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
+                            else cardSetting.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
                             |> byte |> NewStepsIndex
                         | Due ->
                             if ankiCard.Ivl > 0L
@@ -646,7 +646,7 @@ module Anki =
                             |> float
                             |> TimeSpan.FromDays
                             |> (+) colCreateDate
-                      CardOption = cardOption }
+                      CardSetting = cardSetting }
                 getCard c
                 |> function
                 | Some entity ->

@@ -16,10 +16,10 @@ open System.Linq
 open SimpleInjector.Lifestyles
 
 [<Fact>]
-let ``CardOptions load and copy defaultCardOptions are equal`` (): unit =
-    let record = CardOptionsRepository.defaultCardOptions.CopyToNew 3 |> CardOption.load true
+let ``CardSettings load and copy defaultCardSettings are equal`` (): unit =
+    let record = CardSettingsRepository.defaultCardSettings.CopyToNew 3 |> CardSetting.load true
 
-    Assert.Equal(CardOptionsRepository.defaultCardOptions, record)
+    Assert.Equal(CardSettingsRepository.defaultCardSettings, record)
 
 [<Fact>]
 let ``Interval, all NewStepsIndexes map to db and back`` (): unit =

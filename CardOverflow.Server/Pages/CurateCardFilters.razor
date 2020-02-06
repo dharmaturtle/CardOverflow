@@ -13,10 +13,10 @@
   Filters
 </h5>
 <div class="list-group">
-  @foreach (var deck in decks) {
+  @foreach (var filter in _filters) {
     <div class="list-group-item d-flex justify-content-between p-0 border-0">
-      <button @onclick=@(() => new SearchCommand(deck.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill text-left">@deck.Name</button>
-      <button @onclick=@(() => Edit(deck)) class="oi oi-pencil btn btn-light"></button>
+      <button @onclick=@(() => new SearchCommand(filter.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill text-left">@filter.Name</button>
+      <button @onclick=@(() => Edit(filter)) class="oi oi-pencil btn btn-light"></button>
     </div>
   }
   <button class="btn btn-success" @onclick=@Create>
@@ -25,9 +25,9 @@
 </div>
 
 <BSModal @ref=Modal>
-  <EditForm Model=ActiveDeck OnValidSubmit=Save>
+  <EditForm Model=_activeFilter OnValidSubmit=Save>
     <BSModalHeader OnClick=Modal.Hide>
-      @if (ActiveDeck.Id == 0) {
+      @if (_activeFilter.Id == 0) {
         <span>Create a new deck</span>
       } else {
         <span>Edit deck</span>
@@ -36,13 +36,13 @@
     <BSModalBody>
       <div class="form-group">
         <label for="newDeckNameInput">Name</label>
-        <InputText @bind-Value=ActiveDeck.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <ValidationMessage For=@(() => ActiveDeck.Name) />
+        <InputText @bind-Value=_activeFilter.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <ValidationMessage For=@(() => _activeFilter.Name) />
       </div>
       <div class="form-group">
         <label for="newDeckQueryInput">Query</label>
-        <InputText @bind-Value=ActiveDeck.Query class="form-control" id="newDeckQueryInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <ValidationMessage For=@(() => ActiveDeck.Query) />
+        <InputText @bind-Value=_activeFilter.Query class="form-control" id="newDeckQueryInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <ValidationMessage For=@(() => _activeFilter.Query) />
       </div>
       <DataAnnotationsValidator />
     </BSModalBody>
@@ -70,25 +70,25 @@
   public string Query { get; set; }
   [Parameter]
   public EventCallback<SearchCommand> DeckClicked { get; set; }
-  List<ViewDeck> decks = new List<ViewDeck>();
-  ViewDeck ActiveDeck = new ViewDeck();
+  List<ViewFilter> _filters = new List<ViewFilter>();
+  ViewFilter _activeFilter = new ViewFilter();
 
   protected override async Task OnInitializedAsync() {
-    decks = await SanitizeDeckRepository.Get(Service, User?.Id ?? 0);
+    _filters = await SanitizeFilterRepository.Get(Service, User?.Id ?? 0);
   }
 
   async Task Save() {
-    var newId = await SanitizeDeckRepository.UpsertAsync(Service, ActiveDeck);
-    if (ActiveDeck.Id == 0) {
-      ActiveDeck.Id = newId;
-      decks.Add(ActiveDeck);
+    var newId = await SanitizeFilterRepository.UpsertAsync(Service, _activeFilter);
+    if (_activeFilter.Id == 0) {
+      _activeFilter.Id = newId;
+      _filters.Add(_activeFilter);
     }
     Modal.Hide();
   }
 
   async Task Delete() {
-    decks.Remove(ActiveDeck);
-    var x = SanitizeDeckRepository.Delete(Service, User.Id, ActiveDeck);
+    _filters.Remove(_activeFilter);
+    var x = SanitizeFilterRepository.Delete(Service, User.Id, _activeFilter);
     if (x.IsOk) {
       await x.ResultValue;
     } else {
@@ -98,14 +98,14 @@
   }
 
   void Create() {
-    ActiveDeck = new ViewDeck(0, User.Id, "New Deck", Query);
+    _activeFilter = new ViewFilter(0, User.Id, "New Filter", Query);
     Modal.Show();
   }
 
-  Task Edit(ViewDeck deck) {
-    ActiveDeck = deck;
+  Task Edit(ViewFilter filter) {
+    _activeFilter = filter;
     Modal.Show();
-    return DeckClicked.InvokeAsync(new SearchCommand(deck.Query));
+    return DeckClicked.InvokeAsync(new SearchCommand(filter.Query));
   }
 
 }

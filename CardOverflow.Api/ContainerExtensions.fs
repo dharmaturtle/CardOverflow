@@ -41,9 +41,9 @@ module Logger =
 type EntityHasher () =
     interface IEntityHasher with
         member val CardInstanceHasher =
-            fun struct (cardInstance, cardTemplateInstanceHash, sha512) -> CardInstanceEntity.hash cardTemplateInstanceHash sha512 cardInstance
-        member val CardTemplateInstanceHasher =
-            fun struct (instance, sha512) -> CardTemplateInstanceEntity.hash sha512 instance
+            fun struct (cardInstance, templateInstanceHash, sha512) -> CardInstanceEntity.hash templateInstanceHash sha512 cardInstance
+        member val TemplateInstanceHasher =
+            fun struct (instance, sha512) -> TemplateInstanceEntity.hash sha512 instance
 
 type Container with
     member container.RegisterStuffTestOnly =

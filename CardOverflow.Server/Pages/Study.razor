@@ -16,7 +16,7 @@
 
 @if (User == null) {
   <p><em>You aren't signed in dude.</em></p>
-} else if (SelectedDeck == null) {
+} else if (_selectedFilter == null) {
   <div class="container">
     <Heatmap />
     <table class="table">
@@ -24,38 +24,38 @@
         <th></th>
         <th>Due</th>
       </tr>
-      @foreach (var deck in Decks) {
+      @foreach (var filter in _filters) {
         <tr>
           <td>
-            <button @onclick=@(() => SelectedDeck = deck) class="btn btn-link">
-              @deck.Name
+            <button @onclick=@(() => _selectedFilter = filter) class="btn btn-link">
+              @filter.Name
             </button>
           </td>
           <td>
-            @deck.Due
+            @filter.Due
           </td>
         </tr>
       }
     </table>
   </div>
 } else {
-  <StudyDetail Query=@SelectedDeck.Query />
+  <StudyDetail Query=@_selectedFilter.Query />
 }
 
 @code {
   [CascadingParameter]
   UserEntity User { get; set; }
-  List<ViewDeckWithDue> Decks = new List<ViewDeckWithDue>();
-  ViewDeckWithDue SelectedDeck;
+  private List<ViewFilterWithDue> _filters = new List<ViewFilterWithDue>();
+  private ViewFilterWithDue _selectedFilter;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    SelectedDeck = null;
+    _selectedFilter = null;
   }
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      Decks = await SanitizeDeckRepository.GetWithDue(Service, User.Id);
+      _filters = await SanitizeFilterRepository.GetWithDue(Service, User.Id);
     }
   }
 

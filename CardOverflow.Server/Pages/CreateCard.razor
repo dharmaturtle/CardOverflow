@@ -23,11 +23,11 @@
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
-  IEnumerable<ViewCardTemplateWithAllInstances> Templates;
+  IEnumerable<ViewTemplateWithAllInstances> Templates;
 
   protected override async Task OnInitializedAsync() {
     Card = await CardRepository.getNew(Service, User?.Id ?? 0);
-    Templates = await SanitizeCardTemplate.GetMine(Service, User?.Id ?? 0);
+    Templates = await SanitizeTemplate.GetMine(Service, User?.Id ?? 0);
   }
 
 }

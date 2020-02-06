@@ -1,4 +1,4 @@
-module CardTemplateRepositoryTests
+module TemplateRepositoryTests
 
 open LoadersAndCopiers
 open Helpers
@@ -18,24 +18,24 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``CardTemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
+let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     let templateId = 1
     let userId = 3
     use c = new TestContainer()
     
-    let! cardTemplate = SanitizeCardTemplate.AllInstances c.Db templateId
-    let latestInstance = cardTemplate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
+    let! template = SanitizeTemplate.AllInstances c.Db templateId
+    let latestInstance = template.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
-        cardTemplate.Value.Instances.Single().Name)
+        template.Value.Instances.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
         latestInstance.QuestionTemplate)
-    Assert.Equal(1, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplateId = templateId))
+    Assert.Equal(1, c.Db.TemplateInstance.Count(fun x -> x.TemplateId = templateId))
 
     // Testing UpdateFieldsToNewInstance
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
@@ -46,12 +46,12 @@ let ``CardTemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = t
             Name = newTemplateName
             QuestionTemplate = newQuestionTemplate
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
-        } |> ViewCardTemplateInstance.copyTo
+        } |> ViewTemplateInstance.copyTo
     
-    do! CardTemplateRepository.UpdateFieldsToNewInstance c.Db userId updated
+    do! TemplateRepository.UpdateFieldsToNewInstance c.Db userId updated
 
-    let! cardTemplate = SanitizeCardTemplate.AllInstances c.Db templateId
-    let latestInstance = cardTemplate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
+    let! template = SanitizeTemplate.AllInstances c.Db templateId
+    let latestInstance = template.Value.Instances |> Seq.maxBy (fun x -> x.Created)
     Assert.Equal(
         newQuestionTemplate,
         latestInstance.QuestionTemplate)
@@ -65,11 +65,11 @@ let ``CardTemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = t
     Assert.Equal(2, c.Db.AcquiredCard.Single().CardInstanceId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.AcquiredCard.Include(fun x -> x.CardInstance).Single().CardInstance.CardTemplateInstanceId)
-    Assert.Equal(2, c.Db.CardTemplateInstance.Count(fun x -> x.CardTemplateId = templateId))
+        c.Db.AcquiredCard.Include(fun x -> x.CardInstance).Single().CardInstance.TemplateInstanceId)
+    Assert.Equal(2, c.Db.TemplateInstance.Count(fun x -> x.TemplateId = templateId))
     Assert.Equal(2, c.Db.CardInstance.Count())
     Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.CardId = 1))
-    let createds = c.Db.CardTemplateInstance.Where(fun x -> x.CardTemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
+    let createds = c.Db.TemplateInstance.Where(fun x -> x.TemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = CardRepository.getView c.Db 1
     let front, _, _, _ = x.FrontBackFrontSynthBackSynth

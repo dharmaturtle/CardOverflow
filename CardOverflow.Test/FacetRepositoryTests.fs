@@ -17,14 +17,14 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Sanitation
 
-let normalCommand fieldValues cardTemplateInstance =
+let normalCommand fieldValues templateInstance =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    {   TemplateInstance = cardTemplateInstance
+    {   TemplateInstance = templateInstance
         FieldValues =
-            cardTemplateInstance.Fields
+            templateInstance.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
             |> Seq.mapi (fun i field -> {
                 EditField = ViewField.copyTo field
@@ -306,7 +306,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
 //            Title = "",
 //            Description = "",
 //            Fields = "",
-//            CardTemplateId = 1,
+//            TemplateId = 1,
 //            Modified = DateTime.UtcNow)
     
 //    CardRepository.AddCard c.Db facet

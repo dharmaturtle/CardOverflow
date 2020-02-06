@@ -48,12 +48,12 @@ module ViewField =
     }
 
 [<CLIMutable>]
-type ViewCardTemplateInstance = {
+type ViewTemplateInstance = {
     Id: int
     [<Required>]
     [<StringLength(100, MinimumLength = 3, ErrorMessage = "Name must be 3-100 characters long.")>]
     Name: string
-    CardTemplateId: int
+    TemplateId: int
     Css: string
     Fields: ViewField ResizeArray
     Created: DateTime
@@ -72,11 +72,11 @@ type ViewCardTemplateInstance = {
     member this.ClozeFields =
         AnkiImportLogic.clozeFields this.QuestionTemplate
 
-module ViewCardTemplateInstance =
-    let load (bznz: CardTemplateInstance) = {
+module ViewTemplateInstance =
+    let load (bznz: TemplateInstance) = {
         Id = bznz.Id
         Name = bznz.Name
-        CardTemplateId = bznz.CardTemplateId
+        TemplateId = bznz.TemplateId
         Css = bznz.Css
         Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
         Created = bznz.Created
@@ -89,10 +89,10 @@ module ViewCardTemplateInstance =
         ShortAnswerTemplate = bznz.ShortAnswerTemplate
         EditSummary = bznz.EditSummary
     }
-    let copyTo (view: ViewCardTemplateInstance): CardTemplateInstance = {
+    let copyTo (view: ViewTemplateInstance): TemplateInstance = {
         Id = view.Id
         Name = view.Name
-        CardTemplateId = view.CardTemplateId
+        TemplateId = view.TemplateId
         Css = view.Css
         Fields = view.Fields |> Seq.map ViewField.copyTo |> Seq.toList
         Created = view.Created
@@ -107,17 +107,17 @@ module ViewCardTemplateInstance =
     }
 
 [<CLIMutable>]
-type ViewCardTemplateWithAllInstances = {
+type ViewTemplateWithAllInstances = {
     Id: int
     AuthorId: int
-    Instances: ViewCardTemplateInstance ResizeArray
-    Editable: ViewCardTemplateInstance
+    Instances: ViewTemplateInstance ResizeArray
+    Editable: ViewTemplateInstance
 } with
-    static member load (entity: CardTemplateEntity) =
+    static member load (entity: TemplateEntity) =
         let instances =
-            entity.CardTemplateInstances
+            entity.TemplateInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.map (CardTemplateInstance.load >> ViewCardTemplateInstance.load)
+            |> Seq.map (TemplateInstance.load >> ViewTemplateInstance.load)
             |> toResizeArray
         {   Id = entity.Id
             AuthorId = entity.AuthorId
@@ -127,51 +127,51 @@ type ViewCardTemplateWithAllInstances = {
                     Id = 0
                     EditSummary = "" }}
     static member initialize userId =
-        let instance = CardTemplateInstance.initialize |> ViewCardTemplateInstance.load
+        let instance = TemplateInstance.initialize |> ViewTemplateInstance.load
         {   Id = 0
             AuthorId = userId
             Instances = [instance].ToList()
             Editable = instance
         }
 
-module SanitizeCardTemplate =
+module SanitizeTemplate =
     let AllInstances (db: CardOverflowDb) templateId = task {
         let! template =
-            db.CardTemplate
-                .Include(fun x -> x.CardTemplateInstances)
+            db.Template
+                .Include(fun x -> x.TemplateInstances)
                 .SingleOrDefaultAsync(fun x -> templateId = x.Id)
         return
             match template with
             | null -> Error "That template doesn't exist"
-            | x -> Ok <| ViewCardTemplateWithAllInstances.load x
+            | x -> Ok <| ViewTemplateWithAllInstances.load x
         }
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.LatestCardTemplateInstance
+            db.LatestTemplateInstance
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (CardTemplateInstance.loadLatest >> ViewCardTemplateInstance.load) |> toResizeArray
+        return x |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
         }
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
-            db.CardTemplate
-                .Include(fun x-> x.CardTemplateInstances)
+            db.Template
+                .Include(fun x-> x.TemplateInstances)
                 .Where(fun x -> 
                     x.AuthorId = userId ||
                     x.AuthorId = 2 ||
-                    x.CardTemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))
+                    x.TemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))
                 )
                 .ToListAsync()
-        return x |> Seq.map ViewCardTemplateWithAllInstances.load |> toResizeArray
+        return x |> Seq.map ViewTemplateWithAllInstances.load |> toResizeArray
         }
-    let Update (db: CardOverflowDb) userId (instance: ViewCardTemplateInstance) =
-        let update () = ViewCardTemplateInstance.copyTo instance |> CardTemplateRepository.UpdateFieldsToNewInstance db userId |> Ok
+    let Update (db: CardOverflowDb) userId (instance: ViewTemplateInstance) =
+        let update () = ViewTemplateInstance.copyTo instance |> TemplateRepository.UpdateFieldsToNewInstance db userId |> Ok
         if instance.Fields.Count = instance.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
-            db.CardTemplate.SingleOrDefault(fun x -> x.Id = instance.CardTemplateId)
+            db.Template.SingleOrDefault(fun x -> x.Id = instance.TemplateId)
             |> function
             | null -> update ()
-            | cardTemplate ->
-                if cardTemplate.AuthorId = userId then 
+            | template ->
+                if template.AuthorId = userId then 
                     update ()
                 else Error "You aren't that this template's author."
         else

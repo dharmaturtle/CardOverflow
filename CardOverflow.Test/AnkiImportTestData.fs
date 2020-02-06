@@ -1478,8 +1478,8 @@ type AllAnkiCols () =
 
 [<Theory>]
 [<ClassData(typeof<AllAnkiCols>)>]
-let ``parseCardOptions`` title col =
-    Anki.parseCardOptions col
+let ``parseCardSettings`` title col =
+    Anki.parseCardSettings col
     |> Result.isOk
     |> Assert.True
 

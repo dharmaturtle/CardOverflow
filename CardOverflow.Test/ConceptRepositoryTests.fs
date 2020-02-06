@@ -297,7 +297,7 @@ let ``Card search works`` (): Task<unit> = task {
 let ``New user has TheCollective's card templates`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
     let theCollectiveId = c.Db.User.Single(fun x -> x.DisplayName = "The Collective").Id
     for template in myTemplates do
         Assert.Equal(theCollectiveId, template.AuthorId)
@@ -307,10 +307,10 @@ let ``New user has TheCollective's card templates`` (): Task<unit> = task {
 let ``Updating card template with duplicate field names yields error`` (): unit =
     let userId = 3
     let fieldName = Guid.NewGuid().ToString()
-    let template = CardTemplateInstance.initialize |> ViewCardTemplateInstance.load
+    let template = TemplateInstance.initialize |> ViewTemplateInstance.load
     let template = { template with Fields = template.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
-    let error = SanitizeCardTemplate.Update null userId template |> Result.getError
+    let error = SanitizeTemplate.Update null userId template |> Result.getError
     
     Assert.Equal("Field names must differ", error)
 
@@ -318,12 +318,12 @@ let ``Updating card template with duplicate field names yields error`` (): unit 
 let ``Can create card template and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let initialCardTemplate = ViewCardTemplateWithAllInstances.initialize userId
+    let initialTemplate = ViewTemplateWithAllInstances.initialize userId
 
-    do! SanitizeCardTemplate.Update c.Db userId initialCardTemplate.Editable |> Result.getOk
-    let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
+    do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable |> Result.getOk
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
 
-    Assert.True(myTemplates.Single(fun x -> x.AuthorId = userId).Editable.Fields.Any(fun x -> x.Name = initialCardTemplate.Editable.Fields.First().Name))
+    Assert.True(myTemplates.Single(fun x -> x.AuthorId = userId).Editable.Fields.Any(fun x -> x.Name = initialTemplate.Editable.Fields.First().Name))
     
     // testing a brand new template, but slightly different
     let fieldName = Guid.NewGuid().ToString()
@@ -336,13 +336,13 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
                 Ordinal = 0
                 IsSticky = false
             }
-        {   initialCardTemplate.Editable with
-                Fields = initialCardTemplate.Editable.Fields.Append newField |> toResizeArray
+        {   initialTemplate.Editable with
+                Fields = initialTemplate.Editable.Fields.Append newField |> toResizeArray
         }
-    do! SanitizeCardTemplate.Update c.Db userId newEditable |> Result.getOk
+    do! SanitizeTemplate.Update c.Db userId newEditable |> Result.getOk
     
-    Assert.Equal(2, c.Db.CardTemplate.Count(fun x -> x.AuthorId = userId))
-    let! myTemplates = SanitizeCardTemplate.GetMine c.Db userId
+    Assert.Equal(2, c.Db.Template.Count(fun x -> x.AuthorId = userId))
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
     Assert.True(myTemplates.OrderBy(fun x -> x.Id).Last().Editable.Fields.Any(fun x -> x.Name = fieldName))
     }
 
@@ -350,15 +350,15 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
 let ``New card template has correct hash`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let initialCardTemplate = ViewCardTemplateWithAllInstances.initialize userId
+    let initialTemplate = ViewTemplateWithAllInstances.initialize userId
     use sha512 = SHA512.Create()
-    do! SanitizeCardTemplate.Update c.Db userId initialCardTemplate.Editable |> Result.getOk
-    let! dbTemplate = c.Db.CardTemplateInstance.SingleAsync(fun x -> x.CardTemplate.AuthorId = userId)
+    do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable |> Result.getOk
+    let! dbTemplate = c.Db.TemplateInstance.SingleAsync(fun x -> x.Template.AuthorId = userId)
     
     let computedHash =
-        initialCardTemplate.Editable
-        |> ViewCardTemplateInstance.copyTo
-        |> fun x -> CardTemplateEntity() |> Entity |> x.CopyToNewInstance
-        |> CardTemplateInstanceEntity.hash sha512
+        initialTemplate.Editable
+        |> ViewTemplateInstance.copyTo
+        |> fun x -> TemplateEntity() |> Entity |> x.CopyToNewInstance
+        |> TemplateInstanceEntity.hash sha512
     
     Assert.Equal<byte[]>(dbTemplate.Hash, computedHash) }

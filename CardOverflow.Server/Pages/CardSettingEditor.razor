@@ -1,5 +1,4 @@
-﻿
-@page "/cardoption"
+﻿@page "/cardsetting"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -14,26 +13,26 @@
 
 @if (User == null) {
   <span>You need to log in dude.</span>
-} else if (_options == null) {
+} else if (_settings == null) {
   <p><em>Loading...</em></p>
 } else {
   <div class="row">
     <div class="col-sm-10">
-      <CardOptionEditorDetail Option=@_selected Save=@Save SetAsDefault=@_SetSelectedAsDefault />
+      <CardSettingEditorDetail Setting=@_selected Save=@Save SetAsDefault=@_SetSelectedAsDefault />
     </div>
     <div class="col-sm-2 list-group">
-      <h5>Card Options</h5>
+      <h5>Card Settings</h5>
       <button type="button" class="btn btn-success" @onclick=@_Add>
         Add
       </button>
       <button type="button" class="btn btn-primary" @onclick=@Save>Save</button>
-      @foreach (var x in _options.Select((x, i) => new { Option = x, Index = i })) {
-        <button class="list-group-item list-group-item-action @(_selected == x.Option ? "active" : "")"
+      @foreach (var x in _settings.Select((x, i) => new { Setting = x, Index = i })) {
+        <button class="list-group-item list-group-item-action @(_selected == x.Setting ? "active" : "")"
                 @onclick=@(() => _Select(x.Index))>
-          @if (x.Option.IsDefault) {
+          @if (x.Setting.IsDefault) {
             <span class="oi oi-star"></span>
           }
-          @x.Option.Name
+          @x.Setting.Name
         </button>
       }
     </div>
@@ -43,41 +42,41 @@
 @code {
   [CascadingParameter]
   public UserEntity User { get; set; }
-  private List<ViewCardOption> _options;
-  private ViewCardOption _selected;
+  private List<ViewCardSetting> _settings;
+  private ViewCardSetting _selected;
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      _options = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.getAll(db, User.Id));
-      _selected = _options.Single(x => x.IsDefault);
+      _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, User.Id));
+      _selected = _settings.Single(x => x.IsDefault);
     }
   }
 
   private void _Select(int index) =>
-    _selected = _options.ElementAt(index);
+    _selected = _settings.ElementAt(index);
 
   private void _Add() {
-    var option = CardOptionsRepository.defaultCardOptions.Apply(ViewCardOption.load);
-    option.Name = "New Card Options";
-    option.IsDefault = false;
-    _options.Add(option);
-    _selected = option;
+    var setting = CardSettingsRepository.defaultCardSettings.Apply(ViewCardSetting.load);
+    setting.Name = "New Card Settings";
+    setting.IsDefault = false;
+    _settings.Add(setting);
+    _selected = setting;
   }
 
   private void _SetSelectedAsDefault() {
-    _options.Single(x => x.IsDefault).IsDefault = false;
+    _settings.Single(x => x.IsDefault).IsDefault = false;
     _selected.IsDefault = true;
   }
 
   private async Task Save() {
-    var r = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.upsertMany(db, User.Id, _options));
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.upsertMany(db, User.Id, _settings));
     if (r.IsOk) {
-      if (r.ResultValue.Count() == _options.Count()) {
+      if (r.ResultValue.Count() == _settings.Count()) {
         foreach (var x in r.ResultValue.Select((id, i) => new { NewId = id, Index = i })) {
-          _options.ElementAt(x.Index).Id = x.NewId;
+          _settings.ElementAt(x.Index).Id = x.NewId;
         }
       } else {
-        throw new Exception("Response doesn't have the correct number of CardOptions");
+        throw new Exception("Response doesn't have the correct number of CardSettings");
       }
       ToastService.ShowInfo("Saved!");
     } else {

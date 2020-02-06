@@ -51,9 +51,9 @@ let ``Convert.fromPercent 50 = 0.5``(): unit =
     Assert.Equal(expected, actual)
 
 [<Fact>]
-let ``ViewCardOption.load and copyTo reverse each other``(): unit =
-    let actual = CardOptionsRepository.defaultCardOptions |> ViewCardOption.load |> fun x -> x.copyTo
-    Assert.Equal(CardOptionsRepository.defaultCardOptions, actual)
+let ``ViewCardSetting.load and copyTo reverse each other``(): unit =
+    let actual = CardSettingsRepository.defaultCardSettings |> ViewCardSetting.load |> fun x -> x.copyTo
+    Assert.Equal(CardSettingsRepository.defaultCardSettings, actual)
 
 type GetCardIdIsOkData () =
     inherit XunitClassDataBase

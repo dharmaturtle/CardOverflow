@@ -27,15 +27,15 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             | Easy -> easyInterval, Interval easyInterval
         let calculateInterval previousInterval =
             let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
-                max (rawInterval * card.Options.MatureCardsIntervalFactor)
+                max (rawInterval * card.Settings.MatureCardsIntervalFactor)
                     (TimeSpan.FromDays 1. |> previousInterval.Add)
-                |> min (TimeSpanInt16.value card.Options.MatureCardsMaximumInterval)
+                |> min (TimeSpanInt16.value card.Settings.MatureCardsMaximumInterval)
             let delta = time.utcNow - card.Due |> max TimeSpan.Zero
-            let hard = interval previousInterval <| previousInterval * card.Options.MatureCardsHardIntervalFactor
+            let hard = interval previousInterval <| previousInterval * card.Settings.MatureCardsHardIntervalFactor
             let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
-            let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Options.MatureCardsEaseFactorEasyBonusFactor)
+            let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Settings.MatureCardsEaseFactorEasyBonusFactor)
             match score with
-            | Again -> card.Options.NewCardsSteps.Head, 0.
+            | Again -> card.Settings.NewCardsSteps.Head, 0.
             | Hard -> hard, card.EaseFactor - 0.15
             | Good -> good, card.EaseFactor
             | Easy -> easy, max (card.EaseFactor + 0.15) 1.3
@@ -43,19 +43,19 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
         | NewStepsIndex i ->
             calculateStepsInterval
                 NewStepsIndex
-                card.Options.NewCardsSteps
-                card.Options.NewCardsGraduatingInterval
-                card.Options.NewCardsEasyInterval
+                card.Settings.NewCardsSteps
+                card.Settings.NewCardsGraduatingInterval
+                card.Settings.NewCardsEasyInterval
                 i,
-            card.Options.NewCardsStartingEaseFactor
+            card.Settings.NewCardsStartingEaseFactor
         | LapsedStepsIndex i ->
             calculateStepsInterval
                 LapsedStepsIndex
-                card.Options.LapsedCardsSteps
-                card.Options.NewCardsGraduatingInterval // medTODO consider an option for this
-                card.Options.NewCardsGraduatingInterval // medTODO actually the card options are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
+                card.Settings.LapsedCardsSteps
+                card.Settings.NewCardsGraduatingInterval // medTODO consider an option for this
+                card.Settings.NewCardsGraduatingInterval // medTODO actually the card options are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
                 i,
-            card.Options.LapsedCardsNewIntervalFactor
+            card.Settings.LapsedCardsNewIntervalFactor
         | Interval i ->
             let interval, ease = calculateInterval i
             (interval, Interval interval), ease

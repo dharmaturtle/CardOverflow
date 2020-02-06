@@ -11,8 +11,8 @@
 @inject IToastService ToastService
 
 <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
-  @foreach (var option in _options) {
-    <option value=@option.Id selected=@(SelectedId == option.Id)>@option.Name</option>
+  @foreach (var setting in _settings) {
+    <option value=@setting.Id selected=@(SelectedId == setting.Id)>@setting.Name</option>
   }
 </select>
 
@@ -22,16 +22,16 @@
   [Parameter]
   public int SelectedId { get; set; }
   [Parameter]
-  public EventCallback<int> OptionSelected { get; set; }
-  private List<ViewCardOption> _options = new List<ViewCardOption>();
+  public EventCallback<int> SettingSelected { get; set; }
+  private List<ViewCardSetting> _settings = new List<ViewCardSetting>();
 
   protected override async Task OnInitializedAsync() {
-    _options = await DbExecutor.QueryAsync(db => SanitizeCardOptionRepository.getAll(db, User.Id));
+    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, User.Id));
   }
 
   private async Task _SetSelected(int newId) {
     SelectedId = newId;
-    await OptionSelected.InvokeAsync(newId);
+    await SettingSelected.InvokeAsync(newId);
   }
 
 }

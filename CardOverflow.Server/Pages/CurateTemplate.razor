@@ -20,7 +20,7 @@
 } else {
   <div class="row">
     <div class="col-sm-10">
-      <CardTemplateEditor Template=@_templates[_selectedIndex] />
+      <TemplateEditor Template=@_templates[_selectedIndex] />
     </div>
     <div class="col-sm-2 list-group">
       <h5 class="text-center">Card Templates</h5>
@@ -42,19 +42,19 @@
   public int TemplateId { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
-  private List<ViewCardTemplateWithAllInstances> _templates;
+  private List<ViewTemplateWithAllInstances> _templates;
   private int _selectedIndex;
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      _templates = await DbExecutor.QueryAsync(db => SanitizeCardTemplate.GetMine(db, User.Id));
+      _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User.Id));
       _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
         .Apply(_templates.IndexOf);
     }
   }
 
   private void _Add() {
-    var t = ViewCardTemplateWithAllInstances.initialize(User.Id);
+    var t = ViewTemplateWithAllInstances.initialize(User.Id);
     _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }

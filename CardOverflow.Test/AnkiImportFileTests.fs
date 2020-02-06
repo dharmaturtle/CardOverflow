@@ -37,7 +37,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = ta
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-    Assert.Equal(c.Db.LatestCardTemplateInstance.Count(), c.Db.CardTemplateInstance.Count()) }
+    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count()) }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -108,7 +108,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.CardInstance.Count())
-    Assert.Equal(c.Db.LatestCardTemplateInstance.Count(), c.Db.CardTemplateInstance.Count()) }
+    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count()) }
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let! acquired = CardRepository.GetAcquired c.Db userId cardId
@@ -127,7 +127,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         |> Result.getOk
     let allCardInstanceViews =
         c.Db.CardInstance
-            .Include(fun x -> x.CardTemplateInstance)
+            .Include(fun x -> x.TemplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -281,7 +281,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
         otherTest clozeText }
     let assertCount expected (clozeText: string) =
         c.Db.CardInstance
-            .Include(fun x -> x.CardTemplateInstance)
+            .Include(fun x -> x.TemplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -374,7 +374,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    CardTemplateInstance.initialize.Fields.Select(fun f -> {
+                    TemplateInstance.initialize.Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             if f.Name = "Front" then
@@ -384,9 +384,9 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                         Communal = None
                     }).ToList()
                 TemplateInstance =
-                    { CardTemplateInstance.initialize with
+                    { TemplateInstance.initialize with
                         QuestionTemplate = questionTemplate
-                    } |> ViewCardTemplateInstance.load
+                    } |> ViewTemplateInstance.load
             }
         if questionTemplate.Contains "cloze" then
             Assert.Equal<string seq>(["Front"], view.TemplateInstance.ClozeFields)
@@ -412,7 +412,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    CardTemplateInstance.initialize.Fields.Select(fun f -> {
+                    TemplateInstance.initialize.Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             match f.Name with
@@ -422,10 +422,10 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                         Communal = None
                     }).ToList()
                 TemplateInstance =
-                    { CardTemplateInstance.initialize with
+                    { TemplateInstance.initialize with
                         QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
                         AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
-                    } |> ViewCardTemplateInstance.load
+                    } |> ViewTemplateInstance.load
             }
         Assert.Equal<string seq>(["Front"; "Back"], view.TemplateInstance.ClozeFields)
         view.Backs.Value
@@ -443,11 +443,11 @@ let ``EditCardCommand's back works with cloze`` (): unit =
             "In 1492, Columbus sailed the ocean [ blue ] .Source goes here" ]
 
 [<Fact>]
-let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` (): unit =
+let ``AnkiDefaults.templateIdByHash is same as initial db`` (): unit =
     let c = new TestContainer()
     let userId = 1
-    let toEntity (cardTemplate: AnkiCardTemplateInstance) =
-        cardTemplate.CopyToNew userId null
+    let toEntity (template: AnkiTemplateInstance) =
+        template.CopyToNew userId null
     use hasher = SHA512.Create()
     let dbidByHash =
         Anki.parseModels
@@ -456,14 +456,14 @@ let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` (): unit =
         |> Result.getOk
         |> List.collect (snd >> List.map toEntity)
         |> List.mapi (fun i entity ->
-            CardTemplateInstanceEntity.hashBase64 hasher entity, i + 1
+            TemplateInstanceEntity.hashBase64 hasher entity, i + 1
         ) |> Map.ofList
     let actualDbIdByHash =
-        c.Db.CardTemplate
-            .Include(fun x -> x.CardTemplateInstances)
+        c.Db.Template
+            .Include(fun x -> x.TemplateInstances)
             .AsEnumerable()
-            .Select(fun x -> x.CardTemplateInstances.Single())
-            .Select(fun x -> CardTemplateInstanceEntity.hashBase64 hasher x, x.Id)
+            .Select(fun x -> x.TemplateInstances.Single())
+            .Select(fun x -> TemplateInstanceEntity.hashBase64 hasher x, x.Id)
             |> Map.ofSeq
 
     dbidByHash |> Map.iter(fun hash expectedId ->
@@ -472,7 +472,7 @@ let ``AnkiDefaults.cardTemplateIdByHash is same as initial db`` (): unit =
             actualDbIdByHash.[hash]))
     Assert.Equal<Map<string, int>>(
         dbidByHash,
-        AnkiDefaults.cardTemplateIdByHash)
+        AnkiDefaults.templateIdByHash)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = task {

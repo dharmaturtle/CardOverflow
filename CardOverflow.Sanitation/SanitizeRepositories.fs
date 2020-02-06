@@ -21,7 +21,7 @@ open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 
 [<CLIMutable>]
-type ViewDeck = {
+type ViewFilter = {
     Id: int
     UserId: int
     [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
@@ -29,24 +29,24 @@ type ViewDeck = {
     [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Query: string
 } with
-    member this.copyTo (e: DeckEntity) =
+    member this.copyTo (e: FilterEntity) =
         e.UserId <- this.UserId
         e.Name <- this.Name
         e.Query <- this.Query
     member this.copyToNew =
-        let e = DeckEntity()
+        let e = FilterEntity()
         this.copyTo e
         e
 
-module ViewDeck =
-    let load (e: DeckEntity) = {
+module ViewFilter =
+    let load (e: FilterEntity) = {
         Id = e.Id
         UserId = e.UserId
         Name = e.Name
         Query = e.Query
     }
 
-type ViewDeckWithDue = {
+type ViewFilterWithDue = {
     Id: int
     UserId: int
     [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
@@ -56,8 +56,8 @@ type ViewDeckWithDue = {
     Due: int
 }
 
-module ViewDeckWithDue =
-    let load (db: CardOverflowDb) (e: DeckEntity) = {
+module ViewFilterWithDue =
+    let load (db: CardOverflowDb) (e: FilterEntity) = {
         Id = e.Id
         UserId = e.UserId
         Name = e.Name
@@ -65,14 +65,14 @@ module ViewDeckWithDue =
         Due = CardRepository.GetDueCount db e.UserId e.Query
     }
 
-module SanitizeDeckRepository =
-    let UpsertAsync (db: CardOverflowDb) (deck: ViewDeck) = task {
-        let! d = db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deck.Id)
+module SanitizeFilterRepository =
+    let UpsertAsync (db: CardOverflowDb) (deck: ViewFilter) = task {
+        let! d = db.Filter.SingleOrDefaultAsync(fun x -> x.Id = deck.Id)
         let deck =
             match d with
             | null ->
                 let d = deck.copyToNew
-                db.Deck.AddI d
+                db.Filter.AddI d
                 d
             | d ->
                 deck.copyTo d
@@ -80,18 +80,18 @@ module SanitizeDeckRepository =
         do! db.SaveChangesAsyncI ()
         return deck.Id
         }
-    let Delete (db: CardOverflowDb) userId (deck: ViewDeck) =
-        let d = db.Deck.Single(fun x -> x.Id = deck.Id)
+    let Delete (db: CardOverflowDb) userId (deck: ViewFilter) =
+        let d = db.Filter.Single(fun x -> x.Id = deck.Id)
         if d.UserId = userId
-        then Ok <| DeckRepository.Delete db d
+        then Ok <| FilterRepository.Delete db d
         else Error <| "That isn't your deck"
     let Get (db: CardOverflowDb) userId = task {
-        let! r = DeckRepository.Get db userId
-        return r |> Seq.map ViewDeck.load |> toResizeArray
+        let! r = FilterRepository.Get db userId
+        return r |> Seq.map ViewFilter.load |> toResizeArray
     }
     let GetWithDue (db: CardOverflowDb) userId = task {
-        let! r = DeckRepository.Get db userId
-        return r |> Seq.map (ViewDeckWithDue.load db) |> toResizeArray
+        let! r = FilterRepository.Get db userId
+        return r |> Seq.map (ViewFilterWithDue.load db) |> toResizeArray
     }
         
 [<CLIMutable>]
@@ -196,7 +196,7 @@ type ViewEditCardCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateInstance: ViewCardTemplateInstance
+    TemplateInstance: ViewTemplateInstance
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -228,7 +228,7 @@ type ViewEditCardCommand = {
     member this.load =
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            TemplateInstance = this.TemplateInstance |> ViewCardTemplateInstance.copyTo
+            TemplateInstance = this.TemplateInstance |> ViewTemplateInstance.copyTo
         }
     member this.CommunalFieldValues =
         this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
@@ -241,7 +241,7 @@ module SanitizeCardRepository =
     let getEdit (db: CardOverflowDb) cardInstanceId = task {
         let! instance =
             db.CardInstance
-                .Include(fun x -> x.CardTemplateInstance)
+                .Include(fun x -> x.TemplateInstance)
                 .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                 .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
@@ -264,10 +264,10 @@ module SanitizeCardRepository =
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString instance.CardTemplateInstance.Fields
+                            <| Fields.fromString instance.TemplateInstance.Fields
                             <| instance.FieldValues
                             <| communalCardInstanceIdsAndValueByField
-                    TemplateInstance = instance.CardTemplateInstance |> CardTemplateInstance.load |> ViewCardTemplateInstance.load
+                    TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
                 } |> Ok }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
@@ -344,7 +344,7 @@ module Convert =
         (float  x) / 100.
 
 [<CLIMutable>]
-type ViewCardOption = {
+type ViewCardSetting = {
     Id: int
     Name: string
     IsDefault: bool
@@ -370,7 +370,7 @@ type ViewCardOption = {
     AutomaticallyPlayAudio: bool
     ReplayQuestionAudioOnAnswer: bool
 } with
-    static member load (bznz: CardOption) = {
+    static member load (bznz: CardSetting) = {
         Id = bznz.Id
         Name = bznz.Name
         IsDefault = bznz.IsDefault
@@ -394,7 +394,7 @@ type ViewCardOption = {
         AutomaticallyPlayAudio = bznz.AutomaticallyPlayAudio
         ReplayQuestionAudioOnAnswer = bznz.ReplayQuestionAudioOnAnswer
     }
-    member this.copyTo: CardOption = {
+    member this.copyTo: CardSetting = {
         Id = this.Id
         Name = this.Name
         IsDefault = this.IsDefault
@@ -419,36 +419,36 @@ type ViewCardOption = {
         ReplayQuestionAudioOnAnswer = this.ReplayQuestionAudioOnAnswer
     }
 
-module SanitizeCardOptionRepository =
-    let setCard (db: CardOverflowDb) userId acquiredCardId newCardOptionId = task {
-        let! option = db.CardOption.SingleOrDefaultAsync(fun x -> x.Id = newCardOptionId && x.UserId = userId)
+module SanitizeCardSettingRepository =
+    let setCard (db: CardOverflowDb) userId acquiredCardId newCardSettingId = task {
+        let! option = db.CardSetting.SingleOrDefaultAsync(fun x -> x.Id = newCardSettingId && x.UserId = userId)
         let! card = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
         return!
             match option, card with
             | null, _
             | _, null -> Error "Something's null" |> Task.FromResult
             | option, card -> task {
-                card.CardOptionId <- option.Id
+                card.CardSettingId <- option.Id
                 do! db.SaveChangesAsyncI()
                 return Ok ()
             }
     }
     let getAll (db: CardOverflowDb) userId = task {
-        let! x = CardOptionsRepository.getAll db userId
-        return x |> Seq.map ViewCardOption.load |> toResizeArray }
-    let upsertMany (db: CardOverflowDb) userId (options: ViewCardOption ResizeArray) = task {
+        let! x = CardSettingsRepository.getAll db userId
+        return x |> Seq.map ViewCardSetting.load |> toResizeArray }
+    let upsertMany (db: CardOverflowDb) userId (options: ViewCardSetting ResizeArray) = task {
         let options = options.Select(fun x -> x.copyTo) |> List.ofSeq
         let oldOptionIds = options.Select(fun x -> x.Id).Where(fun x -> x <> 0).ToList()
-        let! oldOptions = db.CardOption.Where(fun x -> oldOptionIds.Contains x.Id && x.UserId = userId).ToListAsync()
+        let! oldOptions = db.CardSetting.Where(fun x -> oldOptionIds.Contains x.Id && x.UserId = userId).ToListAsync()
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return!
             options |> List.map (fun option ->
                 let maybeSetDefault e =
                     if option.IsDefault then
-                        user.DefaultCardOption <- e
+                        user.DefaultCardSetting <- e
                 if option.Id = 0 then
                     let e = option.CopyToNew userId
-                    db.CardOption.AddI e
+                    db.CardSetting.AddI e
                     maybeSetDefault e
                     Ok e
                 else

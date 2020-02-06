@@ -13,8 +13,8 @@ open System.Text
 open System.Collections.Generic
 open System.Text.RegularExpressions
 
-module CardTemplateInstanceEntity =
-    let hash (hasher: SHA512) (e: CardTemplateInstanceEntity) =
+module TemplateInstanceEntity =
+    let hash (hasher: SHA512) (e: TemplateInstanceEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -32,23 +32,23 @@ module CardTemplateInstanceEntity =
     let hashBase64 hasher entity = hash hasher entity |> Convert.ToBase64String
 
 module CardInstanceEntity =
-    let hash (cardTemplateHash: byte[]) (hasher: SHA512) (e: CardInstanceEntity) =
+    let hash (templateHash: byte[]) (hasher: SHA512) (e: CardInstanceEntity) =
         e.CommunalFieldInstance_CardInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
             .Append(e.FieldValues)
             .Append(e.AnkiNoteId.ToString())
             .Append(e.AnkiNoteOrd.ToString())
-            .Append(e.CardTemplateInstance.AnkiId.ToString())
+            .Append(e.TemplateInstance.AnkiId.ToString())
         |> Seq.toList
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Array.append cardTemplateHash
+        |> Array.append templateHash
         |> hasher.ComputeHash
 
-type CardOption with
-    member this.AcquireEquality (that: CardOption) =
+type CardSetting with
+    member this.AcquireEquality (that: CardSetting) =
         this.Name = that.Name &&
         this.NewCardsSteps = that.NewCardsSteps &&
         this.NewCardsMaxPerDay = that.NewCardsMaxPerDay &&
@@ -69,7 +69,7 @@ type CardOption with
         this.ShowAnswerTimer = that.ShowAnswerTimer &&
         this.AutomaticallyPlayAudio = that.AutomaticallyPlayAudio &&
         this.ReplayQuestionAudioOnAnswer = that.ReplayQuestionAudioOnAnswer
-    static member load isDefault (entity: CardOptionEntity) =
+    static member load isDefault (entity: CardSettingEntity) =
         { Id = entity.Id
           Name = entity.Name
           IsDefault = isDefault
@@ -92,7 +92,7 @@ type CardOption with
           ShowAnswerTimer = entity.ShowAnswerTimer
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
           ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
-    member this.CopyTo(entity: CardOptionEntity) =
+    member this.CopyTo(entity: CardSettingEntity) =
         entity.Name <- this.Name
         entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
@@ -114,7 +114,7 @@ type CardOption with
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio
         entity.ReplayQuestionAudioOnAnswer <- this.ReplayQuestionAudioOnAnswer
     member this.CopyToNew userId =
-        let entity = CardOptionEntity()
+        let entity = CardSettingEntity()
         this.CopyTo entity
         entity.UserId <- userId
         entity
@@ -145,11 +145,11 @@ type IdOrEntity<'a> =
     | Id of int
     | Entity of 'a
 
-type CardTemplateInstance with
-    static member load (entity: CardTemplateInstanceEntity) = {
+type TemplateInstance with
+    static member load (entity: TemplateInstanceEntity) = {
         Id = entity.Id
         Name = entity.Name
-        CardTemplateId = entity.CardTemplateId
+        TemplateId = entity.TemplateId
         Css = entity.Css
         Fields = Fields.fromString entity.Fields
         Created = entity.Created
@@ -161,10 +161,10 @@ type CardTemplateInstance with
         ShortQuestionTemplate = entity.ShortQuestionTemplate
         ShortAnswerTemplate = entity.ShortAnswerTemplate
         EditSummary = entity.EditSummary }
-    static member loadLatest (entity: LatestCardTemplateInstanceEntity) = {
-        Id = entity.CardTemplateInstanceId
+    static member loadLatest (entity: LatestTemplateInstanceEntity) = {
+        Id = entity.TemplateInstanceId
         Name = entity.Name
-        CardTemplateId = entity.CardTemplateId
+        TemplateId = entity.TemplateId
         Css = entity.Css
         Fields = Fields.fromString entity.Fields
         Created = entity.Created
@@ -179,7 +179,7 @@ type CardTemplateInstance with
     static member initialize = {
         Id = 0
         Name = "New Template"
-        CardTemplateId = 0
+        TemplateId = 0
         Css = """.card {
      font-family: arial;
      font-size: 20px;
@@ -225,7 +225,7 @@ type CardTemplateInstance with
         ShortQuestionTemplate = ""
         ShortAnswerTemplate = ""
         EditSummary = "Initial creation" }
-    member this.CopyTo (entity: CardTemplateInstanceEntity) =
+    member this.CopyTo (entity: TemplateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -238,33 +238,33 @@ type CardTemplateInstance with
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
         entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
         entity.EditSummary <- this.EditSummary
-    member this.CopyToNewInstance cardTemplate =
-        let e = CardTemplateInstanceEntity()
+    member this.CopyToNewInstance template =
+        let e = TemplateInstanceEntity()
         this.CopyTo e
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        match cardTemplate with
-        | Id id -> e.CardTemplateId <- id
-        | Entity entity -> e.CardTemplate <- entity
+        match template with
+        | Id id -> e.TemplateId <- id
+        | Entity entity -> e.Template <- entity
         e
 
-type AcquiredCardTemplateInstance with
-    static member load(entity: CardTemplateInstanceEntity) =
-        { DefaultTags = entity.User_CardTemplateInstances.Single().Tag_User_CardTemplateInstances.Select(fun x -> x.DefaultTagId)
-          DefaultCardOptionId = entity.User_CardTemplateInstances.Single().DefaultCardOptionId
-          CardTemplateInstance = CardTemplateInstance.load entity }
+type AcquiredTemplateInstance with
+    static member load(entity: TemplateInstanceEntity) =
+        { DefaultTags = entity.User_TemplateInstances.Single().Tag_User_TemplateInstances.Select(fun x -> x.DefaultTagId)
+          DefaultCardSettingId = entity.User_TemplateInstances.Single().DefaultCardSettingId
+          TemplateInstance = TemplateInstance.load entity }
 
 type CardInstanceView with
-    static member private toView (cardTemplateInstance: CardTemplateInstanceEntity) (fieldValues: string)=
-        {   FieldValues = FieldAndValue.load (Fields.fromString cardTemplateInstance.Fields) fieldValues
-            TemplateInstance = CardTemplateInstance.load cardTemplateInstance }
+    static member private toView (templateInstance: TemplateInstanceEntity) (fieldValues: string)=
+        {   FieldValues = FieldAndValue.load (Fields.fromString templateInstance.Fields) fieldValues
+            TemplateInstance = TemplateInstance.load templateInstance }
     static member load (entity: CardInstanceEntity) =
         CardInstanceView.toView
-            entity.CardTemplateInstance
+            entity.TemplateInstance
             entity.FieldValues
     static member loadLatest (entity: LatestCardInstanceEntity) =
         CardInstanceView.toView
-            entity.CardTemplateInstance
+            entity.TemplateInstance
             entity.FieldValues
     member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
@@ -272,7 +272,7 @@ type CardInstanceView with
             communalFields.Select(fun x -> CommunalFieldInstance_CardInstanceEntity(CommunalFieldInstance = x))
             |> entity.CommunalFieldInstance_CardInstances.Concat
             |> toResizeArray
-        entity.CardTemplateInstanceId <- this.TemplateInstance.Id
+        entity.TemplateInstanceId <- this.TemplateInstance.Id
     member this.CopyToNew communalFields =
         let entity = CardInstanceEntity()
         this.CopyToX entity communalFields
@@ -360,7 +360,7 @@ type QuizCard with
                 IsLapsed = entity.IsLapsed
                 EaseFactor = float entity.EaseFactorInPermille / 1000.
                 IntervalOrStepsIndex = IntervalOrStepsIndex.intervalFromDb entity.IntervalOrStepsIndex
-                Options = CardOption.load false entity.CardOption } // lowTODO false exists to make the syntax work; it is semantically useless. Remove.
+                Settings = CardSetting.load false entity.CardSetting } // lowTODO false exists to make the syntax work; it is semantically useless. Remove.
         }
 
 type AcquiredCard with
@@ -370,14 +370,14 @@ type AcquiredCard with
         entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
-        entity.CardOptionId <- this.CardOptionId
+        entity.CardSettingId <- this.CardSettingId
         entity.Due <- this.Due
         entity.Tag_AcquiredCards <- tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList()
     member this.copyToNew tagIds =
         let e = AcquiredCardEntity()
         this.copyTo e tagIds
         e
-    static member initialize userId cardOptionId tags =
+    static member initialize userId cardSettingId tags =
         {   CardId = 0
             AcquiredCardId = 0
             UserId = userId
@@ -386,7 +386,7 @@ type AcquiredCard with
             EaseFactorInPermille = 0s
             IntervalOrStepsIndex = NewStepsIndex 0uy
             Due = DateTime.UtcNow
-            CardOptionId = cardOptionId
+            CardSettingId = cardSettingId
             CardInstanceMeta = CardInstanceMeta.initialize
             Tags = tags
         }
@@ -401,7 +401,7 @@ type AcquiredCard with
                 EaseFactorInPermille = entity.EaseFactorInPermille
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
-                CardOptionId = entity.CardOptionId
+                CardSettingId = entity.CardSettingId
                 CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.IsLatest entity.CardInstance
                 Tags = entity.Tag_AcquiredCards.Select(fun x -> x.Tag.Name)
             }

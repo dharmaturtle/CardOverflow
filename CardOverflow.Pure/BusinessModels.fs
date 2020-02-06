@@ -47,7 +47,7 @@ module TimeSpanInt16 =
     let value (TimeSpanInt16 t) = t
     let totalDays t = (value t).TotalDays |> int16
 
-type CardOption = {
+type CardSetting = {
     Id: int
     Name: string
     IsDefault: bool
@@ -106,10 +106,10 @@ module Fields =
         MappingTools.splitByRecordSeparator
         >> List.map Field.fromString
 
-type CardTemplateInstance = {
+type TemplateInstance = {
     Id: int
     Name: string
-    CardTemplateId: int
+    TemplateId: int
     Css: string
     Fields: Field list
     Created: DateTime
@@ -127,16 +127,16 @@ type CardTemplateInstance = {
     member this.ClozeFields =
         AnkiImportLogic.clozeFields this.QuestionTemplate
 
-type AcquiredCardTemplateInstance = {
+type AcquiredTemplateInstance = {
     DefaultTags: int seq
-    DefaultCardOptionId: int
-    CardTemplateInstance: CardTemplateInstance
+    DefaultCardSettingId: int
+    TemplateInstance: TemplateInstance
 }
 
-type CardTemplate = {
+type Template = {
     Id: int
     AuthorId: int
-    LatestInstance: CardTemplateInstance
+    LatestInstance: TemplateInstance
 }
 
 type IntervalOrStepsIndex =
@@ -156,7 +156,7 @@ type QuizCard = {
     IsLapsed: bool
     EaseFactor: float
     IntervalOrStepsIndex: IntervalOrStepsIndex
-    Options: CardOption
+    Settings: CardSetting
 }
 
 //type CardInstance = {
@@ -168,7 +168,7 @@ type QuizCard = {
 
 // medTODO delete?
 //type AcquiredDisplayCard = { // Acquired cause only private tags can be on a card
-//    CardTemplateName: string
+//    TemplateName: string
 //    Front: string
 //    Back: string
 //    Tags: string seq
@@ -254,7 +254,7 @@ type EditFieldAndValue = {
 
 type CardInstanceView = {
     FieldValues: FieldAndValue ResizeArray
-    TemplateInstance: CardTemplateInstance
+    TemplateInstance: TemplateInstance
 } with
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         CardHtml.generate
@@ -293,7 +293,7 @@ type AcquiredCard = {
     EaseFactorInPermille: int16
     IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
-    CardOptionId: int
+    CardSettingId: int
     Tags: string seq
 }
 
@@ -358,7 +358,7 @@ type CardRevision = {
 type EditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateInstance: CardTemplateInstance
+    TemplateInstance: TemplateInstance
 } with
     member this.CardView = {   
         FieldValues =
