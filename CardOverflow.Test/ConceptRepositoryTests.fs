@@ -355,7 +355,16 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     
     Assert.Equal(2, c.Db.Template.Count(fun x -> x.AuthorId = userId))
     let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    Assert.True(myTemplates.OrderBy(fun x -> x.Id).Last().Editable.Fields.Any(fun x -> x.Name = fieldName))
+    let latestTemplate = myTemplates.OrderBy(fun x -> x.Id).Last().Editable
+    Assert.True(latestTemplate.Fields.Any(fun x -> x.Name = fieldName))
+
+    // updating the slightly different template
+    let name = Guid.NewGuid().ToString()
+    let! x = SanitizeTemplate.Update c.Db userId { latestTemplate with Name = name }
+    Assert.Null x.Value
+
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Instances.Single()).Single(fun x -> x.Name = name).TemplateId)
     }
 
 [<Fact>]

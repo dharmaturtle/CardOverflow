@@ -87,6 +87,8 @@ module TemplateRepository =
                 ac.CardInstance.Modified <- Nullable()
                 ac.CardInstance.TemplateInstance <- newTemplateInstance
             )
+        let! existing = db.User_TemplateInstance.Where(fun x -> x.UserId = userId && x.TemplateInstance.TemplateId = newTemplateInstance.TemplateId).ToListAsync()
+        db.User_TemplateInstance.RemoveRange existing
         User_TemplateInstanceEntity(UserId = userId, TemplateInstance = newTemplateInstance, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
         |> db.User_TemplateInstance.AddI
         return! db.SaveChangesAsyncI()
