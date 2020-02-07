@@ -7,7 +7,13 @@ namespace CardOverflow.Entity
 {
     public partial class LatestTemplateInstanceEntity
     {
+        public LatestTemplateInstanceEntity()
+        {
+            User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
+        }
+
         public int AuthorId { get; set; }
+        [Key]
         public int TemplateInstanceId { get; set; }
         public int TemplateId { get; set; }
         [Required]
@@ -116,5 +122,6 @@ namespace CardOverflow.Entity
         public long? AnkiId { get; set; }
         [ForeignKey("TemplateInstanceId")]
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
+        public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
     }
 }

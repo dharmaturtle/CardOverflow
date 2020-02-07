@@ -1,5 +1,6 @@
 namespace CardOverflow.Sanitation
 
+open System.Threading.Tasks
 open X.PagedList
 open FSharp.Control.Tasks
 open System.Collections.Generic
@@ -170,18 +171,17 @@ module SanitizeTemplate =
         }}
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
-            db.Template
-                .Include(fun x-> x.TemplateInstances)
-                .Where(fun x -> 
-                    x.AuthorId = userId ||
-                    x.AuthorId = 2 ||
-                    x.TemplateInstances.Any(fun x -> x.CardInstances.Any(fun x -> x.AcquiredCards.Any(fun x -> x.UserId = userId)))
-                )
+            db.User_TemplateInstance
+                .Include(fun x -> x.TemplateInstance.Template)
+                .Where(fun x ->  x.UserId = userId)
                 .ToListAsync()
-        return x |> Seq.map ViewTemplateWithAllInstances.load |> toResizeArray
+        return x |> Seq.map (fun x -> ViewTemplateWithAllInstances.load x.TemplateInstance.Template) |> toResizeArray
         }
     let Update (db: CardOverflowDb) userId (instance: ViewTemplateInstance) =
-        let update () = ViewTemplateInstance.copyTo instance |> TemplateRepository.UpdateFieldsToNewInstance db userId |> Ok
+        let update () = task {
+            let! r = ViewTemplateInstance.copyTo instance |> TemplateRepository.UpdateFieldsToNewInstance db userId
+            return r |> Ok
+        }
         if instance.Fields.Count = instance.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
             db.Template.SingleOrDefault(fun x -> x.Id = instance.TemplateId)
             |> function
@@ -189,6 +189,6 @@ module SanitizeTemplate =
             | template ->
                 if template.AuthorId = userId then 
                     update ()
-                else Error "You aren't that this template's author."
+                else Error "You aren't that this template's author." |> Task.FromResult
         else
-            Error "Field names must differ"
+            Error "Field names must differ" |> Task.FromResult

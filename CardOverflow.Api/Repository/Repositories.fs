@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open System.Threading.Tasks
 open FsToolkit.ErrorHandling
 open CardOverflow.Pure.Core
 open System.Security.Cryptography
@@ -86,6 +87,8 @@ module TemplateRepository =
                 ac.CardInstance.Modified <- Nullable()
                 ac.CardInstance.TemplateInstance <- newTemplateInstance
             )
+        User_TemplateInstanceEntity(UserId = userId, TemplateInstance = newTemplateInstance, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
+        |> db.User_TemplateInstance.AddI
         return! db.SaveChangesAsyncI()
         }
 

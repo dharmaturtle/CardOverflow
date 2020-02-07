@@ -104,9 +104,8 @@
 
   async Task Submit() {
     IsDisabled = true;
-    var x = SanitizeTemplate.Update(Service, User.Id, Instance);
+    var x = await SanitizeTemplate.Update(Service, User.Id, Instance);
     if (x.IsOk) {
-      await x.ResultValue;
       ToastService.ShowSuccess("Saved!");
     } else {
       ToastService.ShowError(x.ErrorValue);

@@ -280,7 +280,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<LatestTemplateInstanceEntity>(entity =>
             {
-                entity.HasNoKey();
+                entity.HasMany(x => x.User_TemplateInstances)
+                    .WithOne()
+                    .HasForeignKey(x => x.TemplateInstanceId);
 
                 entity.ToView("LatestTemplateInstance");
 
