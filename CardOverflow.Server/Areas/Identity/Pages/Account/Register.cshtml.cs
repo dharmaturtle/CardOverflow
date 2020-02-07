@@ -89,7 +89,13 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
           DisplayName = Input.DisplayName,
           CardSettings = new List<CardSettingEntity> { defaultSetting },
           Filters = new List<FilterEntity> { new FilterEntity { Name = "All", Query = "" } },
-        };
+          User_TemplateInstances = _db.TemplateInstance
+            .Where(x => x.Template.AuthorId == 2)
+            .Select(x => x.Id)
+            .ToList()
+            .Select(id => new User_TemplateInstanceEntity { TemplateInstanceId = id, DefaultCardSettingId = 1 }) // lowTODO do we ever use the card setting here?
+            .ToList(),
+      };
         var result = await _userManager.CreateAsync(user, Input.Password);
         if (result.Succeeded) {
           _logger.LogInformation("User created a new account with password.");

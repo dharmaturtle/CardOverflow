@@ -911,11 +911,21 @@ INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [Normalize
 INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardSettingId], [ShowNextReviewTime], [ShowRemainingCardCount], [MixNewAndReview], [NextDayStartsAtXHoursPastMidnight], [LearnAheadLimitInMinutes], [TimeboxTimeLimitInMinutes], [IsNightMode]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'7f15011b-1605-4b2c-ba98-af5659739d60', NULL, 0, 0, NULL, 0, 0, N'The Collective', 2, 1, 1, 0, 4, 20, 0, 0)
 INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardSettingId], [ShowNextReviewTime], [ShowRemainingCardCount], [MixNewAndReview], [NextDayStartsAtXHoursPastMidnight], [LearnAheadLimitInMinutes], [TimeboxTimeLimitInMinutes], [IsNightMode]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'd622b1ce-0c3b-48a3-9851-506e17bd04ec', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle', 3, 1, 1, 0, 4, 20, 0, 0)
 SET IDENTITY_INSERT [dbo].[User] OFF
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 1, 1)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 2, 1)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 3, 1)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 4, 1)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 5, 1)
 INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 1, 2)
 INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 2, 2)
 INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 3, 2)
 INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 4, 2)
 INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 5, 2)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 1, 3)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 2, 3)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 3, 3)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 4, 3)
+INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 5, 3)
 /****** Object:  Index [IX_AcquiredCard_CardInstanceId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardInstanceId] ON [dbo].[AcquiredCard]
 (

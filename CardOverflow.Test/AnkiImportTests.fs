@@ -381,13 +381,13 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
         let! card = CardRepository.Get c.Db userId instance.CardId
         Assert.Empty <| card.Relationships
         Assert.Equal(
-            [ { Id = 2
-                FieldName = "Front"
-                Value = "Basic (optional reversed card) front" }
-              { Id = 3
+            [ { Id = 1
                 FieldName = "Back"
                 Value = "Basic (optional reversed card) back" }
-              { Id = 4
+              { Id = 6
+                FieldName = "Front"
+                Value = "Basic (optional reversed card) front" }
+              { Id = 7
                 FieldName = "Add Reverse"
                 Value = "Basic (optional reversed card) reverse" }],
             card.Instance.CommunalFields)
@@ -397,10 +397,10 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
         let! card = CardRepository.Get c.Db userId instance.CardId
         Assert.Empty <| card.Relationships
         Assert.Equal(
-            [ { Id = 1
+            [ { Id = 2
                 FieldName = "Back"
                 Value = "Basic (and reversed card) back" }
-              { Id = 7
+              { Id = 3
                 FieldName = "Front"
                 Value = "Basic (and reversed card) front" }],
             card.Instance.CommunalFields)

@@ -122,6 +122,8 @@ namespace CardOverflow.Entity
         public long? AnkiId { get; set; }
         [ForeignKey("TemplateInstanceId")]
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
+        [ForeignKey("TemplateId")]
+        public virtual TemplateEntity Template { get; set; }
         public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
     }
 }

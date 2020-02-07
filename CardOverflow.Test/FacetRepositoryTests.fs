@@ -34,7 +34,7 @@ let normalCommand fieldValues templateInstance =
         EditSummary = "Initial creation"
     }
 
-let clozeCommand clozeText clozeTemplate = {
+let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
     EditSummary = "Initial creation"
     FieldValues =
         clozeTemplate.Fields.Select(fun f -> {

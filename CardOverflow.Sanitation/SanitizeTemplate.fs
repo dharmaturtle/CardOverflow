@@ -108,6 +108,45 @@ module ViewTemplateInstance =
         EditSummary = view.EditSummary
     }
 
+type ViewSearchTemplateInstance = {
+    Id: int
+    Name: string
+    TemplateId: int
+    Css: string
+    Fields: ViewField ResizeArray
+    Created: DateTime
+    Modified: DateTime option
+    LatexPre: string
+    LatexPost: string
+    QuestionTemplate: string
+    AnswerTemplate: string
+    ShortQuestionTemplate: string
+    ShortAnswerTemplate: string
+    EditSummary: string
+    TemplateUsers: int
+    IsAcquired: bool
+}
+
+module ViewSearchTemplateInstance =
+    let load templateUsers isAcquired (bznz: TemplateInstance) = {
+        Id = bznz.Id
+        Name = bznz.Name
+        TemplateId = bznz.TemplateId
+        Css = bznz.Css
+        Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
+        Created = bznz.Created
+        Modified = bznz.Modified
+        LatexPre = bznz.LatexPre
+        LatexPost = bznz.LatexPost
+        QuestionTemplate = bznz.QuestionTemplate
+        AnswerTemplate = bznz.AnswerTemplate
+        ShortQuestionTemplate = bznz.ShortQuestionTemplate
+        ShortAnswerTemplate = bznz.ShortAnswerTemplate
+        EditSummary = bznz.EditSummary
+        TemplateUsers = templateUsers
+        IsAcquired = isAcquired
+    }
+
 [<CLIMutable>]
 type ViewTemplateWithAllInstances = {
     Id: int
@@ -147,7 +186,7 @@ module SanitizeTemplate =
             | null -> Error "That template doesn't exist"
             | x -> Ok <| ViewTemplateWithAllInstances.load x
         }
-    let Search (db: CardOverflowDb) (pageNumber: int) (searchTerm: string) = task {
+    let Search (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) = task {
         let! r =
             db.LatestTemplateInstance
                 .Where(fun x ->
@@ -161,9 +200,14 @@ module SanitizeTemplate =
                     EF.Functions.FreeText(x.TemplateInstance.QuestionTemplate, searchTerm) ||
                     EF.Functions.FreeText(x.TemplateInstance.ShortAnswerTemplate, searchTerm) ||
                     EF.Functions.FreeText(x.TemplateInstance.ShortQuestionTemplate, searchTerm)
+                ).Select(fun x ->
+                    x.Template.TemplateInstances.Select(fun x -> x.User_TemplateInstances.Count).ToList(), // lowTODO sum here
+                    x.User_TemplateInstances.Any(fun x -> x.UserId = userId),
+                    x
                 ).ToPagedListAsync(pageNumber, 15)
         return {
-            Results = r |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
+            Results = r |> Seq.map (fun (users, isAcquired, l) ->
+                l |> TemplateInstance.loadLatest |> ViewSearchTemplateInstance.load (users.Sum()) isAcquired) |> toResizeArray
             Details = {
                 CurrentPage = r.PageNumber
                 PageCount = r.PageCount
