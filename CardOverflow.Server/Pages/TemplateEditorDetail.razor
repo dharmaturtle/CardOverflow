@@ -11,100 +11,143 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
-<EditForm Model=@Instance OnValidSubmit=@Submit>
-  <fieldset disabled=@IsDisabled>
-    <div class="form-row align-items-center">
-      <div class="col-auto-1">
-        <label for="nameInput" class="form-label">
-          Name:
-        </label>
-      </div>
-      <div class="col-sm-11">
-        <InputText id="nameInput" @bind-Value=@Instance.Name class="form-control mb-2" />
-      </div>
+@if (Instance == null) {
+  <p><em>@_loadingMessage</em></p>
+} else {
+  <div class="row">
+    <div class="col-sm">
+      <EditForm Model=@Instance OnValidSubmit=@Submit>
+        <fieldset disabled=@IsDisabled>
+          <div class="form-row align-items-center">
+            <div class="col-auto-1">
+              <label for="nameInput" class="form-label">
+                Name:
+              </label>
+            </div>
+            <div class="col-sm-11">
+              <InputText id="nameInput" @bind-Value=@Instance.Name class="form-control mb-2" />
+            </div>
+          </div>
+          <table class="table-borderless my-3">
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Ordinal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach (var field in Instance.Fields.OrderBy(x => x.Ordinal)) {
+                <tr>
+                  <td>
+                    <InputText @bind-Value=@field.Name class="form-control" />
+                    <ValidationMessage For=@(() => field.Name) />
+                  </td>
+                  <td>
+                    <InputNumber @bind-Value=@field.Ordinal class="form-control" />
+                    <ValidationMessage For=@(() => field.Ordinal) />
+                  </td>
+                  <td>
+                    <button type="button" class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
+                      <span class="oi oi-trash"></span>
+                    </button>
+                  </td>
+                </tr>
+              }
+              <tr>
+                <td></td>
+                <td></td>
+                <td>
+                  <button type="button" class="btn btn-success" @onclick=AddField>
+                    <span class="oi oi-plus"></span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="row">
+            <div class="col-sm">
+              <h5 class="text-center">Question Template</h5>
+              <InputTextArea @bind-Value=@Instance.QuestionTemplate class="form-control code" rows="25" />
+              <ValidationMessage For=@(() => Instance.QuestionTemplate) />
+            </div>
+            <div class="col-sm">
+              <h5 class="text-center">Answer Template</h5>
+              <InputTextArea @bind-Value=@Instance.AnswerTemplate class="form-control code" rows="25" />
+              <ValidationMessage For=@(() => Instance.AnswerTemplate) />
+            </div>
+            <div class="col-sm">
+              <h5 class="text-center">CSS</h5>
+              <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
+              <ValidationMessage For=@(() => Instance.Css) />
+            </div>
+          </div>
+        </fieldset>
+        <div class="float-right mt-3 mr-3">
+          <div class="row">
+            <div class="btn-group">
+              @if (IsDisabled) {
+                <h5 class="mt-2 mr-2">Revision</h5>
+                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Instance = Template.Instances.Single(x => x.Id == id)))>
+                  @foreach (var instance in Template.Instances.OrderByDescending(x => x.Created)) {
+                    <option value=@instance.Id selected=@(Instance.Id == instance.Id)>
+                      @instance.EditSummary - @instance.Created
+                    </option>
+                  }
+                </select>
+                <button class="btn btn-primary" type="button" @onclick=@(() => { IsDisabled = false; Instance.EditSummary = ""; })>
+                  Edit
+                </button>
+              } else {
+                <InputText @bind-Value=@Instance.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
+                <button type="submit" class="btn btn-primary">Save</button>
+              }
+            </div>
+          </div>
+          <div class="row">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+          </div>
+        </div>
+      </EditForm>
     </div>
-    <table class="table-borderless my-3">
-      <thead>
-        <tr>
-          <th>Field Name</th>
-          <th>Ordinal</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach (var field in Instance.Fields.OrderBy(x => x.Ordinal)) {
-          <tr>
-            <td>
-              <InputText @bind-Value=@field.Name class="form-control" />
-              <ValidationMessage For=@(() => field.Name) />
-            </td>
-            <td>
-              <InputNumber @bind-Value=@field.Ordinal class="form-control" />
-              <ValidationMessage For=@(() => field.Ordinal) />
-            </td>
-            <td>
-              <button type="button" class="btn" @onclick=@(() => DeleteField(field.Ordinal))>
-                <span class="oi oi-trash"></span>
-              </button>
-            </td>
-          </tr>
-        }
-        <tr>
-          <td></td>
-          <td></td>
-          <td>
-            <button type="button" class="btn btn-success" @onclick=AddField>
-              <span class="oi oi-plus"></span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="row">
-      <div class="col-sm">
-        <h5 class="text-center">Question Template</h5>
-        <InputTextArea @bind-Value=@Instance.QuestionTemplate class="form-control code" rows="25" />
-        <ValidationMessage For=@(() => Instance.QuestionTemplate) />
-      </div>
-      <div class="col-sm">
-        <h5 class="text-center">Answer Template</h5>
-        <InputTextArea @bind-Value=@Instance.AnswerTemplate class="form-control code" rows="25" />
-        <ValidationMessage For=@(() => Instance.AnswerTemplate) />
-      </div>
-      <div class="col-sm">
-        <h5 class="text-center">CSS</h5>
-        <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
-        <ValidationMessage For=@(() => Instance.Css) />
-      </div>
-    </div>
-    <div class="float-right mt-3 mr-3">
-      <div class="row">
-        <span class="btn-group">
-          <InputText @bind-Value=@Instance.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
-          <button type="submit" class="btn btn-primary">Save</button>
-        </span>
-      </div>
-      <div class="row">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-      </div>
-    </div>
-  </fieldset>
-</EditForm>
-
+  </div>
+}
 @code {
-  [Parameter]
-  public ViewTemplateInstance Instance { get; set; }
-  [Parameter]
-  public bool IsDisabled { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [Parameter] public int TemplateId { get; set; }
+  [Parameter] public ViewTemplateInstance Instance { get; set; }
+  [Parameter] public bool IsDisabled { get; set; } = true;
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public ViewTemplateWithAllInstances Template { get; set; }
+  private string _loadingMessage = "Loading...";
+
+  protected override async Task OnParametersSetAsync() {
+    await base.OnParametersSetAsync();
+    var x = Template == null
+      ? await DbExecutor.QueryAsync(db => SanitizeTemplate.AllInstances(db, TemplateId))
+      : FSharpResult<ViewTemplateWithAllInstances, string>.NewOk(Template);
+    if (x.IsOk) {
+      Template = x.ResultValue;
+      var instanceId =
+        NavigationManager.Uri
+          .Apply(NavigationManager.ToAbsoluteUri).Query
+          .Apply(QueryHelpers.ParseQuery)
+          .TryGetValue("InstanceId", out var token) &&
+        int.TryParse(token.First(), out int possibleId)
+        ? possibleId
+        : 0;
+      Instance = Template.Instances.SingleOrDefault(x => x.Id == instanceId) ?? Template.Instances.First();
+    } else {
+      _loadingMessage = x.ErrorValue;
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
 
   async Task Submit() {
     IsDisabled = true;
-    var x = await SanitizeTemplate.Update(Service, User.Id, Instance);
+    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.Update(db, User.Id, Instance));
     if (x.IsOk) {
       ToastService.ShowSuccess("Saved!");
     } else {

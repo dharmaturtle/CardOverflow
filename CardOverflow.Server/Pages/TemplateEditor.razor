@@ -1,4 +1,4 @@
-﻿@page "/template/{TemplateId:int}"
+@page "/template/{TemplateId:int}"
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -12,71 +12,11 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
-@if (Template == null) {
-  <p><em>@LoadingMessage</em></p>
-} else {
-  <div class="row">
-    <div class="col-sm">
-      @if (SelectedInstance == 0) {
-        <TemplateEditorDetail IsDisabled=false Instance=@Editable />
-      } else {
-        <TemplateEditorDetail IsDisabled=true Instance=@Template.Instances.Single(x => x.Id == SelectedInstance) />
-      }
-    </div>
-    <div class="col-sm-6 d-flex justify-content-end align-items-center">
-      <h5 class="mt-2 mr-2">Revision</h5>
-      <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(Select))>
-        @foreach (var instance in Template.Instances.OrderByDescending(x => x.Created)) {
-          <option value=@instance.Id selected=@(SelectedInstance == instance.Id)>
-            @instance.EditSummary - @instance.Created
-          </option>
-        }
-      </select>
-      <button class="btn btn-primary" type="button"
-              @onclick=@(() => Select(0))>
-        Edit
-      </button>
-    </div>
-  </div>
-}
+<TemplateEditorDetail TemplateId=@TemplateId Template=@Template />
 
 @code {
-  [Parameter]
-  public int TemplateId { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  string LoadingMessage = "Loading...";
-  [Parameter]
-  public ViewTemplateWithAllInstances Template { get; set; }
-  ViewTemplateInstance Editable;
-  int SelectedInstance;
-
-  protected override async Task OnParametersSetAsync() {
-    await base.OnParametersSetAsync();
-    var x = Template == null
-      ? await SanitizeTemplate.AllInstances(Service, TemplateId)
-      : FSharpResult<ViewTemplateWithAllInstances, string>.NewOk(Template);
-    if (x.IsOk) {
-      Template = x.ResultValue;
-      Editable = Template.Editable;
-      SelectedInstance =
-        NavigationManager.Uri
-          .Apply(NavigationManager.ToAbsoluteUri).Query
-          .Apply(QueryHelpers.ParseQuery)
-          .TryGetValue("InstanceId", out var token) &&
-        int.TryParse(token.First(), out int possibleId) &&
-        Template.Instances.Any(i => i.Id == possibleId)
-        ? possibleId
-        : 0;
-    } else {
-      LoadingMessage = x.ErrorValue;
-      ToastService.ShowError(x.ErrorValue);
-    }
-  }
-
-  void Select(int id) =>
-    SelectedInstance = id;
-
+  [Parameter] public int TemplateId { get; set; }
+  [Parameter] public ViewTemplateWithAllInstances Template { get; set; }
 }
