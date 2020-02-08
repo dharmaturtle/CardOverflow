@@ -115,4 +115,20 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         front
     )
 
+    let testView getView id expected = task {
+        let! actual = getView c.Db id
+        BusinessLogicTests.assertStripped expected actual
+    }
+    
+    do! testView TemplateRepository.getFront templateId newQuestionTemplate
+    do! testView TemplateRepository.getBack templateId <| newQuestionTemplate + " {{Back}}"
+
+    let priorInstance = template.Value.Instances |> Seq.minBy (fun x -> x.Created)
+    do! testView TemplateRepository.getFrontInstance priorInstance.Id "{{Front}}"
+    do! testView TemplateRepository.getBackInstance priorInstance.Id "{{Front}} {{Back}}"
+
+    do! testView TemplateRepository.getFrontInstance 0 ""
+    do! testView TemplateRepository.getBackInstance 0 ""
+    do! testView TemplateRepository.getFront 0 ""
+    do! testView TemplateRepository.getBack 0 ""
     }

@@ -67,6 +67,50 @@ module CommentRepository =
         db.SaveChangesAsyncI ()
 
 module TemplateRepository =
+    let getFront (db: CardOverflowDb) templateId = task {
+        let! r =
+            db.LatestTemplateInstance
+                .SingleOrDefaultAsync(fun x -> x.TemplateId = templateId)
+        return
+            match r with
+            | null -> ""
+            | r ->
+                let front, _, _, _ = r |> TemplateInstance.loadLatest |> fun x -> x.FrontBackFrontSynthBackSynth
+                front
+    }
+    let getBack (db: CardOverflowDb) templateId = task {
+        let! r =
+            db.LatestTemplateInstance
+                .SingleOrDefaultAsync(fun x -> x.TemplateId = templateId)
+        return
+            match r with
+            | null -> ""
+            | r ->
+                let _, back, _, _ = r |> TemplateInstance.loadLatest |> fun x -> x.FrontBackFrontSynthBackSynth
+                back
+    }
+    let getFrontInstance (db: CardOverflowDb) instanceId = task {
+        let! r =
+            db.TemplateInstance
+                .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
+        return
+            match r with
+            | null -> ""
+            | r ->
+                let front, _, _, _ = r |> TemplateInstance.load |> fun x -> x.FrontBackFrontSynthBackSynth
+                front
+    }
+    let getBackInstance (db: CardOverflowDb) instanceId = task {
+        let! r =
+            db.TemplateInstance
+                .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
+        return
+            match r with
+            | null -> ""
+            | r ->
+                let _, back, _, _ = r |> TemplateInstance.load |> fun x -> x.FrontBackFrontSynthBackSynth
+                back
+    }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: TemplateInstance) = task {
         let template =
             if instance.TemplateId = 0 then
