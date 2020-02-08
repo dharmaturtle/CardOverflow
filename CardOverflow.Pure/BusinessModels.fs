@@ -126,6 +126,8 @@ type TemplateInstance = {
         Cloze.isCloze this.QuestionTemplate
     member this.ClozeFields =
         AnkiImportLogic.clozeFields this.QuestionTemplate
+    member this.FrontBackFrontSynthBackSynth =
+        CardHtml.generate [] this.QuestionTemplate this.AnswerTemplate this.Css
 
 type AcquiredTemplateInstance = {
     DefaultTags: int seq

@@ -1,5 +1,6 @@
 module BusinessLogicTests
 
+open LoadersAndCopiers
 open CardOverflow.Api
 open CardOverflow.Pure
 open CardOverflow.Debug
@@ -306,4 +307,14 @@ let ``CardHtml renders multiple cloze templates properly 3``(): unit =
         front
     assertStripped
         "In 1492, Columbus sailed the ocean [ blue ] .Some extra info"
+        back
+
+[<Fact>]
+let ``TemplateInstance.FrontBackFrontSynthBackSynth works``(): unit =
+    let front, back, _, _ = TemplateInstance.initialize.FrontBackFrontSynthBackSynth
+    assertStripped
+        "{{Front}}"
+        front
+    assertStripped
+        "{{Front}} {{Back}}"
         back
