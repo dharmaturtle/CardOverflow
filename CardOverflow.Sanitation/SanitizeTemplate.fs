@@ -183,7 +183,7 @@ module SanitizeTemplate =
                 .SingleOrDefaultAsync(fun x -> templateId = x.Id)
         return
             match template with
-            | null -> Error "That template doesn't exist"
+            | null -> sprintf "Template #%i doesn't exist" templateId |> Error
             | x -> Ok <| ViewTemplateWithAllInstances.load x
         }
     let Search (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) = task {

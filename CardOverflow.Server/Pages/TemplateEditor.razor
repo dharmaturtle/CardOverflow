@@ -1,4 +1,3 @@
-@page "/template/{TemplateId:int}"
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -126,7 +125,7 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    var x = Template == null
+    var x = (Template == null || (Template.Id != TemplateId && TemplateId != 0))
       ? await DbExecutor.QueryAsync(db => SanitizeTemplate.AllInstances(db, TemplateId))
       : FSharpResult<ViewTemplateWithAllInstances, string>.NewOk(Template);
     if (x.IsOk) {

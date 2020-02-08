@@ -1,0 +1,82 @@
+@page "/template"
+@page "/template/{SelectedId:int}"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@inject DbExecutor DbExecutor
+
+<div class="d-flex justify-content-between align-items-center">
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_instances?.Select(x => x.TemplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+</div>
+@if (SelectedId == null) {
+  @if (_instances == null) {
+    <p><em>Loading...</em></p>
+  } else {
+    <table class="table">
+      <tr>
+        <th></th>
+        <th>Users</th>
+        <th>Name</th>
+      </tr>
+      @foreach (var instance in _instances) {
+        <tr>
+          <td>
+            <div class="curate-tooltip-target">
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <span class="oi oi-eye@(instance.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <div class="curate-tooltip-content">
+                <ResizingIframe SrcUrl=@("/template/" + instance.TemplateId + "/back")></ResizingIframe>
+              </div>
+            </div>
+          </td>
+          <td>
+            @instance.TemplateUsers
+          </td>
+          <td>
+            <a href="/template/@instance.TemplateId">
+              @instance.Name
+            </a>
+          </td>
+        </tr>
+      }
+    </table>
+  }
+  <Pager Details=@_details PageChanged=@PageChanged />
+} else {
+  <TemplateEditor TemplateId=@SelectedId.Value />
+}
+
+@code {
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public int? SelectedId { get; set; }
+  private IList<ViewSearchTemplateInstance> _instances;
+  private PagedListDetails _details;
+  private SearchCommand _search = new SearchCommand { Query = "" };
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    if (SelectedId == null && _instances == null) {
+      await PageChanged(1);
+      StateHasChanged();
+    }
+  }
+
+  async Task PageChanged(int pageNumber) {
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, User?.Id ?? 0, pageNumber, _search.Query));
+    _details = pagedList.Details;
+    _instances = pagedList.Results.ToList();
+  }
+
+  Task SearchClicked(SearchCommand newSearch) {
+    SelectedId = null;
+    _search = newSearch;
+    return PageChanged(1);
+  }
+
+}
