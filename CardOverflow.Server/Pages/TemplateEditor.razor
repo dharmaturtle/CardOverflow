@@ -25,20 +25,19 @@
         <TemplateEditorDetail IsDisabled=true Instance=@Template.Instances.Single(x => x.Id == SelectedInstance) />
       }
     </div>
-    <div class="col-sm-1 list-group">
-      <h5>Revisions</h5>
-      <button class="list-group-item list-group-item-action @(SelectedInstance == 0 ? "active" : "")"
-              @onclick=@(() => Select(0))>
-        Edit
-      </button>
+    <div class="col-sm-6 d-flex justify-content-end align-items-center">
+      <h5 class="mt-2 mr-2">Revision</h5>
       <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(Select))>
-        @foreach (var instance in Template.Instances) {
+        @foreach (var instance in Template.Instances.OrderByDescending(x => x.Created)) {
           <option value=@instance.Id selected=@(SelectedInstance == instance.Id)>
-            @instance.Created
-            @instance.EditSummary
+            @instance.EditSummary - @instance.Created
           </option>
         }
       </select>
+      <button class="btn btn-primary" type="button"
+              @onclick=@(() => Select(0))>
+        Edit
+      </button>
     </div>
   </div>
 }
