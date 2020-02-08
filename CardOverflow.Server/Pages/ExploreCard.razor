@@ -50,7 +50,7 @@
   <div>
     @if (Card.IsAcquired) {
       <h3>Card Options</h3>
-      <CardSettingSelector OptionSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
+      <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
     }
     <h3>Tags</h3>
     <ul class="d-flex flex-wrap list-unstyled">
