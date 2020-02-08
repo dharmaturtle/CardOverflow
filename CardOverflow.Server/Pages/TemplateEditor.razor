@@ -31,13 +31,14 @@
               @onclick=@(() => Select(0))>
         Edit
       </button>
-      @foreach (var instance in Template.Instances) {
-        <button class="list-group-item list-group-item-action @(SelectedInstance == instance.Id ? "active" : "")"
-                @onclick=@(() => Select(instance.Id))>
-          @instance.Created
-          @instance.EditSummary
-        </button>
-      }
+      <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(Select))>
+        @foreach (var instance in Template.Instances) {
+          <option value=@instance.Id selected=@(SelectedInstance == instance.Id)>
+            @instance.Created
+            @instance.EditSummary
+          </option>
+        }
+      </select>
     </div>
   </div>
 }
