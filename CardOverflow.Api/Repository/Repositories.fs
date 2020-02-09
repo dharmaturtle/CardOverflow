@@ -210,7 +210,7 @@ module CardRepository =
                     .Include(fun x -> x.TemplateInstance)
                     .SingleAsync(fun x -> x.CardId = cardId)
             let latestInstance = CardInstanceMeta.loadLatest isAcquired e
-            let! concept =
+            let! card =
                 if userId = 0 then
                     db.Card
                         .Include(fun x -> x.Author)
@@ -228,9 +228,6 @@ module CardRepository =
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                             .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
-                        .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                         .Include(fun x -> x.RelationshipSources :> IEnumerable<_>)
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Target.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.TemplateInstance)
@@ -244,7 +241,7 @@ module CardRepository =
                             .ThenInclude(fun (x: RelationshipEntity) -> x.Source.CardInstances :> IEnumerable<_>)
                             .ThenInclude(fun (x: CardInstanceEntity) -> x.AcquiredCards)
                         .SingleAsync(fun x -> x.Id = cardId)
-            return concept |> ExploreCard.load userId latestInstance
+            return card |> ExploreCard.load userId latestInstance
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
         let! r =
