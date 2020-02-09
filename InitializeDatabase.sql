@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -638,10 +638,24 @@ CREATE TABLE [dbo].[Relationship](
 	[SourceId] [int] NOT NULL,
 	[TargetId] [int] NOT NULL,
 	[Name] [nvarchar](250) NOT NULL,
-	[UserId] [int] NOT NULL,
  CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Relationship_AcquiredCard] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Relationship_AcquiredCard](
+	[AcquiredCardId] [int] NOT NULL,
+	[RelationshipId] [int] NOT NULL,
+ CONSTRAINT [PK_Relationship_AcquiredCard] PRIMARY KEY CLUSTERED 
+(
+	[AcquiredCardId] ASC,
+	[RelationshipId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -1105,22 +1119,20 @@ CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]
 	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [IX_Relationship_SourceId_TargetId_Name] ******/
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Relationship_SourceId_TargetId_Name] ON [dbo].[Relationship]
+(
+	[SourceId] ASC,
+	[TargetId] ASC,
+	[Name] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 /****** Object:  Index [IX_Relationship_SourceId] ******/
 CREATE NONCLUSTERED INDEX [IX_Relationship_SourceId] ON [dbo].[Relationship]
 (
 	[SourceId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_Relationship_SourceId_TargetId_UserId_Name] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Relationship_SourceId_TargetId_UserId_Name] ON [dbo].[Relationship]
-(
-	[SourceId] ASC,
-	[TargetId] ASC,
-	[UserId] ASC,
-	[Name] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Relationship_TargetId] ******/
 CREATE NONCLUSTERED INDEX [IX_Relationship_TargetId] ON [dbo].[Relationship]
@@ -1128,10 +1140,10 @@ CREATE NONCLUSTERED INDEX [IX_Relationship_TargetId] ON [dbo].[Relationship]
 	[TargetId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_Relationship_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Relationship_UserId] ON [dbo].[Relationship]
+/****** Object:  Index [IX_Relationship_AcquiredCard_RelationshipId] ******/
+CREATE NONCLUSTERED INDEX [IX_Relationship_AcquiredCard_RelationshipId] ON [dbo].[Relationship_AcquiredCard]
 (
-	[UserId] ASC
+	[RelationshipId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 SET ANSI_PADDING ON
@@ -1416,10 +1428,15 @@ REFERENCES [dbo].[CardInstance] ([Id])
 GO
 ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_CardInstance_TargetId]
 GO
-ALTER TABLE [dbo].[Relationship]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
+ALTER TABLE [dbo].[Relationship_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_AcquiredCard_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
+REFERENCES [dbo].[AcquiredCard] ([Id])
 GO
-ALTER TABLE [dbo].[Relationship] CHECK CONSTRAINT [FK_Relationship_User_UserId]
+ALTER TABLE [dbo].[Relationship_AcquiredCard] CHECK CONSTRAINT [FK_Relationship_AcquiredCard_AcquiredCard_AcquiredCardId]
+GO
+ALTER TABLE [dbo].[Relationship_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_AcquiredCard_Relationship_RelationshipId] FOREIGN KEY([RelationshipId])
+REFERENCES [dbo].[Relationship] ([Id])
+GO
+ALTER TABLE [dbo].[Relationship_AcquiredCard] CHECK CONSTRAINT [FK_Relationship_AcquiredCard_Relationship_RelationshipId]
 GO
 ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
 REFERENCES [dbo].[AcquiredCard] ([Id])

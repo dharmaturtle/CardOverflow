@@ -29,6 +29,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<LatestTemplateInstanceEntity> LatestTemplateInstance { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
+        public virtual DbSet<Relationship_AcquiredCardEntity> Relationship_AcquiredCard { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_AcquiredCardEntity> Tag_AcquiredCard { get; set; }
         public virtual DbSet<Tag_User_TemplateInstanceEntity> Tag_User_TemplateInstance { get; set; }
@@ -295,9 +296,7 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.TargetId);
 
-                entity.HasIndex(e => e.UserId);
-
-                entity.HasIndex(e => new { e.SourceId, e.TargetId, e.UserId, e.Name })
+                entity.HasIndex(e => new { e.SourceId, e.TargetId, e.Name })
                     .IsUnique();
 
                 entity.HasOne(d => d.Source)
@@ -309,10 +308,22 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.RelationshipTargets)
                     .HasForeignKey(d => d.TargetId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+            });
 
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Relationships)
-                    .HasForeignKey(d => d.UserId)
+            modelBuilder.Entity<Relationship_AcquiredCardEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.AcquiredCardId, e.RelationshipId });
+
+                entity.HasIndex(e => e.RelationshipId);
+
+                entity.HasOne(d => d.AcquiredCard)
+                    .WithMany(p => p.Relationship_AcquiredCards)
+                    .HasForeignKey(d => d.AcquiredCardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.Relationship)
+                    .WithMany(p => p.Relationship_AcquiredCards)
+                    .HasForeignKey(d => d.RelationshipId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
