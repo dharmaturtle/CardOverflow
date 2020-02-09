@@ -95,9 +95,8 @@
     : "Loading...";
 
   async Task Add() {
-    var x = SanitizeRelationshipRepository.Add(Service, User.Id, Command);
+    var x = await SanitizeRelationshipRepository.Add(Service, User.Id, Command);
     if (x.IsOk) {
-      await x.ResultValue;
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
       Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, 1)).ToList();
     } else {
@@ -106,9 +105,8 @@
   }
 
   async Task Acquire(string name, int targetId) {
-    var x = SanitizeRelationshipRepository.Add(Service, User.Id, new AddRelationshipCommand(name, Card.Id, targetId.ToString()));
+    var x = await SanitizeRelationshipRepository.Add(Service, User.Id, new AddRelationshipCommand(name, Card.Id, targetId.ToString()));
     if (x.IsOk) {
-      await x.ResultValue;
       Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = true;
       Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users++;
       StateHasChanged();

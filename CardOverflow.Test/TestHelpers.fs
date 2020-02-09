@@ -1,5 +1,6 @@
 namespace CardOverflow.Test
 
+open System.Threading.Tasks
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Api
@@ -13,6 +14,7 @@ open System.Data.SqlClient
 open System.IO
 open System.Linq
 open SimpleInjector.Lifestyles
+open FsToolkit.ErrorHandling
 
 module Assert =
     let SingleI x =
@@ -31,3 +33,7 @@ module Extensions =
             Result.getOk this
         member this.error =
             Result.getError this
+
+module TaskResult =
+    let assertOk x =
+        x |> TaskResult.defaultWith(fun () -> failwith "you gots an error")

@@ -25,6 +25,7 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 open System.Collections
 open System.Security.Cryptography
+open FsToolkit.ErrorHandling
 
 [<Fact>]
 let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``(): Task<unit> = task {
@@ -118,7 +119,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             TargetLink = "2"
         }
     if cardIds.Length <> 1 then
-        do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1 |> Result.getOk
+        let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
+        Assert.Null x.Value
         let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(1, card.Relationships.Single().Users)
         let! card = CardRepository.Get c.Db userId 2
@@ -130,7 +132,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         let! card = CardRepository.Get c.Db userId 2
         Assert.Equal(0, card.Relationships.Count)
 
-        do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1 |> Result.getOk
+        let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
+        Assert.Null x.Value
         do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
         let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(0, card.Relationships.Count)
@@ -172,9 +175,11 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             addRelationshipCommand1, addRelationshipCommand2
             addRelationshipCommand2, addRelationshipCommand1 ]
         let testRelationships (creator, acquirer) = task {
-            do! SanitizeRelationshipRepository.Add c.Db 1 creator |> Result.getOk // card creator also acquires the relationship; .Single() below refers this this
+            let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
+            Assert.Null x.Value
         
-            do! SanitizeRelationshipRepository.Add c.Db userId acquirer |> Result.getOk
+            let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
+            Assert.Null x.Value
             let! card = CardRepository.Get c.Db userId 1
             Assert.Equal(2, card.Relationships.Single().Users)
             Assert.True(card.Relationships.Single().IsAcquired)
@@ -190,7 +195,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
 
-            do! SanitizeRelationshipRepository.Add c.Db userId acquirer |> Result.getOk
+            let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
+            Assert.Null x.Value
             do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
             let! card = CardRepository.Get c.Db userId 1
             Assert.Equal(1, card.Relationships.Count)
@@ -374,19 +380,18 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     }
 
 [<Fact>]
-let ``New card template has correct hash`` (): Task<unit> = task {
-    use c = new TestContainer()
-    let userId = 3
-    let initialTemplate = ViewTemplateWithAllInstances.initialize userId
-    use sha512 = SHA512.Create()
-    let! x = SanitizeTemplate.Update c.Db userId initialTemplate.Editable
-    Assert.Null x.Value
-    let! dbTemplate = c.Db.TemplateInstance.SingleAsync(fun x -> x.Template.AuthorId = userId)
+let ``New card template has correct hash`` (): Task<unit> = taskResult {
+        use c = new TestContainer()
+        let userId = 3
+        let initialTemplate = ViewTemplateWithAllInstances.initialize userId
+        use sha512 = SHA512.Create()
+        do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable
+        let! (dbTemplate: TemplateInstanceEntity) = c.Db.TemplateInstance.SingleAsync(fun x -> x.Template.AuthorId = userId)
     
-    let computedHash =
-        initialTemplate.Editable
-        |> ViewTemplateInstance.copyTo
-        |> fun x -> TemplateEntity() |> Entity |> x.CopyToNewInstance
-        |> TemplateInstanceEntity.hash sha512
+        let computedHash =
+            initialTemplate.Editable
+            |> ViewTemplateInstance.copyTo
+            |> fun x -> TemplateEntity() |> Entity |> x.CopyToNewInstance
+            |> TemplateInstanceEntity.hash sha512
     
-    Assert.Equal<byte[]>(dbTemplate.Hash, computedHash) }
+        Assert.Equal<byte[]>(dbTemplate.Hash, computedHash) } |> TaskResult.assertOk
