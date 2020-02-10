@@ -95,6 +95,12 @@ GO
 /****** Object:  FullTextCatalog [CardInstanceFieldValueFullTextCatalog] ******/
 CREATE FULLTEXT CATALOG [CardInstanceFieldValueFullTextCatalog] WITH ACCENT_SENSITIVITY = ON
 GO
+/****** Object:  FullTextCatalog [RelationshipFullTextCatalog] ******/
+CREATE FULLTEXT CATALOG [RelationshipFullTextCatalog] WITH ACCENT_SENSITIVITY = OFF
+GO
+/****** Object:  FullTextCatalog [TagFullTextCatalog] ******/
+CREATE FULLTEXT CATALOG [TagFullTextCatalog] WITH ACCENT_SENSITIVITY = OFF
+GO
 /****** Object:  FullTextCatalog [TemplateFullTextCatalog] ******/
 CREATE FULLTEXT CATALOG [TemplateFullTextCatalog] WITH ACCENT_SENSITIVITY = OFF
 GO
@@ -137,6 +143,147 @@ CREATE TABLE [dbo].[Card](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[AcquiredCard] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AcquiredCard](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NOT NULL,
+	[CardInstanceId] [int] NOT NULL,
+	[CardState] [tinyint] NOT NULL,
+	[EaseFactorInPermille] [smallint] NOT NULL,
+	[IntervalOrStepsIndex] [smallint] NOT NULL,
+	[Due] [smalldatetime] NOT NULL,
+	[CardSettingId] [int] NOT NULL,
+	[IsLapsed] [bit] NOT NULL,
+ CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Tag] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Tag](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](250) NOT NULL,
+ CONSTRAINT [PK_Tag] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Tag_AcquiredCard] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Tag_AcquiredCard](
+	[TagId] [int] NOT NULL,
+	[AcquiredCardId] [int] NOT NULL,
+ CONSTRAINT [PK_Tag_AcquiredCard] PRIMARY KEY CLUSTERED 
+(
+	[TagId] ASC,
+	[AcquiredCardId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[CardTagCount] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[CardTagCount]
+AS
+SELECT        c.Id AS CardId, t.Name, COUNT(*) AS Count
+FROM            dbo.Card AS c INNER JOIN
+                         dbo.CardInstance AS i ON c.Id = i.CardId INNER JOIN
+                         dbo.AcquiredCard AS ac ON ac.CardInstanceId = i.Id INNER JOIN
+                         dbo.Tag_AcquiredCard AS ta ON ta.AcquiredCardId = ac.Id INNER JOIN
+                         dbo.Tag AS t ON ta.TagId = t.Id
+GROUP BY c.Id, t.Name
+GO
+/****** Object:  View [dbo].[CardInstanceTagCount] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[CardInstanceTagCount]
+AS
+SELECT        i.Id AS CardInstanceId, t.Name, COUNT(*) AS Count
+FROM            dbo.CardInstance AS i INNER JOIN
+                         dbo.AcquiredCard AS ac ON ac.CardInstanceId = i.Id INNER JOIN
+                         dbo.Tag_AcquiredCard AS ta ON ta.AcquiredCardId = ac.Id INNER JOIN
+                         dbo.Tag AS t ON ta.TagId = t.Id
+GROUP BY i.Id, t.Name
+GO
+/****** Object:  Table [dbo].[Relationship] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Relationship](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[SourceId] [int] NOT NULL,
+	[TargetId] [int] NOT NULL,
+	[Name] [nvarchar](250) NOT NULL,
+ CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Relationship_AcquiredCard] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Relationship_AcquiredCard](
+	[AcquiredCardId] [int] NOT NULL,
+	[RelationshipId] [int] NOT NULL,
+ CONSTRAINT [PK_Relationship_AcquiredCard] PRIMARY KEY CLUSTERED 
+(
+	[AcquiredCardId] ASC,
+	[RelationshipId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[CardRelationshipCount] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[CardRelationshipCount]
+AS
+SELECT        c.Id AS CardId, r.Name, COUNT(*) AS Count
+FROM            dbo.Card AS c INNER JOIN
+                         dbo.CardInstance AS i ON c.Id = i.CardId INNER JOIN
+                         dbo.AcquiredCard AS ac ON ac.CardInstanceId = i.Id INNER JOIN
+                         dbo.Relationship_AcquiredCard AS ra ON ra.AcquiredCardId = ac.Id INNER JOIN
+                         dbo.Relationship AS r ON ra.RelationshipId = r.Id AND (r.SourceId = ac.CardInstanceId OR
+                         r.TargetId = ac.CardInstanceId)
+GROUP BY c.Id, r.Name
+GO
+/****** Object:  View [dbo].[CardInstanceRelationshipCount] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[CardInstanceRelationshipCount]
+AS
+SELECT        i.Id AS CardInstanceId, r.Name, COUNT(*) AS Count
+FROM            dbo.CardInstance AS i INNER JOIN
+                         dbo.AcquiredCard AS ac ON ac.CardInstanceId = i.Id INNER JOIN
+                         dbo.Relationship_AcquiredCard AS ra ON ra.AcquiredCardId = ac.Id INNER JOIN
+                         dbo.Relationship AS r ON ra.RelationshipId = r.Id AND (r.SourceId = ac.CardInstanceId OR
+                         r.TargetId = ac.CardInstanceId)
+GROUP BY i.Id, r.Name
+GO
 /****** Object:  View [dbo].[LatestCardInstance] ******/
 SET ANSI_NULLS ON
 GO
@@ -162,27 +309,6 @@ SELECT c.AuthorId
   LEFT OUTER JOIN [CardInstance] i2 ON (c.Id = i2.CardId AND 
     (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
 WHERE i2.id IS NULL;
-GO
-/****** Object:  Table [dbo].[AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AcquiredCard](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[CardInstanceId] [int] NOT NULL,
-	[CardState] [tinyint] NOT NULL,
-	[EaseFactorInPermille] [smallint] NOT NULL,
-	[IntervalOrStepsIndex] [smallint] NOT NULL,
-	[Due] [smalldatetime] NOT NULL,
-	[CardSettingId] [int] NOT NULL,
-	[IsLapsed] [bit] NOT NULL,
- CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
 GO
 /****** Object:  View [dbo].[AcquiredCardIsLatest] ******/
 SET ANSI_NULLS ON
@@ -628,66 +754,6 @@ CREATE TABLE [dbo].[PotentialSignups](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Relationship] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Relationship](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[SourceId] [int] NOT NULL,
-	[TargetId] [int] NOT NULL,
-	[Name] [nvarchar](250) NOT NULL,
- CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Relationship_AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Relationship_AcquiredCard](
-	[AcquiredCardId] [int] NOT NULL,
-	[RelationshipId] [int] NOT NULL,
- CONSTRAINT [PK_Relationship_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[AcquiredCardId] ASC,
-	[RelationshipId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Tag] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Tag](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](250) NOT NULL,
- CONSTRAINT [PK_Tag] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Tag_AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Tag_AcquiredCard](
-	[TagId] [int] NOT NULL,
-	[AcquiredCardId] [int] NOT NULL,
- CONSTRAINT [PK_Tag_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[TagId] ASC,
-	[AcquiredCardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
 /****** Object:  Table [dbo].[Tag_User_TemplateInstance] ******/
 SET ANSI_NULLS ON
 GO
@@ -1119,6 +1185,12 @@ CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]
 	[AcquiredCardId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_Relationship_SourceId] ******/
+CREATE NONCLUSTERED INDEX [IX_Relationship_SourceId] ON [dbo].[Relationship]
+(
+	[SourceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
 /****** Object:  Index [IX_Relationship_SourceId_TargetId_Name] ******/
@@ -1128,11 +1200,6 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_Relationship_SourceId_TargetId_Name] ON [db
 	[TargetId] ASC,
 	[Name] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-/****** Object:  Index [IX_Relationship_SourceId] ******/
-CREATE NONCLUSTERED INDEX [IX_Relationship_SourceId] ON [dbo].[Relationship]
-(
-	[SourceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 /****** Object:  Index [IX_Relationship_TargetId] ******/
 CREATE NONCLUSTERED INDEX [IX_Relationship_TargetId] ON [dbo].[Relationship]
@@ -1258,6 +1325,20 @@ GO
 CREATE FULLTEXT INDEX ON [dbo].[CardInstance](
 [FieldValues] LANGUAGE 'English')
 KEY INDEX [PK_CardInstance]ON ([CardInstanceFieldValueFullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
+GO
+/****** Object:  FullTextIndex ******/
+CREATE FULLTEXT INDEX ON [dbo].[Relationship](
+[Name] LANGUAGE 'English')
+KEY INDEX [PK_Relationship]ON ([RelationshipFullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
+GO
+/****** Object:  FullTextIndex ******/
+CREATE FULLTEXT INDEX ON [dbo].[Tag](
+[Name] LANGUAGE 'English')
+KEY INDEX [PK_Tag]ON ([TagFullTextCatalog], FILEGROUP [PRIMARY])
 WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
 
 GO

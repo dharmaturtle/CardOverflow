@@ -13,7 +13,11 @@ namespace CardOverflow.Entity
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<CardEntity> Card { get; set; }
         public virtual DbSet<CardInstanceEntity> CardInstance { get; set; }
+        public virtual DbSet<CardInstanceRelationshipCountEntity> CardInstanceRelationshipCount { get; set; }
+        public virtual DbSet<CardInstanceTagCountEntity> CardInstanceTagCount { get; set; }
+        public virtual DbSet<CardRelationshipCountEntity> CardRelationshipCount { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
+        public virtual DbSet<CardTagCountEntity> CardTagCount { get; set; }
         public virtual DbSet<CommentCardEntity> CommentCard { get; set; }
         public virtual DbSet<CommentTemplateEntity> CommentTemplate { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
@@ -126,6 +130,27 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
+            modelBuilder.Entity<CardInstanceRelationshipCountEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("CardInstanceRelationshipCount");
+            });
+
+            modelBuilder.Entity<CardInstanceTagCountEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("CardInstanceTagCount");
+            });
+
+            modelBuilder.Entity<CardRelationshipCountEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("CardRelationshipCount");
+            });
+
             modelBuilder.Entity<CardSettingEntity>(entity =>
             {
                 entity.HasIndex(e => e.UserId);
@@ -138,6 +163,13 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.CardSettings)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<CardTagCountEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("CardTagCount");
             });
 
             modelBuilder.Entity<CommentCardEntity>(entity =>
