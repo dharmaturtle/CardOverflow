@@ -128,26 +128,36 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.CardInstances)
                     .HasForeignKey(d => d.TemplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+                
+                entity.HasMany(x => x.CardTagCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardId);
+                
+                entity.HasMany(x => x.CardRelationshipCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardId);
+                
+                entity.HasMany(x => x.CardInstanceTagCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardInstanceId);
+                
+                entity.HasMany(x => x.CardInstanceRelationshipCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardInstanceId);
             });
 
             modelBuilder.Entity<CardInstanceRelationshipCountEntity>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToView("CardInstanceRelationshipCount");
             });
 
             modelBuilder.Entity<CardInstanceTagCountEntity>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToView("CardInstanceTagCount");
             });
 
             modelBuilder.Entity<CardRelationshipCountEntity>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToView("CardRelationshipCount");
             });
 
@@ -167,8 +177,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTagCountEntity>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToView("CardTagCount");
             });
 
@@ -298,6 +306,22 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<LatestCardInstanceEntity>(entity =>
             {
                 entity.HasMany(x => x.CommunalFieldInstance_CardInstances)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardInstanceId);
+                
+                entity.HasMany(x => x.CardTagCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardId);
+                
+                entity.HasMany(x => x.CardRelationshipCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardId);
+                
+                entity.HasMany(x => x.CardInstanceTagCounts)
+                    .WithOne()
+                    .HasForeignKey(x => x.CardInstanceId);
+                
+                entity.HasMany(x => x.CardInstanceRelationshipCounts)
                     .WithOne()
                     .HasForeignKey(x => x.CardInstanceId);
                 
