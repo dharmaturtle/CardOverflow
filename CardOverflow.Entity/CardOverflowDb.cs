@@ -33,7 +33,7 @@ namespace CardOverflow.Entity
         private DbSet<LatestTemplateInstanceEntity> _LatestTemplateInstanceTracked { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
-        public virtual DbSet<Relationship_AcquiredCardEntity> Relationship_AcquiredCard { get; set; }
+        public virtual DbSet<Relationship_CardInstanceEntity> Relationship_CardInstance { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_AcquiredCardEntity> Tag_AcquiredCard { get; set; }
         public virtual DbSet<Tag_User_TemplateInstanceEntity> Tag_User_TemplateInstance { get; set; }
@@ -348,38 +348,38 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
             {
-                entity.HasIndex(e => e.SourceId);
-
-                entity.HasIndex(e => e.TargetId);
-
-                entity.HasIndex(e => new { e.SourceId, e.TargetId, e.Name })
+                entity.HasIndex(e => e.Name)
                     .IsUnique();
-
-                entity.HasOne(d => d.Source)
-                    .WithMany(p => p.RelationshipSources)
-                    .HasForeignKey(d => d.SourceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.Target)
-                    .WithMany(p => p.RelationshipTargets)
-                    .HasForeignKey(d => d.TargetId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Relationship_AcquiredCardEntity>(entity =>
+            modelBuilder.Entity<Relationship_CardInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.AcquiredCardId, e.RelationshipId });
+                entity.HasKey(e => new { e.UserId, e.SourceInstanceId, e.TargetInstanceId, e.RelationshipId });
 
                 entity.HasIndex(e => e.RelationshipId);
 
-                entity.HasOne(d => d.AcquiredCard)
-                    .WithMany(p => p.Relationship_AcquiredCards)
-                    .HasForeignKey(d => d.AcquiredCardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
+                entity.HasIndex(e => e.SourceInstanceId);
+
+                entity.HasIndex(e => e.TargetInstanceId);
 
                 entity.HasOne(d => d.Relationship)
-                    .WithMany(p => p.Relationship_AcquiredCards)
+                    .WithMany(p => p.Relationship_CardInstances)
                     .HasForeignKey(d => d.RelationshipId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.SourceInstance)
+                    .WithMany(p => p.Relationship_CardInstanceSourceInstances)
+                    .HasForeignKey(d => d.SourceInstanceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.TargetInstance)
+                    .WithMany(p => p.Relationship_CardInstanceTargetInstances)
+                    .HasForeignKey(d => d.TargetInstanceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Relationship_CardInstances)
+                    .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

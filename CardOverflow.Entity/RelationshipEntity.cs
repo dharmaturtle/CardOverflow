@@ -9,13 +9,11 @@ namespace CardOverflow.Entity
     {
         public RelationshipEntity()
         {
-            Relationship_AcquiredCards = new HashSet<Relationship_AcquiredCardEntity>();
+            Relationship_CardInstances = new HashSet<Relationship_CardInstanceEntity>();
         }
 
         [Key]
         public int Id { get; set; }
-        public int SourceId { get; set; }
-        public int TargetId { get; set; }
         [Required]
         [StringLength(250)]
         public string Name {
@@ -27,13 +25,7 @@ namespace CardOverflow.Entity
         }
         private string _Name;
 
-        [ForeignKey("SourceId")]
-        [InverseProperty("RelationshipSources")]
-        public virtual CardInstanceEntity Source { get; set; }
-        [ForeignKey("TargetId")]
-        [InverseProperty("RelationshipTargets")]
-        public virtual CardInstanceEntity Target { get; set; }
         [InverseProperty("Relationship")]
-        public virtual ICollection<Relationship_AcquiredCardEntity> Relationship_AcquiredCards { get; set; }
+        public virtual ICollection<Relationship_CardInstanceEntity> Relationship_CardInstances { get; set; }
     }
 }

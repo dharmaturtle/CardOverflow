@@ -12,8 +12,8 @@ namespace CardOverflow.Entity
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             CommunalFieldInstance_CardInstances = new HashSet<CommunalFieldInstance_CardInstanceEntity>();
             File_CardInstances = new HashSet<File_CardInstanceEntity>();
-            RelationshipSources = new HashSet<RelationshipEntity>();
-            RelationshipTargets = new HashSet<RelationshipEntity>();
+            Relationship_CardInstanceSourceInstances = new HashSet<Relationship_CardInstanceEntity>();
+            Relationship_CardInstanceTargetInstances = new HashSet<Relationship_CardInstanceEntity>();
             CardTagCounts = new HashSet<CardTagCountEntity>();
             CardRelationshipCounts = new HashSet<CardRelationshipCountEntity>();
             CardInstanceTagCounts = new HashSet<CardInstanceTagCountEntity>();
@@ -58,10 +58,10 @@ namespace CardOverflow.Entity
         public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
         [InverseProperty("CardInstance")]
         public virtual ICollection<File_CardInstanceEntity> File_CardInstances { get; set; }
-        [InverseProperty("Source")]
-        public virtual ICollection<RelationshipEntity> RelationshipSources { get; set; }
-        [InverseProperty("Target")]
-        public virtual ICollection<RelationshipEntity> RelationshipTargets { get; set; }
+        [InverseProperty("SourceInstance")]
+        public virtual ICollection<Relationship_CardInstanceEntity> Relationship_CardInstanceSourceInstances { get; set; }
+        [InverseProperty("TargetInstance")]
+        public virtual ICollection<Relationship_CardInstanceEntity> Relationship_CardInstanceTargetInstances { get; set; }
 
         public virtual ICollection<CardTagCountEntity> CardTagCounts { get; set; }
         public virtual ICollection<CardRelationshipCountEntity> CardRelationshipCounts { get; set; }

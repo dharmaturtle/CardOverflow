@@ -18,6 +18,7 @@ namespace CardOverflow.Entity
             CommunalFields = new HashSet<CommunalFieldEntity>();
             Feedbacks = new HashSet<FeedbackEntity>();
             Filters = new HashSet<FilterEntity>();
+            Relationship_CardInstances = new HashSet<Relationship_CardInstanceEntity>();
             Templates = new HashSet<TemplateEntity>();
             User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
             Vote_CommentCards = new HashSet<Vote_CommentCardEntity>();
@@ -62,6 +63,8 @@ namespace CardOverflow.Entity
         public virtual ICollection<FeedbackEntity> Feedbacks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<FilterEntity> Filters { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<Relationship_CardInstanceEntity> Relationship_CardInstances { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<TemplateEntity> Templates { get; set; }
         [InverseProperty("User")]
