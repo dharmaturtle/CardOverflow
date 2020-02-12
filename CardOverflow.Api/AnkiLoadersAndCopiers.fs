@@ -120,8 +120,6 @@ type AnkiCardWrite = {
         let templateHash = this.Template |> TemplateInstanceEntity.hash hasher
         let hash = this.CopyToNew [] |> CardInstanceEntity.hash templateHash hasher
         db.CardInstance
-            .Include(fun x -> x.Card.RelationshipSources)
-            .Include(fun x -> x.Card.RelationshipTargets)
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
             .OrderBy(fun x -> x.Created)
@@ -468,7 +466,6 @@ module Anki =
         initialTags
         userId
         fileEntityByAnkiFileName
-        noRelationship
         getCard = // lowTODO use tail recursion
         let rec parseNotesRec tags cardsAndTagsByNoteId =
             function
@@ -560,21 +557,6 @@ module Anki =
                                             |> List.map (fun (_, oldOrdinal) -> fieldValues.[int oldOrdinal])
                                         toCard fields anon.Entity templateOrdinal
                                     ))
-                                for instancePair in combination 2 instances do
-                                    let a = instancePair.[0]
-                                    let b = instancePair.[1]
-                                    let shareCommunalField =
-                                        a.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance).Intersect(
-                                            b.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
-                                        ).Any()
-                                    if  a.Card.Id = 0 &&
-                                        b.Card.Id = 0 &&
-                                        noRelationship a.Id b.Id userId "Linked" &&
-                                        not shareCommunalField
-                                    then
-                                        let r = RelationshipEntity(Name = "Linked", UserId = userId)
-                                        instancePair.[0].Card.RelationshipSources.Add r
-                                        instancePair.[1].Card.RelationshipTargets.Add r
                                 instances |> Ok
                         let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
                         return (note.Id, (cards, relevantTags))

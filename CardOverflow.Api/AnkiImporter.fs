@@ -72,7 +72,6 @@ module AnkiImporter =
         defaultCardSetting
         getTemplates
         getCard
-        noRelationship
         getAcquiredCard
         getHistory =
         let col = ankiDb.Cols.Single()
@@ -154,7 +153,6 @@ module AnkiImporter =
                     usersTags
                     userId
                     fileEntityByAnkiFileName
-                    noRelationship
                     getCard
                     ankiDb.Notes
                 |> Result.consolidate
@@ -194,8 +192,6 @@ module AnkiImporter =
             card.AcquireEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =
             history.AcquireEquality db |> Option.ofObj
-        let noRelationship sourceId targetId userId name =
-            not <| db.Relationship.Any(fun x -> x.SourceId = sourceId && x.TargetId = targetId && x.UserId = userId && x.Name = name)
         result {
             let! acquiredCardEntities, histories =
                 load
@@ -209,7 +205,6 @@ module AnkiImporter =
                     <| defaultCardSetting
                     <| getTemplateInstance
                     <| getCard
-                    <| noRelationship
                     <| getAcquiredCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
@@ -220,13 +215,6 @@ module AnkiImporter =
                 if x.Id = 0
                 then db.History.AddI x
             )
-            db.ChangeTracker.Entries() // CardInstances may be unused if they're duplicates; this removes their orphaned Relationships
-                |> Seq.filter (fun e -> e.State = EntityState.Added && e.Entity :? RelationshipEntity)
-                |> Seq.iter (fun x ->
-                    let e = x.Entity :?> RelationshipEntity
-                    if isNull e.Source || isNull e.Target then
-                        x.State <- EntityState.Detached
-                )
             return db.SaveChangesAsyncI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
         }
         

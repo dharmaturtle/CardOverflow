@@ -91,7 +91,6 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
             option
             (fun _ -> None)
             (fun _ -> None)
-            (fun _ _ _ _ -> false)
             (fun _ -> None)
             (fun _ -> None)
         |> Result.getOk
