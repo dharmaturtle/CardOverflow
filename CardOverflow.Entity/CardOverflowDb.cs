@@ -9,15 +9,15 @@ namespace CardOverflow.Entity
     public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int>
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
-        public virtual DbSet<AcquiredCardIsLatestEntity> AcquiredCardIsLatest { get; set; }
+        private DbSet<AcquiredCardIsLatestEntity> _AcquiredCardIsLatestTracked { get; set; }
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<CardEntity> Card { get; set; }
         public virtual DbSet<CardInstanceEntity> CardInstance { get; set; }
-        public virtual DbSet<CardInstanceRelationshipCountEntity> CardInstanceRelationshipCount { get; set; }
-        public virtual DbSet<CardInstanceTagCountEntity> CardInstanceTagCount { get; set; }
-        public virtual DbSet<CardRelationshipCountEntity> CardRelationshipCount { get; set; }
+        private DbSet<CardInstanceRelationshipCountEntity> _CardInstanceRelationshipCountTracked { get; set; }
+        private DbSet<CardInstanceTagCountEntity> _CardInstanceTagCountTracked { get; set; }
+        private DbSet<CardRelationshipCountEntity> _CardRelationshipCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
-        public virtual DbSet<CardTagCountEntity> CardTagCount { get; set; }
+        private DbSet<CardTagCountEntity> _CardTagCountTracked { get; set; }
         public virtual DbSet<CommentCardEntity> CommentCard { get; set; }
         public virtual DbSet<CommentTemplateEntity> CommentTemplate { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
@@ -28,9 +28,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<FilterEntity> Filter { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
-        public virtual DbSet<LatestCardInstanceEntity> LatestCardInstance { get; set; }
-        public virtual DbSet<LatestCommunalFieldInstanceEntity> LatestCommunalFieldInstance { get; set; }
-        public virtual DbSet<LatestTemplateInstanceEntity> LatestTemplateInstance { get; set; }
+        private DbSet<LatestCardInstanceEntity> _LatestCardInstanceTracked { get; set; }
+        private DbSet<LatestCommunalFieldInstanceEntity> _LatestCommunalFieldInstanceTracked { get; set; }
+        private DbSet<LatestTemplateInstanceEntity> _LatestTemplateInstanceTracked { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
         public virtual DbSet<Relationship_AcquiredCardEntity> Relationship_AcquiredCard { get; set; }
