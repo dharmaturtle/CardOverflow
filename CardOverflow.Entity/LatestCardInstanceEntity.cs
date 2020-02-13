@@ -10,8 +10,6 @@ namespace CardOverflow.Entity
         public LatestCardInstanceEntity()
         {
             CommunalFieldInstance_CardInstances = new HashSet<CommunalFieldInstance_CardInstanceEntity>();
-            CardTagCounts = new HashSet<CardTagCountEntity>();
-            CardRelationshipCounts = new HashSet<CardRelationshipCountEntity>();
             CardInstanceTagCounts = new HashSet<CardInstanceTagCountEntity>();
             CardInstanceRelationshipCounts = new HashSet<CardInstanceRelationshipCountEntity>();
         }
@@ -42,12 +40,13 @@ namespace CardOverflow.Entity
         public byte? AnkiNoteOrd { get; set; }
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
         public virtual UserEntity Author { get; set; }
+      
+        [ForeignKey("CardId")]
+        public virtual CardEntity Card { get; set; }
         [ForeignKey("CardInstanceId")]
         public virtual CardInstanceEntity CardInstance { get; set; }
 
         public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
-        public virtual ICollection<CardTagCountEntity> CardTagCounts { get; set; }
-        public virtual ICollection<CardRelationshipCountEntity> CardRelationshipCounts { get; set; }
         public virtual ICollection<CardInstanceTagCountEntity> CardInstanceTagCounts { get; set; }
         public virtual ICollection<CardInstanceRelationshipCountEntity> CardInstanceRelationshipCounts { get; set; }
     }

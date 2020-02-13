@@ -148,16 +148,22 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardInstanceRelationshipCountEntity>(entity =>
             {
+                entity.HasKey(e => new { e.CardInstanceId, e.Name });
+                
                 entity.ToView("CardInstanceRelationshipCount");
             });
 
             modelBuilder.Entity<CardInstanceTagCountEntity>(entity =>
             {
+                entity.HasKey(e => new { e.CardInstanceId, e.Name });
+                
                 entity.ToView("CardInstanceTagCount");
             });
 
             modelBuilder.Entity<CardRelationshipCountEntity>(entity =>
             {
+                entity.HasKey(e => new { e.CardId, e.Name });
+                
                 entity.ToView("CardRelationshipCount");
             });
 
@@ -177,6 +183,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardTagCountEntity>(entity =>
             {
+                entity.HasKey(e => new { e.CardId, e.Name });
+                
                 entity.ToView("CardTagCount");
             });
 
@@ -308,14 +316,6 @@ namespace CardOverflow.Entity
                 entity.HasMany(x => x.CommunalFieldInstance_CardInstances)
                     .WithOne()
                     .HasForeignKey(x => x.CardInstanceId);
-                
-                entity.HasMany(x => x.CardTagCounts)
-                    .WithOne()
-                    .HasForeignKey(x => x.CardId);
-                
-                entity.HasMany(x => x.CardRelationshipCounts)
-                    .WithOne()
-                    .HasForeignKey(x => x.CardId);
                 
                 entity.HasMany(x => x.CardInstanceTagCounts)
                     .WithOne()

@@ -115,3 +115,6 @@ module List =
         match xs with
         | [] -> [x]
         | _  -> xs
+
+module ResizeArray =
+    let empty<'T> = [].ToList<'T>()

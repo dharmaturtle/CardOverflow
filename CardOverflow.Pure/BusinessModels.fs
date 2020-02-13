@@ -272,6 +272,25 @@ type CommunalFieldInstance = {
 }
 
 [<CLIMutable>]
+type ViewTag = {
+    Name: string
+    Count: int
+    IsAcquired: bool
+}
+
+[<CLIMutable>]
+type ViewRelationship = {
+    Name: string
+    CardId: int
+    IsAcquired: bool
+    Users: int
+} with
+    member this.PrimaryName =
+        Relationship.split this.Name |> fst
+    member this.SecondaryName =
+        Relationship.split this.Name |> snd
+
+[<CLIMutable>]
 type CardInstanceMeta = {
     Id: int
     Created: DateTime
@@ -282,6 +301,8 @@ type CardInstanceMeta = {
     StrippedFront: string
     StrippedBack: string
     CommunalFields: CommunalFieldInstance ResizeArray
+    Relationships: ViewRelationship list
+    Tags: ViewTag list
 }
 
 [<CLIMutable>]
@@ -306,25 +327,6 @@ type Comment = {
     Created: DateTime
     IsDmca: bool
 }
-
-[<CLIMutable>]
-type ViewTag = {
-    Name: string
-    Count: int
-    IsAcquired: bool
-}
-
-[<CLIMutable>]
-type ViewRelationship = {
-    Name: string
-    CardId: int
-    IsAcquired: bool
-    Users: int
-} with
-    member this.PrimaryName =
-        Relationship.split this.Name |> fst
-    member this.SecondaryName =
-        Relationship.split this.Name |> snd
 
 [<CLIMutable>]
 type ExploreCardSummary = {
