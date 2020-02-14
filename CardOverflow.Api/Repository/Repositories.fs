@@ -47,18 +47,18 @@ module FeedbackRepository =
         db.SaveChangesAsyncI()
 
 module RelationshipRepository =
-    let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_CardInstanceEntity) =
-        db.Relationship_CardInstance.AddI j
+    let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_AcquiredCardEntity) =
+        db.Relationship_AcquiredCard.AddI j
         db.SaveChangesAsyncI ()
     let removeAndSaveAsync (db: CardOverflowDb) sourceInstanceId targetInstanceId userId name =
-        db.Relationship_CardInstance.SingleOrDefault(fun x ->
-            ((x.SourceInstanceId = sourceInstanceId && x.TargetInstanceId = targetInstanceId)  ||
-             (x.SourceInstanceId = targetInstanceId && x.TargetInstanceId = sourceInstanceId)) &&
+        db.Relationship_AcquiredCard.SingleOrDefault(fun x ->
+            ((x.SourceAcquiredCard.CardInstance.Id = sourceInstanceId && x.TargetAcquiredCard.CardInstance.Id = targetInstanceId)  ||
+             (x.SourceAcquiredCard.CardInstance.Id = targetInstanceId && x.TargetAcquiredCard.CardInstance.Id = sourceInstanceId)) &&
             x.Relationship.Name = name &&
-            x.UserId = userId
+            x.SourceAcquiredCard.UserId = userId
         ) |> function
         | null -> ()
-        | x -> db.Relationship_CardInstance.RemoveI x
+        | x -> db.Relationship_AcquiredCard.RemoveI x
         db.SaveChangesAsyncI ()
 
 module CommentRepository =
@@ -214,8 +214,8 @@ module CardRepository =
                     .Select(fun x ->
                         x,
                         x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
-                        x.CardInstance.Relationship_CardInstanceSourceInstances.Where(fun x -> x.UserId = userId).Select(fun x -> x.Relationship.Name),
-                        x.CardInstance.Relationship_CardInstanceTargetInstances.Where(fun x -> x.UserId = userId).Select(fun x -> x.Relationship.Name)
+                        x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name),
+                        x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name)
                     ).SingleAsync()
             let latestInstance = CardInstanceMeta.loadLatest isAcquired e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
             let! card =
@@ -250,8 +250,8 @@ module CardRepository =
                 .Select(fun x ->
                     x,
                     x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
-                    x.CardInstance.Relationship_CardInstanceSourceInstances.Where(fun x -> x.UserId = userId).Select(fun x -> x.Relationship.Name),
-                    x.CardInstance.Relationship_CardInstanceTargetInstances.Where(fun x -> x.UserId = userId).Select(fun x -> x.Relationship.Name)
+                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name),
+                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name)
                 ).SingleOrDefaultAsync()
         return
             match r |> Core.toOption with

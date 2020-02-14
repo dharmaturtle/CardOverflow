@@ -169,18 +169,16 @@ module SanitizeRelationshipRepository =
         else Error "Couldn't find the card ID"
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetId = GetCardId command.TargetLink
-        let! exists = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstanceId = targetId)
-        do! if not exists then Error "You haven't acquired the linked card." else Ok ()
-        let! ac = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstanceId = command.SourceId)
-        let! ac = ac |> Result.ofNullable "You haven't acquired the source card."
+        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Where(fun x -> x.UserId = userId && (x.CardInstanceId = targetId || x.CardInstanceId = command.SourceId)).ToListAsync()
+        let! t = acs.SingleOrDefault(fun x -> x.CardInstanceId = targetId) |> Result.ofNullable "You haven't acquired the linked card."
+        let! s = acs.SingleOrDefault(fun x -> x.CardInstanceId = command.SourceId) |> Result.ofNullable "You haven't acquired the source card."
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         return!
-            Relationship_CardInstanceEntity(
+            Relationship_AcquiredCardEntity(
                 Relationship = r,
-                SourceInstanceId = command.SourceId,
-                TargetInstanceId = targetId,
-                UserId = userId
+                SourceAcquiredCardId = s.Id,
+                TargetAcquiredCardId = t.Id
             ) |> RelationshipRepository.addAndSaveAsync db
         }
     let Remove db sourceId targetId userId name =
