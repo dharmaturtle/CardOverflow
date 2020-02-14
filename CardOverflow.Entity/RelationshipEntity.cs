@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public RelationshipEntity()
         {
-            Relationship_CardInstances = new HashSet<Relationship_CardInstanceEntity>();
+            Relationship_AcquiredCards = new HashSet<Relationship_AcquiredCardEntity>();
         }
 
         [Key]
@@ -26,6 +26,6 @@ namespace CardOverflow.Entity
         private string _Name;
 
         [InverseProperty("Relationship")]
-        public virtual ICollection<Relationship_CardInstanceEntity> Relationship_CardInstances { get; set; }
+        public virtual ICollection<Relationship_AcquiredCardEntity> Relationship_AcquiredCards { get; set; }
     }
 }
