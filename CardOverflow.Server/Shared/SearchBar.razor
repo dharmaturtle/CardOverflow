@@ -27,17 +27,13 @@
 </EditForm>
 <span style="min-width: fit-content;">
   &nbsp;
-  @if (!String.IsNullOrWhiteSpace(BeforeId)) {
-    <a href=@CreateLink(BeforeId)>
-      <span class="oi oi-chevron-left"></span>
-    </a>
-  }
+  <a href=@CreateLink(BeforeId) style=@(String.IsNullOrWhiteSpace(BeforeId) ? "visibility: hidden" : "")>
+    <span class="oi oi-chevron-left"></span>
+  </a>
   &nbsp;
-  @if (!String.IsNullOrWhiteSpace(AfterId)) {
-    <a href=@CreateLink(AfterId)>
-      <span class="oi oi-chevron-right"></span>
-    </a>
-  }
+  <a href=@CreateLink(AfterId) style=@(String.IsNullOrWhiteSpace(AfterId) ? "visibility: hidden" : "")>
+    <span class="oi oi-chevron-right"></span>
+  </a>
 </span>
 
 @code {
