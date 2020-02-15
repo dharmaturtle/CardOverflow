@@ -262,22 +262,27 @@ module CardRepository =
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return AcquiredCard.initialize userId user.DefaultCardSettingId.Value [] // medTODO handle the null
         }
+    let private containsSearchTerm (searchTerm: string) = "\"" + searchTerm.Replace('"', ' ') + "\""
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
+        let containsSearchTerm = containsSearchTerm searchTerm
         db.AcquiredCard
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
                 String.IsNullOrWhiteSpace searchTerm ||
+                EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                 EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
     let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
+        let containsSearchTerm = containsSearchTerm searchTerm
         db.AcquiredCardIsLatest
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
                 String.IsNullOrWhiteSpace searchTerm ||
+                EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                 EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
@@ -314,12 +319,14 @@ module CardRepository =
             .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
             .Count()
     let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) (searchTerm: string) =
+        let containsSearchTerm = containsSearchTerm searchTerm
         task {
             let! r =
                 db.LatestCardInstance
                     .Where(fun x ->
                         x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm)) ||
                         String.IsNullOrWhiteSpace searchTerm ||
+                        EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                         EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
                     )
                     .Include(fun x -> x.TemplateInstance)

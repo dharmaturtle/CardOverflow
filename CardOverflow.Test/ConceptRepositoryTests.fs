@@ -289,6 +289,10 @@ let ``Card search works`` (): Task<unit> = task {
     Assert.Equal(1, cards.Results.Single().Id)
     let! cards = search "Front"
     Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "\"Front"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "Fro*"
+    Assert.Equal(1, cards.Results.Single().Id)
     let! cards = search <| Guid.NewGuid().ToString()
     Assert.Empty(cards.Results)
     let! cards = search front
