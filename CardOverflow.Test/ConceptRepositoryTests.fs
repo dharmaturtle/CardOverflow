@@ -273,11 +273,11 @@ let rec ``GetAcquired works when acquiring 2 cards of a pair; also a lot of rela
 let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let basicTag = "basic tag"
+    let basicTag = "basic"
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId [basicTag]
     let front = Guid.NewGuid().ToString()
     let back = Guid.NewGuid().ToString()
-    let! _ = FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom tag"]
+    let! _ = FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom"]
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
     do! Task.Delay 10000 // give the full text index time to rebuild

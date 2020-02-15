@@ -269,8 +269,10 @@ module CardRepository =
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
-                x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
                 String.IsNullOrWhiteSpace searchTerm ||
+                x.Tag_AcquiredCards.Any(fun x ->
+                    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
+                    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
                 EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                 EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
@@ -280,8 +282,10 @@ module CardRepository =
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
-                x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm) ||
                 String.IsNullOrWhiteSpace searchTerm ||
+                x.Tag_AcquiredCards.Any(fun x ->
+                    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
+                    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
                 EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                 EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
@@ -324,8 +328,10 @@ module CardRepository =
             let! r =
                 db.LatestCardInstance
                     .Where(fun x ->
-                        x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> x.Tag.Name.Contains searchTerm)) ||
                         String.IsNullOrWhiteSpace searchTerm ||
+                        x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x ->
+                            EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
+                            EF.Functions.FreeText(x.Tag.Name, searchTerm))) ||
                         EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                         EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
                     )
