@@ -255,7 +255,7 @@ module CardRepository =
                 ).SingleOrDefaultAsync()
         return
             match r |> Core.toOption with
-            | None -> Error "That card doesn't exist!"
+            | None -> Error (sprintf "Card #%i not found" cardId)
             | Some (e, t, rs, rt) -> AcquiredCard.load (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc e
         }
     let getNew (db: CardOverflowDb) userId = task {
