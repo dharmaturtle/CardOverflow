@@ -81,11 +81,11 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     Command = new AddRelationshipCommand { SourceId = Card.Id };
-    htmlByCardId = Card.Relationships.ToDictionary(x => x.CardId, x => "");
-    htmlByCardId = (await Card.Relationships
-      .Select(async x => (x.CardId, await UserContentHttpClient.GetStrippedFront(x.CardId)))
+    var relationshipIds = Card.Relationships.Select(x => x.CardId).Distinct();
+    htmlByCardId = relationshipIds.ToDictionary(x => x, _ => "");
+    htmlByCardId = (await relationshipIds.Select(async x => (x, await UserContentHttpClient.GetStrippedFront(x)))
       .Apply(Task.WhenAll))
-      .ToDictionary(x => x.CardId, x => x.Item2);
+      .ToDictionary(x => x.Item1, x => x.Item2);
     StateHasChanged();
   }
 
@@ -99,6 +99,9 @@
     if (x.IsOk) {
       var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
       Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, 1)).ToList();
+      if (!htmlByCardId.ContainsKey(targetId)) { // lazy GetStrippedFront - don't use TryAdd
+        htmlByCardId.Add(targetId, await UserContentHttpClient.GetStrippedFront(targetId));
+      }
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
