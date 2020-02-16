@@ -7,7 +7,8 @@ namespace CardOverflow.Entity
 {
     public partial class CardInstanceRelationshipCountEntity
     {
-        public int CardInstanceId { get; set; }
+        public int SourceCardInstanceId { get; set; }
+        public int TargetCardInstanceId { get; set; }
         [Required]
         [StringLength(250)]
         public string Name {
@@ -19,5 +20,6 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public int Count { get; set; }
+        public int CardInstanceId { get; set; }
     }
 }

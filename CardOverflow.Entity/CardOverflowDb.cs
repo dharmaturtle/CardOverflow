@@ -148,7 +148,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardInstanceRelationshipCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CardInstanceId, e.Name });
+                entity.HasKey(e => new { e.SourceCardInstanceId, e.TargetCardInstanceId, e.Name });
                 
                 entity.ToView("CardInstanceRelationshipCount");
             });
@@ -162,7 +162,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardRelationshipCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CardId, e.Name });
+                entity.HasKey(e => new { e.SourceCardId,  e.TargetCardId, e.Name });
                 
                 entity.ToView("CardRelationshipCount");
             });

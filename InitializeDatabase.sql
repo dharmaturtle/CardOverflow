@@ -434,15 +434,26 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE VIEW [dbo].[CardRelationshipCount]
 AS
-SELECT
-    c.Id CardId,
-    (SELECT TOP 1 r.Name FROM dbo.Relationship r WHERE r.Id = ri.RelationshipId) [Name],
-    COUNT(*) [Count]
-FROM dbo.Card c
-JOIN dbo.CardInstance i ON c.Id = i.CardId
-JOIN dbo.AcquiredCard ac on i.Id = ac.CardInstanceId
-JOIN dbo.Relationship_AcquiredCard ri ON (ac.Id = ri.SourceAcquiredCardId OR ac.Id = ri.TargetAcquiredCardId)
-GROUP BY c.Id, ri.RelationshipId
+SELECT * FROM (
+    SELECT
+        si.CardId SourceCardId,
+        ti.CardId TargetCardId,
+        (SELECT TOP 1 r.Name
+        FROM dbo.Relationship r
+        WHERE r.Id = rac.RelationshipId) [Name],
+        Count(*) [Count]
+    FROM dbo.Relationship_AcquiredCard rac
+    JOIN dbo.AcquiredCard sac ON rac.SourceAcquiredCardId = sac.Id
+    JOIN dbo.AcquiredCard tac ON rac.TargetAcquiredCardId = tac.Id
+    JOIN dbo.CardInstance si ON sac.CardInstanceId = si.Id
+    JOIN dbo.CardInstance ti ON tac.CardInstanceId = ti.Id
+    GROUP BY si.CardId, ti.CardId, rac.RelationshipId
+    ) X
+CROSS APPLY -- https://dba.stackexchange.com/q/259798
+    (values (X.SourceCardId),
+            (X.TargetCardId)
+    ) _ (CardId)
+
 GO
 /****** Object:  View [dbo].[CardInstanceRelationshipCount] ******/
 SET ANSI_NULLS ON
@@ -451,14 +462,23 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE VIEW [dbo].[CardInstanceRelationshipCount]
 AS
-SELECT
-    i.Id CardInstanceId,
-    (SELECT TOP 1 r.Name FROM dbo.Relationship r WHERE r.Id = ri.RelationshipId) [Name],
-    COUNT(*) [Count]
-FROM dbo.CardInstance i
-JOIN dbo.AcquiredCard ac on i.Id = ac.CardInstanceId
-JOIN dbo.Relationship_AcquiredCard ri ON (ac.Id = ri.SourceAcquiredCardId OR ac.Id = ri.TargetAcquiredCardId)
-GROUP BY i.Id, ri.RelationshipId
+SELECT * FROM (
+    SELECT
+        sac.CardInstanceId SourceCardInstanceId,
+        tac.CardInstanceId TargetCardInstanceId,
+        (SELECT TOP 1 r.Name
+        FROM dbo.Relationship r
+        WHERE r.Id = rac.RelationshipId) [Name],
+        Count(*) [Count]
+    FROM dbo.Relationship_AcquiredCard rac
+    JOIN dbo.AcquiredCard sac ON rac.SourceAcquiredCardId = sac.Id
+    JOIN dbo.AcquiredCard tac ON rac.TargetAcquiredCardId = tac.Id
+    GROUP BY sac.CardInstanceId, tac.CardInstanceId, rac.RelationshipId
+    ) X
+CROSS APPLY -- https://dba.stackexchange.com/q/259798
+    (values (X.SourceCardInstanceId),
+            (X.TargetCardInstanceId)
+    ) _ (CardInstanceId)
 GO
 /****** Object:  Table [dbo].[AlphaBetaKey] ******/
 SET ANSI_NULLS ON
