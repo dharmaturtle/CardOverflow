@@ -177,8 +177,11 @@ module SanitizeRelationshipRepository =
         let sid, tid =
             if Relationship.isDirectional command.Name then
                 s.Id, t.Id
-            else
-                min s.Id t.Id, max s.Id t.Id
+            else // if non-directional, alter the source/target ids so they're grouped properly in the DB. EG: Source=1,Target=2,Name=X and Source=2,Target=1,Name=X are seen as distinct, so this makes them the same
+                if s.CardInstanceId < t.CardInstanceId then
+                    s.Id, t.Id
+                else
+                    t.Id, s.Id
         return!
             Relationship_AcquiredCardEntity(
                 Relationship = r,

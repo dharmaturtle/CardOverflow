@@ -1683,3 +1683,4 @@ GO
 ALTER DATABASE [CardOverflow] SET  READ_WRITE 
 GO
 
+-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable

@@ -107,8 +107,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     
     let userId = 1 // this user creates the card
     for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>>) in addCards do
-        let! _ = addCard c.Db userId ["a"]
-        ()
+        let! x = addCard c.Db userId ["a"]
+        Assert.Empty x
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(
         cardIds.Count(),
@@ -174,7 +174,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             IsAcquired = true }],
         card.Value.Tags
     )
-    if cardIds.Length <> 1 then
+
+    let testRelationships userId = task {
         let addRelationshipCommand2 =
             {   Name = relationshipName
                 SourceCardId = 2
@@ -228,13 +229,15 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             
             do! successfulRemove ()
             let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
-            Assert.Null r.Value
+            Assert.Null r.Value }
+        if cardIds.Length <> 1 then
+            do! testRelationships commands.[0]
+            do! testRelationships commands.[1]
+            do! testRelationships commands.[2]
+            do! testRelationships commands.[3]
         }
-        do! testRelationships commands.[0]
-        do! testRelationships commands.[1]
-        do! testRelationships commands.[2]
-        do! testRelationships commands.[3]
-    let userId = 3 // this user never acquires the card
+
+    let userId = 3 // this user hasn't acquired the card yet
     if cardIds.Length = 1 then
         let! cards = CardRepository.SearchAsync c.Db userId 1 ""
         Assert.Equal(
@@ -268,6 +271,10 @@ let testGetAcquired (cardIds: int list) addCards name = task {
                 IsAcquired = false }],
             card2.Value.Tags
         )
+    if cardIds.Length <> 1 then // user3 acquires card in opposite order from user2
+        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+        do! testRelationships userId
     }
     
 [<Fact>]
