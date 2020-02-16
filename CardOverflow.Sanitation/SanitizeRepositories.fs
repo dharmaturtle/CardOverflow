@@ -156,9 +156,9 @@ type AddRelationshipCommand = {
     [<StringLength(250, ErrorMessage = "Name must be less than 250 characters.")>]
     Name: string
     [<Required>]
-    SourceId: int
-    [<Required>]
-    TargetLink: string
+    SourceInstanceId: int
+    [<Required>] // Source is the InstanceId, while the Target is the CardId. The target link only contains the the CardId - we get the TargetInstanceId by finding the Instance they acquired
+    TargetCardLink: string
 }
 type CardIdRegex = Regex< """(?<cardId>\d+)$""" >
 module SanitizeRelationshipRepository =
@@ -168,10 +168,10 @@ module SanitizeRelationshipRepository =
         then Ok <| int x.Value
         else Error "Couldn't find the card ID"
     let Add (db: CardOverflowDb) userId command = taskResult {
-        let! targetId = GetCardId command.TargetLink
-        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Where(fun x -> x.UserId = userId && (x.CardInstanceId = targetId || x.CardInstanceId = command.SourceId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.CardInstanceId = targetId) |> Result.ofNullable "You haven't acquired the linked card."
-        let! s = acs.SingleOrDefault(fun x -> x.CardInstanceId = command.SourceId) |> Result.ofNullable "You haven't acquired the source card."
+        let! targetCardId = GetCardId command.TargetCardLink
+        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Where(fun x -> x.UserId = userId && (x.CardInstance.CardId = targetCardId || x.CardInstanceId = command.SourceInstanceId)).ToListAsync()
+        let! t = acs.SingleOrDefault(fun x -> x.CardInstanceId <> command.SourceInstanceId) |> Result.ofNullable "You haven't acquired the linked card."
+        let! s = acs.SingleOrDefault(fun x -> x.CardInstanceId = command.SourceInstanceId) |> Result.ofNullable "You haven't acquired the source card."
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         return!

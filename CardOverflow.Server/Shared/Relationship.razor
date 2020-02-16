@@ -58,7 +58,7 @@
       </div>
       <div class="form-group col-md-7">
         <label for="TargetCardUrl">Related card URL</label>
-        <InputText @bind-Value=@Command.TargetLink class="form-control" id="TargetCardUrl" placeholder="buffbrains.io/card/1234" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <InputText @bind-Value=@Command.TargetCardLink class="form-control" id="TargetCardUrl" placeholder="buffbrains.io/card/1234" /> @*this seems to break validation: @bind-Value:event="oninput"*@
       </div>
       <div class="form-group col-md-1">
         <label>&nbsp;</label>
@@ -80,7 +80,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Command = new AddRelationshipCommand { SourceId = Card.Id };
+    Command = new AddRelationshipCommand { SourceInstanceId = Card.Instance.Id };
     var relationshipIds = Card.Relationships.Select(x => x.CardId).Distinct();
     htmlByCardId = relationshipIds.ToDictionary(x => x, _ => "");
     htmlByCardId = (await relationshipIds.Select(async x => (x, await UserContentHttpClient.GetStrippedFront(x)))
@@ -97,10 +97,10 @@
   async Task Add() {
     var x = await SanitizeRelationshipRepository.Add(Service, User.Id, Command);
     if (x.IsOk) {
-      var targetId = SanitizeRelationshipRepository.GetCardId(Command.TargetLink).ResultValue;
-      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetId, true, 1)).ToList();
-      if (!htmlByCardId.ContainsKey(targetId)) { // lazy GetStrippedFront - don't use TryAdd
-        htmlByCardId.Add(targetId, await UserContentHttpClient.GetStrippedFront(targetId));
+      var targetCardId = SanitizeRelationshipRepository.GetCardId(Command.TargetCardLink).ResultValue;
+      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetCardId, true, 1)).ToList();
+      if (!htmlByCardId.ContainsKey(targetCardId)) { // lazy GetStrippedFront - don't use TryAdd
+        htmlByCardId.Add(targetCardId, await UserContentHttpClient.GetStrippedFront(targetCardId));
       }
     } else {
       ToastService.ShowError(x.ErrorValue);

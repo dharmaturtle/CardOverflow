@@ -120,8 +120,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     let relationshipName = "test relationship"
     let addRelationshipCommand1 =
         {   Name = relationshipName
-            SourceId = 1
-            TargetLink = "2"
+            SourceInstanceId = 1
+            TargetCardLink = "2"
         }
     if cardIds.Length <> 1 then
         let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
@@ -171,8 +171,8 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     if cardIds.Length <> 1 then
         let addRelationshipCommand2 =
             {   Name = relationshipName
-                SourceId = 2
-                TargetLink = "1"
+                SourceInstanceId = 2
+                TargetCardLink = "1"
             }
         let commands = [
             addRelationshipCommand1, addRelationshipCommand1
