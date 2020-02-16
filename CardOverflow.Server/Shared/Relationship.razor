@@ -13,38 +13,38 @@
 
 <h3>Relationships</h3>
 <ul class="list-unstyled">
-  @foreach (var relationship in Card.Relationships.Where(x => !x.IsAcquired)) {
+  @foreach (var (relationship, cardId) in Card.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
     <li>
-      <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.CardId))>
+      <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
           <div class="curate-tooltip-content">
-            <ResizingIframe SrcUrl=@("/card/" + @relationship.CardId + "/front/")></ResizingIframe>
+            <ResizingIframe SrcUrl=@("/card/" + @cardId + "/front/")></ResizingIframe>
           </div>
         </span>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
-      <a href="/card/@relationship.CardId">@htmlByCardId[relationship.CardId]</a>
+      <a href="/card/@cardId">@htmlByCardId[cardId]</a>
     </li>
   }
 </ul>
 @if (User != null) {
   <h3>Your Relationships</h3>
   <ul class="list-unstyled">
-    @foreach (var relationship in Card.Relationships.Where(x => x.IsAcquired)) {
+    @foreach (var (relationship, cardId) in Card.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
       <li>
-        <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.CardId))>
+        <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
           <span class="curate-tooltip-target">
             <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
             <span class="badge badge-success">@relationship.Users</span>
             <div class="curate-tooltip-content">
-              <ResizingIframe SrcUrl=@("/card/" + @relationship.CardId + "/front/")></ResizingIframe>
+              <ResizingIframe SrcUrl=@("/card/" + @cardId + "/front/")></ResizingIframe>
             </div>
           </span>
           @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
         </button>
-        <a href="/card/@relationship.CardId">@getHtml(relationship.CardId)</a>
+        <a href="/card/@cardId">@getHtml(cardId)</a>
       </li>
     }
   </ul>
@@ -80,8 +80,8 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Command = new AddRelationshipCommand { SourceInstanceId = Card.Instance.Id };
-    var relationshipIds = Card.Relationships.Select(x => x.CardId).Distinct();
+    Command = new AddRelationshipCommand { SourceCardId = Card.Id };
+    var relationshipIds = Card.Relationships.SelectMany(x => new List<int> { x.SourceCardId, x.TargetCardId }).Distinct().Where(x => x != Card.Id).ToList();
     htmlByCardId = relationshipIds.ToDictionary(x => x, _ => "");
     htmlByCardId = (await relationshipIds.Select(async x => (x, await UserContentHttpClient.GetStrippedFront(x)))
       .Apply(Task.WhenAll))
@@ -98,30 +98,30 @@
     var x = await SanitizeRelationshipRepository.Add(Service, User.Id, Command);
     if (x.IsOk) {
       var targetCardId = SanitizeRelationshipRepository.GetCardId(Command.TargetCardLink).ResultValue;
-      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, targetCardId, true, 1)).ToList();
-      if (!htmlByCardId.ContainsKey(targetCardId)) { // lazy GetStrippedFront - don't use TryAdd
+      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, Card.Id, targetCardId, true, 1)).ToList();
+      if (targetCardId != Card.Id && !htmlByCardId.ContainsKey(targetCardId)) { // lazy GetStrippedFront - don't use TryAdd
         htmlByCardId.Add(targetCardId, await UserContentHttpClient.GetStrippedFront(targetCardId));
       }
     } else {
       ToastService.ShowError(x.ErrorValue);
-    }
+    }    
   }
 
-  async Task Acquire(string name, int targetId) {
-    var x = await SanitizeRelationshipRepository.Add(Service, User.Id, new AddRelationshipCommand(name, Card.Id, targetId.ToString()));
+  async Task Acquire(string name, int sourceCardId, int targetCardId) {
+    var x = await SanitizeRelationshipRepository.Add(Service, User.Id, new AddRelationshipCommand(name, sourceCardId, targetCardId.ToString()));
     if (x.IsOk) {
-      Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = true;
-      Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users++;
+      Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).IsAcquired = true;
+      Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).Users++;
       StateHasChanged();
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
   }
 
-  async Task Unacquire(string name, int targetCardId) {
-    await SanitizeRelationshipRepository.Remove(Service, Card.Instance.Id, targetCardId, User.Id, name);
-    Card.Relationships.Single(r => r.CardId == targetCardId && r.Name == name).IsAcquired = false;
-    Card.Relationships.Single(r => r.CardId == targetCardId && r.Name == name).Users--;
+  async Task Unacquire(string name, int sourceCardId, int targetCardId) {
+    await SanitizeRelationshipRepository.Remove(Service, sourceCardId, targetCardId, User.Id, name);
+    Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).IsAcquired = false;
+    Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).Users--;
     StateHasChanged();
   }
 

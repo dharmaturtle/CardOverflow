@@ -120,7 +120,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     let relationshipName = "test relationship"
     let addRelationshipCommand1 =
         {   Name = relationshipName
-            SourceInstanceId = 1
+            SourceCardId = 1
             TargetCardLink = "2"
         }
     if cardIds.Length <> 1 then
@@ -171,7 +171,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     if cardIds.Length <> 1 then
         let addRelationshipCommand2 =
             {   Name = relationshipName
-                SourceInstanceId = 2
+                SourceCardId = 2
                 TargetCardLink = "1"
             }
         let commands = [

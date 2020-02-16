@@ -156,8 +156,8 @@ type AddRelationshipCommand = {
     [<StringLength(250, ErrorMessage = "Name must be less than 250 characters.")>]
     Name: string
     [<Required>]
-    SourceInstanceId: int
-    [<Required>] // Source is the InstanceId, while the Target is the CardId. The target link only contains the the CardId - we get the TargetInstanceId by finding the Instance they acquired
+    SourceCardId: int
+    [<Required>]
     TargetCardLink: string
 }
 type CardIdRegex = Regex< """(?<cardId>\d+)$""" >
@@ -169,9 +169,9 @@ module SanitizeRelationshipRepository =
         else Error "Couldn't find the card ID"
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetCardId = GetCardId command.TargetCardLink
-        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Where(fun x -> x.UserId = userId && (x.CardInstance.CardId = targetCardId || x.CardInstanceId = command.SourceInstanceId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.CardInstanceId <> command.SourceInstanceId) |> Result.ofNullable "You haven't acquired the linked card."
-        let! s = acs.SingleOrDefault(fun x -> x.CardInstanceId = command.SourceInstanceId) |> Result.ofNullable "You haven't acquired the source card."
+        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.CardInstance).Where(fun x -> x.UserId = userId && (x.CardInstance.CardId = targetCardId || x.CardInstance.CardId = command.SourceCardId)).ToListAsync()
+        let! t = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = targetCardId) |> Result.ofNullable "You haven't acquired the linked card."
+        let! s = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = command.SourceCardId) |> Result.ofNullable "You haven't acquired the source card."
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid =
