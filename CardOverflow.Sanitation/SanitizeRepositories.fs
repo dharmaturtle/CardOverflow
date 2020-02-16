@@ -170,8 +170,8 @@ module SanitizeRelationshipRepository =
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetCardId = GetCardId command.TargetCardLink
         let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.CardInstance).Where(fun x -> x.UserId = userId && (x.CardInstance.CardId = targetCardId || x.CardInstance.CardId = command.SourceCardId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = targetCardId) |> Result.ofNullable "You haven't acquired the linked card."
-        let! s = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = command.SourceCardId) |> Result.ofNullable "You haven't acquired the source card."
+        let! t = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
+        let! s = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid =
