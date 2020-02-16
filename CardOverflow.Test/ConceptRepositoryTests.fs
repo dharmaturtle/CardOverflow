@@ -57,6 +57,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let cardId = 1
         
     let! card = CardRepository.Get c.Db userId cardId
+    let card = card.Value
     let! view = CardRepository.getView c.Db cardId
         
     let front, _, _, _ = view.FrontBackFrontSynthBackSynth
@@ -71,7 +72,10 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
             Count = 1
             IsAcquired = true }],
         card.Tags
-    )}
+    )
+    
+    let! card = CardRepository.Get c.Db userId 9999
+    Assert.Equal("Card #9999 not found", card.error) }
 
 [<Fact>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
@@ -86,6 +90,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
     let! card = CardRepository.Get c.Db userId 1
+    let card = card.Value
     Assert.Equal(1, card.Summary.Users)
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
@@ -122,23 +127,23 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
         Assert.Null x.Value
         let! card = CardRepository.Get c.Db userId 1
-        Assert.Equal(1, card.Relationships.Single().Users)
+        Assert.Equal(1, card.Value.Relationships.Single().Users)
         let! card = CardRepository.Get c.Db userId 2
-        Assert.Equal(1, card.Relationships.Single().Users)
+        Assert.Equal(1, card.Value.Relationships.Single().Users)
 
         do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
         let! card = CardRepository.Get c.Db userId 1
-        Assert.Equal(0, card.Relationships.Count)
+        Assert.Equal(0, card.Value.Relationships.Count)
         let! card = CardRepository.Get c.Db userId 2
-        Assert.Equal(0, card.Relationships.Count)
+        Assert.Equal(0, card.Value.Relationships.Count)
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
         Assert.Null x.Value
         do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
         let! card = CardRepository.Get c.Db userId 1
-        Assert.Equal(0, card.Relationships.Count)
+        Assert.Equal(0, card.Value.Relationships.Count)
         let! card = CardRepository.Get c.Db userId 2
-        Assert.Equal(0, card.Relationships.Count)
+        Assert.Equal(0, card.Value.Relationships.Count)
     
     let userId = 2 // this user acquires the card
     if cardIds.Length = 1 then
@@ -151,7 +156,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         [{  Name = "a"
             Count = 1
             IsAcquired = false }],
-        card.Tags
+        card.Value.Tags
     )
     let! card = CardRepository.GetAcquired c.Db userId 1
     let card = card |> Result.getOk
@@ -161,7 +166,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         [{  Name = "a"
             Count = 2
             IsAcquired = true }],
-        card.Tags
+        card.Value.Tags
     )
     if cardIds.Length <> 1 then
         let addRelationshipCommand2 =
@@ -181,17 +186,21 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
             Assert.Null x.Value
             let! card = CardRepository.Get c.Db userId 1
+            let card = card.Value
             Assert.Equal(2, card.Relationships.Single().Users)
             Assert.True(card.Relationships.Single().IsAcquired)
             let! card = CardRepository.Get c.Db userId 2
+            let card = card.Value
             Assert.Equal(2, card.Relationships.Single().Users)
             Assert.True(card.Relationships.Single().IsAcquired)
         
             do! SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
             let! card = CardRepository.Get c.Db userId 1
+            let card = card.Value
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             let! card = CardRepository.Get c.Db userId 2
+            let card = card.Value
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
 
@@ -199,9 +208,11 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             Assert.Null x.Value
             do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
             let! card = CardRepository.Get c.Db userId 1
+            let card = card.Value
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             let! card = CardRepository.Get c.Db userId 2
+            let card = card.Value
             Assert.Equal(1, card.Relationships.Count)
             Assert.False(card.Relationships.Single().IsAcquired)
             
@@ -223,7 +234,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             [{  Name = "a"
                 Count = 2
                 IsAcquired = false }],
-            card.Tags
+            card.Value.Tags
         )
     else
         let! cards = CardRepository.SearchAsync c.Db userId 1 ""
@@ -236,14 +247,14 @@ let testGetAcquired (cardIds: int list) addCards name = task {
             [{  Name = "a"
                 Count = 2
                 IsAcquired = false }],
-            card1.Tags
+            card1.Value.Tags
         )
         let! card2 = CardRepository.Get c.Db userId 2
         Assert.Equal<ViewTag seq>(
             [{  Name = "a"
                 Count = 1
                 IsAcquired = false }],
-            card2.Tags
+            card2.Value.Tags
         )
     }
     

@@ -200,40 +200,40 @@ module CardRepository =
         db.AcquiredCard.Single(fun x -> x.Id = acquiredCardId)
         |> db.AcquiredCard.RemoveI
         db.SaveChangesAsyncI ()
-    let Get (db: CardOverflowDb) userId cardId =
-        task {
-            let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
-            let! tc = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-            let! rc = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-            let! e, t, rs, rt =
-                db.LatestCardInstance
-                    .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
-                    .Include(fun x -> x.TemplateInstance)
-                    .Where(fun x -> x.CardId = cardId)
-                    .Select(fun x ->
-                        x,
-                        x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
-                        x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name),
-                        x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name)
-                    ).SingleAsync()
-            let latestInstance = CardInstanceMeta.loadLatest isAcquired e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
-            let! card =
-                if userId = 0 then
-                    db.Card
-                        .Include(fun x -> x.Author)
-                        .Include(fun x -> x.CommentCards :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CommentCardEntity) -> x.User )
-                        .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CardInstanceEntity) -> x.TemplateInstance)
-                        .SingleAsync(fun x -> x.Id = cardId)
-                else
-                    db.Card
-                        .Include(fun x -> x.Author)
-                        .Include(fun x -> x.CommentCards :> IEnumerable<_>)
-                            .ThenInclude(fun (x: CommentCardEntity) -> x.User )
-                        .SingleAsync(fun x -> x.Id = cardId)
-            return card |> ExploreCard.load userId latestInstance
+    let Get (db: CardOverflowDb) userId cardId = taskResult {
+        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        let! tc = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
+        let! rc = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
+        let! r =
+            db.LatestCardInstance
+                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                .Include(fun x -> x.TemplateInstance)
+                .Where(fun x -> x.CardId = cardId)
+                .Select(fun x ->
+                    x,
+                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
+                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name),
+                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name)
+                ).SingleOrDefaultAsync()
+        let! e, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" cardId)
+        let latestInstance = CardInstanceMeta.loadLatest isAcquired e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+        let! card =
+            if userId = 0 then
+                db.Card
+                    .Include(fun x -> x.Author)
+                    .Include(fun x -> x.CommentCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommentCardEntity) -> x.User )
+                    .Include(fun x -> x.CardInstances :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CardInstanceEntity) -> x.TemplateInstance)
+                    .SingleAsync(fun x -> x.Id = cardId)
+            else
+                db.Card
+                    .Include(fun x -> x.Author)
+                    .Include(fun x -> x.CommentCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: CommentCardEntity) -> x.User )
+                    .SingleAsync(fun x -> x.Id = cardId)
+        return card |> ExploreCard.load userId latestInstance
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
         let! tc = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()

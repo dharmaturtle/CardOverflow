@@ -261,7 +261,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     }
     
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
-    Result.getOk x
+    Assert.Empty x.Value
     
     let! refreshed = CardRepository.getView c.Db cardId
     Assert.Equal<string seq>(
@@ -278,7 +278,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
          {  Name = "b"
             Count = 1
             IsAcquired = true }],
-        card.Tags)
+        card.Value.Tags)
     Assert.Equal<string seq>(
         [newValue; newValue],
         refreshed.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)

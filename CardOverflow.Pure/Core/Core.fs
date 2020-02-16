@@ -50,10 +50,10 @@ module Result =
         then results |> Seq.map getOk |> Ok
         else errors |> Seq.map getError |> String.concat "\r\n" |> Error
 
-    let ofNullable error =
-        function
-        | null -> Error error
-        | x -> Ok x
+    let ofNullable error x =
+        match obj.ReferenceEquals(x, null) with
+        | true -> Error error
+        | false -> Ok x
 
 module Random =
     let cryptographicString length = // https://stackoverflow.com/a/1344255/625919 and https://gist.github.com/diegojancic/9f78750f05550fa6039d2f6092e461e5

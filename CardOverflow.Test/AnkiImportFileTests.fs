@@ -179,6 +179,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             "Image here"],
         c.Db.CommunalFieldInstance.Select(fun x -> MappingTools.stripHtmlTags x.Value))
     let! card = CardRepository.Get c.Db userId 1
+    let card = card.Value
     Assert.Equal<string seq>(
         [longThing; ""],
         card.Instance.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags))
@@ -186,7 +187,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
         card.Instance.StrippedFront)
     let! card = CardRepository.Get c.Db userId 1
-    Assert.Empty card.Relationships
+    Assert.Empty card.Value.Relationships
     Assert.Empty c.Db.Relationship
 
     let! clozes = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()
@@ -209,7 +210,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
-    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Instance.Id
+    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Value.Instance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
