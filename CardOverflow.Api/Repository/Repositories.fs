@@ -50,12 +50,13 @@ module RelationshipRepository =
     let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_AcquiredCardEntity) =
         db.Relationship_AcquiredCard.AddI j
         db.SaveChangesAsyncI ()
-    let removeAndSaveAsync (db: CardOverflowDb) sourceInstanceId targetInstanceId userId name =
+    let removeAndSaveAsync (db: CardOverflowDb) sourceInstanceId targetCardId userId name =
         db.Relationship_AcquiredCard.SingleOrDefault(fun x ->
-            ((x.SourceAcquiredCard.CardInstance.Id = sourceInstanceId && x.TargetAcquiredCard.CardInstance.Id = targetInstanceId)  ||
-             (x.SourceAcquiredCard.CardInstance.Id = targetInstanceId && x.TargetAcquiredCard.CardInstance.Id = sourceInstanceId)) &&
-            x.Relationship.Name = name &&
-            x.SourceAcquiredCard.UserId = userId
+            ((x.SourceAcquiredCard.CardInstanceId = sourceInstanceId && x.TargetAcquiredCard.CardInstance.CardId = targetCardId)  ||
+             (x.TargetAcquiredCard.CardInstanceId = sourceInstanceId && x.SourceAcquiredCard.CardInstance.CardId = targetCardId)) && // removes in the opposite direction - the user/UI (usually) doesn't know what the real source is - it assumes the current is always the source. lowTODO fix this by making the ViewRelationship's CardId be a DU of Source or Target CardId
+            x.SourceAcquiredCard.UserId = userId &&
+            x.TargetAcquiredCard.UserId = userId &&
+            x.Relationship.Name = name
         ) |> function
         | null -> ()
         | x -> db.Relationship_AcquiredCard.RemoveI x

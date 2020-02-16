@@ -118,10 +118,10 @@
     }
   }
 
-  async Task Unacquire(string name, int targetId) {
-    await SanitizeRelationshipRepository.Remove(Service, Card.Id, targetId, User.Id, name);
-    Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).IsAcquired = false;
-    Card.Relationships.Single(r => r.CardId == targetId && r.Name == name).Users--;
+  async Task Unacquire(string name, int targetCardId) {
+    await SanitizeRelationshipRepository.Remove(Service, Card.Instance.Id, targetCardId, User.Id, name);
+    Card.Relationships.Single(r => r.CardId == targetCardId && r.Name == name).IsAcquired = false;
+    Card.Relationships.Single(r => r.CardId == targetCardId && r.Name == name).Users--;
     StateHasChanged();
   }
 

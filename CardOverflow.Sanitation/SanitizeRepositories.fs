@@ -181,8 +181,8 @@ module SanitizeRelationshipRepository =
                 TargetAcquiredCardId = t.Id
             ) |> RelationshipRepository.addAndSaveAsync db
         }
-    let Remove db sourceId targetId userId name =
-        RelationshipRepository.removeAndSaveAsync db sourceId targetId userId name // don't eta reduce - consumed by C#
+    let Remove db sourceInstanceId targetCardId userId name =
+        RelationshipRepository.removeAndSaveAsync db sourceInstanceId targetCardId userId name // don't eta reduce - consumed by C#
 
 [<CLIMutable>]
 type SearchCommand = {

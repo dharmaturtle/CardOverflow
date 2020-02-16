@@ -139,7 +139,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
         Assert.Null x.Value
-        do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
+        do! SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName // tests removing in the opposite direction - the user/UI (usually) doesn't know what the real source is - it assumes the current is always the source
         let! card = CardRepository.Get c.Db userId 1
         Assert.Equal(0, card.Value.Relationships.Count)
         let! card = CardRepository.Get c.Db userId 2
