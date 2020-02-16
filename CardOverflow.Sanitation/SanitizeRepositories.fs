@@ -174,11 +174,16 @@ module SanitizeRelationshipRepository =
         let! s = acs.SingleOrDefault(fun x -> x.CardInstanceId = command.SourceInstanceId) |> Result.ofNullable "You haven't acquired the source card."
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
+        let sid, tid =
+            if Relationship.isDirectional command.Name then
+                s.Id, t.Id
+            else
+                min s.Id t.Id, max s.Id t.Id
         return!
             Relationship_AcquiredCardEntity(
                 Relationship = r,
-                SourceAcquiredCardId = s.Id,
-                TargetAcquiredCardId = t.Id
+                SourceAcquiredCardId = sid,
+                TargetAcquiredCardId = tid
             ) |> RelationshipRepository.addAndSaveAsync db
         }
     let Remove db sourceInstanceId targetCardId userId name =

@@ -281,7 +281,8 @@ type ViewTag = {
 [<CLIMutable>]
 type ViewRelationship = {
     Name: string
-    CardId: int
+    SourceCardId: int
+    TargetCardId: int
     IsAcquired: bool
     Users: int
 } with

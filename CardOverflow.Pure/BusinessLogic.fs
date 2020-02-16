@@ -11,6 +11,7 @@ open CardOverflow.Debug
 
 module Relationship =
     type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
+    let isDirectional = RelationshipRegex().IsMatch
     let split name =
         let x = RelationshipRegex().TypedMatch name
         if x.Success then

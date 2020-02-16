@@ -311,7 +311,8 @@ type CardInstanceMeta with
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Relationships = relationshipCounts.Select(fun x ->
                 {   Name = x.Name
-                    CardId = x.CardId
+                    SourceCardId = x.SourceCardId
+                    TargetCardId = x.TargetCardId
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> Seq.toList
@@ -334,7 +335,8 @@ type CardInstanceMeta with
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Relationships = relationshipCounts.Select(fun x ->
                 {   Name = x.Name
-                    CardId = x.CardId
+                    SourceCardId = x.SourceCardId
+                    TargetCardId = x.TargetCardId
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> Seq.toList
