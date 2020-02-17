@@ -22,6 +22,9 @@
     <None Include="..\InitializeDatabase.sql" Link="Stuff\InitializeDatabase.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\TweakDevelopment.sql" Link="Stuff\TweakDevelopment.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

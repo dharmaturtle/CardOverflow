@@ -79,6 +79,11 @@ let deleteAndRecreateDbScript =
         GO"""
     ] |> String.concat "\r\n"
 
+let tweakDevelopmentDbScript =
+    [   """USE [CardOverflow]"""
+        File.ReadAllText @"..\netcoreapp3.1\Stuff\TweakDevelopment.sql"
+    ] |> String.concat "\r\n"
+
 let runScript dbName (script: string) baseConnectionString =
     use conn = new SqlConnection(ConnectionString.value baseConnectionString)
     conn.Open()
@@ -90,10 +95,9 @@ let runScript dbName (script: string) baseConnectionString =
     |> ignore
     conn.Close()
 
-let fullReset databaseName connectionString =
-    deleteAndRecreateDbScript
-    |> runScript databaseName
-    <| connectionString
+let fullReset databaseName = runScript databaseName deleteAndRecreateDbScript
+
+let tweak databaseName = runScript databaseName tweakDevelopmentDbScript
 
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): unit =
@@ -101,6 +105,7 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): 
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
     c.GetInstance<ConnectionString>() |> fullReset "CardOverflow"
+    c.GetInstance<ConnectionString>() |> tweak "CardOverflow"
 
 let fastResetScript =
     let insertMasterData =
@@ -121,6 +126,12 @@ let fastResetScript =
         %s
         GO
         ALTER FULLTEXT CATALOG CardInstanceFieldValueFullTextCatalog REBUILD
+        GO
+        ALTER FULLTEXT CATALOG RelationshipFullTextCatalog REBUILD
+        GO
+        ALTER FULLTEXT CATALOG TagFullTextCatalog REBUILD
+        GO
+        ALTER FULLTEXT CATALOG TemplateFullTextCatalog REBUILD
         GO
         EXEC sp_MSForEachTable 'ALTER TABLE ? CHECK CONSTRAINT ALL'
         GO
