@@ -19,6 +19,7 @@ function Replace-TextInFile {
 
 Remove-Item CardOverflow.Entity\* -Include *entity.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
+Remove-Item CardOverflow.Entity\* -Include *CardOverflowDbOverride.cs
 dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
 
 Remove-Item CardOverflow.Entity\* -Include AspNet*entity.cs
@@ -86,5 +87,7 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
         }
         private string _$2;'
 }
+
+git -c diff.mnemonicprefix=false -c core.quotepath=false --no-optional-locks checkout CardOverflow.Entity/CardOverflowDbOverride.cs
 
 Read-Host -Prompt “Press Enter to exit”
