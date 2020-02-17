@@ -198,20 +198,27 @@ let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
         [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>
 
-[<Fact>]
-let ``Relationship tests``(): Task<unit> = task {
-    let cardIds = [1; 2]
-    use c = new TestContainer()
-    let userId = 1 // this user creates the card
-    for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>>) in [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ] do
-        let! x = addCard c.Db userId ["a"]
-        Assert.Empty x
-    let relationshipName = "test relationship"
+let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
         {   Name = relationshipName
             SourceCardId = 1
             TargetCardLink = "2"
         }
+    let addRelationshipCommand2 =
+        {   Name = relationshipName
+            SourceCardId = 2
+            TargetCardLink = "1"
+        }
+    let commands = [
+        addRelationshipCommand1, addRelationshipCommand1
+        addRelationshipCommand2, addRelationshipCommand2
+        addRelationshipCommand1, addRelationshipCommand2
+        addRelationshipCommand2, addRelationshipCommand1 ]
+
+    let userId = 1 // this user creates the card
+    for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>>) in [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ] do
+        let! x = addCard c.Db userId []
+        Assert.Empty x
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
@@ -232,23 +239,22 @@ let ``Relationship tests``(): Task<unit> = task {
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
     let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
-    Assert.Equal("Relationship not found between source Card #2 and target Card #1 with name \"test relationship\".", r.error)
+    Assert.Equal(sprintf "Relationship not found between source Card #2 and target Card #1 with name \"%s\"." relationshipName, r.error)
     let! card = CardRepository.Get c.Db userId 1
     Assert.Equal(1, card.Value.Relationships.Count)
     let! card = CardRepository.Get c.Db userId 2
     Assert.Equal(1, card.Value.Relationships.Count)
     do! successfulRemove ()
+
+    return commands }
+
+[<Fact>]
+let ``Nondirectional relationship tests``(): Task<unit> = task {
+    let cardIds = [1; 2]
+    use c = new TestContainer()
+    let relationshipName = Guid.NewGuid().ToString()
     
-    let addRelationshipCommand2 =
-        {   Name = relationshipName
-            SourceCardId = 2
-            TargetCardLink = "1"
-        }
-    let commands = [
-        addRelationshipCommand1, addRelationshipCommand1
-        addRelationshipCommand2, addRelationshipCommand2
-        addRelationshipCommand1, addRelationshipCommand2
-        addRelationshipCommand2, addRelationshipCommand1 ]
+    let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, acquirer) = task {
         let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
         Assert.Null x.Value
@@ -280,7 +286,7 @@ let ``Relationship tests``(): Task<unit> = task {
         let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
         Assert.Null x.Value
         let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
-        Assert.Equal("Relationship not found between source Card #2 and target Card #1 with name \"test relationship\".", r.error)
+        Assert.Equal(sprintf "Relationship not found between source Card #2 and target Card #1 with name \"%s\"." relationshipName, r.error)
         let! card = CardRepository.Get c.Db userId 1
         let card = card.Value
         Assert.Equal(1, card.Relationships.Count)
