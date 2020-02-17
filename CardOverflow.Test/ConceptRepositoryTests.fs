@@ -239,13 +239,6 @@ let ``Relationship tests``(): Task<unit> = task {
     Assert.Equal(1, card.Value.Relationships.Count)
     do! successfulRemove ()
     
-    let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
-
-    let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
     let addRelationshipCommand2 =
         {   Name = relationshipName
             SourceCardId = 2
@@ -256,7 +249,7 @@ let ``Relationship tests``(): Task<unit> = task {
         addRelationshipCommand2, addRelationshipCommand2
         addRelationshipCommand1, addRelationshipCommand2
         addRelationshipCommand2, addRelationshipCommand1 ]
-    let testRelationships (creator, acquirer) = task {
+    let testRelationships userId (creator, acquirer) = task {
         let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
         Assert.Null x.Value
         
@@ -300,10 +293,22 @@ let ``Relationship tests``(): Task<unit> = task {
         do! successfulRemove ()
         let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
         Assert.Null r.Value }
-    do! testRelationships commands.[0]
-    do! testRelationships commands.[1]
-    do! testRelationships commands.[2]
-    do! testRelationships commands.[3] }
+
+    let userId = 2 // this user acquires the card
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! testRelationships userId commands.[0]
+    do! testRelationships userId commands.[1]
+    do! testRelationships userId commands.[2]
+    do! testRelationships userId commands.[3]
+
+    let userId = 3 // this user acquires card in opposite order from user2
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! testRelationships userId commands.[0]
+    do! testRelationships userId commands.[1]
+    do! testRelationships userId commands.[2]
+    do! testRelationships userId commands.[3] }
 
 [<NCrunch.Framework.Serial>]
 [<Fact>]
