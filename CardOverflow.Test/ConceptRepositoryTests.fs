@@ -117,39 +117,6 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     let! card = CardRepository.GetAcquired c.Db userId 1
     let card = card |> Result.getOk
     Assert.Equal(userId, card.UserId)
-    let relationshipName = "test relationship"
-    let addRelationshipCommand1 =
-        {   Name = relationshipName
-            SourceCardId = 1
-            TargetCardLink = "2"
-        }
-    if cardIds.Length <> 1 then
-        let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
-        Assert.Null x.Value
-        let! card = CardRepository.Get c.Db userId 1
-        Assert.Equal(1, card.Value.Relationships.Single().Users)
-        let! card = CardRepository.Get c.Db userId 2
-        Assert.Equal(1, card.Value.Relationships.Single().Users)
-
-        let successfulRemove () = task {
-            let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
-            Assert.Null r.Value
-            let! card = CardRepository.Get c.Db userId 1
-            Assert.Equal(0, card.Value.Relationships.Count)
-            let! card = CardRepository.Get c.Db userId 2
-            Assert.Equal(0, card.Value.Relationships.Count) }
-        do! successfulRemove ()
-
-        let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
-        Assert.Null x.Value
-        let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
-        Assert.Equal("Relationship not found between source Card #2 and target Card #1 with name \"test relationship\".", r.error)
-        let! card = CardRepository.Get c.Db userId 1
-        Assert.Equal(1, card.Value.Relationships.Count)
-        let! card = CardRepository.Get c.Db userId 2
-        Assert.Equal(1, card.Value.Relationships.Count)
-
-        do! successfulRemove ()
     
     let userId = 2 // this user acquires the card
     if cardIds.Length = 1 then
@@ -165,8 +132,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         card.Value.Tags
     )
     let! card = CardRepository.GetAcquired c.Db userId 1
-    let card = card |> Result.getOk
-    TagRepository.AddTo c.Db "a" card.AcquiredCardId
+    TagRepository.AddTo c.Db "a" card.Value.AcquiredCardId
     let! card = CardRepository.Get c.Db userId 1
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
@@ -175,69 +141,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         card.Value.Tags
     )
 
-    let testRelationships userId = task {
-        let addRelationshipCommand2 =
-            {   Name = relationshipName
-                SourceCardId = 2
-                TargetCardLink = "1"
-            }
-        let commands = [
-            addRelationshipCommand1, addRelationshipCommand1
-            addRelationshipCommand2, addRelationshipCommand2
-            addRelationshipCommand1, addRelationshipCommand2
-            addRelationshipCommand2, addRelationshipCommand1 ]
-        let testRelationships (creator, acquirer) = task {
-            let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
-            Assert.Null x.Value
-        
-            let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
-            Assert.Null x.Value
-            let! card = CardRepository.Get c.Db userId 1
-            let card = card.Value
-            Assert.Equal(2, card.Relationships.Single().Users)
-            Assert.True(card.Relationships.Single().IsAcquired)
-            let! card = CardRepository.Get c.Db userId 2
-            let card = card.Value
-            Assert.Equal(2, card.Relationships.Single().Users)
-            Assert.True(card.Relationships.Single().IsAcquired)
-
-            let successfulRemove () = task {
-                let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
-                Assert.Null r.Value
-                let! card = CardRepository.Get c.Db userId 1
-                let card = card.Value
-                Assert.Equal(1, card.Relationships.Count)
-                Assert.False(card.Relationships.Single().IsAcquired)
-                let! card = CardRepository.Get c.Db userId 2
-                let card = card.Value
-                Assert.Equal(1, card.Relationships.Count)
-                Assert.False(card.Relationships.Single().IsAcquired) }
-            do! successfulRemove ()
-
-            let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
-            Assert.Null x.Value
-            let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
-            Assert.Equal("Relationship not found between source Card #2 and target Card #1 with name \"test relationship\".", r.error)
-            let! card = CardRepository.Get c.Db userId 1
-            let card = card.Value
-            Assert.Equal(1, card.Relationships.Count)
-            Assert.True(card.Relationships.Single().IsAcquired)
-            let! card = CardRepository.Get c.Db userId 2
-            let card = card.Value
-            Assert.Equal(1, card.Relationships.Count)
-            Assert.True(card.Relationships.Single().IsAcquired)
-            
-            do! successfulRemove ()
-            let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
-            Assert.Null r.Value }
-        if cardIds.Length <> 1 then
-            do! testRelationships commands.[0]
-            do! testRelationships commands.[1]
-            do! testRelationships commands.[2]
-            do! testRelationships commands.[3]
-        }
-
-    let userId = 3 // this user hasn't acquired the card yet
+    let userId = 3 // this user never acquires the card
     if cardIds.Length = 1 then
         let! cards = CardRepository.SearchAsync c.Db userId 1 ""
         Assert.Equal(
@@ -271,10 +175,6 @@ let testGetAcquired (cardIds: int list) addCards name = task {
                 IsAcquired = false }],
             card2.Value.Tags
         )
-    if cardIds.Length <> 1 then // user3 acquires card in opposite order from user2
-        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
-        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
-        do! testRelationships userId
     }
     
 [<Fact>]
@@ -292,11 +192,118 @@ let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> =
         <| nameof <@ ``GetAcquired works when acquiring 1 card of a pair`` @>
 
 [<Fact>]
-let rec ``GetAcquired works when acquiring 2 cards of a pair; also a lot of relationship tests``(): Task<unit> =
+let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
     testGetAcquired
         [1; 2]
         [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
-        <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair; also a lot of relationship tests`` @>
+        <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>
+
+[<Fact>]
+let ``Relationship tests``(): Task<unit> = task {
+    let cardIds = [1; 2]
+    use c = new TestContainer()
+    let userId = 1 // this user creates the card
+    for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>>) in [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ] do
+        let! x = addCard c.Db userId ["a"]
+        Assert.Empty x
+    let relationshipName = "test relationship"
+    let addRelationshipCommand1 =
+        {   Name = relationshipName
+            SourceCardId = 1
+            TargetCardLink = "2"
+        }
+
+    let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
+    Assert.Null x.Value
+    let! card = CardRepository.Get c.Db userId 1
+    Assert.Equal(1, card.Value.Relationships.Single().Users)
+    let! card = CardRepository.Get c.Db userId 2
+    Assert.Equal(1, card.Value.Relationships.Single().Users)
+
+    let successfulRemove () = task {
+        let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
+        Assert.Null r.Value
+        let! card = CardRepository.Get c.Db userId 1
+        Assert.Equal(0, card.Value.Relationships.Count)
+        let! card = CardRepository.Get c.Db userId 2
+        Assert.Equal(0, card.Value.Relationships.Count) }
+    do! successfulRemove ()
+
+    let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
+    Assert.Null x.Value
+    let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
+    Assert.Equal("Relationship not found between source Card #2 and target Card #1 with name \"test relationship\".", r.error)
+    let! card = CardRepository.Get c.Db userId 1
+    Assert.Equal(1, card.Value.Relationships.Count)
+    let! card = CardRepository.Get c.Db userId 2
+    Assert.Equal(1, card.Value.Relationships.Count)
+    do! successfulRemove ()
+    
+    let userId = 2 // this user acquires the card
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+
+    let userId = 3 // this user acquires card in opposite order from user2
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    let addRelationshipCommand2 =
+        {   Name = relationshipName
+            SourceCardId = 2
+            TargetCardLink = "1"
+        }
+    let commands = [
+        addRelationshipCommand1, addRelationshipCommand1
+        addRelationshipCommand2, addRelationshipCommand2
+        addRelationshipCommand1, addRelationshipCommand2
+        addRelationshipCommand2, addRelationshipCommand1 ]
+    let testRelationships (creator, acquirer) = task {
+        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
+        Assert.Null x.Value
+        
+        let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
+        Assert.Null x.Value
+        let! card = CardRepository.Get c.Db userId 1
+        let card = card.Value
+        Assert.Equal(2, card.Relationships.Single().Users)
+        Assert.True(card.Relationships.Single().IsAcquired)
+        let! card = CardRepository.Get c.Db userId 2
+        let card = card.Value
+        Assert.Equal(2, card.Relationships.Single().Users)
+        Assert.True(card.Relationships.Single().IsAcquired)
+
+        let successfulRemove () = task {
+            let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
+            Assert.Null r.Value
+            let! card = CardRepository.Get c.Db userId 1
+            let card = card.Value
+            Assert.Equal(1, card.Relationships.Count)
+            Assert.False(card.Relationships.Single().IsAcquired)
+            let! card = CardRepository.Get c.Db userId 2
+            let card = card.Value
+            Assert.Equal(1, card.Relationships.Count)
+            Assert.False(card.Relationships.Single().IsAcquired) }
+        do! successfulRemove ()
+
+        let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
+        Assert.Null x.Value
+        let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
+        Assert.Equal("Relationship not found between source Card #2 and target Card #1 with name \"test relationship\".", r.error)
+        let! card = CardRepository.Get c.Db userId 1
+        let card = card.Value
+        Assert.Equal(1, card.Relationships.Count)
+        Assert.True(card.Relationships.Single().IsAcquired)
+        let! card = CardRepository.Get c.Db userId 2
+        let card = card.Value
+        Assert.Equal(1, card.Relationships.Count)
+        Assert.True(card.Relationships.Single().IsAcquired)
+            
+        do! successfulRemove ()
+        let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
+        Assert.Null r.Value }
+    do! testRelationships commands.[0]
+    do! testRelationships commands.[1]
+    do! testRelationships commands.[2]
+    do! testRelationships commands.[3] }
 
 [<NCrunch.Framework.Serial>]
 [<Fact>]
