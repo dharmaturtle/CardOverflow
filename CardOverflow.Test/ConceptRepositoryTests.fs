@@ -249,6 +249,74 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
     return commands }
 
 [<Fact>]
+let ``Directional relationship tests``(): Task<unit> = task {
+    let cardIds = [1; 2]
+    use c = new TestContainer()
+    let relationshipName = "test/relationship"
+    
+    let! commands = relationshipTestInit c relationshipName
+    let testRelationships userId (creator, acquirer) = task {
+        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
+        Assert.Null x.Value
+        
+        let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
+        Assert.Null x.Value
+        let! card = CardRepository.Get c.Db userId 1
+        let card = card.Value
+        Assert.Equal(2, card.Relationships.Single().Users)
+        Assert.True(card.Relationships.Single().IsAcquired)
+        let! card = CardRepository.Get c.Db userId 2
+        let card = card.Value
+        Assert.Equal(2, card.Relationships.Single().Users)
+        Assert.True(card.Relationships.Single().IsAcquired)
+
+        let successfulRemove () = task {
+            let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
+            Assert.Null r.Value
+            let! card = CardRepository.Get c.Db userId 1
+            let card = card.Value
+            Assert.Equal(1, card.Relationships.Count)
+            Assert.False(card.Relationships.Single().IsAcquired)
+            let! card = CardRepository.Get c.Db userId 2
+            let card = card.Value
+            Assert.Equal(1, card.Relationships.Count)
+            Assert.False(card.Relationships.Single().IsAcquired) }
+        do! successfulRemove ()
+
+        let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
+        Assert.Null x.Value
+        let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
+        Assert.Equal(sprintf "Relationship not found between source Card #2 and target Card #1 with name \"%s\"." relationshipName, r.error)
+        let! card = CardRepository.Get c.Db userId 1
+        let card = card.Value
+        Assert.Equal(1, card.Relationships.Count)
+        Assert.True(card.Relationships.Single().IsAcquired)
+        let! card = CardRepository.Get c.Db userId 2
+        let card = card.Value
+        Assert.Equal(1, card.Relationships.Count)
+        Assert.True(card.Relationships.Single().IsAcquired)
+            
+        do! successfulRemove ()
+        let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
+        Assert.Null r.Value }
+
+    let userId = 2 // this user acquires the card
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! testRelationships userId commands.[0]
+    do! testRelationships userId commands.[1]
+    do! testRelationships userId commands.[2]
+    do! testRelationships userId commands.[3]
+
+    let userId = 3 // this user acquires card in opposite order from user2
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! testRelationships userId commands.[0]
+    do! testRelationships userId commands.[1]
+    do! testRelationships userId commands.[2]
+    do! testRelationships userId commands.[3] }
+
+[<Fact>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
     let cardIds = [1; 2]
     use c = new TestContainer()
