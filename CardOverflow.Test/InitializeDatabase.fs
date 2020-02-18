@@ -64,7 +64,11 @@ let deleteAndRecreateDbScript =
         // https://stackoverflow.com/questions/25845836/could-not-obtain-information-about-windows-nt-group-user
         """
         USE [CardOverflow]
-        GO 
+        GO
+        DBCC CHECKIDENT ('[CardInstance]', RESEED, 1001)
+        DBCC CHECKIDENT ('[CommunalFieldInstance]', RESEED, 1001)
+        DBCC CHECKIDENT ('[TemplateInstance]', RESEED, 1001)
+        GO
         ALTER DATABASE [CardOverflow] set TRUSTWORTHY ON; 
         GO 
         EXEC dbo.sp_changedbowner @loginame = N'sa', @map = false 

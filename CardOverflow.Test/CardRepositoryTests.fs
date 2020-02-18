@@ -18,6 +18,53 @@ open CardOverflow.Pure
 open CardOverflow.Sanitation
 
 [<Fact>]
+let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Empty x
+    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! ac = CardRepository.GetAcquired c.Db userId 1
+    let! x = 
+        {   EditCardCommand.EditSummary = ""
+            FieldValues = [].ToList()
+            TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
+    Assert.Empty x.Value
+
+    let i2 = 1002
+    do! CardRepository.AcquireCardAsync c.Db userId i2 // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the CardInstanceId
+    Assert.Equal(i2, c.Db.AcquiredCard.Single().CardInstanceId)
+    
+    use db = c.Db
+    db.AcquiredCard.AddI <|
+        AcquiredCardEntity(
+            CardInstanceId = i2,
+            Due = DateTime.UtcNow,
+            UserId = userId,
+            CardSettingId = userId)
+    let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
+    Assert.Equal(
+        "Cannot insert duplicate key row in object 'dbo.AcquiredCard' with unique index 'IX_AcquiredCard_UserId_CardInstanceId'. The duplicate key value is (3, 1002).
+The statement has been terminated.", 
+        ex.InnerException.Message)
+
+    let i1 = 1001
+    use db = c.Db
+    db.AcquiredCard.AddI <|
+        AcquiredCardEntity(
+            CardInstanceId = i1,
+            Due = DateTime.UtcNow,
+            UserId = userId,
+            CardSettingId = userId)
+    let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
+    Assert.Equal(
+        "Cannot insert duplicate key row in object 'dbo.UserAndCard' with unique index 'IX_UserAndCard_UserId_CardId'. The duplicate key value is (3, 1).
+The statement has been terminated.", 
+        ex.InnerException.Message)
+    }
+
+[<Fact>]
 let ``AcquireCards works``(): Task<unit> = task {
     use c = new TestContainer()
     

@@ -40,6 +40,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<TemplateEntity> Template { get; set; }
         public virtual DbSet<TemplateInstanceEntity> TemplateInstance { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
+        public virtual DbSet<UserAndCardEntity> UserAndCard { get; set; }
         public virtual DbSet<User_TemplateInstanceEntity> User_TemplateInstance { get; set; }
         public virtual DbSet<Vote_CommentCardEntity> Vote_CommentCard { get; set; }
         public virtual DbSet<Vote_CommentTemplateEntity> Vote_CommentTemplate { get; set; }
@@ -448,6 +449,13 @@ namespace CardOverflow.Entity
                     .IsUnique();
 
                 entity.HasOne(d => d.DefaultCardSetting);
+            });
+
+            modelBuilder.Entity<UserAndCardEntity>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("UserAndCard");
             });
 
             modelBuilder.Entity<User_TemplateInstanceEntity>(entity =>
