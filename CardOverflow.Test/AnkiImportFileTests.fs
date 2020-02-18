@@ -248,11 +248,11 @@ let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
     use c = new TestContainer()
     let! _ = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
 
-    let! view = CardRepository.instance c.Db 1
+    let! view = CardRepository.instance c.Db 1001
     Assert.Equal<string seq>(
         ["{{c1::Portland::city}} was founded in 1845."; "extra"],
         view.Value.FieldValues.Select(fun x -> x.Value))
-    let! view = CardRepository.instance c.Db 2
+    let! view = CardRepository.instance c.Db 1002
     Assert.Equal<string seq>(
         ["Portland was founded in {{c2::1845}}."; "extra"],
         view.Value.FieldValues.Select(fun x -> x.Value))}
@@ -309,7 +309,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
     
     // c1 and c2 cloze pair with communal Extra creates one Extra instance
     let! actual = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
-    Assert.Equal([ "Extra", 6 ] , actual)}
+    Assert.Equal([ "Extra", 1006 ] , actual)}
 
 [<Fact>]
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
@@ -320,7 +320,8 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         |> TaskX.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
-    let id = 1
+    let cardId = 1
+    let cardInstanceId = 1001
 
     let test instanceId customTest = task {
         let! acquired = CardRepository.getNew c.Db userId
@@ -346,25 +347,25 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                             .ToList()
                     TemplateInstance = template }
             |> TaskX.map Result.getOk
-        Assert.Equal<seq<string * int>>(["Back", 1], communals)
+        Assert.Equal<seq<string * int>>(["Back", 1001], communals)
         let! field = c.Db.CommunalField.SingleAsync()
-        Assert.Equal(id, field.Id)
+        Assert.Equal(cardId, field.Id)
         Assert.Equal(3, field.AuthorId)
         let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_CardInstances).SingleAsync(fun x -> x.Value = communalValue)
-        Assert.Equal(id, instance.Id)
-        Assert.Equal(id, instance.CommunalFieldId)
+        Assert.Equal(cardInstanceId, instance.Id)
+        Assert.Equal(1, instance.CommunalFieldId)
         Assert.Equal("Back", instance.FieldName)
         Assert.Equal(communalValue, instance.Value)
         Assert.Null instance.Modified
         Assert.Equal(editSummary, instance.EditSummary)
         customTest instance }
     do! test <| None <| fun i ->
-            Assert.Equal(1,  i.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
-            Assert.Equal(id, i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
+            Assert.Equal(cardInstanceId, i.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
+            Assert.Equal(1001, i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
             Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = i.Id))
-    do! test <| Some id <| fun i ->
-            Assert.Equal([1;  2],  i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId))
-            Assert.Equal([id; id], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstanceId))
+    do! test <| Some cardInstanceId <| fun i ->
+            Assert.Equal([1001; 1002], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId))
+            Assert.Equal([1001; 1001], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstanceId))
             Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = i.Id))
     Assert.SingleI c.Db.CommunalField
     Assert.SingleI c.Db.CommunalFieldInstance }

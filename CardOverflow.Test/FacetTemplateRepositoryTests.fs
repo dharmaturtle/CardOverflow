@@ -62,7 +62,7 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         ["Front mutated"; "Back mutated"],
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.AcquiredCard.Single().UserId)
-    Assert.Equal(2, c.Db.AcquiredCard.Single().CardInstanceId)
+    Assert.Equal(1002, c.Db.AcquiredCard.Single().CardInstanceId)
     Assert.Equal(
         latestInstance.Id,
         c.Db.AcquiredCard.Include(fun x -> x.CardInstance).Single().CardInstance.TemplateInstanceId)

@@ -246,12 +246,13 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let tags = ["a"; "b"]
     let! _ = addBasicCard c.Db userId tags
     let cardId = 1
+    let cardInstanceId = 1001
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
-    let! old = SanitizeCardRepository.getEdit c.Db cardId
-    let old = Result.getOk old
+    let! old = SanitizeCardRepository.getEdit c.Db cardInstanceId
+    let old = old.Value
     let updated = {
         old with
             FieldValues =

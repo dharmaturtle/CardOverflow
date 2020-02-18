@@ -102,7 +102,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
         card.Tags
     )}
 
-let testGetAcquired (cardIds: int list) addCards name = task {
+let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     use c = new TestContainer(false, name)
     
     let userId = 1 // this user creates the card
@@ -111,7 +111,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
         Assert.Empty x
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(
-        cardIds.Count(),
+        cardInstanceIds.Count(),
         acquiredCards.Results.Count()
     )
     let! card = CardRepository.GetAcquired c.Db userId 1
@@ -119,11 +119,11 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     Assert.Equal(userId, card.UserId)
     
     let userId = 2 // this user acquires the card
-    if cardIds.Length = 1 then
-        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    if cardInstanceIds.Length = 1 then
+        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
     else
-        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
-        do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
+        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
     let! card = CardRepository.Get c.Db userId 1
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
@@ -142,10 +142,10 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     )
 
     let userId = 3 // this user never acquires the card
-    if cardIds.Length = 1 then
+    if cardInstanceIds.Length = 1 then
         let! cards = CardRepository.SearchAsync c.Db userId 1 ""
         Assert.Equal(
-            cardIds.Count(),
+            cardInstanceIds.Count(),
             cards.Results.Count()
         )
         let! card = CardRepository.Get c.Db userId 1
@@ -158,7 +158,7 @@ let testGetAcquired (cardIds: int list) addCards name = task {
     else
         let! cards = CardRepository.SearchAsync c.Db userId 1 ""
         Assert.Equal(
-            cardIds.Count(),
+            cardInstanceIds.Count(),
             cards.Results.Count()
         )
         let! card1 = CardRepository.Get c.Db userId 1
@@ -180,21 +180,21 @@ let testGetAcquired (cardIds: int list) addCards name = task {
 [<Fact>]
 let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
     testGetAcquired
-        [1]
+        [1001]
         [ FacetRepositoryTests.addBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 1 basic card`` @>
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> = 
     testGetAcquired
-        [1]
+        [1001]
         [ FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 1 card of a pair`` @>
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
     testGetAcquired
-        [1; 2]
+        [1001; 1002]
         [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
         <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>
 
@@ -250,7 +250,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 
 [<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
-    let cardIds = [1; 2]
+    let cardInstanceIds = [1001; 1002]
     use c = new TestContainer()
     let relationshipName = "test/relationship"
     
@@ -301,16 +301,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -319,7 +319,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
 
 [<Fact>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
-    let cardIds = [1; 2]
+    let cardInstanceIds = [1001; 1002]
     use c = new TestContainer()
     let relationshipName = Guid.NewGuid().ToString()
     
@@ -370,16 +370,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[1]
-    do! CardRepository.AcquireCardAsync c.Db userId cardIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]

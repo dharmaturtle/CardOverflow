@@ -133,6 +133,10 @@ let fastResetScript =
         GO
         ALTER FULLTEXT CATALOG TemplateFullTextCatalog REBUILD
         GO
+        DBCC CHECKIDENT ('[CardInstance]', RESEED, 1000)
+        DBCC CHECKIDENT ('[CommunalFieldInstance]', RESEED, 1000)
+        DBCC CHECKIDENT ('[TemplateInstance]', RESEED, 1000)
+        GO
         EXEC sp_MSForEachTable 'ALTER TABLE ? CHECK CONSTRAINT ALL'
         GO
         EXEC sp_MSForEachTable 'ENABLE TRIGGER ALL ON ?'

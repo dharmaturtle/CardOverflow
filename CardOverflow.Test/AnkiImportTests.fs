@@ -214,7 +214,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         Assert.Empty card.Relationships
         let communalValue = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"
         Assert.Equal(
-            { Id = 1
+            { Id = 1001
               FieldName = "Source"
               Value = communalValue },
             card.Instance.CommunalFields.Single())
@@ -253,20 +253,20 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             command.Value.CommunalFieldValues.Select(fun x -> x.Value))
 
     let! cloze = getInstances "Cloze"
-    for card in cloze do
-        let! view = CardRepository.getView c.Db card.Id
-        if card.Id = 2 then
+    for instance in cloze do
+        let! view = CardRepository.getView c.Db instance.CardId
+        if instance.Id = 1002 then
             [   "Text", "Toxic adenomas are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
                 "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         else
             [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"
                 "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Field.Name, x.Value))
-        let! card = CardRepository.Get c.Db userId card.CardId
+        let! card = CardRepository.Get c.Db userId instance.CardId
         let card = card.Value
         let communalValue = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
         Assert.Equal(
-            {   Id = 4
+            {   Id = 1004
                 FieldName = "Text"
                 Value = communalValue },
             card.Instance.CommunalFields.Single(fun x -> x.FieldName = "Text"))
@@ -384,13 +384,13 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
         let card = card.Value
         Assert.Empty <| card.Relationships
         Assert.Equal(
-            [ { Id = 1
+            [ { Id = 1001
                 FieldName = "Back"
                 Value = "Basic (optional reversed card) back" }
-              { Id = 6
+              { Id = 1006
                 FieldName = "Front"
                 Value = "Basic (optional reversed card) front" }
-              { Id = 7
+              { Id = 1007
                 FieldName = "Add Reverse"
                 Value = "Basic (optional reversed card) reverse" }],
             card.Instance.CommunalFields)
@@ -399,12 +399,12 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
     for instance in instances do
         let! card = CardRepository.Get c.Db userId instance.CardId
         let card = card.Value
-        Assert.Empty <| card.Relationships
+        Assert.Empty card.Relationships
         Assert.Equal(
-            [ { Id = 2
+            [ { Id = 1002
                 FieldName = "Back"
                 Value = "Basic (and reversed card) back" }
-              { Id = 3
+              { Id = 1003
                 FieldName = "Front"
                 Value = "Basic (and reversed card) front" }],
             card.Instance.CommunalFields)
