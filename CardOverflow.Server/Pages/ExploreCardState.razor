@@ -10,7 +10,6 @@
 @using CardOverflow.Server.Data
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
 
 <div>
   Gotten by <span class="badge badge-success">@Card.Summary.Users</span>
@@ -18,11 +17,20 @@
     <p>Log in to Get</p>
   } else {
     @if (Card.IsAcquired) {
-      <button class="btn btn-secondary" disabled>
-        Gotten
+      <button class="btn btn-danger" @onclick=@_discard>
+        Discard
       </button>
+      @if (AcquiredCard.CardState.IsSuspended) {
+        <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Normal))>
+          Unsuspend
+        </button>
+      } else {
+        <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Suspended))>
+          Suspend
+        </button>
+      }
     } else {
-      <button class="btn btn-primary" @onclick=@(() => Acquire(Card.Instance.Id))>
+      <button class="btn btn-primary" @onclick=@_acquire>
         Get
       </button>
     }
@@ -34,16 +42,34 @@
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
   [Parameter] public AcquiredCard AcquiredCard { get; set; }
 
-  async Task Acquire(int cardId) {
-    await CardRepository.AcquireCardAsync(Service, User.Id, cardId);
-    var ac = await CardRepository.GetAcquired(Service, User.Id, cardId);
+  private async Task _acquire() {
+    await DbExecutor.QueryAsync(db => CardRepository.AcquireCardAsync(db, User.Id, Card.Instance.Id));
+    var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
     if (ac.IsOk) {
       AcquiredCard = ac.ResultValue;
       Card.Instance.IsAcquired = true;
       Card.Summary.Users++;
-      StateHasChanged();
     } else {
       ToastService.ShowError(ac.ErrorValue);
+    }
+  }
+
+  private async Task _discard() {
+    var x = await DbExecutor.QueryAsync(db => CardRepository.deleteAcquired(db, User.Id, AcquiredCard.AcquiredCardId));
+    if (x.IsOk) {
+      Card.Instance.IsAcquired = false;
+      Card.Summary.Users--;
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  private async Task _editState(CardState state) {
+    var x = await DbExecutor.QueryAsync(db => CardRepository.editState(db, User.Id, AcquiredCard.AcquiredCardId, state));
+    if (x.IsOk) {
+      AcquiredCard.CardState = state;
+    } else {
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 
