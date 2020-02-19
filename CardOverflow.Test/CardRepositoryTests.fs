@@ -18,6 +18,34 @@ open CardOverflow.Pure
 open CardOverflow.Sanitation
 
 [<Fact>]
+let ``CardRepository.editState works``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Empty x
+    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! ac = CardRepository.GetAcquired c.Db userId 1
+    
+    let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
+    Assert.Null x.Value
+    let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
+    Assert.Equal(ac.Value.CardState, CardState.Suspended)
+
+    let! x = 
+        {   EditCardCommand.EditSummary = ""
+            FieldValues = [].ToList()
+            TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
+    Assert.Empty x.Value
+    let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
+    Assert.Equal(ac.Value.CardState, CardState.Suspended) // still suspended after edit
+
+    let userId = 2 // other users can't edit card state
+    let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
+    Assert.Equal("You don't own that card.", x.error)
+    }
+
+[<Fact>]
 let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3

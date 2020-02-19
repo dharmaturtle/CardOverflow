@@ -162,6 +162,12 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module CardRepository =
+    let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
+            let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+            let! ac = ac |> Result.ofNullable "You don't own that card."
+            ac.CardState <- CardState.toDb state
+            return! db.SaveChangesAsyncI()
+        }
     let instance (db: CardOverflowDb) instanceId = task {
         let! r =
             db.CardInstance
