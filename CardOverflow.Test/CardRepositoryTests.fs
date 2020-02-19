@@ -18,6 +18,52 @@ open CardOverflow.Pure
 open CardOverflow.Sanitation
 
 [<Fact>]
+let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Empty x
+    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let getAcquired () = task { return! CardRepository.GetAcquired c.Db userId 1 }
+    let! ac = getAcquired ()
+
+    let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
+    Assert.Null x.Value
+    Assert.Empty c.Db.AcquiredCard
+
+    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.Value.CardInstanceMeta.Id }
+    
+    do! reacquire ()
+    let! ac = getAcquired ()
+    let! x = 
+        {   EditCardCommand.EditSummary = ""
+            FieldValues = [].ToList()
+            TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
+    Assert.Empty x.Value
+    let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
+    Assert.Null x.Value
+    Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
+
+    let userId = 3
+    do! reacquire ()
+    let! ac = getAcquired ()
+    let! batch = CardRepository.GetQuizBatch c.Db userId ""
+    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
+    Assert.NotEmpty c.Db.AcquiredCard
+    Assert.NotEmpty c.Db.History
+    let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
+    Assert.Null x.Value
+    Assert.Empty c.Db.AcquiredCard // still empty after adding a history
+    Assert.Empty c.Db.History
+    
+    do! reacquire ()
+    let otherUserId = 2
+    let! x = CardRepository.deleteAcquired c.Db otherUserId ac.Value.AcquiredCardId
+    Assert.Equal("You don't own that card.", x.error) // other users can't delete your card
+    }
+
+[<Fact>]
 let ``CardRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
@@ -159,7 +205,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(1, count)
 
     let! a = CardRepository.GetQuizBatch c.Db acquirerId ""
-    let getId (x: Result<QuizCard, string> seq) = x.First() |> Result.getOk |> fun x -> x.AcquiredCardId
+    let getId (x: Result<QuizCard, string> seq) = x.First().Value.AcquiredCardId
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     let! b = CardRepository.GetQuizBatch c.Db acquirerId ""
     Assert.NotEqual(getId a, getId b)

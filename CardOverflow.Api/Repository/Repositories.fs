@@ -147,11 +147,8 @@ module TemplateRepository =
         }
 
 module HistoryRepository =
-    let addAndSaveAsync (db: CardOverflowDb) e =
-        db.History.AddI e
-        db.SaveChangesAsyncI ()
     let getHeatmap (db: CardOverflowDb) userId = task {
-        let oneYearishAgo = DateTime.UtcNow - TimeSpan.FromDays (53. * 7. - 1.) // always show full weeks; -1 is from allDateCounts being inclusive
+        let oneYearishAgo = DateTime.UtcNow - TimeSpan.FromDays (53. * 7. - 1.) // always show full weeks of slightly more than a year; -1 is from allDateCounts being inclusive
         let! dateCounts =
             (query {
                 for h in db.History do
@@ -162,6 +159,12 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module CardRepository =
+    let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {
+            let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+            let! ac = ac |> Result.ofNullable "You don't own that card."
+            db.AcquiredCard.RemoveI ac
+            return! db.SaveChangesAsyncI()
+        }
     let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
             let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             let! ac = ac |> Result.ofNullable "You don't own that card."
@@ -269,7 +272,7 @@ module CardRepository =
                 ).SingleOrDefaultAsync()
         return
             match r |> Core.toOption with
-            | None -> Error (sprintf "Card #%i not found" cardId)
+            | None -> Error (sprintf "Card #%i not found for User #%i" cardId userId)
             | Some (e, t, rs, rt) -> AcquiredCard.load (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc e
         }
     let getNew (db: CardOverflowDb) userId = task {
