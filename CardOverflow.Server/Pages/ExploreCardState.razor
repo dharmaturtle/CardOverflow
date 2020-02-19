@@ -1,0 +1,50 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Legacy
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inherits OwningComponentBase<CardOverflowDb>
+
+<div>
+  Gotten by <span class="badge badge-success">@Card.Summary.Users</span>
+  @if (User == null) {
+    <p>Log in to Get</p>
+  } else {
+    @if (Card.IsAcquired) {
+      <button class="btn btn-secondary" disabled>
+        Gotten
+      </button>
+    } else {
+      <button class="btn btn-primary" @onclick=@(() => Acquire(Card.Instance.Id))>
+        Get
+      </button>
+    }
+  }
+</div>
+
+@code {
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+  [Parameter] public AcquiredCard AcquiredCard { get; set; }
+
+  async Task Acquire(int cardId) {
+    await CardRepository.AcquireCardAsync(Service, User.Id, cardId);
+    var ac = await CardRepository.GetAcquired(Service, User.Id, cardId);
+    if (ac.IsOk) {
+      AcquiredCard = ac.ResultValue;
+      Card.Instance.IsAcquired = true;
+      Card.Summary.Users++;
+      StateHasChanged();
+    } else {
+      ToastService.ShowError(ac.ErrorValue);
+    }
+  }
+
+}
