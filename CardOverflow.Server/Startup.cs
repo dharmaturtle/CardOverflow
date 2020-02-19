@@ -32,14 +32,13 @@ namespace CardOverflow.Server {
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
-      services.AddSingleton(
-        new DbContextOptionsBuilder<CardOverflowDb>()
-          .UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
-          .Options
-        );
+      DbContextOptionsBuilder buildOptions(DbContextOptionsBuilder builder) =>
+        builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+      services.AddSingleton(buildOptions(new DbContextOptionsBuilder<CardOverflowDb>()).Options);
       services.AddSingleton<DbExecutor>();
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-      services.AddDbContext<CardOverflowDb>();
+      services.AddEntityFrameworkSqlServer();
+      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => buildOptions(optionsBuilder));
       services.AddDefaultIdentity<UserEntity>(options => {
         options.User.RequireUniqueEmail = true;
         options.Password.RequireDigit = true;

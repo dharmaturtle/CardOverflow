@@ -1,5 +1,15 @@
 module ContainerExtensions
 
+open Microsoft.Extensions.Configuration;
+open Microsoft.Extensions.DependencyInjection;
+open CardOverflow.Api;
+open CardOverflow.Entity;
+open CardOverflow.Debug;
+open Microsoft.EntityFrameworkCore;
+open Microsoft.Extensions.Configuration;
+open Microsoft.Extensions.DependencyInjection;
+open Serilog;
+open Microsoft.Extensions.Logging;
 open CardOverflow.Api
 open SimpleInjector
 open SimpleInjector.Lifestyles
@@ -48,22 +58,26 @@ type EntityHasher () =
 type Container with
     member container.RegisterStuffTestOnly =
         container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle()
-        container.RegisterSingleton<IEntityHasher, EntityHasher>()
         container.RegisterInstance<IConfiguration>(Environment.get |> Configuration.get)
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
-        
-        container.RegisterSingleton<DbContextOptions<CardOverflowDb>>(fun () ->
-            let loggerFactory = new Microsoft.Extensions.Logging.LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
-            loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
-            DbContextOptionsBuilder<CardOverflowDb>()
-                .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value)
-                //.UseLoggerFactory(loggerFactory)
-                //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3, medTODO actually test this
-                //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
-                //.EnableSensitiveDataLogging(true)
-                .Options)
-        container.Register<CardOverflowDb> Lifestyle.Scoped
+        let loggerFactory = new LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
+        ServiceCollection() // https://stackoverflow.com/a/60290696
+            .AddEntityFrameworkSqlServer()
+            .AddSingleton<ILoggerFactory>(loggerFactory)
+            .AddSingleton<IEntityHasher, EntityHasher>()
+            .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
+                //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
+                optionsBuilder
+                    .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value)
+                    //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3, medTODO actually test this
+                    //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
+                    //.EnableSensitiveDataLogging(true)
+                    |> ignore)
+            .AddSimpleInjector(container)
+            .BuildServiceProvider(true)
+            .UseSimpleInjector(container)
+            |> ignore
     
     member container.RegisterStandardConnectionString =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection") |> ConnectionString)

@@ -9,6 +9,8 @@ using System.Threading;
 using System.Linq;
 using Microsoft.FSharp.Core;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CardOverflow.Entity {
 
@@ -17,11 +19,12 @@ namespace CardOverflow.Entity {
     FSharpFunc<(TemplateInstanceEntity, SHA512), byte[]> TemplateInstanceHasher { get; }
   }
 
+  // This class should not store custom state due to usage of `AddDbContextPool`
   public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int> {
     private readonly IEntityHasher _entityHasher;
 
-    public CardOverflowDb(DbContextOptions<CardOverflowDb> options, IEntityHasher entityHasher) : base(options) {
-      _entityHasher = entityHasher;
+    public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
+      _entityHasher = this.GetService<IEntityHasher>();
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess) {
