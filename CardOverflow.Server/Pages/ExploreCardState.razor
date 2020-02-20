@@ -17,7 +17,7 @@
     <p>Log in to Get</p>
   } else {
     @if (Card.IsAcquired) {
-      <button class="btn btn-danger" @onclick=@_discard>
+      <button class="btn btn-danger" @onclick=@(() => _modal.Show())>
         Discard
       </button>
       @if (AcquiredCard.CardState.IsSuspended) {
@@ -37,10 +37,37 @@
   }
 </div>
 
+<BSModal @ref=_modal>
+  <BSModalHeader>
+    Are you sure you want to discard?
+  </BSModalHeader>
+  <BSModalBody>
+    <div>
+      Discarding a card will delete all all of it's associated Tags, Relationships, and History. Are you sure you want to discard?
+    </div>
+    <div class="small">
+      <em>Suspending will preserve the above data and prevent the card from appearing when you Study.</em>
+    </div>
+  </BSModalBody>
+  <BSModalFooter >
+    <div>
+      <BSButton Color="Color.Secondary" OnClick=_modal.Hide type="button">
+        Cancel
+      </BSButton>
+      <BSButton Color="Color.Danger" @onclick=@_discard>
+        Discard
+      </BSButton>
+    </div>
+  </BSModalFooter>
+</BSModal>
+
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
   [Parameter] public AcquiredCard AcquiredCard { get; set; }
+  [Parameter] public EventCallback<CardOverflow.Pure.ExploreCard> UpdateCard { get; set; }
+  [Parameter] public EventCallback<AcquiredCard> UpdateAcquiredCard { get; set; }
+  private BSModal _modal;
 
   private async Task _acquire() {
     await DbExecutor.QueryAsync(db => CardRepository.AcquireCardAsync(db, User.Id, Card.Instance.Id));
@@ -49,6 +76,8 @@
       AcquiredCard = ac.ResultValue;
       Card.Instance.IsAcquired = true;
       Card.Summary.Users++;
+      await UpdateAcquiredCard.InvokeAsync(AcquiredCard);
+      await UpdateCard.InvokeAsync(Card);
     } else {
       ToastService.ShowError(ac.ErrorValue);
     }
@@ -59,9 +88,13 @@
     if (x.IsOk) {
       Card.Instance.IsAcquired = false;
       Card.Summary.Users--;
+      AcquiredCard = null;
+      await UpdateAcquiredCard.InvokeAsync(AcquiredCard);
+      await UpdateCard.InvokeAsync(Card);
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
+    _modal.Hide();
   }
 
   private async Task _editState(CardState state) {

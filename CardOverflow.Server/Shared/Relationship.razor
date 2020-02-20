@@ -29,7 +29,7 @@
     </li>
   }
 </ul>
-@if (User != null) {
+@if (Card.IsAcquired) {
   <h3>Your Relationships</h3>
   <ul class="list-unstyled">
     @foreach (var (relationship, cardId) in Card.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {

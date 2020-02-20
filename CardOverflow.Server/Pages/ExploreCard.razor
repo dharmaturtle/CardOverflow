@@ -17,7 +17,7 @@
 } else {
   <div class="d-flex justify-content-between align-items-center">
     <div>
-      <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard/>
+      <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard UpdateAcquiredCard=@(x => AcquiredCard = x) UpdateCard=@(x => Card = x)/>
     </div>
     <div>
       By @Card.Author
@@ -49,7 +49,7 @@
         </li>
       }
     </ul>
-    @if (User != null) {
+    @if (Card.IsAcquired) {
       <h3>Your Tags</h3>
       <ul class="d-flex flex-wrap list-unstyled">
         @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {

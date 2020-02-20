@@ -61,6 +61,7 @@ namespace CardOverflow.Server {
         .CreateLogger();
       services.AddLogging(x => x
         .AddFilter("Microsoft.AspNetCore", LogLevel.Warning)
+        .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning)
       );
     }
 

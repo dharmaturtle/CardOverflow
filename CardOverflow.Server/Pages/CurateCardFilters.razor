@@ -63,15 +63,12 @@
 </BSModal>
 
 @code {
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public string Query { get; set; }
+  [Parameter] public EventCallback<SearchCommand> DeckClicked { get; set; }
+  private List<ViewFilter> _filters = new List<ViewFilter>();
+  private ViewFilter _activeFilter = new ViewFilter();
   BSModal Modal;
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  [Parameter]
-  public string Query { get; set; }
-  [Parameter]
-  public EventCallback<SearchCommand> DeckClicked { get; set; }
-  List<ViewFilter> _filters = new List<ViewFilter>();
-  ViewFilter _activeFilter = new ViewFilter();
 
   protected override async Task OnInitializedAsync() {
     _filters = await SanitizeFilterRepository.Get(Service, User?.Id ?? 0);
