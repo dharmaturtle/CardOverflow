@@ -169,6 +169,7 @@ module SanitizeRelationshipRepository =
         else Error "Couldn't find the card ID"
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetCardId = GetCardId command.TargetCardLink
+        do! if targetCardId = command.SourceCardId then Error "A card can't be related to itself" else Ok ()
         let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.CardInstance).Where(fun x -> x.UserId = userId && (x.CardInstance.CardId = targetCardId || x.CardInstance.CardId = command.SourceCardId)).ToListAsync()
         let! t = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
         let! s = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)

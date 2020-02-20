@@ -249,6 +249,22 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
     return commands }
 
 [<Fact>]
+let ``Relationships can't be self related``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Empty x
+    let addRelationshipCommand =
+        {   Name = ""
+            SourceCardId = 1
+            TargetCardLink = string 1
+        }
+
+    let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
+    
+    Assert.Equal("A card can't be related to itself", x.error) }
+
+[<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
     let cardInstanceIds = [1001; 1002]
     use c = new TestContainer()

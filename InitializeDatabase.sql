@@ -446,6 +446,7 @@ CREATE TABLE [dbo].[Relationship_AcquiredCard](
 	[SourceAcquiredCardId] [int] NOT NULL,
 	[TargetAcquiredCardId] [int] NOT NULL,
 	[RelationshipId] [int] NOT NULL,
+	CONSTRAINT source_not_equal_target CHECK(SourceAcquiredCardId <> TargetAcquiredCardId),
  CONSTRAINT [PK_Relationship_AcquiredCard] PRIMARY KEY CLUSTERED 
 (
 	[SourceAcquiredCardId] ASC,
