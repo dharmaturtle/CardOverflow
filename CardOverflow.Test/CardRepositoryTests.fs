@@ -48,18 +48,35 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let userId = 3
     do! reacquire ()
     let! ac = getAcquired ()
+    let ac = ac.Value
     let! batch = CardRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
-    Assert.NotEmpty c.Db.AcquiredCard
-    Assert.NotEmpty c.Db.History
-    let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
+    TagRepository.AddTo c.Db "tag" ac.AcquiredCardId
+    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Empty x
+    let! card2 = c.Db.Card.SingleOrDefaultAsync(fun x -> x.Id <> ac.CardId)
+    let card2 = card2.Id
+    let addRelationshipCommand =
+        {   Name = "my relationship"
+            SourceCardId = 1
+            TargetCardLink = string card2
+        }
+    let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
     Assert.Null x.Value
-    Assert.Empty c.Db.AcquiredCard // still empty after adding a history
+    Assert.NotEmpty c.Db.AcquiredCard
+    Assert.NotEmpty c.Db.Relationship_AcquiredCard
+    Assert.NotEmpty c.Db.History
+    Assert.NotEmpty c.Db.Tag_AcquiredCard
+    let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId // can delete after adding a history, tag, and relationship
+    Assert.Null x.Value
+    Assert.Equal(card2, c.Db.AcquiredCard.Include(fun x -> x.CardInstance).Single().CardInstance.CardId) // from the other side of the relationship
+    Assert.Empty c.Db.Relationship_AcquiredCard
     Assert.Empty c.Db.History
+    Assert.Empty c.Db.Tag_AcquiredCard
     
     do! reacquire ()
     let otherUserId = 2
-    let! x = CardRepository.deleteAcquired c.Db otherUserId ac.Value.AcquiredCardId
+    let! x = CardRepository.deleteAcquired c.Db otherUserId ac.AcquiredCardId
     Assert.Equal("You don't own that card.", x.error) // other users can't delete your card
     }
 
