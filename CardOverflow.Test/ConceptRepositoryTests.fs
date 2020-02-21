@@ -99,8 +99,14 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
          {  Name = "b"
             Count = 1
             IsAcquired = true }],
-        card.Tags
-    )}
+        card.Tags)
+    
+    let! ac = CardRepository.GetAcquired c.Db userId card.Id
+    let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
+    Assert.Null x.Value
+    let! card = CardRepository.Get c.Db userId 1
+    Assert.Equal(0, card.Value.Summary.Users) // suspended cards don't count to User count
+    }
 
 let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     use c = new TestContainer(false, name)

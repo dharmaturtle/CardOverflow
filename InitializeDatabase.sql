@@ -1,4 +1,4 @@
-﻿USE [master]
+USE [master]
 GO
 /****** Object:  Database [CardOverflow] ******/
 CREATE DATABASE [CardOverflow]
@@ -1664,14 +1664,14 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM inserted)
 	BEGIN
 		UPDATE	dbo.CardInstance
-		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = i.CardInstanceId)
+		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = i.CardInstanceId AND CardState <> 3)
 		FROM	inserted i
 		WHERE	dbo.CardInstance.Id = i.CardInstanceId
 	END
 	IF EXISTS (SELECT 1 FROM deleted)
 	BEGIN
 		UPDATE	dbo.CardInstance
-		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = d.CardInstanceId)
+		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = d.CardInstanceId AND CardState <> 3)
 		FROM	deleted d
 		WHERE	dbo.CardInstance.Id = d.CardInstanceId
 	END
