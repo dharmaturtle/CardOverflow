@@ -14,13 +14,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Microsoft.Extensions.Logging;
+using Westwind.AspNetCore.LiveReload;
 
 namespace CardOverflow.Server {
   public class Startup {
+    private readonly IWebHostEnvironment _env;
 
-    public Startup() =>
-      Configuration =
-        ContainerExtensions.Configuration.get(ContainerExtensions.Environment.get);
+    public Startup(IWebHostEnvironment env) {
+      Configuration = ContainerExtensions.Configuration.get(ContainerExtensions.Environment.get);
+      _env = env;
+    }
 
     public IConfiguration Configuration { get; }
 
@@ -54,6 +57,13 @@ namespace CardOverflow.Server {
       services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<UserEntity>>();
       services.AddSingleton<WeatherForecastService>();
       services.AddHttpClient<UserContentHttpClient>();
+      if (_env.IsDevelopment()) {
+        services.AddLiveReload(config => {
+          config.LiveReloadEnabled = true;
+          config.ClientFileExtensions = ".css,.js,.htm,.html";
+          config.FolderToMonitor = "~/../";
+        });
+      }
 
       Log.Logger = new LoggerConfiguration()
         .ReadFrom
@@ -66,10 +76,11 @@ namespace CardOverflow.Server {
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+    public void Configure(IApplicationBuilder app) {
       app.UseRouting();
 
-      if (env.IsDevelopment()) {
+      if (_env.IsDevelopment()) {
+        app.UseLiveReload();
         app.UseDeveloperExceptionPage();
         app.UseDatabaseErrorPage();
       } else {
