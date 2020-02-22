@@ -20,8 +20,8 @@ namespace CardOverflow.Server {
   public class Startup {
     private readonly IWebHostEnvironment _env;
 
-    public Startup(IWebHostEnvironment env) {
-      Configuration = ContainerExtensions.Configuration.get(ContainerExtensions.Environment.get);
+    public Startup(IWebHostEnvironment env, IConfiguration configuration) {
+      Configuration = configuration;
       _env = env;
     }
 

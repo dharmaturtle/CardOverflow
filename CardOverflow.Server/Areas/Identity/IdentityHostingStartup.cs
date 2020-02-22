@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using CardOverflow.Entity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -14,8 +15,12 @@ namespace CardOverflow.Server.Areas.Identity
     {
         public void Configure(IWebHostBuilder builder)
         {
-            builder.ConfigureServices((context, services) => {
-            });
+            builder
+                .ConfigureServices((context, services) => {})
+                .ConfigureAppConfiguration((builderContext, config) =>
+                    config
+                        .SetBasePath(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "config"))
+            );
         }
     }
 }
