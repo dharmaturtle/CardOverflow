@@ -174,14 +174,12 @@ module CardRepository =
             return! db.SaveChangesAsyncI()
         }
     let instance (db: CardOverflowDb) instanceId = task {
-        let! r =
+        match!
             db.CardInstance
-                .Include(fun x -> x.TemplateInstance)
-                .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
-        return
-            match r with
-            | null -> Error "Card instance not found"
-            | x -> Ok <| CardInstanceView.load x
+            .Include(fun x -> x.TemplateInstance)
+            .SingleOrDefaultAsync(fun x -> x.Id = instanceId) with
+        | null -> return Error "Card instance not found"
+        | x -> return Ok <| CardInstanceView.load x
     }
     let getView (db: CardOverflowDb) cardId = task {
         let! r =
