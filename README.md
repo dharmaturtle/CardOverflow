@@ -2,9 +2,13 @@
 
 StackOverflow for flashcards.
 
+Video demo:
+
+[![Video demo](https://img.youtube.com/vi/OdNVhK1odA8/maxresdefault.jpg)](https://youtu.be/OdNVhK1odA8)
+
 ## Getting started
 
-1. Create an empty database named `CardOverflow` in SQL Server. 
+1. Create an empty database in SQL Server.
 2. Duplicate `Config\appsettings.Local.json.template`, renaming it `appsettings.Local.json`. Update the connection string to point to the database you just created.
 3. Run the test named `Delete and Recreate localhost's CardOverflow Database via SqlScript` in `CardOverflow.Test\InitializeDatabase.fs`.
 4. Set `CardOverflow.Server` as the startup project and `F5` or run `CardOverflow.Server\dotnet-watch-run.ps1`.
