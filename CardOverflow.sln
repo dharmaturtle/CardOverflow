@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28711.60
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardOverflow.Server", "CardOverflow.Server\CardOverflow.Server.csproj", "{A24868D8-6143-4EE4-8B54-6A65FD686A77}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardOverflow.Web", "CardOverflow.Web\CardOverflow.Web.csproj", "{6D7C7598-9BDD-45F8-906E-B319B6626C7C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardOverflow.Entity", "CardOverflow.Entity\CardOverflow.Entity.csproj", "{598C6752-15D4-4545-89E7-D8885043C6DD}"
@@ -34,8 +36,6 @@ EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.Pure", "CardOverflow.Pure\CardOverflow.Pure.fsproj", "{FF9547D0-4AA5-406E-AED7-AB36E01B64F5}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.TestConsole", "CardOverflow.TestConsole\CardOverflow.TestConsole.fsproj", "{948D2E7C-E88D-4F30-8A0A-2B0CDD10FDDB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardOverflow.Server", "CardOverflow.Server\CardOverflow.Server.csproj", "{A24868D8-6143-4EE4-8B54-6A65FD686A77}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
