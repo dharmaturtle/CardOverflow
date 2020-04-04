@@ -39,6 +39,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+            ParentId = None
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
     Assert.Empty x.Value
     let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
@@ -98,6 +99,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+            ParentId = None
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
     Assert.Empty x.Value
     let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
@@ -120,6 +122,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+            ParentId = None
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
     Assert.Empty x.Value
 
@@ -188,7 +191,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_1));
 
     let! ac = CardRepository.GetAcquired c.Db authorId c1
-    let! v = SanitizeCardRepository.getEdit c.Db ci1_1
+    let! v = SanitizeCardRepository.getEdit c.Db ci1_1 None
     let v = { v.Value with FieldValues = [].ToList() }
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac.Value v.load
     Assert.Empty x.Value

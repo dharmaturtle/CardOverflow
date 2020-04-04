@@ -101,7 +101,7 @@
       Templates = await SanitizeTemplate.GetMine(Service, User?.Id ?? 0);
     }
     if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First());
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), FSharpOption<int>.None);
       NewEditCardOnSave = true;
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
@@ -126,7 +126,7 @@
             return new EditFieldAndValue(x.EditField, "", x.Communal);
           }
         }).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance);
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance, FSharpOption<int>.None);
         UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
       }
     } else {

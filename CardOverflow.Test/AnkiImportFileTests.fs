@@ -195,7 +195,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [longThing; ""]
 
     let initialInstance = clozes.First()
-    let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
+    let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id None
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
@@ -210,7 +210,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
-    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Value.Instance.Id
+    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Value.Instance.Id None
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
@@ -345,7 +345,9 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     Communal = communal
                                 })
                             .ToList()
-                    TemplateInstance = template }
+                    TemplateInstance = template
+                    ParentId = None
+                }
             |> TaskX.map Result.getOk
         Assert.Equal<seq<string * int>>(["Back", 1001], communals)
         let! field = c.Db.CommunalField.SingleAsync()
@@ -389,6 +391,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     { TemplateInstance.initialize with
                         QuestionTemplate = questionTemplate
                     } |> ViewTemplateInstance.load
+                ParentId = None
             }
         if questionTemplate.Contains "cloze" then
             Assert.Equal<string seq>(["Front"], view.TemplateInstance.ClozeFields)
@@ -428,6 +431,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                         QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
                         AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                     } |> ViewTemplateInstance.load
+                ParentId = None
             }
         Assert.Equal<string seq>(["Front"; "Back"], view.TemplateInstance.ClozeFields)
         view.Backs.Value

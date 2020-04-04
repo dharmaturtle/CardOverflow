@@ -206,6 +206,7 @@ type ViewEditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: ViewTemplateInstance
+    ParentId: int option
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -238,6 +239,7 @@ type ViewEditCardCommand = {
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             TemplateInstance = this.TemplateInstance |> ViewTemplateInstance.copyTo
+            ParentId = this.ParentId
         }
     member this.CommunalFieldValues =
         this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
@@ -247,7 +249,7 @@ type ViewEditCardCommand = {
             .ToList()
 
 module SanitizeCardRepository =
-    let getEdit (db: CardOverflowDb) cardInstanceId = task {
+    let getEdit (db: CardOverflowDb) cardInstanceId parentId = task { // veryLowTODO validate parentId
         let! instance =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
@@ -256,7 +258,7 @@ module SanitizeCardRepository =
                 .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
         return
             match instance with
-            | null -> Error "Card instance not found"
+            | null -> Error <| sprintf "Card instance %i not found" cardInstanceId
             | instance ->
                 let communalCardInstanceIdsAndValueByField =
                     instance.CommunalFieldInstance_CardInstances
@@ -277,6 +279,7 @@ module SanitizeCardRepository =
                             <| instance.FieldValues
                             <| communalCardInstanceIdsAndValueByField
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
+                    ParentId = parentId
                 } |> Ok }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance

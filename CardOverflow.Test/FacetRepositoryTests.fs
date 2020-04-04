@@ -32,6 +32,7 @@ let normalCommand fieldValues templateInstance =
                 Communal = None
             }) |> toResizeArray
         EditSummary = "Initial creation"
+        ParentId = None
     }
 
 let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
@@ -51,7 +52,8 @@ let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
                     } |> Some
                 else None
         }).ToList()
-    TemplateInstance = clozeTemplate }
+    TemplateInstance = clozeTemplate
+    ParentId = None }
 
 let clozeCommandWithSharedExtra clozeText clozeTemplate = {
     clozeCommand clozeText clozeTemplate with
@@ -251,7 +253,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
-    let! old = SanitizeCardRepository.getEdit c.Db cardInstanceId
+    let! old = SanitizeCardRepository.getEdit c.Db cardInstanceId None
     let old = old.Value
     let updated = {
         old with

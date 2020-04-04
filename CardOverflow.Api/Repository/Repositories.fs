@@ -178,7 +178,7 @@ module CardRepository =
             db.CardInstance
             .Include(fun x -> x.TemplateInstance)
             .SingleOrDefaultAsync(fun x -> x.Id = instanceId) with
-        | null -> return Error "Card instance not found"
+        | null -> return Error <| sprintf "Card instance %i not found" instanceId
         | x -> return Ok <| CardInstanceView.load x
     }
     let getView (db: CardOverflowDb) cardId = task {
@@ -387,10 +387,10 @@ module CardRepository =
         task {
             let card =
                 if acquiredCard.CardId = 0 then
-                    Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId)
+                    Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, ParentId = Option.toNullable command.ParentId) // needs validation
                 else
                     Id <| acquiredCard.CardId
-            let! entity =
+            let! acquiredCardEntity =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
@@ -414,7 +414,7 @@ module CardRepository =
                     .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
                     .ToList()
             let r =
-                match entity with
+                match acquiredCardEntity with
                 | null ->
                     let tagIds = acquiredCard.Tags |> List.map (getsertTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
                     if command.TemplateInstance.IsCloze then

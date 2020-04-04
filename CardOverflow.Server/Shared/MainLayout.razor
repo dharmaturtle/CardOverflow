@@ -27,6 +27,7 @@
   protected override async Task OnInitializedAsync() {
     var email =
       (await AuthenticationStateProvider.GetAuthenticationStateAsync())
+      //.User.Claims.claim
       .User.Identity.Name;
     User = UserRepository.Get(Db, email);
   }

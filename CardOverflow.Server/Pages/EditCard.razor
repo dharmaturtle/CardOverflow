@@ -1,4 +1,5 @@
 @page "/card/{Id:int}/edit"
+@page "/Curate/Card/Fork/{ParentId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -20,29 +21,39 @@
 }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
+  [Parameter] public int Id { get; set; }
+  [Parameter] public int ParentId { get; set; }
   [CascadingParameter]
   UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
   ViewEditCardCommand Command;
 
+  private async Task _trySetCardAndCommand(AcquiredCard card) {
+    var maybeParentId = ParentId == 0 ? FSharpOption<int>.None : ParentId;
+    var instanceId = card.CardInstanceMeta.Id == 0 ? ParentId : card.CardInstanceMeta.Id;
+    var x = await DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, instanceId, maybeParentId));
+    if (x.IsOk) {
+      Card = card;
+      Command = x.ResultValue;
+    } else {
+      LoadingMessage = x.ErrorValue;
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    var x = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User?.Id ?? 0, Id));
-    if (x.IsOk) {
-      var xx = await DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, x.ResultValue.CardInstanceMeta.Id));
-      if (xx.IsOk) {
-        Card = x.ResultValue;
-        Command = xx.ResultValue;
+    if (ParentId == 0) {
+      var x = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User?.Id ?? 0, Id));
+      if (x.IsOk) {
+        await _trySetCardAndCommand(x.ResultValue);
       } else {
         LoadingMessage = x.ErrorValue;
         ToastService.ShowError(x.ErrorValue);
       }
     } else {
-      LoadingMessage = x.ErrorValue;
-      ToastService.ShowError(x.ErrorValue);
+      await _trySetCardAndCommand(await CardRepository.getNew(Service, User?.Id ?? 0));
     }
     StateHasChanged();
   }

@@ -25,6 +25,10 @@
         <a href="card/@Card.Id/edit" title="Edit">
           <span class="oi oi-pencil"></span>
         </a>
+      } else {
+        <a href="curate/card/fork/@Card.Instance.Id" title="Edit a copy">
+          <span class="fas fa-code-branch"></span>
+        </a>
       }
       <a href="/card/@Card.Id/revision">
         <i class="fas fa-history"></i>

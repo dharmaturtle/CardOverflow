@@ -218,7 +218,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
               FieldName = "Source"
               Value = communalValue },
             card.Instance.CommunalFields.Single())
-        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
+        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id None
         let command = Result.getOk command
         Assert.Equal<int seq>(
             basic.Select(fun x -> x.Id) |> Seq.sort,
@@ -244,7 +244,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             view.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value))
-        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
+        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id None
         Assert.Equal<int seq>(
             sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
             command.Value.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
@@ -274,7 +274,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.Instance.StrippedFront)
         else
             Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.Instance.StrippedFront)
-        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
+        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id None
         let command = Result.getOk command
         Assert.Equal<int seq>(
             cloze.Select(fun x -> x.Id) |> Seq.sort,
