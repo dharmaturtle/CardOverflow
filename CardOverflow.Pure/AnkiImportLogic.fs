@@ -25,9 +25,10 @@ module AnkiImportLogic =
                 [ 1 .. max ]
                 indexes
             |> Seq.forall(fun (x, y) -> x = y)
-            |> fun isConsecutive -> match isConsecutive && max > 0 with
-            | true -> Ok max
-            | false -> Error errorMessage
+            |> fun isConsecutive ->
+                match isConsecutive && max > 0 with
+                | true -> Ok max
+                | false -> Error errorMessage
     let multipleClozeToSingleCloze (index: byte) field =
         (field, ClozeRegex().TypedMatches field)
         ||> Seq.fold (fun field m -> 

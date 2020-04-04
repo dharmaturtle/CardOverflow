@@ -205,7 +205,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    Result.getOk x
+    Assert.Equal([("Extra", 1002)], Result.getOk x)
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
@@ -223,7 +223,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    Result.getOk x
+    Assert.Equal([("Extra", 1006)], Result.getOk x)
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 

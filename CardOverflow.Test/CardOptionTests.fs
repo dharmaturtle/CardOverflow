@@ -81,7 +81,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                     }).ToList()
                 TemplateInstance = template
             }
-    r |> Result.getOk
+    r |> Result.getOk |> Assert.Empty 
 
     // new card has default option
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)
