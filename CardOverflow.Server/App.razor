@@ -1,6 +1,16 @@
 ﻿<Router AppAssembly=@typeof(Program).Assembly>
   <Found Context="routeData">
-    <AuthorizeRouteView RouteData=@routeData DefaultLayout=@typeof(MainLayout) />
+    <AuthorizeRouteView RouteData=@routeData DefaultLayout=@typeof(MainLayout)>
+      <NotAuthorized>
+        <h1>Not Authorized</h1>
+        <p>You're not authorized to reach this page.</p>
+        <p>You may need to log in, or log in as a different user.</p>
+      </NotAuthorized>
+      <Authorizing>
+        <h1>Authentication in progress</h1>
+        <p>Please wait, this is only visible while authentication is in progress.</p>
+      </Authorizing>
+    </AuthorizeRouteView>
   </Found>
   <NotFound>
     <CascadingAuthenticationState>
