@@ -318,7 +318,7 @@ type AcquiredCard = {
     IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
     CardSettingId: int
-    Tags: string seq
+    Tags: string list
 }
 
 type Comment = {

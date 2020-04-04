@@ -374,7 +374,7 @@ module CardRepository =
             }
         }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
-        let getTagId (db: CardOverflowDb) (input: string) =
+        let getsertTagId (db: CardOverflowDb) (input: string) =
             let r =
                 match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
                 | null ->
@@ -416,7 +416,7 @@ module CardRepository =
             let r =
                 match entity with
                 | null ->
-                    let tags = acquiredCard.Tags |> Seq.map (getTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
+                    let tagIds = acquiredCard.Tags |> List.map (getsertTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
                     if command.TemplateInstance.IsCloze then
                         let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
                         AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
@@ -448,7 +448,7 @@ module CardRepository =
                                         |> Some
                                     else None
                                 )) |> List.ofSeq |> List.choose id
-                        let e = acquiredCard.copyToNew tags
+                        let e = acquiredCard.copyToNew tagIds
                         e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
                         db.AcquiredCard.AddI e
                         communalInstances

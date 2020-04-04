@@ -429,7 +429,7 @@ type AcquiredCard with
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
                 CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.IsLatest entity.CardInstance usersTags tagCounts usersRelationships relationshipCounts
-                Tags = usersTags
+                Tags = usersTags |> List.ofSeq
             }
         }
 
