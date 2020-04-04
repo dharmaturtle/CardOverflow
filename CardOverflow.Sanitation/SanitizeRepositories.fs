@@ -249,7 +249,7 @@ type ViewEditCardCommand = {
             .ToList()
 
 module SanitizeCardRepository =
-    let getEdit (db: CardOverflowDb) cardInstanceId parentId = task { // veryLowTODO validate parentId
+    let private _getCommand (db: CardOverflowDb) cardInstanceId parentId = task { // veryLowTODO validate parentId
         let! instance =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
@@ -281,6 +281,10 @@ module SanitizeCardRepository =
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
                     ParentId = parentId
                 } |> Ok }
+    let getFork (db: CardOverflowDb) cardInstanceId =
+        _getCommand db cardInstanceId (Some cardInstanceId)
+    let getEdit (db: CardOverflowDb) cardInstanceId =
+        _getCommand db cardInstanceId None
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
         let actual = command.CommunalFieldValues.Select(fun x -> x.EditField.Name) |> Set.ofSeq

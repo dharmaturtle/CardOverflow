@@ -242,7 +242,7 @@ Back
 
 open CardOverflow.Sanitation
 [<Fact>]
-let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the fields``() : Task<unit> = task {
+let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also forking``() : Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
@@ -252,8 +252,8 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
-            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> Result.getOk x.Result)
-    let! old = SanitizeCardRepository.getEdit c.Db cardInstanceId None
+            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> x.Result.Value)
+    let! old = SanitizeCardRepository.getEdit c.Db cardInstanceId
     let old = old.Value
     let updated = {
         old with
@@ -266,38 +266,81 @@ let ``CardRepository.UpdateFieldsToNewInstance on a basic card updates the field
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
     Assert.Empty x.Value
     
-    let! refreshed = CardRepository.getView c.Db cardId
-    Assert.Equal<string seq>(
-        [newValue; newValue],
-        refreshed.FieldValues.Select(fun x -> x.Value))
-    Assert.Equal(
-        2,
-        c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
-    let! card = CardRepository.Get c.Db userId cardId
-    Assert.Equal<ViewTag seq>(
-        [{  Name = "a"
-            Count = 1
-            IsAcquired = true }
-         {  Name = "b"
-            Count = 1
-            IsAcquired = true }],
-        card.Value.Tags)
-    Assert.Equal<string seq>(
-        [newValue; newValue],
-        refreshed.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
-    )
-    let createds = c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList
-    Assert.NotEqual(createds.[0], createds.[1])
+    let asserts userId cardId newValue instanceCountForCard revisionCount tags = task {
+        let! refreshed = CardRepository.getView c.Db cardId
+        Assert.Equal<string seq>(
+            [newValue; newValue],
+            refreshed.FieldValues.Select(fun x -> x.Value))
+        Assert.Equal(
+            instanceCountForCard,
+            c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
+        let! card = CardRepository.Get c.Db userId cardId
+        Assert.Equal<ViewTag seq>(
+            tags,
+            card.Value.Tags)
+        Assert.Equal<string seq>(
+            [newValue; newValue],
+            refreshed.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
+        )
+        let createds = c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList
+        Assert.NotEqual(createds.[0], createds.[1])
+        let! revisions = CardRepository.Revisions c.Db userId cardId
+        Assert.Equal(revisionCount, revisions.SortedMeta.Count())
+        let! instance = CardRepository.instance c.Db revisions.SortedMeta.[0].Id
+        let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
+        Assert.Contains(newValue, revision)
+        if instanceCountForCard > 1 then
+            let! instance = CardRepository.instance c.Db revisions.SortedMeta.[1].Id
+            let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
+            Assert.Contains("Front", original)
+            Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest
+    }
+    
+    do! asserts userId cardId newValue 2 2
+            [ { Name = "a"
+                Count = 1
+                IsAcquired = true }
+              { Name = "b"
+                Count = 1
+                IsAcquired = true }]
+            
+    // fork
+    let userId = 2
+    let cardId = 2
+    let cardInstanceId = 1002
+    let newValue = Guid.NewGuid().ToString()
+    let! acquiredCard =  CardRepository.getNew c.Db userId
+    let! old = SanitizeCardRepository.getFork c.Db cardInstanceId
+    let old = old.Value
+    let updated = {
+        old with
+            FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    Assert.Empty x.Value
 
-    let! revisions = CardRepository.Revisions c.Db userId cardId
-    Assert.Equal(2, revisions.SortedMeta.Count())
-    let! instance = CardRepository.instance c.Db revisions.SortedMeta.[0].Id
-    let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
-    Assert.Contains(newValue, revision)
-    let! instance = CardRepository.instance c.Db revisions.SortedMeta.[1].Id
-    let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
-    Assert.Contains("Front", original)
-    Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest
+    do! asserts userId cardId newValue 1 1 []
+
+    // already forked
+    let cardInstanceId = 1003
+    Assert.Equal(userId, c.Db.CardInstance.Include(fun x -> x.Card).Single(fun x -> x.Id = cardInstanceId).Card.AuthorId)
+    let! acquiredCard =  CardRepository.getNew c.Db userId
+    let! fork = SanitizeCardRepository.getFork c.Db cardInstanceId
+    
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard fork.Value.load
+    
+    Assert.Equal("You can't fork your own cards.", x.error)
+
+    // missing fork
+    let cardInstanceId = 1337
+    
+    let! old = SanitizeCardRepository.getFork c.Db cardInstanceId
+    
+    Assert.Equal(sprintf "Card instance %i not found" cardInstanceId, old.error)
     }
     
 // fuck merge

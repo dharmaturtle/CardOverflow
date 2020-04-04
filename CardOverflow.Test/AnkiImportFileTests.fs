@@ -195,7 +195,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [longThing; ""]
 
     let initialInstance = clozes.First()
-    let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id None
+    let! editCommand = SanitizeCardRepository.getEdit c.Db initialInstance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
@@ -210,7 +210,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
     let! card = CardRepository.Get c.Db userId <| clozes.First().CardId
-    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Value.Instance.Id None
+    let! editCommand = SanitizeCardRepository.getEdit c.Db card.Value.Instance.Id
     let editCommand = editCommand |> Result.getOk
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.CommunalFieldValues |> List.ofSeq

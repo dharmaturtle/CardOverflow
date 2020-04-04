@@ -384,13 +384,24 @@ module CardRepository =
                 | x -> x
             db.SaveChangesI ()
             r.Id
-        task {
-            let card =
-                if acquiredCard.CardId = 0 then
-                    Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, ParentId = Option.toNullable command.ParentId) // needs validation
+        taskResult {
+            let! card =
+                if acquiredCard.CardId = 0 then taskResult {
+                    do! match command.ParentId with
+                        | Some instanceId -> task {
+                            let! userDoesntOwnInstance = db.CardInstance.AnyAsync(fun x -> x.Id = instanceId && x.Card.AuthorId <> acquiredCard.UserId)
+                            return
+                                if userDoesntOwnInstance then Ok ()
+                                else Error "You can't fork your own cards."
+                            }
+                        | None -> Ok () |> Task.FromResult
+                    return Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, ParentId = Option.toNullable command.ParentId)
+                    }
                 else
-                    Id <| acquiredCard.CardId
-            let! acquiredCardEntity =
+                    Id acquiredCard.CardId
+                    |> Ok
+                    |> Task.FromResult
+            let! (acquiredCardEntity: AcquiredCardEntity) =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
@@ -413,7 +424,7 @@ module CardRepository =
                 command.CommunalNonClozeFieldValues
                     .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
                     .ToList()
-            let r =
+            let! r =
                 match acquiredCardEntity with
                 | null ->
                     let tagIds = acquiredCard.Tags |> List.map (getsertTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
@@ -485,12 +496,10 @@ module CardRepository =
                     Ok <| communalFields.ToList()
             do! db.SaveChangesAsyncI()
             return
-                r |> Result.map (fun r ->
-                    r.Where(fun x -> nonClozeCommunals.Select(fun x -> x.FieldName).Contains x.FieldName)
-                        .Select(fun x -> x.FieldName, x.Id)
-                        .Distinct()
-                        .ToList()
-                )
+                r.Where(fun x -> nonClozeCommunals.Select(fun x -> x.FieldName).Contains x.FieldName)
+                    .Select(fun x -> x.FieldName, x.Id)
+                    .Distinct()
+                    .ToList()
         }
 
 module CardSettingsRepository =

@@ -191,7 +191,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_1));
 
     let! ac = CardRepository.GetAcquired c.Db authorId c1
-    let! v = SanitizeCardRepository.getEdit c.Db ci1_1 None
+    let! v = SanitizeCardRepository.getEdit c.Db ci1_1
     let v = { v.Value with FieldValues = [].ToList() }
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac.Value v.load
     Assert.Empty x.Value
