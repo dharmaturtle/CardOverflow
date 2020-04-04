@@ -185,6 +185,7 @@ CREATE TABLE [dbo].[Card](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[AuthorId] [int] NOT NULL,
 	[Users] [int] NOT NULL,
+	[ParentId] [int] NULL,
  CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -1072,6 +1073,12 @@ CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardSettingId] ON [dbo].[AcquiredCard
 	[CardSettingId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_AcquiredCard_CardState] ******/
+CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardState] ON [dbo].[AcquiredCard]
+(
+	[CardState] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 /****** Object:  Index [IX_AcquiredCard_UserId] ******/
 CREATE NONCLUSTERED INDEX [IX_AcquiredCard_UserId] ON [dbo].[AcquiredCard]
 (
@@ -1453,6 +1460,11 @@ REFERENCES [dbo].[User] ([Id])
 ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[AspNetUserTokens] CHECK CONSTRAINT [FK_AspNetUserTokens_User_UserId]
+GO
+ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_CardInstance_ParentId] FOREIGN KEY([ParentId])
+REFERENCES [dbo].[CardInstance] ([Id])
+GO
+ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_CardInstance_ParentId]
 GO
 ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User_AuthorId] FOREIGN KEY([AuthorId])
 REFERENCES [dbo].[User] ([Id])

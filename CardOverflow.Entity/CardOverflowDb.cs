@@ -65,7 +65,7 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.CardSettingId);
 
                 entity.HasIndex(e => e.CardState);
-                
+
                 entity.HasIndex(e => e.UserId);
 
                 entity.HasIndex(e => new { e.UserId, e.CardInstanceId })
