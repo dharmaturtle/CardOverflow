@@ -10,71 +10,71 @@
 <div class=@NavMenuCssClass @onclick=ToggleNavMenu>
   <ul class="nav flex-column">
     <li class="nav-item px-3">
-      <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+      <NavLink class="nav-link" Match="NavLinkMatch.All" href="">
         <span class="oi oi-home" aria-hidden="true"></span> Home
       </NavLink>
     </li>
     <li class="nav-item px-3">
-      <NavLink class="nav-link" href="explore">
+      <NavLink class="nav-link" Match="NavLinkMatch.All" href="explore">
         <span class="oi oi-compass" aria-hidden="true"></span> Explore
       </NavLink>
     </li>
     <AuthorizeView>
       <Authorized>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="curate">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="curate">
             <span class="oi oi-list" aria-hidden="true"></span> Curate
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="curate/card/create">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="curate/card/create">
             <span class="oi oi-document" aria-hidden="true"></span> Create Card
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="template">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="template">
             <i class="fas fa-stamp mr-3" aria-hidden="true"></i> Explore Templates
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="template/curate">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="template/curate">
             <i class="fas fa-stamp mr-3" aria-hidden="true"></i> Curate Templates
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="study">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="study">
             <span class="oi oi-list-rich" aria-hidden="true"></span> Study
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="cardoption">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="cardoption">
             <span class="oi oi-cog" aria-hidden="true"></span> Card Options
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="import">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="import">
             <span class="oi oi-cloud-upload" aria-hidden="true"></span> Import
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="Identity/Account/Manage">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="Identity/Account/Manage">
             <span class="oi oi-person" aria-hidden="true"></span> Hi @User?.DisplayName!
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="Identity/Account/LogOut">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="Identity/Account/LogOut">
             <span class="oi oi-account-logout" aria-hidden="true"></span> Log out
           </NavLink>
         </li>
       </Authorized>
       <NotAuthorized>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="Identity/Account/Register">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="Identity/Account/Register">
             <span class="oi oi-star" aria-hidden="true"></span> Register
           </NavLink>
         </li>
         <li class="nav-item px-3">
-          <NavLink class="nav-link" href="Identity/Account/Login">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="Identity/Account/Login">
             <span class="oi oi-account-login" aria-hidden="true"></span> Log in
           </NavLink>
         </li>
