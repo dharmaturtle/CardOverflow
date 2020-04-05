@@ -209,7 +209,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     let! basic = getInstances "Basic"
     for card in basic do
-        let! card = CardRepository.Get c.Db userId card.CardId
+        let! card = CardRepository.Explore c.Db userId card.CardId
         let card = card.Value
         Assert.Empty card.Relationships
         let communalValue = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"
@@ -232,7 +232,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         ["More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
          "Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
     for card in sketchy do
-        let! card = CardRepository.Get c.Db userId card.CardId
+        let! card = CardRepository.Explore c.Db userId card.CardId
         let card = card.Value
         Assert.Empty card.Relationships
         Assert.Equal(
@@ -262,7 +262,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"
                 "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Field.Name, x.Value))
-        let! card = CardRepository.Get c.Db userId instance.CardId
+        let! card = CardRepository.Explore c.Db userId instance.CardId
         let card = card.Value
         let communalValue = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
         Assert.Equal(
@@ -380,7 +380,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
 
     let! instances = getInstances "optional"
     for instance in instances do
-        let! card = CardRepository.Get c.Db userId instance.CardId
+        let! card = CardRepository.Explore c.Db userId instance.CardId
         let card = card.Value
         Assert.Empty <| card.Relationships
         Assert.Equal(
@@ -397,7 +397,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = ta
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
-        let! card = CardRepository.Get c.Db userId instance.CardId
+        let! card = CardRepository.Explore c.Db userId instance.CardId
         let card = card.Value
         Assert.Empty card.Relationships
         Assert.Equal(

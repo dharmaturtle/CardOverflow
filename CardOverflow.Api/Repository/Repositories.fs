@@ -217,7 +217,7 @@ module CardRepository =
         db.AcquiredCard.Single(fun x -> x.Id = acquiredCardId)
         |> db.AcquiredCard.RemoveI
         db.SaveChangesAsyncI ()
-    let Get (db: CardOverflowDb) userId cardId = taskResult {
+    let Explore (db: CardOverflowDb) userId cardId = taskResult {
         let! r =
             db.LatestCardInstance
                 .Include(fun x -> x.Card.Author)

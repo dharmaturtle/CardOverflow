@@ -96,7 +96,7 @@
     var oldId = Id;
     await base.SetParametersAsync(parameters);
     if (Id != oldId) {
-      var x = await DbExecutor.QueryAsync(db => CardRepository.Get(db, User?.Id ?? 0, Id));
+      var x = await DbExecutor.QueryAsync(db => CardRepository.Explore(db, User?.Id ?? 0, Id));
       if (x.IsOk) {
         Card = x.ResultValue;
       } else {
