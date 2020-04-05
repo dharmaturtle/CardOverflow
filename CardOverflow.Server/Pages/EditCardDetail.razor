@@ -109,7 +109,7 @@
       EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), FSharpOption<int>.None);
       NewEditCardOnSave = true;
     }
-    _SelectedCardSettingId = User.DefaultCardSettingId.Value;
+    _SelectedCardSettingId = User.DefaultCardSettingId;
     UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
   }
 

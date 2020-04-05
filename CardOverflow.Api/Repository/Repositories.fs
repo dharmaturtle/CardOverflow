@@ -257,7 +257,7 @@ module CardRepository =
             let card =
                 AcquiredCard.initialize
                     userId
-                    user.DefaultCardSettingId.Value // medTODO handle the null case
+                    user.DefaultCardSettingId
                     []
                 |> fun x -> x.copyToNew [] // medTODO get tags from template
             card.CardInstanceId <- cardInstanceId
@@ -294,7 +294,7 @@ module CardRepository =
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return AcquiredCard.initialize userId user.DefaultCardSettingId.Value [] // medTODO handle the null
+        return AcquiredCard.initialize userId user.DefaultCardSettingId []
         }
     let private containsSearchTerm (searchTerm: string) = "\"" + searchTerm.Replace('"', ' ') + "\""
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
@@ -570,7 +570,7 @@ module CardSettingsRepository =
     let getAll (db: CardOverflowDb) userId = task {
             let! user = db.User.SingleAsync(fun x -> x.Id = userId)
             let! r = db.CardSetting.Where(fun x -> x.UserId = userId).ToListAsync()
-            return r |> Seq.map (fun o -> CardSetting.load (o.Id = user.DefaultCardSettingId.Value) o)
+            return r |> Seq.map (fun o -> CardSetting.load (o.Id = user.DefaultCardSettingId) o)
         }
 
 module UserRepository =

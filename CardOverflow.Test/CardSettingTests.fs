@@ -36,7 +36,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     
     Assert.Equal(newId, ids.Value.Single(fun x -> x <> oldId))
     let! user = c.Db.User.SingleAsync(fun x -> x.Id = userId)
-    Assert.Equal(oldId, user.DefaultCardSettingId.Value)
+    Assert.Equal(oldId, user.DefaultCardSettingId)
 
     // can update
     let! options = SanitizeCardSettingRepository.getAll c.Db userId
@@ -62,7 +62,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                    ].ToList()
     
         let! user = c.Db.User.SingleAsync(fun x -> x.Id = userId)
-        Assert.Equal(expectedDefaultId, user.DefaultCardSettingId.Value) }
+        Assert.Equal(expectedDefaultId, user.DefaultCardSettingId) }
     do! canUpdateIsDefault oldId
     do! canUpdateIsDefault newId
 

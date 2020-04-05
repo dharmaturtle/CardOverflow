@@ -36,7 +36,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _DisplayName;
-        public int? DefaultCardSettingId { get; set; }
+        public int DefaultCardSettingId { get; set; }
         public bool ShowNextReviewTime { get; set; }
         public bool ShowRemainingCardCount { get; set; }
         public byte MixNewAndReview { get; set; }
