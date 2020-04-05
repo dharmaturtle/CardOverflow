@@ -36,8 +36,8 @@
   TagText WriteTag = new TagText();
   List<string> Tags = new List<string>();
 
-  void SaveTag() {
-    var r = SanitizeTagRepository.AddTo(Service, WriteTag, User.Id, CardId);
+  async Task SaveTag() {
+    var r = await SanitizeTagRepository.AddTo(Service, WriteTag, User.Id, CardId);
     if (r.IsOk) {
       Tags.Add(WriteTag.Text);
       Tags = Tags.Distinct().ToList();

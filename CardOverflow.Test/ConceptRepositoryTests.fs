@@ -138,7 +138,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
         card.Value.Tags
     )
     let! card = CardRepository.GetAcquired c.Db userId 1
-    TagRepository.AddTo c.Db "a" card.Value.AcquiredCardId
+    do! TagRepository.AddTo c.Db "a" card.Value.AcquiredCardId
     let! card = ExploreCardRepository.get c.Db userId 1
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"

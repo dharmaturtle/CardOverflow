@@ -52,7 +52,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let ac = ac.Value
     let! batch = CardRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
-    TagRepository.AddTo c.Db "tag" ac.AcquiredCardId
+    do! TagRepository.AddTo c.Db "tag" ac.AcquiredCardId
     let! x = FacetRepositoryTests.addBasicCard c.Db userId []
     Assert.Empty x
     let! card2 = c.Db.Card.SingleOrDefaultAsync(fun x -> x.Id <> ac.CardId)

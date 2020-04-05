@@ -38,7 +38,7 @@ let ``TagRepository AddTo/DeleteFrom works``(): Task<unit> = task {
     let cardId = 1
     let tagName = Guid.NewGuid().ToString()
 
-    TagRepository.AddTo c.Db tagName cardId
+    do! TagRepository.AddTo c.Db tagName cardId
     //TagRepository.AddTo c.Db userId tagName cardId medTODO uncomment and fix; make it idempotent
 
     Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
@@ -51,7 +51,7 @@ let ``TagRepository AddTo/DeleteFrom works``(): Task<unit> = task {
     Assert.Equal(
         tagName,
         joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
-        )
+    )
     
     do! TagRepository.DeleteFrom c.Db tagName cardId
     Assert.Empty <| joinTable ()

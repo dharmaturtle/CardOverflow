@@ -604,13 +604,14 @@ module TagRepository =
         |> db.Tag.AddRange
         db.SaveChangesI ()
 
-    let AddTo (db: CardOverflowDb) newTag acquiredCardId =
+    let AddTo (db: CardOverflowDb) newTag acquiredCardId = task {
         defaultArg
             (db.Tag.SingleOrDefault(fun x -> x.Name = newTag) |> Option.ofObj)
             (TagEntity(Name = newTag))
         |> fun x -> Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = x)
         |> db.Tag_AcquiredCard.AddI
-        db.SaveChangesI ()
+        return! db.SaveChangesAsyncI ()
+        }
     
     let DeleteFrom (db: CardOverflowDb) tagName acquiredCardId = task {
         let! tag = db.Tag.SingleOrDefaultAsync(fun x -> x.Name = tagName)
@@ -626,17 +627,6 @@ module TagRepository =
 
     let Search (db: CardOverflowDb) (input: string) =
         db.Tag.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())).ToList()
-    
-    let GetAll (db: CardOverflowDb) userId =
-        db.Tag.ToList()
-        
-    let Update (db: CardOverflowDb) tag =
-        db.Tag.UpdateI tag
-        db.SaveChangesI ()
-
-    let Delete (db: CardOverflowDb) tag =
-        db.Tag.RemoveI tag
-        db.SaveChangesI ()
 
 module FilterRepository =
     let Create (db: CardOverflowDb) userId name query =

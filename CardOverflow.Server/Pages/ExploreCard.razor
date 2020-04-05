@@ -126,8 +126,8 @@
     }
   }
 
-  void AcquireTag(string name) {
-    var x = SanitizeTagRepository.AddTo(Service, new TagText { Text = name }, User.Id, Card.Id);
+  async Task AcquireTag(string name) {
+    var x = await SanitizeTagRepository.AddTo(Service, new TagText { Text = name }, User.Id, Card.Id);
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == name).IsAcquired = true;
       StateHasChanged();
@@ -136,8 +136,8 @@
     }
   }
 
-  void DeleteTag(string tag) {
-    var x = SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id);
+  async Task DeleteTag(string tag) {
+    var x = await SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id);
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
       StateHasChanged();

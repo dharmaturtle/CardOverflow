@@ -117,11 +117,17 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let validate (db: CardOverflowDb) userId cardId action = // medTODO tag length needs validation
-        db.AcquiredCard.FirstOrDefault(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
-        |> function
-        | null -> Error "You haven't gotten that card."
-        | card -> Ok <| action card.Id
+    let validate (db: CardOverflowDb) userId cardId action = task { // medTODO tag length needs validation
+        let! maybeCard = db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        return!
+            maybeCard
+            |> function
+            | null -> Error "You haven't gotten that card." |> Task.FromResult
+            | card -> task {
+                do! action card.Id
+                return () |> Ok
+            }
+        }
     let AddTo db tag userId cardId =
         validate db userId cardId
             <| TagRepository.AddTo db tag.Text
