@@ -391,16 +391,6 @@ module CardRepository =
             }
         }
     let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
-        let getsertTagId (db: CardOverflowDb) (input: string) =
-            let r =
-                match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
-                | null ->
-                    let e = TagEntity(Name = input)
-                    db.Tag.AddI e
-                    e
-                | x -> x
-            db.SaveChangesI ()
-            r.Id
         taskResult {
             let! card =
                 if acquiredCard.CardId = 0 then taskResult {
@@ -441,46 +431,57 @@ module CardRepository =
                 command.CommunalNonClozeFieldValues
                     .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
                     .ToList()
-            let! r =
+            let! (r: CommunalFieldInstanceEntity ResizeArray) =
                 match acquiredCardEntity with
-                | null ->
-                    let tagIds = acquiredCard.Tags |> List.map (getsertTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
-                    if command.TemplateInstance.IsCloze then
-                        let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
-                        AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
-                        |> Result.map (fun max ->
-                        [1uy .. byte max] |> List.map (fun clozeIndex ->
-                            let zip =
-                                Seq.zip
-                                    (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                                    (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
-                                |> Map.ofSeq
-                            { command with
-                                FieldValues =
-                                    command.FieldValues.Select(fun x ->
-                                    { x with
-                                        Value = zip.[x.EditField.Name]}).ToList() }))
-                    else Ok [ command ]
-                    |> Result.map (List.map (fun c ->
-                        let communalInstances =
-                            c.FieldValues.Select(fun edit ->
-                                let fieldName = edit.EditField.Name
-                                edit.Communal |> Option.bind(fun value ->
-                                    if value.CommunalCardInstanceIds.Contains 0 then
-                                        match value.InstanceId with
-                                        | Some id -> db.CommunalFieldInstance.Single(fun x -> x.Id = id)
-                                        | None ->
-                                            nonClozeCommunals.SingleOrDefault(fun x -> x.FieldName = fieldName)
-                                            |> Option.ofObj
-                                            |> Option.defaultValue (createCommunalFieldInstanceEntity c fieldName)
-                                        |> Some
-                                    else None
-                                )) |> List.ofSeq |> List.choose id
-                        let e = acquiredCard.copyToNew tagIds
-                        e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
-                        db.AcquiredCard.AddI e
-                        communalInstances
-                        ) >> Seq.collect id >> toResizeArray)
+                | null -> task {
+                    let getsertTagId (db: CardOverflowDb) (input: string) =
+                        match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
+                        | null ->
+                            let e = TagEntity(Name = input)
+                            db.Tag.AddI e
+                            e
+                        | x -> x
+                    let tags = acquiredCard.Tags |> List.map (getsertTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
+                    do! db.SaveChangesAsyncI()
+                    let tagIds = tags.Select(fun x -> x.Id)
+                    return
+                        if command.TemplateInstance.IsCloze then
+                            let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
+                            AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
+                            |> Result.map (fun max ->
+                            [1uy .. byte max] |> List.map (fun clozeIndex ->
+                                let zip =
+                                    Seq.zip
+                                        (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                                        (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
+                                    |> Map.ofSeq
+                                { command with
+                                    FieldValues =
+                                        command.FieldValues.Select(fun x ->
+                                        { x with
+                                            Value = zip.[x.EditField.Name]}).ToList() }))
+                        else Ok [ command ]
+                        |> Result.map (List.map (fun c ->
+                            let communalInstances =
+                                c.FieldValues.Select(fun edit ->
+                                    let fieldName = edit.EditField.Name
+                                    edit.Communal |> Option.bind(fun value ->
+                                        if value.CommunalCardInstanceIds.Contains 0 then
+                                            match value.InstanceId with
+                                            | Some id -> db.CommunalFieldInstance.Single(fun x -> x.Id = id)
+                                            | None ->
+                                                nonClozeCommunals.SingleOrDefault(fun x -> x.FieldName = fieldName)
+                                                |> Option.ofObj
+                                                |> Option.defaultValue (createCommunalFieldInstanceEntity c fieldName)
+                                            |> Some
+                                        else None
+                                    )) |> List.ofSeq |> List.choose id
+                            let e = acquiredCard.copyToNew tagIds
+                            e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                            db.AcquiredCard.AddI e
+                            communalInstances
+                            ) >> Seq.collect id >> toResizeArray)
+                    }
                 | e ->
                     let communalFields, instanceIds =
                         e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
@@ -510,7 +511,7 @@ module CardRepository =
                         | ac ->
                             ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
                     e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
-                    Ok <| communalFields.ToList()
+                    communalFields.ToList() |> Ok |> Task.FromResult
             do! db.SaveChangesAsyncI()
             return
                 r.Where(fun x -> nonClozeCommunals.Select(fun x -> x.FieldName).Contains x.FieldName)
@@ -626,10 +627,6 @@ module FilterRepository =
     let Get (db: CardOverflowDb) userId =
         db.Filter.Where(fun d -> d.UserId = userId).ToListAsync()
         
-    let Update (db: CardOverflowDb) deck =
-        db.Filter.UpdateI deck
-        db.SaveChangesI ()
-
     let Delete (db: CardOverflowDb) deck =
         db.Filter.RemoveI deck
         db.SaveChangesAsyncI ()
