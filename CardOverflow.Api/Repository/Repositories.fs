@@ -234,12 +234,13 @@ module CardRepository =
                     x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name).ToList(),
                     x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
+        let! e, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" cardId)
         let! tc = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
         let! rc = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-        let! e, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" cardId)
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
-        let latestInstance = CardInstanceMeta.loadLatest isAcquired e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
-        return ExploreCard.load latestInstance e.Card
+        return
+            CardInstanceMeta.loadLatest isAcquired e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+            |> ExploreCard.load e.Card
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = task {
         let! tc = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
