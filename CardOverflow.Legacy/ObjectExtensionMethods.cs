@@ -31,6 +31,9 @@ namespace CardOverflow.Debug {
       return input;
     }
 
+    public static string InC<TInput>(this TInput input) =>
+      ObjectDumper.Dump(input, DumpOptions);
+
     public static TInput FDump<TInput>(this TInput input) {
       var s = ObjectDumper.Dump(input, DumpOptions);
       s = s.Replace("var", "let");

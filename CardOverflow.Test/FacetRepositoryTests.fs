@@ -16,6 +16,7 @@ open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Sanitation
+open FsToolkit.ErrorHandling
 
 let normalCommand fieldValues templateInstance =
     let fieldValues =
@@ -237,10 +238,49 @@ Back
             .Single()
             |> Result.getOk
             |> fun x -> x.Tags
-    )
-    }
+    )}
 
-open CardOverflow.Sanitation
+[<Fact>]
+let ``CardRepository.ExploreInstance works``() : Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = addBasicCard c.Db userId []
+    let cardId = 1
+    let oldCardInstanceId = 1001
+    let newCardInstanceId = 1002
+    let newValue = Guid.NewGuid().ToString()
+    let! acquiredCard = 
+        (CardRepository.GetAcquired c.Db userId cardId)
+            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> x.Result.Value)
+    let! old = SanitizeCardRepository.getEdit c.Db oldCardInstanceId
+    let updated = {
+        old with
+            ViewEditCardCommand.FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    Assert.Empty x
+
+    let! (card1: ExploreCard) = CardRepository.Explore         c.Db userId cardId
+    let! (card2: ExploreCard) = CardRepository.ExploreInstance c.Db userId newCardInstanceId
+    Assert.Equal(card1.InC(), card2.InC())
+    Assert.Equal(newValue                 , card2.Summary.Instance.StrippedFront)
+    Assert.Equal(newValue + " " + newValue, card2.Summary.Instance.StrippedBack)
+    let! (card3: ExploreCard) = CardRepository.ExploreInstance c.Db userId oldCardInstanceId
+    Assert.Equal("Front",      card3.Summary.Instance.StrippedFront)
+    Assert.Equal("Front Back", card3.Summary.Instance.StrippedBack)
+
+    // nonexistant id
+    let nonexistant = 1337
+    
+    let! (missingCard: Result<ExploreCard, string>) = CardRepository.ExploreInstance c.Db userId nonexistant
+    
+    Assert.Equal(sprintf "Card Instance #%i not found" nonexistant, missingCard.error)
+    } |> TaskResult.assertOk)
+
 [<Fact>]
 let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also forking``() : Task<unit> = task {
     use c = new TestContainer()

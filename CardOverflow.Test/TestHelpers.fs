@@ -36,4 +36,4 @@ module Extensions =
 
 module TaskResult =
     let assertOk x =
-        x |> TaskResult.defaultWith(fun () -> failwith "you gots an error")
+        x |> TaskResult.defaultWith(fun () -> failwith <| x.GetAwaiter().GetResult().error)
