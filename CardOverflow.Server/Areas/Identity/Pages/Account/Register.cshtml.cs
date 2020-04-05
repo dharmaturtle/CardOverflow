@@ -93,9 +93,9 @@ namespace CardOverflow.Server.Areas.Identity.Pages.Account {
             .Where(x => x.Template.AuthorId == 2)
             .Select(x => x.Id)
             .ToList()
-            .Select(id => new User_TemplateInstanceEntity { TemplateInstanceId = id, DefaultCardSettingId = 1 }) // lowTODO do we ever use the card setting here?
+            .Select(id => new User_TemplateInstanceEntity { TemplateInstanceId = id, DefaultCardSetting = defaultSetting })
             .ToList(),
-      };
+        };
         var result = await _userManager.CreateAsync(user, Input.Password);
         if (result.Succeeded) {
           _logger.LogInformation("User created a new account with password.");
