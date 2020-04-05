@@ -53,7 +53,7 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
                 LapsedStepsIndex
                 card.Settings.LapsedCardsSteps
                 card.Settings.NewCardsGraduatingInterval // medTODO consider an option for this
-                card.Settings.NewCardsGraduatingInterval // medTODO actually the card options are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
+                card.Settings.NewCardsGraduatingInterval // medTODO actually the card settings are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
                 i,
             card.Settings.LapsedCardsNewIntervalFactor
         | Interval i ->

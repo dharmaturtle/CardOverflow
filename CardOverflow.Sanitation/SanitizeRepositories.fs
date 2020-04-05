@@ -480,7 +480,7 @@ module SanitizeCardSettingRepository =
                     Ok e
                 else
                     match oldOptions.SingleOrDefault(fun x -> x.Id = option.Id) with
-                    | null -> Error "Card option not found (or doesn't belong to you.)"
+                    | null -> Error "Card setting not found (or doesn't belong to you.)"
                     | e ->
                         option.CopyTo e
                         maybeSetDefault e

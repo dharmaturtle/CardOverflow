@@ -42,7 +42,7 @@
   </div>
   <div>
     @if (Card.IsAcquired) {
-      <h3>Card Options</h3>
+      <h3>Card Settings</h3>
       <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
     }
     <h3>Tags</h3>
@@ -119,7 +119,7 @@
   private async Task _SetOption(int newId) {
     var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, User.Id, AcquiredCard.AcquiredCardId, newId));
     if (r.IsOk) {
-      ToastService.ShowInfo("Card option saved!");
+      ToastService.ShowInfo("Card setting saved!");
     } else {
       ToastService.ShowError(r.ErrorValue);
     }
