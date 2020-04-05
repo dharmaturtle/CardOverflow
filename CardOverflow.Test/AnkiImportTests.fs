@@ -453,23 +453,24 @@ let ``Tag collation is case insensitive and .Contains works as expected``() : Ta
     use c = new TestContainer()
     let userId = 3
     let upperGuid = Guid.NewGuid().ToString().ToUpper()
-    TagRepository.Add c.Db userId [ upperGuid ]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId [ upperGuid ]
 
-    c.Db.Tag.Where(fun t -> [ upperGuid.ToLower() ].Contains t.Name) |> Assert.SingleI
-    }
+    c.Db.Tag.Where(fun t -> [ upperGuid.ToLower() ].Contains t.Name)
+    
+    |> Assert.SingleI }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses old tags`` _ simpleAnkiDb: Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    TagRepository.Add c.Db userId [ "Tag"; "Deck:Default" ]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId [ "Tag"; "Deck:Default" ]
     Assert.Equal(2, c.Db.Tag.Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
         |> Result.getOk
 
-    Assert.Equal(4, c.Db.Tag.Count()) }
+    Assert.Equal(["Basic"; "Deck:Default"; "OtherTag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name)) }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]

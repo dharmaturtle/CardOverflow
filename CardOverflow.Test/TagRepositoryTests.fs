@@ -12,25 +12,6 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks
 
 [<Fact>]
-let ``TagRepository can add a new tag`` (): unit =
-    use c = new TestContainer()
-    let tagName = Guid.NewGuid().ToString()
-
-    tagName |> List.singleton |> TagRepository.Add c.Db 1
-
-    Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
-
-[<Fact>]
-let ``When TagRepository adds a tag twice, only one is added`` (): unit =
-    use c = new TestContainer()
-    let tagName = Guid.NewGuid().ToString()
-
-    tagName |> List.singleton |> TagRepository.Add c.Db 1
-    tagName |> List.singleton |> TagRepository.Add c.Db 1
-
-    Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
-
-[<Fact>]
 let ``TagRepository AddTo/DeleteFrom works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3

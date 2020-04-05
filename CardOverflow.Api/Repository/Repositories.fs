@@ -590,20 +590,6 @@ module UserRepository =
         db.User.FirstOrDefault(fun x -> x.Email = email)
 
 module TagRepository =
-    let tagEntities (db: CardOverflowDb) (newTags: string seq) =
-        let newTags = newTags.Distinct().ToList() // https://stackoverflow.com/a/18113534
-        db.Tag
-            .Select(fun x -> x.Name)
-            .Where(fun x -> newTags.Contains x)
-            .ToList()
-            .Contains >> not
-        |> newTags.Where
-        |> Seq.map (fun x -> TagEntity(Name = x))
-    let Add (db: CardOverflowDb) userId newTags =
-        tagEntities db newTags
-        |> db.Tag.AddRange
-        db.SaveChangesI ()
-
     let AddTo (db: CardOverflowDb) newTag acquiredCardId = task {
         defaultArg
             (db.Tag.SingleOrDefault(fun x -> x.Name = newTag) |> Option.ofObj)
