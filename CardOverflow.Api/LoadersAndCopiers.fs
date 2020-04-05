@@ -298,14 +298,14 @@ type CommunalFieldInstance with
         Value = entity.Value }
 
 type CardInstanceMeta with
-    static member load userId isLatest (entity: CardInstanceEntity) (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) =
+    static member load isAcquired isLatest (entity: CardInstanceEntity) (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) =
         let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
             IsLatest = isLatest
-            IsAcquired = entity.AcquiredCards.Any(fun x -> x.UserId = userId)
+            IsAcquired = isAcquired
             StrippedFront = MappingTools.stripHtmlTags front
             StrippedBack = MappingTools.stripHtmlTags back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
@@ -416,7 +416,7 @@ type AcquiredCard with
             CardInstanceMeta = CardInstanceMeta.initialize
             Tags = tags
         }
-    static member load (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) (entity: AcquiredCardIsLatestEntity) = result {
+    static member load (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
             {   CardId = entity.CardInstance.CardId
@@ -428,7 +428,7 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
-                CardInstanceMeta = CardInstanceMeta.load entity.UserId entity.IsLatest entity.CardInstance usersTags tagCounts usersRelationships relationshipCounts
+                CardInstanceMeta = CardInstanceMeta.load isAcquired entity.IsLatest entity.CardInstance usersTags tagCounts usersRelationships relationshipCounts
                 Tags = usersTags |> List.ofSeq
             }
         }
@@ -468,9 +468,9 @@ type ExploreCard with
     }
 
 type CardRevision with
-    static member load userId (e: CardEntity) = {
+    static member load isAcquired (e: CardEntity) = {
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
-        SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.mapi (fun i e -> CardInstanceMeta.load userId (i = 0) e Set.empty ResizeArray.empty Set.empty ResizeArray.empty) |> Seq.toList
+        SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.mapi (fun i e -> CardInstanceMeta.load isAcquired (i = 0) e Set.empty ResizeArray.empty Set.empty ResizeArray.empty) |> Seq.toList
     }

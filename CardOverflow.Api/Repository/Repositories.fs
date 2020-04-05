@@ -195,7 +195,8 @@ module CardRepository =
                 .Include(fun x -> x.CardInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CardInstanceEntity) -> x.TemplateInstance)
                 .SingleAsync(fun x -> x.Id = cardId)
-        return CardRevision.load userId r
+        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        return CardRevision.load isAcquired r
     }
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
@@ -261,7 +262,7 @@ module CardRepository =
         return
             match r |> Core.toOption with
             | None -> Error (sprintf "Card #%i not found for User #%i" cardId userId)
-            | Some (e, t, rs, rt) -> AcquiredCard.load (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc e
+            | Some (e, t, rs, rt) -> AcquiredCard.load (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc e true
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
@@ -302,7 +303,7 @@ module CardRepository =
                         .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
             return {
-                Results = r |> Seq.map (fun x -> AcquiredCard.load (x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name) |> Set.ofSeq) ResizeArray.empty Set.empty ResizeArray.empty x)
+                Results = r |> Seq.map (fun x -> AcquiredCard.load (x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name) |> Set.ofSeq) ResizeArray.empty Set.empty ResizeArray.empty x true)
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount
