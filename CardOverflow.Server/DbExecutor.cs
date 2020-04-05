@@ -16,6 +16,11 @@ namespace CardOverflow.Server {
       command(db);
     }
 
+    public async Task CommandAsync(Func<CardOverflowDb, Task> command) {
+      using var db = new CardOverflowDb(_options);
+      await command(db);
+    }
+
     public T Query<T>(Func<CardOverflowDb, T> query) {
       using var db = new CardOverflowDb(_options);
       return query(db);

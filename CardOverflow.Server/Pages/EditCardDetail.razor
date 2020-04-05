@@ -10,7 +10,7 @@
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 @if (Templates == null) {
   <p><em>Loading...</em></p>
@@ -103,7 +103,7 @@
 
   protected override async Task OnInitializedAsync() {
     if (Templates == null) {
-      Templates = await SanitizeTemplate.GetMine(Service, User?.Id ?? 0);
+      Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User?.Id ?? 0));
     }
     if (EditCard == null) {
       EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), FSharpOption<int>.None);
@@ -119,7 +119,7 @@
   }
 
   async Task UpdateCard() {
-    var result = await SanitizeCardRepository.Update(Service, User.Id, Card, EditCard);
+    var result = await DbExecutor.QueryAsync(db => SanitizeCardRepository.Update(db, User.Id, Card, EditCard));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       if (NewEditCardOnSave) {

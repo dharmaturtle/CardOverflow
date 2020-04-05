@@ -8,7 +8,7 @@
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 @if (User != null) {
   @foreach (var tag in Tags) {
@@ -37,7 +37,7 @@
   List<string> Tags = new List<string>();
 
   async Task SaveTag() {
-    var r = await SanitizeTagRepository.AddTo(Service, WriteTag, User.Id, CardId);
+    var r = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, WriteTag, User.Id, CardId));
     if (r.IsOk) {
       Tags.Add(WriteTag.Text);
       Tags = Tags.Distinct().ToList();

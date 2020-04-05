@@ -11,7 +11,7 @@
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 @if (Card == null || Templates == null) {
   <p><em>@LoadingMessage</em></p>
@@ -27,8 +27,8 @@
   IEnumerable<ViewTemplateWithAllInstances> Templates;
 
   protected override async Task OnInitializedAsync() {
-    Card = await CardRepository.getNew(Service, User?.Id ?? 0);
-    Templates = await SanitizeTemplate.GetMine(Service, User?.Id ?? 0);
+    Card = await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User?.Id ?? 0));
+    Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User?.Id ?? 0));
   }
 
 }

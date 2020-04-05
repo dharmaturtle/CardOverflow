@@ -7,9 +7,9 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 @inject IToastService ToastService
-@inject UserContentHttpClient UserContentHttpClient;
+@inject UserContentHttpClient UserContentHttpClient
 
 <h3>Relationships</h3>
 <ul class="list-unstyled">
@@ -95,7 +95,7 @@
     : "Loading...";
 
   async Task Add() {
-    var x = await SanitizeRelationshipRepository.Add(Service, User.Id, Command);
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, Command));
     if (x.IsOk) {
       var targetCardId = SanitizeRelationshipRepository.GetCardId(Command.TargetCardLink).ResultValue;
       Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, Card.Id, targetCardId, true, 1)).ToList();
@@ -104,11 +104,11 @@
       }
     } else {
       ToastService.ShowError(x.ErrorValue);
-    }    
+    }
   }
 
   async Task Acquire(string name, int sourceCardId, int targetCardId) {
-    var x = await SanitizeRelationshipRepository.Add(Service, User.Id, new AddRelationshipCommand(name, sourceCardId, targetCardId.ToString()));
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, new AddRelationshipCommand(name, sourceCardId, targetCardId.ToString())));
     if (x.IsOk) {
       Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).IsAcquired = true;
       Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).Users++;
@@ -119,7 +119,7 @@
   }
 
   async Task Unacquire(string name, int sourceCardId, int targetCardId) {
-    await SanitizeRelationshipRepository.Remove(Service, sourceCardId, targetCardId, User.Id, name);
+    await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceCardId, targetCardId, User.Id, name));
     Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).IsAcquired = false;
     Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).Users--;
     StateHasChanged();

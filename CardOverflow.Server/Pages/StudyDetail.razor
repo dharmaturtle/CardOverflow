@@ -6,7 +6,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
@@ -94,7 +94,7 @@
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      batch = await CardRepository.GetQuizBatch(Service, User.Id, Query);
+      batch = await DbExecutor.QueryAsync(db => CardRepository.GetQuizBatch(db, User.Id, Query));
       if (batch.Any()) {
         await ShowFront();
       }
@@ -107,7 +107,7 @@
 
   async Task SaveScore(Score score) {
     var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.Calculate(batch.First().ResultValue, score);
-    await SanitizeHistoryRepository.AddAndSaveAsync(Service, batch.First().ResultValue.AcquiredCardId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps);
+    await DbExecutor.CommandAsync(db => SanitizeHistoryRepository.AddAndSaveAsync(db, batch.First().ResultValue.AcquiredCardId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps));
     // medTODO needs `undo review` support
     batch.RemoveAt(0);
     await ShowFront();
@@ -135,7 +135,7 @@
     }
     StateHasChanged();
     if (batch.Count() <= 1) {
-      batch.AddRange(await CardRepository.GetQuizBatch(Service, User.Id, Query));
+      batch.AddRange(await DbExecutor.QueryAsync(db => CardRepository.GetQuizBatch(db, User.Id, Query)));
     }
   }
 

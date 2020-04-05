@@ -7,8 +7,8 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inherits OwningComponentBase<CardOverflowDb>
 @inject TimeProvider Time
+@inject DbExecutor DbExecutor
 
 @if (User != null) {
   <li class="list-group-item border-0">
@@ -38,7 +38,7 @@
   bool isSaved;
 
   async Task SaveComment() {
-    await SanitizeCommentRepository.AddAndSaveAsync(Service, Time, WriteComment, CardId, User.Email);
+    await DbExecutor.CommandAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment, CardId, User.Email));
     isSaved = true;
   }
 

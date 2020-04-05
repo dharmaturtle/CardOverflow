@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 <h5>
   Filters
@@ -71,11 +71,11 @@
   BSModal Modal;
 
   protected override async Task OnInitializedAsync() {
-    _filters = await SanitizeFilterRepository.Get(Service, User?.Id ?? 0);
+    _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Get(db, User?.Id ?? 0));
   }
 
   async Task Save() {
-    var newId = await SanitizeFilterRepository.UpsertAsync(Service, _activeFilter);
+    var newId = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.UpsertAsync(db, _activeFilter));
     if (_activeFilter.Id == 0) {
       _activeFilter.Id = newId;
       _filters.Add(_activeFilter);
@@ -85,9 +85,9 @@
 
   async Task Delete() {
     _filters.Remove(_activeFilter);
-    var x = SanitizeFilterRepository.Delete(Service, User.Id, _activeFilter);
+    var x = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Delete(db, User.Id, _activeFilter));
     if (x.IsOk) {
-      await x.ResultValue;
+      ToastService.ShowSuccess("Deleted!");
     } else {
       ToastService.ShowError(x.ErrorValue);
     }

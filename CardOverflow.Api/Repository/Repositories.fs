@@ -383,7 +383,7 @@ module CardRepository =
                             Users = c.CardUsers
                             Instance = CardInstanceMeta.loadLatest isAcquired c Set.empty ResizeArray.empty Set.empty ResizeArray.empty
                         }
-                    ) // medTODO optimize
+                    ) |> List.ofSeq // medTODO optimize
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount

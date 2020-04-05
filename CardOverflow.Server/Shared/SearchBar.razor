@@ -6,8 +6,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
-@inherits OwningComponentBase<CardOverflowDb>
-
+@inject DbExecutor DbExecutor
 @* lowTODO this doesn't appear if there's only 1 search result *@
 @if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
   <span style="min-width: fit-content;">

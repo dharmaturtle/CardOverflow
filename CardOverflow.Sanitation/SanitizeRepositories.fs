@@ -80,11 +80,16 @@ module SanitizeFilterRepository =
         do! db.SaveChangesAsyncI ()
         return deck.Id
         }
-    let Delete (db: CardOverflowDb) userId (deck: ViewFilter) =
-        let d = db.Filter.Single(fun x -> x.Id = deck.Id)
-        if d.UserId = userId
-        then Ok <| FilterRepository.Delete db d
-        else Error <| "That isn't your deck"
+    let Delete (db: CardOverflowDb) userId (deck: ViewFilter) = task {
+        let! d = db.Filter.SingleAsync(fun x -> x.Id = deck.Id)
+        return!
+            if d.UserId = userId
+            then task{
+                do! FilterRepository.Delete db d
+                return Ok ()
+            }
+            else Error "That isn't your deck" |> Task.FromResult
+    }
     let Get (db: CardOverflowDb) userId = task {
         let! r = FilterRepository.Get db userId
         return r |> Seq.map ViewFilter.load |> toResizeArray

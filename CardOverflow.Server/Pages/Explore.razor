@@ -8,7 +8,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
   <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/card/{x}") Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
@@ -70,7 +70,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await SanitizeCardRepository.SearchAsync(Service, User?.Id ?? 0, pageNumber, search);
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCardRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, search));
     details = pagedList.Details;
     cards = pagedList.Results.ToList();
   }

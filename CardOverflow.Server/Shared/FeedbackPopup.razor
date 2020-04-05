@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 @if (User != null) {
   <div style="position: fixed; bottom: 0px; left: 20px; z-index: 999;">
@@ -76,7 +76,7 @@
     isExpanded = !isExpanded;
 
   async Task Save() {
-    await SanitizeFeedback.addAndSaveAsync(Service, User.Id, feedbackPayload);
+    await DbExecutor.CommandAsync(db => SanitizeFeedback.addAndSaveAsync(db, User.Id, feedbackPayload));
     isSaved = true;
   }
 

@@ -8,7 +8,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Shared
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 @inject Scheduler Scheduler
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
@@ -55,7 +55,7 @@
 
   protected override async Task OnInitializedAsync() {
     if (User != null) {
-      _filters = await SanitizeFilterRepository.GetWithDue(Service, User.Id);
+      _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.GetWithDue(db, User.Id));
     }
   }
 

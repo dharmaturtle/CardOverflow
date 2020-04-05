@@ -12,7 +12,6 @@
 @using CardOverflow.Server.Data
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
 @inject NavigationManager NavigationManager
 
 @if (Card == null) {
@@ -127,7 +126,7 @@
   }
 
   async Task AcquireTag(string name) {
-    var x = await SanitizeTagRepository.AddTo(Service, new TagText { Text = name }, User.Id, Card.Id);
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, new TagText { Text = name }, User.Id, Card.Id));
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == name).IsAcquired = true;
       StateHasChanged();
@@ -137,7 +136,7 @@
   }
 
   async Task DeleteTag(string tag) {
-    var x = await SanitizeTagRepository.DeleteFrom(Service, tag, User.Id, Card.Id);
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, tag, User.Id, Card.Id));
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
       StateHasChanged();

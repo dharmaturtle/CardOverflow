@@ -9,7 +9,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
 
 <div class="row">
   <div class="col-sm-2">
@@ -86,7 +86,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await SanitizeCardRepository.GetAcquiredPages(Service, User?.Id ?? 0, pageNumber, search);
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCardRepository.GetAcquiredPages(db, User?.Id ?? 0, pageNumber, search));
     details = pagedList.Details;
     cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
     if (pagedList.Results.Any(x => x.IsError)) {

@@ -11,7 +11,6 @@
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
-@inherits OwningComponentBase<CardOverflowDb>
 @inject DbExecutor DbExecutor
 
 @if (Card == null) {
@@ -54,7 +53,7 @@
         ToastService.ShowError(x.ErrorValue);
       }
     } else {
-      await _trySetCardAndCommand(await CardRepository.getNew(Service, User?.Id ?? 0));
+      await _trySetCardAndCommand(await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User?.Id ?? 0)));
     }
     StateHasChanged();
   }
