@@ -1,4 +1,4 @@
-module CardRepositoryTests
+module AcquireCardRepositoryTests
 
 open LoadersAndCopiers
 open Helpers

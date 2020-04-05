@@ -58,7 +58,7 @@
     <Compile Include="LoadersAndCopiersTests.fs" />
     <Compile Include="MergeTests.fs" />
     <Compile Include="FacetRepositoryTests.fs" />
-    <Compile Include="CardRepositoryTests.fs" />
+    <Compile Include="AcquireCardRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="FacetTemplateRepositoryTests.fs" />
     <Compile Include="CardOptionTests.fs" />
