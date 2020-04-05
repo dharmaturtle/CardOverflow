@@ -369,21 +369,30 @@ module CardRepository =
                         EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
                         EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
                     )
-                    .Include(fun x -> x.TemplateInstance)
-                    .Include(fun x -> x.Author)
                     .OrderByDescending(fun x -> x.CardUsers)
+                    .Select(fun x ->
+                        x,
+                        x.CardInstance.AcquiredCards.Any(fun x -> x.UserId = userId),
+                        x.TemplateInstance, // .Include fails for some reason, so we have to manually select
+                        x.Author
+                    )
                     .ToPagedListAsync(pageNumber, 15)
+            let squashed =
+                r |> List.ofSeq |> List.map (fun (c, isAcquired, template, author) ->
+                    c.Author <- author
+                    c.TemplateInstance <- template
+                    c, isAcquired
+                )
             return {
                 Results =
-                    r |> Seq.map (fun c ->
-                        let isAcquired = db.AcquiredCard.Any(fun x -> x.UserId = userId && x.CardInstance.CardId = c.CardId)
+                    squashed |> List.map (fun (c, isAcquired) ->
                         {   Id = c.CardId
                             Author = c.Author.DisplayName
                             AuthorId = c.AuthorId
                             Users = c.CardUsers
                             Instance = CardInstanceMeta.loadLatest isAcquired c Set.empty ResizeArray.empty Set.empty ResizeArray.empty
                         }
-                    ) |> List.ofSeq // medTODO optimize
+                    )
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount
