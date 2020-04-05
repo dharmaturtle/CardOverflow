@@ -241,7 +241,7 @@ Back
     )}
 
 [<Fact>]
-let ``CardRepository.ExploreInstance works``() : Task<unit> = (taskResult {
+let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicCard c.Db userId []
@@ -264,19 +264,19 @@ let ``CardRepository.ExploreInstance works``() : Task<unit> = (taskResult {
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
     Assert.Empty x
 
-    let! (card1: ExploreCard) = CardRepository.Explore         c.Db userId cardId
-    let! (card2: ExploreCard) = CardRepository.ExploreInstance c.Db userId newCardInstanceId
+    let! (card1: ExploreCard) = ExploreCardRepository.get      c.Db userId cardId
+    let! (card2: ExploreCard) = ExploreCardRepository.instance c.Db userId newCardInstanceId
     Assert.Equal(card1.InC(), card2.InC())
     Assert.Equal(newValue                 , card2.Summary.Instance.StrippedFront)
     Assert.Equal(newValue + " " + newValue, card2.Summary.Instance.StrippedBack)
-    let! (card3: ExploreCard) = CardRepository.ExploreInstance c.Db userId oldCardInstanceId
+    let! (card3: ExploreCard) = ExploreCardRepository.instance c.Db userId oldCardInstanceId
     Assert.Equal("Front",      card3.Summary.Instance.StrippedFront)
     Assert.Equal("Front Back", card3.Summary.Instance.StrippedBack)
 
     // nonexistant id
     let nonexistant = 1337
     
-    let! (missingCard: Result<ExploreCard, string>) = CardRepository.ExploreInstance c.Db userId nonexistant
+    let! (missingCard: Result<ExploreCard, string>) = ExploreCardRepository.instance c.Db userId nonexistant
     
     Assert.Equal(sprintf "Card Instance #%i not found" nonexistant, missingCard.error)
     } |> TaskResult.assertOk)
@@ -314,7 +314,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
         Assert.Equal(
             instanceCountForCard,
             c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
-        let! card = CardRepository.Explore c.Db userId cardId
+        let! card = ExploreCardRepository.get c.Db userId cardId
         Assert.Equal<ViewTag seq>(
             tags,
             card.Value.Tags)
