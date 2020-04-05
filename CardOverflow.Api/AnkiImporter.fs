@@ -192,7 +192,7 @@ module AnkiImporter =
             card.AcquireEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =
             history.AcquireEquality db |> Option.ofObj
-        result {
+        taskResult {
             let! acquiredCardEntities, histories =
                 load
                     ankiDb
@@ -215,7 +215,7 @@ module AnkiImporter =
                 if x.Id = 0
                 then db.History.AddI x
             )
-            return db.SaveChangesAsyncI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
+            return! db.SaveChangesAsyncI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
         }
         
 // lowTODO consider just generating a temporary guid code side to serve as a lookupID for the record types, then build the entities at the very end.

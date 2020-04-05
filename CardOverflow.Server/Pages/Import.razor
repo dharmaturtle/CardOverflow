@@ -5,7 +5,8 @@
 @using System.IO
 @using Blazor.FileReader
 @inject IFileReaderService fileReaderService
-@inherits OwningComponentBase<CardOverflowDb>
+@inject DbExecutor DbExecutor
+
 <style>
   .droptarget {
     display: block;
@@ -112,9 +113,8 @@
       this.StateHasChanged();
 
       try {
-        var x = SanitizeAnki.Import(Service, downloadPath, User.Id);
+        var x = await DbExecutor.QueryAsync(db => SanitizeAnki.Import(db, downloadPath, User.Id));
         if (x.IsOk) {
-          await x.ResultValue;
           Output += $"Import complete!.{nl}";
         } else {
           Output += $"Error(s) importing: " + x.ErrorValue;

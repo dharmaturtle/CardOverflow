@@ -21,27 +21,29 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks
 open System.Security.Cryptography
 open System.Collections.Generic
+open FsToolkit.ErrorHandling
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = task {
+let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer(false, ankiFileName)
     
     do!
         SanitizeAnki.ankiExportsDir +/ ankiFileName
         |> AnkiImporter.loadFiles (fun _ -> None)
-        |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
-        |> Result.getOk
+        |> Task.FromResult
+        |> TaskResult.bind(AnkiImporter.save c.Db ankiDb userId)
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count()) }
+    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
+    } |> TaskResult.assertOk)
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = task {
+let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer(false, ankiFileName)
 
@@ -49,13 +51,13 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
         do!
             SanitizeAnki.ankiExportsDir +/ ankiFileName
             |> AnkiImporter.loadFiles (fun sha256 -> c.Db.File.FirstOrDefault(fun f -> f.Sha256 = sha256) |> Option.ofObj)
-            |> Result.bind (AnkiImporter.save c.Db ankiDb userId)
-            |> Result.getOk
+            |> Task.FromResult
+            |> TaskResult.bind(AnkiImporter.save c.Db ankiDb userId)
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
-    }
+    } |> TaskResult.assertOk)
 
 [<Fact>]
 let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (): unit =
@@ -97,18 +99,18 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     Assert.Equal<string list> (expected, actual)
 
 [<Fact>]
-let ``AnkiImporter import cards that have the same acquireHash as distinct cards`` (): Task<unit> = task { // lowTODO, perhaps they should be the same card
+let ``AnkiImporter import cards that have the same acquireHash as distinct cards`` (): Task<unit> = (taskResult { // lowTODO, perhaps they should be the same card
     let userId = 3
     use c = new TestContainer()
-    do!
-        AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
-        |> Result.getOk
+    
+    do! AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
+    
     Assert.Equal<string seq>(
         ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.CardInstance.Count())
-    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count()) }
+    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count()) } |> TaskResult.assertOk)
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let! acquired = CardRepository.GetAcquired c.Db userId cardId
@@ -122,9 +124,8 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let userId = 3
     use c = new TestContainer()
     let testCommunalFields = testCommunalFields c userId
-    do!
-        AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
-        |> Result.getOk
+    let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
+    Assert.Null x.Value
     let allCardInstanceViews =
         c.Db.CardInstance
             .Include(fun x -> x.TemplateInstance)
@@ -481,7 +482,7 @@ let ``AnkiDefaults.templateIdByHash is same as initial db`` (): unit =
         AnkiDefaults.templateIdByHash)
 
 //[<Fact>]
-let ``Manual Anki import`` (): Task<unit> = task {
+let ``Manual Anki import`` (): Task<unit> = (taskResult {
     let userId = 3
     let pathToCollection = @""
     
@@ -494,14 +495,11 @@ let ``Manual Anki import`` (): Task<unit> = task {
     //use __ = AsyncScopedLifestyle.BeginScope c
     //let db = c.GetInstance<CardOverflowDb>()
 
-    do!    
-        let ankiDb =
-            AnkiImporter.getSimpleAnkiDb
-            |> using(SanitizeAnki.ankiDb pathToCollection)
-        pathToCollection
+    let ankiDb =
+        AnkiImporter.getSimpleAnkiDb
+        |> using(SanitizeAnki.ankiDb pathToCollection)
+    do! pathToCollection
         |> AnkiImporter.loadFiles (fun sha256 -> db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
-        |> Result.bind (AnkiImporter.save db ankiDb userId)
-        |> function
-        | Ok x -> x
-        | Error x -> failwith x
-    }
+        |> Task.FromResult
+        |> TaskResult.bind(AnkiImporter.save db ankiDb userId)
+    } |> TaskResult.assertOk)
