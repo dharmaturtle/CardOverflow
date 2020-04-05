@@ -65,16 +65,25 @@
           </div>
         </div>
       </div>
-      <div class="float-right mr-3">
-        <div class="row">
-          <span class="btn-group">
-            <InputText @bind-Value=@EditCard.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" />
-            <button type="button" class="btn btn-primary" @onclick=@UpdateCard>Save</button>
-          </span>
+      <div class="row">
+        <div class="col-sm">
+          @if (EditCard.ParentId != null) {
+            <a href="cardinstance/@EditCard.ParentId.Value">
+              Parent
+            </a>
+          }
         </div>
-        <div class="row">
-          <DataAnnotationsValidator />
-          <ValidationSummary />
+        <div class="col-sm">
+          <div class="row mx-1">
+            <span class="btn-group w-100">
+              <InputText @bind-Value=@EditCard.EditSummary class="form-control w-100" placeholder="Edit Summary" />
+              <button type="button" class="btn btn-primary" @onclick=@UpdateCard>Save</button>
+            </span>
+          </div>
+          <div class="row">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+          </div>
         </div>
       </div>
     </fieldset>
@@ -82,14 +91,10 @@
 }
 
 @code {
-  [Parameter]
-  public AcquiredCard Card { get; set; }
-  [Parameter]
-  public ViewEditCardCommand EditCard { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  [Parameter]
-  public IEnumerable<ViewTemplateWithAllInstances> Templates { get; set; }
+  [Parameter] public AcquiredCard Card { get; set; }
+  [Parameter] public ViewEditCardCommand EditCard { get; set; }
+  [Parameter] public IEnumerable<ViewTemplateWithAllInstances> Templates { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   private IEnumerable<ViewTemplateInstance> SelectedTemplateInstances;
   private int SelectedTemplateId;
   private int SelectedTemplateInstanceId;

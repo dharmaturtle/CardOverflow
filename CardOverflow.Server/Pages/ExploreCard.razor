@@ -1,3 +1,5 @@
+@page "/cardinstance/{InstanceId:int}"
+
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Legacy
@@ -11,13 +13,14 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inherits OwningComponentBase<CardOverflowDb>
+@inject NavigationManager NavigationManager
 
 @if (Card == null) {
   <p><em>@_LoadingMessage</em></p>
 } else {
   <div class="d-flex justify-content-between align-items-center">
     <div>
-      <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard UpdateAcquiredCard=@(x => AcquiredCard = x) UpdateCard=@(x => Card = x)/>
+      <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard UpdateAcquiredCard=@(x => AcquiredCard = x) UpdateCard=@(x => Card = x) />
     </div>
     <div>
       By @Card.Author
@@ -36,7 +39,7 @@
     </div>
   </div>
   <div>
-    <ResizingIframe SrcUrl=@("/card/" + @Id + "/back/")></ResizingIframe>
+    <ResizingIframe SrcUrl=@("/cardinstance/" + Card.Instance.Id + "/back/") />
   </div>
   <div>
     @if (Card.IsAcquired) {
@@ -84,10 +87,9 @@
 }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [Parameter] public int Id { get; set; }
+  [Parameter] public int InstanceId { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
   AcquiredCard AcquiredCard;
   private string _LoadingMessage = "Loading...";
@@ -95,8 +97,10 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     var oldId = Id;
     await base.SetParametersAsync(parameters);
-    if (Id != oldId) {
-      var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, Id));
+    if (Id != oldId || InstanceId != 0) {
+      var x = InstanceId == 0
+        ? await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, Id))
+        : await DbExecutor.QueryAsync(db => ExploreCardRepository.instance(db, User?.Id ?? 0, InstanceId));
       if (x.IsOk) {
         Card = x.ResultValue;
       } else {
@@ -104,7 +108,7 @@
         _LoadingMessage = x.ErrorValue;
       }
       if (User != null) {
-        var r = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Id));
+        var r = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
         if (r.IsOk) {
           AcquiredCard = r.ResultValue;
         } // the only error so far is due to not acquiring the card, so intentionally not showing it.
