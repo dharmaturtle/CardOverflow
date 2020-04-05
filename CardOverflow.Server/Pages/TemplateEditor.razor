@@ -130,15 +130,7 @@
       : FSharpResult<ViewTemplateWithAllInstances, string>.NewOk(Template);
     if (x.IsOk) {
       Template = x.ResultValue;
-      var instanceId =
-        NavigationManager.Uri
-          .Apply(NavigationManager.ToAbsoluteUri).Query
-          .Apply(QueryHelpers.ParseQuery)
-          .TryGetValue("InstanceId", out var token) &&
-        int.TryParse(token.First(), out int possibleId)
-        ? possibleId
-        : 0;
-      Instance = Template.Instances.SingleOrDefault(x => x.Id == instanceId) ?? Template.Instances.First();
+      Instance = Template.Instances.SingleOrDefault(x => x.Id == NavigationManager.GetQueryInt("InstanceId")) ?? Template.Instances.First();
     } else {
       _loadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
