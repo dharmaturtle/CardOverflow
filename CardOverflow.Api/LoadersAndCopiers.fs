@@ -460,7 +460,7 @@ type ExploreCardSummary with
     }
 
 type ExploreCard with
-    static member load userId instance (entity: CardEntity) = {
+    static member load instance (entity: CardEntity) = {
         Summary = ExploreCardSummary.load instance entity
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
         Tags = instance.Tags
