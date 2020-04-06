@@ -1,5 +1,6 @@
 module ViewLogic
 
+open HtmlDiff
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
@@ -27,3 +28,9 @@ let insertDiffColors (html: string) =
         	background-color:#FEC8C8;
         }
     </style>""")
+
+let diff a b =
+    HtmlDiff(a, b)
+        //.IgnoreWhitespaceDifferences // lowTODO add an option for this
+        .Build()
+    |> insertDiffColors
