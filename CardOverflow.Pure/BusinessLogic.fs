@@ -59,19 +59,20 @@ module CardHtml =
                     showIfEmpty.Replace("{{text:" + fieldName + "}}", MappingTools.stripHtmlTags value)
                 let cloze =
                     if isFront then
-                        let hintGroup = ClozeRegex().TypedMatch(value).hint
-                        let hint =
-                            if hintGroup.Success then
-                                hintGroup.Value
-                            else
-                                "..."
-                        let brackets = sprintf """
+                        let regexMatches = ClozeRegex().TypedMatches(value).Select(fun x -> x.hint, x.Value) |> List.ofSeq
+                        (value, regexMatches) ||> List.fold(fun current (hintGroup, rawCloze) ->
+                            let hint =
+                                if hintGroup.Success then
+                                    hintGroup.Value
+                                else
+                                    "..."
+                            let brackets = hint |> sprintf """
         <span class="cloze-brackets-front">[</span>
         <span class="cloze-filler-front">%s</span>
         <span class="cloze-brackets-front">]</span>
         """
-                        let hidden = ClozeRegex().Replace(value, brackets hint)
-                        stripHtml.Replace("{{cloze:" + fieldName + "}}", hidden)
+                            current.Replace(rawCloze, brackets)
+                        ) |> fun x -> stripHtml.Replace("{{cloze:" + fieldName + "}}", x)
                     else
                         let html =
                             sprintf """
