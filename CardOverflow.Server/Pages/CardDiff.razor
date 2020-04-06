@@ -92,6 +92,52 @@
           <iframe srcdoc=@ViewLogic.diff(_a.TemplateInstance.AnswerTemplate, _b.TemplateInstance.AnswerTemplate) style="width: 100%; height: 40vh; resize:vertical;" />
         </BSTabContent>
       </BSTab>
+      <BSTab>
+        <BSTabLabel>Templates detailed</BSTabLabel>
+        <BSTabContent>
+          <TextDiff OldText=@_a.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x))
+                    NewText=@_b.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x)) CollapseContent=true MaxHeight="-1">
+            <Header>
+              <h6 style="padding: 12px; margin: 0px;">
+                Fields
+                <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+                <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+                <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+              </h6>
+            </Header>
+          </TextDiff>
+          <TextDiff OldText=@_a.TemplateInstance.QuestionTemplate NewText=@_b.TemplateInstance.QuestionTemplate CollapseContent=true MaxHeight="-1">
+            <Header>
+              <h6 style="padding: 12px; margin: 0px;">
+                Question Template
+                <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+                <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+                <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+              </h6>
+            </Header>
+          </TextDiff>
+          <TextDiff OldText=@_a.TemplateInstance.AnswerTemplate NewText=@_b.TemplateInstance.AnswerTemplate CollapseContent=true MaxHeight="-1">
+            <Header>
+              <h6 style="padding: 12px; margin: 0px;">
+                Answer Template
+                <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+                <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+                <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+              </h6>
+            </Header>
+          </TextDiff>
+          <TextDiff OldText=@_a.TemplateInstance.Css NewText=@_b.TemplateInstance.Css CollapseContent=true MaxHeight="-1">
+            <Header>
+              <h6 style="padding: 12px; margin: 0px;">
+                CSS
+                <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+                <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+                <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+              </h6>
+            </Header>
+          </TextDiff>
+        </BSTabContent>
+      </BSTab>
     </BSTabList>
     <BSTabSelectedContent />
   </BSTabGroup>
@@ -111,7 +157,10 @@
     var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId));
     if (x.IsOk) {
       (_a, _b) = x.ResultValue;
-      _fieldNames = _a.FieldValues.Concat(_b.FieldValues).Select(x => x.Field.Name).Distinct().ToList();
+      _fieldNames =
+        _a.FieldValues.OrderBy(x => x.Field.Ordinal).Concat(
+          _b.FieldValues.OrderBy(x => x.Field.Ordinal))
+        .Select(x => x.Field.Name).Distinct().ToList();
     } else {
       ToastService.ShowError(x.ErrorValue);
       _loadingMessage = x.ErrorValue;
