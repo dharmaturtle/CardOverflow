@@ -66,6 +66,23 @@
           }
         </BSTabContent>
       </BSTab>
+      <BSTab>
+        <BSTabLabel>Fields detailed</BSTabLabel>
+        <BSTabContent>
+          @foreach (var name in _fieldNames) {
+            <TextDiff OldText=@_value(_a, name) NewText=@_value(_b, name) CollapseContent=true MaxHeight="-1">
+              <Header>
+                <h6 style="padding: 12px; margin: 0px;">
+                  @name
+                  <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+                  <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+                  <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+                </h6>
+              </Header>
+            </TextDiff>
+          }
+        </BSTabContent>
+      </BSTab>
     </BSTabList>
     <BSTabSelectedContent />
   </BSTabGroup>
