@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.0" />
     <PackageReference Include="Syncfusion.EJ2.Blazor" Version="17.3.0.29-beta" />
     <PackageReference Include="Tewr.Blazor.FileReader" Version="1.2.0.19363" />
+    <PackageReference Include="htmldiff.net" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup>

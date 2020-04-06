@@ -2,6 +2,7 @@
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
+@using HtmlDiff
 @using Microsoft.FSharp.Collections
 @using CardOverflow.Pure
 @using CardOverflow.Api
@@ -24,12 +25,14 @@
       @_b.FrontBackFrontSynthBackSynth.Item2
     </div>
   </div>
+  <iframe srcdoc=@_summary style="width: 100%; height: 50vh; resize:vertical;" />
 }
 
 @code {
   [Parameter] public int AId { get; set; }
   [Parameter] public int BId { get; set; }
   private string _loadingMessage = "Loading...";
+  private string _summary;
   private CardInstanceView _a;
   private CardInstanceView _b;
 
@@ -38,6 +41,9 @@
     var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId));
     if (x.IsOk) {
       (_a, _b) = x.ResultValue;
+      _summary = new HtmlDiff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2)
+        //.IgnoreWhitespaceDifferences // lowTODO add an option for this
+        .Build();
     } else {
       ToastService.ShowError(x.ErrorValue);
       _loadingMessage = x.ErrorValue;
