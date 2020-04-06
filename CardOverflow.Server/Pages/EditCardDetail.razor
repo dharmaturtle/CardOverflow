@@ -55,7 +55,7 @@
             </div>
             @if (EditCard.Backs.IsOk) {
               @foreach (var back in EditCard.Backs.ResultValue) {
-                <iframe sandbox="allow-scripts" srcdoc=@back style="height: 80vh; width: 100%;"></iframe>
+                <iframe sandbox="allow-scripts" srcdoc=@back style="height: 80vh; width: 100%; resize: vertical;"></iframe>
               }
             } else {
               <span>
