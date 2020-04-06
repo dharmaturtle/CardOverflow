@@ -106,7 +106,7 @@
         ToastService.ShowError(x.ErrorValue);
         _LoadingMessage = x.ErrorValue;
       }
-      if (User != null) {
+      if (User != null && Card != null) {
         var r = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
         if (r.IsOk) {
           AcquiredCard = r.ResultValue;
