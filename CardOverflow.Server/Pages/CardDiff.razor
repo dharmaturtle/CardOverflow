@@ -83,6 +83,15 @@
           }
         </BSTabContent>
       </BSTab>
+      <BSTab>
+        <BSTabLabel>Templates</BSTabLabel>
+        <BSTabContent>
+          <h4>Question Template</h4>
+          <iframe srcdoc=@ViewLogic.diff(_a.TemplateInstance.QuestionTemplate, _b.TemplateInstance.QuestionTemplate) style="width: 100%; height: 40vh; resize:vertical;" />
+          <h4>Answer Template</h4>
+          <iframe srcdoc=@ViewLogic.diff(_a.TemplateInstance.AnswerTemplate, _b.TemplateInstance.AnswerTemplate) style="width: 100%; height: 40vh; resize:vertical;" />
+        </BSTabContent>
+      </BSTab>
     </BSTabList>
     <BSTabSelectedContent />
   </BSTabGroup>
