@@ -32,9 +32,14 @@
           <span class="fas fa-code-branch"></span>
         </a>
       }
-      <a href="/card/@Card.Id/revision">
+      <a href="/card/@Card.Id/revision" title="Revisions">
         <i class="fas fa-history"></i>
       </a>
+      @if (Card.Instance.IsLatest) {
+        <span class="fas fa-sync text-success" title="Up to date" />
+      } else {
+        <span class="fas fa-sync text-danger" title="Out of date" />
+      }
     </div>
   </div>
   <div>

@@ -73,18 +73,14 @@
 }
 
 @code {
-  [Parameter]
-  public EditFieldAndValue Field { get; set; }
-  [Parameter]
-  public AcquiredCard Card { get; set; }
-  [Parameter]
-  public bool MustBeCommunal { get; set; }
-  [Parameter]
-  public EventCallback<string> ValueUpdated { get; set; }
+  [Parameter] public EditFieldAndValue Field { get; set; }
+  [Parameter] public AcquiredCard Card { get; set; }
+  [Parameter] public bool MustBeCommunal { get; set; }
+  [Parameter] public EventCallback<string> ValueUpdated { get; set; }
   private object[] _tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   private List<CommunalFieldInstance> _searchResults = new List<CommunalFieldInstance>();
-  private bool _readOnlyIsVisible;
   private SearchCommand _searchCommand = new SearchCommand("");
+  private bool _readOnlyIsVisible;
   private bool _isNew = true;
 
   protected override void OnParametersSet() {
