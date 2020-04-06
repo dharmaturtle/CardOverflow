@@ -241,7 +241,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! view = CardRepository.getView c.Db card.Id
         Assert.Equal(
             expectedFieldAndValues,
-            view.FieldValues
+            view.Value.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value))
         let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
@@ -261,7 +261,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         else
             [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"
                 "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
-        |> fun expected -> Assert.Equal(expected, view.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Field.Name, x.Value))
+        |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Field.Name, x.Value))
         let! card = ExploreCardRepository.get c.Db userId instance.CardId
         let card = card.Value
         let communalValue = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"

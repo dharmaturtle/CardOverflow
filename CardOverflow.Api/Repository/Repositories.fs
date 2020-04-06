@@ -232,13 +232,13 @@ module CardRepository =
         | null -> return Error <| sprintf "Card instance %i not found" instanceId
         | x -> return Ok <| CardInstanceView.load x
     }
-    let getView (db: CardOverflowDb) cardId = task {
-        let! r =
-            db.LatestCardInstance
-                .Include(fun x -> x.TemplateInstance)
-                .SingleAsync(fun x -> x.CardId = cardId)
-        return CardInstanceView.loadLatest r
-    }
+    let getView (db: CardOverflowDb) cardId =
+        db.LatestCardInstance
+            .Include(fun x -> x.TemplateInstance)
+            .SingleOrDefaultAsync(fun x -> x.CardId = cardId)
+        |> Task.map Ok
+        |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Card #%i not found" cardId) x |> Task.FromResult)
+        |> TaskResult.map CardInstanceView.loadLatest
     let Revisions (db: CardOverflowDb) userId cardId = task {
         let! r =
             db.Card

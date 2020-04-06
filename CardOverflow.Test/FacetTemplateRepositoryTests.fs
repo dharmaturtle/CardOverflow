@@ -72,7 +72,7 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
     let createds = c.Db.TemplateInstance.Where(fun x -> x.TemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = CardRepository.getView c.Db 1
-    let front, _, _, _ = x.FrontBackFrontSynthBackSynth
+    let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth
     Assert.Equal(
         """<!DOCTYPE html>
     <head>

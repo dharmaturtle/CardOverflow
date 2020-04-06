@@ -226,7 +226,7 @@ Back
                 Ordinal = 1uy
                 IsSticky = false }
             Value = "Back"}],
-        view.FieldValues
+        view.Value.FieldValues
             |> Seq.sortByDescending (fun x -> x.Field.Name)
     )
     Assert.Equal<string seq>(
@@ -310,7 +310,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
         let! refreshed = CardRepository.getView c.Db cardId
         Assert.Equal<string seq>(
             [newValue; newValue],
-            refreshed.FieldValues.Select(fun x -> x.Value))
+            refreshed.Value.FieldValues.Select(fun x -> x.Value))
         Assert.Equal(
             instanceCountForCard,
             c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
@@ -320,7 +320,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
             card.Value.Tags)
         Assert.Equal<string seq>(
             [newValue; newValue],
-            refreshed.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
+            refreshed.Value.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
         )
         let createds = c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList
         Assert.NotEqual(createds.[0], createds.[1])
