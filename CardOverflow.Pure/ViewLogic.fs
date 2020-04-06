@@ -13,3 +13,17 @@ let toString (timeSpan: TimeSpan) =
     | duration when duration < TimeSpan.FromDays 30.   -> sprintf "%.0f d"     timeSpan.TotalDays
     | duration when duration < TimeSpan.FromDays 365.  -> sprintf "%.1f mo" <| timeSpan.TotalDays / 30.
     | _                                                -> sprintf "%.1f yr" <| timeSpan.TotalDays / 365.
+
+let insertDiffColors (html: string) =
+    html.Replace("<head>", """<head>
+    <style>
+        ins {
+        	background-color: #cfc;
+        	text-decoration: none;
+        }
+        
+        del {
+        	color: #999;
+        	background-color:#FEC8C8;
+        }
+    </style>""")

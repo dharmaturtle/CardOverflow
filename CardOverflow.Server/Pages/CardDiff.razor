@@ -43,7 +43,7 @@
       (_a, _b) = x.ResultValue;
       _summary = new HtmlDiff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2)
         //.IgnoreWhitespaceDifferences // lowTODO add an option for this
-        .Build();
+        .Build().Apply(ViewLogic.insertDiffColors);
     } else {
       ToastService.ShowError(x.ErrorValue);
       _loadingMessage = x.ErrorValue;
