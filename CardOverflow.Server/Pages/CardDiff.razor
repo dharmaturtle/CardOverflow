@@ -20,16 +20,31 @@
 @if (_a == null || _b == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
-  <iframe srcdoc=@_summary style="width: 100%; height: 50vh; resize:vertical;" />
-  <TextDiff OldText=@_a.FrontBackFrontSynthBackSynth.Item2 NewText=@_b.FrontBackFrontSynthBackSynth.Item2 CollapseContent=true MaxHeight="-1">
-    <Header>
-      <h6 style="padding: 12px; margin: 0px;">
-        <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
-        <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
-        <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
-      </h6>
-    </Header>
-  </TextDiff>
+  <BSTabGroup>
+    <BSTabList>
+      <BSTab>
+        <BSTabLabel>Holistic</BSTabLabel>
+        <BSTabContent>
+          <iframe srcdoc=@_summary style="width: 100%; height: 90vh; resize:vertical;" />
+        </BSTabContent>
+      </BSTab>
+      <BSTab>
+        <BSTabLabel>Holistic detailed</BSTabLabel>
+        <BSTabContent>
+          <TextDiff OldText=@_a.FrontBackFrontSynthBackSynth.Item2 NewText=@_b.FrontBackFrontSynthBackSynth.Item2 CollapseContent=true MaxHeight="-1">
+            <Header>
+              <h6 style="padding: 12px; margin: 0px;">
+                <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+                <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+                <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+              </h6>
+            </Header>
+          </TextDiff>
+        </BSTabContent>
+      </BSTab>
+    </BSTabList>
+    <BSTabSelectedContent />
+  </BSTabGroup>
 }
 
 @code {
