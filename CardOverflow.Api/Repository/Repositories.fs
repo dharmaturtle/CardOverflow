@@ -210,6 +210,16 @@ module ExploreCardRepository =
         }
 
 module CardViewRepository =
+    let instancePair (db: CardOverflowDb) aId bId = taskResult {
+        let! (instances: CardInstanceEntity ResizeArray) =
+            db.CardInstance
+                .Include(fun x -> x.TemplateInstance)
+                .Where(fun x -> x.Id = aId || x.Id = bId)
+                .ToListAsync()
+        let! a = Result.requireNotNull (sprintf "Card instance #%i not found" aId) <| instances.SingleOrDefault(fun x -> x.Id = aId)
+        let! b = Result.requireNotNull (sprintf "Card instance #%i not found" bId) <| instances.SingleOrDefault(fun x -> x.Id = bId)
+        return CardInstanceView.load a, CardInstanceView.load b
+    }
     let instance (db: CardOverflowDb) instanceId = task {
         match!
             db.CardInstance

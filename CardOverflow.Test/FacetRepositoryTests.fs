@@ -282,6 +282,27 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     } |> TaskResult.assertOk)
 
 [<Fact>]
+let ``CardViewRepository.instancePair works``() : Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = addBasicCard c.Db userId []
+    let! _ = addBasicCard c.Db userId []
+    
+    let! a, b = CardViewRepository.instancePair c.Db 1001 1002
+    
+    Assert.Equal(a.InC(), b.InC())
+
+    // missing instanceId
+    let! (x: Result<_, _>) = CardViewRepository.instancePair c.Db 1001 -1
+    
+    Assert.Equal("Card instance #-1 not found", x.error)
+    
+    let! (x: Result<_, _>) = CardViewRepository.instancePair c.Db -1 1001
+    
+    Assert.Equal("Card instance #-1 not found", x.error)
+    } |> TaskResult.assertOk)
+
+[<Fact>]
 let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also forking``() : Task<unit> = task {
     use c = new TestContainer()
     let userId = 3

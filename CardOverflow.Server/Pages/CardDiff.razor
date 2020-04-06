@@ -1,0 +1,47 @@
+@page "/carddiff/{AId:int}/{BId:int}"
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using Syncfusion.EJ2.Blazor
+@using Syncfusion.EJ2.Blazor.RichTextEditor
+@inject IToastService ToastService
+@inject DbExecutor DbExecutor
+
+@if (_a == null || _b == null) {
+  <p><em>@_loadingMessage</em></p>
+} else {
+  <div class="row">
+    <div class="col-sm">
+      @_a.FrontBackFrontSynthBackSynth.Item2
+    </div>
+    <div class="col-sm">
+      @_b.FrontBackFrontSynthBackSynth.Item2
+    </div>
+  </div>
+}
+
+@code {
+  [Parameter] public int AId { get; set; }
+  [Parameter] public int BId { get; set; }
+  private string _loadingMessage = "Loading...";
+  private CardInstanceView _a;
+  private CardInstanceView _b;
+
+  protected override async Task OnParametersSetAsync() {
+    await base.OnParametersSetAsync();
+    var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId));
+    if (x.IsOk) {
+      (_a, _b) = x.ResultValue;
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+      _loadingMessage = x.ErrorValue;
+    }
+  }
+
+}
