@@ -15,6 +15,8 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Microsoft.Extensions.Logging;
 using Westwind.AspNetCore.LiveReload;
+using DiffPlex;
+using DiffPlex.DiffBuilder;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -30,6 +32,8 @@ namespace CardOverflow.Server {
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
+      services.AddScoped<ISideBySideDiffBuilder, SideBySideDiffBuilder>();
+      services.AddScoped<IDiffer, Differ>();
       services.AddBlazoredToast();
       services.AddMvc();
       services.AddSingleton<RandomProvider>();
@@ -65,7 +69,7 @@ namespace CardOverflow.Server {
         });
       }
 
-      Log.Logger = new LoggerConfiguration()
+      Serilog.Log.Logger = new LoggerConfiguration()
         .ReadFrom
         .Configuration(Configuration)
         .CreateLogger();

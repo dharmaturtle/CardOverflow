@@ -3,6 +3,9 @@
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using HtmlDiff
+@using DiffPlex;
+@using DiffPlex.DiffBuilder;
+@using BlazorTextDiff;
 @using Microsoft.FSharp.Collections
 @using CardOverflow.Pure
 @using CardOverflow.Api
@@ -17,15 +20,16 @@
 @if (_a == null || _b == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
-  <div class="row">
-    <div class="col-sm">
-      @_a.FrontBackFrontSynthBackSynth.Item2
-    </div>
-    <div class="col-sm">
-      @_b.FrontBackFrontSynthBackSynth.Item2
-    </div>
-  </div>
   <iframe srcdoc=@_summary style="width: 100%; height: 50vh; resize:vertical;" />
+  <TextDiff OldText=@_a.FrontBackFrontSynthBackSynth.Item2 NewText=@_b.FrontBackFrontSynthBackSynth.Item2 CollapseContent=true MaxHeight="-1">
+    <Header>
+      <h6 style="padding: 12px; margin: 0px;">
+        <span class="badge badge-primary">@($"{context.Modifications} Line Modifications")</span>
+        <span class="badge badge-danger">@($"{context.Deletions} Line Deletions")</span>
+        <span class="badge badge-success">@($"{context.Additions} Line Additions")</span>
+      </h6>
+    </Header>
+  </TextDiff>
 }
 
 @code {
