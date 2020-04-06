@@ -2,6 +2,7 @@ module ViewLogic
 
 open HtmlDiff
 open System
+open CardOverflow.Debug
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
@@ -16,18 +17,23 @@ let toString (timeSpan: TimeSpan) =
     | _                                                -> sprintf "%.1f yr" <| timeSpan.TotalDays / 365.
 
 let insertDiffColors (html: string) =
-    html.Replace("<head>", """<head>
-    <style>
+    let style =
+        """<style>
         ins {
-        	background-color: #cfc;
-        	text-decoration: none;
+        	    background-color: #cfc;
+        	    text-decoration: none;
         }
         
         del {
-        	color: #999;
-        	background-color:#FEC8C8;
+        	    color: #999;
+        	    background-color:#FEC8C8;
         }
-    </style>""")
+        </style>"""
+    let head = "<head>"
+    if html.Contains head then
+        html.Replace(head, head + style)
+    else
+        style + html
 
 let diff a b =
     HtmlDiff(a, b)

@@ -69,8 +69,7 @@ let ``insertDiffColors`` (): unit =
 
     Assert.Equal("""<!DOCTYPE html>
     
-<head>
-    <style>
+<head><style>
         ins {
         	background-color: #cfc;
         	text-decoration: none;
@@ -122,4 +121,28 @@ let ``insertDiffColors`` (): unit =
 </body>
     
 </html>
+""", actual, ignoreWhiteSpaceDifferences = true, ignoreLineEndingDifferences = true)
+
+[<Fact>]
+let ``insertDiffColors works without <head>`` (): unit =
+    let actual = ViewLogic.insertDiffColors """
+    <p>a front</p>
+    <hr id=answer>
+    <p>a back</p>
+"""
+
+    Assert.Equal("""<style>
+        ins {
+        	background-color: #cfc;
+        	text-decoration: none;
+        }
+        
+        del {
+        	color: #999;
+        	background-color:#FEC8C8;
+        }
+    </style>
+    <p>a front</p>
+    <hr id=answer>
+    <p>a back</p>
 """, actual, ignoreWhiteSpaceDifferences = true, ignoreLineEndingDifferences = true)

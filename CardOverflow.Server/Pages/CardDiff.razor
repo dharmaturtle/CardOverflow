@@ -2,6 +2,7 @@
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
+@using System.Linq
 @using HtmlDiff
 @using DiffPlex;
 @using DiffPlex.DiffBuilder;
@@ -56,6 +57,15 @@
           </TextDiff>
         </BSTabContent>
       </BSTab>
+      <BSTab>
+        <BSTabLabel>Fields</BSTabLabel>
+        <BSTabContent>
+          @foreach (var name in _fieldNames) {
+            <h4>@name</h4>
+            <iframe srcdoc=@ViewLogic.diff(_value(_a, name), _value(_b, name)) style="width: 100%; height: 30vh; resize:vertical;" />
+          }
+        </BSTabContent>
+      </BSTab>
     </BSTabList>
     <BSTabSelectedContent />
   </BSTabGroup>
@@ -67,12 +77,15 @@
   private string _loadingMessage = "Loading...";
   private CardInstanceView _a;
   private CardInstanceView _b;
+  private List<string> _fieldNames;
+  private string _value(CardInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId));
     if (x.IsOk) {
       (_a, _b) = x.ResultValue;
+      _fieldNames = _a.FieldValues.Concat(_b.FieldValues).Select(x => x.Field.Name).Distinct().ToList();
     } else {
       ToastService.ShowError(x.ErrorValue);
       _loadingMessage = x.ErrorValue;
