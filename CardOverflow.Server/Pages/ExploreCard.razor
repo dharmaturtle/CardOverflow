@@ -86,7 +86,7 @@
 }
 
 @code {
-  [Parameter] public int Id { get; set; }
+  [Parameter] public int CardId { get; set; }
   [Parameter] public int InstanceId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
@@ -94,11 +94,11 @@
   private string _LoadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
-    var oldId = Id;
+    var oldId = CardId;
     await base.SetParametersAsync(parameters);
-    if (Id != oldId || InstanceId != 0) {
+    if (CardId != oldId || InstanceId != 0) {
       var x = InstanceId == 0
-        ? await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, Id))
+        ? await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, CardId))
         : await DbExecutor.QueryAsync(db => ExploreCardRepository.instance(db, User?.Id ?? 0, InstanceId));
       if (x.IsOk) {
         Card = x.ResultValue;

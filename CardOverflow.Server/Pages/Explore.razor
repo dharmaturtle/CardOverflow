@@ -1,5 +1,5 @@
 @page "/explore"
-@page "/card/{SelectedId:int}"
+@page "/card/{SelectedCardId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,9 +11,9 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/card/{x}") Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/card/{x}") Ids=@cards?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedCardId.ToString() />
 </div>
-@if (SelectedId == null) {
+@if (SelectedCardId == null) {
   @if (cards == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -49,21 +49,19 @@
   }
   <Pager Details=@details PageChanged=@PageChanged />
 } else {
-  <ExploreCard Id=@SelectedId.Value />
+  <ExploreCard CardId=@SelectedCardId.Value />
 }
 
 @code {
-  IList<CardOverflow.Pure.ExploreCardSummary> cards;
-  PagedListDetails details;
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  [Parameter]
-  public int? SelectedId { get; set; }
-  SearchCommand search = new SearchCommand { Query = "" };
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public int? SelectedCardId { get; set; }
+  private IList<CardOverflow.Pure.ExploreCardSummary> cards;
+  private PagedListDetails details;
+  private SearchCommand search = new SearchCommand { Query = "" };
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (SelectedId == null && cards == null) {
+    if (SelectedCardId == null && cards == null) {
       await PageChanged(1);
       StateHasChanged();
     }
@@ -76,7 +74,7 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedId = null;
+    SelectedCardId = null;
     search = newSearch;
     return PageChanged(1);
   }
