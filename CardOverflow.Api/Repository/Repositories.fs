@@ -209,6 +209,23 @@ module ExploreCardRepository =
             |> ExploreCard.load e.Card
         }
 
+module CardViewRepository =
+    let instance (db: CardOverflowDb) instanceId = task {
+        match!
+            db.CardInstance
+            .Include(fun x -> x.TemplateInstance)
+            .SingleOrDefaultAsync(fun x -> x.Id = instanceId) with
+        | null -> return Error <| sprintf "Card instance %i not found" instanceId
+        | x -> return Ok <| CardInstanceView.load x
+    }
+    let get (db: CardOverflowDb) cardId =
+        db.LatestCardInstance
+            .Include(fun x -> x.TemplateInstance)
+            .SingleOrDefaultAsync(fun x -> x.CardId = cardId)
+        |> Task.map Ok
+        |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Card #%i not found" cardId) x |> Task.FromResult)
+        |> TaskResult.map CardInstanceView.loadLatest
+
 module CardRepository =
     let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {
             let! (rs: Relationship_AcquiredCardEntity ResizeArray) = db.Relationship_AcquiredCard.Where(fun x -> x.SourceAcquiredCardId = acquiredCardId || x.TargetAcquiredCardId = acquiredCardId).ToListAsync()
@@ -224,21 +241,6 @@ module CardRepository =
             ac.CardState <- CardState.toDb state
             return! db.SaveChangesAsyncI()
         }
-    let instance (db: CardOverflowDb) instanceId = task {
-        match!
-            db.CardInstance
-            .Include(fun x -> x.TemplateInstance)
-            .SingleOrDefaultAsync(fun x -> x.Id = instanceId) with
-        | null -> return Error <| sprintf "Card instance %i not found" instanceId
-        | x -> return Ok <| CardInstanceView.load x
-    }
-    let getView (db: CardOverflowDb) cardId =
-        db.LatestCardInstance
-            .Include(fun x -> x.TemplateInstance)
-            .SingleOrDefaultAsync(fun x -> x.CardId = cardId)
-        |> Task.map Ok
-        |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Card #%i not found" cardId) x |> Task.FromResult)
-        |> TaskResult.map CardInstanceView.loadLatest
     let Revisions (db: CardOverflowDb) userId cardId = task {
         let! r =
             db.Card

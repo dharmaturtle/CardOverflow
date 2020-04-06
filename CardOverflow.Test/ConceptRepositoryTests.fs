@@ -58,7 +58,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         
     let! card = ExploreCardRepository.get c.Db userId cardId
     let card = card.Value
-    let! view = CardRepository.getView c.Db cardId
+    let! view = CardViewRepository.get c.Db cardId
         
     let front, _, _, _ = view.Value.FrontBackFrontSynthBackSynth
     Assert.DoesNotContain("{{Front}}", front)

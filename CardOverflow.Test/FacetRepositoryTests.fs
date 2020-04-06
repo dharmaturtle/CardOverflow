@@ -208,7 +208,7 @@ Back
         |> Result.getOk
         |> fun x -> x.Back
     )
-    let! view = CardRepository.getView c.Db 1
+    let! view = CardViewRepository.get c.Db 1
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {
                 Name = "Front"
@@ -307,7 +307,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     Assert.Empty x.Value
     
     let asserts userId cardId newValue instanceCountForCard revisionCount tags = task {
-        let! refreshed = CardRepository.getView c.Db cardId
+        let! refreshed = CardViewRepository.get c.Db cardId
         Assert.Equal<string seq>(
             [newValue; newValue],
             refreshed.Value.FieldValues.Select(fun x -> x.Value))
@@ -326,11 +326,11 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
         Assert.NotEqual(createds.[0], createds.[1])
         let! revisions = CardRepository.Revisions c.Db userId cardId
         Assert.Equal(revisionCount, revisions.SortedMeta.Count())
-        let! instance = CardRepository.instance c.Db revisions.SortedMeta.[0].Id
+        let! instance = CardViewRepository.instance c.Db revisions.SortedMeta.[0].Id
         let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
         Assert.Contains(newValue, revision)
         if instanceCountForCard > 1 then
-            let! instance = CardRepository.instance c.Db revisions.SortedMeta.[1].Id
+            let! instance = CardViewRepository.instance c.Db revisions.SortedMeta.[1].Id
             let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
             Assert.Contains("Front", original)
             Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest

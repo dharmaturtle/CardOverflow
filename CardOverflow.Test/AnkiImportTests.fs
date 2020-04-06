@@ -238,7 +238,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         Assert.Equal(
             expectedFieldAndValues,
             card.Instance.CommunalFields.Select(fun x -> x.FieldName, x.Value))
-        let! view = CardRepository.getView c.Db card.Id
+        let! view = CardViewRepository.get c.Db card.Id
         Assert.Equal(
             expectedFieldAndValues,
             view.Value.FieldValues
@@ -254,7 +254,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
 
     let! cloze = getInstances "Cloze"
     for instance in cloze do
-        let! view = CardRepository.getView c.Db instance.CardId
+        let! view = CardViewRepository.get c.Db instance.CardId
         if instance.Id = 1002 then
             [   "Text", "Toxic adenomas are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
                 "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]

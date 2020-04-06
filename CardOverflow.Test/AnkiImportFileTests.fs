@@ -249,11 +249,11 @@ let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
     use c = new TestContainer()
     let! _ = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
 
-    let! view = CardRepository.instance c.Db 1001
+    let! view = CardViewRepository.instance c.Db 1001
     Assert.Equal<string seq>(
         ["{{c1::Portland::city}} was founded in 1845."; "extra"],
         view.Value.FieldValues.Select(fun x -> x.Value))
-    let! view = CardRepository.instance c.Db 1002
+    let! view = CardViewRepository.instance c.Db 1002
     Assert.Equal<string seq>(
         ["Portland was founded in {{c2::1845}}."; "extra"],
         view.Value.FieldValues.Select(fun x -> x.Value))}

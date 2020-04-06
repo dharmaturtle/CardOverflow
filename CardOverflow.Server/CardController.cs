@@ -14,16 +14,16 @@ namespace CardOverflow.Server {
     }
 
     [HttpGet("card/{id}/front")] // highTODO move to another server
-    public async Task<IActionResult> Front(int id) => _front(await CardRepository.getView(_db, id));
+    public async Task<IActionResult> Front(int id) => _front(await CardViewRepository.get(_db, id));
 
     [HttpGet("card/{id}/back")] // highTODO move to another server
-    public async Task<IActionResult> Back(int id) => _back(await CardRepository.getView(_db, id));
+    public async Task<IActionResult> Back(int id) => _back(await CardViewRepository.get(_db, id));
 
     [HttpGet("cardinstance/{id}/front")] // highTODO move to another server
-    public async Task<IActionResult> InstanceFront(int id) => _front(await CardRepository.instance(_db, id));
+    public async Task<IActionResult> InstanceFront(int id) => _front(await CardViewRepository.instance(_db, id));
 
     [HttpGet("cardinstance/{id}/back")] // highTODO move to another server
-    public async Task<IActionResult> InstanceBack(int id) => _back(await CardRepository.instance(_db, id));
+    public async Task<IActionResult> InstanceBack(int id) => _back(await CardViewRepository.instance(_db, id));
 
     private ContentResult _front(FSharpResult<CardInstanceView, string> view) =>
       (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item1).Apply(_toTextHtmlContent);
