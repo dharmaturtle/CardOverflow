@@ -308,6 +308,83 @@ let ``CardHtml renders multiple cloze templates properly 3``(): unit =
     assertStripped
         "In 1492, Columbus sailed the ocean [ blue ] .Some extra info"
         back
+        
+[<Fact>]
+let ``CardHtml renders {{cloze:FieldName}} properly with hint``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [("Text", "Canberra was founded in {{c1::1913::year}}.")
+             ("Extra", "Some extra stuff.")
+            ]
+            "{{cloze:Text}}"
+            """{{cloze:Text}}<br>{{Extra}}"""
+            ""
+
+    assertBody
+        """Canberra was founded in 
+        <span class="cloze-brackets-front">[</span>
+        <span class="cloze-filler-front">year</span>
+        <span class="cloze-brackets-front">]</span>
+        ."""
+        front
+    assertBody
+        """Canberra was founded in 
+        <span class="cloze-brackets-back">[</span>
+        1913
+        <span class="cloze-brackets-back">]</span>
+        .<br>Some extra stuff."""
+        back
+
+[<Fact>]
+let ``CardHtml renders multiple cloze templates properly 1 with hint``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
+                "Field2", "In 1492, Columbus sailed the ocean blue."
+                "Extra", "Some extra info" ]
+            "{{cloze:Field1}}{{cloze:Field2}}"
+            "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+            ""
+    assertStripped
+        "Columbus first crossed the Atlantic in [ year ]"
+        front
+    assertStripped
+        "Columbus first crossed the Atlantic in [ 1492 ] Some extra info"
+        back
+
+[<Fact>]
+let ``CardHtml renders multiple cloze templates properly 2 with hint``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [   "Field1", "Columbus first crossed the Atlantic in 1492"
+                "Field2", "In {{c2::1492::year}}, Columbus sailed the ocean blue."
+                "Extra", "Some extra info" ]
+            "{{cloze:Field1}}{{cloze:Field2}}"
+            "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+            ""
+    assertStripped
+        "In [ year ] , Columbus sailed the ocean blue."
+        front
+    assertStripped
+        "In [ 1492 ] , Columbus sailed the ocean blue.Some extra info"
+        back
+
+[<Fact>]
+let ``CardHtml renders multiple cloze templates properly 3 with hint``(): unit =
+    let front, back, _, _ =
+        CardHtml.generate
+            [   "Field1", "Columbus first crossed the Atlantic in 1492"
+                "Field2", "In 1492, Columbus sailed the ocean {{c3::blue::color}}."
+                "Extra", "Some extra info" ]
+            "{{cloze:Field1}}{{cloze:Field2}}"
+            "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+            ""
+    assertStripped
+        "In 1492, Columbus sailed the ocean [ color ] ."
+        front
+    assertStripped
+        "In 1492, Columbus sailed the ocean [ blue ] .Some extra info"
+        back
 
 [<Fact>]
 let ``TemplateInstance.FrontBackFrontSynthBackSynth works``(): unit =

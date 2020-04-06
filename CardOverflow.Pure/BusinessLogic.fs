@@ -59,12 +59,18 @@ module CardHtml =
                     showIfEmpty.Replace("{{text:" + fieldName + "}}", MappingTools.stripHtmlTags value)
                 let cloze =
                     if isFront then
-                        let brackets = """
+                        let hintGroup = ClozeRegex().TypedMatch(value).hint
+                        let hint =
+                            if hintGroup.Success then
+                                hintGroup.Value
+                            else
+                                "..."
+                        let brackets = sprintf """
         <span class="cloze-brackets-front">[</span>
-        <span class="cloze-filler-front">...</span>
+        <span class="cloze-filler-front">%s</span>
         <span class="cloze-brackets-front">]</span>
         """
-                        let hidden = ClozeRegex().Replace(value, brackets) // medTODO show the hint
+                        let hidden = ClozeRegex().Replace(value, brackets hint)
                         stripHtml.Replace("{{cloze:" + fieldName + "}}", hidden)
                     else
                         let html =
