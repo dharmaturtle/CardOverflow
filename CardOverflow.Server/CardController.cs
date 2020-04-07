@@ -26,12 +26,10 @@ namespace CardOverflow.Server {
     public async Task<IActionResult> InstanceBack(int id) => _back(await CardViewRepository.instance(_db, id));
 
     private ContentResult _front(FSharpResult<CardInstanceView, string> view) =>
-      (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item1).Apply(_toTextHtmlContent);
+      (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item1).ToTextHtmlContent(this);
 
     private ContentResult _back(FSharpResult<CardInstanceView, string> view) =>
-      (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item2).Apply(_toTextHtmlContent);
-
-    private ContentResult _toTextHtmlContent(string s) => Content(s, "text/html");
+      (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item2).ToTextHtmlContent(this);
 
   }
 }

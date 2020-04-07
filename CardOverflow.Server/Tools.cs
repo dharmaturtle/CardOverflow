@@ -1,5 +1,6 @@
 ﻿using CardOverflow.Pure;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
@@ -17,5 +18,9 @@ namespace CardOverflow.Server {
         int.TryParse(token[0], out int possibleId)
         ? possibleId
         : fallbackValue;
+
+    public static ContentResult ToTextHtmlContent(this string s, ControllerBase controllerBase) =>
+      controllerBase.Content(s, "text/html");
+
   }
 }

@@ -1,5 +1,6 @@
 module TemplateRepositoryTests
 
+open FsToolkit.ErrorHandling
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Api
@@ -115,20 +116,23 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         front
     )
 
-    let testView getView id expected = task {
-        let! actual = getView c.Db id
-        BusinessLogicTests.assertStripped expected actual
+    // test existing
+    let testView getView id expectedFront expectedBack = task {
+        let! (actual: Result<TemplateInstance, string>) = getView c.Db id
+        let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth
+        BusinessLogicTests.assertStripped expectedFront front
+        BusinessLogicTests.assertStripped expectedBack back
     }
     
-    do! testView TemplateRepository.getFront templateId newQuestionTemplate
-    do! testView TemplateRepository.getBack templateId <| newQuestionTemplate + " {{Back}}"
+    do! testView TemplateRepository.latest templateId newQuestionTemplate <| newQuestionTemplate + " {{Back}}"
 
     let priorInstance = template.Value.Instances |> Seq.minBy (fun x -> x.Created)
-    do! testView TemplateRepository.getFrontInstance priorInstance.Id "{{Front}}"
-    do! testView TemplateRepository.getBackInstance priorInstance.Id "{{Front}} {{Back}}"
+    do! testView TemplateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
 
-    do! testView TemplateRepository.getFrontInstance 0 ""
-    do! testView TemplateRepository.getBackInstance 0 ""
-    do! testView TemplateRepository.getFront 0 ""
-    do! testView TemplateRepository.getBack 0 ""
+    // test missing
+    let testViewError getView id expected =
+        getView c.Db id
+        |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
+    do! testViewError TemplateRepository.latest 0 "Template #0 not found"
+    do! testViewError TemplateRepository.instance 0 "Template Instance #0 not found"
     }
