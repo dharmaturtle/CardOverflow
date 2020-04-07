@@ -22,17 +22,15 @@
         @if (meta.Modified != null) {
           <label>Modified:</label> @meta.Modified.Value;
         }
-        <ResizingIframe SrcUrl=@("/cardinstance/" + meta.Id + "/back")></ResizingIframe>
+        <ResizingIframe SrcUrl=@("/cardinstance/" + meta.Id + "/back") />
       </li>
     }
   </ol>
 }
 
 @code {
-  [Parameter]
-  public int Id { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [Parameter] public int Id { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.CardRevision Revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {

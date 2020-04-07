@@ -21,6 +21,30 @@
 @if (_a == null || _b == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
+  <div class="row">
+    <div class="col-sm">
+      <span class="curate-tooltip-target">
+        <span class="oi oi-eye@(_aIsAcquired ? " text-success" : "")" aria-hidden="true" />
+        <span class="curate-tooltip-content">
+          <ResizingIframe SrcUrl=@("/cardinstance/" + AId + "/back") />
+        </span>
+      </span>
+      <a href="cardinstance/@AId">
+        Old
+      </a>
+    </div>
+    <div class="col-sm">
+      <span class="curate-tooltip-target">
+        <span class="oi oi-eye@(_bIsAcquired ? " text-success" : "")" aria-hidden="true" />
+        <span class="curate-tooltip-content">
+          <ResizingIframe SrcUrl=@("/cardinstance/" + BId + "/back") />
+        </span>
+      </span>
+      <a href="cardinstance/@BId">
+        New
+      </a>
+    </div>
+  </div>
   <BSTabGroup>
     <BSTabList>
       <BSTab>
@@ -180,9 +204,12 @@
 @code {
   [Parameter] public int AId { get; set; }
   [Parameter] public int BId { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   private string _loadingMessage = "Loading...";
   private CardInstanceView _a;
   private CardInstanceView _b;
+  private bool _aIsAcquired;
+  private bool _bIsAcquired;
   private string _templateFields(CardInstanceView view) => view.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(CardInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
@@ -195,9 +222,9 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId));
+    var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId, User?.Id ?? 0));
     if (x.IsOk) {
-      (_a, _b) = x.ResultValue;
+      (_a, _aIsAcquired, _b, _bIsAcquired) = x.ResultValue;
       _fieldNames =
         _a.FieldValues.OrderBy(x => x.Field.Ordinal).Concat(
           _b.FieldValues.OrderBy(x => x.Field.Ordinal))
