@@ -176,6 +176,10 @@ type ViewTemplateWithAllInstances = {
         }
 
 module SanitizeTemplate =
+    let latest (db: CardOverflowDb) templateId =
+        TemplateRepository.latest db templateId |> TaskResult.map ViewTemplateInstance.load
+    let instance (db: CardOverflowDb) instanceId =
+        TemplateRepository.instance db instanceId |> TaskResult.map ViewTemplateInstance.load
     let AllInstances (db: CardOverflowDb) templateId = task {
         let! template =
             db.Template

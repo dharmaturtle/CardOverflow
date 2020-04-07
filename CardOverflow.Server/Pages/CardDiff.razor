@@ -30,8 +30,16 @@
         </span>
       </span>
       <a href="cardinstance/@AId">
-        Old
+        Old Card
       </a>
+      @if (_a.TemplateInstance.Id != _b.TemplateInstance.Id) {
+        <span>
+          &nbsp;and&nbsp;
+        </span>
+        <a href="templateinstance/@_a.TemplateInstance.Id">
+          Old Template
+        </a>
+      }
     </div>
     <div class="col-sm">
       <span class="curate-tooltip-target">
@@ -41,8 +49,20 @@
         </span>
       </span>
       <a href="cardinstance/@BId">
-        New
+        New Card
       </a>
+      @if (_a.TemplateInstance.Id != _b.TemplateInstance.Id) {
+        <span>
+          &nbsp;and&nbsp;
+        </span>
+        <a href="templateinstance/@_b.TemplateInstance.Id">
+          New Template
+        </a>
+      } else {
+        <a href="templateinstance/@_a.TemplateInstance.Id" class="float-right">
+          Template
+        </a>
+      }
     </div>
   </div>
   <BSTabGroup>
