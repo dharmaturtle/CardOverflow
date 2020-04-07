@@ -50,24 +50,20 @@ module RelationshipRepository =
     let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_AcquiredCardEntity) =
         db.Relationship_AcquiredCard.AddI j
         db.SaveChangesAsyncI ()
-    let removeAndSaveAsync (db: CardOverflowDb) sourceCardId targetCardId userId name = task {
-        return!
-            db.Relationship_AcquiredCard.SingleOrDefault(fun x ->
-                x.SourceAcquiredCard.CardInstance.CardId = sourceCardId &&
-                x.TargetAcquiredCard.CardInstance.CardId = targetCardId &&
-                x.SourceAcquiredCard.UserId = userId &&
-                x.TargetAcquiredCard.UserId = userId &&
-                x.Relationship.Name = name
-            ) |> function
-            | null ->
-                sprintf "Relationship not found between source Card #%i and target Card #%i with name \"%s\"." sourceCardId targetCardId name |> Error |> Task.FromResult
-            | x ->
-                db.Relationship_AcquiredCard.RemoveI x
-                task {
-                    do! db.SaveChangesAsyncI ()
-                    return Ok ()
-                }
-        }
+    let removeAndSaveAsync (db: CardOverflowDb) sourceCardId targetCardId userId name =
+        db.Relationship_AcquiredCard.SingleOrDefault(fun x ->
+            x.SourceAcquiredCard.CardInstance.CardId = sourceCardId &&
+            x.TargetAcquiredCard.CardInstance.CardId = targetCardId &&
+            x.SourceAcquiredCard.UserId = userId &&
+            x.TargetAcquiredCard.UserId = userId &&
+            x.Relationship.Name = name
+        ) |> function
+        | null ->
+            sprintf "Relationship not found between source Card #%i and target Card #%i with name \"%s\"." sourceCardId targetCardId name |> Error |> Task.FromResult
+        | x ->
+            db.Relationship_AcquiredCard.RemoveI x
+            db.SaveChangesAsyncI ()
+            |> Task.map(fun () -> Ok())
 
 module CommentRepository =
     let addAndSaveAsync (db: CardOverflowDb) (comment: CommentCardEntity) =
