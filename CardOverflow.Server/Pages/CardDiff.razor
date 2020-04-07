@@ -24,16 +24,27 @@
   <BSTabGroup>
     <BSTabList>
       <BSTab>
-        <BSTabLabel>Holistic</BSTabLabel>
+        <BSTabLabel>
+          Holistic
+          @if (_HasDifferences(_holisticFrontDiff()) || _HasDifferences(_holisticBackDiff())) {
+            <i class="fas fa-asterisk"></i>
+          }
+        </BSTabLabel>
         <BSTabContent>
           <h4>Front</h4>
-          <iframe srcdoc=@(ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item1, _b.FrontBackFrontSynthBackSynth.Item1)) style="width: 100%; height: 40vh; resize:vertical;" />
+          <iframe srcdoc=@_holisticFrontDiff() style="width: 100%; height: 40vh; resize:vertical;" />
           <h4>Back</h4>
-          <iframe srcdoc=@(ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2)) style="width: 100%; height: 40vh; resize:vertical;" />
+          <iframe srcdoc=@_holisticBackDiff() style="width: 100%; height: 40vh; resize:vertical;" />
         </BSTabContent>
       </BSTab>
       <BSTab>
-        <BSTabLabel>Holistic detailed</BSTabLabel>
+        <BSTabLabel>
+          Holistic detailed
+          @if (_a.FrontBackFrontSynthBackSynth.Item1 != _b.FrontBackFrontSynthBackSynth.Item1 ||
+            _a.FrontBackFrontSynthBackSynth.Item2 != _b.FrontBackFrontSynthBackSynth.Item2) {
+            <i class="fas fa-asterisk"></i>
+          }
+        </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_a.FrontBackFrontSynthBackSynth.Item1 NewText=@_b.FrontBackFrontSynthBackSynth.Item1 CollapseContent=true MaxHeight="-1">
             <Header>
@@ -58,16 +69,26 @@
         </BSTabContent>
       </BSTab>
       <BSTab>
-        <BSTabLabel>Fields</BSTabLabel>
+        <BSTabLabel>
+          Fields
+          @if (_fieldNames.Any(name => _HasDifferences(_fieldDiff(name)) )) {
+            <i class="fas fa-asterisk"></i>
+          }
+        </BSTabLabel>
         <BSTabContent>
           @foreach (var name in _fieldNames) {
             <h4>@name</h4>
-            <iframe srcdoc=@ViewLogic.diff(_value(_a, name), _value(_b, name)) style="width: 100%; height: 30vh; resize:vertical;" />
+            <iframe srcdoc=@_fieldDiff(name) style="width: 100%; height: 30vh; resize:vertical;" />
           }
         </BSTabContent>
       </BSTab>
       <BSTab>
-        <BSTabLabel>Fields detailed</BSTabLabel>
+        <BSTabLabel>
+          Fields detailed
+          @if (_fieldNames.Any(name => _value(_a, name) != _value(_b, name))) {
+            <i class="fas fa-asterisk"></i>
+          }
+        </BSTabLabel>
         <BSTabContent>
           @foreach (var name in _fieldNames) {
             <TextDiff OldText=@_value(_a, name) NewText=@_value(_b, name) CollapseContent=true MaxHeight="-1">
@@ -84,19 +105,32 @@
         </BSTabContent>
       </BSTab>
       <BSTab>
-        <BSTabLabel>Templates</BSTabLabel>
+        <BSTabLabel>
+          Templates
+          @if (_HasDifferences(_questionTemplateDiff()) || _HasDifferences(_answerTemplateDiff())) {
+            <i class="fas fa-asterisk"></i>
+          }
+        </BSTabLabel>
         <BSTabContent>
           <h4>Question Template</h4>
-          <iframe srcdoc=@ViewLogic.diff(_a.TemplateInstance.QuestionTemplate, _b.TemplateInstance.QuestionTemplate) style="width: 100%; height: 40vh; resize:vertical;" />
+          <iframe srcdoc=@_questionTemplateDiff() style="width: 100%; height: 40vh; resize:vertical;" />
           <h4>Answer Template</h4>
-          <iframe srcdoc=@ViewLogic.diff(_a.TemplateInstance.AnswerTemplate, _b.TemplateInstance.AnswerTemplate) style="width: 100%; height: 40vh; resize:vertical;" />
+          <iframe srcdoc=@_answerTemplateDiff() style="width: 100%; height: 40vh; resize:vertical;" />
         </BSTabContent>
       </BSTab>
       <BSTab>
-        <BSTabLabel>Templates detailed</BSTabLabel>
+        <BSTabLabel>
+          Templates detailed
+          @if (
+            _templateFields(_a) != _templateFields(_b) ||
+            _a.TemplateInstance.QuestionTemplate != _b.TemplateInstance.QuestionTemplate ||
+            _a.TemplateInstance.AnswerTemplate != _b.TemplateInstance.AnswerTemplate ||
+            _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
+            <i class="fas fa-asterisk"></i>
+          }
+        </BSTabLabel>
         <BSTabContent>
-          <TextDiff OldText=@_a.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x))
-                    NewText=@_b.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x)) CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_templateFields(_a) NewText=@_templateFields(_b) CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Fields
@@ -149,8 +183,15 @@
   private string _loadingMessage = "Loading...";
   private CardInstanceView _a;
   private CardInstanceView _b;
+  private string _templateFields(CardInstanceView view) => view.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(CardInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
+  private string _holisticFrontDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item1, _b.FrontBackFrontSynthBackSynth.Item1);
+  private string _holisticBackDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2);
+  private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
+  private string _questionTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.QuestionTemplate, _b.TemplateInstance.QuestionTemplate);
+  private string _answerTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerTemplate, _b.TemplateInstance.AnswerTemplate);
+  private bool _HasDifferences(string diff) => diff.Contains("<ins ") || diff.Contains("<del ");
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
