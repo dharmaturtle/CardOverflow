@@ -306,6 +306,18 @@ let ``CardViewRepository.instancePair works``() : Task<unit> = (taskResult {
     } |> TaskResult.assertOk)
 
 [<Fact>]
+let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
+    let view =
+        CardInstanceEntity(
+            FieldValues = "",
+            TemplateInstance = TemplateInstanceEntity(
+                Fields = "FrontArial20False0FalseBackArial20False1False"
+            ))
+        |> CardInstanceView.load
+
+    Assert.Empty view.FieldValues
+
+[<Fact>]
 let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also forking``() : Task<unit> = task {
     use c = new TestContainer()
     let userId = 3

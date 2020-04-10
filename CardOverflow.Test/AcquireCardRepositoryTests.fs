@@ -35,7 +35,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     
     do! reacquire ()
     let! ac = getAcquired ()
-    let! x = 
+    let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo

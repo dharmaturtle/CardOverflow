@@ -20,6 +20,9 @@ namespace CardOverflow.Debug {
       return input;
     }
 
+    public static void Di<TInput>(this TInput input, string id = "") =>
+      input.D(id);
+
     private static readonly DumpOptions DumpOptions = new DumpOptions {
       DumpStyle = DumpStyle.CSharp,
       LineBreakChar = "\r\n",

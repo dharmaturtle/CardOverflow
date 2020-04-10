@@ -32,7 +32,10 @@ let boolToString =
 // https://en.wikipedia.org/wiki/C0_and_C1_control_codes
 
 let split separator (string: string) =
-    string.Split [| separator |] |> Array.toList
+    if String.IsNullOrEmpty string then
+        []
+    else
+        string.Split [| separator |] |> Array.toList
 
 let splitByFileSeparator =
     split '\x1c'
