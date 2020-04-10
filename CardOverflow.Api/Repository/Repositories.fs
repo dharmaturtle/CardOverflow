@@ -172,6 +172,32 @@ module ExploreCardRepository =
         }
 
 module CardViewRepository =
+    let getAcquiredInstanceIds (db: CardOverflowDb) userId aId bId =
+        if userId = 0 then
+            [].ToListAsync()
+        else 
+            db.AcquiredCard
+                .Where(fun x -> x.UserId = userId)
+                .Where(fun x -> x.CardInstanceId = aId || x.CardInstanceId = bId)
+                .Select(fun x -> x.CardInstanceId)
+                .ToListAsync()
+    let instanceWithLatest (db: CardOverflowDb) aId userId = taskResult {
+        let! (a: CardInstanceEntity) =
+            db.CardInstance
+                .Include(fun x -> x.TemplateInstance)
+                .SingleOrDefaultAsync(fun x -> x.Id = aId)
+            |> Task.map (Result.requireNotNull (sprintf "Card instance #%i not found" aId))
+        let! (b: LatestCardInstanceEntity) = // verylowTODO optimization try to get this from `a` above
+            db.LatestCardInstance
+                .Include(fun x -> x.TemplateInstance)
+                .SingleAsync(fun x -> x.CardId = a.CardId)
+        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.CardInstanceId
+        return
+            CardInstanceView.load a,
+            acquiredInstanceIds.Contains a.Id,
+            CardInstanceView.loadLatest b,
+            acquiredInstanceIds.Contains b.CardInstanceId
+    }
     let instancePair (db: CardOverflowDb) aId bId userId = taskResult {
         let! (instances: CardInstanceEntity ResizeArray) =
             db.CardInstance
@@ -180,14 +206,7 @@ module CardViewRepository =
                 .ToListAsync()
         let! a = Result.requireNotNull (sprintf "Card instance #%i not found" aId) <| instances.SingleOrDefault(fun x -> x.Id = aId)
         let! b = Result.requireNotNull (sprintf "Card instance #%i not found" bId) <| instances.SingleOrDefault(fun x -> x.Id = bId)
-        let! (acquiredInstanceIds: int ResizeArray) =
-            if userId <> 0 then
-                db.AcquiredCard
-                    .Where(fun x -> x.UserId = userId)
-                    .Where(fun x -> x.CardInstanceId = aId || x.CardInstanceId = bId)
-                    .Select(fun x -> x.CardInstanceId)
-                    .ToListAsync()
-            else [].ToListAsync()
+        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId bId
         return
             CardInstanceView.load a,
             acquiredInstanceIds.Contains a.Id,

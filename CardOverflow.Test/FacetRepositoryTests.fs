@@ -306,6 +306,29 @@ let ``CardViewRepository.instancePair works``() : Task<unit> = (taskResult {
     } |> TaskResult.assertOk)
 
 [<Fact>]
+let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = addBasicCard c.Db userId []
+    let! ac = CardRepository.GetAcquired c.Db userId 1
+    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let secondVersion = Guid.NewGuid().ToString()
+    let! _ =
+        {   EditCardCommand.EditSummary = secondVersion
+            FieldValues = [].ToList()
+            TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
+            ParentId = None
+        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
+    let updatedInstanceId = 1002
+    do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+        |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
+    
+    let! _, _, (b: CardInstanceView), _ = CardViewRepository.instanceWithLatest c.Db 1001 userId
+    
+    Assert.Empty b.FieldValues
+    } |> TaskResult.assertOk)
+
+[<Fact>]
 let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
     let view =
         CardInstanceEntity(
