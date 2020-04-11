@@ -38,7 +38,9 @@
       @if (Card.Instance.IsLatest) {
         <span class="fas fa-sync text-success" title="Up to date" />
       } else {
-        <span class="fas fa-sync text-danger" title="Out of date" />
+        <a href="carddiff/@Card.Instance.Id">
+          <span class="fas fa-sync text-danger" title="Out of date" />
+        </a>
       }
     </div>
   </div>

@@ -53,6 +53,11 @@
           Old Template
         </a>
       }
+      @if (_aIsAcquired && !_bIsAcquired) {
+        <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewCard>
+          Get New Card
+        </button>
+      }
     </div>
     <div class="col-sm">
       <span class="curate-tooltip-target">
@@ -98,9 +103,9 @@
         <BSTabLabel>
           Holistic detailed
           @if (_a.FrontBackFrontSynthBackSynth.Item1 != _b.FrontBackFrontSynthBackSynth.Item1 ||
-        _a.FrontBackFrontSynthBackSynth.Item2 != _b.FrontBackFrontSynthBackSynth.Item2) {
-        <i class="fas fa-asterisk"></i>
-      }
+      _a.FrontBackFrontSynthBackSynth.Item2 != _b.FrontBackFrontSynthBackSynth.Item2) {
+      <i class="fas fa-asterisk"></i>
+    }
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_a.FrontBackFrontSynthBackSynth.Item1 NewText=@_b.FrontBackFrontSynthBackSynth.Item1 CollapseContent=true MaxHeight="-1">
@@ -179,12 +184,12 @@
         <BSTabLabel>
           Templates detailed
           @if (
-        _templateFields(_a) != _templateFields(_b) ||
-        _a.TemplateInstance.QuestionTemplate != _b.TemplateInstance.QuestionTemplate ||
-        _a.TemplateInstance.AnswerTemplate != _b.TemplateInstance.AnswerTemplate ||
-        _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
-        <i class="fas fa-asterisk"></i>
-      }
+      _templateFields(_a) != _templateFields(_b) ||
+      _a.TemplateInstance.QuestionTemplate != _b.TemplateInstance.QuestionTemplate ||
+      _a.TemplateInstance.AnswerTemplate != _b.TemplateInstance.AnswerTemplate ||
+      _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
+      <i class="fas fa-asterisk"></i>
+    }
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_templateFields(_a) NewText=@_templateFields(_b) CollapseContent=true MaxHeight="-1">
@@ -283,6 +288,13 @@
         _OnError(x.ErrorValue);
       }
     }
+  }
+
+  private async Task _GetNewCard() {
+    await DbExecutor.CommandAsync(db => CardRepository.AcquireCardAsync(db, User.Id, BId));
+    var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, User.Id, new List<int> { AId, BId }));
+    _aIsAcquired = acquiredIds.Contains(AId);
+    _bIsAcquired = acquiredIds.Contains(BId);
   }
 
 }

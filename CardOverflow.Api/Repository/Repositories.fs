@@ -230,6 +230,10 @@ module CardViewRepository =
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Card #%i not found" cardId) x |> Task.FromResult)
         |> TaskResult.map CardInstanceView.loadLatest
 
+module AcquiredCardRepository =
+    let getAcquired (db: CardOverflowDb) userId (testCardInstanceIds: int ResizeArray) =
+        db.AcquiredCard.Where(fun x -> testCardInstanceIds.Contains(x.CardInstanceId) && x.UserId = userId).Select(fun x -> x.CardInstanceId).ToListAsync()
+
 module CardRepository =
     let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {
             do! db.Relationship_AcquiredCard
