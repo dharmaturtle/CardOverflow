@@ -2,12 +2,12 @@
 
 <div class="top-row pl-4 navbar navbar-dark">
   <a class="navbar-brand" href="">Buff Brains</a>
-  <button class="navbar-toggler" @onclick=ToggleNavMenu>
+  <button class="navbar-toggler" @onclick=_ToggleNavMenu>
     <span class="navbar-toggler-icon"></span>
   </button>
 </div>
 
-<div class=@NavMenuCssClass @onclick=ToggleNavMenu>
+<div class=@(_collapseNavMenu ? "collapse" : "") @onclick=_ToggleNavMenu>
   <ul class="nav flex-column">
     <li class="nav-item sidebarnav-item px-3">
       <NavLink class="nav-link" Match="NavLinkMatch.All" href="">
@@ -84,13 +84,10 @@
 </div>
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  bool collapseNavMenu = true;
+  [CascadingParameter] UserEntity User { get; set; }
+  private bool _collapseNavMenu = true;
 
-  string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-  void ToggleNavMenu() {
-    collapseNavMenu = !collapseNavMenu;
-  }
+  private void _ToggleNavMenu() =>
+    _collapseNavMenu = !_collapseNavMenu;
+  
 }
