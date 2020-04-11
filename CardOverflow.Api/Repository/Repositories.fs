@@ -233,6 +233,10 @@ module CardViewRepository =
 module AcquiredCardRepository =
     let getAcquired (db: CardOverflowDb) userId (testCardInstanceIds: int ResizeArray) =
         db.AcquiredCard.Where(fun x -> testCardInstanceIds.Contains(x.CardInstanceId) && x.UserId = userId).Select(fun x -> x.CardInstanceId).ToListAsync()
+    let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (cardInstanceId: int) =
+        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.Card.CardInstances.Any(fun x -> x.Id = cardInstanceId))
+        |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with the id #%i" cardInstanceId))
+        |> TaskResult.map (fun x -> x.CardInstanceId)
 
 module CardRepository =
     let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {

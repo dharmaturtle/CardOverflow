@@ -28,7 +28,7 @@ open System.Security.Cryptography
 open FsToolkit.ErrorHandling
 
 [<Fact>]
-let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``(): Task<unit> = task {
+let ``Getting 10 pages of GetAcquiredPages takes less than 1 minute``(): Task<unit> = task {
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
@@ -42,6 +42,43 @@ let ``Getting 10 pages of GetAcquiredConceptsAsync takes less than 1 minute``():
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     }
+
+[<Fact>]
+let ``GetAcquiredPages gets the acquired card if there's been an update``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! ac = CardRepository.GetAcquired c.Db userId 1
+    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let secondVersion = Guid.NewGuid().ToString()
+    let! _ =
+        {   EditCardCommand.EditSummary = secondVersion
+            FieldValues = [].ToList()
+            TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
+            ParentId = None
+        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
+    let oldInstanceId = 1001
+    let updatedInstanceId = 1002
+    do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
+        |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
+    do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+        |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
+
+    let! (cards: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
+    let cards = cards.Results |> Seq.map (fun x -> x.Value) |> Seq.toList
+
+    Assert.Equal(updatedInstanceId, cards.Single().CardInstanceMeta.Id)
+
+    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
+    let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId oldInstanceId
+
+    Assert.Equal(updatedInstanceId, actual)
+
+    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
+    let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId updatedInstanceId
+
+    Assert.Equal(updatedInstanceId, actual)
+    } |> TaskResult.assertOk)
 
 [<Fact>]
 let ``GetForUser isn't empty``(): Task<unit> = task {

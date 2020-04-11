@@ -81,6 +81,18 @@
       await PageChanged(1);
       StateHasChanged();
     }
+    if (SelectedInstanceId != null) {
+      if (cards == null || (cards != null && !cards.Any(card => card.CardInstanceMeta.Id == SelectedInstanceId.Value))) {
+        var x = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquiredInstanceFromInstance(db, User.Id, SelectedInstanceId.Value));
+        if (x.IsOk) {
+          SelectedInstanceId = x.ResultValue;
+        } else {
+          SelectedInstanceId = null;
+          ToastService.ShowError(x.ErrorValue);
+        }
+        StateHasChanged();
+      }
+    }
   }
 
   async Task PageChanged(int pageNumber) {
