@@ -114,13 +114,13 @@
     await ShowFront();
   }
 
-  async Task FocusButton() {
-    if (isFront) {
-      await Js.InvokeAsync<string>("focusElement", ShowAnswerButton);
-    } else {
-      await Js.InvokeAsync<string>("focusElement", GoodButton);
-    }
-  }
+  async Task FocusButton() =>
+    await (
+      isFront 
+      ? ShowAnswerButton 
+      : GoodButton
+    ).Focus(Js);
+  
 
   async Task ShowFront() {
     frontVisible = TimeProvider.utcNow;
@@ -129,7 +129,7 @@
       iframeSrcdoc = batch.First().ResultValue.Front;
       if (isRendered) {
         StateHasChanged();
-        await Js.InvokeVoidAsync("focusElement", ShowAnswerButton);
+        await ShowAnswerButton.Focus(Js);
       }
     } else {
       ToastService.ShowError(batch.First().ErrorValue);
@@ -149,8 +149,8 @@
     GoodInterval = good;
     EasyInterval = easy;
     if (isRendered) {
-      await Task.Delay(50); // focusElement needs this. lowTODO put focusElement in OnAfterRenderAsync
-      await Js.InvokeAsync<string>("focusElement", GoodButton);
+      await Task.Delay(50); // the Focus below needs this. lowTODO put focusElement in OnAfterRenderAsync
+      await GoodButton.Focus(Js);
     }
   }
 

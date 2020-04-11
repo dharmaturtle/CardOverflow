@@ -1,4 +1,4 @@
-﻿using CardOverflow.Pure;
+using CardOverflow.Pure;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -8,8 +8,8 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace CardOverflow.Server {
-  // Class members must be Pure! https://en.wikipedia.org/wiki/Pure_function
-  public static class Tools {
+  public static class PureTools {
+
     public static int GetQueryInt(this NavigationManager navigationManager, string key, int fallbackValue = 0) =>
       navigationManager.Uri
         .Apply(navigationManager.ToAbsoluteUri).Query
