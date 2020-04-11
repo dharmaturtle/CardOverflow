@@ -232,16 +232,19 @@ module CardViewRepository =
 
 module CardRepository =
     let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {
-            let! (rs: Relationship_AcquiredCardEntity ResizeArray) = db.Relationship_AcquiredCard.Where(fun x -> x.SourceAcquiredCardId = acquiredCardId || x.TargetAcquiredCardId = acquiredCardId).ToListAsync()
-            db.Relationship_AcquiredCard.RemoveRange rs
-            let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
-            let! ac = ac |> Result.ofNullable "You don't own that card."
-            db.AcquiredCard.RemoveI ac
+            do! db.Relationship_AcquiredCard
+                    .Where(fun x -> x.SourceAcquiredCardId = acquiredCardId || x.TargetAcquiredCardId = acquiredCardId)
+                    .ToListAsync()
+                |> Task.map db.Relationship_AcquiredCard.RemoveRange
+            do! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+                |> Task.map (Result.ofNullable "You don't own that card.")
+                |> TaskResult.map db.AcquiredCard.RemoveI
             return! db.SaveChangesAsyncI()
         }
     let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
-            let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
-            let! ac = ac |> Result.ofNullable "You don't own that card."
+            let! (ac: AcquiredCardEntity) =
+                db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+                |> Task.map (Result.ofNullable "You don't own that card.")
             ac.CardState <- CardState.toDb state
             return! db.SaveChangesAsyncI()
         }
