@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>Latest</LangVersion>
-    <BlazorLinkOnBuild Condition="'$(Configuration)'!='Release'">false</BlazorLinkOnBuild> <!--https://github.com/RemiBou/Westwind.AspnetCore.LiveReload-->
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +21,7 @@
   <ItemGroup>
     <Watch Include="**\*.cshtml" />
     <Watch Include="**\*.razor" />
+    <Watch Include="**\*.css" />
     <Watch Include="**\(!*\obj)*.json" />
     <Watch Include="**\(!.g.)*.cs" />
     <Watch Include="..\**\*.fs" />
@@ -42,7 +42,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj" />
-    <ProjectReference Include="..\Westwind.AspnetCore.LiveReload\Westwind.AspnetCore.LiveReload\Westwind.AspNetCore.LiveReload.csproj" />
   </ItemGroup>
 
   <ItemGroup>

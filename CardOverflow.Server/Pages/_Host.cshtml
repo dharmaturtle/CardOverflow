@@ -13,6 +13,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" />
   <link href="css/site.css" rel="stylesheet" />
   <link href="_content/Blazored.Toast/blazored-toast.css" rel="stylesheet" />
+  <environment include="Development">
+    <script>
+      var wait = ms => new Promise((r, j) => setTimeout(r, ms)); // Inspired by https://github.com/martasp/BlazorLiveReload
+      var failed = false;
+      async function fetchAsync() {
+        try {
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function () {
+            if (this.status === 200 && failed) { // connected and previously failed
+              location.reload();
+            } else if (this.status === 0 && this.readyState === 4) { // connection broken
+              failed = true;
+            }
+          };
+          xhttp.open("GET", "/", true);
+          xhttp.send();
+        }
+        catch (e) {
+          failed = true;
+          await wait(200);
+          console.log("failed " + e);
+        }
+      }
+      async function Pooling() {
+        while (true) {
+          fetchAsync();
+          await wait(2000);
+        }
+      }
+      Pooling();
+    </script>
+  </environment>
   <script>
     window.Speak = (message) => {
       var msg = new SpeechSynthesisUtterance(message);

@@ -14,17 +14,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Microsoft.Extensions.Logging;
-using Westwind.AspNetCore.LiveReload;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
 
 namespace CardOverflow.Server {
   public class Startup {
-    private readonly IWebHostEnvironment _env;
 
     public Startup(IWebHostEnvironment env, IConfiguration configuration) {
       Configuration = configuration;
-      _env = env;
     }
 
     public IConfiguration Configuration { get; }
@@ -61,13 +58,6 @@ namespace CardOverflow.Server {
       services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<UserEntity>>();
       services.AddSingleton<WeatherForecastService>();
       services.AddHttpClient<UserContentHttpClient>();
-      if (_env.IsDevelopment()) {
-        services.AddLiveReload(config => {
-          config.LiveReloadEnabled = true;
-          config.ClientFileExtensions = ".css,.js,.htm,.html";
-          config.FolderToMonitor = "~/../";
-        });
-      }
 
       Serilog.Log.Logger = new LoggerConfiguration()
         .ReadFrom
@@ -80,11 +70,10 @@ namespace CardOverflow.Server {
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app) {
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
       app.UseRouting();
 
-      if (_env.IsDevelopment()) {
-        app.UseLiveReload();
+      if (env.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
         app.UseDatabaseErrorPage();
       } else {
