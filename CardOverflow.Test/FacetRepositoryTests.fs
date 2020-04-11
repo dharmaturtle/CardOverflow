@@ -319,13 +319,19 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
             TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
             ParentId = None
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
+    let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
     
-    let! _, _, (b: CardInstanceView), _ = CardViewRepository.instanceWithLatest c.Db 1001 userId
+    let! (a: CardInstanceView), (a_: bool), (b: CardInstanceView), (b_: bool), bId = CardViewRepository.instanceWithLatest c.Db 1001 userId
     
+    do! CardViewRepository.instance c.Db oldInstanceId
+        |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
+    Assert.False a_
+    Assert.True b_
     Assert.Empty b.FieldValues
+    Assert.Equal(updatedInstanceId, bId)
     } |> TaskResult.assertOk)
 
 [<Fact>]

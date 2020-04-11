@@ -172,7 +172,7 @@ module ExploreCardRepository =
         }
 
 module CardViewRepository =
-    let getAcquiredInstanceIds (db: CardOverflowDb) userId aId bId =
+    let private getAcquiredInstanceIds (db: CardOverflowDb) userId aId bId =
         if userId = 0 then
             [].ToListAsync()
         else 
@@ -196,7 +196,8 @@ module CardViewRepository =
             CardInstanceView.load a,
             acquiredInstanceIds.Contains a.Id,
             CardInstanceView.loadLatest b,
-            acquiredInstanceIds.Contains b.CardInstanceId
+            acquiredInstanceIds.Contains b.CardInstanceId,
+            b.CardInstanceId
     }
     let instancePair (db: CardOverflowDb) aId bId userId = taskResult {
         let! (instances: CardInstanceEntity ResizeArray) =

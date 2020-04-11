@@ -1,3 +1,4 @@
+@page "/carddiff/{AId:int}"
 @page "/carddiff/{AId:int}/{BId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -17,6 +18,18 @@
 @using Syncfusion.EJ2.Blazor.RichTextEditor
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@* BlazorStrap's BSTabBase is causing the following exception on page load; ignore it'
+  System.ObjectDisposedException: Cannot process pending renders after the renderer has been disposed.
+  Object name: 'Renderer'.
+     at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessPendingRender()
+     at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)
+     at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()
+     at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContextDispatcher.InvokeAsync(Action workItem)
+     at BlazorStrap.BSTabGroupBase.set_Selected(BSTabBase value)
+     at BlazorStrap.BSTabBase.Dispose(Boolean disposing)
+     at BlazorStrap.BSTabBase.Dispose()
+     at Microsoft.AspNetCore.Components.RenderTree.Renderer.Dispose(Boolean disposing)
+*@
 
 @if (_a == null || _b == null) {
   <p><em>@_loadingMessage</em></p>
@@ -85,9 +98,9 @@
         <BSTabLabel>
           Holistic detailed
           @if (_a.FrontBackFrontSynthBackSynth.Item1 != _b.FrontBackFrontSynthBackSynth.Item1 ||
-            _a.FrontBackFrontSynthBackSynth.Item2 != _b.FrontBackFrontSynthBackSynth.Item2) {
-            <i class="fas fa-asterisk"></i>
-          }
+        _a.FrontBackFrontSynthBackSynth.Item2 != _b.FrontBackFrontSynthBackSynth.Item2) {
+        <i class="fas fa-asterisk"></i>
+      }
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_a.FrontBackFrontSynthBackSynth.Item1 NewText=@_b.FrontBackFrontSynthBackSynth.Item1 CollapseContent=true MaxHeight="-1">
@@ -166,12 +179,12 @@
         <BSTabLabel>
           Templates detailed
           @if (
-            _templateFields(_a) != _templateFields(_b) ||
-            _a.TemplateInstance.QuestionTemplate != _b.TemplateInstance.QuestionTemplate ||
-            _a.TemplateInstance.AnswerTemplate != _b.TemplateInstance.AnswerTemplate ||
-            _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
-            <i class="fas fa-asterisk"></i>
-          }
+        _templateFields(_a) != _templateFields(_b) ||
+        _a.TemplateInstance.QuestionTemplate != _b.TemplateInstance.QuestionTemplate ||
+        _a.TemplateInstance.AnswerTemplate != _b.TemplateInstance.AnswerTemplate ||
+        _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
+        <i class="fas fa-asterisk"></i>
+      }
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_templateFields(_a) NewText=@_templateFields(_b) CollapseContent=true MaxHeight="-1">
@@ -240,18 +253,35 @@
   private string _answerTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerTemplate, _b.TemplateInstance.AnswerTemplate);
   private bool _HasDifferences(string diff) => diff.Contains("<ins ") || diff.Contains("<del ");
 
+  private void _OnOk() =>
+    _fieldNames =
+      _a.FieldValues.OrderBy(x => x.Field.Ordinal).Concat(
+        _b.FieldValues.OrderBy(x => x.Field.Ordinal))
+      .Select(x => x.Field.Name).Distinct().ToList();
+
+  private void _OnError(string error) {
+    ToastService.ShowError(error);
+    _loadingMessage = error;
+  }
+
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId, User?.Id ?? 0));
-    if (x.IsOk) {
-      (_a, _aIsAcquired, _b, _bIsAcquired) = x.ResultValue;
-      _fieldNames =
-        _a.FieldValues.OrderBy(x => x.Field.Ordinal).Concat(
-          _b.FieldValues.OrderBy(x => x.Field.Ordinal))
-        .Select(x => x.Field.Name).Distinct().ToList();
+    if (BId == 0) {
+      var x = await DbExecutor.QueryAsync(db => CardViewRepository.instanceWithLatest(db, AId, User?.Id ?? 0));
+      if (x.IsOk) {
+        (_a, _aIsAcquired, _b, _bIsAcquired, BId) = x.ResultValue;
+        _OnOk();
+      } else {
+        _OnError(x.ErrorValue);
+      }
     } else {
-      ToastService.ShowError(x.ErrorValue);
-      _loadingMessage = x.ErrorValue;
+      var x = await DbExecutor.QueryAsync(db => CardViewRepository.instancePair(db, AId, BId, User?.Id ?? 0));
+      if (x.IsOk) {
+        (_a, _aIsAcquired, _b, _bIsAcquired) = x.ResultValue;
+        _OnOk();
+      } else {
+        _OnError(x.ErrorValue);
+      }
     }
   }
 
