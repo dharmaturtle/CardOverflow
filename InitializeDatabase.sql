@@ -1,1726 +1,2530 @@
-USE [master]
-GO
-/****** Object:  Database [CardOverflow] ******/
-CREATE DATABASE [CardOverflow]
-GO
-ALTER DATABASE [CardOverflow] SET COMPATIBILITY_LEVEL = 130
-GO
-IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
-begin
-EXEC [CardOverflow].[dbo].[sp_fulltext_database] @action = 'enable'
-end
-GO
-ALTER DATABASE [CardOverflow] SET ANSI_NULL_DEFAULT OFF 
-GO
-ALTER DATABASE [CardOverflow] SET ANSI_NULLS OFF 
-GO
-ALTER DATABASE [CardOverflow] SET ANSI_PADDING OFF 
-GO
-ALTER DATABASE [CardOverflow] SET ANSI_WARNINGS OFF 
-GO
-ALTER DATABASE [CardOverflow] SET ARITHABORT OFF 
-GO
-ALTER DATABASE [CardOverflow] SET AUTO_CLOSE OFF 
-GO
-ALTER DATABASE [CardOverflow] SET AUTO_SHRINK OFF 
-GO
-ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS ON 
-GO
-ALTER DATABASE [CardOverflow] SET CURSOR_CLOSE_ON_COMMIT OFF 
-GO
-ALTER DATABASE [CardOverflow] SET CURSOR_DEFAULT  GLOBAL 
-GO
-ALTER DATABASE [CardOverflow] SET CONCAT_NULL_YIELDS_NULL OFF 
-GO
-ALTER DATABASE [CardOverflow] SET NUMERIC_ROUNDABORT OFF 
-GO
-ALTER DATABASE [CardOverflow] SET QUOTED_IDENTIFIER OFF 
-GO
-ALTER DATABASE [CardOverflow] SET RECURSIVE_TRIGGERS OFF 
-GO
-ALTER DATABASE [CardOverflow] SET  ENABLE_BROKER 
-GO
-ALTER DATABASE [CardOverflow] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
-GO
-ALTER DATABASE [CardOverflow] SET DATE_CORRELATION_OPTIMIZATION OFF 
-GO
-ALTER DATABASE [CardOverflow] SET TRUSTWORTHY ON 
-GO
-ALTER DATABASE [CardOverflow] SET ALLOW_SNAPSHOT_ISOLATION OFF 
-GO
-ALTER DATABASE [CardOverflow] SET PARAMETERIZATION SIMPLE 
-GO
-ALTER DATABASE [CardOverflow] SET READ_COMMITTED_SNAPSHOT ON 
-GO
-ALTER DATABASE [CardOverflow] SET HONOR_BROKER_PRIORITY OFF 
-GO
-ALTER DATABASE [CardOverflow] SET RECOVERY FULL 
-GO
-ALTER DATABASE [CardOverflow] SET  MULTI_USER 
-GO
-ALTER DATABASE [CardOverflow] SET PAGE_VERIFY CHECKSUM  
-GO
-ALTER DATABASE [CardOverflow] SET DB_CHAINING OFF 
-GO
-ALTER DATABASE [CardOverflow] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
-GO
-ALTER DATABASE [CardOverflow] SET TARGET_RECOVERY_TIME = 60 SECONDS 
-GO
-ALTER DATABASE [CardOverflow] SET DELAYED_DURABILITY = DISABLED 
-GO
-EXEC sys.sp_db_vardecimal_storage_format N'CardOverflow', N'ON'
-GO
-ALTER DATABASE [CardOverflow] SET QUERY_STORE = OFF
-GO
-USE [CardOverflow]
-GO
-ALTER DATABASE SCOPED CONFIGURATION SET LEGACY_CARDINALITY_ESTIMATION = OFF;
-GO
-ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET LEGACY_CARDINALITY_ESTIMATION = PRIMARY;
-GO
-ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 0;
-GO
-ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET MAXDOP = PRIMARY;
-GO
-ALTER DATABASE SCOPED CONFIGURATION SET PARAMETER_SNIFFING = ON;
-GO
-ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET PARAMETER_SNIFFING = PRIMARY;
-GO
-ALTER DATABASE SCOPED CONFIGURATION SET QUERY_OPTIMIZER_HOTFIXES = OFF;
-GO
-ALTER DATABASE SCOPED CONFIGURATION FOR SECONDARY SET QUERY_OPTIMIZER_HOTFIXES = PRIMARY;
-GO
-USE [CardOverflow]
-GO
-/****** Object:  FullTextCatalog [CardInstanceFieldValueFullTextCatalog] ******/
-CREATE FULLTEXT CATALOG [CardInstanceFieldValueFullTextCatalog] WITH ACCENT_SENSITIVITY = ON
-GO
-/****** Object:  FullTextCatalog [RelationshipFullTextCatalog] ******/
-CREATE FULLTEXT CATALOG [RelationshipFullTextCatalog] WITH ACCENT_SENSITIVITY = OFF
-GO
-/****** Object:  FullTextCatalog [TagFullTextCatalog] ******/
-CREATE FULLTEXT CATALOG [TagFullTextCatalog] WITH ACCENT_SENSITIVITY = OFF
-GO
-/****** Object:  FullTextCatalog [TemplateFullTextCatalog] ******/
-CREATE FULLTEXT CATALOG [TemplateFullTextCatalog] WITH ACCENT_SENSITIVITY = OFF
-GO
-/****** Object:  Table [dbo].[CardInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CardInstance](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Created] [datetime2](7) NOT NULL,
-	[Modified] [datetime2](7) NULL,
-	[CardId] [int] NOT NULL,
-	[IsDmca] [bit] NOT NULL,
-	[FieldValues] [nvarchar](max) NOT NULL,
-	[TemplateInstanceId] [int] NOT NULL,
-	[Users] [int] NOT NULL,
-	[EditSummary] [nvarchar](200) NOT NULL,
-	[AnkiNoteId] [bigint] NULL,
-	[AnkiNoteOrd] [tinyint] NULL,
-	[Hash] [binary](64) NOT NULL,
- CONSTRAINT [PK_CardInstance] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AcquiredCard](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[CardInstanceId] [int] NOT NULL,
-	[CardState] [tinyint] NOT NULL,
-	[EaseFactorInPermille] [smallint] NOT NULL,
-	[IntervalOrStepsIndex] [smallint] NOT NULL,
-	[Due] [smalldatetime] NOT NULL,
-	[CardSettingId] [int] NOT NULL,
-	[IsLapsed] [bit] NOT NULL,
- CONSTRAINT [PK_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  View [dbo].[UserAndCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE VIEW [dbo].[UserAndCard] WITH SCHEMABINDING AS
-SELECT
-    ac.[UserId] UserId,
-    ci.[CardId] CardId
-FROM [dbo].[AcquiredCard] ac
-JOIN [dbo].[CardInstance] ci ON ac.CardInstanceId = ci.Id
-GO
-SET ARITHABORT ON
-SET CONCAT_NULL_YIELDS_NULL ON
-SET QUOTED_IDENTIFIER ON
-SET ANSI_NULLS ON
-SET ANSI_PADDING ON
-SET ANSI_WARNINGS ON
-SET NUMERIC_ROUNDABORT OFF
-GO
-/****** Object:  Index [IX_UserAndCard_UserId_CardId] ******/
-CREATE UNIQUE CLUSTERED INDEX [IX_UserAndCard_UserId_CardId] ON [dbo].[UserAndCard]
-(
-	[UserId] ASC,
-	[CardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Card] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Card](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AuthorId] [int] NOT NULL,
-	[Users] [int] NOT NULL,
-	[ParentId] [int] NULL,
- CONSTRAINT [PK_Card] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Tag] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Tag](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](250) NOT NULL,
- CONSTRAINT [PK_Tag] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Tag_AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Tag_AcquiredCard](
-	[TagId] [int] NOT NULL,
-	[AcquiredCardId] [int] NOT NULL,
- CONSTRAINT [PK_Tag_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[TagId] ASC,
-	[AcquiredCardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  View [dbo].[CardTagCount] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE VIEW [dbo].[CardTagCount]
-AS
-SELECT
-    c.Id CardId,
-    (SELECT TOP 1 t.Name FROM dbo.Tag t WHERE t.Id = ta.TagId) [Name],
-    COUNT(*) [Count]
-FROM dbo.Card c
-JOIN dbo.CardInstance i ON c.Id = i.CardId
-JOIN dbo.AcquiredCard ac ON ac.CardInstanceId = i.Id
-JOIN dbo.Tag_AcquiredCard ta ON ta.AcquiredCardId = ac.Id
-GROUP BY c.Id, ta.TagId
-GO
-/****** Object:  View [dbo].[CardInstanceTagCount] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE VIEW [dbo].[CardInstanceTagCount]
-AS
-SELECT
-    i.Id CardInstanceId,
-    (SELECT TOP 1 t.Name FROM dbo.Tag t WHERE t.Id = ta.TagId) [Name],
-    COUNT(*) [Count]
-FROM dbo.CardInstance i
-JOIN dbo.AcquiredCard ac ON ac.CardInstanceId = i.Id
-JOIN dbo.Tag_AcquiredCard ta ON ta.AcquiredCardId = ac.Id
-GROUP BY i.Id, ta.TagId
-GO
-/****** Object:  View [dbo].[LatestCardInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE   VIEW [dbo].[LatestCardInstance] AS
---https://stackoverflow.com/a/2111420
-SELECT c.AuthorId
-      ,c.Users as CardUsers
-      ,i1.Id as CardInstanceId
-	  ,i1.CardId
-      ,i1.Created
-      ,i1.Modified
-      ,i1.IsDmca
-      ,i1.FieldValues
-      ,i1.TemplateInstanceId
-      ,i1.Users as InstanceUsers
-      ,i1.EditSummary
-      ,i1.AnkiNoteId
-      ,i1.AnkiNoteOrd
-  FROM [Card] c
-  JOIN [CardInstance] i1 on (c.Id = i1.CardId)
-  LEFT OUTER JOIN [CardInstance] i2 ON (c.Id = i2.CardId AND 
-    (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
-WHERE i2.id IS NULL;
-GO
-/****** Object:  View [dbo].[AcquiredCardIsLatest] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE   VIEW [dbo].[AcquiredCardIsLatest] AS
-SELECT a.*,
-	CAST(
-		CASE
-			WHEN l.CardInstanceId IS NULL
-			THEN 0
-			ELSE 1
-		END
-	AS BIT) AS IsLatest
-FROM [AcquiredCard] a
-LEFT JOIN [LatestCardInstance] l on (l.CardInstanceId = a.CardInstanceId)
-GO
-/****** Object:  Table [dbo].[CommunalField] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommunalField](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AuthorId] [int] NOT NULL,
- CONSTRAINT [PK_CommunalField] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CommunalFieldInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommunalFieldInstance](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[CommunalFieldId] [int] NOT NULL,
-	[FieldName] [nvarchar](200) NOT NULL,
-	[Value] [nvarchar](max) NOT NULL,
-	[Created] [datetime2](7) NOT NULL,
-	[Modified] [datetime2](7) NULL,
-	[EditSummary] [nvarchar](200) NOT NULL,
- CONSTRAINT [PK_CommunalFieldInstance] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  View [dbo].[LatestCommunalFieldInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE   VIEW [dbo].[LatestCommunalFieldInstance] AS
---https://stackoverflow.com/a/2111420
-SELECT c.AuthorId
-      ,i1.Id as CommunalFieldInstanceId
-      ,i1.CommunalFieldId
-      ,i1.FieldName
-      ,i1.Value
-      ,i1.Created
-      ,i1.Modified
-      ,i1.EditSummary
-  FROM [CommunalField] c
-  JOIN [CommunalFieldInstance] i1 on (c.Id = i1.CommunalFieldId)
-  LEFT OUTER JOIN [CommunalFieldInstance] i2 ON (c.Id = i2.CommunalFieldId AND 
-    (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
-WHERE i2.id IS NULL;
-GO
-/****** Object:  Table [dbo].[Template] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Template](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AuthorId] [int] NOT NULL,
- CONSTRAINT [PK_Template] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[TemplateInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[TemplateInstance](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](100) NOT NULL,
-	[TemplateId] [int] NOT NULL,
-	[Css] [varchar](4000) NOT NULL,
-	[Created] [datetime2](7) NOT NULL,
-	[Modified] [datetime2](7) NULL,
-	[LatexPre] [nvarchar](500) NOT NULL,
-	[LatexPost] [nvarchar](500) NOT NULL,
-	[IsDmca] [bit] NOT NULL,
-	[QuestionTemplate] [nvarchar](4000) NOT NULL,
-	[AnswerTemplate] [nvarchar](4000) NOT NULL,
-	[ShortQuestionTemplate] [nvarchar](200) NOT NULL,
-	[ShortAnswerTemplate] [nvarchar](200) NOT NULL,
-	[Fields] [nvarchar](4000) NOT NULL,
-	[EditSummary] [nvarchar](200) NOT NULL,
-	[AnkiId] [bigint] NULL,
-	[Hash] [binary](64) NOT NULL,
- CONSTRAINT [PK_TemplateInstance] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  View [dbo].[LatestTemplateInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE   VIEW [dbo].[LatestTemplateInstance] AS
---https://stackoverflow.com/a/2111420
-SELECT c.AuthorId
-      ,i1.Id as TemplateInstanceId
-      ,i1.TemplateId
-      ,i1.Name
-      ,i1.Css
-      ,i1.Created
-      ,i1.Modified
-      ,i1.LatexPre
-      ,i1.LatexPost
-      ,i1.IsDmca
-      ,i1.QuestionTemplate
-      ,i1.AnswerTemplate
-      ,i1.ShortQuestionTemplate
-      ,i1.ShortAnswerTemplate
-      ,i1.Fields
-      ,i1.EditSummary
-      ,i1.AnkiId
-  FROM dbo.[Template] c
-  JOIN [TemplateInstance] i1 on (c.Id = i1.TemplateId)
-  LEFT OUTER JOIN [TemplateInstance] i2 ON (c.Id = i2.TemplateId AND 
-    (i1.Created < i2.Created OR (i1.Created = i2.Created AND i1.id < i2.id)))
-WHERE i2.id IS NULL;
-GO
-/****** Object:  Table [dbo].[Relationship] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Relationship](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](250) NOT NULL,
- CONSTRAINT [PK_Relationship] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Relationship_AcquiredCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Relationship_AcquiredCard](
-	[SourceAcquiredCardId] [int] NOT NULL,
-	[TargetAcquiredCardId] [int] NOT NULL,
-	[RelationshipId] [int] NOT NULL,
-	CONSTRAINT source_not_equal_target CHECK(SourceAcquiredCardId <> TargetAcquiredCardId),
- CONSTRAINT [PK_Relationship_AcquiredCard] PRIMARY KEY CLUSTERED 
-(
-	[SourceAcquiredCardId] ASC,
-	[TargetAcquiredCardId] ASC,
-	[RelationshipId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  View [dbo].[CardRelationshipCount] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE VIEW [dbo].[CardRelationshipCount]
-AS
-SELECT * FROM (
-    SELECT
-        si.CardId SourceCardId,
-        ti.CardId TargetCardId,
-        (SELECT TOP 1 r.Name
-        FROM dbo.Relationship r
-        WHERE r.Id = rac.RelationshipId) [Name],
-        Count(*) [Count]
-    FROM dbo.Relationship_AcquiredCard rac
-    JOIN dbo.AcquiredCard sac ON rac.SourceAcquiredCardId = sac.Id
-    JOIN dbo.AcquiredCard tac ON rac.TargetAcquiredCardId = tac.Id
-    JOIN dbo.CardInstance si ON sac.CardInstanceId = si.Id
-    JOIN dbo.CardInstance ti ON tac.CardInstanceId = ti.Id
-    GROUP BY si.CardId, ti.CardId, rac.RelationshipId
-    ) X
-CROSS APPLY -- https://dba.stackexchange.com/q/259798
-    (values (X.SourceCardId),
-            (X.TargetCardId)
-    ) _ (CardId)
+﻿--
+-- PostgreSQL database dump
+--
 
-GO
-/****** Object:  View [dbo].[CardInstanceRelationshipCount] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE VIEW [dbo].[CardInstanceRelationshipCount]
-AS
-SELECT * FROM (
-    SELECT
-        sac.CardInstanceId SourceCardInstanceId,
-        tac.CardInstanceId TargetCardInstanceId,
-        (SELECT TOP 1 r.Name
-        FROM dbo.Relationship r
-        WHERE r.Id = rac.RelationshipId) [Name],
-        Count(*) [Count]
-    FROM dbo.Relationship_AcquiredCard rac
-    JOIN dbo.AcquiredCard sac ON rac.SourceAcquiredCardId = sac.Id
-    JOIN dbo.AcquiredCard tac ON rac.TargetAcquiredCardId = tac.Id
-    GROUP BY sac.CardInstanceId, tac.CardInstanceId, rac.RelationshipId
-    ) X
-CROSS APPLY -- https://dba.stackexchange.com/q/259798
-    (values (X.SourceCardInstanceId),
-            (X.TargetCardInstanceId)
-    ) _ (CardInstanceId)
-GO
-/****** Object:  Table [dbo].[AlphaBetaKey] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AlphaBetaKey](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Key] [nvarchar](50) NOT NULL,
-	[IsUsed] [bit] NOT NULL,
- CONSTRAINT [PK_AlphaBetaKey] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AspNetRoleClaims] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AspNetRoleClaims](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[RoleId] [int] NOT NULL,
-	[ClaimType] [nvarchar](max) NULL,
-	[ClaimValue] [nvarchar](max) NULL,
- CONSTRAINT [PK_AspNetRoleClaims] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AspNetRoles] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AspNetRoles](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](256) NULL,
-	[NormalizedName] [nvarchar](256) NULL,
-	[ConcurrencyStamp] [nvarchar](max) NULL,
- CONSTRAINT [PK_AspNetRoles] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AspNetUserClaims] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AspNetUserClaims](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[ClaimType] [nvarchar](max) NULL,
-	[ClaimValue] [nvarchar](max) NULL,
- CONSTRAINT [PK_AspNetUserClaims] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AspNetUserLogins] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AspNetUserLogins](
-	[LoginProvider] [nvarchar](450) NOT NULL,
-	[ProviderKey] [nvarchar](450) NOT NULL,
-	[ProviderDisplayName] [nvarchar](max) NULL,
-	[UserId] [int] NOT NULL,
- CONSTRAINT [PK_AspNetUserLogins] PRIMARY KEY CLUSTERED 
-(
-	[LoginProvider] ASC,
-	[ProviderKey] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AspNetUserRoles] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AspNetUserRoles](
-	[UserId] [int] NOT NULL,
-	[RoleId] [int] NOT NULL,
- CONSTRAINT [PK_AspNetUserRoles] PRIMARY KEY CLUSTERED 
-(
-	[UserId] ASC,
-	[RoleId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[AspNetUserTokens] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[AspNetUserTokens](
-	[UserId] [int] NOT NULL,
-	[LoginProvider] [nvarchar](450) NOT NULL,
-	[Name] [nvarchar](450) NOT NULL,
-	[Value] [nvarchar](max) NULL,
- CONSTRAINT [PK_AspNetUserTokens] PRIMARY KEY CLUSTERED 
-(
-	[UserId] ASC,
-	[LoginProvider] ASC,
-	[Name] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CardSetting] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CardSetting](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[Name] [nvarchar](100) NOT NULL,
-	[NewCardsStepsInMinutes] [varchar](100) NOT NULL,
-	[NewCardsMaxPerDay] [smallint] NOT NULL,
-	[NewCardsGraduatingIntervalInDays] [tinyint] NOT NULL,
-	[NewCardsEasyIntervalInDays] [tinyint] NOT NULL,
-	[NewCardsStartingEaseFactorInPermille] [smallint] NOT NULL,
-	[NewCardsBuryRelated] [bit] NOT NULL,
-	[MatureCardsMaxPerDay] [smallint] NOT NULL,
-	[MatureCardsEaseFactorEasyBonusFactorInPermille] [smallint] NOT NULL,
-	[MatureCardsIntervalFactorInPermille] [smallint] NOT NULL,
-	[MatureCardsMaximumIntervalInDays] [smallint] NOT NULL,
-	[MatureCardsHardIntervalFactorInPermille] [smallint] NOT NULL,
-	[MatureCardsBuryRelated] [bit] NOT NULL,
-	[LapsedCardsStepsInMinutes] [varchar](100) NOT NULL,
-	[LapsedCardsNewIntervalFactorInPermille] [smallint] NOT NULL,
-	[LapsedCardsMinimumIntervalInDays] [tinyint] NOT NULL,
-	[LapsedCardsLeechThreshold] [tinyint] NOT NULL,
-	[ShowAnswerTimer] [bit] NOT NULL,
-	[AutomaticallyPlayAudio] [bit] NOT NULL,
-	[ReplayQuestionAudioOnAnswer] [bit] NOT NULL,
- CONSTRAINT [PK_CardSetting] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CommentCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommentCard](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[CardId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
-	[Text] [nvarchar](500) NOT NULL,
-	[Created] [smalldatetime] NOT NULL,
-	[IsDmca] [bit] NOT NULL,
- CONSTRAINT [PK_CommentCard] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CommentTemplate] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommentTemplate](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[TemplateId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
-	[Text] [nvarchar](500) NOT NULL,
-	[Created] [smalldatetime] NOT NULL,
-	[IsDmca] [bit] NOT NULL,
- CONSTRAINT [PK_CommentTemplate] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[CommunalFieldInstance_CardInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[CommunalFieldInstance_CardInstance](
-	[CardInstanceId] [int] NOT NULL,
-	[CommunalFieldInstanceId] [int] NOT NULL,
- CONSTRAINT [PK_CommunalFieldInstance_CardInstance] PRIMARY KEY CLUSTERED 
-(
-	[CommunalFieldInstanceId] ASC,
-	[CardInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Feedback] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Feedback](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Title] [nvarchar](50) NOT NULL,
-	[Description] [nvarchar](1000) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[Created] [smalldatetime] NOT NULL,
-	[ParentId] [int] NULL,
-	[Priority] [tinyint] NULL,
- CONSTRAINT [PK_Feedback] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[File] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[File](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[FileName] [nvarchar](200) NOT NULL,
-	[Data] [varbinary](max) NOT NULL,
-	[Sha256] [binary](32) NOT NULL,
- CONSTRAINT [PK_File] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[File_CardInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[File_CardInstance](
-	[CardInstanceId] [int] NOT NULL,
-	[FileId] [int] NOT NULL,
- CONSTRAINT [PK_File_CardInstance] PRIMARY KEY CLUSTERED 
-(
-	[CardInstanceId] ASC,
-	[FileId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Filter] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Filter](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [nvarchar](128) NOT NULL,
-	[UserId] [int] NOT NULL,
-	[Query] [nvarchar](256) NOT NULL,
- CONSTRAINT [PK_Filter] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[History] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[History](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[AcquiredCardId] [int] NOT NULL,
-	[Score] [tinyint] NOT NULL,
-	[Timestamp] [smalldatetime] NOT NULL,
-	[IntervalWithUnusedStepsIndex] [smallint] NOT NULL,
-	[EaseFactorInPermille] [smallint] NOT NULL,
-	[TimeFromSeeingQuestionToScoreInSecondsPlus32768] [smallint] NOT NULL,
- CONSTRAINT [PK_History] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[PotentialSignups] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[PotentialSignups](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[Email] [nvarchar](500) NOT NULL,
-	[Message] [nvarchar](1000) NOT NULL,
-	[OneIsAlpha2Beta3Ga] [tinyint] NOT NULL,
-	[TimeStamp] [smalldatetime] NOT NULL,
- CONSTRAINT [PK_PotentialSignups] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Tag_User_TemplateInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Tag_User_TemplateInstance](
-	[UserId] [int] NOT NULL,
-	[TemplateInstanceId] [int] NOT NULL,
-	[DefaultTagId] [int] NOT NULL,
- CONSTRAINT [PK_Tag_User_TemplateInstance] PRIMARY KEY CLUSTERED 
-(
-	[UserId] ASC,
-	[TemplateInstanceId] ASC,
-	[DefaultTagId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[User] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[User](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[UserName] [nvarchar](256) NULL,
-	[NormalizedUserName] [nvarchar](256) NULL,
-	[Email] [nvarchar](256) NULL,
-	[NormalizedEmail] [nvarchar](256) NULL,
-	[EmailConfirmed] [bit] NOT NULL,
-	[PasswordHash] [nvarchar](max) NULL,
-	[SecurityStamp] [nvarchar](max) NULL,
-	[ConcurrencyStamp] [nvarchar](max) NULL,
-	[PhoneNumber] [nvarchar](max) NULL,
-	[PhoneNumberConfirmed] [bit] NOT NULL,
-	[TwoFactorEnabled] [bit] NOT NULL,
-	[LockoutEnd] [datetimeoffset](7) NULL,
-	[LockoutEnabled] [bit] NOT NULL,
-	[AccessFailedCount] [int] NOT NULL,
-	[DisplayName] [nvarchar](32) NULL,
-	[DefaultCardSettingId] [int] NULL,
-	[ShowNextReviewTime] [bit] NOT NULL,
-	[ShowRemainingCardCount] [bit] NOT NULL,
-	[MixNewAndReview] [tinyint] NOT NULL,
-	[NextDayStartsAtXHoursPastMidnight] [tinyint] NOT NULL,
-	[LearnAheadLimitInMinutes] [tinyint] NOT NULL,
-	[TimeboxTimeLimitInMinutes] [tinyint] NOT NULL,
-	[IsNightMode] [bit] NOT NULL,
- CONSTRAINT [PK_User] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[User_TemplateInstance] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[User_TemplateInstance](
-	[UserId] [int] NOT NULL,
-	[TemplateInstanceId] [int] NOT NULL,
-	[DefaultCardSettingId] [int] NOT NULL,
- CONSTRAINT [PK_User_TemplateInstance] PRIMARY KEY CLUSTERED 
-(
-	[UserId] ASC,
-	[TemplateInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Vote_CommentCard] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Vote_CommentCard](
-	[CommentCardId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
- CONSTRAINT [PK_Vote_CommentCard] PRIMARY KEY CLUSTERED 
-(
-	[CommentCardId] ASC,
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Vote_CommentTemplate] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Vote_CommentTemplate](
-	[CommentTemplateId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
- CONSTRAINT [PK_Vote_CommentTemplate] PRIMARY KEY CLUSTERED 
-(
-	[CommentTemplateId] ASC,
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[Vote_Feedback] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[Vote_Feedback](
-	[FeedbackId] [int] NOT NULL,
-	[UserId] [int] NOT NULL,
- CONSTRAINT [PK_Vote_Feedback] PRIMARY KEY CLUSTERED 
-(
-	[FeedbackId] ASC,
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-SET IDENTITY_INSERT [dbo].[CardSetting] ON 
+-- Dumped from database version 12.2
+-- Dumped by pg_dump version 12.2
 
-INSERT [dbo].[CardSetting] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (1, 1, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
-INSERT [dbo].[CardSetting] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (2, 2, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
-INSERT [dbo].[CardSetting] ([Id], [UserId], [Name], [NewCardsStepsInMinutes], [NewCardsMaxPerDay], [NewCardsGraduatingIntervalInDays], [NewCardsEasyIntervalInDays], [NewCardsStartingEaseFactorInPermille], [NewCardsBuryRelated], [MatureCardsMaxPerDay], [MatureCardsEaseFactorEasyBonusFactorInPermille], [MatureCardsIntervalFactorInPermille], [MatureCardsMaximumIntervalInDays], [MatureCardsHardIntervalFactorInPermille], [MatureCardsBuryRelated], [LapsedCardsStepsInMinutes], [LapsedCardsNewIntervalFactorInPermille], [LapsedCardsMinimumIntervalInDays], [LapsedCardsLeechThreshold], [ShowAnswerTimer], [AutomaticallyPlayAudio], [ReplayQuestionAudioOnAnswer]) VALUES (3, 3, N'Default', N'1 10', 20, 1, 4, 2500, 1, 200, 1300, 1000, 32767, 1200, 1, N'10', 0, 1, 8, 0, 0, 0)
-SET IDENTITY_INSERT [dbo].[CardSetting] OFF
-SET IDENTITY_INSERT [dbo].[Template] ON 
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
 
-INSERT [dbo].[Template] ([Id], [AuthorId]) VALUES (1, 2)
-INSERT [dbo].[Template] ([Id], [AuthorId]) VALUES (2, 2)
-INSERT [dbo].[Template] ([Id], [AuthorId]) VALUES (3, 2)
-INSERT [dbo].[Template] ([Id], [AuthorId]) VALUES (4, 2)
-INSERT [dbo].[Template] ([Id], [AuthorId]) VALUES (5, 2)
-SET IDENTITY_INSERT [dbo].[Template] OFF
-SET IDENTITY_INSERT [dbo].[TemplateInstance] ON 
+SET default_tablespace = '';
 
-INSERT [dbo].[TemplateInstance] ([Id], [Name], [TemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [Hash]) VALUES (1, N'Basic', 1, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', CAST(N'2019-04-08T02:14:29.5810000' AS DateTime2), CAST(N'2019-06-16T00:53:30.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{Front}}', N'{{FrontSide}}
+SET default_table_access_method = heap;
 
-<hr id=answer>
+--
+-- Name: AcquiredCard; Type: TABLE; Schema: public; Owner: postgres
+--
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669581, 0xCB0A06105B2CBE2E2DDE79F01A88B336D6F89A3B7C5E23753EF92FC05BEEFEFEFCE69B1D89D40B286DE537F6823F1C18B36F7F4F17912518ECEBDA9AED89ACBE)
-INSERT [dbo].[TemplateInstance] ([Id], [Name], [TemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [Hash]) VALUES (2, N'Basic (and reversed card) - Card 1', 2, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', CAST(N'2019-04-08T02:14:29.5770000' AS DateTime2), CAST(N'2019-06-16T00:51:28.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{Front}}', N'{{FrontSide}}
+CREATE TABLE public."AcquiredCard" (
+    "Id" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "CardInstanceId" integer NOT NULL,
+    "CardState" smallint NOT NULL,
+    "EaseFactorInPermille" smallint NOT NULL,
+    "IntervalOrStepsIndex" smallint NOT NULL,
+    "Due" timestamp without time zone NOT NULL,
+    "CardSettingId" integer NOT NULL,
+    "IsLapsed" boolean NOT NULL
+);
 
-<hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669577, 0x7865EC597180B1001F1E050693824B210DEE685EBCEF3AEC1D80FF3E83E7D9DCE6A586F6BCC771AADD48CE7903DF9D5FAC673D1BFD5ABD0FA5A09D44CDE48FBB)
-INSERT [dbo].[TemplateInstance] ([Id], [Name], [TemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [Hash]) VALUES (3, N'Basic (optional reversed card) - Card 1', 3, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', CAST(N'2019-04-08T02:14:29.5720000' AS DateTime2), CAST(N'2019-06-16T00:51:32.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{Front}}', N'{{FrontSide}}
+ALTER TABLE public."AcquiredCard" OWNER TO postgres;
 
-<hr id=answer>
+--
+-- Name: AcquiredCardIsLatest; Type: TABLE; Schema: public; Owner: postgres
+--
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', N'Imported from Anki', 1554689669572, 0xBE066200F645231B9AA47D4DF0E803F99E1197765DCAACDA45EE5E0029F2813F0440388B4E99EA72A32BB0BA16D8F85E40C61499AECD65A5D5CC0E285A916A8F)
-INSERT [dbo].[TemplateInstance] ([Id], [Name], [TemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [Hash]) VALUES (4, N'Basic (type in the answer)', 4, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', CAST(N'2019-04-08T02:14:29.5710000' AS DateTime2), CAST(N'2019-06-16T00:51:46.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{Front}}
-{{type:Back}}', N'{{FrontSide}}
+CREATE TABLE public."AcquiredCardIsLatest" (
+    "Id" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "CardInstanceId" integer NOT NULL,
+    "CardState" smallint NOT NULL,
+    "EaseFactorInPermille" smallint NOT NULL,
+    "IntervalOrStepsIndex" smallint NOT NULL,
+    "Due" timestamp without time zone NOT NULL,
+    "CardSettingId" integer NOT NULL,
+    "IsLapsed" boolean NOT NULL,
+    "IsLatest" boolean
+);
 
-<hr id=answer>
 
-{{Back}}', N'', N'', N'FrontArial20False0FalseBackArial20False1False', N'Imported from Anki', 1554689669571, 0x1DC35754E5575169D3E1A3FF8013BE0ADB80EB1DA7BD749100F0927985E84B19BC81A7B89F232D55B17E2DC0F8CE1DEC8A487C77AF9DAF4B2D2BF36324453326)
-INSERT [dbo].[TemplateInstance] ([Id], [Name], [TemplateId], [Css], [Created], [Modified], [LatexPre], [LatexPost], [IsDmca], [QuestionTemplate], [AnswerTemplate], [ShortQuestionTemplate], [ShortAnswerTemplate], [Fields], [EditSummary], [AnkiId], [Hash]) VALUES (5, N'Cloze', 5, N'.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
+ALTER TABLE public."AcquiredCardIsLatest" OWNER TO postgres;
 
-.cloze {
- font-weight: bold;
- color: blue;
-}
-.nightMode .cloze {
- color: lightblue;
-}', CAST(N'2019-04-08T02:14:29.5700000' AS DateTime2), CAST(N'2019-06-16T00:51:55.0000000' AS DateTime2), N'\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', N'\end{document}', 0, N'{{cloze:Text}}', N'{{cloze:Text}}<br>
-{{Extra}}', N'', N'', N'TextArial20False0FalseExtraArial20False1False', N'Imported from Anki', 1554689669570, 0x3C43C6FE47B095D4E2E12D8DB1B91110C72090ADB383FD04FC6D6C868A591E6840D47F74E301035333A55A7A16DC6E5DA5E9E4FCAE81C4E64E66C34A03AFAAC2)
-SET IDENTITY_INSERT [dbo].[TemplateInstance] OFF
-SET IDENTITY_INSERT [dbo].[User] ON 
+--
+-- Name: AcquiredCard_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
 
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardSettingId], [ShowNextReviewTime], [ShowRemainingCardCount], [MixNewAndReview], [NextDayStartsAtXHoursPastMidnight], [LearnAheadLimitInMinutes], [TimeboxTimeLimitInMinutes], [IsNightMode]) VALUES (1, NULL, NULL, N'admin@cardoverflow.io', NULL, 0, NULL, NULL, N'4934a9df-035b-4216-a8d7-cf00510a16ff', NULL, 0, 0, NULL, 0, 0, N'Admin', 1, 1, 1, 0, 4, 20, 0, 0)
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardSettingId], [ShowNextReviewTime], [ShowRemainingCardCount], [MixNewAndReview], [NextDayStartsAtXHoursPastMidnight], [LearnAheadLimitInMinutes], [TimeboxTimeLimitInMinutes], [IsNightMode]) VALUES (2, NULL, NULL, N'theCollective@cardoverflow.io', NULL, 0, NULL, NULL, N'7f15011b-1605-4b2c-ba98-af5659739d60', NULL, 0, 0, NULL, 0, 0, N'The Collective', 2, 1, 1, 0, 4, 20, 0, 0)
-INSERT [dbo].[User] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [DisplayName], [DefaultCardSettingId], [ShowNextReviewTime], [ShowRemainingCardCount], [MixNewAndReview], [NextDayStartsAtXHoursPastMidnight], [LearnAheadLimitInMinutes], [TimeboxTimeLimitInMinutes], [IsNightMode]) VALUES (3, NULL, NULL, N'roboturtle@cardoverflow.io', NULL, 0, NULL, NULL, N'd622b1ce-0c3b-48a3-9851-506e17bd04ec', NULL, 0, 0, NULL, 0, 0, N'RoboTurtle', 3, 1, 1, 0, 4, 20, 0, 0)
-SET IDENTITY_INSERT [dbo].[User] OFF
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 1, 1)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 2, 1)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 3, 1)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 4, 1)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (1, 5, 1)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 1, 2)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 2, 2)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 3, 2)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 4, 2)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (2, 5, 2)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 1, 3)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 2, 3)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 3, 3)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 4, 3)
-INSERT [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId], [DefaultCardSettingId]) VALUES (3, 5, 3)
-/****** Object:  Index [IX_AcquiredCard_CardInstanceId] ******/
-CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardInstanceId] ON [dbo].[AcquiredCard]
-(
-	[CardInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AcquiredCard_CardSettingId] ******/
-CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardSettingId] ON [dbo].[AcquiredCard]
-(
-	[CardSettingId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AcquiredCard_CardState] ******/
-CREATE NONCLUSTERED INDEX [IX_AcquiredCard_CardState] ON [dbo].[AcquiredCard]
-(
-	[CardState] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AcquiredCard_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_AcquiredCard_UserId] ON [dbo].[AcquiredCard]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AcquiredCard_UserId_CardInstanceId] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_AcquiredCard_UserId_CardInstanceId] ON [dbo].[AcquiredCard]
-(
-	[UserId] ASC,
-	[CardInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_AlphaBetaKey_Key] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_AlphaBetaKey_Key] ON [dbo].[AlphaBetaKey]
-(
-	[Key] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AspNetRoleClaims_RoleId] ******/
-CREATE NONCLUSTERED INDEX [IX_AspNetRoleClaims_RoleId] ON [dbo].[AspNetRoleClaims]
-(
-	[RoleId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [RoleNameIndex] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [RoleNameIndex] ON [dbo].[AspNetRoles]
-(
-	[NormalizedName] ASC
-)
-WHERE ([NormalizedName] IS NOT NULL)
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AspNetUserClaims_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_AspNetUserClaims_UserId] ON [dbo].[AspNetUserClaims]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AspNetUserLogins_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_AspNetUserLogins_UserId] ON [dbo].[AspNetUserLogins]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_AspNetUserRoles_RoleId] ******/
-CREATE NONCLUSTERED INDEX [IX_AspNetUserRoles_RoleId] ON [dbo].[AspNetUserRoles]
-(
-	[RoleId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Card_AuthorId] ******/
-CREATE NONCLUSTERED INDEX [IX_Card_AuthorId] ON [dbo].[Card]
-(
-	[AuthorId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CardInstance_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_CardInstance_CardId] ON [dbo].[CardInstance]
-(
-	[CardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_CardInstance_Hash] ******/
-CREATE NONCLUSTERED INDEX [IX_CardInstance_Hash] ON [dbo].[CardInstance]
-(
-	[Hash] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CardInstance_TemplateInstanceId] ******/
-CREATE NONCLUSTERED INDEX [IX_CardInstance_TemplateInstanceId] ON [dbo].[CardInstance]
-(
-	[TemplateInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CardSetting_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_CardSetting_UserId] ON [dbo].[CardSetting]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommentCard_CardId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommentCard_CardId] ON [dbo].[CommentCard]
-(
-	[CardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommentCard_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommentCard_UserId] ON [dbo].[CommentCard]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommentTemplate_TemplateId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommentTemplate_TemplateId] ON [dbo].[CommentTemplate]
-(
-	[TemplateId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommentTemplate_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommentTemplate_UserId] ON [dbo].[CommentTemplate]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommunalField_AuthorId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommunalField_AuthorId] ON [dbo].[CommunalField]
-(
-	[AuthorId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommunalFieldInstance_CommunalFieldId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CommunalFieldId] ON [dbo].[CommunalFieldInstance]
-(
-	[CommunalFieldId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ******/
-CREATE NONCLUSTERED INDEX [IX_CommunalFieldInstance_CardInstance_CardInstanceId] ON [dbo].[CommunalFieldInstance_CardInstance]
-(
-	[CardInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Feedback_ParentId] ******/
-CREATE NONCLUSTERED INDEX [IX_Feedback_ParentId] ON [dbo].[Feedback]
-(
-	[ParentId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Feedback_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Feedback_UserId] ON [dbo].[Feedback]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_File_Sha256] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_File_Sha256] ON [dbo].[File]
-(
-	[Sha256] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_File_CardInstance_FileId] ******/
-CREATE NONCLUSTERED INDEX [IX_File_CardInstance_FileId] ON [dbo].[File_CardInstance]
-(
-	[FileId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Filter_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Filter_UserId] ON [dbo].[Filter]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_History_AcquiredCardId] ******/
-CREATE NONCLUSTERED INDEX [IX_History_AcquiredCardId] ON [dbo].[History]
-(
-	[AcquiredCardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_Relationship_Name] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Relationship_Name] ON [dbo].[Relationship]
-(
-	[Name] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Relationship_AcquiredCard_RelationshipId] ******/
-CREATE NONCLUSTERED INDEX [IX_Relationship_AcquiredCard_RelationshipId] ON [dbo].[Relationship_AcquiredCard]
-(
-	[RelationshipId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Relationship_AcquiredCard_TargetAcquiredCardId] ******/
-CREATE NONCLUSTERED INDEX [IX_Relationship_AcquiredCard_TargetAcquiredCardId] ON [dbo].[Relationship_AcquiredCard]
-(
-	[TargetAcquiredCardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_Tag_Name] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Tag_Name] ON [dbo].[Tag]
-(
-	[Name] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Tag_AcquiredCard_AcquiredCardId] ******/
-CREATE NONCLUSTERED INDEX [IX_Tag_AcquiredCard_AcquiredCardId] ON [dbo].[Tag_AcquiredCard]
-(
-	[AcquiredCardId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Tag_User_TemplateInstance_DefaultTagId] ******/
-CREATE NONCLUSTERED INDEX [IX_Tag_User_TemplateInstance_DefaultTagId] ON [dbo].[Tag_User_TemplateInstance]
-(
-	[DefaultTagId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Template_AuthorId] ******/
-CREATE NONCLUSTERED INDEX [IX_Template_AuthorId] ON [dbo].[Template]
-(
-	[AuthorId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_TemplateInstance_Hash] ******/
-CREATE NONCLUSTERED INDEX [IX_TemplateInstance_Hash] ON [dbo].[TemplateInstance]
-(
-	[Hash] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_TemplateInstance_TemplateId] ******/
-CREATE NONCLUSTERED INDEX [IX_TemplateInstance_TemplateId] ON [dbo].[TemplateInstance]
-(
-	[TemplateId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [EmailIndex] ******/
-CREATE NONCLUSTERED INDEX [EmailIndex] ON [dbo].[User]
-(
-	[NormalizedEmail] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_User_DisplayName] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_User_DisplayName] ON [dbo].[User]
-(
-	[DisplayName] ASC
-)
-WHERE ([DisplayName] IS NOT NULL)
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [IX_User_Email] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [IX_User_Email] ON [dbo].[User]
-(
-	[Email] ASC
-)
-WHERE ([Email] IS NOT NULL)
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-SET ANSI_PADDING ON
-GO
-/****** Object:  Index [UserNameIndex] ******/
-CREATE UNIQUE NONCLUSTERED INDEX [UserNameIndex] ON [dbo].[User]
-(
-	[NormalizedUserName] ASC
-)
-WHERE ([NormalizedUserName] IS NOT NULL)
-WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_User_TemplateInstance_DefaultCardSettingId] ******/
-CREATE NONCLUSTERED INDEX [IX_User_TemplateInstance_DefaultCardSettingId] ON [dbo].[User_TemplateInstance]
-(
-	[DefaultCardSettingId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_User_TemplateInstance_TemplateInstanceId] ******/
-CREATE NONCLUSTERED INDEX [IX_User_TemplateInstance_TemplateInstanceId] ON [dbo].[User_TemplateInstance]
-(
-	[TemplateInstanceId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Vote_CommentCard_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Vote_CommentCard_UserId] ON [dbo].[Vote_CommentCard]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Vote_CommentTemplate_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Vote_CommentTemplate_UserId] ON [dbo].[Vote_CommentTemplate]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  Index [IX_Vote_Feedback_UserId] ******/
-CREATE NONCLUSTERED INDEX [IX_Vote_Feedback_UserId] ON [dbo].[Vote_Feedback]
-(
-	[UserId] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-/****** Object:  FullTextIndex ******/
-CREATE FULLTEXT INDEX ON [dbo].[CardInstance](
-[FieldValues] LANGUAGE 'English')
-KEY INDEX [PK_CardInstance]ON ([CardInstanceFieldValueFullTextCatalog], FILEGROUP [PRIMARY])
-WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+ALTER TABLE public."AcquiredCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."AcquiredCard_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
 
-GO
-/****** Object:  FullTextIndex ******/
-CREATE FULLTEXT INDEX ON [dbo].[Relationship](
-[Name] LANGUAGE 'English')
-KEY INDEX [PK_Relationship]ON ([RelationshipFullTextCatalog], FILEGROUP [PRIMARY])
-WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
 
-GO
-/****** Object:  FullTextIndex ******/
-CREATE FULLTEXT INDEX ON [dbo].[Tag](
-[Name] LANGUAGE 'English')
-KEY INDEX [PK_Tag]ON ([TagFullTextCatalog], FILEGROUP [PRIMARY])
-WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+--
+-- Name: AlphaBetaKey; Type: TABLE; Schema: public; Owner: postgres
+--
 
-GO
-/****** Object:  FullTextIndex ******/
-CREATE FULLTEXT INDEX ON [dbo].[TemplateInstance](
-[AnswerTemplate] LANGUAGE 'English', 
-[Css] LANGUAGE 'English', 
-[Fields] LANGUAGE 'English', 
-[LatexPost] LANGUAGE 'English', 
-[LatexPre] LANGUAGE 'English', 
-[Name] LANGUAGE 'English', 
-[QuestionTemplate] LANGUAGE 'English', 
-[ShortAnswerTemplate] LANGUAGE 'English', 
-[ShortQuestionTemplate] LANGUAGE 'English')
-KEY INDEX [PK_TemplateInstance]ON ([TemplateFullTextCatalog], FILEGROUP [PRIMARY])
-WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+CREATE TABLE public."AlphaBetaKey" (
+    "Id" integer NOT NULL,
+    "Key" character varying(50) NOT NULL,
+    "IsUsed" boolean NOT NULL
+);
 
-GO
-ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
-REFERENCES [dbo].[CardInstance] ([Id])
-GO
-ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardInstance_CardInstanceId]
-GO
-ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_CardSetting_CardSettingId] FOREIGN KEY([CardSettingId])
-REFERENCES [dbo].[CardSetting] ([Id])
-GO
-ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_CardSetting_CardSettingId]
-GO
-ALTER TABLE [dbo].[AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_AcquiredCard_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[AcquiredCard] CHECK CONSTRAINT [FK_AcquiredCard_User_UserId]
-GO
-ALTER TABLE [dbo].[AspNetRoleClaims]  WITH CHECK ADD  CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY([RoleId])
-REFERENCES [dbo].[AspNetRoles] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[AspNetRoleClaims] CHECK CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId]
-GO
-ALTER TABLE [dbo].[AspNetUserClaims]  WITH CHECK ADD  CONSTRAINT [FK_AspNetUserClaims_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[AspNetUserClaims] CHECK CONSTRAINT [FK_AspNetUserClaims_User_UserId]
-GO
-ALTER TABLE [dbo].[AspNetUserLogins]  WITH CHECK ADD  CONSTRAINT [FK_AspNetUserLogins_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[AspNetUserLogins] CHECK CONSTRAINT [FK_AspNetUserLogins_User_UserId]
-GO
-ALTER TABLE [dbo].[AspNetUserRoles]  WITH CHECK ADD  CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId] FOREIGN KEY([RoleId])
-REFERENCES [dbo].[AspNetRoles] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[AspNetUserRoles] CHECK CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId]
-GO
-ALTER TABLE [dbo].[AspNetUserRoles]  WITH CHECK ADD  CONSTRAINT [FK_AspNetUserRoles_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[AspNetUserRoles] CHECK CONSTRAINT [FK_AspNetUserRoles_User_UserId]
-GO
-ALTER TABLE [dbo].[AspNetUserTokens]  WITH CHECK ADD  CONSTRAINT [FK_AspNetUserTokens_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[AspNetUserTokens] CHECK CONSTRAINT [FK_AspNetUserTokens_User_UserId]
-GO
-ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_CardInstance_ParentId] FOREIGN KEY([ParentId])
-REFERENCES [dbo].[CardInstance] ([Id])
-GO
-ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_CardInstance_ParentId]
-GO
-ALTER TABLE [dbo].[Card]  WITH CHECK ADD  CONSTRAINT [FK_Card_User_AuthorId] FOREIGN KEY([AuthorId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Card] CHECK CONSTRAINT [FK_Card_User_AuthorId]
-GO
-ALTER TABLE [dbo].[CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardInstance_Card_CardId] FOREIGN KEY([CardId])
-REFERENCES [dbo].[Card] ([Id])
-GO
-ALTER TABLE [dbo].[CardInstance] CHECK CONSTRAINT [FK_CardInstance_Card_CardId]
-GO
-ALTER TABLE [dbo].[CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CardInstance_TemplateInstance_TemplateInstanceId] FOREIGN KEY([TemplateInstanceId])
-REFERENCES [dbo].[TemplateInstance] ([Id])
-GO
-ALTER TABLE [dbo].[CardInstance] CHECK CONSTRAINT [FK_CardInstance_TemplateInstance_TemplateInstanceId]
-GO
-ALTER TABLE [dbo].[CardSetting]  WITH CHECK ADD  CONSTRAINT [FK_CardSetting_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[CardSetting] CHECK CONSTRAINT [FK_CardSetting_User_UserId]
-GO
-ALTER TABLE [dbo].[CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_CommentCard_Card_CardId] FOREIGN KEY([CardId])
-REFERENCES [dbo].[Card] ([Id])
-GO
-ALTER TABLE [dbo].[CommentCard] CHECK CONSTRAINT [FK_CommentCard_Card_CardId]
-GO
-ALTER TABLE [dbo].[CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_CommentCard_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[CommentCard] CHECK CONSTRAINT [FK_CommentCard_User_UserId]
-GO
-ALTER TABLE [dbo].[CommentTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentTemplate_Template_TemplateId] FOREIGN KEY([TemplateId])
-REFERENCES [dbo].[Template] ([Id])
-GO
-ALTER TABLE [dbo].[CommentTemplate] CHECK CONSTRAINT [FK_CommentTemplate_Template_TemplateId]
-GO
-ALTER TABLE [dbo].[CommentTemplate]  WITH CHECK ADD  CONSTRAINT [FK_CommentTemplate_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[CommentTemplate] CHECK CONSTRAINT [FK_CommentTemplate_User_UserId]
-GO
-ALTER TABLE [dbo].[CommunalField]  WITH CHECK ADD  CONSTRAINT [FK_CommunalField_User_AuthorId] FOREIGN KEY([AuthorId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[CommunalField] CHECK CONSTRAINT [FK_CommunalField_User_AuthorId]
-GO
-ALTER TABLE [dbo].[CommunalFieldInstance]  WITH CHECK ADD  CONSTRAINT [FK_CommunalFieldInstance_CommunalField_CommunalFieldId] FOREIGN KEY([CommunalFieldId])
-REFERENCES [dbo].[CommunalField] ([Id])
-GO
-ALTER TABLE [dbo].[CommunalFieldInstance] CHECK CONSTRAINT [FK_CommunalFieldInstance_CommunalField_CommunalFieldId]
-GO
-ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
-REFERENCES [dbo].[CardInstance] ([Id])
-GO
-ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance] CHECK CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CardInstance_CardInstanceId]
-GO
-ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CommunalFieldInstance_CommunalFieldInstanceId] FOREIGN KEY([CommunalFieldInstanceId])
-REFERENCES [dbo].[CommunalFieldInstance] ([Id])
-GO
-ALTER TABLE [dbo].[CommunalFieldInstance_CardInstance] CHECK CONSTRAINT [FK_CommunalFieldInstance_CardInstance_CommunalFieldInstance_CommunalFieldInstanceId]
-GO
-ALTER TABLE [dbo].[Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Feedback_Feedback_ParentId] FOREIGN KEY([ParentId])
-REFERENCES [dbo].[Feedback] ([Id])
-GO
-ALTER TABLE [dbo].[Feedback] CHECK CONSTRAINT [FK_Feedback_Feedback_ParentId]
-GO
-ALTER TABLE [dbo].[Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Feedback_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Feedback] CHECK CONSTRAINT [FK_Feedback_User_UserId]
-GO
-ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId] FOREIGN KEY([CardInstanceId])
-REFERENCES [dbo].[CardInstance] ([Id])
-GO
-ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_CardInstance_CardInstanceId]
-GO
-ALTER TABLE [dbo].[File_CardInstance]  WITH CHECK ADD  CONSTRAINT [FK_File_CardInstance_File_FileId] FOREIGN KEY([FileId])
-REFERENCES [dbo].[File] ([Id])
-GO
-ALTER TABLE [dbo].[File_CardInstance] CHECK CONSTRAINT [FK_File_CardInstance_File_FileId]
-GO
-ALTER TABLE [dbo].[Filter]  WITH CHECK ADD  CONSTRAINT [FK_Filter_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Filter] CHECK CONSTRAINT [FK_Filter_User_UserId]
-GO
-ALTER TABLE [dbo].[History]  WITH CHECK ADD  CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
-REFERENCES [dbo].[AcquiredCard] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[History] CHECK CONSTRAINT [FK_History_AcquiredCard_AcquiredCardId]
-GO
-ALTER TABLE [dbo].[Relationship_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_AcquiredCard_AcquiredCard_SourceAcquiredCardId] FOREIGN KEY([SourceAcquiredCardId])
-REFERENCES [dbo].[AcquiredCard] ([Id])
-GO
-ALTER TABLE [dbo].[Relationship_AcquiredCard] CHECK CONSTRAINT [FK_Relationship_AcquiredCard_AcquiredCard_SourceAcquiredCardId]
-GO
-ALTER TABLE [dbo].[Relationship_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_AcquiredCard_AcquiredCard_TargetAcquiredCardId] FOREIGN KEY([TargetAcquiredCardId])
-REFERENCES [dbo].[AcquiredCard] ([Id])
-GO
-ALTER TABLE [dbo].[Relationship_AcquiredCard] CHECK CONSTRAINT [FK_Relationship_AcquiredCard_AcquiredCard_TargetAcquiredCardId]
-GO
-ALTER TABLE [dbo].[Relationship_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Relationship_AcquiredCard_Relationship_RelationshipId] FOREIGN KEY([RelationshipId])
-REFERENCES [dbo].[Relationship] ([Id])
-GO
-ALTER TABLE [dbo].[Relationship_AcquiredCard] CHECK CONSTRAINT [FK_Relationship_AcquiredCard_Relationship_RelationshipId]
-GO
-ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId] FOREIGN KEY([AcquiredCardId])
-REFERENCES [dbo].[AcquiredCard] ([Id])
-ON DELETE CASCADE
-GO
-ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId]
-GO
-ALTER TABLE [dbo].[Tag_AcquiredCard]  WITH CHECK ADD  CONSTRAINT [FK_Tag_AcquiredCard_Tag_TagId] FOREIGN KEY([TagId])
-REFERENCES [dbo].[Tag] ([Id])
-GO
-ALTER TABLE [dbo].[Tag_AcquiredCard] CHECK CONSTRAINT [FK_Tag_AcquiredCard_Tag_TagId]
-GO
-ALTER TABLE [dbo].[Tag_User_TemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_TemplateInstance_Tag_DefaultTagId] FOREIGN KEY([DefaultTagId])
-REFERENCES [dbo].[Tag] ([Id])
-GO
-ALTER TABLE [dbo].[Tag_User_TemplateInstance] CHECK CONSTRAINT [FK_Tag_User_TemplateInstance_Tag_DefaultTagId]
-GO
-ALTER TABLE [dbo].[Tag_User_TemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_Tag_User_TemplateInstance_User_TemplateInstance_UserId_TemplateInstanceId] FOREIGN KEY([UserId], [TemplateInstanceId])
-REFERENCES [dbo].[User_TemplateInstance] ([UserId], [TemplateInstanceId])
-GO
-ALTER TABLE [dbo].[Tag_User_TemplateInstance] CHECK CONSTRAINT [FK_Tag_User_TemplateInstance_User_TemplateInstance_UserId_TemplateInstanceId]
-GO
-ALTER TABLE [dbo].[Template]  WITH CHECK ADD  CONSTRAINT [FK_Template_User_AuthorId] FOREIGN KEY([AuthorId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Template] CHECK CONSTRAINT [FK_Template_User_AuthorId]
-GO
-ALTER TABLE [dbo].[TemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_TemplateInstance_Template_TemplateId] FOREIGN KEY([TemplateId])
-REFERENCES [dbo].[Template] ([Id])
-GO
-ALTER TABLE [dbo].[TemplateInstance] CHECK CONSTRAINT [FK_TemplateInstance_Template_TemplateId]
-GO
-ALTER TABLE [dbo].[User]  WITH CHECK ADD  CONSTRAINT [FK_User_CardSetting_DefaultCardSettingId] FOREIGN KEY([DefaultCardSettingId])
-REFERENCES [dbo].[CardSetting] ([Id])
-GO
-ALTER TABLE [dbo].[User] CHECK CONSTRAINT [FK_User_CardSetting_DefaultCardSettingId]
-GO
-ALTER TABLE [dbo].[User_TemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_TemplateInstance_CardSetting_DefaultCardSettingId] FOREIGN KEY([DefaultCardSettingId])
-REFERENCES [dbo].[CardSetting] ([Id])
-GO
-ALTER TABLE [dbo].[User_TemplateInstance] CHECK CONSTRAINT [FK_User_TemplateInstance_CardSetting_DefaultCardSettingId]
-GO
-ALTER TABLE [dbo].[User_TemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_TemplateInstance_TemplateInstance_TemplateInstanceId] FOREIGN KEY([TemplateInstanceId])
-REFERENCES [dbo].[TemplateInstance] ([Id])
-GO
-ALTER TABLE [dbo].[User_TemplateInstance] CHECK CONSTRAINT [FK_User_TemplateInstance_TemplateInstance_TemplateInstanceId]
-GO
-ALTER TABLE [dbo].[User_TemplateInstance]  WITH CHECK ADD  CONSTRAINT [FK_User_TemplateInstance_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[User_TemplateInstance] CHECK CONSTRAINT [FK_User_TemplateInstance_User_UserId]
-GO
-ALTER TABLE [dbo].[Vote_CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCard_CommentCard_CommentCardId] FOREIGN KEY([CommentCardId])
-REFERENCES [dbo].[CommentCard] ([Id])
-GO
-ALTER TABLE [dbo].[Vote_CommentCard] CHECK CONSTRAINT [FK_Vote_CommentCard_CommentCard_CommentCardId]
-GO
-ALTER TABLE [dbo].[Vote_CommentCard]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentCard_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Vote_CommentCard] CHECK CONSTRAINT [FK_Vote_CommentCard_User_UserId]
-GO
-ALTER TABLE [dbo].[Vote_CommentTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentTemplate_CommentTemplate_CommentTemplateId] FOREIGN KEY([CommentTemplateId])
-REFERENCES [dbo].[CommentTemplate] ([Id])
-GO
-ALTER TABLE [dbo].[Vote_CommentTemplate] CHECK CONSTRAINT [FK_Vote_CommentTemplate_CommentTemplate_CommentTemplateId]
-GO
-ALTER TABLE [dbo].[Vote_CommentTemplate]  WITH CHECK ADD  CONSTRAINT [FK_Vote_CommentTemplate_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Vote_CommentTemplate] CHECK CONSTRAINT [FK_Vote_CommentTemplate_User_UserId]
-GO
-ALTER TABLE [dbo].[Vote_Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Vote_Feedback_Feedback_FeedbackId] FOREIGN KEY([FeedbackId])
-REFERENCES [dbo].[Feedback] ([Id])
-GO
-ALTER TABLE [dbo].[Vote_Feedback] CHECK CONSTRAINT [FK_Vote_Feedback_Feedback_FeedbackId]
-GO
-ALTER TABLE [dbo].[Vote_Feedback]  WITH CHECK ADD  CONSTRAINT [FK_Vote_Feedback_User_UserId] FOREIGN KEY([UserId])
-REFERENCES [dbo].[User] ([Id])
-GO
-ALTER TABLE [dbo].[Vote_Feedback] CHECK CONSTRAINT [FK_Vote_Feedback_User_UserId]
-GO
-/****** Object:  Trigger [dbo].[TriggerCardInstanceUserUpdate] ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 
--- =============================================
--- Author:		Alex
--- Create date: 11:40 10/8/2019
--- Description:	Updates the Users count of Card and CardInstance
--- =============================================
-CREATE TRIGGER [dbo].[TriggerCardInstanceUserUpdate] 
-	ON  [dbo].[AcquiredCard]
-	AFTER INSERT, DELETE, UPDATE
-AS 
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+ALTER TABLE public."AlphaBetaKey" OWNER TO postgres;
 
-	IF EXISTS (SELECT 1 FROM inserted)
-	BEGIN
-		UPDATE	dbo.CardInstance
-		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = i.CardInstanceId AND CardState <> 3)
-		FROM	inserted i
-		WHERE	dbo.CardInstance.Id = i.CardInstanceId
-	END
-	IF EXISTS (SELECT 1 FROM deleted)
-	BEGIN
-		UPDATE	dbo.CardInstance
-		SET		Users = (SELECT Count(*) FROM dbo.AcquiredCard WHERE CardInstanceId = d.CardInstanceId AND CardState <> 3)
-		FROM	deleted d
-		WHERE	dbo.CardInstance.Id = d.CardInstanceId
-	END
+--
+-- Name: AlphaBetaKey_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
 
-	IF EXISTS (SELECT 1 FROM inserted)
-	BEGIN
-		UPDATE	c
-		SET		Users =
-				   (SELECT	SUM(ci2.Users)
-					FROM	dbo.CardInstance ci2
-					WHERE	ci2.CardId = c.Id)
-		FROM	dbo.Card c
-		INNER JOIN dbo.CardInstance ci
-			ON ci.CardId = c.Id
-		INNER JOIN inserted i
-			ON ci.Id = i.CardInstanceId
-	END
-	IF EXISTS (SELECT 1 FROM deleted)
-	BEGIN
-		UPDATE	c
-		SET		Users =
-				   (SELECT	SUM(ci2.Users)
-					FROM	dbo.CardInstance ci2
-					WHERE	ci2.CardId = c.Id)
-		FROM	dbo.Card c
-		INNER JOIN dbo.CardInstance ci
-			ON ci.CardId = c.Id
-		INNER JOIN deleted d
-			ON ci.Id = d.CardInstanceId
-	END
-END
-GO
-ALTER TABLE [dbo].[AcquiredCard] ENABLE TRIGGER [TriggerCardInstanceUserUpdate]
-GO
-USE [master]
-GO
-ALTER DATABASE [CardOverflow] SET  READ_WRITE 
-GO
+ALTER TABLE public."AlphaBetaKey" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."AlphaBetaKey_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
 
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+
+--
+-- Name: AspNetRoleClaims; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."AspNetRoleClaims" (
+    "Id" integer NOT NULL,
+    "RoleId" integer NOT NULL,
+    "ClaimType" text,
+    "ClaimValue" text
+);
+
+
+ALTER TABLE public."AspNetRoleClaims" OWNER TO postgres;
+
+--
+-- Name: AspNetRoleClaims_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."AspNetRoleClaims" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."AspNetRoleClaims_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: AspNetRoles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."AspNetRoles" (
+    "Id" integer NOT NULL,
+    "Name" character varying(256),
+    "NormalizedName" character varying(256),
+    "ConcurrencyStamp" text
+);
+
+
+ALTER TABLE public."AspNetRoles" OWNER TO postgres;
+
+--
+-- Name: AspNetRoles_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."AspNetRoles" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."AspNetRoles_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: AspNetUserClaims; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."AspNetUserClaims" (
+    "Id" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "ClaimType" text,
+    "ClaimValue" text
+);
+
+
+ALTER TABLE public."AspNetUserClaims" OWNER TO postgres;
+
+--
+-- Name: AspNetUserClaims_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."AspNetUserClaims" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."AspNetUserClaims_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: AspNetUserLogins; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."AspNetUserLogins" (
+    "LoginProvider" character varying(450) NOT NULL,
+    "ProviderKey" character varying(450) NOT NULL,
+    "ProviderDisplayName" text,
+    "UserId" integer NOT NULL
+);
+
+
+ALTER TABLE public."AspNetUserLogins" OWNER TO postgres;
+
+--
+-- Name: AspNetUserRoles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."AspNetUserRoles" (
+    "UserId" integer NOT NULL,
+    "RoleId" integer NOT NULL
+);
+
+
+ALTER TABLE public."AspNetUserRoles" OWNER TO postgres;
+
+--
+-- Name: AspNetUserTokens; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."AspNetUserTokens" (
+    "UserId" integer NOT NULL,
+    "LoginProvider" character varying(450) NOT NULL,
+    "Name" character varying(450) NOT NULL,
+    "Value" text
+);
+
+
+ALTER TABLE public."AspNetUserTokens" OWNER TO postgres;
+
+--
+-- Name: Card; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Card" (
+    "Id" integer NOT NULL,
+    "AuthorId" integer NOT NULL,
+    "Users" integer NOT NULL,
+    "ParentId" integer
+);
+
+
+ALTER TABLE public."Card" OWNER TO postgres;
+
+--
+-- Name: CardInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CardInstance" (
+    "Id" integer NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "CardId" integer NOT NULL,
+    "IsDmca" boolean NOT NULL,
+    "FieldValues" text NOT NULL,
+    "TemplateInstanceId" integer NOT NULL,
+    "Users" integer NOT NULL,
+    "EditSummary" character varying(200) NOT NULL,
+    "AnkiNoteId" bigint,
+    "AnkiNoteOrd" smallint,
+    "Hash" bytea NOT NULL
+);
+
+
+ALTER TABLE public."CardInstance" OWNER TO postgres;
+
+--
+-- Name: CardInstanceRelationshipCount; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CardInstanceRelationshipCount" (
+    "SourceCardInstanceId" integer NOT NULL,
+    "TargetCardInstanceId" integer NOT NULL,
+    "Name" character varying(250),
+    "Count" integer,
+    "CardInstanceId" integer NOT NULL
+);
+
+
+ALTER TABLE public."CardInstanceRelationshipCount" OWNER TO postgres;
+
+--
+-- Name: CardInstanceTagCount; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CardInstanceTagCount" (
+    "CardInstanceId" integer NOT NULL,
+    "Name" character varying(250),
+    "Count" integer
+);
+
+
+ALTER TABLE public."CardInstanceTagCount" OWNER TO postgres;
+
+--
+-- Name: CardInstance_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."CardInstance" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CardInstance_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: CardRelationshipCount; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CardRelationshipCount" (
+    "SourceCardId" integer NOT NULL,
+    "TargetCardId" integer NOT NULL,
+    "Name" character varying(250),
+    "Count" integer,
+    "CardId" integer NOT NULL
+);
+
+
+ALTER TABLE public."CardRelationshipCount" OWNER TO postgres;
+
+--
+-- Name: CardSetting; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CardSetting" (
+    "Id" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "Name" character varying(100) NOT NULL,
+    "NewCardsStepsInMinutes" character varying(100) NOT NULL,
+    "NewCardsMaxPerDay" smallint NOT NULL,
+    "NewCardsGraduatingIntervalInDays" smallint NOT NULL,
+    "NewCardsEasyIntervalInDays" smallint NOT NULL,
+    "NewCardsStartingEaseFactorInPermille" smallint NOT NULL,
+    "NewCardsBuryRelated" boolean NOT NULL,
+    "MatureCardsMaxPerDay" smallint NOT NULL,
+    "MatureCardsEaseFactorEasyBonusFactorInPermille" smallint NOT NULL,
+    "MatureCardsIntervalFactorInPermille" smallint NOT NULL,
+    "MatureCardsMaximumIntervalInDays" smallint NOT NULL,
+    "MatureCardsHardIntervalFactorInPermille" smallint NOT NULL,
+    "MatureCardsBuryRelated" boolean NOT NULL,
+    "LapsedCardsStepsInMinutes" character varying(100) NOT NULL,
+    "LapsedCardsNewIntervalFactorInPermille" smallint NOT NULL,
+    "LapsedCardsMinimumIntervalInDays" smallint NOT NULL,
+    "LapsedCardsLeechThreshold" smallint NOT NULL,
+    "ShowAnswerTimer" boolean NOT NULL,
+    "AutomaticallyPlayAudio" boolean NOT NULL,
+    "ReplayQuestionAudioOnAnswer" boolean NOT NULL
+);
+
+
+ALTER TABLE public."CardSetting" OWNER TO postgres;
+
+--
+-- Name: CardSetting_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."CardSetting" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CardSetting_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: CardTagCount; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CardTagCount" (
+    "CardId" integer NOT NULL,
+    "Name" character varying(250),
+    "Count" integer
+);
+
+
+ALTER TABLE public."CardTagCount" OWNER TO postgres;
+
+--
+-- Name: Card_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."Card" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Card_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: CommentCard; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CommentCard" (
+    "Id" integer NOT NULL,
+    "CardId" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "Text" character varying(500) NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "IsDmca" boolean NOT NULL
+);
+
+
+ALTER TABLE public."CommentCard" OWNER TO postgres;
+
+--
+-- Name: CommentCard_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."CommentCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CommentCard_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: CommentTemplate; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CommentTemplate" (
+    "Id" integer NOT NULL,
+    "TemplateId" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "Text" character varying(500) NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "IsDmca" boolean NOT NULL
+);
+
+
+ALTER TABLE public."CommentTemplate" OWNER TO postgres;
+
+--
+-- Name: CommentTemplate_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."CommentTemplate" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CommentTemplate_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: CommunalField; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CommunalField" (
+    "Id" integer NOT NULL,
+    "AuthorId" integer NOT NULL
+);
+
+
+ALTER TABLE public."CommunalField" OWNER TO postgres;
+
+--
+-- Name: CommunalFieldInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CommunalFieldInstance" (
+    "Id" integer NOT NULL,
+    "CommunalFieldId" integer NOT NULL,
+    "FieldName" character varying(200) NOT NULL,
+    "Value" text NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "EditSummary" character varying(200) NOT NULL
+);
+
+
+ALTER TABLE public."CommunalFieldInstance" OWNER TO postgres;
+
+--
+-- Name: CommunalFieldInstance_CardInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."CommunalFieldInstance_CardInstance" (
+    "CardInstanceId" integer NOT NULL,
+    "CommunalFieldInstanceId" integer NOT NULL
+);
+
+
+ALTER TABLE public."CommunalFieldInstance_CardInstance" OWNER TO postgres;
+
+--
+-- Name: CommunalFieldInstance_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."CommunalFieldInstance" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CommunalFieldInstance_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: CommunalField_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."CommunalField" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CommunalField_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: Feedback; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Feedback" (
+    "Id" integer NOT NULL,
+    "Title" character varying(50) NOT NULL,
+    "Description" character varying(1000) NOT NULL,
+    "UserId" integer NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "ParentId" integer,
+    "Priority" smallint
+);
+
+
+ALTER TABLE public."Feedback" OWNER TO postgres;
+
+--
+-- Name: Feedback_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."Feedback" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Feedback_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: File; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."File" (
+    "Id" integer NOT NULL,
+    "FileName" character varying(200) NOT NULL,
+    "Data" bytea NOT NULL,
+    "Sha256" bytea NOT NULL
+);
+
+
+ALTER TABLE public."File" OWNER TO postgres;
+
+--
+-- Name: File_CardInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."File_CardInstance" (
+    "CardInstanceId" integer NOT NULL,
+    "FileId" integer NOT NULL
+);
+
+
+ALTER TABLE public."File_CardInstance" OWNER TO postgres;
+
+--
+-- Name: File_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."File" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."File_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: Filter; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Filter" (
+    "Id" integer NOT NULL,
+    "Name" character varying(128) NOT NULL,
+    "UserId" integer NOT NULL,
+    "Query" character varying(256) NOT NULL
+);
+
+
+ALTER TABLE public."Filter" OWNER TO postgres;
+
+--
+-- Name: Filter_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."Filter" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Filter_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: History; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."History" (
+    "Id" integer NOT NULL,
+    "AcquiredCardId" integer NOT NULL,
+    "Score" smallint NOT NULL,
+    "Timestamp" timestamp without time zone NOT NULL,
+    "IntervalWithUnusedStepsIndex" smallint NOT NULL,
+    "EaseFactorInPermille" smallint NOT NULL,
+    "TimeFromSeeingQuestionToScoreInSecondsPlus32768" smallint NOT NULL
+);
+
+
+ALTER TABLE public."History" OWNER TO postgres;
+
+--
+-- Name: History_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."History" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."History_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: LatestCardInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."LatestCardInstance" (
+    "AuthorId" integer NOT NULL,
+    "CardUsers" integer NOT NULL,
+    "CardInstanceId" integer NOT NULL,
+    "CardId" integer NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "IsDmca" boolean NOT NULL,
+    "FieldValues" text NOT NULL,
+    "TemplateInstanceId" integer NOT NULL,
+    "InstanceUsers" integer NOT NULL,
+    "EditSummary" character varying(200) NOT NULL,
+    "AnkiNoteId" bigint,
+    "AnkiNoteOrd" smallint
+);
+
+
+ALTER TABLE public."LatestCardInstance" OWNER TO postgres;
+
+--
+-- Name: LatestCommunalFieldInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."LatestCommunalFieldInstance" (
+    "AuthorId" integer NOT NULL,
+    "CommunalFieldInstanceId" integer NOT NULL,
+    "CommunalFieldId" integer NOT NULL,
+    "FieldName" character varying(200) NOT NULL,
+    "Value" text NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "EditSummary" character varying(200) NOT NULL
+);
+
+
+ALTER TABLE public."LatestCommunalFieldInstance" OWNER TO postgres;
+
+--
+-- Name: LatestTemplateInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."LatestTemplateInstance" (
+    "AuthorId" integer NOT NULL,
+    "TemplateInstanceId" integer NOT NULL,
+    "TemplateId" integer NOT NULL,
+    "Name" character varying(100) NOT NULL,
+    "Css" character varying(4000) NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "LatexPre" character varying(500) NOT NULL,
+    "LatexPost" character varying(500) NOT NULL,
+    "IsDmca" boolean NOT NULL,
+    "QuestionTemplate" character varying(4000) NOT NULL,
+    "AnswerTemplate" character varying(4000) NOT NULL,
+    "ShortQuestionTemplate" character varying(200) NOT NULL,
+    "ShortAnswerTemplate" character varying(200) NOT NULL,
+    "Fields" character varying(4000) NOT NULL,
+    "EditSummary" character varying(200) NOT NULL,
+    "AnkiId" bigint
+);
+
+
+ALTER TABLE public."LatestTemplateInstance" OWNER TO postgres;
+
+--
+-- Name: PotentialSignups; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."PotentialSignups" (
+    "Id" integer NOT NULL,
+    "Email" character varying(500) NOT NULL,
+    "Message" character varying(1000) NOT NULL,
+    "OneIsAlpha2Beta3Ga" smallint NOT NULL,
+    "TimeStamp" timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public."PotentialSignups" OWNER TO postgres;
+
+--
+-- Name: PotentialSignups_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."PotentialSignups" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."PotentialSignups_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: Relationship; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Relationship" (
+    "Id" integer NOT NULL,
+    "Name" character varying(250) NOT NULL
+);
+
+
+ALTER TABLE public."Relationship" OWNER TO postgres;
+
+--
+-- Name: Relationship_AcquiredCard; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Relationship_AcquiredCard" (
+    "SourceAcquiredCardId" integer NOT NULL,
+    "TargetAcquiredCardId" integer NOT NULL,
+    "RelationshipId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Relationship_AcquiredCard" OWNER TO postgres;
+
+--
+-- Name: Relationship_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."Relationship" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Relationship_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: Tag; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Tag" (
+    "Id" integer NOT NULL,
+    "Name" character varying(250) NOT NULL
+);
+
+
+ALTER TABLE public."Tag" OWNER TO postgres;
+
+--
+-- Name: Tag_AcquiredCard; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Tag_AcquiredCard" (
+    "TagId" integer NOT NULL,
+    "AcquiredCardId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Tag_AcquiredCard" OWNER TO postgres;
+
+--
+-- Name: Tag_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."Tag" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Tag_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: Tag_User_TemplateInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Tag_User_TemplateInstance" (
+    "UserId" integer NOT NULL,
+    "TemplateInstanceId" integer NOT NULL,
+    "DefaultTagId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Tag_User_TemplateInstance" OWNER TO postgres;
+
+--
+-- Name: Template; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Template" (
+    "Id" integer NOT NULL,
+    "AuthorId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Template" OWNER TO postgres;
+
+--
+-- Name: TemplateInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."TemplateInstance" (
+    "Id" integer NOT NULL,
+    "Name" character varying(100) NOT NULL,
+    "TemplateId" integer NOT NULL,
+    "Css" character varying(4000) NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "LatexPre" character varying(500) NOT NULL,
+    "LatexPost" character varying(500) NOT NULL,
+    "IsDmca" boolean NOT NULL,
+    "QuestionTemplate" character varying(4000) NOT NULL,
+    "AnswerTemplate" character varying(4000) NOT NULL,
+    "ShortQuestionTemplate" character varying(200) NOT NULL,
+    "ShortAnswerTemplate" character varying(200) NOT NULL,
+    "Fields" character varying(4000) NOT NULL,
+    "EditSummary" character varying(200) NOT NULL,
+    "AnkiId" bigint,
+    "Hash" bytea NOT NULL
+);
+
+
+ALTER TABLE public."TemplateInstance" OWNER TO postgres;
+
+--
+-- Name: TemplateInstance_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."TemplateInstance" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."TemplateInstance_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: Template_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."Template" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Template_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: User; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."User" (
+    "Id" integer NOT NULL,
+    "UserName" character varying(256),
+    "NormalizedUserName" character varying(256),
+    "Email" character varying(256),
+    "NormalizedEmail" character varying(256),
+    "EmailConfirmed" boolean NOT NULL,
+    "PasswordHash" text,
+    "SecurityStamp" text,
+    "ConcurrencyStamp" text,
+    "PhoneNumber" text,
+    "PhoneNumberConfirmed" boolean NOT NULL,
+    "TwoFactorEnabled" boolean NOT NULL,
+    "LockoutEnd" timestamp with time zone,
+    "LockoutEnabled" boolean NOT NULL,
+    "AccessFailedCount" integer NOT NULL,
+    "DisplayName" character varying(32),
+    "DefaultCardSettingId" integer,
+    "ShowNextReviewTime" boolean NOT NULL,
+    "ShowRemainingCardCount" boolean NOT NULL,
+    "MixNewAndReview" smallint NOT NULL,
+    "NextDayStartsAtXHoursPastMidnight" smallint NOT NULL,
+    "LearnAheadLimitInMinutes" smallint NOT NULL,
+    "TimeboxTimeLimitInMinutes" smallint NOT NULL,
+    "IsNightMode" boolean NOT NULL
+);
+
+
+ALTER TABLE public."User" OWNER TO postgres;
+
+--
+-- Name: UserAndCard; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."UserAndCard" (
+    "UserId" integer NOT NULL,
+    "CardId" integer NOT NULL
+);
+
+
+ALTER TABLE public."UserAndCard" OWNER TO postgres;
+
+--
+-- Name: User_Id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public."User" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."User_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: User_TemplateInstance; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."User_TemplateInstance" (
+    "UserId" integer NOT NULL,
+    "TemplateInstanceId" integer NOT NULL,
+    "DefaultCardSettingId" integer NOT NULL
+);
+
+
+ALTER TABLE public."User_TemplateInstance" OWNER TO postgres;
+
+--
+-- Name: Vote_CommentCard; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Vote_CommentCard" (
+    "CommentCardId" integer NOT NULL,
+    "UserId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Vote_CommentCard" OWNER TO postgres;
+
+--
+-- Name: Vote_CommentTemplate; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Vote_CommentTemplate" (
+    "CommentTemplateId" integer NOT NULL,
+    "UserId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Vote_CommentTemplate" OWNER TO postgres;
+
+--
+-- Name: Vote_Feedback; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Vote_Feedback" (
+    "FeedbackId" integer NOT NULL,
+    "UserId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Vote_Feedback" OWNER TO postgres;
+
+--
+-- Data for Name: AcquiredCard; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AcquiredCard" ("Id", "UserId", "CardInstanceId", "CardState", "EaseFactorInPermille", "IntervalOrStepsIndex", "Due", "CardSettingId", "IsLapsed") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AcquiredCardIsLatest; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AcquiredCardIsLatest" ("Id", "UserId", "CardInstanceId", "CardState", "EaseFactorInPermille", "IntervalOrStepsIndex", "Due", "CardSettingId", "IsLapsed", "IsLatest") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AlphaBetaKey; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AlphaBetaKey" ("Id", "Key", "IsUsed") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AspNetRoleClaims; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AspNetRoleClaims" ("Id", "RoleId", "ClaimType", "ClaimValue") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AspNetRoles; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AspNetRoles" ("Id", "Name", "NormalizedName", "ConcurrencyStamp") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AspNetUserClaims; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AspNetUserClaims" ("Id", "UserId", "ClaimType", "ClaimValue") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AspNetUserLogins; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AspNetUserLogins" ("LoginProvider", "ProviderKey", "ProviderDisplayName", "UserId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AspNetUserRoles; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AspNetUserRoles" ("UserId", "RoleId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: AspNetUserTokens; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."AspNetUserTokens" ("UserId", "LoginProvider", "Name", "Value") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Card; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Card" ("Id", "AuthorId", "Users", "ParentId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CardInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CardInstance" ("Id", "Created", "Modified", "CardId", "IsDmca", "FieldValues", "TemplateInstanceId", "Users", "EditSummary", "AnkiNoteId", "AnkiNoteOrd", "Hash") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CardInstanceRelationshipCount; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CardInstanceRelationshipCount" ("SourceCardInstanceId", "TargetCardInstanceId", "Name", "Count", "CardInstanceId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CardInstanceTagCount; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CardInstanceTagCount" ("CardInstanceId", "Name", "Count") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CardRelationshipCount; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CardRelationshipCount" ("SourceCardId", "TargetCardId", "Name", "Count", "CardId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CardSetting; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CardSetting" ("Id", "UserId", "Name", "NewCardsStepsInMinutes", "NewCardsMaxPerDay", "NewCardsGraduatingIntervalInDays", "NewCardsEasyIntervalInDays", "NewCardsStartingEaseFactorInPermille", "NewCardsBuryRelated", "MatureCardsMaxPerDay", "MatureCardsEaseFactorEasyBonusFactorInPermille", "MatureCardsIntervalFactorInPermille", "MatureCardsMaximumIntervalInDays", "MatureCardsHardIntervalFactorInPermille", "MatureCardsBuryRelated", "LapsedCardsStepsInMinutes", "LapsedCardsNewIntervalFactorInPermille", "LapsedCardsMinimumIntervalInDays", "LapsedCardsLeechThreshold", "ShowAnswerTimer", "AutomaticallyPlayAudio", "ReplayQuestionAudioOnAnswer") FROM stdin;
+1	1	Default	1 10	20	1	4	2500	t	200	1300	1000	32767	1200	t	10	0	1	8	f	f	f
+2	2	Default	1 10	20	1	4	2500	t	200	1300	1000	32767	1200	t	10	0	1	8	f	f	f
+3	3	Default	1 10	20	1	4	2500	t	200	1300	1000	32767	1200	t	10	0	1	8	f	f	f
+\.
+
+
+--
+-- Data for Name: CardTagCount; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CardTagCount" ("CardId", "Name", "Count") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CommentCard; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CommentCard" ("Id", "CardId", "UserId", "Text", "Created", "IsDmca") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CommentTemplate; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CommentTemplate" ("Id", "TemplateId", "UserId", "Text", "Created", "IsDmca") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CommunalField; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CommunalField" ("Id", "AuthorId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CommunalFieldInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CommunalFieldInstance" ("Id", "CommunalFieldId", "FieldName", "Value", "Created", "Modified", "EditSummary") FROM stdin;
+\.
+
+
+--
+-- Data for Name: CommunalFieldInstance_CardInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."CommunalFieldInstance_CardInstance" ("CardInstanceId", "CommunalFieldInstanceId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Feedback; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Feedback" ("Id", "Title", "Description", "UserId", "Created", "ParentId", "Priority") FROM stdin;
+\.
+
+
+--
+-- Data for Name: File; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."File" ("Id", "FileName", "Data", "Sha256") FROM stdin;
+\.
+
+
+--
+-- Data for Name: File_CardInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."File_CardInstance" ("CardInstanceId", "FileId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Filter; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Filter" ("Id", "Name", "UserId", "Query") FROM stdin;
+\.
+
+
+--
+-- Data for Name: History; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."History" ("Id", "AcquiredCardId", "Score", "Timestamp", "IntervalWithUnusedStepsIndex", "EaseFactorInPermille", "TimeFromSeeingQuestionToScoreInSecondsPlus32768") FROM stdin;
+\.
+
+
+--
+-- Data for Name: LatestCardInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."LatestCardInstance" ("AuthorId", "CardUsers", "CardInstanceId", "CardId", "Created", "Modified", "IsDmca", "FieldValues", "TemplateInstanceId", "InstanceUsers", "EditSummary", "AnkiNoteId", "AnkiNoteOrd") FROM stdin;
+\.
+
+
+--
+-- Data for Name: LatestCommunalFieldInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."LatestCommunalFieldInstance" ("AuthorId", "CommunalFieldInstanceId", "CommunalFieldId", "FieldName", "Value", "Created", "Modified", "EditSummary") FROM stdin;
+\.
+
+
+--
+-- Data for Name: LatestTemplateInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."LatestTemplateInstance" ("AuthorId", "TemplateInstanceId", "TemplateId", "Name", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId") FROM stdin;
+2	1	1	Basic	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIA	2019-04-08 02:14:29.581	2019-06-16 00:53:30	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	* TRIAL * TRIA	f	* TRIAL *	{{FrontSide}}\r\n\r\n<hr id=answer>\r\n\r\n{{Back}}			FrontArial20False0FalseBackArial20False1False	Imported from Anki	1554689669581
+2	2	2	* TRIAL * TRIAL * TRIAL * TRIAL * 	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n	2019-04-08 02:14:29.577	2019-06-16 00:51:28	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	\\end{document}	f	{{Front}}	{{FrontSide}}\r\n\r\n<hr id=answer>\r\n\r\n{{Back}}			FrontArial20False0FalseBackArial20False1False	Imported from Anki	1554689669577
+2	3	3	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIA	2019-04-08 02:14:29.572	2019-06-16 00:51:32	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	\\end{document}	f	* TRIAL *	{{FrontSide}}\r\n\r\n<hr id=answer>\r\n\r\n{{Back}}			* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * T	* TRIAL * TRIAL * 	1554689669572
+2	4	4	Basic (type in the answer)	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n	2019-04-08 02:14:29.571	2019-06-16 00:51:46	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	* TRIAL * TRIA	f	* TRIAL * TRIAL * TRIAL 	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * T			FrontArial20False0FalseBackArial20False1False	Imported from Anki	1554689669571
+2	5	5	Cloze	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n\r\n.cloze {\r\n font-weight: bold;\r\n color: blue;\r\n}\r\n.nightMode .cloze {\r\n color: lightblue;\r\n}	2019-04-08 02:14:29.57	2019-06-16 00:51:55	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	* TRIAL * TRIA	f	{{cloze:Text}}	{{cloze:Text}}<br>\r\n{{Extra}}			* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL 	Imported from Anki	1554689669570
+\.
+
+
+--
+-- Data for Name: PotentialSignups; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."PotentialSignups" ("Id", "Email", "Message", "OneIsAlpha2Beta3Ga", "TimeStamp") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Relationship; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Relationship" ("Id", "Name") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Relationship_AcquiredCard; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Relationship_AcquiredCard" ("SourceAcquiredCardId", "TargetAcquiredCardId", "RelationshipId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Tag; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Tag" ("Id", "Name") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Tag_AcquiredCard; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Tag_AcquiredCard" ("TagId", "AcquiredCardId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Tag_User_TemplateInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Tag_User_TemplateInstance" ("UserId", "TemplateInstanceId", "DefaultTagId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Template; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Template" ("Id", "AuthorId") FROM stdin;
+1	2
+2	2
+3	2
+4	2
+5	2
+\.
+
+
+--
+-- Data for Name: TemplateInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash") FROM stdin;
+1	Basic	1	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n	2019-04-08 02:14:29.581	2019-06-16 00:53:30	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	\\end{document}	f	{{Front}}	{{FrontSide}}\r\n\r\n<hr id=answer>\r\n\r\n{{Back}}			FrontArial20False0FalseBackArial20False1False	Imported from Anki	1554689669581	\\xcb0a06105b2cbe2e2dde79f01a88b336d6f89a3b7c5e23753ef92fc05beefefefce69b1d89d40b286de537f6823f1c18b36f7f4f17912518ecebda9aed89acbe
+2	Basic (and reversed card) - Card 1	2	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n	2019-04-08 02:14:29.577	2019-06-16 00:51:28	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL *	\\end{document}	f	{{Front}}	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * T			FrontArial20False0FalseBackArial20False1False	Imported from Anki	1554689669577	\\x7865ec597180b1001f1e050693824b210dee685ebcef3aec1d80ff3e83e7d9dce6a586f6bcc771aadd48ce7903df9d5fac673d1bfd5abd0fa5a09d44cde48fbb
+3	Basic (optional reversed card) - Card 1	3	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n	2019-04-08 02:14:29.572	2019-06-16 00:51:32	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	* TRIAL * TRIA	f	{{Front}}	{{FrontSide}}\r\n\r\n<hr id=answer>\r\n\r\n{{Back}}			* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * T	Imported from Anki	1554689669572	\\xbe066200f645231b9aa47d4df0e803f99e1197765dcaacda45ee5e0029f2813f0440388b4e99ea72a32bb0ba16d8f85e40c61499aecd65a5d5cc0e285a916a8f
+4	Basic (type in the answer)	4	.card {\r\n font-family: arial;\r\n font-size: 20px;\r\n text-align: center;\r\n color: black;\r\n background-color: white;\r\n}\r\n	2019-04-08 02:14:29.571	2019-06-16 00:51:46	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	\\end{document}	f	* TRIAL * TRIAL * TRIAL 	{{FrontSide}}\r\n\r\n<hr id=answer>\r\n\r\n{{Back}}			FrontArial20False0FalseBackArial20False1False	Imported from Anki	1554689669571	\\x1dc35754e5575169d3e1a3ff8013be0adb80eb1da7bd749100f0927985e84b19bc81a7b89f232d55b17e2dc0f8ce1dec8a487c77af9daf4b2d2bf36324453326
+5	Cloze	5	* TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * TRIAL * T	2019-04-08 02:14:29.57	2019-06-16 00:51:55	\\documentclass[12pt]{article}\r\n\\special{papersize=3in,5in}\r\n\\usepackage[utf8]{inputenc}\r\n\\usepackage{amssymb,amsmath}\r\n\\pagestyle{empty}\r\n\\setlength{\\parindent}{0in}\r\n\\begin{document}\r\n	\\end{document}	f	{{cloze:Text}}	{{cloze:Text}}<br>\r\n{{Extra}}			TextArial20False0FalseExtraArial20False1False	Imported from Anki	1554689669570	\\x3c43c6fe47b095d4e2e12d8db1b91110c72090adb383fd04fc6d6c868a591e6840d47f74e301035333a55a7a16dc6e5da5e9e4fcae81c4e64e66c34a03afaac2
+\.
+
+
+--
+-- Data for Name: User; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."User" ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd", "LockoutEnabled", "AccessFailedCount", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") FROM stdin;
+1	\N	\N	admin@cardoverflow.io	\N	f	\N	\N	4934a9df-035b-4216-a8d7-cf00510a16ff	\N	f	f	\N	f	0	Admin	1	t	t	0	4	20	0	f
+2	\N	\N	theCollective@cardoverflow.io	\N	f	\N	\N	7f15011b-1605-4b2c-ba98-af5659739d60	\N	f	f	\N	f	0	The Collective	2	t	t	0	4	20	0	f
+3	\N	\N	roboturtle@cardoverflow.io	\N	f	\N	\N	d622b1ce-0c3b-48a3-9851-506e17bd04ec	\N	f	f	\N	f	0	RoboTurtle	3	t	t	0	4	20	0	f
+\.
+
+
+--
+-- Data for Name: UserAndCard; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."UserAndCard" ("UserId", "CardId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: User_TemplateInstance; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."User_TemplateInstance" ("UserId", "TemplateInstanceId", "DefaultCardSettingId") FROM stdin;
+1	1	1
+1	2	1
+1	3	1
+1	4	1
+1	5	1
+2	1	2
+2	2	2
+2	3	2
+2	4	2
+2	5	2
+3	1	3
+3	2	3
+3	3	3
+3	4	3
+3	5	3
+\.
+
+
+--
+-- Data for Name: Vote_CommentCard; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Vote_CommentCard" ("CommentCardId", "UserId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Vote_CommentTemplate; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Vote_CommentTemplate" ("CommentTemplateId", "UserId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Vote_Feedback; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Vote_Feedback" ("FeedbackId", "UserId") FROM stdin;
+\.
+
+
+--
+-- Name: AcquiredCard_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."AcquiredCard_Id_seq"', 1, false);
+
+
+--
+-- Name: AlphaBetaKey_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."AlphaBetaKey_Id_seq"', 1, false);
+
+
+--
+-- Name: AspNetRoleClaims_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."AspNetRoleClaims_Id_seq"', 1, false);
+
+
+--
+-- Name: AspNetRoles_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."AspNetRoles_Id_seq"', 1, false);
+
+
+--
+-- Name: AspNetUserClaims_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."AspNetUserClaims_Id_seq"', 1, false);
+
+
+--
+-- Name: CardInstance_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."CardInstance_Id_seq"', 1, false);
+
+
+--
+-- Name: CardSetting_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."CardSetting_Id_seq"', 4, false);
+
+
+--
+-- Name: Card_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Card_Id_seq"', 1, false);
+
+
+--
+-- Name: CommentCard_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."CommentCard_Id_seq"', 1, false);
+
+
+--
+-- Name: CommentTemplate_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."CommentTemplate_Id_seq"', 1, false);
+
+
+--
+-- Name: CommunalFieldInstance_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."CommunalFieldInstance_Id_seq"', 1, false);
+
+
+--
+-- Name: CommunalField_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."CommunalField_Id_seq"', 1, false);
+
+
+--
+-- Name: Feedback_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Feedback_Id_seq"', 1, false);
+
+
+--
+-- Name: File_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."File_Id_seq"', 1, false);
+
+
+--
+-- Name: Filter_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Filter_Id_seq"', 1, false);
+
+
+--
+-- Name: History_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."History_Id_seq"', 1, false);
+
+
+--
+-- Name: PotentialSignups_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."PotentialSignups_Id_seq"', 1, false);
+
+
+--
+-- Name: Relationship_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Relationship_Id_seq"', 1, false);
+
+
+--
+-- Name: Tag_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Tag_Id_seq"', 1, false);
+
+
+--
+-- Name: TemplateInstance_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."TemplateInstance_Id_seq"', 6, false);
+
+
+--
+-- Name: Template_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Template_Id_seq"', 6, false);
+
+
+--
+-- Name: User_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."User_Id_seq"', 4, false);
+
+
+--
+-- Name: AcquiredCard PK_AcquiredCard; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "PK_AcquiredCard" PRIMARY KEY ("Id");
+
+
+--
+-- Name: AlphaBetaKey PK_AlphaBetaKey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AlphaBetaKey"
+    ADD CONSTRAINT "PK_AlphaBetaKey" PRIMARY KEY ("Id");
+
+
+--
+-- Name: AspNetRoleClaims PK_AspNetRoleClaims; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetRoleClaims"
+    ADD CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id");
+
+
+--
+-- Name: AspNetRoles PK_AspNetRoles; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetRoles"
+    ADD CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id");
+
+
+--
+-- Name: AspNetUserClaims PK_AspNetUserClaims; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserClaims"
+    ADD CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id");
+
+
+--
+-- Name: AspNetUserLogins PK_AspNetUserLogins; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserLogins"
+    ADD CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey");
+
+
+--
+-- Name: AspNetUserRoles PK_AspNetUserRoles; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserRoles"
+    ADD CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId");
+
+
+--
+-- Name: AspNetUserTokens PK_AspNetUserTokens; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserTokens"
+    ADD CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name");
+
+
+--
+-- Name: Card PK_Card; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Card"
+    ADD CONSTRAINT "PK_Card" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CardInstance PK_CardInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CardInstance"
+    ADD CONSTRAINT "PK_CardInstance" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CardSetting PK_CardSetting; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CardSetting"
+    ADD CONSTRAINT "PK_CardSetting" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CommentCard PK_CommentCard; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommentCard"
+    ADD CONSTRAINT "PK_CommentCard" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CommentTemplate PK_CommentTemplate; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommentTemplate"
+    ADD CONSTRAINT "PK_CommentTemplate" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CommunalField PK_CommunalField; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalField"
+    ADD CONSTRAINT "PK_CommunalField" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CommunalFieldInstance PK_CommunalFieldInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalFieldInstance"
+    ADD CONSTRAINT "PK_CommunalFieldInstance" PRIMARY KEY ("Id");
+
+
+--
+-- Name: CommunalFieldInstance_CardInstance PK_CommunalFieldInstance_CardInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalFieldInstance_CardInstance"
+    ADD CONSTRAINT "PK_CommunalFieldInstance_CardInstance" PRIMARY KEY ("CommunalFieldInstanceId", "CardInstanceId");
+
+
+--
+-- Name: Feedback PK_Feedback; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Feedback"
+    ADD CONSTRAINT "PK_Feedback" PRIMARY KEY ("Id");
+
+
+--
+-- Name: File PK_File; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."File"
+    ADD CONSTRAINT "PK_File" PRIMARY KEY ("Id");
+
+
+--
+-- Name: File_CardInstance PK_File_CardInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."File_CardInstance"
+    ADD CONSTRAINT "PK_File_CardInstance" PRIMARY KEY ("CardInstanceId", "FileId");
+
+
+--
+-- Name: Filter PK_Filter; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Filter"
+    ADD CONSTRAINT "PK_Filter" PRIMARY KEY ("Id");
+
+
+--
+-- Name: History PK_History; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."History"
+    ADD CONSTRAINT "PK_History" PRIMARY KEY ("Id");
+
+
+--
+-- Name: PotentialSignups PK_PotentialSignups; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."PotentialSignups"
+    ADD CONSTRAINT "PK_PotentialSignups" PRIMARY KEY ("Id");
+
+
+--
+-- Name: Relationship PK_Relationship; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Relationship"
+    ADD CONSTRAINT "PK_Relationship" PRIMARY KEY ("Id");
+
+
+--
+-- Name: Relationship_AcquiredCard PK_Relationship_AcquiredCard; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Relationship_AcquiredCard"
+    ADD CONSTRAINT "PK_Relationship_AcquiredCard" PRIMARY KEY ("SourceAcquiredCardId", "TargetAcquiredCardId", "RelationshipId");
+
+
+--
+-- Name: Tag PK_Tag; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag"
+    ADD CONSTRAINT "PK_Tag" PRIMARY KEY ("Id");
+
+
+--
+-- Name: Tag_AcquiredCard PK_Tag_AcquiredCard; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag_AcquiredCard"
+    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "AcquiredCardId");
+
+
+--
+-- Name: Tag_User_TemplateInstance PK_Tag_User_TemplateInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag_User_TemplateInstance"
+    ADD CONSTRAINT "PK_Tag_User_TemplateInstance" PRIMARY KEY ("UserId", "TemplateInstanceId", "DefaultTagId");
+
+
+--
+-- Name: Template PK_Template; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Template"
+    ADD CONSTRAINT "PK_Template" PRIMARY KEY ("Id");
+
+
+--
+-- Name: TemplateInstance PK_TemplateInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."TemplateInstance"
+    ADD CONSTRAINT "PK_TemplateInstance" PRIMARY KEY ("Id");
+
+
+--
+-- Name: User PK_User; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."User"
+    ADD CONSTRAINT "PK_User" PRIMARY KEY ("Id");
+
+
+--
+-- Name: User_TemplateInstance PK_User_TemplateInstance; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."User_TemplateInstance"
+    ADD CONSTRAINT "PK_User_TemplateInstance" PRIMARY KEY ("UserId", "TemplateInstanceId");
+
+
+--
+-- Name: Vote_CommentCard PK_Vote_CommentCard; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_CommentCard"
+    ADD CONSTRAINT "PK_Vote_CommentCard" PRIMARY KEY ("CommentCardId", "UserId");
+
+
+--
+-- Name: Vote_CommentTemplate PK_Vote_CommentTemplate; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_CommentTemplate"
+    ADD CONSTRAINT "PK_Vote_CommentTemplate" PRIMARY KEY ("CommentTemplateId", "UserId");
+
+
+--
+-- Name: Vote_Feedback PK_Vote_Feedback; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_Feedback"
+    ADD CONSTRAINT "PK_Vote_Feedback" PRIMARY KEY ("FeedbackId", "UserId");
+
+
+--
+-- Name: EmailIndex; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "EmailIndex" ON public."User" USING btree ("NormalizedEmail");
+
+
+--
+-- Name: IX_AcquiredCard_CardInstanceId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AcquiredCard_CardInstanceId" ON public."AcquiredCard" USING btree ("CardInstanceId");
+
+
+--
+-- Name: IX_AcquiredCard_CardSettingId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AcquiredCard_CardSettingId" ON public."AcquiredCard" USING btree ("CardSettingId");
+
+
+--
+-- Name: IX_AcquiredCard_CardState; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AcquiredCard_CardState" ON public."AcquiredCard" USING btree ("CardState");
+
+
+--
+-- Name: IX_AcquiredCard_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AcquiredCard_UserId" ON public."AcquiredCard" USING btree ("UserId");
+
+
+--
+-- Name: IX_AcquiredCard_UserId_CardInstanceId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_CardInstanceId" ON public."AcquiredCard" USING btree ("UserId", "CardInstanceId");
+
+
+--
+-- Name: IX_AlphaBetaKey_Key; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_AlphaBetaKey_Key" ON public."AlphaBetaKey" USING btree ("Key");
+
+
+--
+-- Name: IX_AspNetRoleClaims_RoleId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AspNetRoleClaims_RoleId" ON public."AspNetRoleClaims" USING btree ("RoleId");
+
+
+--
+-- Name: IX_AspNetUserClaims_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AspNetUserClaims_UserId" ON public."AspNetUserClaims" USING btree ("UserId");
+
+
+--
+-- Name: IX_AspNetUserLogins_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AspNetUserLogins_UserId" ON public."AspNetUserLogins" USING btree ("UserId");
+
+
+--
+-- Name: IX_AspNetUserRoles_RoleId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_AspNetUserRoles_RoleId" ON public."AspNetUserRoles" USING btree ("RoleId");
+
+
+--
+-- Name: IX_CardInstance_CardId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CardInstance_CardId" ON public."CardInstance" USING btree ("CardId");
+
+
+--
+-- Name: IX_CardInstance_Hash; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CardInstance_Hash" ON public."CardInstance" USING btree ("Hash");
+
+
+--
+-- Name: IX_CardInstance_TemplateInstanceId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CardInstance_TemplateInstanceId" ON public."CardInstance" USING btree ("TemplateInstanceId");
+
+
+--
+-- Name: IX_CardSetting_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CardSetting_UserId" ON public."CardSetting" USING btree ("UserId");
+
+
+--
+-- Name: IX_Card_AuthorId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Card_AuthorId" ON public."Card" USING btree ("AuthorId");
+
+
+--
+-- Name: IX_CommentCard_CardId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommentCard_CardId" ON public."CommentCard" USING btree ("CardId");
+
+
+--
+-- Name: IX_CommentCard_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommentCard_UserId" ON public."CommentCard" USING btree ("UserId");
+
+
+--
+-- Name: IX_CommentTemplate_TemplateId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommentTemplate_TemplateId" ON public."CommentTemplate" USING btree ("TemplateId");
+
+
+--
+-- Name: IX_CommentTemplate_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommentTemplate_UserId" ON public."CommentTemplate" USING btree ("UserId");
+
+
+--
+-- Name: IX_CommunalFieldInstance_CardInstance_CardInstanceId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommunalFieldInstance_CardInstance_CardInstanceId" ON public."CommunalFieldInstance_CardInstance" USING btree ("CardInstanceId");
+
+
+--
+-- Name: IX_CommunalFieldInstance_CommunalFieldId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommunalFieldInstance_CommunalFieldId" ON public."CommunalFieldInstance" USING btree ("CommunalFieldId");
+
+
+--
+-- Name: IX_CommunalField_AuthorId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_CommunalField_AuthorId" ON public."CommunalField" USING btree ("AuthorId");
+
+
+--
+-- Name: IX_Feedback_ParentId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Feedback_ParentId" ON public."Feedback" USING btree ("ParentId");
+
+
+--
+-- Name: IX_Feedback_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Feedback_UserId" ON public."Feedback" USING btree ("UserId");
+
+
+--
+-- Name: IX_File_CardInstance_FileId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_File_CardInstance_FileId" ON public."File_CardInstance" USING btree ("FileId");
+
+
+--
+-- Name: IX_File_Sha256; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_File_Sha256" ON public."File" USING btree ("Sha256");
+
+
+--
+-- Name: IX_Filter_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Filter_UserId" ON public."Filter" USING btree ("UserId");
+
+
+--
+-- Name: IX_History_AcquiredCardId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_History_AcquiredCardId" ON public."History" USING btree ("AcquiredCardId");
+
+
+--
+-- Name: IX_Relationship_AcquiredCard_RelationshipId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Relationship_AcquiredCard_RelationshipId" ON public."Relationship_AcquiredCard" USING btree ("RelationshipId");
+
+
+--
+-- Name: IX_Relationship_AcquiredCard_TargetAcquiredCardId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Relationship_AcquiredCard_TargetAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("TargetAcquiredCardId");
+
+
+--
+-- Name: IX_Relationship_Name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree ("Name");
+
+
+--
+-- Name: IX_Tag_AcquiredCard_AcquiredCardId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Tag_AcquiredCard_AcquiredCardId" ON public."Tag_AcquiredCard" USING btree ("AcquiredCardId");
+
+
+--
+-- Name: IX_Tag_Name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree ("Name");
+
+
+--
+-- Name: IX_Tag_User_TemplateInstance_DefaultTagId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Tag_User_TemplateInstance_DefaultTagId" ON public."Tag_User_TemplateInstance" USING btree ("DefaultTagId");
+
+
+--
+-- Name: IX_TemplateInstance_Hash; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_TemplateInstance_Hash" ON public."TemplateInstance" USING btree ("Hash");
+
+
+--
+-- Name: IX_TemplateInstance_TemplateId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_TemplateInstance_TemplateId" ON public."TemplateInstance" USING btree ("TemplateId");
+
+
+--
+-- Name: IX_Template_AuthorId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Template_AuthorId" ON public."Template" USING btree ("AuthorId");
+
+
+--
+-- Name: IX_User_DisplayName; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_User_DisplayName" ON public."User" USING btree ("DisplayName");
+
+
+--
+-- Name: IX_User_Email; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "IX_User_Email" ON public."User" USING btree ("Email");
+
+
+--
+-- Name: IX_User_TemplateInstance_DefaultCardSettingId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_User_TemplateInstance_DefaultCardSettingId" ON public."User_TemplateInstance" USING btree ("DefaultCardSettingId");
+
+
+--
+-- Name: IX_User_TemplateInstance_TemplateInstanceId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_User_TemplateInstance_TemplateInstanceId" ON public."User_TemplateInstance" USING btree ("TemplateInstanceId");
+
+
+--
+-- Name: IX_Vote_CommentCard_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Vote_CommentCard_UserId" ON public."Vote_CommentCard" USING btree ("UserId");
+
+
+--
+-- Name: IX_Vote_CommentTemplate_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Vote_CommentTemplate_UserId" ON public."Vote_CommentTemplate" USING btree ("UserId");
+
+
+--
+-- Name: IX_Vote_Feedback_UserId; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX "IX_Vote_Feedback_UserId" ON public."Vote_Feedback" USING btree ("UserId");
+
+
+--
+-- Name: RoleNameIndex; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "RoleNameIndex" ON public."AspNetRoles" USING btree ("NormalizedName");
+
+
+--
+-- Name: UserNameIndex; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX "UserNameIndex" ON public."User" USING btree ("NormalizedUserName");
+
+
+--
+-- Name: AcquiredCard FK_AcquiredCard_CardInstance_CardInstanceId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "FK_AcquiredCard_CardInstance_CardInstanceId" FOREIGN KEY ("CardInstanceId") REFERENCES public."CardInstance"("Id");
+
+
+--
+-- Name: AcquiredCard FK_AcquiredCard_CardSetting_CardSettingId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "FK_AcquiredCard_CardSetting_CardSettingId" FOREIGN KEY ("CardSettingId") REFERENCES public."CardSetting"("Id");
+
+
+--
+-- Name: AcquiredCard FK_AcquiredCard_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "FK_AcquiredCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: AspNetRoleClaims FK_AspNetRoleClaims_AspNetRoles_RoleId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetRoleClaims"
+    ADD CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES public."AspNetRoles"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: AspNetUserClaims FK_AspNetUserClaims_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserClaims"
+    ADD CONSTRAINT "FK_AspNetUserClaims_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: AspNetUserLogins FK_AspNetUserLogins_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserLogins"
+    ADD CONSTRAINT "FK_AspNetUserLogins_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: AspNetUserRoles FK_AspNetUserRoles_AspNetRoles_RoleId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserRoles"
+    ADD CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES public."AspNetRoles"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: AspNetUserRoles FK_AspNetUserRoles_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserRoles"
+    ADD CONSTRAINT "FK_AspNetUserRoles_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: AspNetUserTokens FK_AspNetUserTokens_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."AspNetUserTokens"
+    ADD CONSTRAINT "FK_AspNetUserTokens_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: CardInstance FK_CardInstance_Card_CardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CardInstance"
+    ADD CONSTRAINT "FK_CardInstance_Card_CardId" FOREIGN KEY ("CardId") REFERENCES public."Card"("Id");
+
+
+--
+-- Name: CardInstance FK_CardInstance_TemplateInstance_TemplateInstanceId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CardInstance"
+    ADD CONSTRAINT "FK_CardInstance_TemplateInstance_TemplateInstanceId" FOREIGN KEY ("TemplateInstanceId") REFERENCES public."TemplateInstance"("Id");
+
+
+--
+-- Name: CardSetting FK_CardSetting_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CardSetting"
+    ADD CONSTRAINT "FK_CardSetting_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: Card FK_Card_CardInstance_ParentId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Card"
+    ADD CONSTRAINT "FK_Card_CardInstance_ParentId" FOREIGN KEY ("ParentId") REFERENCES public."CardInstance"("Id");
+
+
+--
+-- Name: Card FK_Card_User_AuthorId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Card"
+    ADD CONSTRAINT "FK_Card_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: CommentCard FK_CommentCard_Card_CardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommentCard"
+    ADD CONSTRAINT "FK_CommentCard_Card_CardId" FOREIGN KEY ("CardId") REFERENCES public."Card"("Id");
+
+
+--
+-- Name: CommentCard FK_CommentCard_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommentCard"
+    ADD CONSTRAINT "FK_CommentCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: CommentTemplate FK_CommentTemplate_Template_TemplateId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommentTemplate"
+    ADD CONSTRAINT "FK_CommentTemplate_Template_TemplateId" FOREIGN KEY ("TemplateId") REFERENCES public."Template"("Id");
+
+
+--
+-- Name: CommentTemplate FK_CommentTemplate_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommentTemplate"
+    ADD CONSTRAINT "FK_CommentTemplate_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: CommunalFieldInstance_CardInstance FK_CommunalFieldInstance_CardInstance_CardInstance_CardInstance; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalFieldInstance_CardInstance"
+    ADD CONSTRAINT "FK_CommunalFieldInstance_CardInstance_CardInstance_CardInstance" FOREIGN KEY ("CardInstanceId") REFERENCES public."CardInstance"("Id");
+
+
+--
+-- Name: CommunalFieldInstance_CardInstance FK_CommunalFieldInstance_CardInstance_CommunalFieldInstance_Com; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalFieldInstance_CardInstance"
+    ADD CONSTRAINT "FK_CommunalFieldInstance_CardInstance_CommunalFieldInstance_Com" FOREIGN KEY ("CommunalFieldInstanceId") REFERENCES public."CommunalFieldInstance"("Id");
+
+
+--
+-- Name: CommunalFieldInstance FK_CommunalFieldInstance_CommunalField_CommunalFieldId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalFieldInstance"
+    ADD CONSTRAINT "FK_CommunalFieldInstance_CommunalField_CommunalFieldId" FOREIGN KEY ("CommunalFieldId") REFERENCES public."CommunalField"("Id");
+
+
+--
+-- Name: CommunalField FK_CommunalField_User_AuthorId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."CommunalField"
+    ADD CONSTRAINT "FK_CommunalField_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: Feedback FK_Feedback_Feedback_ParentId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Feedback"
+    ADD CONSTRAINT "FK_Feedback_Feedback_ParentId" FOREIGN KEY ("ParentId") REFERENCES public."Feedback"("Id");
+
+
+--
+-- Name: Feedback FK_Feedback_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Feedback"
+    ADD CONSTRAINT "FK_Feedback_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: File_CardInstance FK_File_CardInstance_CardInstance_CardInstanceId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."File_CardInstance"
+    ADD CONSTRAINT "FK_File_CardInstance_CardInstance_CardInstanceId" FOREIGN KEY ("CardInstanceId") REFERENCES public."CardInstance"("Id");
+
+
+--
+-- Name: File_CardInstance FK_File_CardInstance_File_FileId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."File_CardInstance"
+    ADD CONSTRAINT "FK_File_CardInstance_File_FileId" FOREIGN KEY ("FileId") REFERENCES public."File"("Id");
+
+
+--
+-- Name: Filter FK_Filter_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Filter"
+    ADD CONSTRAINT "FK_Filter_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: History FK_History_AcquiredCard_AcquiredCardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."History"
+    ADD CONSTRAINT "FK_History_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: Relationship_AcquiredCard FK_Relationship_AcquiredCard_AcquiredCard_SourceAcquiredCardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Relationship_AcquiredCard"
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_AcquiredCard_SourceAcquiredCardId" FOREIGN KEY ("SourceAcquiredCardId") REFERENCES public."AcquiredCard"("Id");
+
+
+--
+-- Name: Relationship_AcquiredCard FK_Relationship_AcquiredCard_AcquiredCard_TargetAcquiredCardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Relationship_AcquiredCard"
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_AcquiredCard_TargetAcquiredCardId" FOREIGN KEY ("TargetAcquiredCardId") REFERENCES public."AcquiredCard"("Id");
+
+
+--
+-- Name: Relationship_AcquiredCard FK_Relationship_AcquiredCard_Relationship_RelationshipId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Relationship_AcquiredCard"
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_Relationship_RelationshipId" FOREIGN KEY ("RelationshipId") REFERENCES public."Relationship"("Id");
+
+
+--
+-- Name: Tag_AcquiredCard FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag_AcquiredCard"
+    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+
+
+--
+-- Name: Tag_AcquiredCard FK_Tag_AcquiredCard_Tag_TagId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag_AcquiredCard"
+    ADD CONSTRAINT "FK_Tag_AcquiredCard_Tag_TagId" FOREIGN KEY ("TagId") REFERENCES public."Tag"("Id");
+
+
+--
+-- Name: Tag_User_TemplateInstance FK_Tag_User_TemplateInstance_Tag_DefaultTagId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag_User_TemplateInstance"
+    ADD CONSTRAINT "FK_Tag_User_TemplateInstance_Tag_DefaultTagId" FOREIGN KEY ("DefaultTagId") REFERENCES public."Tag"("Id");
+
+
+--
+-- Name: Tag_User_TemplateInstance FK_Tag_User_TemplateInstance_User_TemplateInstance_UserId_Templ; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tag_User_TemplateInstance"
+    ADD CONSTRAINT "FK_Tag_User_TemplateInstance_User_TemplateInstance_UserId_Templ" FOREIGN KEY ("UserId", "TemplateInstanceId") REFERENCES public."User_TemplateInstance"("UserId", "TemplateInstanceId");
+
+
+--
+-- Name: TemplateInstance FK_TemplateInstance_Template_TemplateId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."TemplateInstance"
+    ADD CONSTRAINT "FK_TemplateInstance_Template_TemplateId" FOREIGN KEY ("TemplateId") REFERENCES public."Template"("Id");
+
+
+--
+-- Name: Template FK_Template_User_AuthorId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Template"
+    ADD CONSTRAINT "FK_Template_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: User FK_User_CardSetting_DefaultCardSettingId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."User"
+    ADD CONSTRAINT "FK_User_CardSetting_DefaultCardSettingId" FOREIGN KEY ("DefaultCardSettingId") REFERENCES public."CardSetting"("Id");
+
+
+--
+-- Name: User_TemplateInstance FK_User_TemplateInstance_CardSetting_DefaultCardSettingId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."User_TemplateInstance"
+    ADD CONSTRAINT "FK_User_TemplateInstance_CardSetting_DefaultCardSettingId" FOREIGN KEY ("DefaultCardSettingId") REFERENCES public."CardSetting"("Id");
+
+
+--
+-- Name: User_TemplateInstance FK_User_TemplateInstance_TemplateInstance_TemplateInstanceId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."User_TemplateInstance"
+    ADD CONSTRAINT "FK_User_TemplateInstance_TemplateInstance_TemplateInstanceId" FOREIGN KEY ("TemplateInstanceId") REFERENCES public."TemplateInstance"("Id");
+
+
+--
+-- Name: User_TemplateInstance FK_User_TemplateInstance_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."User_TemplateInstance"
+    ADD CONSTRAINT "FK_User_TemplateInstance_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: Vote_CommentCard FK_Vote_CommentCard_CommentCard_CommentCardId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_CommentCard"
+    ADD CONSTRAINT "FK_Vote_CommentCard_CommentCard_CommentCardId" FOREIGN KEY ("CommentCardId") REFERENCES public."CommentCard"("Id");
+
+
+--
+-- Name: Vote_CommentCard FK_Vote_CommentCard_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_CommentCard"
+    ADD CONSTRAINT "FK_Vote_CommentCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: Vote_CommentTemplate FK_Vote_CommentTemplate_CommentTemplate_CommentTemplateId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_CommentTemplate"
+    ADD CONSTRAINT "FK_Vote_CommentTemplate_CommentTemplate_CommentTemplateId" FOREIGN KEY ("CommentTemplateId") REFERENCES public."CommentTemplate"("Id");
+
+
+--
+-- Name: Vote_CommentTemplate FK_Vote_CommentTemplate_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_CommentTemplate"
+    ADD CONSTRAINT "FK_Vote_CommentTemplate_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- Name: Vote_Feedback FK_Vote_Feedback_Feedback_FeedbackId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_Feedback"
+    ADD CONSTRAINT "FK_Vote_Feedback_Feedback_FeedbackId" FOREIGN KEY ("FeedbackId") REFERENCES public."Feedback"("Id");
+
+
+--
+-- Name: Vote_Feedback FK_Vote_Feedback_User_UserId; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Vote_Feedback"
+    ADD CONSTRAINT "FK_Vote_Feedback_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+

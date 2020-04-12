@@ -1,8 +1,9 @@
-$connectionString = "Server=localhost;Database=CardOverflow;User Id=localsa;"
+$db = "CardOverflow"
+$connectionString = "Host=localhost;Database=$db;Username=postgres;"
 
-mssql-scripter --connection-string $connectionString --schema-and-data --file-path ./InitializeDatabase.sql
-# If the above has problems, consider using --check-for-existence https://github.com/Microsoft/mssql-scripter
-((((Get-Content -Raw InitializeDatabase.sql) -replace " +S[\w: \/]+\*{6}\/"," ******/") -replace " CONTAINMENT[^?]*?GO", "GO") -replace "\[varbinary\]\(32\)", "[binary](32)") -replace "WHERE \(\[ClozeIndex\] IS NOT NULL\)", "" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
+pg_dump -U postgres -p 5432 -d $db -f "InitializeDatabase.sql" -w
+
+((((Get-Content -Raw InitializeDatabase.sql) -replace "","") -replace "", "") -replace "", "") -replace "", "" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
 
 function Replace-TextInFile {
     Param(
@@ -20,7 +21,7 @@ function Replace-TextInFile {
 Remove-Item CardOverflow.Entity\* -Include *entity.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDb.cs
 Remove-Item CardOverflow.Entity\* -Include *CardOverflowDbOverride.cs
-dotnet ef dbcontext scaffold $connectionString Microsoft.EntityFrameworkCore.SqlServer --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
+dotnet ef dbcontext scaffold $connectionString Npgsql.EntityFrameworkCore.PostgreSQL --context CardOverflowDb --force --project CardOverflow.Entity --data-annotations --use-database-names
 
 Remove-Item CardOverflow.Entity\* -Include AspNet*entity.cs
 
