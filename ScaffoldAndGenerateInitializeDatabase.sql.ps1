@@ -1,9 +1,9 @@
 $db = "CardOverflow"
 $connectionString = "Host=localhost;Database=$db;Username=postgres;"
 
-pg_dump -U postgres -p 5432 -d $db -f "InitializeDatabase.sql" -w
+pg_dump -U postgres -p 5432 -d $db -f "InitializeDatabase.sql" -w --column-inserts
 
-((((Get-Content -Raw InitializeDatabase.sql) -replace "","") -replace "", "") -replace "", "") -replace "", "" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
+((((Get-Content -Raw InitializeDatabase.sql) -replace "--.*\n\n","") -replace "--.*\n", "") -replace "", "") -replace "", "" | Out-File -Encoding "UTF8BOM" InitializeDatabase.sql
 
 function Replace-TextInFile {
     Param(
