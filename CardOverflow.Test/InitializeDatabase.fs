@@ -18,8 +18,6 @@ open Microsoft.EntityFrameworkCore
 open System.Text
 open FSharp.Control.Tasks
 open System.Threading.Tasks
-open Microsoft.SqlServer.Management.Smo
-open Microsoft.SqlServer.Management.Common
 open System.Text.RegularExpressions
 open Npgsql
     
@@ -56,17 +54,6 @@ let tweakDevelopmentDbScript =
         File.ReadAllText @"..\netcoreapp3.1\Stuff\TweakDevelopment.sql"
     ] |> String.concat "\r\n"
 
-let runScript dbName (script: string) baseConnectionString =
-    use conn = new SqlConnection(ConnectionString.value baseConnectionString)
-    conn.Open()
-    let server = conn |> ServerConnection |> Server
-    script
-        .Replace("[CardOverflow]", sprintf "[%s]" dbName)
-        .Replace("'CardOverflow'", sprintf "'%s'" dbName)
-    |> server.ConnectionContext.ExecuteNonQuery
-    |> ignore
-    conn.Close()
-
 let executeNonQuery command connectionString =
     use connection = new NpgsqlConnection(connectionString)
     connection.Open()
@@ -89,15 +76,13 @@ let fullReset databaseName serverConnectionString =
         <| File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql"
         <| sprintf "%s;Database=%s;" serverConnectionString databaseName
 
-let tweak databaseName = runScript databaseName tweakDevelopmentDbScript
-
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): unit =
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterServerConnectionString
     c.GetInstance<ConnectionString>() |> fullReset "CardOverflow"
-    c.GetInstance<ConnectionString>() |> tweak "CardOverflow"
+    //c.GetInstance<ConnectionString>() |> tweak "CardOverflow"
 
 let fastResetScript =
     let insertMasterData =

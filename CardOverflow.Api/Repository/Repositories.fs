@@ -320,12 +320,12 @@ module CardRepository =
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
-                String.IsNullOrWhiteSpace searchTerm ||
-                x.Tag_AcquiredCards.Any(fun x ->
-                    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
-                    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
-                EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
-                EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                String.IsNullOrWhiteSpace searchTerm
+                //x.Tag_AcquiredCards.Any(fun x -> // medTODO add ElasticSearch
+                //    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
+                //    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
+                //EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
+                //EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
     let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let containsSearchTerm = containsSearchTerm searchTerm
@@ -333,12 +333,12 @@ module CardRepository =
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
-                String.IsNullOrWhiteSpace searchTerm ||
-                x.Tag_AcquiredCards.Any(fun x ->
-                    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
-                    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
-                EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
-                EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                String.IsNullOrWhiteSpace searchTerm
+                //x.Tag_AcquiredCards.Any(fun x -> // medTODO add ElasticSearch
+                //    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
+                //    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
+                //EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
+                //EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
             )
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
@@ -379,12 +379,12 @@ module CardRepository =
             let! r =
                 db.LatestCardInstance
                     .Where(fun x ->
-                        String.IsNullOrWhiteSpace searchTerm ||
-                        x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x ->
-                            EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
-                            EF.Functions.FreeText(x.Tag.Name, searchTerm))) ||
-                        EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
-                        EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                        String.IsNullOrWhiteSpace searchTerm
+                        //x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x -> // medTODO add ElasticSearch
+                        //    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
+                        //    EF.Functions.FreeText(x.Tag.Name, searchTerm))) ||
+                        //EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
+                        //EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
                     )
                     .OrderByDescending(fun x -> x.CardUsers)
                     .Select(fun x ->

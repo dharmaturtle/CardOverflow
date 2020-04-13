@@ -37,11 +37,11 @@ namespace CardOverflow.Server {
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
       DbContextOptionsBuilder buildOptions(DbContextOptionsBuilder builder) =>
-        builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+        builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
       services.AddSingleton(buildOptions(new DbContextOptionsBuilder<CardOverflowDb>()).Options);
       services.AddSingleton<DbExecutor>();
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-      services.AddEntityFrameworkSqlServer();
+      services.AddEntityFrameworkNpgsql();
       services.AddDbContextPool<CardOverflowDb>(optionsBuilder => buildOptions(optionsBuilder));
       services.AddDefaultIdentity<UserEntity>(options => {
         options.User.RequireUniqueEmail = true;

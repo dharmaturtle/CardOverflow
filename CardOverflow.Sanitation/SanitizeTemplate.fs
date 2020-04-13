@@ -194,16 +194,16 @@ module SanitizeTemplate =
         let! r =
             db.LatestTemplateInstance
                 .Where(fun x ->
-                    String.IsNullOrWhiteSpace searchTerm ||
-                    EF.Functions.FreeText(x.TemplateInstance.AnswerTemplate, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.Css, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.Fields, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.LatexPost, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.LatexPre, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.Name, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.QuestionTemplate, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.ShortAnswerTemplate, searchTerm) ||
-                    EF.Functions.FreeText(x.TemplateInstance.ShortQuestionTemplate, searchTerm)
+                    String.IsNullOrWhiteSpace searchTerm
+                    //EF.Functions.FreeText(x.TemplateInstance.AnswerTemplate, searchTerm) || // medTODO add ElasticSearch
+                    //EF.Functions.FreeText(x.TemplateInstance.Css, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.Fields, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.LatexPost, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.LatexPre, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.Name, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.QuestionTemplate, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.ShortAnswerTemplate, searchTerm) ||
+                    //EF.Functions.FreeText(x.TemplateInstance.ShortQuestionTemplate, searchTerm)
                 ).Select(fun x ->
                     x.Template.TemplateInstances.Select(fun x -> x.User_TemplateInstances.Count).ToList(), // lowTODO sum here
                     x.User_TemplateInstances.Any(fun x -> x.UserId = userId),

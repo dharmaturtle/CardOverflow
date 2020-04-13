@@ -63,13 +63,13 @@ type Container with
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
         let loggerFactory = new LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
         ServiceCollection() // https://stackoverflow.com/a/60290696
-            .AddEntityFrameworkSqlServer()
+            .AddEntityFrameworkNpgsql()
             .AddSingleton<ILoggerFactory>(loggerFactory)
             .AddSingleton<IEntityHasher, EntityHasher>()
             .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
                 //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
-                    .UseSqlServer(container.GetInstance<ConnectionString>() |> ConnectionString.value)
+                    .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
                     //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3, medTODO actually test this
                     //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                     //.EnableSensitiveDataLogging(true)
