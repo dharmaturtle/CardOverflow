@@ -136,17 +136,17 @@ let fastResetScript =
         insertMasterData
     
 let databaseExists databaseName connectionString =
-    use connection = new SqlConnection(ConnectionString.value connectionString)
-    use command = new SqlCommand("SELECT db_id('" + databaseName + "')", connection) // sql injection vector - do not use in prod https://stackoverflow.com/a/33782992
+    use connection = new NpgsqlConnection(ConnectionString.value connectionString)
+    use command = new NpgsqlCommand(sprintf "SELECT 1 FROM pg_database WHERE datname='%s'" databaseName, connection) // sql injection vector - do not use in prod https://stackoverflow.com/a/33782992
     connection.Open()
     DBNull.Value :> obj <> command.ExecuteScalar()
 
 let fastReset databaseName connectionString =
     if databaseExists databaseName connectionString then
-        fastResetScript
+        fullReset // medTODO make fast
     else
-        "" // deleteAndRecreateDbScript
-    |> runScript databaseName
+        fullReset
+    <| databaseName
     <| connectionString
 
 //[<Fact>]
