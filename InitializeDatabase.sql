@@ -90,7 +90,7 @@ CREATE TABLE public."CardInstance" (
     "EditSummary" character varying(200) NOT NULL,
     "AnkiNoteId" bigint,
     "AnkiNoteOrd" smallint,
-    "Hash" bytea NOT NULL
+    "Hash" bit(512) NOT NULL
 );
 
 
@@ -628,7 +628,7 @@ CREATE TABLE public."TemplateInstance" (
     "Fields" character varying(4000) NOT NULL,
     "EditSummary" character varying(200) NOT NULL,
     "AnkiId" bigint,
-    "Hash" bytea NOT NULL
+    "Hash" bit(512) NOT NULL
 );
 
 
@@ -885,7 +885,7 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 
 <hr id=answer>
 
-{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1554689669581, '\xcb0a06105b2cbe2e2dde79f01a88b336d6f89a3b7c5e23753ef92fc05beefefefce69b1d89d40b286de537f6823f1c18b36f7f4f17912518ecebda9aed89acbe');
+{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1554689669581, B'11010011010100000110000000001000110110100011010001111101011101001011010001111011100111100000111101011000000100011100110101101100011010110001111101011001110111000011111001111010110001001010111001111100100111111111010000000011110110100111011101111111011111110011111101100111110110011011100010010001001010111101000000010100101101101010011111101100011011110100000111111100001110000001100011001101111101101111111011110010111010001000100110100100000110000011011111010111010110110101100110110111100100010011010101111101');
 INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash") VALUES (2, 'Basic (and reversed card) - Card 1', 2, '.card {
  font-family: arial;
  font-size: 20px;
@@ -904,7 +904,7 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 
 <hr id=answer>
 
-{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1554689669577, '\x7865ec597180b1001f1e050693824b210dee685ebcef3aec1d80ff3e83e7d9dce6a586f6bcc771aadd48ce7903df9d5fac673d1bfd5abd0fa5a09d44cde48fbb');
+{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1554689669577, B'00011110101001100011011110011010100011100000000110001101000000001111100001111000101000000110000011001001010000011101001010000100101100000111011100010110011110100011110111110111010111000011011110111000000000011111111101111100110000011110011110011011001110110110011110100101011000010110111100111101111000111000111001010101101110110001001001110011100111101100000011111011101110011111101000110101111001101011110011011000101111110101101010111101111100001010010100000101101110010010001010110011001001111111000111011101');
 INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash") VALUES (3, 'Basic (optional reversed card) - Card 1', 3, '.card {
  font-family: arial;
  font-size: 20px;
@@ -923,7 +923,7 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 
 <hr id=answer>
 
-{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', 'Imported from Anki', 1554689669572, '\xbe066200f645231b9aa47d4df0e803f99e1197765dcaacda45ee5e0029f2813f0440388b4e99ea72a32bb0ba16d8f85e40c61499aecd65a5d5cc0e285a916a8f');
+{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1FalseAdd ReverseArial20False2False', 'Imported from Anki', 1554689669572, B'01111101011000000100011000000000011011111010001011000100110110000101100100100101101111101011001000001111000101111100000010011111011110011000100011101001011011101011101001010011001101010101101110100010011101110111101000000000100101000100111110000001111111000010000000000010000111001101000101110010100110010101011101001110110001011101010000001101010111010110100000011011000111110111101000000010011000110010100010011001011101011011001110100110101001011010101100110011011100000001010001011010100010010101011011110001');
 INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash") VALUES (4, 'Basic (type in the answer)', 4, '.card {
  font-family: arial;
  font-size: 20px;
@@ -943,7 +943,7 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 
 <hr id=answer>
 
-{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1554689669571, '\x1dc35754e5575169d3e1a3ff8013be0adb80eb1da7bd749100f0927985e84b19bc81a7b89f232d55b17e2dc0f8ce1dec8a487c77af9daf4b2d2bf36324453326');
+{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1554689669571, B'10111000110000111110101000101010101001111110101010001010100101101100101110000111110001011111111100000001110010000111110101010000110110110000000111010111101110001110010110111101001011101000100100000000000011110100100110011110101000010001011111010010100110000011110110000001111001010001110111111001110001001011010010101010100011010111111010110100000000110001111101110011101110000011011101010001000100100011111011101110111101011011100111110101110100101011010011010100110011111100011000100100101000101100110001100100');
 INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash") VALUES (5, 'Cloze', 5, '.card {
  font-family: arial;
  font-size: 20px;
@@ -966,7 +966,7 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 \setlength{\parindent}{0in}
 \begin{document}
 ', '\end{document}', false, '{{cloze:Text}}', '{{cloze:Text}}<br>
-{{Extra}}', '', '', 'TextArial20False0FalseExtraArial20False1False', 'Imported from Anki', 1554689669570, '\x3c43c6fe47b095d4e2e12d8db1b91110c72090adb383fd04fc6d6c868a591e6840d47f74e301035333a55a7a16dc6e5da5e9e4fcae81c4e64e66c34a03afaac2');
+{{Extra}}', '', '', 'TextArial20False0FalseExtraArial20False1False', 'Imported from Anki', 1554689669570, B'00111100110000100110001101111111111000100000110110101001001010110100011110000111101101001011000110001101100111011000100000001000111000110000010000001001101101011100110111000001101111110010000000111111101101100011011001100001010100011001101001111000000101100000001000101011111111100010111011000111100000001100000011001010110011001010010101011010010111100110100000111011011101101011101010100101100101110010011100111111011101011000000100100011011001110111001001100110110000110101001011000000111101010101010101000011');
 
 
 INSERT INTO public."User" ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd", "LockoutEnabled", "AccessFailedCount", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (1, NULL, NULL, 'admin@cardoverflow.io', NULL, false, NULL, NULL, '4934a9df-035b-4216-a8d7-cf00510a16ff', NULL, false, false, NULL, false, 0, 'Admin', 1, true, true, 0, 4, 20, 0, false);

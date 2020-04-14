@@ -574,4 +574,4 @@ let ``New card template has correct hash`` (): Task<unit> = taskResult {
             |> fun x -> TemplateEntity() |> Entity |> x.CopyToNewInstance
             |> TemplateInstanceEntity.hash sha512
     
-        Assert.Equal<byte[]>(dbTemplate.Hash, computedHash) } |> TaskResult.assertOk
+        Assert.Equal<BitArray>(dbTemplate.Hash, computedHash) } |> TaskResult.assertOk

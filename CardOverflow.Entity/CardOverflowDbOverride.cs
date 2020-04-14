@@ -11,12 +11,13 @@ using Microsoft.FSharp.Core;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections;
 
 namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
-    FSharpFunc<(CardInstanceEntity, byte[], SHA512), byte[]> CardInstanceHasher { get; }
-    FSharpFunc<(TemplateInstanceEntity, SHA512), byte[]> TemplateInstanceHasher { get; }
+    FSharpFunc<(CardInstanceEntity, BitArray, SHA512), BitArray> CardInstanceHasher { get; }
+    FSharpFunc<(TemplateInstanceEntity, SHA512), BitArray> TemplateInstanceHasher { get; }
   }
 
   // This class should not store custom state due to usage of `AddDbContextPool`
@@ -24,7 +25,7 @@ namespace CardOverflow.Entity {
     private readonly IEntityHasher _entityHasher;
 
     public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
-      _entityHasher = this.GetService<IEntityHasher>();
+      _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess) {

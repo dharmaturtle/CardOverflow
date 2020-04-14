@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -121,8 +122,8 @@ namespace CardOverflow.Entity
         private string _EditSummary;
         public long? AnkiId { get; set; }
         [Required]
-        [MaxLength(64)]
-        public byte[] Hash { get; set; }
+        [MaxLength(512)]
+        public BitArray Hash { get; set; }
 
         [ForeignKey("TemplateId")]
         [InverseProperty("TemplateInstances")]

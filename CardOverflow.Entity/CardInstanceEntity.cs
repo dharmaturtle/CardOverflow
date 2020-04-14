@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -42,8 +43,8 @@ namespace CardOverflow.Entity
         public long? AnkiNoteId { get; set; }
         public byte? AnkiNoteOrd { get; set; }
         [Required]
-        [MaxLength(64)]
-        public byte[] Hash { get; set; }
+        [MaxLength(512)]
+        public BitArray Hash { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]

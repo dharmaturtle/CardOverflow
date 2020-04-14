@@ -12,9 +12,10 @@ open System.Security.Cryptography
 open System.Text
 open System.Collections.Generic
 open System.Text.RegularExpressions
+open System.Collections
 
 module TemplateInstanceEntity =
-    let hash (hasher: SHA512) (e: TemplateInstanceEntity) =
+    let byteArrayHash (hasher: SHA512) (e: TemplateInstanceEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -29,10 +30,15 @@ module TemplateInstanceEntity =
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
         |> hasher.ComputeHash
-    let hashBase64 hasher entity = hash hasher entity |> Convert.ToBase64String
+    let hash h e = byteArrayHash h e |> BitArray
+    let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module CardInstanceEntity =
-    let hash (templateHash: byte[]) (hasher: SHA512) (e: CardInstanceEntity) =
+    let bitArrayToByteArray (bitArray: BitArray) = // https://stackoverflow.com/a/45760138
+        let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
+        bitArray.CopyTo(bytes, 0)
+        bytes
+    let hash (templateHash: BitArray) (hasher: SHA512) (e: CardInstanceEntity) =
         e.CommunalFieldInstance_CardInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
@@ -44,8 +50,9 @@ module CardInstanceEntity =
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Array.append templateHash
+        |> Array.append (bitArrayToByteArray templateHash)
         |> hasher.ComputeHash
+        |> BitArray
 
 type CardSetting with
     member this.AcquireEquality (that: CardSetting) =

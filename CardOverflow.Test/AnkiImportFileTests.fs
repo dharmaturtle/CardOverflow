@@ -480,6 +480,19 @@ let ``AnkiDefaults.templateIdByHash is same as initial db`` (): unit =
     Assert.Equal<Map<string, int>>(
         dbidByHash,
         AnkiDefaults.templateIdByHash)
+    
+    // testing the stored hash in the db
+    let actualDbIdByHash =
+        c.Db.Template
+            .Include(fun x -> x.TemplateInstances)
+            .AsEnumerable()
+            .Select(fun x -> x.TemplateInstances.Single())
+            .Select(fun x -> x.Hash |> CardInstanceEntity.bitArrayToByteArray |> Convert.ToBase64String, x.Id)
+            |> Map.ofSeq
+    dbidByHash |> Map.iter(fun hash expectedId ->
+        Assert.Equal(
+            expectedId,
+            actualDbIdByHash.[hash]))
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {
