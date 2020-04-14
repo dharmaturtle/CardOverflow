@@ -159,6 +159,7 @@ let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task
         |> Seq.head
         |> Result.getOk
         |> fun x -> x.Front
+        , false, true
     )
     Assert.Equal(
         """<!DOCTYPE html>
@@ -207,6 +208,7 @@ Back
         |> Seq.head
         |> Result.getOk
         |> fun x -> x.Back
+        , false, true
     )
     let! view = CardViewRepository.get c.Db 1
     Assert.Equal<FieldAndValue seq>(

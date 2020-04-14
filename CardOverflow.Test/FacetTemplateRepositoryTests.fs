@@ -113,7 +113,8 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         <script type="text/javascript" src="/js/iframeResizer.contentWindow.min.js"></script> 
     </body>
 </html>""",
-        front
+        front,
+        false, true
     )
 
     // test existing

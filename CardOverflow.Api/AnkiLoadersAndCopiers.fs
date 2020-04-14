@@ -169,14 +169,13 @@ type AnkiHistory = {
     TimeFromSeeingQuestionToScoreInSecondsMinus32768: int16
 } with
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let roundedTimeStamp = MappingTools.round this.Timestamp <| TimeSpan.FromMinutes(1.)
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
             this.AcquiredCard.CardInstanceId = h.AcquiredCard.CardInstanceId &&
             this.AcquiredCard.CardInstance.TemplateInstanceId = h.AcquiredCard.CardInstance.TemplateInstanceId &&
             this.Score = h.Score &&
-            roundedTimeStamp = h.Timestamp &&
+            this.Timestamp = h.Timestamp &&
             interval = h.IntervalWithUnusedStepsIndex &&
             this.EaseFactorInPermille = h.EaseFactorInPermille &&
             this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768

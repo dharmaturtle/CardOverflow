@@ -299,8 +299,8 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``AnkiImporter can import AnkiImportTestData.All`` _ ankiDb: Task<unit> = task {
-    use c = new TestContainer()
+let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task<unit> = task {
+    use c = new TestContainer(false, ankiFileName)
     let userId = 3
     let! x = AnkiImporter.save c.Db ankiDb userId Map.empty
     Assert.Null x.Value
@@ -444,32 +444,33 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<u
     }
 
 [<Fact>]
-let ``Tag collation is case insensitive and .Contains works as expected``() : Task<unit> = task { // if we ever change the collation, make sure all .Contains everywhere also work (like the one in AnkiImporter)
+let ``Tag collation is case insensitive and .Contains works as expected``() : Task<unit> = task { // if we ever change the collation, make sure all .Contains everywhere also work (like the one in AnkiImporter) medTODO remove after ElasticSearch
     use c = new TestContainer()
     let userId = 3
     let upperGuid = Guid.NewGuid().ToString().ToUpper()
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId [ upperGuid ]
 
-    c.Db.Tag.Where(fun t -> [ upperGuid.ToLower() ].Contains t.Name)
+    TagRepository.Search c.Db <| upperGuid.ToLower()
     
     |> Assert.SingleI }
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Importing AnkiDb reuses old tags`` _ simpleAnkiDb: Task<unit> = (taskResult {
-    use c = new TestContainer()
+let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
+    use c = new TestContainer(false, ankiFileName)
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId [ "Tag"; "Deck:Default" ]
     Assert.Equal(2, c.Db.Tag.Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
 
-    Assert.Equal(["Basic"; "Deck:Default"; "OtherTag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name)) } |> TaskResult.assertOk)
+    Assert.Equal(["Basic"; "Deck:Default"; "OtherTag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
+    } |> TaskResult.assertOk)
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` _ simpleAnkiDb: Task<unit> = (taskResult {
-    use c = new TestContainer()
+let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
+    use c = new TestContainer(false, ankiFileName)
     let theCollectiveId = 2
     let userId = 3
     for _ in [1..5] do
@@ -483,13 +484,13 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` _ sim
         Assert.Equal(0, c.Db.Template.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(10, c.Db.Card.Count())
-        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic Front")))
-        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (and reversed card) front")))
-        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> x.FieldValues.Contains("Basic (optional reversed card) front")))
+        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
+        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.Equal(10, c.Db.AcquiredCard.Count())
-        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic Front")))
-        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (and reversed card) front")))
-        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstance.FieldValues.Contains("Basic (optional reversed card) front")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic Front%")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
         Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(7, c.Db.CommunalField.Count())
@@ -498,10 +499,10 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` _ sim
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
-let ``Importing AnkiDb, then again with different card lapses, updates db`` _ simpleAnkiDb: Task<unit> = (taskResult {
+let ``Importing AnkiDb, then again with different card lapses, updates db`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     let easeFactorA = 13s
     let easeFactorB = 45s
-    use c = new TestContainer()
+    use c = new TestContainer(false, ankiFileName)
     let userId = 3
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = 0s))

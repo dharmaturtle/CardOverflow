@@ -639,7 +639,7 @@ module TagRepository =
         }
 
     let Search (db: CardOverflowDb) (input: string) =
-        db.Tag.Where(fun t -> t.Name.ToLower().Contains(input.ToLower())).ToList()
+        db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, "%" + input + "%")).ToList()
 
 module FilterRepository =
     let Create (db: CardOverflowDb) userId name query =
