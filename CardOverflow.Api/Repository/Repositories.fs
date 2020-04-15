@@ -278,8 +278,11 @@ module CardRepository =
                     []
                 |> fun x -> x.copyToNew [] // medTODO get tags from template
             card.CardInstanceId <- cardInstanceId
+            card.CardId <- cardInstance.CardId
             card |> db.AcquiredCard.AddI
-        | x -> x.CardInstanceId <- cardInstanceId
+        | card ->
+            card.CardInstanceId <- cardInstanceId
+            card.CardId <- cardInstance.CardId
         return! db.SaveChangesAsyncI ()
         }
     let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId =
@@ -504,6 +507,11 @@ module CardRepository =
                                     )) |> List.ofSeq |> List.choose id
                             let e = acquiredCard.copyToNew tagIds
                             e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                            match card with
+                            | Id x ->
+                                e.CardId <- x
+                            | Entity _ ->
+                                e.Card <- e.CardInstance.Card
                             db.AcquiredCard.AddI e
                             communalInstances
                             ) >> Seq.collect id >> toResizeArray)

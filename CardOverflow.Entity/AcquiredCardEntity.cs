@@ -18,6 +18,7 @@ namespace CardOverflow.Entity
         [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
+        public int CardId { get; set; }
         public int CardInstanceId { get; set; }
         public byte CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
@@ -27,6 +28,9 @@ namespace CardOverflow.Entity
         public int CardSettingId { get; set; }
         public bool IsLapsed { get; set; }
 
+        [ForeignKey("CardId")]
+        [InverseProperty("AcquiredCards")]
+        public virtual CardEntity Card { get; set; }
         [ForeignKey("CardInstanceId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardInstanceEntity CardInstance { get; set; }

@@ -56,6 +56,7 @@ SET default_table_access_method = heap;
 CREATE TABLE public."AcquiredCard" (
     "Id" integer NOT NULL,
     "UserId" integer NOT NULL,
+    "CardId" integer NOT NULL,
     "CardInstanceId" integer NOT NULL,
     "CardState" smallint NOT NULL,
     "EaseFactorInPermille" smallint NOT NULL,
@@ -1063,6 +1064,10 @@ SELECT pg_catalog.setval('public."Template_Id_seq"', 6, false);
 SELECT pg_catalog.setval('public."User_Id_seq"', 4, false);
 
 
+ALTER TABLE ONLY public."CardInstance"
+    ADD CONSTRAINT "UQ_CardInstance_CardId_Id" UNIQUE ("CardId", "Id");
+
+
 ALTER TABLE ONLY public."AcquiredCard"
     ADD CONSTRAINT "PK_AcquiredCard" PRIMARY KEY ("Id");
 
@@ -1212,6 +1217,9 @@ CREATE INDEX "IX_AcquiredCard_CardState" ON public."AcquiredCard" USING btree ("
 
 
 CREATE INDEX "IX_AcquiredCard_UserId" ON public."AcquiredCard" USING btree ("UserId");
+
+
+CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_CardId" ON public."AcquiredCard" USING btree ("UserId", "CardId");
 
 
 CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_CardInstanceId" ON public."AcquiredCard" USING btree ("UserId", "CardInstanceId");
@@ -1529,6 +1537,10 @@ ALTER TABLE ONLY public."Vote_Feedback"
 
 ALTER TABLE ONLY public."Vote_Feedback"
     ADD CONSTRAINT "FK_Vote_Feedback_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "FK_AcquiredCard_CardInstance_CardId_CardInstanceId" FOREIGN KEY ("CardId", "CardInstanceId") REFERENCES public."CardInstance"("CardId", "Id");
 
 
 

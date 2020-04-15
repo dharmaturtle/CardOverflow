@@ -139,8 +139,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "Cannot insert duplicate key row in object 'dbo.AcquiredCard' with unique index 'IX_AcquiredCard_UserId_CardInstanceId'. The duplicate key value is (3, 1002).
-The statement has been terminated.", 
+        "23505: duplicate key value violates unique constraint \"IX_AcquiredCard_UserId_CardInstanceId\"",
         ex.InnerException.Message)
 
     let i1 = 1001
@@ -153,8 +152,7 @@ The statement has been terminated.",
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "Cannot insert duplicate key row in object 'dbo.UserAndCard' with unique index 'IX_UserAndCard_UserId_CardId'. The duplicate key value is (3, 1).
-The statement has been terminated.", 
+        "23503: insert or update on table \"AcquiredCard\" violates foreign key constraint \"FK_AcquiredCard_CardInstance_CardId_CardInstanceId\"", 
         ex.InnerException.Message)
     }
 

@@ -29,5 +29,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
+        [InverseProperty("Card")]
+        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
     }
 }

@@ -146,8 +146,9 @@ type AnkiAcquiredCard = {
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
     member this.CopyToNew (tags: TagEntity seq) =
-        let entity = AcquiredCardEntity ()
+        let entity = AcquiredCardEntity()
         this.CopyTo entity
+        entity.Card <- this.CardInstance.Card
         entity.CardInstance <- this.CardInstance
         entity.CardSetting <- this.CardSetting
         entity.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(AcquiredCard = entity, Tag = x)).ToList()
