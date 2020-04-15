@@ -1,8 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections;
 
 namespace CardOverflow.Entity
 {
@@ -41,9 +41,9 @@ namespace CardOverflow.Entity
         }
         private string _EditSummary;
         public long? AnkiNoteId { get; set; }
-        public byte? AnkiNoteOrd { get; set; }
+        public short? AnkiNoteOrd { get; set; }
         [Required]
-        [MaxLength(512)]
+        [Column(TypeName = "bit(512)")]
         public BitArray Hash { get; set; }
 
         [ForeignKey("CardId")]

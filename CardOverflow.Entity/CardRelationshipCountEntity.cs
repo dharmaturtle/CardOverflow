@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public int SourceCardId { get; set; }
         public int TargetCardId { get; set; }
-        [Required]
+        public int CardId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;
@@ -20,6 +20,5 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public int Count { get; set; }
-        public int CardId { get; set; }
     }
 }

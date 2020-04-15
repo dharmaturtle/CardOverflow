@@ -22,11 +22,9 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
         public bool IsDmca { get; set; }
-        [Required]
         public string FieldValues { get; set; }
         public int TemplateInstanceId { get; set; }
         public int InstanceUsers { get; set; }
-        [Required]
         [StringLength(200)]
         public string EditSummary {
             get => _EditSummary;
@@ -37,7 +35,7 @@ namespace CardOverflow.Entity
         }
         private string _EditSummary;
         public long? AnkiNoteId { get; set; }
-        public byte? AnkiNoteOrd { get; set; }
+        public short? AnkiNoteOrd { get; set; }
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
         public virtual UserEntity Author { get; set; }
       

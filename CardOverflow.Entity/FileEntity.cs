@@ -27,7 +27,6 @@ namespace CardOverflow.Entity
         [Required]
         public byte[] Data { get; set; }
         [Required]
-        [MaxLength(32)]
         public byte[] Sha256 { get; set; }
 
         [InverseProperty("File")]

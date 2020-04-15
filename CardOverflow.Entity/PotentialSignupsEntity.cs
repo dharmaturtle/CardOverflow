@@ -29,8 +29,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Message;
-        public byte OneIsAlpha2Beta3Ga { get; set; }
-        [Column(TypeName = "smalldatetime")]
+        public short OneIsAlpha2Beta3Ga { get; set; }
         public DateTime TimeStamp { get; set; }
     }
 }

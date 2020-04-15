@@ -10,7 +10,6 @@ namespace CardOverflow.Entity
         public int AuthorId { get; set; }
         public int CommunalFieldInstanceId { get; set; }
         public int CommunalFieldId { get; set; }
-        [Required]
         [StringLength(200)]
         public string FieldName {
             get => _FieldName;
@@ -20,11 +19,9 @@ namespace CardOverflow.Entity
             }
         }
         private string _FieldName;
-        [Required]
         public string Value { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        [Required]
         [StringLength(200)]
         public string EditSummary {
             get => _EditSummary;

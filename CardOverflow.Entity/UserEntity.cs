@@ -39,10 +39,10 @@ namespace CardOverflow.Entity
         public int DefaultCardSettingId { get; set; }
         public bool ShowNextReviewTime { get; set; }
         public bool ShowRemainingCardCount { get; set; }
-        public byte MixNewAndReview { get; set; }
-        public byte NextDayStartsAtXHoursPastMidnight { get; set; }
-        public byte LearnAheadLimitInMinutes { get; set; }
-        public byte TimeboxTimeLimitInMinutes { get; set; }
+        public short MixNewAndReview { get; set; }
+        public short NextDayStartsAtXHoursPastMidnight { get; set; }
+        public short LearnAheadLimitInMinutes { get; set; }
+        public short TimeboxTimeLimitInMinutes { get; set; }
         public bool IsNightMode { get; set; }
 
         public virtual CardSettingEntity DefaultCardSetting { get; set; }

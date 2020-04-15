@@ -20,10 +20,9 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         public int CardId { get; set; }
         public int CardInstanceId { get; set; }
-        public byte CardState { get; set; }
+        public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
-        [Column(TypeName = "smalldatetime")]
         public DateTime Due { get; set; }
         public int CardSettingId { get; set; }
         public bool IsLapsed { get; set; }

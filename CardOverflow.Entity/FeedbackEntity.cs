@@ -36,10 +36,9 @@ namespace CardOverflow.Entity
         }
         private string _Description;
         public int UserId { get; set; }
-        [Column(TypeName = "smalldatetime")]
         public DateTime Created { get; set; }
         public int? ParentId { get; set; }
-        public byte? Priority { get; set; }
+        public short? Priority { get; set; }
 
         [ForeignKey("ParentId")]
         [InverseProperty("Children")]

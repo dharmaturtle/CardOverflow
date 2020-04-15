@@ -40,7 +40,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<TemplateEntity> Template { get; set; }
         public virtual DbSet<TemplateInstanceEntity> TemplateInstance { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
-        public virtual DbSet<UserAndCardEntity> UserAndCard { get; set; }
         public virtual DbSet<User_TemplateInstanceEntity> User_TemplateInstance { get; set; }
         public virtual DbSet<Vote_CommentCardEntity> Vote_CommentCard { get; set; }
         public virtual DbSet<Vote_CommentTemplateEntity> Vote_CommentTemplate { get; set; }
@@ -67,6 +66,9 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.CardState);
 
                 entity.HasIndex(e => e.UserId);
+
+                entity.HasIndex(e => new { e.UserId, e.CardId })
+                    .IsUnique();
 
                 entity.HasIndex(e => new { e.UserId, e.CardInstanceId })
                     .IsUnique();
@@ -120,7 +122,9 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.TemplateInstanceId);
 
-                entity.Property(e => e.Hash).IsFixedLength();
+                entity.HasIndex(e => new { e.CardId, e.Id })
+                    .HasName("UQ_CardInstance_CardId_Id")
+                    .IsUnique();
 
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.CardInstances)
@@ -173,10 +177,6 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<CardSettingEntity>(entity =>
             {
                 entity.HasIndex(e => e.UserId);
-
-                entity.Property(e => e.LapsedCardsStepsInMinutes).IsUnicode(false);
-
-                entity.Property(e => e.NewCardsStepsInMinutes).IsUnicode(false);
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.CardSettings)
@@ -254,12 +254,14 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.CardInstance)
                     .WithMany(p => p.CommunalFieldInstance_CardInstances)
                     .HasForeignKey(d => d.CardInstanceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_CommunalFieldInst_CardInst_CardInst_CardInstId");
 
                 entity.HasOne(d => d.CommunalFieldInstance)
                     .WithMany(p => p.CommunalFieldInstance_CardInstances)
                     .HasForeignKey(d => d.CommunalFieldInstanceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_CommunalFieldInstance_CommunalField_CommunalFieldId");
             });
 
             modelBuilder.Entity<FeedbackEntity>(entity =>
@@ -278,8 +280,6 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.Sha256)
                     .IsUnique();
-
-                entity.Property(e => e.Sha256).IsFixedLength();
             });
 
             modelBuilder.Entity<File_CardInstanceEntity>(entity =>
@@ -345,8 +345,6 @@ namespace CardOverflow.Entity
                     .HasForeignKey(x => x.TemplateInstanceId);
 
                 entity.ToView("LatestTemplateInstance");
-
-                entity.Property(e => e.Css).IsUnicode(false);
             });
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
@@ -411,7 +409,8 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.User_TemplateInstance)
                     .WithMany(p => p.Tag_User_TemplateInstances)
                     .HasForeignKey(d => new { d.UserId, d.TemplateInstanceId })
-                    .OnDelete(DeleteBehavior.ClientSetNull);
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Tag_User_TemplatInst_User_TemplatInst_UserId_TemplatInstId");
             });
 
             modelBuilder.Entity<TemplateEntity>(entity =>
@@ -430,10 +429,6 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.TemplateId);
 
-                entity.Property(e => e.Css).IsUnicode(false);
-
-                entity.Property(e => e.Hash).IsFixedLength();
-
                 entity.HasOne(d => d.Template)
                     .WithMany(p => p.TemplateInstances)
                     .HasForeignKey(d => d.TemplateId)
@@ -451,13 +446,13 @@ namespace CardOverflow.Entity
                     .IsUnique();
 
                 entity.HasOne(d => d.DefaultCardSetting);
-            });
 
-            modelBuilder.Entity<UserAndCardEntity>(entity =>
-            {
-                entity.HasNoKey();
+                entity.HasIndex(e => e.NormalizedEmail)
+                    .HasName("EmailIndex");
 
-                entity.ToView("UserAndCard");
+                entity.HasIndex(e => e.NormalizedUserName)
+                    .HasName("UserNameIndex")
+                    .IsUnique();
             });
 
             modelBuilder.Entity<User_TemplateInstanceEntity>(entity =>

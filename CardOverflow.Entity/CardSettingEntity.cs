@@ -37,8 +37,8 @@ namespace CardOverflow.Entity
         }
         private string _NewCardsStepsInMinutes;
         public short NewCardsMaxPerDay { get; set; }
-        public byte NewCardsGraduatingIntervalInDays { get; set; }
-        public byte NewCardsEasyIntervalInDays { get; set; }
+        public short NewCardsGraduatingIntervalInDays { get; set; }
+        public short NewCardsEasyIntervalInDays { get; set; }
         public short NewCardsStartingEaseFactorInPermille { get; set; }
         public bool NewCardsBuryRelated { get; set; }
         public short MatureCardsMaxPerDay { get; set; }
@@ -58,8 +58,8 @@ namespace CardOverflow.Entity
         }
         private string _LapsedCardsStepsInMinutes;
         public short LapsedCardsNewIntervalFactorInPermille { get; set; }
-        public byte LapsedCardsMinimumIntervalInDays { get; set; }
-        public byte LapsedCardsLeechThreshold { get; set; }
+        public short LapsedCardsMinimumIntervalInDays { get; set; }
+        public short LapsedCardsLeechThreshold { get; set; }
         public bool ShowAnswerTimer { get; set; }
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAudioOnAnswer { get; set; }

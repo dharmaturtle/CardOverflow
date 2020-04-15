@@ -8,7 +8,6 @@ namespace CardOverflow.Entity
     public partial class CardTagCountEntity
     {
         public int CardId { get; set; }
-        [Required]
         [StringLength(250)]
         public string Name {
             get => _Name;

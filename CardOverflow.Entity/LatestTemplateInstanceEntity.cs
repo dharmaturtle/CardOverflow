@@ -16,7 +16,6 @@ namespace CardOverflow.Entity
         [Key]
         public int TemplateInstanceId { get; set; }
         public int TemplateId { get; set; }
-        [Required]
         [StringLength(100)]
         public string Name {
             get => _Name;
@@ -26,7 +25,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        [Required]
         [StringLength(4000)]
         public string Css {
             get => _Css;
@@ -38,7 +36,6 @@ namespace CardOverflow.Entity
         private string _Css;
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        [Required]
         [StringLength(500)]
         public string LatexPre {
             get => _LatexPre;
@@ -48,7 +45,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _LatexPre;
-        [Required]
         [StringLength(500)]
         public string LatexPost {
             get => _LatexPost;
@@ -59,7 +55,6 @@ namespace CardOverflow.Entity
         }
         private string _LatexPost;
         public bool IsDmca { get; set; }
-        [Required]
         [StringLength(4000)]
         public string QuestionTemplate {
             get => _QuestionTemplate;
@@ -69,7 +64,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _QuestionTemplate;
-        [Required]
         [StringLength(4000)]
         public string AnswerTemplate {
             get => _AnswerTemplate;
@@ -79,7 +73,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _AnswerTemplate;
-        [Required]
         [StringLength(200)]
         public string ShortQuestionTemplate {
             get => _ShortQuestionTemplate;
@@ -89,7 +82,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _ShortQuestionTemplate;
-        [Required]
         [StringLength(200)]
         public string ShortAnswerTemplate {
             get => _ShortAnswerTemplate;
@@ -99,7 +91,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _ShortAnswerTemplate;
-        [Required]
         [StringLength(4000)]
         public string Fields {
             get => _Fields;
@@ -109,7 +100,6 @@ namespace CardOverflow.Entity
             }
         }
         private string _Fields;
-        [Required]
         [StringLength(200)]
         public string EditSummary {
             get => _EditSummary;
