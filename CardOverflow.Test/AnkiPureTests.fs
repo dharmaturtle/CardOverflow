@@ -33,7 +33,7 @@ let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expec
             LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
             LapsedCardsNewIntervalFactor = 0.
             LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
-            LapsedCardsLeechThreshold = 8uy
+            LapsedCardsLeechThreshold = 8s
             ShowAnswerTimer = false
             AutomaticallyPlayAudio = true
             ReplayQuestionAudioOnAnswer = true

@@ -11,10 +11,10 @@ type Score = | Again | Hard | Good | Easy
 module Score =
     let create =
         function
-        | 0uy -> Ok Again
-        | 1uy -> Ok Hard
-        | 2uy -> Ok Good
-        | 3uy -> Ok Easy
+        | 0s -> Ok Again
+        | 1s -> Ok Hard
+        | 2s -> Ok Good
+        | 3s -> Ok Easy
         | x -> sprintf "Invalid Score in database: %A" x |> Error
     let toDb =
         function
@@ -22,16 +22,16 @@ module Score =
         | Hard -> 1
         | Good -> 2
         | Easy -> 3
-        >> byte
+        >> int16
 
 type CardState = | Normal | SchedulerBuried | UserBuried | Suspended
 module CardState =
     let create =
         function
-        | 0uy -> Ok Normal
-        | 1uy -> Ok SchedulerBuried
-        | 2uy -> Ok UserBuried
-        | 3uy -> Ok Suspended
+        | 0s -> Ok Normal
+        | 1s -> Ok SchedulerBuried
+        | 2s -> Ok UserBuried
+        | 3s -> Ok Suspended
         | x -> sprintf "Invalid CardState in database: %A" x |> Error
     let toDb =
         function
@@ -39,7 +39,7 @@ module CardState =
         | SchedulerBuried -> 1
         | UserBuried -> 2
         | Suspended -> 3
-        >> byte
+        >> int16
 
 module TimeSpanInt16 =
     type TimeSpanInt16 = private TimeSpanInt16 of TimeSpan
@@ -66,7 +66,7 @@ type CardSetting = {
     LapsedCardsSteps: TimeSpan list
     LapsedCardsNewIntervalFactor: float // percent by which to multiply the current interval when a card goes has lapsed, called "new interval" in anki gui
     LapsedCardsMinimumInterval: TimeSpan
-    LapsedCardsLeechThreshold: byte
+    LapsedCardsLeechThreshold: int16
     ShowAnswerTimer: bool
     AutomaticallyPlayAudio: bool
     ReplayQuestionAudioOnAnswer: bool

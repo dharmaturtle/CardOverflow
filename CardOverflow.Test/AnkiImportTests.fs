@@ -406,7 +406,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
                 Value = "Basic (and reversed card) front" }],
             card.Instance.CommunalFields)
 
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
     }
 
@@ -491,7 +491,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic Front%")))
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic (optional reversed card) front%")))
-        Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+        Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
         Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(7, c.Db.CommunalField.Count())
         Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
@@ -513,5 +513,5 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` anki
 
     Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     } |> TaskResult.assertOk)

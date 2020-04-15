@@ -37,7 +37,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
     } |> TaskResult.assertOk)
 
@@ -56,7 +56,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
 
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1uy))
+    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     } |> TaskResult.assertOk)
 
 [<Fact>]
@@ -267,7 +267,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
     let getCardInstances clozeText = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
         let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
-        for i in [1 .. clozeMaxIndex] |> List.map byte do
+        for i in [1 .. clozeMaxIndex] |> List.map int16 do
             let singleCloze = AnkiImportLogic.multipleClozeToSingleCloze i clozeText
             Assert.SingleI <| c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
             Assert.Equal(clozeMaxIndex, c.Db.LatestCardInstance.Count(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))

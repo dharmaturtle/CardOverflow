@@ -57,7 +57,7 @@ let ``maxClozeIndex has error with 0``(): unit =
     Assert.Equal(expectedErrorMessage, actualErrorMessage)
 
 let run index before expected =
-    let index = byte index
+    let index = int16 index
     Assert.Equal(
         expected,
         AnkiImportLogic.multipleClozeToSingleCloze index before)

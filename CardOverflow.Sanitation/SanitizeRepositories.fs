@@ -224,7 +224,7 @@ type ViewEditCardCommand = {
         if this.TemplateInstance.IsCloze then
             result {
                 let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
-                return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
+                return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                     let zip =
                         Seq.zip
                             <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
@@ -325,7 +325,7 @@ type PotentialSignupCommand = {
     Email: string
     [<StringLength(1000, ErrorMessage = "Message must be less than 1000 characters.")>]
     Message: string
-    OneIsAlpha2Beta3Ga: byte
+    OneIsAlpha2Beta3Ga: int16
 }
 
 module SanitizeLandingPage =
@@ -351,7 +351,7 @@ type Feedback = {
 }
 module SanitizeFeedback =
     let addAndSaveAsync (db: CardOverflowDb) userId feedback =
-        FeedbackRepository.addAndSaveAsync db userId feedback.Title feedback.Description (feedback.Priority |> byte |> Nullable)
+        FeedbackRepository.addAndSaveAsync db userId feedback.Title feedback.Description (feedback.Priority |> int16 |> Nullable)
 
 module Minutes =
     let private intString (f: float) = f |> Convert.ToInt32 |> string
@@ -440,7 +440,7 @@ type ViewCardSetting = {
         LapsedCardsSteps = this.LapsedCardsSteps |> Minutes.fromStringList
         LapsedCardsNewIntervalFactor = this.LapsedCardsNewIntervalFactor |> Convert.fromPercent
         LapsedCardsMinimumInterval = this.LapsedCardsMinimumInterval |> float |> TimeSpan.FromDays
-        LapsedCardsLeechThreshold = this.LapsedCardsLeechThreshold |> byte
+        LapsedCardsLeechThreshold = this.LapsedCardsLeechThreshold |> int16
         ShowAnswerTimer = this.ShowAnswerTimer
         AutomaticallyPlayAudio = this.AutomaticallyPlayAudio
         ReplayQuestionAudioOnAnswer = this.ReplayQuestionAudioOnAnswer

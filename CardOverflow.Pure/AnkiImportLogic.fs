@@ -29,7 +29,7 @@ module AnkiImportLogic =
                 match isConsecutive && max > 0 with
                 | true -> Ok max
                 | false -> Error errorMessage
-    let multipleClozeToSingleCloze (index: byte) field =
+    let multipleClozeToSingleCloze (index: int16) field =
         (field, ClozeRegex().TypedMatches field)
         ||> Seq.fold (fun field m -> 
             if m.clozeIndex.Value = string index then
@@ -40,7 +40,7 @@ module AnkiImportLogic =
                 field.Replace(m.Value, "{{c" + string index + "::" + m.answer.Value + hint + "}}")
             else
                 field.Replace(m.Value, m.answer.Value))
-    let multipleClozeToSingleClozeList (index: byte) =
+    let multipleClozeToSingleClozeList (index: int16) =
         List.map (multipleClozeToSingleCloze index)
     let clozeFields questionTemplate =
         ClozeTemplateRegex().TypedMatches questionTemplate

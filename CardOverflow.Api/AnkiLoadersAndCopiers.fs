@@ -44,9 +44,9 @@ type AnkiTemplateInstance = {
     ShortAnswerTemplate: string
     DeckId: int64
     IsCloze: bool
-    Ordinal: byte
+    Ordinal: int16
     NewByOldField: Map<Field, Field>
-    FieldsByOrdinal: Map<byte, Field list>
+    FieldsByOrdinal: Map<int16, Field list>
     CommunalFields: Field list
 } with
     member this.CopyTo (entity: TemplateInstanceEntity) =
@@ -81,7 +81,7 @@ type AnkiTemplateInstance = {
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
-    AnkiNoteOrd: Byte
+    AnkiNoteOrd: int16
     CommunalFields: CommunalFieldInstanceEntity list
     Template: TemplateInstanceEntity
     FieldValues: string
@@ -163,7 +163,7 @@ type AnkiAcquiredCard = {
 
 type AnkiHistory = {
     AcquiredCard: AcquiredCardEntity
-    Score: byte
+    Score: int16
     Timestamp: DateTime
     IntervalWithUnusedStepsIndex: IntervalOrStepsIndex
     EaseFactorInPermille: int16
@@ -257,7 +257,7 @@ module Anki =
               LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
               LapsedCardsNewIntervalFactor = get.Required.At ["lapse"; "mult"] Decode.float
               LapsedCardsMinimumInterval = get.Required.At ["lapse"; "minInt"] Decode.float |> TimeSpan.FromDays
-              LapsedCardsLeechThreshold = get.Required.At ["lapse"; "leechFails"] Decode.int |> byte
+              LapsedCardsLeechThreshold = get.Required.At ["lapse"; "leechFails"] Decode.int |> int16
               ShowAnswerTimer = get.Required.Field "timer" ankiIntToBool
               AutomaticallyPlayAudio = get.Required.Field "autoplay" Decode.bool
               ReplayQuestionAudioOnAnswer = get.Required.Field "replayq" Decode.bool })
@@ -275,7 +275,7 @@ module Anki =
         Template: AnkiTemplateInstance
         NewByOldField: (Field * Field) list
         ReducedFields: Field list
-        FieldsByOrdinal: (byte * Field list) list
+        FieldsByOrdinal: (int16 * Field list) list
     } with
         member this.QuestionTemplate = this.Template.QuestionTemplate
         member this.AnswerTemplate = this.Template.AnswerTemplate
@@ -385,7 +385,7 @@ module Anki =
                               AnswerTemplate = g.Required.Field "afmt" Decode.string
                               ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
                               ShortAnswerTemplate = g.Required.Field "bafmt" Decode.string
-                              Ordinal = g.Required.Field "ord" Decode.int |> byte|})
+                              Ordinal = g.Required.Field "ord" Decode.int |> int16 |})
                               |> Decode.list )
                 |> List.sortBy (fun x -> x.Ordinal)
             templates
@@ -523,11 +523,11 @@ module Anki =
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
                                         <| valueByFieldName
                                         <| template.Template.QuestionTemplate
-                                return [1 .. max] |> List.map byte |> List.map (fun clozeIndex ->
+                                return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                                     toCard
                                         <| AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex fieldValues
                                         <| template.Entity
-                                        <| clozeIndex - 1uy // ankidb's cards' ord column is 0 indexed for cloze deletions
+                                        <| clozeIndex - 1s // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}
                             else
                                 let instances = templates |> List.collect (fun anon ->
@@ -581,7 +581,7 @@ module Anki =
         let cardSetting, deckTag = cardSettingAndDeckTagByDeckId.[ankiCard.Did]
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
-        let card = cards.Single(fun x -> x.AnkiNoteOrd = (ankiCard.Ord |> byte |> Nullable))
+        let card = cards.Single(fun x -> x.AnkiNoteOrd = (ankiCard.Ord |> int16 |> Nullable))
         let cti = card.TemplateInstance
         match ankiCard.Type with
         | 0L -> Ok New

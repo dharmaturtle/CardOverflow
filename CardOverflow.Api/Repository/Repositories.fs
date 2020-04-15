@@ -478,7 +478,7 @@ module CardRepository =
                             let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
                             AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
                             |> Result.map (fun max ->
-                            [1uy .. byte max] |> List.map (fun clozeIndex ->
+                            [1s .. int16 max] |> List.map (fun clozeIndex ->
                                 let zip =
                                     Seq.zip
                                         (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
@@ -574,7 +574,7 @@ module CardSettingsRepository =
           LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
           LapsedCardsNewIntervalFactor = 0.
           LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
-          LapsedCardsLeechThreshold = byte 8
+          LapsedCardsLeechThreshold = int16 8
           ShowAnswerTimer = false
           AutomaticallyPlayAudio = false
           ReplayQuestionAudioOnAnswer = false }
