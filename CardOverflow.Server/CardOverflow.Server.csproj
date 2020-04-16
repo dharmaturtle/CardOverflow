@@ -47,6 +47,7 @@
 
   <ItemGroup>
     <None Include="Pages\Login.cshtml" />
+    <None Include="Pages\Logout.cshtml" />
     <None Include="Pages\Shared\_CookieConsentPartial.cshtml" />
     <None Include="Pages\Shared\_LoginPartial.cshtml" />
     <None Include="Pages\Shared\_ValidationScriptsPartial.cshtml" />
