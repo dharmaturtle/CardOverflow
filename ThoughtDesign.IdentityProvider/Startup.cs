@@ -7,47 +7,40 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace ThoughtDesign.IdentityProvider
-{
-    public class Startup
-    {
-        public IWebHostEnvironment Environment { get; }
+namespace ThoughtDesign.IdentityProvider {
+  public class Startup {
+    public IWebHostEnvironment Environment { get; }
 
-        public Startup(IWebHostEnvironment environment)
-        {
-            Environment = environment;
-        }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllersWithViews();
-
-            var builder = services.AddIdentityServer()
-                .AddInMemoryIdentityResources(Config.Ids)
-                .AddInMemoryApiResources(Config.Apis)
-                .AddInMemoryClients(Config.Clients);
-
-            // not recommended for production - you need to store your key material somewhere secure highTODO
-            builder.AddDeveloperSigningCredential();
-        }
-
-        public void Configure(IApplicationBuilder app)
-        {
-            if (Environment.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseStaticFiles();
-            app.UseRouting();
-
-            app.UseIdentityServer();
-
-            app.UseAuthorization();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapDefaultControllerRoute();
-            });
-        }
+    public Startup(IWebHostEnvironment environment) {
+      Environment = environment;
     }
+
+    public void ConfigureServices(IServiceCollection services) {
+      services.AddControllersWithViews();
+
+      var builder = services.AddIdentityServer()
+          .AddInMemoryIdentityResources(Config.Ids)
+          .AddInMemoryApiResources(Config.Apis)
+          .AddInMemoryClients(Config.Clients);
+
+      // not recommended for production - you need to store your key material somewhere secure highTODO
+      builder.AddDeveloperSigningCredential();
+    }
+
+    public void Configure(IApplicationBuilder app) {
+      if (Environment.IsDevelopment()) {
+        app.UseDeveloperExceptionPage();
+      }
+
+      app.UseStaticFiles();
+      app.UseRouting();
+
+      app.UseIdentityServer();
+
+      app.UseAuthorization();
+      app.UseEndpoints(endpoints => {
+        endpoints.MapDefaultControllerRoute();
+      });
+    }
+  }
 }
