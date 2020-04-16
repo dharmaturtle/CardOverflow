@@ -46,13 +46,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Areas\Identity\Pages\Account\Register.cshtml" />
-    <None Include="Areas\Identity\Pages\Account\_ViewImports.cshtml" />
-    <None Include="Areas\Identity\Pages\_ViewImports.cshtml" />
-    <None Include="Areas\Identity\Pages\_ViewStart.cshtml" />
     <None Include="Pages\Login.cshtml" />
     <None Include="Pages\Shared\_CookieConsentPartial.cshtml" />
-    <None Include="Areas\Identity\Pages\Shared\_IdentityLayout.cshtml" />
     <None Include="Pages\Shared\_LoginPartial.cshtml" />
     <None Include="Pages\Shared\_ValidationScriptsPartial.cshtml" />
     <None Include="Pages\_ViewImports.cshtml" />

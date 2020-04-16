@@ -2,7 +2,6 @@ using Blazor.FileReader;
 using Blazored.Toast;
 using CardOverflow.Api;
 using CardOverflow.Entity;
-using CardOverflow.Server.Areas.Identity;
 using CardOverflow.Server.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -74,7 +73,6 @@ namespace CardOverflow.Server {
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
       services.AddServerSideBlazor();
-      services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<UserEntity>>();
       services.AddSingleton<WeatherForecastService>();
       services.AddHttpClient<UserContentHttpClient>();
 
