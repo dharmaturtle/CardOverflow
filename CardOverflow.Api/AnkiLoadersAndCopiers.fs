@@ -303,7 +303,7 @@ module Anki =
                                 |> List.ofSeq
                                 |> List.map(fun x -> x.fieldName.Value)
                                 |> List.filter(fun x ->
-                                    if x.[0] = '^' then failwith "medTODO fix this"
+                                    if x.[0] = '^' then failwith "^ currently not supported, yell at me to fix this medTODO"
                                     x.[0] <> '#' &&
                                     x.[0] <> '/' &&
                                     not <| String.Equals(x, "FrontSide", StringComparison.OrdinalIgnoreCase) &&
