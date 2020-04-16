@@ -21,7 +21,8 @@ namespace ThoughtDesign.IdentityProvider {
       var builder = services.AddIdentityServer()
           .AddInMemoryIdentityResources(Config.Ids)
           .AddInMemoryApiResources(Config.Apis)
-          .AddInMemoryClients(Config.Clients);
+          .AddInMemoryClients(Config.Clients)
+          .AddTestUsers(TestUsers.Users); // highTODO replace
 
       // not recommended for production - you need to store your key material somewhere secure highTODO
       builder.AddDeveloperSigningCredential();

@@ -16,6 +16,8 @@ using Serilog;
 using Microsoft.Extensions.Logging;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -29,6 +31,21 @@ namespace CardOverflow.Server {
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
+      services.AddAuthentication(options => {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+      })
+        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options => {
+          options.Authority = "https://localhost:44318/";
+          options.ClientId = "cardoverflowserversideblazorclient";
+          options.ClientSecret = "secret";
+          options.ResponseType = "code id_token";
+          options.Scope.Add("openid");
+          options.Scope.Add("profile");
+          options.SaveTokens = true;
+          options.GetClaimsFromUserInfoEndpoint = true;
+        });
       services.AddScoped<ISideBySideDiffBuilder, SideBySideDiffBuilder>();
       services.AddScoped<IDiffer, Differ>();
       services.AddBlazoredToast();
@@ -71,8 +88,6 @@ namespace CardOverflow.Server {
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
-      app.UseRouting();
-
       if (env.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
         app.UseDatabaseErrorPage();
@@ -86,6 +101,8 @@ namespace CardOverflow.Server {
 
       app.UseHttpsRedirection();
       app.UseStaticFiles();
+
+      app.UseRouting();
 
       app.UseAuthentication();
       app.UseAuthorization();
