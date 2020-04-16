@@ -34,9 +34,11 @@ namespace CardOverflow.Server {
       services.AddAuthentication(options => {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
       })
         .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
         .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options => {
+          options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
           options.Authority = "https://localhost:44318/";
           options.ClientId = "cardoverflowserversideblazorclient";
           options.ClientSecret = "secret";
