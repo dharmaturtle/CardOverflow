@@ -11,15 +11,17 @@ using ThoughtDesign.IdentityProvider.Data;
 [assembly: HostingStartup(typeof(ThoughtDesign.IdentityProvider.Areas.Identity.IdentityHostingStartup))]
 namespace ThoughtDesign.IdentityProvider.Areas.Identity {
   public class IdentityHostingStartup : IHostingStartup {
+
     public void Configure(IWebHostBuilder builder) {
       builder.ConfigureServices((context, services) => {
         services.AddDbContext<IdentityDb>(options =>
             options.UseSqlServer(
                 context.Configuration.GetConnectionString("IdentityDbConnection")));
-
-        services.AddDefaultIdentity<ThoughtDesignUser>(options => options.SignIn.RequireConfirmedAccount = true)
-            .AddEntityFrameworkStores<IdentityDb>();
+        services.AddIdentity<ThoughtDesignUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+          .AddEntityFrameworkStores<IdentityDb>()
+          .AddDefaultTokenProviders();
       });
     }
+
   }
 }
