@@ -17,7 +17,7 @@ namespace ThoughtDesign.IdentityProvider {
     }
 
     public void ConfigureServices(IServiceCollection services) {
-      services.AddControllersWithViews();
+      services.AddMvc();
 
       var builder = services.AddIdentityServer()
           .AddInMemoryIdentityResources(Config.Ids) // highTODO replace
@@ -41,7 +41,9 @@ namespace ThoughtDesign.IdentityProvider {
 
       app.UseAuthorization();
       app.UseEndpoints(endpoints => {
+        endpoints.MapControllers();
         endpoints.MapDefaultControllerRoute();
+        endpoints.MapRazorPages();
       });
     }
   }

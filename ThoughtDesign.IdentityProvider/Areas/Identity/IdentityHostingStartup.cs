@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
         services.AddIdentity<ThoughtDesignUser, IdentityRole<int>>(options => options.SignIn.RequireConfirmedAccount = true)
           .AddEntityFrameworkStores<IdentityDb>()
           .AddDefaultTokenProviders();
+        services.AddSingleton<IEmailSender, EmailSender>();
       });
     }
 
