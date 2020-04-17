@@ -1,4 +1,4 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 
 namespace ThoughtDesign.IdentityProvider {
   public class Startup {
@@ -19,10 +20,10 @@ namespace ThoughtDesign.IdentityProvider {
       services.AddControllersWithViews();
 
       var builder = services.AddIdentityServer()
-          .AddInMemoryIdentityResources(Config.Ids)
+          .AddInMemoryIdentityResources(Config.Ids) // highTODO replace
           .AddInMemoryApiResources(Config.Apis)
           .AddInMemoryClients(Config.Clients)
-          .AddTestUsers(TestUsers.Users); // highTODO replace
+          .AddAspNetIdentity<ThoughtDesignUser>();
 
       // not recommended for production - you need to store your key material somewhere secure highTODO
       builder.AddDeveloperSigningCredential();
