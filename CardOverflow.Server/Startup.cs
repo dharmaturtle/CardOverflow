@@ -55,13 +55,10 @@ namespace CardOverflow.Server {
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
-      DbContextOptionsBuilder buildOptions(DbContextOptionsBuilder builder) =>
-        builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
-      services.AddSingleton(buildOptions(new DbContextOptionsBuilder<CardOverflowDb>()).Options);
       services.AddSingleton<DbExecutor>();
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
       services.AddEntityFrameworkNpgsql();
-      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => buildOptions(optionsBuilder));
+      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
       
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();

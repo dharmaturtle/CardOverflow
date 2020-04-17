@@ -33,8 +33,11 @@
         x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" &&
         x.OriginalIssuer == "https://localhost:44318" &&
         x.Issuer == "https://localhost:44318"
-      ).Value.Apply(int.Parse);
-    User = await UserRepository.Get(Db, userId);
+      )?.Value.Apply(int.Parse);
+    User =
+      userId == null
+      ? null
+      : await UserRepository.Get(Db, userId.Value); ;
   }
 
 }

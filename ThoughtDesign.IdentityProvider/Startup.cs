@@ -2,8 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using CardOverflow.Entity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,6 +23,9 @@ namespace ThoughtDesign.IdentityProvider {
 
     public void ConfigureServices(IServiceCollection services) {
       services.AddMvc();
+
+      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+      services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
 
       var builder = services.AddIdentityServer()
           .AddInMemoryIdentityResources(Config.Ids) // highTODO replace

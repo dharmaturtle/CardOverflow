@@ -26,7 +26,7 @@ namespace CardOverflow.Entity
         }
 
         public int Id { get; set; }
-        //[Required] // medTODO make this not nullable
+        [Required]
         [StringLength(32)]
         public string DisplayName {
             get => _DisplayName;
