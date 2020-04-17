@@ -20,12 +20,13 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 namespace CardOverflow.Server {
   public class Startup {
+    public IWebHostEnvironment Environment { get; }
+    public IConfiguration Configuration { get; }
 
-    public Startup(IWebHostEnvironment env, IConfiguration configuration) {
+    public Startup(IWebHostEnvironment environment, IConfiguration configuration) {
+      Environment = environment;
       Configuration = configuration;
     }
-
-    public IConfiguration Configuration { get; }
 
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
