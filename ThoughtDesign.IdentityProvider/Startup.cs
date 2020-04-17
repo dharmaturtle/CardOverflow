@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
+using System.Security.Cryptography.X509Certificates;
 using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 
 namespace ThoughtDesign.IdentityProvider {
@@ -33,8 +35,11 @@ namespace ThoughtDesign.IdentityProvider {
           .AddInMemoryClients(Config.Clients)
           .AddAspNetIdentity<ThoughtDesignUser>();
 
-      // not recommended for production - you need to store your key material somewhere secure highTODO
-      builder.AddDeveloperSigningCredential();
+      if (Environment.IsDevelopment()) {
+        builder.AddDeveloperSigningCredential();
+      } else {
+        builder.AddSigningCredential(_LoadCertificateFromStore());
+      }
     }
 
     public void Configure(IApplicationBuilder app) {
@@ -56,5 +61,17 @@ namespace ThoughtDesign.IdentityProvider {
         endpoints.MapRazorPages();
       });
     }
+
+    private X509Certificate2 _LoadCertificateFromStore() {
+      const string thumbPrint = "3eda15be748458261633f08b5b627f178e4e32a9"; // highTODO buy a real cert from a CSA https://app.pluralsight.com/course-player?clipId=d5db5c32-4eb2-49a9-aa1e-ef91603fb0ef
+      using var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+      store.Open(OpenFlags.ReadOnly);
+      var certCollection = store.Certificates.Find(X509FindType.FindByThumbprint, thumbPrint, true);
+      if (certCollection.Count == 0) {
+        throw new Exception("The specified certificate wasn't found.");
+      }
+      return certCollection[0];
+    }
+
   }
 }
