@@ -3,11 +3,13 @@
 
 
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
+using System.IO;
 
 namespace ThoughtDesign.IdentityProvider {
   public class Program {
@@ -42,6 +44,9 @@ namespace ThoughtDesign.IdentityProvider {
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
       Host.CreateDefaultBuilder(args)
+        .ConfigureAppConfiguration((_, config) =>
+          config
+            .SetBasePath(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "config")))
         .ConfigureWebHostDefaults(webBuilder => {
           webBuilder.UseStartup<Startup>();
           webBuilder.UseSerilog();
