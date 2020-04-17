@@ -106,8 +106,7 @@ type CommentText = {
 }
 
 module SanitizeCommentRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: CommentText) cardId email = // lowTODO add idempotency key
-        let userId = db.User.First(fun x -> x.Email = email).Id // lowTODO is there a way to get the userId directly from the UI?
+    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: CommentText) cardId userId = // lowTODO add idempotency key
         CommentCardEntity(
             CardId = cardId,
             UserId = userId,

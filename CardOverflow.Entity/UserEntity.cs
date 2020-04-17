@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CardOverflow.Entity
 {
-    public partial class UserEntity : IdentityUser<int>
+    public partial class UserEntity
     {
         public UserEntity()
         {
@@ -25,7 +25,7 @@ namespace CardOverflow.Entity
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
-        [Key]
+        public int Id { get; set; }
         //[Required] // medTODO make this not nullable
         [StringLength(32)]
         public string DisplayName {

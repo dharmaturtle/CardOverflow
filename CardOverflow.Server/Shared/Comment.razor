@@ -38,7 +38,7 @@
   bool isSaved;
 
   async Task SaveComment() {
-    await DbExecutor.CommandAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment, CardId, User.Email));
+    await DbExecutor.CommandAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment, CardId, User.Id));
     isSaved = true;
   }
 

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int>
+    public partial class CardOverflowDb : DbContext
     {
         public virtual DbSet<AcquiredCardEntity> AcquiredCard { get; set; }
         private DbSet<AcquiredCardIsLatestEntity> _AcquiredCardIsLatestTracked { get; set; }
@@ -442,17 +442,7 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.DisplayName)
                     .IsUnique();
 
-                entity.HasIndex(e => e.Email)
-                    .IsUnique();
-
                 entity.HasOne(d => d.DefaultCardSetting);
-
-                entity.HasIndex(e => e.NormalizedEmail)
-                    .HasName("EmailIndex");
-
-                entity.HasIndex(e => e.NormalizedUserName)
-                    .HasName("UserNameIndex")
-                    .IsUnique();
             });
 
             modelBuilder.Entity<User_TemplateInstanceEntity>(entity =>

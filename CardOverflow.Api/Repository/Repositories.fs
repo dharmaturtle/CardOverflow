@@ -609,20 +609,20 @@ module CardSettingsRepository =
         }
 
 module UserRepository =
-    let add (db: CardOverflowDb) name email = task {
+    let add (db: CardOverflowDb) id name = task {
         let cardSetting = CardSettingsRepository.defaultCardSettings.CopyToNew 0
         let user =
             UserEntity(
+                Id = id,
                 DisplayName = name,
-                Email = email,
                 CardSettings = [cardSetting].ToList()
             )
         db.User.AddI user
         do! db.SaveChangesAsyncI ()
         user.DefaultCardSetting <- cardSetting
         return! db.SaveChangesAsyncI () }
-    let Get (db: CardOverflowDb) email =
-        db.User.FirstOrDefault(fun x -> x.Email = email)
+    let Get (db: CardOverflowDb) id =
+        db.User.SingleAsync(fun x -> x.Id = id)
 
 module TagRepository =
     let AddTo (db: CardOverflowDb) newTag acquiredCardId = task {

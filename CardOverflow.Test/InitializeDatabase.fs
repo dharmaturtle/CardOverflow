@@ -27,9 +27,9 @@ let ankiModels = "{\"1554689669581\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \
 let deleteAndRecreateDatabase(db: CardOverflowDb) = task {
     db.Database.EnsureDeleted() |> ignore
     db.Database.EnsureCreated() |> ignore
-    do! UserRepository.add db "Admin" "admin@cardoverflow.io"
-    do! UserRepository.add db "The Collective" "theCollective@cardoverflow.io"
-    do! UserRepository.add db "RoboTurtle" "roboturtle@cardoverflow.io"
+    do! UserRepository.add db 1 "Admin"
+    do! UserRepository.add db 2 "The Collective"
+    do! UserRepository.add db 3 "RoboTurtle"
     let theCollective = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.DisplayName = "The Collective")
     let toEntity (template: AnkiTemplateInstance) =
         template.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting

@@ -21,7 +21,7 @@ namespace CardOverflow.Entity {
   }
 
   // This class should not store custom state due to usage of `AddDbContextPool`
-  public partial class CardOverflowDb : IdentityDbContext<UserEntity, IdentityRole<int>, int> {
+  public partial class CardOverflowDb : DbContext {
     private readonly IEntityHasher _entityHasher;
 
     public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
