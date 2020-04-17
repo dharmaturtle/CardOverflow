@@ -22,14 +22,19 @@
 </CascadingValue>
 
 @code {
-  UserEntity User;
+  UserEntity User; // medTODO make business object
 
   protected override async Task OnInitializedAsync() {
-    var email =
+    var userId =
       (await AuthenticationStateProvider.GetAuthenticationStateAsync())
-      //.User.Claims.claim
-      .User.Identity.Name;
-    User = UserRepository.Get(Db, email);
+      .User
+      .Claims
+      .SingleOrDefault(x =>
+        x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" &&
+        x.OriginalIssuer == "https://localhost:44318" &&
+        x.Issuer == "https://localhost:44318"
+      ).Value.Apply(int.Parse);
+    User = await UserRepository.Get(Db, userId);
   }
 
 }
