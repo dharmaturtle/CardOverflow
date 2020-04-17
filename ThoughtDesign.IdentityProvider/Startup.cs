@@ -42,7 +42,9 @@ namespace ThoughtDesign.IdentityProvider {
 
       app.UseIdentityServer();
 
+      app.UseAuthentication();
       app.UseAuthorization();
+
       app.UseEndpoints(endpoints => {
         endpoints.MapControllers();
         endpoints.MapDefaultControllerRoute();
