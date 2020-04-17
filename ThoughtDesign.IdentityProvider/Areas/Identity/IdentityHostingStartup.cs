@@ -18,8 +18,16 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
         services.AddDbContext<IdentityDb>(options =>
             options.UseNpgsql(
                 context.Configuration.GetConnectionString("IdentityDbConnection")));
-        services.AddIdentity<ThoughtDesignUser, IdentityRole<int>>(options => options.SignIn.RequireConfirmedAccount = true)
-          .AddEntityFrameworkStores<IdentityDb>()
+        services.AddIdentity<ThoughtDesignUser, IdentityRole<int>>(options => {
+          options.User.RequireUniqueEmail = true;
+          options.Password.RequireDigit = true;
+          options.Password.RequireLowercase = true;
+          options.Password.RequireUppercase = true;
+          options.Password.RequiredLength = 6;
+          options.Password.RequireNonAlphanumeric = true;
+          //options.SignIn.RequireConfirmedEmail = true; // highTODO
+          //options.SignIn.RequireConfirmedAccount = true; // highTODO
+        }).AddEntityFrameworkStores<IdentityDb>()
           .AddDefaultTokenProviders();
         services.AddSingleton<IEmailSender, EmailSender>();
       });

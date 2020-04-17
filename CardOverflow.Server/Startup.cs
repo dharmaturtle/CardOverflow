@@ -62,15 +62,7 @@ namespace CardOverflow.Server {
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
       services.AddEntityFrameworkNpgsql();
       services.AddDbContextPool<CardOverflowDb>(optionsBuilder => buildOptions(optionsBuilder));
-      services.AddDefaultIdentity<UserEntity>(options => {
-        options.User.RequireUniqueEmail = true;
-        options.Password.RequireDigit = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        //options.SignIn.RequireConfirmedEmail = true; // highTODO
-      }).AddEntityFrameworkStores<CardOverflowDb>();
+      
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
       services.AddServerSideBlazor();
