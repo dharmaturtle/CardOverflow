@@ -25,6 +25,7 @@ namespace ThoughtDesign.IdentityProvider {
           ClientSecrets = { new Secret("secret".Sha256()) }, // highTODO
           RedirectUris = { "https://localhost:44315/signin-oidc" },
           PostLogoutRedirectUris = { "https://localhost:44315/signout-callback-oidc" },
+          RequireConsent = false,
           AllowOfflineAccess = true,
           AllowedScopes = {
             IdentityServerConstants.StandardScopes.OpenId,
