@@ -100,7 +100,7 @@ namespace ThoughtDesign.IdentityProvider {
         var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, model.RememberLogin, lockoutOnFailure: true);
         if (result.Succeeded) {
           var user = await _userManager.FindByNameAsync(model.Username);
-          await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.ClientId));
+          await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id.ToString(), user.UserName, clientId: context?.ClientId));
 
           if (context != null) {
             if (await _clientStore.IsPkceClientAsync(context.ClientId)) {

@@ -17,7 +17,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
         services.AddDbContext<IdentityDb>(options =>
             options.UseNpgsql(
                 context.Configuration.GetConnectionString("IdentityDbConnection")));
-        services.AddIdentity<ThoughtDesignUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+        services.AddIdentity<ThoughtDesignUser, IdentityRole<int>>(options => options.SignIn.RequireConfirmedAccount = true)
           .AddEntityFrameworkStores<IdentityDb>()
           .AddDefaultTokenProviders();
       });
