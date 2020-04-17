@@ -15,7 +15,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
     public void Configure(IWebHostBuilder builder) {
       builder.ConfigureServices((context, services) => {
         services.AddDbContext<IdentityDb>(options =>
-            options.UseSqlServer(
+            options.UseNpgsql(
                 context.Configuration.GetConnectionString("IdentityDbConnection")));
         services.AddIdentity<ThoughtDesignUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
           .AddEntityFrameworkStores<IdentityDb>()
