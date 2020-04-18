@@ -27,7 +27,7 @@
               failed = true;
             }
           };
-          xhttp.open("GET", "/", true);
+          xhttp.open("HEAD", "/css/site.css", true); // poll a static file. Otherwise it'll invoke Blazor lifecycle methods and cause issues
           xhttp.send();
         }
         catch (e) {
