@@ -36,6 +36,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CardOverflow.TestConsole", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThoughtDesign.IdentityProvider", "ThoughtDesign.IdentityProvider\ThoughtDesign.IdentityProvider.csproj", "{15944469-4E9B-4CE7-AA9F-A2C53A96E181}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Endpoints", "Endpoints", "{8FFB0480-CFB9-4856-98D0-FB860B8DE4FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A24868D8-6143-4EE4-8B54-6A65FD686A77} = {8FFB0480-CFB9-4856-98D0-FB860B8DE4FF}
+		{15944469-4E9B-4CE7-AA9F-A2C53A96E181} = {8FFB0480-CFB9-4856-98D0-FB860B8DE4FF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {37C5842B-59A4-40A6-9436-19990224854D}
