@@ -1,8 +1,10 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
 using CardOverflow.Entity;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +12,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using ThoughtDesign.IdentityProvider.Areas.Identity;
 using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 
 namespace ThoughtDesign.IdentityProvider {
@@ -40,6 +45,13 @@ namespace ThoughtDesign.IdentityProvider {
       } else {
         builder.AddSigningCredential(_LoadCertificateFromStore());
       }
+
+      var assemblyName = typeof(IdentityHostingStartup).GetTypeInfo().Assembly.GetName().Name;
+      var identityDbConnection = Configuration.GetConnectionString("IdentityDbConnection");
+      builder.AddConfigurationStore(options => {
+        options.ConfigureDbContext = builder =>
+          builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
+      });
     }
 
     public void Configure(IApplicationBuilder app) {
