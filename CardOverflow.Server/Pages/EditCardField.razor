@@ -25,7 +25,7 @@
       <span class="curate-tooltip-target">
         <span class="oi oi-eye" aria-hidden="true"></span>
         <div class="curate-tooltip-content">
-          <ResizingIframe SrcUrl=@("/cardinstance/" + instanceId + "/front") />
+          <ResizingIframe SrcUrl=@("cardinstance/" + instanceId + "/front") />
         </div>
       </span>
     }
@@ -56,7 +56,7 @@
         <button type="button" class="btn btn-outline-success" @onclick=@(() => SearchResultClicked(communalFieldInstance)) style="position: absolute; right: 15px;">
           ✔
         </button>
-        <ResizingIframe SrcUrl=@("/communalfieldinstance/" + communalFieldInstance.Id) />
+        <ResizingIframe SrcUrl=@("communalfieldinstance/" + communalFieldInstance.Id) />
       </div>
     }
     @if (_readOnlyIsVisible) {

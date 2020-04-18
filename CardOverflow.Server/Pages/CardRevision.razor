@@ -22,7 +22,7 @@
         @if (meta.Modified != null) {
           <label>Modified:</label> @meta.Modified.Value;
         }
-        <ResizingIframe SrcUrl=@("/cardinstance/" + meta.Id + "/back") />
+        <ResizingIframe SrcUrl=@("cardinstance/" + meta.Id + "/back") />
       </li>
     }
   </ol>
