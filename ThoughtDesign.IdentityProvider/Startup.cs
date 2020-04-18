@@ -1,4 +1,4 @@
-// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
@@ -34,33 +34,33 @@ namespace ThoughtDesign.IdentityProvider {
       services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
 
-      var builder = services.AddIdentityServer()
-          .AddInMemoryIdentityResources(Config.Ids) // highTODO replace
-          .AddInMemoryApiResources(Config.Apis)
-          .AddInMemoryClients(Config.Clients)
-          .AddAspNetIdentity<ThoughtDesignUser>();
+      var builder = services
+        .AddIdentityServer()
+        .AddAspNetIdentity<ThoughtDesignUser>();
 
       if (Environment.IsDevelopment()) {
-        builder.AddDeveloperSigningCredential();
+        builder
+          .AddDeveloperSigningCredential()
+          .AddInMemoryIdentityResources(Config.Ids)
+          .AddInMemoryApiResources(Config.Apis)
+          .AddInMemoryClients(Config.Clients);
       } else {
-        builder.AddSigningCredential(_LoadCertificateFromStore());
+        var assemblyName = typeof(IdentityHostingStartup).GetTypeInfo().Assembly.GetName().Name;
+        var identityDbConnection = Configuration.GetConnectionString("IdentityDbConnection");
+        void dbOptionsBuilder(DbContextOptionsBuilder builder) =>
+          builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
+        builder
+          .AddSigningCredential(_LoadCertificateFromStore())
+          .AddConfigurationStore(options => options.ConfigureDbContext = dbOptionsBuilder)
+          .AddOperationalStore(options => options.ConfigureDbContext = dbOptionsBuilder);
       }
-
-      var assemblyName = typeof(IdentityHostingStartup).GetTypeInfo().Assembly.GetName().Name;
-      var identityDbConnection = Configuration.GetConnectionString("IdentityDbConnection");
-      builder.AddConfigurationStore(options => {
-        options.ConfigureDbContext = builder =>
-          builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
-      });
-      builder.AddOperationalStore(options => {
-        options.ConfigureDbContext = builder =>
-          builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
-      });
     }
 
     public void Configure(IApplicationBuilder app) {
       if (Environment.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
+      } else {
+        Config.SeedDatabase(app); // medTODO remove once mature in production
       }
 
       app.UseStaticFiles();
