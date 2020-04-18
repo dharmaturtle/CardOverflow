@@ -8,15 +8,44 @@
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
 @inject IJSRuntime Js
-@inject UrlProvider UrlProvider 
+@inject UrlProvider UrlProvider
 
-<iframe sandbox="allow-scripts allow-same-origin" src=@(UrlProvider.UserContentApi + SrcUrl) scrolling="no" @ref="iframe" @onload=@iframeloaded
-        style="width: 1px; min-width: 100%; height:100px;"></iframe>
+<iframe sandbox="allow-scripts allow-same-origin" src=@_src scrolling="no" @ref="iframe" @onload=@iframeloaded
+        style="width: 1px; min-width: 100%; height:100px;" />
 
 @code {
-  [Parameter]
-  public string SrcUrl { get; set; }
+  [Parameter] public int CardId { get; set; }
+  [Parameter] public int CardInstanceId { get; set; }
+  [Parameter] public int TemplateId { get; set; }
+  [Parameter] public int TemplateInstanceId { get; set; }
+  [Parameter] public int CommunalFieldId { get; set; }
+  [Parameter] public int CommunalFieldInstanceId { get; set; }
+  [Parameter] public bool Front { get; set; }
+  [Parameter] public bool Back { get; set; }
   private ElementReference iframe;
+  private string _src;
+
+  protected override async Task OnParametersSetAsync() {
+    await base.OnParametersSetAsync();
+    var middle = "";
+    if (CardId != 0) {
+      middle = "card/" + CardId;
+    } else if (CardInstanceId != 0) {
+      middle = "cardinstance/" + CardInstanceId;
+    } else if (TemplateId != 0) {
+      middle = "template/" + TemplateId;
+    } else if (TemplateInstanceId != 0) {
+      middle = "templateinstance/" + TemplateInstanceId;
+    } else if (CommunalFieldId != 0) {
+      middle = "communalfield/" + CommunalFieldId;
+    } else if (CommunalFieldInstanceId != 0) {
+      middle = "communalfieldinstance/" + CommunalFieldInstanceId;
+    } else {
+      throw new Exception("You done goofed.");
+    }
+    var tail = Back ? "/back" : Front ? "/front" : "";
+    _src = UrlProvider.UserContentApi + middle + tail;
+  }
 
   async Task iframeloaded() => await Js.InvokeAsync<string>("resizeIframe", iframe);
 }

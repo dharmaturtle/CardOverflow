@@ -20,7 +20,7 @@
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
           <div class="curate-tooltip-content">
-            <ResizingIframe SrcUrl=@("card/" + @cardId + "/front/")></ResizingIframe>
+            <ResizingIframe CardId=@cardId Front />
           </div>
         </span>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
@@ -39,7 +39,7 @@
             <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
             <span class="badge badge-success">@relationship.Users</span>
             <div class="curate-tooltip-content">
-              <ResizingIframe SrcUrl=@("card/" + @cardId + "/front/")></ResizingIframe>
+              <ResizingIframe CardId=@cardId Front />
             </div>
           </span>
           @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>

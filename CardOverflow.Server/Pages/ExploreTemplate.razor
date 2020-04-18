@@ -31,7 +31,7 @@
               <span class="oi oi-eye@(instance.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
-                <ResizingIframe SrcUrl=@("template/" + instance.TemplateId + "/back")></ResizingIframe>
+                <ResizingIframe TemplateInstanceId=@instance.Id Back />
               </div>
             </div>
           </td>
