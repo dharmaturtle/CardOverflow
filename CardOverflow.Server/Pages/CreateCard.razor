@@ -13,22 +13,22 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (Card == null || Templates == null) {
+@if (_card == null || _templates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@Card Templates=@Templates />
+  <EditCardDetail Card=@_card Templates=@_templates />
 }
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  AcquiredCard Card;
-  IEnumerable<ViewTemplateWithAllInstances> Templates;
+  private AcquiredCard _card;
+  private IEnumerable<ViewTemplateWithAllInstances> _templates;
 
-  protected override async Task OnInitializedAsync() {
-    Card = await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User?.Id ?? 0));
-    Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User?.Id ?? 0));
+  protected override async Task OnParametersSetAsync() {
+    await base.OnParametersSetAsync();
+    _card = await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id));
+    _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User.Id));
   }
 
 }
