@@ -39,7 +39,7 @@ namespace CardOverflow.Server {
         .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
         .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options => {
           options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-          options.Authority = "https://localhost:44318/";
+          options.Authority = Configuration.UrlProvider().IdentityProvider;
           options.ClientId = "cardoverflowserversideblazorclient";
           options.ClientSecret = "secret";
           options.ResponseType = "code id_token";
@@ -63,6 +63,7 @@ namespace CardOverflow.Server {
       services.AddSingleton<WeatherForecastService>();
       services.AddHttpClient<UserContentHttpClient>();
 
+      services.AddSingleton(Configuration.UrlProvider());
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
       services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
       Serilog.Log.Logger = new LoggerConfiguration()

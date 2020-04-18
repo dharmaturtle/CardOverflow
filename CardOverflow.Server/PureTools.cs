@@ -2,6 +2,7 @@ using CardOverflow.Pure;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,13 @@ namespace CardOverflow.Server {
         int.TryParse(token[0], out int possibleId)
         ? possibleId
         : fallbackValue;
+
+    public static UrlProvider UrlProvider(this IConfiguration configuration) =>
+      new UrlProvider(
+        configuration.GetSection("BaseUrls:Server").Value,
+        configuration.GetSection("BaseUrls:IdentityProvider").Value,
+        configuration.GetSection("BaseUrls:UserContentApi").Value
+      );
 
   }
 }

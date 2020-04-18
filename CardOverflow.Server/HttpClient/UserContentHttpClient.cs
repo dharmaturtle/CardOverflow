@@ -9,8 +9,8 @@ namespace CardOverflow.Server {
   public class UserContentHttpClient {
     private readonly HttpClient _client;
 
-    public UserContentHttpClient(HttpClient httpClient) {
-      httpClient.BaseAddress = new Uri("https://localhost:5011/");
+    public UserContentHttpClient(HttpClient httpClient, UrlProvider urlProvider) {
+      httpClient.BaseAddress = new Uri(urlProvider.UserContentApi);
       _client = httpClient;
     }
 
