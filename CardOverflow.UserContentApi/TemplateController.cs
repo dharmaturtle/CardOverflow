@@ -5,22 +5,22 @@ using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FSharp.Core;
 
-namespace CardOverflow.Server {
+namespace CardOverflow.UserContentApi {
   public class TemplateController : Controller {
     private readonly CardOverflowDb _db;
 
     public TemplateController(CardOverflowDb db) => _db = db;
 
-    [HttpGet("template/{id}/front")] // highTODO move to another server
+    [HttpGet("template/{id}/front")]
     public async Task<IActionResult> Front(int id) => _front(await TemplateRepository.latest(_db, id));
 
-    [HttpGet("template/{id}/back")] // highTODO move to another server
+    [HttpGet("template/{id}/back")]
     public async Task<IActionResult> Back(int id) => _back(await TemplateRepository.latest(_db, id));
 
-    [HttpGet("templateinstance/{id}/front")] // highTODO move to another server
+    [HttpGet("templateinstance/{id}/front")]
     public async Task<IActionResult> InstanceFront(int id) => _front(await TemplateRepository.instance(_db, id));
 
-    [HttpGet("templateinstance/{id}/back")] // highTODO move to another server
+    [HttpGet("templateinstance/{id}/back")]
     public async Task<IActionResult> InstanceBack(int id) => _back(await TemplateRepository.instance(_db, id));
 
     private ContentResult _front(FSharpResult<TemplateInstance, string> view) =>

@@ -19,8 +19,5 @@ namespace CardOverflow.Server {
         ? possibleId
         : fallbackValue;
 
-    public static ContentResult ToTextHtmlContent(this string s, ControllerBase controllerBase) =>
-      controllerBase.Content(s, "text/html");
-
   }
 }

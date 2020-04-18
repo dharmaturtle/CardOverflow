@@ -4,7 +4,7 @@ using CardOverflow.Entity;
 using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CardOverflow.Server {
+namespace CardOverflow.UserContentApi {
   public class CommunalFieldController : Controller {
     private readonly CardOverflowDb _db;
 
@@ -12,11 +12,11 @@ namespace CardOverflow.Server {
       _db = db;
     }
 
-    [HttpGet("communalfield/{id}")] // highTODO move to another server
+    [HttpGet("communalfield/{id}")]
     public async Task<IActionResult> Get(int id) =>
       Content(await CommunalFieldRepository.get(_db, id), "text/html");
 
-    [HttpGet("communalfieldinstance/{id}")] // highTODO move to another server
+    [HttpGet("communalfieldinstance/{id}")]
     public async Task<IActionResult> GetInstance(int id) =>
       Content(await CommunalFieldRepository.getInstance(_db, id), "text/html");
 
