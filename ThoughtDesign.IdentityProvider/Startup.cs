@@ -52,6 +52,10 @@ namespace ThoughtDesign.IdentityProvider {
         options.ConfigureDbContext = builder =>
           builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
       });
+      builder.AddOperationalStore(options => {
+        options.ConfigureDbContext = builder =>
+          builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
+      });
     }
 
     public void Configure(IApplicationBuilder app) {
