@@ -5,11 +5,11 @@ using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FSharp.Core;
 
-namespace CardOverflow.UserContentApi {
-  public class TemplateController : Controller {
+namespace CardOverflow.UserContentApi.Controllers {
+  public class Template : Controller {
     private readonly CardOverflowDb _db;
 
-    public TemplateController(CardOverflowDb db) => _db = db;
+    public Template(CardOverflowDb db) => _db = db;
 
     [HttpGet("template/{id}/front")]
     public async Task<IActionResult> Front(int id) => _front(await TemplateRepository.latest(_db, id));

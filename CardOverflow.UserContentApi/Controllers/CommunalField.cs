@@ -4,11 +4,11 @@ using CardOverflow.Entity;
 using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CardOverflow.UserContentApi {
-  public class CommunalFieldController : Controller {
+namespace CardOverflow.UserContentApi.Controllers {
+  public class CommunalField : Controller {
     private readonly CardOverflowDb _db;
 
-    public CommunalFieldController(CardOverflowDb db) {
+    public CommunalField(CardOverflowDb db) {
       _db = db;
     }
 

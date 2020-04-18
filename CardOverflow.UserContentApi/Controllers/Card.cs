@@ -5,11 +5,11 @@ using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FSharp.Core;
 
-namespace CardOverflow.UserContentApi {
-  public class CardController : Controller {
+namespace CardOverflow.UserContentApi.Controllers {
+  public class Card : Controller {
     private readonly CardOverflowDb _db;
 
-    public CardController(CardOverflowDb db) {
+    public Card(CardOverflowDb db) {
       _db = db;
     }
 
