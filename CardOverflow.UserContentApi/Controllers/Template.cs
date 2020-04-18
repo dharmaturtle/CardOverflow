@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.FSharp.Core;
 
 namespace CardOverflow.UserContentApi.Controllers {
+  [ApiController]
+  //[Route("[controller]")]
   public class Template : Controller {
     private readonly CardOverflowDb _db;
 
