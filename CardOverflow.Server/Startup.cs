@@ -18,6 +18,7 @@ using DiffPlex.DiffBuilder;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using ThoughtDesign.WebLibrary;
+using System;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -65,6 +66,12 @@ namespace CardOverflow.Server {
       services.AddHttpClient<UserContentHttpClient>();
 
       services.RegisterCommonStuff(Configuration);
+
+      services.AddHsts(options => {
+        options.Preload = true;
+        options.IncludeSubDomains = true;
+        options.MaxAge = TimeSpan.FromMinutes(5); // highTODO https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-3.1&tabs=visual-studio#http-strict-transport-security-protocol-hsts For production environments that are implementing HTTPS for the first time, set the initial HstsOptions.MaxAge to a small value using one of the TimeSpan methods. Set the value from hours to no more than a single day in case you need to revert the HTTPS infrastructure to HTTP. After you're confident in the sustainability of the HTTPS configuration, increase the HSTS max-age value; a commonly used value is one year.
+      });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,7 +81,6 @@ namespace CardOverflow.Server {
         app.UseDatabaseErrorPage();
       } else {
         app.UseExceptionHandler("/Error");
-        // highTODO The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
       }
 
