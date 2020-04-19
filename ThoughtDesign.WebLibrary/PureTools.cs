@@ -27,5 +27,8 @@ namespace ThoughtDesign.WebLibrary {
         configuration.GetSection("BaseUrls:UserContentApi").Value
       );
 
+    public static ContentResult ToTextHtmlContent(this string s, ControllerBase controllerBase) =>
+      controllerBase.Content(s, "text/html");
+
   }
 }

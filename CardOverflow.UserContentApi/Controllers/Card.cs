@@ -4,6 +4,7 @@ using CardOverflow.Entity;
 using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FSharp.Core;
+using ThoughtDesign.WebLibrary;
 
 namespace CardOverflow.UserContentApi.Controllers {
   [ApiController]

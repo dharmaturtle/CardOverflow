@@ -3,6 +3,7 @@ using CardOverflow.Api;
 using CardOverflow.Entity;
 using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
+using ThoughtDesign.WebLibrary;
 
 namespace CardOverflow.UserContentApi.Controllers {
   [ApiController]
