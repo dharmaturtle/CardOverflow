@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Serilog;
 
-namespace CardOverflow.Server {
+namespace ThoughtDesign.WebLibrary {
   public class ExceptionLoggingMiddleware {
     private readonly RequestDelegate _next;
 

@@ -37,6 +37,8 @@ namespace CardOverflow.UserContentApi {
         app.UseDeveloperExceptionPage();
       }
 
+      app.UseMiddleware<ExceptionLoggingMiddleware>();
+
       app.UseHttpsRedirection();
 
       app.UseRouting();
