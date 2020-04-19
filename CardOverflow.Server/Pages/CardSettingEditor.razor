@@ -1,4 +1,6 @@
 ﻿@page "/cardsetting"
+@attribute [Authorize]
+
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,9 +13,7 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-@if (User == null) {
-  <span>You need to log in dude.</span>
-} else if (_settings == null) {
+@if (_settings == null || _selected == null) {
   <p><em>Loading...</em></p>
 } else {
   <div class="row">
@@ -40,12 +40,11 @@
 }
 
 @code {
-  [CascadingParameter]
-  public UserEntity User { get; set; }
+  [CascadingParameter] public UserEntity User { get; set; }
   private List<ViewCardSetting> _settings;
   private ViewCardSetting _selected;
 
-  protected override async Task OnInitializedAsync() {
+  protected override async Task OnParametersSetAsync() {
     if (User != null) {
       _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, User.Id));
       _selected = _settings.Single(x => x.IsDefault);

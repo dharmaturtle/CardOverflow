@@ -1,5 +1,6 @@
 @page "/template/curate"
 @page "/template/{TemplateId:int}/curate"
+@attribute [Authorize]
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -38,14 +39,12 @@
 }
 
 @code {
-  [Parameter]
-  public int TemplateId { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [Parameter] public int TemplateId { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   private List<ViewTemplateWithAllInstances> _templates;
   private int _selectedIndex;
 
-  protected override async Task OnInitializedAsync() {
+  protected override async Task OnParametersSetAsync() {
     if (User != null) {
       _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User.Id));
       _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())

@@ -27,8 +27,10 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    _card = await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id));
-    _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User.Id));
+    if (User != null) {
+      _card = await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id));
+      _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User.Id));
+    }
   }
 
 }
