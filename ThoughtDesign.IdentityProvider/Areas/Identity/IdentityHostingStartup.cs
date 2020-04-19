@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -19,14 +20,25 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
             options.UseNpgsql(
                 context.Configuration.GetConnectionString("IdentityDbConnection")));
         services.AddIdentity<ThoughtDesignUser, IdentityRole<int>>(options => {
-          options.User.RequireUniqueEmail = true;
-          options.Password.RequireDigit = true;
-          options.Password.RequireLowercase = true;
-          options.Password.RequireUppercase = true;
-          options.Password.RequiredLength = 6;
-          options.Password.RequireNonAlphanumeric = true;
-          //options.SignIn.RequireConfirmedEmail = true; // highTODO
-          //options.SignIn.RequireConfirmedAccount = true; // highTODO
+          if (context.HostingEnvironment.IsDevelopment()) {
+            options.User.RequireUniqueEmail = true;
+            options.Password.RequireDigit = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequiredLength = 1;
+            options.Password.RequireNonAlphanumeric = false;
+            options.SignIn.RequireConfirmedEmail = false;
+            options.SignIn.RequireConfirmedAccount = false;
+          } else {
+            options.User.RequireUniqueEmail = true;
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequiredLength = 6;
+            options.Password.RequireNonAlphanumeric = true;
+            options.SignIn.RequireConfirmedEmail = true;
+            options.SignIn.RequireConfirmedAccount = true;
+          }
         }).AddEntityFrameworkStores<IdentityDb>()
           .AddDefaultTokenProviders();
         services.AddSingleton<IEmailSender, EmailSender>();
