@@ -64,16 +64,7 @@ namespace CardOverflow.Server {
       services.AddSingleton<WeatherForecastService>();
       services.AddHttpClient<UserContentHttpClient>();
 
-      services.AddSingleton(Configuration.UrlProvider());
-      services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-      Serilog.Log.Logger = new LoggerConfiguration()
-        .ReadFrom
-        .Configuration(Configuration)
-        .CreateLogger();
-      services.AddLogging(x => x
-        .AddFilter("Microsoft.AspNetCore", LogLevel.Warning)
-        .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning));
+      services.RegisterCommonStuff(Configuration);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

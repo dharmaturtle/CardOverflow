@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using ThoughtDesign.IdentityProvider.Areas.Identity;
 using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
+using ThoughtDesign.WebLibrary;
 
 namespace ThoughtDesign.IdentityProvider {
   public class Startup {
@@ -31,9 +32,8 @@ namespace ThoughtDesign.IdentityProvider {
     public void ConfigureServices(IServiceCollection services) {
       services.AddMvc();
 
-      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-      services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-
+      services.RegisterCommonStuff(Configuration);
+      
       var builder = services
         .AddIdentityServer()
         .AddAspNetIdentity<ThoughtDesignUser>();

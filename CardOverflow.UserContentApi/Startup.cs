@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using ThoughtDesign.WebLibrary;
 
 namespace CardOverflow.UserContentApi {
   public class Startup {
@@ -27,16 +28,7 @@ namespace CardOverflow.UserContentApi {
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services) {
       services.AddControllers();
-
-      services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-      Serilog.Log.Logger = new LoggerConfiguration()
-        .ReadFrom
-        .Configuration(Configuration)
-        .CreateLogger();
-      services.AddLogging(x => x
-        .AddFilter("Microsoft.AspNetCore", LogLevel.Warning)
-        .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning));
+      services.RegisterCommonStuff(Configuration);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

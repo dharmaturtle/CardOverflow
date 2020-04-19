@@ -21,6 +21,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\CardOverflow.Api\CardOverflow.Api.fsproj" />
+    <ProjectReference Include="..\ThoughtDesign.WebLibrary\ThoughtDesign.WebLibrary.csproj" />
   </ItemGroup>
 </Project>
