@@ -38,7 +38,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThoughtDesign.IdentityProvi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Endpoints", "Endpoints", "{8FFB0480-CFB9-4856-98D0-FB860B8DE4FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardOverflow.UserContentApi", "CardOverflow.UserContentApi\CardOverflow.UserContentApi.csproj", "{DBC078E5-C6A2-4332-8E02-1CA1A27CE732}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CardOverflow.UserContentApi", "CardOverflow.UserContentApi\CardOverflow.UserContentApi.csproj", "{DBC078E5-C6A2-4332-8E02-1CA1A27CE732}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThoughtDesign.WebLibrary", "ThoughtDesign.WebLibrary\ThoughtDesign.WebLibrary.csproj", "{55BAB54D-94B5-4E25-9A94-BFC797F4AC65}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -86,6 +88,10 @@ Global
 		{DBC078E5-C6A2-4332-8E02-1CA1A27CE732}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DBC078E5-C6A2-4332-8E02-1CA1A27CE732}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DBC078E5-C6A2-4332-8E02-1CA1A27CE732}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55BAB54D-94B5-4E25-9A94-BFC797F4AC65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55BAB54D-94B5-4E25-9A94-BFC797F4AC65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55BAB54D-94B5-4E25-9A94-BFC797F4AC65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55BAB54D-94B5-4E25-9A94-BFC797F4AC65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
