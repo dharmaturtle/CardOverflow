@@ -454,15 +454,7 @@ type ExploreCardSummary with
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
-        Users =
-            let actual = entity.CardInstances.Select(fun x -> x.AcquiredCards.Count).Sum() // medTODO eventually remove
-            if actual = entity.Users then
-                actual
-            else
-                if actual = 0 then
-                    entity.Users
-                else
-                    failwithf "Discrepancy between the triggered value (%i) and the actual value (%i) for CardId %i" entity.Users actual entity.Id
+        Users = entity.Users
         Instance = instance
     }
 
