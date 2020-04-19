@@ -28,7 +28,7 @@ namespace ThoughtDesign.IdentityProvider {
         new Client {
           ClientId = "cardoverflowserversideblazorclient",
           AllowedGrantTypes = GrantTypes.Hybrid,
-          ClientSecrets = { new Secret("secret".Sha256()) }, // highTODO
+          ClientSecrets = { new Secret("tempclientsecret".Sha256()) },
           RedirectUris = { "https://localhost:44315/signin-oidc" },
           PostLogoutRedirectUris = { "https://localhost:44315/signout-callback-oidc" },
           RequireConsent = false,

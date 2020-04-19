@@ -33,6 +33,7 @@ namespace CardOverflow.Server {
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services) {
+      const string clientId = "cardoverflowserversideblazorclient";
       services.AddAuthentication(options => {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
@@ -42,8 +43,8 @@ namespace CardOverflow.Server {
         .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options => {
           options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
           options.Authority = Configuration.UrlProvider().IdentityProvider;
-          options.ClientId = "cardoverflowserversideblazorclient";
-          options.ClientSecret = "secret";
+          options.ClientId = clientId;
+          options.ClientSecret = Configuration.GetSection("ClientSecret:" + clientId).Value;
           options.ResponseType = "code id_token";
           options.Scope.Add("openid");
           options.Scope.Add("profile");
