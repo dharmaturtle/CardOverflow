@@ -7,17 +7,16 @@ using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
 using NeoSmart.Utils;
 
-namespace CardOverflow.Server {
+namespace CardOverflow.UserContentApi.Controllers {
 
   [Route("[controller]")]
-  public class ImageController : Controller {
+  public class Image : Controller {
     private readonly CardOverflowDb _db;
 
-    public ImageController(CardOverflowDb db) {
+    public Image(CardOverflowDb db) => 
       _db = db;
-    }
 
-    [HttpGet("{hash}")] // medTODO move to another server
+    [HttpGet("{hash}")]
     public async Task<IActionResult> GetImage(string hash) { // medTODO is this a security hazard?
       var sha256 = UrlBase64.Decode(hash);
       var imageArray = _db.File.First(x => x.Sha256 == sha256).Data;
