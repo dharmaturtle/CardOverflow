@@ -1,6 +1,5 @@
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
-@using CardOverflow.Debug
 @using CardOverflow.Pure
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
@@ -30,7 +29,7 @@
         } else {
           <button class="btn btn-study btn-danger" @onclick=@(() => SaveScore(Score.Again))>
             <div>
-              Again @* highTODO show how long until this card comes back*@
+              Again
             </div>
             <div>
               @AgainInterval
@@ -171,7 +170,6 @@
   [JSInvokable]
   public async Task<string> GetTranscript(string rawTranscript) {
     this.transcript = rawTranscript.Trim().ToLower();
-    Console.WriteLine(this.transcript);
     StateHasChanged();
     switch (this.transcript) {
       case "what":
@@ -208,7 +206,6 @@
   }
 
   Task OnKeyDown(KeyboardEventArgs eventArgs) {
-    eventArgs.CDump();
     if (isFront && (eventArgs.Key == "ArrowDown" || eventArgs.Key == "ArrowRight")) {
       return ShowBack();
     } else if (!isFront) {
