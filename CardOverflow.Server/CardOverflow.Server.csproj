@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CardOverflow.Sanitation\CardOverflow.Sanitation.fsproj" />
+    <ProjectReference Include="..\ThoughtDesign.WebLibrary\ThoughtDesign.WebLibrary.csproj" />
   </ItemGroup>
 
   <ItemGroup>

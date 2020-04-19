@@ -17,6 +17,7 @@ using DiffPlex;
 using DiffPlex.DiffBuilder;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using ThoughtDesign.WebLibrary;
 
 namespace CardOverflow.Server {
   public class Startup {

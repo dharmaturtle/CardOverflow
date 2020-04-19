@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CardOverflow.Server {
+namespace ThoughtDesign.WebLibrary {
   public static class PureTools {
 
     public static int GetQueryInt(this NavigationManager navigationManager, string key, int fallbackValue = 0) =>
