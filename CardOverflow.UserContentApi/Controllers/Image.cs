@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using CardOverflow.Api;
 using CardOverflow.Entity;
 using CardOverflow.Pure;
 using Microsoft.AspNetCore.Mvc;
@@ -13,17 +14,20 @@ namespace CardOverflow.UserContentApi.Controllers {
   public class Image : Controller {
     private readonly CardOverflowDb _db;
 
-    public Image(CardOverflowDb db) => 
+    public Image(CardOverflowDb db) =>
       _db = db;
 
     [HttpGet("{hash}")]
-    public async Task<IActionResult> GetImage(string hash) { // medTODO is this a security hazard?
-      var sha256 = UrlBase64.Decode(hash);
-      var imageArray = _db.File.First(x => x.Sha256 == sha256).Data;
-      var imageStream = new MemoryStream();
-      await imageStream.WriteAsync(imageArray);
-      imageStream.Position = 0;
-      return new FileStreamResult(imageStream, "image/jpeg"); // medTODO store the MIME
+    public async Task<IActionResult> GetImage(string hash) {
+      var x = await FileRepository.get(_db, hash);
+      if (x.IsOk) {
+        var imageStream = new MemoryStream(); // don't dispose https://stackoverflow.com/a/52329792
+        await imageStream.WriteAsync(x.ResultValue);
+        imageStream.Position = 0;
+        return new FileStreamResult(imageStream, "image/jpeg"); // medTODO store the MIME
+      } else {
+        return NotFound();
+      }
     }
 
   }

@@ -17,6 +17,9 @@ open System.Collections.Generic
 open X.PagedList
 open System.Threading.Tasks
 open Microsoft.FSharp.Core
+open NeoSmart.Utils
+open System.IO
+open System
 
 module CommunalFieldRepository =
     let get (db: CardOverflowDb) fieldId = task {
@@ -170,6 +173,13 @@ module ExploreCardRepository =
             CardInstanceMeta.load isAcquired isLatest e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
             |> ExploreCard.load e.Card
         }
+
+module FileRepository =
+    let get (db: CardOverflowDb) hash =
+        let sha256 = UrlBase64.Decode hash
+        db.File.SingleOrDefaultAsync(fun x -> x.Sha256 = sha256)
+        |> Task.map (Result.requireNotNull ())
+        |> TaskResult.map (fun x -> x.Data)
 
 module CardViewRepository =
     let private getAcquiredInstanceIds (db: CardOverflowDb) userId aId bId =
