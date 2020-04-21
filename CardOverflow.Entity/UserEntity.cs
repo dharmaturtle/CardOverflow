@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Identity;
 
 namespace CardOverflow.Entity
 {
@@ -25,6 +24,7 @@ namespace CardOverflow.Entity
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
+        [Key]
         public int Id { get; set; }
         [Required]
         [StringLength(32)]

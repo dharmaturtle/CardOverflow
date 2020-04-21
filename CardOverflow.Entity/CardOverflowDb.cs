@@ -1,8 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace CardOverflow.Entity
 {
@@ -122,6 +120,10 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.TemplateInstanceId);
 
+                entity.HasIndex(e => e.TsVector)
+                    .HasName("idx_fts_cardinstance_tsvector")
+                    .HasMethod("gin");
+
                 entity.HasIndex(e => new { e.CardId, e.Id })
                     .HasName("UQ_CardInstance_CardId_Id")
                     .IsUnique();
@@ -239,6 +241,10 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.CommunalFieldId);
 
+                entity.HasIndex(e => e.TsVector)
+                    .HasName("idx_fts_communalfieldinstance_tsvector")
+                    .HasMethod("gin");
+
                 entity.HasOne(d => d.CommunalField)
                     .WithMany(p => p.CommunalFieldInstances)
                     .HasForeignKey(d => d.CommunalFieldId)
@@ -261,7 +267,7 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.CommunalFieldInstance_CardInstances)
                     .HasForeignKey(d => d.CommunalFieldInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommunalFieldInstance_CommunalField_CommunalFieldId");
+                    .HasConstraintName("FK_CommFieldInst_CardInst_CommFieldInst_CommFieldInstId");
             });
 
             modelBuilder.Entity<FeedbackEntity>(entity =>
@@ -351,6 +357,10 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.Name)
                     .IsUnique();
+
+                entity.HasIndex(e => e.TsVector)
+                    .HasName("idx_fts_relationship_tsvector")
+                    .HasMethod("gin");
             });
 
             modelBuilder.Entity<Relationship_AcquiredCardEntity>(entity =>
@@ -381,6 +391,10 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.Name)
                     .IsUnique();
+
+                entity.HasIndex(e => e.TsVector)
+                    .HasName("idx_fts_tag_tsvector")
+                    .HasMethod("gin");
             });
 
             modelBuilder.Entity<Tag_AcquiredCardEntity>(entity =>
@@ -428,6 +442,10 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.Hash);
 
                 entity.HasIndex(e => e.TemplateId);
+
+                entity.HasIndex(e => e.TsVector)
+                    .HasName("idx_fts_templateinstance_tsvector")
+                    .HasMethod("gin");
 
                 entity.HasOne(d => d.Template)
                     .WithMany(p => p.TemplateInstances)

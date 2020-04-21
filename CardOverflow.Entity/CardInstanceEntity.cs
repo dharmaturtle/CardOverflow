@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections;
+using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
@@ -45,6 +46,8 @@ namespace CardOverflow.Entity
         [Required]
         [Column(TypeName = "bit(512)")]
         public BitArray Hash { get; set; }
+        public string TsVectorHelper { get; set; }
+        public NpgsqlTsVector TsVector { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("CardInstances")]

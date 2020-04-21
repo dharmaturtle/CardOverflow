@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
@@ -25,6 +26,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
+        public NpgsqlTsVector TsVector { get; set; }
 
         [InverseProperty("Tag")]
         public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }

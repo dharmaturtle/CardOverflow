@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
@@ -39,6 +40,8 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
+        public string BWeightTsVectorHelper { get; set; }
+        public NpgsqlTsVector TsVector { get; set; }
 
         [ForeignKey("CommunalFieldId")]
         [InverseProperty("CommunalFieldInstances")]
