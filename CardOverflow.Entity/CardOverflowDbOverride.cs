@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections;
+using CardOverflow.Pure;
 
 namespace CardOverflow.Entity {
 
@@ -42,11 +43,21 @@ namespace CardOverflow.Entity {
       foreach (var x in entries.Where(x => x.Entity is TemplateInstanceEntity)) {
         var template = (TemplateInstanceEntity) x.Entity;
         template.Hash = _entityHasher.TemplateInstanceHasher.Invoke((template, sha512));
+        template.CWeightTsVectorHelper =
+          Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
+            .Append(MappingTools.stripHtmlTags(template.QuestionTemplate))
+            .Append(MappingTools.stripHtmlTags(template.AnswerTemplate))
+            .Apply(x => string.Join(' ', x));
       }
       foreach (var x in entries.Where(x => x.Entity is CardInstanceEntity)) {
         var card = (CardInstanceEntity) x.Entity;
         var templateHash = card.TemplateInstance?.Hash ?? TemplateInstance.Find(card.TemplateInstanceId).Hash;
         card.Hash = _entityHasher.CardInstanceHasher.Invoke((card, templateHash, sha512));
+        card.TsVectorHelper = MappingTools.stripHtmlTags(card.FieldValues);
+      }
+      foreach (var x in entries.Where(x => x.Entity is CommunalFieldInstanceEntity)) {
+        var communalFieldInstance = (CommunalFieldInstanceEntity) x.Entity;
+        communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
     }
 
