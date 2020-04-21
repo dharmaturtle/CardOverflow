@@ -283,10 +283,14 @@ module Anki =
     let parseModels userId =
         let reduceTemplate (templates: AnkiTemplateInstance list) =
             let templates = templates |> List.map (fun x -> { Template = x; NewByOldField = []; ReducedFields = x.Fields; FieldsByOrdinal = [] })
+            let contains questionTemplate answerTemplate fieldName =
+                let qa = MappingTools.joinByUnitSeparator [questionTemplate; answerTemplate]
+                qa.Contains("{{" + fieldName + "}}", StringComparison.OrdinalIgnoreCase) ||
+                qa.Contains("{{type:" + fieldName + "}}", StringComparison.OrdinalIgnoreCase)
             let communalFields =
                 templates.Head.ReducedFields
-                |> List.filter (fun x ->
-                    templates.Count(fun t -> (MappingTools.joinByUnitSeparator [t.QuestionTemplate; t.AnswerTemplate]).Contains("{{" + x.Name + "}}"))
+                |> List.filter (fun field ->
+                    templates.Count(fun t -> contains t.QuestionTemplate t.AnswerTemplate field.Name)
                     |> function
                     | 1 -> false
                     | _ -> true
