@@ -313,8 +313,8 @@ type CardInstanceMeta with
             IsDmca = entity.IsDmca
             IsLatest = isLatest
             IsAcquired = isAcquired
-            StrippedFront = MappingTools.stripHtmlTags front
-            StrippedBack = MappingTools.stripHtmlTags back
+            StrippedFront = MappingTools.stripHtmlTagsForDisplay front
+            StrippedBack = MappingTools.stripHtmlTagsForDisplay back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Relationships = relationshipCounts.Select(fun x ->
                 {   Name = x.Name
@@ -337,8 +337,8 @@ type CardInstanceMeta with
             IsDmca = entity.IsDmca
             IsLatest = true
             IsAcquired = isAcquired
-            StrippedFront = MappingTools.stripHtmlTags front
-            StrippedBack = MappingTools.stripHtmlTags back
+            StrippedFront = MappingTools.stripHtmlTagsForDisplay front
+            StrippedBack = MappingTools.stripHtmlTagsForDisplay back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Relationships = relationshipCounts.Select(fun x ->
                 {   Name = x.Name

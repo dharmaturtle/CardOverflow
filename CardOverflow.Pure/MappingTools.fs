@@ -1,6 +1,7 @@
 module MappingTools
 
 open System
+open System.Linq
 open HtmlAgilityPack
 open System.Web
 open System.Text.RegularExpressions
@@ -84,3 +85,17 @@ let stripHtmlTags html =
     doc.DocumentNode.InnerText
     |> HttpUtility.HtmlDecode
     |> standardizeWhitespace
+
+let stripHtmlTagsForDisplay html =
+    let doc = HtmlDocument()
+    doc.LoadHtml html
+    for imgNode in doc.DocumentNode.Descendants("img").ToList() do
+        let imgText = HtmlNode.CreateNode " [ Image ] "
+        imgNode.ParentNode.ReplaceChild(imgText, imgNode) |> ignore
+    let r =
+        doc.DocumentNode.InnerText
+        |> HttpUtility.HtmlDecode
+        |> standardizeWhitespace
+    if String.IsNullOrWhiteSpace r then
+        "[ Empty ]"
+    else r

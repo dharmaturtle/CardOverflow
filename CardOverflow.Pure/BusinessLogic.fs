@@ -123,8 +123,8 @@ module CardHtml =
                 css
         htmlBase frontSide,
         htmlBase backSide,
-        MappingTools.stripHtmlTags <| frontSide,
-        MappingTools.stripHtmlTags <| (replaceFields false answerTemplate).Replace("{{FrontSide}}", "")
+        MappingTools.stripHtmlTagsForDisplay <| frontSide,
+        MappingTools.stripHtmlTagsForDisplay <| (replaceFields false answerTemplate).Replace("{{FrontSide}}", "")
 
 type DateCount = {
     Date: DateTime
