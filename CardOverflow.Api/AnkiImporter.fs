@@ -23,7 +23,9 @@ module AnkiDefaults =
          ("vgZiAPZFIxuapH1N8OgD+Z4Rl3ZdyqzaRe5eACnygT8EQDiLTpnqcqMrsLoW2PheQMYUma7NZaXVzA4oWpFqjw==", 3)
          ("eGXsWXGAsQAfHgUGk4JLIQ3uaF687zrsHYD/PoPn2dzmpYb2vMdxqt1IznkD351frGc9G/1avQ+loJ1EzeSPuw==", 2)
          ("PEPG/kewldTi4S2NsbkREMcgkK2zg/0E/G1shopZHmhA1H904wEDUzOlWnoW3G5dpenk/K6BxOZOZsNKA6+qwg==", 5)
-         ("sg4//8QUMVcDU9zVP1jImablLPEfp8cGe+xaMsl3jlMJ44R6ze/VAOfUf52/4bV2yO+mF32S/Wr7PahZ23MOnw==", 4)] |> Map.ofSeq
+         ("HcNXVOVXUWnT4aP/gBO+CtuA6x2nvXSRAPCSeYXoSxm8gae4nyMtVbF+LcD4zh3sikh8d6+dr0stK/NjJEUzJg==", 4)
+         ("sg4//8QUMVcDU9zVP1jImablLPEfp8cGe+xaMsl3jlMJ44R6ze/VAOfUf52/4bV2yO+mF32S/Wr7PahZ23MOnw==", 6)
+         ("IdD6RWYHj6thChsGurufrokeuvUK50wPFNo06+uaShMh4gCUufszmY51PR9C10zA3wtOXVT4WX6i2JGJ7a2YhA==", 7)] |> Map.ofSeq
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
