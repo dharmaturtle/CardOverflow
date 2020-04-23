@@ -38,7 +38,8 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
+    Assert.Equal(7, c.Db.TemplateInstance.Count())
+    Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
     } |> TaskResult.assertOk)
 
 [<Theory>]
@@ -110,7 +111,9 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.CardInstance.Count())
-    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count()) } |> TaskResult.assertOk)
+    Assert.Equal(8, c.Db.TemplateInstance.Count())
+    Assert.Equal(6, c.Db.LatestTemplateInstance.Count())
+    } |> TaskResult.assertOk)
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let! acquired = CardRepository.GetAcquired c.Db userId cardId

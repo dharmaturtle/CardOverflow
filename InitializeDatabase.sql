@@ -916,12 +916,11 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 \setlength{\parindent}{0in}
 \begin{document}
 ', '\end{document}', false, '{{Front}}
-
-{{type:Back}}', '{{Front}}
+{{type:Back}}', '{{FrontSide}}
 
 <hr id=answer>
 
-{{type:Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1587486094455, B'01001101011100001111110011111111001000110010100010001100111010101100000011001010001110111010101111111100000110100001001110011001011001011010011100110100100011111111100011100101111000110110000011011110001101110101101001001100100100111110111001110001110010101001000011000111001000010101111010110011111101111010101100000000111001110010101111111110101110011111110110000111101011010110111000010011111101110110010111101000101111100100100110111111010101101101111110111100000101011001101011011011110011100111000011111001', NULL, '''20px'':22 ''align'':25 ''answer'':5A ''arial'':18 ''back'':7C,10C,13C ''background'':30 ''background-color'':29 ''basic'':1A ''black'':28 ''card'':14 ''center'':26 ''color'':27,31 ''famili'':17 ''font'':16,20 ''font-famili'':15 ''font-siz'':19 ''front'':6C,8C,11C ''size'':21 ''text'':24 ''text-align'':23 ''type'':2A,9C,12C ''white'':32');
+{{Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1587663611565, B'10111000110000111110101000101010101001111110101010001010100101101100101110000111110001011111111100000001110010000111110101010000110110110000000111010111101110001110010110111101001011101000100100000000000011110100100110011110101000010001011111010010100110000011110110000001111001010001110111111001110001001011010010101010100011010111111010110100000000110001111101110011101110000011011101010001000100100011111011101110111101011011100111110101110100101011010011010100110011111100011000100100101000101100110001100100', NULL, '''20px'':21 ''align'':24 ''answer'':5A ''arial'':17 ''back'':7C,10C,12C ''background'':29 ''background-color'':28 ''basic'':1A ''black'':27 ''card'':13 ''center'':25 ''color'':26,30 ''famili'':16 ''font'':15,19 ''font-famili'':14 ''font-siz'':18 ''front'':6C,8C ''frontsid'':11C ''size'':20 ''text'':23 ''text-align'':22 ''type'':2A,9C ''white'':31');
 INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (5, 'Cloze', 5, '.card {
  font-family: arial;
  font-size: 20px;
@@ -945,6 +944,49 @@ INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Creat
 \begin{document}
 ', '\end{document}', false, '{{cloze:Text}}', '{{cloze:Text}}<br>
 {{Extra}}', '', '', 'TextArial20False0FalseExtraArial20False1False', 'Imported from Anki', 1554689669570, B'00111100110000100110001101111111111000100000110110101001001010110100011110000111101101001011000110001101100111011000100000001000111000110000010000001001101101011100110111000001101111110010000000111111101101100011011001100001010100011001101001111000000101100000001000101011111111100010111011000111100000001100000011001010110011001010010101011010010111100110100000111011011101101011101010100101100101110010011100111111011101011000000100100011011001110111001001100110110000110101001011000000111101010101010101000011', NULL, '''20px'':17 ''align'':20 ''arial'':13 ''background'':25 ''background-color'':24 ''black'':23 ''blue'':34 ''bold'':32 ''card'':9 ''center'':21 ''cloze'':1A,4C,6C,28,36 ''color'':22,26,33,37 ''extra'':3C,8C ''famili'':12 ''font'':11,15,30 ''font-famili'':10 ''font-siz'':14 ''font-weight'':29 ''lightblu'':38 ''nightmod'':35 ''size'':16 ''text'':2C,5C,7C,19 ''text-align'':18 ''weight'':31 ''white'':27');
+INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (6, 'Basic (type in the answer)', 4, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, '{{Front}}
+
+{{type:Back}}', '{{Front}}
+
+<hr id=answer>
+
+{{type:Back}}', '', '', 'FrontArial20False0FalseBackArial20False1False', 'Imported from Anki', 1587486094455, B'01001101011100001111110011111111001000110010100010001100111010101100000011001010001110111010101111111100000110100001001110011001011001011010011100110100100011111111100011100101111000110110000011011110001101110101101001001100100100111110111001110001110010101001000011000111001000010101111010110011111101111010101100000000111001110010101111111110101110011111110110000111101011010110111000010011111101110110010111101000101111100100100110111111010101101101111110111100000101011001101011011011110011100111000011111001', NULL, '''20px'':22 ''align'':25 ''answer'':5A ''arial'':18 ''back'':7C,10C,13C ''background'':30 ''background-color'':29 ''basic'':1A ''black'':28 ''card'':14 ''center'':26 ''color'':27,31 ''famili'':17 ''font'':16,20 ''font-famili'':15 ''font-siz'':19 ''front'':6C,8C,11C ''size'':21 ''text'':24 ''text-align'':23 ''type'':2A,9C,12C ''white'':32');
+INSERT INTO public."TemplateInstance" ("Id", "Name", "TemplateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "QuestionTemplate", "AnswerTemplate", "ShortQuestionTemplate", "ShortAnswerTemplate", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (7, 'Cloze', 5, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+.cloze {
+ font-weight: bold;
+ color: blue;
+}
+.nightMode .cloze {
+ color: lightblue;
+}', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, '{{cloze:Text}}', '{{cloze:Text}}', '', '', 'TextArial20False0False', 'Imported from Anki', 1587670846820, B'10000100000010110101111110100010011001101110000011110001110101011000011001010000110110000110000001011101110111011111100101110101100100010111100001011101101011110101000011100111001100101111000000101000010110110010110011010111110101110101100101010010110010001000010001000111000000000010100110011101110111111100110010011001011100011010111010111100111110000100001011101011001100100000001111111011110100000111001010111010001010100001111110011010011111100100010100011011100010011001000110110111101101010001100100100001', NULL, '''20px'':15 ''align'':18 ''arial'':11 ''background'':23 ''background-color'':22 ''black'':21 ''blue'':32 ''bold'':30 ''card'':7 ''center'':19 ''cloze'':1A,3C,5C,26,34 ''color'':20,24,31,35 ''famili'':10 ''font'':9,13,28 ''font-famili'':8 ''font-siz'':12 ''font-weight'':27 ''lightblu'':36 ''nightmod'':33 ''size'':14 ''text'':2C,4C,6C,17 ''text-align'':16 ''weight'':29 ''white'':25');
 
 
 INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (1, 'Admin', 1, true, true, 0, 4, 20, 0, false);

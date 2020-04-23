@@ -78,8 +78,7 @@ let clozeCommandWithSharedExtra clozeText clozeTemplate = {
             }).ToList() }
 
 let add templateName createCommand (db: CardOverflowDb) userId tags = task {
-    let! templates = TestTemplateRepo.Search db templateName
-    let template = templates.Single(fun x -> x.Name = templateName)
+    let! template = TestTemplateRepo.SearchEarliest db templateName
     let! ac = CardRepository.getNew db userId
     let ac = { ac with Tags = tags }
     let! r =

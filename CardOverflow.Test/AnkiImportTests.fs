@@ -197,7 +197,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     Assert.Equal(18, c.Db.Card.Count())
     Assert.Equal(18, c.Db.CardInstance.Count())
-    Assert.Equal(AnkiDefaults.templateIdByHash.Count + 5, c.Db.Template.Count())
+    Assert.Equal(AnkiDefaults.templateIdByHash.Count + 3, c.Db.Template.Count())
     Assert.Equal(AnkiDefaults.templateIdByHash.Count + 5, c.Db.TemplateInstance.Count())
 
     let getInstances (templateName: string) =
@@ -293,7 +293,7 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     Assert.Equal(2, c.Db.Card.Count())
     Assert.Equal(2, c.Db.CardInstance.Count())
     Assert.Equal(6, c.Db.Template.Count())
-    Assert.Equal(6, c.Db.TemplateInstance.Count())
+    Assert.Equal(8, c.Db.TemplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
     } |> TaskResult.assertOk)
 
@@ -305,7 +305,9 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     let! x = AnkiImporter.save c.Db ankiDb userId Map.empty
     Assert.Null x.Value
     Assert.Equal<IEnumerable<string>>(
-        [   "4/8/2019 02:14:29"
+        [   "4/23/2020 19:40:46"
+            "4/23/2020 19:40:46"
+            "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
@@ -314,7 +316,9 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         c.Db.TemplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
-        [   "6/16/2019 00:51:28"
+        [   "4/23/2020 19:40:46"
+            "4/23/2020 19:40:46"
+            "6/16/2019 00:51:28"
             "6/16/2019 00:51:32"
             "6/16/2019 00:51:46"
             "6/16/2019 00:51:55"
@@ -407,7 +411,8 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             card.Instance.CommunalFields)
 
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
+    Assert.Equal(7, c.Db.TemplateInstance.Count())
+    Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
     }
 
 let assertHasHistory db ankiDb: Task<unit> = (taskResult {
@@ -478,7 +483,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(2, c.Db.CardSetting.Count(fun x -> x.UserId = userId))
         Assert.Equal(4, c.Db.Tag.Count())
         Assert.Equal(5, c.Db.Template.Count(fun x -> x.AuthorId = theCollectiveId))
-        Assert.Equal(5, c.Db.TemplateInstance.Count(fun x -> x.Template.AuthorId = theCollectiveId))
+        Assert.Equal(7, c.Db.TemplateInstance.Count(fun x -> x.Template.AuthorId = theCollectiveId))
         Assert.Equal(0, c.Db.Template.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(0, c.Db.TemplateInstance.Count(fun x -> x.Template.AuthorId = userId))
         Assert.Equal(0, c.Db.Template.Count(fun x -> x.AuthorId = userId))
@@ -494,7 +499,8 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
         Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(7, c.Db.CommunalField.Count())
-        Assert.Equal(c.Db.LatestTemplateInstance.Count(), c.Db.TemplateInstance.Count())
+        Assert.Equal(7, c.Db.TemplateInstance.Count())
+        Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
     } |> TaskResult.assertOk)
 
 [<Theory>]

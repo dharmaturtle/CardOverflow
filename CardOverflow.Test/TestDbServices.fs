@@ -61,6 +61,14 @@ module TestTemplateRepo =
                 .ToListAsync()
         return x |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
         }
+    let SearchEarliest (db: CardOverflowDb) (query: string) = task {
+        let! x =
+            db.TemplateInstance
+                .Where(fun x -> x.Name = query)
+                .OrderBy(fun x -> x.Created)
+                .FirstAsync()
+        return x |> TemplateInstance.load |> ViewTemplateInstance.load
+        }
 
 // Sqlite
 
