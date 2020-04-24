@@ -28,7 +28,7 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
                 then memberName.Value + "_" + callerMembersArg.Value
                 else memberName.Value
             Regex.Replace(temp, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
-            |> sprintf "CardOverflow_%s"
+            |> sprintf "Ω_%s"
         container.RegisterStuffTestOnly
         container.RegisterTestConnectionString dbName
         container.Verify()
@@ -37,9 +37,9 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
             if newDb then
                 InitializeDatabase.fullReset
             else
-                InitializeDatabase.fastReset
+                InitializeDatabase.reset
         | None ->
-            InitializeDatabase.fastReset
+            InitializeDatabase.reset
         |> fun reset -> container.GetInstance<IConfiguration>().GetConnectionString "ServerConnection" |> ConnectionString |> reset dbName
 
     interface IDisposable with

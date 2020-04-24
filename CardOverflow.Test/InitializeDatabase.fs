@@ -1,4 +1,4 @@
-module InitializeDatabase
+﻿module InitializeDatabase
 
 open LoadersAndCopiers
 open Helpers
@@ -86,57 +86,54 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): 
 
 let fastResetScript =
     let insertMasterData =
-        Regex("""SET IDENTITY_INSERT.*INSERT \[.*?$""", RegexOptions.Singleline + RegexOptions.Multiline)
+        Regex("""INSERT INTO.*SELECT pg_catalog\.setval\('public\.".*?;""", RegexOptions.Singleline + RegexOptions.Multiline)
             .Match(File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql")
             .Value
-    sprintf // https://stackoverflow.com/a/39511982 https://stackoverflow.com/a/49735672 Full text index stuff: https://stackoverflow.com/q/1091812/ https://stackoverflow.com/a/12183863
-        """USE [CardOverflow]
-        GO
-        EXEC sp_MSForEachTable 'DISABLE TRIGGER ALL ON ?'
-        GO
-        EXEC sp_MSForEachTable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL'
-        GO
-        EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; DELETE FROM ?'
-        GO
-        exec sp_MSforeachtable 'dbcc checkident(''?'', reseed, 0)', @whereand='and exists(select 1 from sys.columns c where c.object_id = o.id and is_identity = 1)'
-        GO
+    sprintf // https://stackoverflow.com/a/12082038
+        """SET session_replication_role = 'replica';
+        DO
+        $func$
+        BEGIN
+           EXECUTE
+           (SELECT 'TRUNCATE TABLE ' || string_agg(oid::regclass::text, ', ') || ' CASCADE'
+            FROM   pg_class
+            WHERE  relkind = 'r'  -- only tables
+            AND    relnamespace = 'public'::regnamespace
+           );
+        END
+        $func$;
         %s
-        GO
-        ALTER FULLTEXT CATALOG CardInstanceFieldValueFullTextCatalog REBUILD
-        GO
-        ALTER FULLTEXT CATALOG RelationshipFullTextCatalog REBUILD
-        GO
-        ALTER FULLTEXT CATALOG TagFullTextCatalog REBUILD
-        GO
-        ALTER FULLTEXT CATALOG TemplateFullTextCatalog REBUILD
-        GO
-        DBCC CHECKIDENT ('[CardInstance]', RESEED, 1000)
-        DBCC CHECKIDENT ('[CommunalFieldInstance]', RESEED, 1000)
-        DBCC CHECKIDENT ('[TemplateInstance]', RESEED, 1000)
-        GO
-        EXEC sp_MSForEachTable 'ALTER TABLE ? CHECK CONSTRAINT ALL'
-        GO
-        EXEC sp_MSForEachTable 'ENABLE TRIGGER ALL ON ?'
-        GO"""
+        SET session_replication_role = 'origin';"""
         insertMasterData
+
+let fastReset databaseName serverConnectionString =
+    let serverConnectionString = ConnectionString.value serverConnectionString
+    executeNonQuery fastResetScript
+        <| sprintf "%s;Database=%s;" serverConnectionString databaseName
     
 let databaseExists databaseName connectionString =
     use connection = new NpgsqlConnection(ConnectionString.value connectionString)
     use command = new NpgsqlCommand(sprintf "SELECT 1 FROM pg_database WHERE datname='%s'" databaseName, connection) // sql injection vector - do not use in prod https://stackoverflow.com/a/33782992
     connection.Open()
-    DBNull.Value :> obj <> command.ExecuteScalar()
+    command.ExecuteScalar() |> isNull |> not
 
-let fastReset databaseName connectionString =
-    if databaseExists databaseName connectionString then
-        fullReset // medTODO make fast
+let reset databaseName serverConnectionString =
+    if databaseExists databaseName serverConnectionString then
+        fastReset
     else
         fullReset
     <| databaseName
-    <| connectionString
+    <| serverConnectionString
 
 //[<Fact>]
 let ``Delete all rows and reinsert master data into localhost's CardOverflow Database`` (): unit =
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
-    c.GetInstance<ConnectionString>() |> fastReset "CardOverflow"
+    c.GetInstance<ConnectionString>() |> reset "CardOverflow"
+
+(*
+select 'drop database "'||datname||'";'
+from pg_database
+where datistemplate=false AND datname like 'Ω_%'
+*)
