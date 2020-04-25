@@ -8,16 +8,6 @@ open System.Text
 open Microsoft.FSharp.Quotations
 open System.Threading.Tasks
 
-module TaskX =
-    let map continuation (t: Task<'A>) =
-        t.ContinueWith(fun (antecedent: Task<'A>) -> // https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/chaining-tasks-by-using-continuation-tasks
-            if  antecedent.Status <> TaskStatus.Canceled &&
-                antecedent.Status <> TaskStatus.Faulted then
-                continuation antecedent.Result
-            else
-                raise antecedent.Exception // must I?
-        )
-
 [<CustomEquality; NoComparison>]
 type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
     { v: 'T } 

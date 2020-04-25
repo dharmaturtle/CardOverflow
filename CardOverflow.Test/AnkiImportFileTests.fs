@@ -321,7 +321,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     use c = new TestContainer()
     let! template =
         TestTemplateRepo.Search c.Db "Basic"
-        |> TaskX.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
     let cardId = 1
@@ -352,7 +352,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                     TemplateInstance = template
                     ParentId = None
                 }
-            |> TaskX.map Result.getOk
+            |> Task.map Result.getOk
         Assert.Equal<seq<string * int>>(["Back", 1001], communals)
         let! field = c.Db.CommunalField.SingleAsync()
         Assert.Equal(cardId, field.Id)
