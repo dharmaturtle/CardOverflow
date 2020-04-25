@@ -14,6 +14,7 @@
     <Compile Include="AnkiImportLogic.fs" />
     <Compile Include="BusinessLogic.fs" />
     <Compile Include="BusinessModels.fs" />
+    <Compile Include="DatabaseLogic.fs" />
   </ItemGroup>
 
   <ItemGroup>

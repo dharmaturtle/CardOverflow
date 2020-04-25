@@ -1,6 +1,6 @@
 module ConceptRepositoryTests
 
-open CardOverflow.Pure.Core
+open CardOverflow.Pure
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Api
@@ -225,21 +225,21 @@ let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
     testGetAcquired
         [1001]
         [ FacetRepositoryTests.addBasicCard ]
-        <| nameof <@ ``GetAcquired works when acquiring 1 basic card`` @>
+        <| nameof ``GetAcquired works when acquiring 1 basic card``
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> = 
     testGetAcquired
         [1001]
         [ FacetRepositoryTests.addReversedBasicCard ]
-        <| nameof <@ ``GetAcquired works when acquiring 1 card of a pair`` @>
+        <| nameof ``GetAcquired works when acquiring 1 card of a pair``
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
     testGetAcquired
         [1001; 1002]
         [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
-        <| nameof <@ ``GetAcquired works when acquiring 2 cards of a pair`` @>
+        <| nameof ``GetAcquired works when acquiring 2 cards of a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
@@ -444,6 +444,37 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3] }
 
+let sanitizeSearchData: Object [] [] = [|
+        [| "{{c1::cloze deletion}}"
+           "{{c1::cloze deletion}}"
+           "" |]
+        [| "wild*"
+           ""
+           "wild:*" |]
+        [| "wild*card"
+           "wild*card"
+           "" |]
+        [| "*wild"
+           "*wild"
+           "" |]
+        [| "wild*."
+           "wild*."
+           "" |]
+        [| "wild* card"
+           " card"
+           "wild:*" |]
+        [| "wild* card*"
+           " "
+           "wild:* card:*" |]
+    |]
+[<Theory>]
+[<MemberData(nameof sanitizeSearchData)>]
+let ``Sanitize search`` (input: string, expectedPlain: string, expectedWildcards: string): unit =
+    let actualPlain, actualWildcards = FullTextSearch.parse input
+
+    Assert.Equal(expectedPlain, actualPlain)
+    Assert.Equal(expectedWildcards, actualWildcards)
+
 [<Fact>]
 let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
@@ -539,7 +570,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
                 IsSticky = false
             }
         {   initialTemplate.Editable with
-                Fields = initialTemplate.Editable.Fields.Append newField |> toResizeArray
+                Fields = initialTemplate.Editable.Fields.Append newField |> Core.toResizeArray
         }
     let! x = SanitizeTemplate.Update c.Db userId newEditable
     Assert.Null x.Value
