@@ -444,8 +444,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3] }
 
-[<NCrunch.Framework.Serial>]
-[<Fact>] // If the index is acting weird, in SSMS, in Object Explorer, connect to the instance of the Database Engine, right-click the instance of the Database Engine, and then click Restart
+[<Fact>]
 let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3

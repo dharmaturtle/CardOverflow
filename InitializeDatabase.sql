@@ -16,8 +16,10 @@ CREATE FUNCTION public.cardinstance_tsvectorfunction() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
-  NEW."TsVectorHelper" = NULL;
+  IF (NEW."TsVectorHelper" IS NOT NULL) THEN
+    NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
+    NEW."TsVectorHelper" = NULL;
+  END IF;
   return NEW;
 end  
 $$;
@@ -29,10 +31,12 @@ CREATE FUNCTION public.communalfieldinstance_tsvectorfunction() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  NEW."TsVector" =
-    setweight(to_tsvector('pg_catalog.english', NEW."FieldName"), 'A') ||
-    setweight(to_tsvector('pg_catalog.english', NEW."BWeightTsVectorHelper"), 'B');
-  NEW."BWeightTsVectorHelper" = NULL;
+  IF (NEW."BWeightTsVectorHelper" IS NOT NULL) THEN
+    NEW."TsVector" =
+        setweight(to_tsvector('pg_catalog.english', NEW."FieldName"), 'A') ||
+        setweight(to_tsvector('pg_catalog.english', NEW."BWeightTsVectorHelper"), 'B');
+    NEW."BWeightTsVectorHelper" = NULL;
+  END IF;
   return NEW;
 end  
 $$;
@@ -68,11 +72,13 @@ CREATE FUNCTION public.templateinstance_tsvectorfunction() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  NEW."TsVector" =
-    setweight(to_tsvector('pg_catalog.english', NEW."Name"), 'A') ||
-    setweight(to_tsvector('pg_catalog.english', NEW."CWeightTsVectorHelper"), 'C') ||
-    setweight(to_tsvector('pg_catalog.english', NEW."Css"), 'D');
-  NEW."CWeightTsVectorHelper" = NULL;
+  IF (NEW."CWeightTsVectorHelper" IS NOT NULL) THEN
+    NEW."TsVector" =
+        setweight(to_tsvector('pg_catalog.english', NEW."Name"), 'A') ||
+        setweight(to_tsvector('pg_catalog.english', NEW."CWeightTsVectorHelper"), 'C') ||
+        setweight(to_tsvector('pg_catalog.english', NEW."Css"), 'D');
+    NEW."CWeightTsVectorHelper" = NULL;
+  END IF;
   return NEW;
 end  
 $$;
