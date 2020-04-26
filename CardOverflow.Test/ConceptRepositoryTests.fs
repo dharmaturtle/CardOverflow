@@ -613,7 +613,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     Assert.Null x.Value
 
     let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Instances.Single()).Single(fun x -> x.Name = name).TemplateId)
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).TemplateId)
     }
 
 [<Fact>]

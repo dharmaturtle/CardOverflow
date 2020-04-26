@@ -213,10 +213,12 @@ module SanitizeTemplate =
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
             db.User_TemplateInstance
-                .Include(fun x -> x.TemplateInstance.Template)
                 .Where(fun x ->  x.UserId = userId)
+                .Select(fun x -> x.TemplateInstance.Template)
+                .Distinct()
+                .Include(fun x -> x.TemplateInstances)
                 .ToListAsync()
-        return x |> Seq.map (fun x -> ViewTemplateWithAllInstances.load x.TemplateInstance.Template) |> toResizeArray
+        return x |> Seq.map ViewTemplateWithAllInstances.load |> toResizeArray
         }
     let Update (db: CardOverflowDb) userId (instance: ViewTemplateInstance) =
         let update () = task {

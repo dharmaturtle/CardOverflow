@@ -15,7 +15,7 @@
 <div class="list-group">
   @foreach (var filter in _filters) {
     <div class="list-group-item d-flex justify-content-between p-0 border-0">
-      <button @onclick=@(() => new SearchCommand(filter.Query).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill text-left">@filter.Name</button>
+      <button @onclick=@(() => new SearchCommand(filter.Query, SearchOrder.Popularity).Apply(DeckClicked.InvokeAsync)) class="btn btn-light flex-fill text-left">@filter.Name</button>
       <button @onclick=@(() => Edit(filter)) class="oi oi-pencil btn btn-light"></button>
     </div>
   }
@@ -102,7 +102,7 @@
   Task Edit(ViewFilter filter) {
     _activeFilter = filter;
     Modal.Show();
-    return DeckClicked.InvokeAsync(new SearchCommand(filter.Query));
+    return DeckClicked.InvokeAsync(new SearchCommand(filter.Query, SearchOrder.Popularity));
   }
 
 }

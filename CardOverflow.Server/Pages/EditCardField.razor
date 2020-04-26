@@ -24,9 +24,9 @@
     @foreach (var instanceId in Field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id)) {
       <span class="curate-tooltip-target">
         <span class="oi oi-eye" aria-hidden="true"/>
-        <div class="curate-tooltip-content">
+        <span class="curate-tooltip-content">
           <ResizingIframe CardInstanceId=@instanceId Front />
-        </div>
+        </span>
       </span>
     }
   </div>
@@ -79,7 +79,7 @@
   [Parameter] public EventCallback<string> ValueUpdated { get; set; }
   private object[] _tools = new object[] { "Bold", "Italic", "Underline", "SubScript", "SuperScript", "StrikeThrough", "FontName", "FontSize", "FontColor", "BackgroundColor", "|", "Formats", "Alignments", "OrderedList", "UnorderedList", "Outdent", "Indent", "|", "CreateTable", "CreateLink", "Image", "|", "ClearFormat", "SourceCode", "FullScreen", "|", "Undo", "Redo" };
   private List<CommunalFieldInstance> _searchResults = new List<CommunalFieldInstance>();
-  private SearchCommand _searchCommand = new SearchCommand("");
+  private SearchCommand _searchCommand = new SearchCommand("", SearchOrder.Popularity);
   private bool _readOnlyIsVisible;
   private bool _isNew = true;
 
