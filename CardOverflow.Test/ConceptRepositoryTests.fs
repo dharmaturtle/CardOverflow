@@ -512,7 +512,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! templates = search "Cloze"
     Assert.Equal("Cloze", templates.Results.Single().Name)
     Assert.Equal(3, templates.Results.Single().TemplateUsers)
-    Assert.True(templates.Results.Single().IsAcquired)
+    Assert.False(templates.Results.Single().IsAcquired) // most recent cloze is not acquired because it's missing Extra. Why Damien?
     let! templates = search "type"
     Assert.Equal("Basic (type in the answer)", templates.Results.Single().Name)
     Assert.Equal(3, templates.Results.Single().TemplateUsers)

@@ -326,32 +326,27 @@ module CardRepository =
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return AcquiredCard.initialize userId user.DefaultCardSettingId.Value [] // medTODO handle the null
         }
-    let private containsSearchTerm (searchTerm: string) = "\"" + searchTerm.Replace('"', ' ') + "\""
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
-        let containsSearchTerm = containsSearchTerm searchTerm
+        let plain, wildcard = FullTextSearch.parse searchTerm
         db.AcquiredCard
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
-                String.IsNullOrWhiteSpace searchTerm
-                //x.Tag_AcquiredCards.Any(fun x ->
-                //    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
-                //    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
-                //EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
-                //EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                String.IsNullOrWhiteSpace searchTerm ||
+                x.Tag_AcquiredCards.Any(fun x ->
+                    x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
+                x.CardInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
-        let containsSearchTerm = containsSearchTerm searchTerm
+        let plain, wildcard = FullTextSearch.parse searchTerm
         db.AcquiredCardIsLatest
             .Include(fun x -> x.CardInstance.TemplateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
-                String.IsNullOrWhiteSpace searchTerm
-                //x.Tag_AcquiredCards.Any(fun x ->
-                //    EF.Functions.Contains(x.Tag.Name, containsSearchTerm) ||
-                //    EF.Functions.FreeText(x.Tag.Name, searchTerm)) ||
-                //EF.Functions.Contains(x.CardInstance.FieldValues, containsSearchTerm) ||
-                //EF.Functions.FreeText(x.CardInstance.FieldValues, searchTerm)
+                String.IsNullOrWhiteSpace searchTerm ||
+                x.Tag_AcquiredCards.Any(fun x ->
+                    x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
+                x.CardInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {

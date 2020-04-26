@@ -358,7 +358,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
-    Assert.Equal(5, c.Db.User_TemplateInstance.Count(fun x -> x.UserId = userId))
+    Assert.Equal(6, c.Db.User_TemplateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
         (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
@@ -386,15 +386,15 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         Assert.Empty <| card.Relationships
         Assert.Equal(
             [ { Id = 1001
-                FieldName = "Back"
-                Value = "Basic (optional reversed card) back" }
-              { Id = 1006
                 FieldName = "Front"
                 Value = "Basic (optional reversed card) front" }
-              { Id = 1007
+              { Id = 1002
                 FieldName = "Add Reverse"
-                Value = "Basic (optional reversed card) reverse" }],
-            card.Instance.CommunalFields)
+                Value = "Basic (optional reversed card) reverse" }
+              { Id = 1007
+                FieldName = "Back"
+                Value = "Basic (optional reversed card) back" }],
+                card.Instance.CommunalFields)
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
@@ -402,10 +402,10 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         let card = card.Value
         Assert.Empty card.Relationships
         Assert.Equal(
-            [ { Id = 1002
+            [ { Id = 1003
                 FieldName = "Back"
                 Value = "Basic (and reversed card) back" }
-              { Id = 1003
+              { Id = 1004
                 FieldName = "Front"
                 Value = "Basic (and reversed card) front" }],
             card.Instance.CommunalFields)
