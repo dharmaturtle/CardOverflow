@@ -122,7 +122,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        let! _ = CardRepository.SearchAsync c.Db userId i ""
+        let! _ = CardRepository.SearchAsync c.Db userId i SearchOrder.Popularity ""
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
@@ -186,7 +186,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
 
     let userId = 3 // this user never acquires the card
     if cardInstanceIds.Length = 1 then
-        let! cards = CardRepository.SearchAsync c.Db userId 1 ""
+        let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
         Assert.Equal(
             cardInstanceIds.Count(),
             cards.Results.Count()
@@ -199,7 +199,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
             card.Value.Tags
         )
     else
-        let! cards = CardRepository.SearchAsync c.Db userId 1 ""
+        let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
         Assert.Equal(
             cardInstanceIds.Count(),
             cards.Results.Count()
@@ -486,8 +486,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom"]
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
-    do! Task.Delay 10000 // give the full text index time to rebuild
-    let search = CardRepository.SearchAsync c.Db userId 1
+    let search = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity
     
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
@@ -508,6 +507,34 @@ let ``Card search works`` (): Task<unit> = task {
     let! cards = search clozeText
     Assert.Equal(3, cards.Results.Single().Id)
 
+    let search = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Relevance
+    // testing relevance
+    let term = "relevant "
+    let less = String.replicate 1 term
+    let more = String.replicate 3 term
+    let! _ = FacetRepositoryTests.addBasicCustomCard [less; less] c.Db userId ["tag"]
+    let! _ = FacetRepositoryTests.addBasicCustomCard [more; more] c.Db userId ["tag"]
+    let! hits = search term
+    Assert.Equal(more.Trim(), hits.Results.First().Instance.StrippedFront)
+
+    // testing relevance sans tags
+    let term = "nightwish "
+    let less = String.replicate 1 term
+    let more = String.replicate 3 term
+    let! _ = FacetRepositoryTests.addBasicCustomCard [less; less] c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicCustomCard [more; more] c.Db userId []
+    let! hits = search term
+    Assert.Equal(more.Trim(), hits.Results.First().Instance.StrippedFront)
+    
+    // tags outweigh fields
+    let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    let tag = " batman"
+    let! _ = FacetRepositoryTests.addBasicCustomCard [lorem      ; ""] c.Db userId [tag]
+    let! _ = FacetRepositoryTests.addBasicCustomCard [lorem + tag; ""] c.Db userId []
+    let! hits = search tag
+    Assert.Equal(lorem, hits.Results.First().Instance.StrippedFront)
+
+    // testing template search
     let search = SanitizeTemplate.Search c.Db userId 1
     let! templates = search "Cloze"
     Assert.Equal("Cloze", templates.Results.Single().Name)

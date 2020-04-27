@@ -207,6 +207,7 @@ module SanitizeRelationshipRepository =
 type SearchCommand = {
     [<StringLength(250, ErrorMessage = "Query must be less than 250 characters.")>]
     Query: string
+    Order: SearchOrder
 }
 
 [<CLIMutable>]
@@ -313,7 +314,7 @@ module SanitizeCardRepository =
                 Set.difference required actual |> String.concat ", " |> sprintf "The following cloze fields must be communal: %s" |> Error |> Task.FromResult
         }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
-        CardRepository.SearchAsync db userId pageNumber searchCommand.Query
+        CardRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.GetAcquiredPages db userId pageNumber searchCommand.Query
 

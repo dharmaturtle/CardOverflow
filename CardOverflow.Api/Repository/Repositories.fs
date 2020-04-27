@@ -381,25 +381,16 @@ module CardRepository =
         (searchAcquired db userId query)
             .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
             .Count()
-    let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) (searchTerm: string) =
+    let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         task {
             let! r =
-                db.LatestCardInstance
-                    .Where(fun x ->
-                        String.IsNullOrWhiteSpace searchTerm ||
-                        x.CardInstance.AcquiredCards.Any(fun x -> x.Tag_AcquiredCards.Any(fun x ->
-                            x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard)))) ||
-                        x.CardInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
-                    )
-                    .OrderByDescending(fun x -> x.CardUsers)
-                    .Select(fun x ->
-                        x,
-                        x.CardInstance.AcquiredCards.Any(fun x -> x.UserId = userId),
-                        x.TemplateInstance, // .Include fails for some reason, so we have to manually select
-                        x.Author
-                    )
-                    .ToPagedListAsync(pageNumber, 15)
+                db.SearchLatestCardInstance(searchTerm, plain, wildcard, order).Select(fun x ->
+                    x,
+                    x.CardInstance.AcquiredCards.Any(fun x -> x.UserId = userId),
+                    x.TemplateInstance, // .Include fails for some reason, so we have to manually select
+                    x.Author
+                ).ToPagedListAsync(pageNumber, 15)
             let squashed =
                 r |> List.ofSeq |> List.map (fun (c, isAcquired, template, author) ->
                     c.Author <- author

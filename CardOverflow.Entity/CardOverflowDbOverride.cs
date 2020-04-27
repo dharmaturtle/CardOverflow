@@ -19,6 +19,11 @@ namespace CardOverflow.Entity {
     FSharpFunc<(TemplateInstanceEntity, SHA512), BitArray> TemplateInstanceHasher { get; }
   }
 
+  public enum SearchOrder {
+    Popularity,
+    Relevance
+  }
+
   // This class should not store custom state due to usage of `AddDbContextPool`
   public partial class CardOverflowDb : DbContext {
     private readonly IEntityHasher _entityHasher;
@@ -35,6 +40,24 @@ namespace CardOverflow.Entity {
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default) {
       _OnBeforeSaving();
       return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    public IOrderedQueryable<LatestCardInstanceEntity> SearchLatestCardInstance(string searchTerm, string plain, string wildcard, SearchOrder searchOrder) {
+      var normalization = NpgsqlTsRankingNormalization.DivideBy1PlusLogLength | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
+      return LatestCardInstance
+        .Where(x =>
+          String.IsNullOrWhiteSpace(searchTerm) ||
+          x.CardInstance.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x =>
+            x.Tag.TsVector.Matches(EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard))))) ||
+          x.CardInstance.TsVector.Matches(EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard))))
+        .OrderByDescending(x =>
+          searchOrder == SearchOrder.Popularity
+          ? x.CardUsers
+          : x.CardInstance.TsVector.RankCoverDensity(
+            EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard)), normalization) +
+            ((float?) x.CardInstance.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
+              x.Tag.TsVector.RankCoverDensity(
+                EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard)), normalization))) ?? 0) / 3); // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
     }
 
     private void _OnBeforeSaving() {
