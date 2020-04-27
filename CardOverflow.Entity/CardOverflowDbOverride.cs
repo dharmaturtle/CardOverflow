@@ -44,29 +44,46 @@ namespace CardOverflow.Entity {
     }
 
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public IOrderedQueryable<LatestCardInstanceEntity> SearchLatestCardInstance(string searchTerm, string plain, string wildcard, SearchOrder searchOrder) {
-      const NpgsqlTsRankingNormalization normalization = NpgsqlTsRankingNormalization.DivideBy1PlusLogLength | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
+    public IOrderedQueryable<LatestCardInstanceEntity> SearchLatestCardInstance(
+      string searchTerm,
+      string plain,
+      string wildcard,
+      SearchOrder searchOrder
+    ) {
+      const NpgsqlTsRankingNormalization normalization =
+          NpgsqlTsRankingNormalization.DivideBy1PlusLogLength
+        | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
+
+      IQueryable<LatestCardInstanceEntity> where(IQueryable<LatestCardInstanceEntity> query) =>
+        String.IsNullOrWhiteSpace(searchTerm)
+        ? query
+        : query.Where(x =>
+          x.CardInstance.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x => x.Tag.TsVector.Matches(
+              Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)))))
+            || x.CardInstance.TsVector.Matches(
+              Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
+
+      IOrderedQueryable<LatestCardInstanceEntity> order(IQueryable<LatestCardInstanceEntity> query) =>
+        searchOrder == SearchOrder.Popularity
+        ? query.OrderByDescending(x => x.CardUsers)
+        : query.OrderByDescending(x =>
+          x.CardInstance.TsVector.RankCoverDensity(
+              Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
+          + (((float?)x.CardInstance.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
+            x.Tag.TsVector.RankCoverDensity(
+              Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
+            )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
+
       return LatestCardInstance
-        .Where(x =>
-          String.IsNullOrWhiteSpace(searchTerm) ||
-          x.CardInstance.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x =>
-            x.Tag.TsVector.Matches(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))))) ||
-          x.CardInstance.TsVector.Matches(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))))
-        .OrderByDescending(x =>
-          searchOrder == SearchOrder.Popularity
-          ? x.CardUsers
-          : x.CardInstance.TsVector.RankCoverDensity(
-            Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization) +
-            (((float?) x.CardInstance.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
-              x.Tag.TsVector.RankCoverDensity(
-                Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization))) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks
+        .Apply(where)
+        .Apply(order);
     }
 
     private void _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
       foreach (var x in entries.Where(x => x.Entity is TemplateInstanceEntity)) {
-        var template = (TemplateInstanceEntity) x.Entity;
+        var template = (TemplateInstanceEntity)x.Entity;
         template.Hash = _entityHasher.TemplateInstanceHasher.Invoke((template, sha512));
         template.CWeightTsVectorHelper =
           Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
@@ -75,13 +92,13 @@ namespace CardOverflow.Entity {
             .Apply(x => string.Join(' ', x));
       }
       foreach (var x in entries.Where(x => x.Entity is CardInstanceEntity)) {
-        var card = (CardInstanceEntity) x.Entity;
+        var card = (CardInstanceEntity)x.Entity;
         var templateHash = card.TemplateInstance?.Hash ?? TemplateInstance.Find(card.TemplateInstanceId).Hash;
         card.Hash = _entityHasher.CardInstanceHasher.Invoke((card, templateHash, sha512));
         card.TsVectorHelper = MappingTools.stripHtmlTags(card.FieldValues);
       }
       foreach (var x in entries.Where(x => x.Entity is CommunalFieldInstanceEntity)) {
-        var communalFieldInstance = (CommunalFieldInstanceEntity) x.Entity;
+        var communalFieldInstance = (CommunalFieldInstanceEntity)x.Entity;
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
     }
