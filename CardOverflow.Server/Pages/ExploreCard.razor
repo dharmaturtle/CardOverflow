@@ -25,11 +25,11 @@
       By @Card.Author
       @if (Card.AuthorId == User?.Id) {
         <a href="card/@Card.Id/edit" title="Edit">
-          <span class="oi oi-pencil"></span>
+          <span class="oi oi-pencil" />
         </a>
       } else {
-        <a href="curate/card/fork/@Card.Instance.Id" title="Edit a copy">
-          <span class="fas fa-code-branch"></span>
+        <a href="curate/card/copy/@Card.Instance.Id" title="Edit a Copy">
+          <span class="fas fa-copy" />
         </a>
       }
       <a href="/card/@Card.Id/revision" title="Revisions">
