@@ -10,7 +10,7 @@ open System.Text.RegularExpressions
 open CardOverflow.Debug
 open FSharp.Text.RegexProvider
 
-type PostgresColonRegex = Regex< """(?<WildcardWord>\w+\*)(?:\s|$)""" >
+type PostgresColonRegex = Regex< """(?<WildcardWord>[A-Za-z]+\*)(?:\s|$)""" >
 module FullTextSearch =
     let private regex = PostgresColonRegex(RegexOptions.Compiled)
     let parse (input: string) =

@@ -451,6 +451,15 @@ let sanitizeSearchData: Object [] [] = [|
         [| "wild*"
            ""
            "wild:*" |]
+        [| "0wild*"
+           "0"
+           "wild:*" |]
+        [| "0wild* word"
+           "0 word"
+           "wild:*" |]
+        [| "zombie 0wild* word"
+           "zombie 0 word"
+           "wild:*" |]
         [| "wild*card"
            "wild*card"
            "" |]
