@@ -348,7 +348,7 @@ let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
     Assert.Empty view.FieldValues
 
 [<Fact>]
-let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also forking``() : Task<unit> = task {
+let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also copying``() : Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
@@ -410,13 +410,13 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
                 Count = 1
                 IsAcquired = true }]
             
-    // fork
+    // copy
     let userId = 2
     let cardId = 2
     let cardInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard =  CardRepository.getNew c.Db userId
-    let! old = SanitizeCardRepository.getFork c.Db cardInstanceId
+    let! old = SanitizeCardRepository.getCopy c.Db cardInstanceId
     let old = old.Value
     let updated = {
         old with
@@ -431,20 +431,20 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
 
     do! asserts userId cardId newValue 1 1 []
 
-    // already forked
+    // already copied
     let cardInstanceId = 1003
     Assert.Equal(userId, c.Db.CardInstance.Include(fun x -> x.Card).Single(fun x -> x.Id = cardInstanceId).Card.AuthorId)
     let! acquiredCard =  CardRepository.getNew c.Db userId
-    let! fork = SanitizeCardRepository.getFork c.Db cardInstanceId
+    let! copy = SanitizeCardRepository.getCopy c.Db cardInstanceId
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard fork.Value.load
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard copy.Value.load
     
-    Assert.Equal("You can't fork your own cards.", x.error)
+    Assert.Equal("You can't copy your own cards. Yet. Contact us if you really want this feature.", x.error)
 
-    // missing fork
+    // missing copy
     let cardInstanceId = 1337
     
-    let! old = SanitizeCardRepository.getFork c.Db cardInstanceId
+    let! old = SanitizeCardRepository.getCopy c.Db cardInstanceId
     
     Assert.Equal(sprintf "Card instance %i not found" cardInstanceId, old.error)
     }

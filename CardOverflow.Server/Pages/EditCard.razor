@@ -1,5 +1,5 @@
 @page "/card/{Id:int}/edit"
-@page "/Curate/Card/Fork/{ParentId:int}"
+@page "/curate/card/copy/{ParentId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -32,7 +32,7 @@
     var instanceId = card.CardInstanceMeta.Id == 0 ? ParentId : card.CardInstanceMeta.Id;
     var x = await (ParentId == 0
       ? DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, instanceId))
-      : DbExecutor.QueryAsync(db => SanitizeCardRepository.getFork(db, instanceId)));
+      : DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, instanceId)));
     if (x.IsOk) {
       Card = card;
       Command = x.ResultValue;

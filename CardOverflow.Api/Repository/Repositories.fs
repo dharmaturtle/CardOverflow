@@ -422,7 +422,7 @@ module CardRepository =
                             let! userDoesntOwnInstance = db.CardInstance.AnyAsync(fun x -> x.Id = instanceId && x.Card.AuthorId <> acquiredCard.UserId)
                             return
                                 if userDoesntOwnInstance then Ok ()
-                                else Error "You can't fork your own cards."
+                                else Error "You can't copy your own cards. Yet. Contact us if you really want this feature."
                             }
                         | None -> Ok () |> Task.FromResult
                     return Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, CopySourceId = Option.toNullable command.CopySourceId)

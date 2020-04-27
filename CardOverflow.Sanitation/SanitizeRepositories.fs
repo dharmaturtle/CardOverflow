@@ -292,7 +292,7 @@ module SanitizeCardRepository =
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
                     CopySourceId = copySourceId
                 } |> Ok }
-    let getFork (db: CardOverflowDb) cardInstanceId =
+    let getCopy (db: CardOverflowDb) cardInstanceId =
         _getCommand db cardInstanceId (Some cardInstanceId)
     let getEdit (db: CardOverflowDb) cardInstanceId =
         _getCommand db cardInstanceId None
