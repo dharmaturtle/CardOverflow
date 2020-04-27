@@ -217,7 +217,7 @@ type ViewEditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: ViewTemplateInstance
-    ParentId: int option
+    ForkParentId: int option
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -250,7 +250,7 @@ type ViewEditCardCommand = {
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             TemplateInstance = this.TemplateInstance |> ViewTemplateInstance.copyTo
-            ParentId = this.ParentId
+            ForkParentId = this.ForkParentId
         }
     member this.CommunalFieldValues =
         this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
@@ -260,7 +260,7 @@ type ViewEditCardCommand = {
             .ToList()
 
 module SanitizeCardRepository =
-    let private _getCommand (db: CardOverflowDb) cardInstanceId parentId = task { // veryLowTODO validate parentId
+    let private _getCommand (db: CardOverflowDb) cardInstanceId forkParentId = task { // veryLowTODO validate parentId
         let! instance =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
@@ -290,7 +290,7 @@ module SanitizeCardRepository =
                             <| instance.FieldValues
                             <| communalCardInstanceIdsAndValueByField
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
-                    ParentId = parentId
+                    ForkParentId = forkParentId
                 } |> Ok }
     let getFork (db: CardOverflowDb) cardInstanceId =
         _getCommand db cardInstanceId (Some cardInstanceId)

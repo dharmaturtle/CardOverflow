@@ -57,7 +57,7 @@ namespace CardOverflow.Entity
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
         [InverseProperty("CardInstance")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        [InverseProperty("Parent")]
+        [InverseProperty("ForkParent")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("CardInstance")]
         public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }

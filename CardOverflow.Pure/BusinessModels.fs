@@ -364,7 +364,7 @@ type EditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: TemplateInstance
-    ParentId: int option
+    ForkParentId: int option
 } with
     member this.CardView = {   
         FieldValues =

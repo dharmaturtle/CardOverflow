@@ -80,7 +80,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                         Communal = None
                     }).ToList()
                 TemplateInstance = template
-                ParentId = None
+                ForkParentId = None
             }
     r |> Result.getOk |> Assert.Empty 
 
