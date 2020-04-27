@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections;
 using CardOverflow.Pure;
+using static Microsoft.EntityFrameworkCore.EF;
 
 namespace CardOverflow.Entity {
 
@@ -42,22 +43,23 @@ namespace CardOverflow.Entity {
       return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
+    // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
     public IOrderedQueryable<LatestCardInstanceEntity> SearchLatestCardInstance(string searchTerm, string plain, string wildcard, SearchOrder searchOrder) {
-      var normalization = NpgsqlTsRankingNormalization.DivideBy1PlusLogLength | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
+      const NpgsqlTsRankingNormalization normalization = NpgsqlTsRankingNormalization.DivideBy1PlusLogLength | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
       return LatestCardInstance
         .Where(x =>
           String.IsNullOrWhiteSpace(searchTerm) ||
           x.CardInstance.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x =>
-            x.Tag.TsVector.Matches(EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard))))) ||
-          x.CardInstance.TsVector.Matches(EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard))))
+            x.Tag.TsVector.Matches(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))))) ||
+          x.CardInstance.TsVector.Matches(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))))
         .OrderByDescending(x =>
           searchOrder == SearchOrder.Popularity
           ? x.CardUsers
           : x.CardInstance.TsVector.RankCoverDensity(
-            EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard)), normalization) +
-            ((float?) x.CardInstance.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
+            Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization) +
+            (((float?) x.CardInstance.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
               x.Tag.TsVector.RankCoverDensity(
-                EF.Functions.WebSearchToTsQuery(plain).And(EF.Functions.ToTsQuery(wildcard)), normalization))) ?? 0) / 3); // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
+                Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization))) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks
     }
 
     private void _OnBeforeSaving() {
