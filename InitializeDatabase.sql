@@ -148,8 +148,8 @@ CREATE TABLE public."Card" (
     "AuthorId" integer NOT NULL,
     "Users" integer NOT NULL,
     "CopySourceId" integer,
-    "VariantParentId" integer,
-    CONSTRAINT at_most_one_parent CHECK (((("CopySourceId" IS NULL) AND ("VariantParentId" IS NULL)) OR (("CopySourceId" IS NOT NULL) AND ("VariantParentId" IS NULL)) OR (("CopySourceId" IS NULL) AND ("VariantParentId" IS NOT NULL))))
+    "BranchSourceId" integer,
+    CONSTRAINT at_most_one_source CHECK (((("CopySourceId" IS NULL) AND ("BranchSourceId" IS NULL)) OR (("CopySourceId" IS NOT NULL) AND ("BranchSourceId" IS NULL)) OR (("CopySourceId" IS NULL) AND ("BranchSourceId" IS NOT NULL))))
 );
 
 
@@ -1384,7 +1384,7 @@ ALTER TABLE ONLY public."Card"
 
 
 ALTER TABLE ONLY public."Card"
-    ADD CONSTRAINT "FK_Card_Card_VariantParentId" FOREIGN KEY ("VariantParentId") REFERENCES public."Card"("Id");
+    ADD CONSTRAINT "FK_Card_Card_BranchSourceId" FOREIGN KEY ("BranchSourceId") REFERENCES public."Card"("Id");
 
 
 ALTER TABLE ONLY public."Card"

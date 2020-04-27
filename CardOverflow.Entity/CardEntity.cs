@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
         {
             CardInstances = new HashSet<CardInstanceEntity>();
             CommentCards = new HashSet<CommentCardEntity>();
-            VariantChildren = new HashSet<CardEntity>();
+            BranchChildren = new HashSet<CardEntity>();
         }
 
         [Key]
@@ -19,7 +19,7 @@ namespace CardOverflow.Entity
         public int AuthorId { get; set; }
         public int Users { get; set; }
         public int? CopySourceId { get; set; }
-        public int? VariantParentId { get; set; }
+        public int? BranchSourceId { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]
@@ -27,16 +27,16 @@ namespace CardOverflow.Entity
         [ForeignKey("CopySourceId")]
         [InverseProperty("Cards")]
         public virtual CardInstanceEntity CopySource { get; set; }
-        [ForeignKey("VariantParentId")]
-        [InverseProperty("VariantChildren")]
-        public virtual CardEntity VariantParent { get; set; }
+        [ForeignKey("BranchSourceId")]
+        [InverseProperty("BranchChildren")]
+        public virtual CardEntity BranchSource { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        [InverseProperty("VariantParent")]
-        public virtual ICollection<CardEntity> VariantChildren { get; set; }
+        [InverseProperty("BranchSource")]
+        public virtual ICollection<CardEntity> BranchChildren { get; set; }
     }
 }
