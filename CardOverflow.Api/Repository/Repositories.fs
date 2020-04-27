@@ -417,7 +417,7 @@ module CardRepository =
         taskResult {
             let! card =
                 if acquiredCard.CardId = 0 then taskResult {
-                    do! match command.ForkParentId with
+                    do! match command.CopySourceId with
                         | Some instanceId -> task {
                             let! userDoesntOwnInstance = db.CardInstance.AnyAsync(fun x -> x.Id = instanceId && x.Card.AuthorId <> acquiredCard.UserId)
                             return
@@ -425,7 +425,7 @@ module CardRepository =
                                 else Error "You can't fork your own cards."
                             }
                         | None -> Ok () |> Task.FromResult
-                    return Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, ForkParentId = Option.toNullable command.ForkParentId)
+                    return Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, CopySourceId = Option.toNullable command.CopySourceId)
                     }
                 else
                     Id acquiredCard.CardId

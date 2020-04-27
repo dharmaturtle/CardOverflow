@@ -67,8 +67,8 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditCard.ForkParentId != null) {
-            <a href="cardinstance/@EditCard.ForkParentId.Value">
+          @if (EditCard.CopySourceId != null) {
+            <a href="cardinstance/@EditCard.CopySourceId.Value">
               Original Card
             </a>
           }

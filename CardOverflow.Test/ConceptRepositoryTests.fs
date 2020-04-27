@@ -55,7 +55,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
-            ForkParentId = None
+            CopySourceId = None
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
     let oldInstanceId = 1001
     let updatedInstanceId = 1002

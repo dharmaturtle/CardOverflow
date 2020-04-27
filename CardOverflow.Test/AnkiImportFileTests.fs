@@ -350,7 +350,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                 })
                             .ToList()
                     TemplateInstance = template
-                    ForkParentId = None
+                    CopySourceId = None
                 }
             |> Task.map Result.getOk
         Assert.Equal<seq<string * int>>(["Back", 1001], communals)
@@ -395,7 +395,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     { TemplateInstance.initialize with
                         QuestionTemplate = questionTemplate
                     } |> ViewTemplateInstance.load
-                ForkParentId = None
+                CopySourceId = None
             }
         if questionTemplate.Contains "cloze" then
             Assert.Equal<string seq>(["Front"], view.TemplateInstance.ClozeFields)
@@ -435,7 +435,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                         QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
                         AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                     } |> ViewTemplateInstance.load
-                ForkParentId = None
+                CopySourceId = None
             }
         Assert.Equal<string seq>(["Front"; "Back"], view.TemplateInstance.ClozeFields)
         view.Backs.Value

@@ -18,15 +18,15 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public int AuthorId { get; set; }
         public int Users { get; set; }
-        public int? ForkParentId { get; set; }
+        public int? CopySourceId { get; set; }
         public int? VariantParentId { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("ForkParentId")]
+        [ForeignKey("CopySourceId")]
         [InverseProperty("Cards")]
-        public virtual CardInstanceEntity ForkParent { get; set; }
+        public virtual CardInstanceEntity CopySource { get; set; }
         [ForeignKey("VariantParentId")]
         [InverseProperty("VariantChildren")]
         public virtual CardEntity VariantParent { get; set; }

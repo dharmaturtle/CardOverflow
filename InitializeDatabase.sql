@@ -147,9 +147,9 @@ CREATE TABLE public."Card" (
     "Id" integer NOT NULL,
     "AuthorId" integer NOT NULL,
     "Users" integer NOT NULL,
-    "ForkParentId" integer,
+    "CopySourceId" integer,
     "VariantParentId" integer,
-    CONSTRAINT at_most_one_parent CHECK (((("ForkParentId" IS NULL) AND ("VariantParentId" IS NULL)) OR (("ForkParentId" IS NOT NULL) AND ("VariantParentId" IS NULL)) OR (("ForkParentId" IS NULL) AND ("VariantParentId" IS NOT NULL))))
+    CONSTRAINT at_most_one_parent CHECK (((("CopySourceId" IS NULL) AND ("VariantParentId" IS NULL)) OR (("CopySourceId" IS NOT NULL) AND ("VariantParentId" IS NULL)) OR (("CopySourceId" IS NULL) AND ("VariantParentId" IS NOT NULL))))
 );
 
 
@@ -1380,7 +1380,7 @@ ALTER TABLE ONLY public."CardSetting"
 
 
 ALTER TABLE ONLY public."Card"
-    ADD CONSTRAINT "FK_Card_CardInstance_ForkParentId" FOREIGN KEY ("ForkParentId") REFERENCES public."CardInstance"("Id");
+    ADD CONSTRAINT "FK_Card_CardInstance_CopySourceId" FOREIGN KEY ("CopySourceId") REFERENCES public."CardInstance"("Id");
 
 
 ALTER TABLE ONLY public."Card"
