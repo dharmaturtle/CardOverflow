@@ -1,5 +1,7 @@
-@page "/card/{Id:int}/edit"
-@page "/curate/card/copy/{ParentId:int}"
+@page "/card/{CardId:int}/edit"
+@page "/curate/card/copy/{CopySourceInstanceId:int}"
+@page "/curate/card/branch/{BranchSourceCardId:int}"
+@attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -20,19 +22,16 @@
 }
 
 @code {
-  [Parameter] public int Id { get; set; }
-  [Parameter] public int ParentId { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [Parameter] public int CardId { get; set; }
+  [Parameter] public int CopySourceInstanceId { get; set; }
+  [Parameter] public int BranchSourceCardId { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   AcquiredCard Card;
   ViewEditCardCommand Command;
 
-  private async Task _trySetCardAndCommand(AcquiredCard card) {
-    var instanceId = card.CardInstanceMeta.Id == 0 ? ParentId : card.CardInstanceMeta.Id;
-    var x = await (ParentId == 0
-      ? DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, instanceId))
-      : DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, instanceId)));
+  private async Task _trySetCardAndCommand(AcquiredCard card, Task<FSharpResult<ViewEditCardCommand, string>> result) {
+    var x = await result;
     if (x.IsOk) {
       Card = card;
       Command = x.ResultValue;
@@ -44,18 +43,29 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (ParentId == 0) {
-      var x = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User?.Id ?? 0, Id));
-      if (x.IsOk) {
-        await _trySetCardAndCommand(x.ResultValue);
+    if (User != null) {
+      if (CardId != 0) {
+        var x = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, CardId));
+        if (x.IsOk) {
+          var xx = DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, x.ResultValue.CardInstanceMeta.Id));
+          await _trySetCardAndCommand(x.ResultValue, xx);
+        } else {
+          LoadingMessage = x.ErrorValue;
+          ToastService.ShowError(x.ErrorValue);
+        }
+      } else if (CopySourceInstanceId != 0) {
+        var xx = DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, CopySourceInstanceId));
+        await _trySetCardAndCommand(await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id)), xx);
+      } else if (BranchSourceCardId != 0) {
+        var xx = DbExecutor.QueryAsync(db => SanitizeCardRepository.getBranch(db, BranchSourceCardId));
+        await _trySetCardAndCommand(await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id)), xx);
       } else {
-        LoadingMessage = x.ErrorValue;
-        ToastService.ShowError(x.ErrorValue);
+        var errorMessage = "0 is an invalid card.";
+        LoadingMessage = errorMessage;
+        ToastService.ShowError(errorMessage);
       }
-    } else {
-      await _trySetCardAndCommand(await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User?.Id ?? 0)));
+      StateHasChanged();
     }
-    StateHasChanged();
   }
 
 }

@@ -67,9 +67,16 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditCard.CopySourceId != null) {
-            <a href="cardinstance/@EditCard.CopySourceId.Value">
-              Original Card
+          @if (EditCard.Source.TryGetCopySourceInstanceId(out var instanceId)) {
+            <span>Copied from</span>
+            <a href="cardinstance/@instanceId">
+              Card
+            </a>
+          }
+          @if (EditCard.Source.TryGetBranchSourceCardId(out var cardId)) {
+            <span>Branched from</span>
+            <a href="card/@cardId">
+              Card
             </a>
           }
         </div>
@@ -106,7 +113,7 @@
       Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User?.Id ?? 0));
     }
     if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), FSharpOption<int>.None);
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), CardSource.Original);
       NewEditCardOnSave = true;
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
@@ -131,7 +138,7 @@
             return new EditFieldAndValue(x.EditField, "", x.Communal);
           }
         }).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance, FSharpOption<int>.None);
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance, CardSource.Original);
         UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
       }
     } else {

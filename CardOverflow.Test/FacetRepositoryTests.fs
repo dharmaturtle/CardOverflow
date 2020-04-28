@@ -33,7 +33,7 @@ let normalCommand fieldValues templateInstance =
                 Communal = None
             }) |> toResizeArray
         EditSummary = "Initial creation"
-        CopySourceId = None
+        Source = Original
     }
 
 let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
@@ -54,7 +54,7 @@ let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
                 else None
         }).ToList()
     TemplateInstance = clozeTemplate
-    CopySourceId = None }
+    Source = Original }
 
 let clozeCommandWithSharedExtra clozeText clozeTemplate = {
     clozeCommand clozeText clozeTemplate with
@@ -318,7 +318,7 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
-            CopySourceId = None
+            Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
     let oldInstanceId = 1001
     let updatedInstanceId = 1002

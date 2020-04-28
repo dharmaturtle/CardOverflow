@@ -324,7 +324,7 @@ module CardRepository =
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return AcquiredCard.initialize userId user.DefaultCardSettingId.Value [] // medTODO handle the null
+        return AcquiredCard.initialize userId user.DefaultCardSettingId.Value [] // lowTODO handle the null
         }
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
@@ -417,15 +417,23 @@ module CardRepository =
         taskResult {
             let! card =
                 if acquiredCard.CardId = 0 then taskResult {
-                    do! match command.CopySourceId with
-                        | Some instanceId -> task {
+                    do! match command.Source with
+                        | CopySourceInstanceId instanceId -> task {
                             let! userDoesntOwnInstance = db.CardInstance.AnyAsync(fun x -> x.Id = instanceId && x.Card.AuthorId <> acquiredCard.UserId)
                             return
                                 if userDoesntOwnInstance then Ok ()
                                 else Error "You can't copy your own cards. Yet. Contact us if you really want this feature."
                             }
-                        | None -> Ok () |> Task.FromResult
-                    return Entity <| fun () -> CardEntity(AuthorId = acquiredCard.UserId, CopySourceId = Option.toNullable command.CopySourceId)
+                        | BranchSourceCardId
+                        | Original -> Ok () |> Task.FromResult
+                    return Entity <| fun () ->
+                        match command.Source with
+                        | CopySourceInstanceId instanceId ->
+                            CardEntity(AuthorId = acquiredCard.UserId, CopySourceId = Nullable instanceId)
+                        | BranchSourceCardId cardId ->
+                            CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
+                        | Original ->
+                            CardEntity(AuthorId = acquiredCard.UserId)
                     }
                 else
                     Id acquiredCard.CardId

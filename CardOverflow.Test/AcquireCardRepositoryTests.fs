@@ -39,7 +39,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
-            CopySourceId = None
+            Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
     Assert.Empty x.Value
     let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
@@ -99,7 +99,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
-            CopySourceId = None
+            Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
     Assert.Empty x.Value
     let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
@@ -122,7 +122,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
-            CopySourceId = None
+            Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
     Assert.Empty x.Value
 

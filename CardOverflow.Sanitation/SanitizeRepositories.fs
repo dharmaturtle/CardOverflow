@@ -217,7 +217,7 @@ type ViewEditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: ViewTemplateInstance
-    CopySourceId: int option
+    Source: CardSource
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -250,7 +250,7 @@ type ViewEditCardCommand = {
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             TemplateInstance = this.TemplateInstance |> ViewTemplateInstance.copyTo
-            CopySourceId = this.CopySourceId
+            Source = this.Source
         }
     member this.CommunalFieldValues =
         this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
@@ -260,7 +260,7 @@ type ViewEditCardCommand = {
             .ToList()
 
 module SanitizeCardRepository =
-    let private _getCommand (db: CardOverflowDb) cardInstanceId copySourceId = task { // veryLowTODO validate parentId
+    let private _getCommand (db: CardOverflowDb) cardInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
         let! instance =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
@@ -290,12 +290,19 @@ module SanitizeCardRepository =
                             <| instance.FieldValues
                             <| communalCardInstanceIdsAndValueByField
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
-                    CopySourceId = copySourceId
+                    Source = source
                 } |> Ok }
+    let getBranch (db: CardOverflowDb) cardId = taskResult {
+            let! cardInstanceId =
+                db.LatestCardInstance.SingleAsync(fun x -> x.CardId = cardId)
+                |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
+                |> TaskResult.map (fun x -> x.CardInstanceId)
+            return! _getCommand db cardInstanceId <| BranchSourceCardId cardId
+        }
     let getCopy (db: CardOverflowDb) cardInstanceId =
-        _getCommand db cardInstanceId (Some cardInstanceId)
+        _getCommand db cardInstanceId <| CopySourceInstanceId cardInstanceId
     let getEdit (db: CardOverflowDb) cardInstanceId =
-        _getCommand db cardInstanceId None
+        _getCommand db cardInstanceId <| Original
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
         let actual = command.CommunalFieldValues.Select(fun x -> x.EditField.Name) |> Set.ofSeq

@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open System.Runtime.InteropServices
 open CardOverflow.Pure.Extensions
 open CardOverflow.Pure.Core
 open System
@@ -360,11 +361,26 @@ type CardRevision = {
     SortedMeta: CardInstanceMeta list
 }
 
+type CardSource =
+    | Original
+    | CopySourceInstanceId of int
+    | BranchSourceCardId of int
+with
+    member this.TryGetCopySourceInstanceId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
+        match this with
+        | CopySourceInstanceId instanceId -> x <- instanceId; true
+        | _ -> false
+    member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
+        match this with
+        | BranchSourceCardId cardId -> x <- cardId; true
+        | _ -> false
+    
+
 type EditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     TemplateInstance: TemplateInstance
-    CopySourceId: int option
+    Source: CardSource
 } with
     member this.CardView = {   
         FieldValues =
