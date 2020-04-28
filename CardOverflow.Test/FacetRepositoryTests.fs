@@ -84,10 +84,10 @@ let add templateName createCommand (db: CardOverflowDb) userId tags = task {
     let! r =
         createCommand template
         |> SanitizeCardRepository.Update db userId ac
-    return Result.getOk r
+    return r.Value
     }
 
-let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<string * int>> =
+let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<int> * ResizeArray<string * int>> =
     add "Basic (and reversed card) - Card 1" <| normalCommand []
 
 let addBasicCard =
@@ -262,7 +262,8 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    let! (instanceId, x) = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    Assert.Equal<int seq>([newCardInstanceId], instanceId)
     Assert.Empty x
 
     let! (card1: ExploreCard) = ExploreCardRepository.get      c.Db userId cardId
@@ -354,7 +355,6 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     let tags = ["a"; "b"]
     let! _ = addBasicCard c.Db userId tags
     let cardId = 1
-    let cardInstanceId = 1001
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
@@ -370,7 +370,9 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     }
     
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
-    Assert.Empty x.Value
+    let (instanceId, x) = x.Value
+    Assert.Equal<int seq>([1002], instanceId)
+    Assert.Empty x
     
     let asserts userId cardId newValue instanceCountForCard revisionCount tags = task {
         let! refreshed = CardViewRepository.get c.Db cardId
@@ -427,7 +429,9 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     }
     
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
-    Assert.Empty x.Value
+    let (instanceId, x) = x.Value
+    Assert.Equal<int seq>([1003], instanceId)
+    Assert.Empty x
 
     do! asserts userId cardId newValue 1 1 []
 

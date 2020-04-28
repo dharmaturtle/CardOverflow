@@ -462,7 +462,7 @@ module CardRepository =
                 command.CommunalNonClozeFieldValues
                     .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
                     .ToList()
-            let! (r: CommunalFieldInstanceEntity ResizeArray) =
+            let! (acs: AcquiredCardEntity list) =
                 match acquiredCardEntity with
                 | null -> task {
                     let getsertTagId (db: CardOverflowDb) (input: string) =
@@ -515,8 +515,7 @@ module CardRepository =
                             | Entity _ ->
                                 e.Card <- e.CardInstance.Card
                             db.AcquiredCard.AddI e
-                            communalInstances
-                            ) >> Seq.collect id >> toResizeArray)
+                            e))
                     }
                 | e ->
                     let communalFields, instanceIds =
@@ -547,10 +546,12 @@ module CardRepository =
                         | ac ->
                             ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
                     e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
-                    communalFields.ToList() |> Ok |> Task.FromResult
+                    [e] |> Ok |> Task.FromResult
             do! db.SaveChangesAsyncI()
             return
-                r.Where(fun x -> nonClozeCommunals.Select(fun x -> x.FieldName).Contains x.FieldName)
+                acs.Select(fun x -> x.CardInstanceId).ToList(),
+                acs.SelectMany(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance))
+                    .Where(fun x -> nonClozeCommunals.Select(fun x -> x.FieldName).Contains x.FieldName)
                     .Select(fun x -> x.FieldName, x.Id)
                     .Distinct()
                     .ToList()

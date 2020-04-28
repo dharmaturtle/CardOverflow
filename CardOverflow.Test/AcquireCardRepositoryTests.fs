@@ -21,8 +21,9 @@ open CardOverflow.Sanitation
 let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Empty x
+    let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Equal<int seq>([1001], instanceIds)
+    Assert.Empty communals
     let! template = SanitizeTemplate.AllInstances c.Db 1
     let getAcquired () = task { return! CardRepository.GetAcquired c.Db userId 1 }
     let! ac = getAcquired ()
@@ -41,7 +42,9 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
             Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
-    Assert.Empty x.Value
+    let (instanceIds, communals) = x.Value
+    Assert.Equal<int seq>([1002], instanceIds)
+    Assert.Empty communals
     let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
@@ -53,8 +56,9 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! batch = CardRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! TagRepository.AddTo c.Db "tag" ac.AcquiredCardId
-    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Empty x
+    let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Equal<int seq>([1003], instanceIds)
+    Assert.Empty communals
     let! card2 = c.Db.Card.SingleOrDefaultAsync(fun x -> x.Id <> ac.CardId)
     let card2 = card2.Id
     let addRelationshipCommand =
@@ -85,8 +89,9 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
 let ``CardRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Empty x
+    let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Equal<int seq>([1001], instanceIds)
+    Assert.Empty communals
     let! template = SanitizeTemplate.AllInstances c.Db 1
     let! ac = CardRepository.GetAcquired c.Db userId 1
     
@@ -95,13 +100,15 @@ let ``CardRepository.editState works``(): Task<unit> = task {
     let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
     Assert.Equal(ac.Value.CardState, CardState.Suspended)
 
-    let! x = 
+    let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
             Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
-    Assert.Empty x.Value
+    let (instanceIds, communals) = x.Value
+    Assert.Equal<int seq>([1002], instanceIds)
+    Assert.Empty communals
     let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
     Assert.Equal(ac.Value.CardState, CardState.Suspended) // still suspended after edit
 
@@ -114,8 +121,9 @@ let ``CardRepository.editState works``(): Task<unit> = task {
 let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! x = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Empty x
+    let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
+    Assert.Equal<int seq>([1001], instanceIds)
+    Assert.Empty communals
     let! template = SanitizeTemplate.AllInstances c.Db 1
     let! ac = CardRepository.GetAcquired c.Db userId 1
     let! x = 
@@ -124,9 +132,11 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
             Source = Original
         } |> CardRepository.UpdateFieldsToNewInstance c.Db ac.Value
-    Assert.Empty x.Value
-
+    let (instanceIds, communals) = x.Value
     let i2 = 1002
+    Assert.Equal<int seq>([i2], instanceIds)
+    Assert.Empty communals
+
     do! CardRepository.AcquireCardAsync c.Db userId i2 // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the CardInstanceId
     Assert.Equal(i2, c.Db.AcquiredCard.Single().CardInstanceId)
     
@@ -192,8 +202,10 @@ let ``AcquireCards works``(): Task<unit> = task {
     let (command, ac) = r.Value
     let command = { command with FieldValues = [].ToList() }
     let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac command.load
-    Assert.Empty x.Value
+    let (instanceIds, communals) = x.Value
     let ci1_2 = 1003
+    Assert.Equal<int seq>([ci1_2], instanceIds)
+    Assert.Empty communals
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

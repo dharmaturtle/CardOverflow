@@ -208,8 +208,10 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
-    let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    Assert.Equal([("Extra", 1002)], Result.getOk x)
+    let! x = SanitizeCardRepository.Update c.Db userId acquired.Value updatedCommand
+    let (instanceIds, communals) = x.Value
+    Assert.Equal([("Extra", 1002)], communals)
+    Assert.Equal<int seq>([1008], instanceIds)
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
@@ -227,7 +229,9 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    Assert.Equal([("Extra", 1006)], Result.getOk x)
+    let (instanceId, communals) = x.Value
+    Assert.Equal([("Extra", 1006)], communals)
+    Assert.Equal<int seq>([1013], instanceId)
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 
@@ -312,8 +316,9 @@ let ``Create cloze card works`` (): Task<unit> = task {
     Assert.Equal(expected, e.Results.Select(fun x -> x.Value.CardInstanceMeta.StrippedFront, x.Value.CardInstanceMeta.StrippedBack))
     
     // c1 and c2 cloze pair with communal Extra creates one Extra instance
-    let! actual = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
-    Assert.Equal([ "Extra", 1006 ] , actual)}
+    let! (instanceIds, communals) = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
+    Assert.Equal([ "Extra", 1006 ] , communals)
+    Assert.Equal<int seq>([1005; 1006], instanceIds)}
 
 [<Fact>]
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
@@ -329,7 +334,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 
     let test instanceId customTest = task {
         let! acquired = CardRepository.getNew c.Db userId
-        let! communals =
+        let! (_, communals) =
             SanitizeCardRepository.Update
                 c.Db
                 userId
