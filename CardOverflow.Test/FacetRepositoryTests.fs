@@ -253,7 +253,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> x.Result.Value)
-    let! old = SanitizeCardRepository.getEdit c.Db oldCardInstanceId
+    let! (old, _) = SanitizeCardRepository.getEdit c.Db userId cardId
     let updated = {
         old with
             ViewEditCardCommand.FieldValues =
@@ -359,8 +359,8 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     let! acquiredCard = 
         (CardRepository.GetAcquired c.Db userId cardId)
             .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> x.Result.Value)
-    let! old = SanitizeCardRepository.getEdit c.Db cardInstanceId
-    let old = old.Value
+    let! old = SanitizeCardRepository.getEdit c.Db userId cardId
+    let (old, _) = old.Value
     let updated = {
         old with
             FieldValues =
@@ -416,8 +416,8 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     let cardInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
     let! acquiredCard =  CardRepository.getNew c.Db userId
-    let! old = SanitizeCardRepository.getCopy c.Db cardInstanceId
-    let old = old.Value
+    let! old = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
+    let (old, _) = old.Value
     let updated = {
         old with
             FieldValues =
@@ -435,16 +435,17 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     let cardInstanceId = 1003
     Assert.Equal(userId, c.Db.CardInstance.Include(fun x -> x.Card).Single(fun x -> x.Id = cardInstanceId).Card.AuthorId)
     let! acquiredCard =  CardRepository.getNew c.Db userId
-    let! copy = SanitizeCardRepository.getCopy c.Db cardInstanceId
+    let! copy = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
+    let (copy, _) = copy.Value
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard copy.Value.load
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard copy.load
     
     Assert.Equal("You can't copy your own cards. Yet. Contact us if you really want this feature.", x.error)
 
     // missing copy
     let cardInstanceId = 1337
     
-    let! old = SanitizeCardRepository.getCopy c.Db cardInstanceId
+    let! old = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
     
     Assert.Equal(sprintf "Card instance %i not found" cardInstanceId, old.error)
     }

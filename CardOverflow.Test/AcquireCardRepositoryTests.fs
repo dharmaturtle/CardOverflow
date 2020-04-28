@@ -188,10 +188,10 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(4, c.Db.AcquiredCard.Count())
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_1));
 
-    let! ac = CardRepository.GetAcquired c.Db authorId c1
-    let! v = SanitizeCardRepository.getEdit c.Db ci1_1
-    let v = { v.Value with FieldValues = [].ToList() }
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac.Value v.load
+    let! r = SanitizeCardRepository.getEdit c.Db authorId c1
+    let (command, ac) = r.Value
+    let command = { command with FieldValues = [].ToList() }
+    let! x = CardRepository.UpdateFieldsToNewInstance c.Db ac command.load
     Assert.Empty x.Value
     let ci1_2 = 1003
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
@@ -209,7 +209,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(4, c.Db.AcquiredCard.Count())
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
 
-    do! CardRepository.UnacquireCardAsync c.Db ac.Value.AcquiredCardId
+    do! CardRepository.UnacquireCardAsync c.Db ac.AcquiredCardId
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

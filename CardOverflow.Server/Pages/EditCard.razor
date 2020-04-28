@@ -15,10 +15,10 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (Card == null) {
+@if (_card == null || _command == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@Card EditCard=@Command />
+  <EditCardDetail Card=@_card EditCard=@_command />
 }
 
 @code {
@@ -27,43 +27,36 @@
   [Parameter] public int BranchSourceCardId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  AcquiredCard Card;
-  ViewEditCardCommand Command;
+  AcquiredCard _card;
+  ViewEditCardCommand _command;
 
-  private async Task _trySetCardAndCommand(AcquiredCard card, Task<FSharpResult<ViewEditCardCommand, string>> result) {
+  private async Task _TrySetCommandAndCard(Task<FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>> result) {
     var x = await result;
     if (x.IsOk) {
-      Card = card;
-      Command = x.ResultValue;
+      _command = x.ResultValue.Item1;
+      _card = x.ResultValue.Item2;
     } else {
       LoadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
     }
   }
 
+  private Task<FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>> _GetCommandAndCard() {
+    if (CardId != 0) {
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, User.Id, CardId));
+    } else if (CopySourceInstanceId != 0) {
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, User.Id, CopySourceInstanceId));
+    } else if (BranchSourceCardId != 0) {
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getBranch(db, User.Id, BranchSourceCardId));
+    } else {
+      return FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
+    }
+  }
+
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     if (User != null) {
-      if (CardId != 0) {
-        var x = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, CardId));
-        if (x.IsOk) {
-          var xx = DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, x.ResultValue.CardInstanceMeta.Id));
-          await _trySetCardAndCommand(x.ResultValue, xx);
-        } else {
-          LoadingMessage = x.ErrorValue;
-          ToastService.ShowError(x.ErrorValue);
-        }
-      } else if (CopySourceInstanceId != 0) {
-        var xx = DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, CopySourceInstanceId));
-        await _trySetCardAndCommand(await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id)), xx);
-      } else if (BranchSourceCardId != 0) {
-        var xx = DbExecutor.QueryAsync(db => SanitizeCardRepository.getBranch(db, BranchSourceCardId));
-        await _trySetCardAndCommand(await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id)), xx);
-      } else {
-        var errorMessage = "0 is an invalid card.";
-        LoadingMessage = errorMessage;
-        ToastService.ShowError(errorMessage);
-      }
+      await _GetCommandAndCard().Apply(_TrySetCommandAndCard);
       StateHasChanged();
     }
   }

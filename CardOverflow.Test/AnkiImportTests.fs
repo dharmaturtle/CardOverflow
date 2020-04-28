@@ -218,8 +218,8 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
               FieldName = "Source"
               Value = communalValue },
             card.Instance.CommunalFields.Single())
-        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
-        let command = Result.getOk command
+        let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
+        let (command, _) = command.Value
         Assert.Equal<int seq>(
             basic.Select(fun x -> x.Id) |> Seq.sort,
             command.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.sort)
@@ -244,13 +244,14 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             view.Value.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value))
-        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
+        let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
+        let (command, _) = command.Value
         Assert.Equal<int seq>(
             sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
-            command.Value.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
+            command.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
         Assert.Equal<string seq>(
             expectedFieldAndValues |> List.map snd,
-            command.Value.CommunalFieldValues.Select(fun x -> x.Value))
+            command.CommunalFieldValues.Select(fun x -> x.Value))
 
     let! cloze = getInstances "Cloze"
     for instance in cloze do
@@ -274,8 +275,8 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.Instance.StrippedFront)
         else
             Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.Instance.StrippedFront)
-        let! command = SanitizeCardRepository.getEdit c.Db card.Instance.Id
-        let command = Result.getOk command
+        let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
+        let (command, _) = command.Value
         Assert.Equal<int seq>(
             cloze.Select(fun x -> x.Id) |> Seq.sort,
             command.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)

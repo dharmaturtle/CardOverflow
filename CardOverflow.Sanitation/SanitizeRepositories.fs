@@ -292,17 +292,25 @@ module SanitizeCardRepository =
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
                     Source = source
                 } |> Ok }
-    let getBranch (db: CardOverflowDb) cardId = taskResult {
-            let! cardInstanceId =
-                db.LatestCardInstance.SingleAsync(fun x -> x.CardId = cardId)
-                |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
-                |> TaskResult.map (fun x -> x.CardInstanceId)
-            return! _getCommand db cardInstanceId <| BranchSourceCardId cardId
-        }
-    let getCopy (db: CardOverflowDb) cardInstanceId =
-        _getCommand db cardInstanceId <| CopySourceInstanceId cardInstanceId
-    let getEdit (db: CardOverflowDb) cardInstanceId =
-        _getCommand db cardInstanceId <| Original
+    let getBranch (db: CardOverflowDb) userId cardId = taskResult {
+        let! ac = CardRepository.getNew db userId
+        let! cardInstanceId =
+            db.LatestCardInstance.SingleAsync(fun x -> x.CardId = cardId)
+            |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
+            |> TaskResult.map (fun x -> x.CardInstanceId)
+        let! command = _getCommand db cardInstanceId <| BranchSourceCardId cardId
+        return command, ac
+    }
+    let getCopy (db: CardOverflowDb) userId cardInstanceId = taskResult {
+        let! ac = CardRepository.getNew db userId
+        let! command = _getCommand db cardInstanceId <| CopySourceInstanceId cardInstanceId
+        return command, ac
+    }
+    let getEdit (db: CardOverflowDb) userId cardId = taskResult {
+        let! ac = CardRepository.GetAcquired db userId cardId
+        let! command = _getCommand db ac.CardInstanceMeta.Id <| Original
+        return command, ac
+    }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
         let actual = command.CommunalFieldValues.Select(fun x -> x.EditField.Name) |> Set.ofSeq
