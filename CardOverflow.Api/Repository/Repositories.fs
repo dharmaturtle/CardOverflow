@@ -425,6 +425,30 @@ module UpdateRepository =
                     CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
                 | Original ->
                     CardEntity(AuthorId = acquiredCard.UserId)
+        let createCommunalFieldInstanceEntity c fieldName =
+            CommunalFieldInstanceEntity(
+                CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
+                FieldName = fieldName,
+                Value =
+                    if c.TemplateInstance.IsCloze then
+                        command.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
+                    else
+                        c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
+                    ,
+                Created = DateTime.UtcNow,
+                EditSummary = c.EditSummary)
+        let updateCommunalField (old: CommunalFieldInstanceEntity) newValue =
+            CommunalFieldInstanceEntity(
+                CommunalField = old.CommunalField,
+                FieldName = old.FieldName,
+                Value = newValue,
+                Created = DateTime.UtcNow,
+                EditSummary = command.EditSummary)
+        let nonClozeCommunals =
+            command.CommunalNonClozeFieldValues
+                .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
+                .ToList()
+        let getClozeIndex fieldValues = ClozeRegex().TypedMatches(fieldValues).Single().clozeIndex.Value
         taskResult {
             let! splitCommands =
                 if command.TemplateInstance.IsCloze then
@@ -443,18 +467,6 @@ module UpdateRepository =
                                 { x with
                                     Value = zip.[x.EditField.Name]}).ToList() }))
                 else Ok [ command ]
-            let! (tagIds: int ResizeArray) = task {
-                let getsertTagId (input: string) =
-                    match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
-                    | null ->
-                        let e = TagEntity(Name = input)
-                        db.Tag.AddI e
-                        e
-                    | x -> x
-                let tags = acquiredCard.Tags |> List.map getsertTagId // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
-                do! db.SaveChangesAsyncI()
-                return tags.Select(fun x -> x.Id).ToList()
-            }
             let! card =
                 if acquiredCard.CardId = 0 then taskResult {
                     do! match command.Source with
@@ -472,6 +484,18 @@ module UpdateRepository =
                     Id acquiredCard.CardId
                     |> Ok
                     |> Task.FromResult
+            let! (tagIds: int ResizeArray) = task {
+                let getsertTagId (input: string) =
+                    match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
+                    | null ->
+                        let e = TagEntity(Name = input)
+                        db.Tag.AddI e
+                        e
+                    | x -> x
+                let tags = acquiredCard.Tags |> List.map getsertTagId // lowTODO optimize
+                do! db.SaveChangesAsyncI()
+                return tags.Select(fun x -> x.Id).ToList()
+            }
             let! (acquiredCardEntity: AcquiredCardEntity) =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
@@ -479,23 +503,7 @@ module UpdateRepository =
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                     .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
-            let createCommunalFieldInstanceEntity c fieldName =
-                CommunalFieldInstanceEntity(
-                    CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                    FieldName = fieldName,
-                    Value =
-                        if c.TemplateInstance.IsCloze then
-                            command.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
-                        else
-                            c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
-                        ,
-                    Created = DateTime.UtcNow,
-                    EditSummary = c.EditSummary)
-            let nonClozeCommunals =
-                command.CommunalNonClozeFieldValues
-                    .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
-                    .ToList()
-            let (acs: AcquiredCardEntity list) =
+            let acs =
                 match acquiredCardEntity with
                 | null ->
                     splitCommands
@@ -524,7 +532,7 @@ module UpdateRepository =
                         db.AcquiredCard.AddI e
                         e)
                 | e ->
-                    let communalFields, instanceIds =
+                    let communalInstances, instanceIds =
                         e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
                         |> List.ofSeq
                         |> List.map (fun old ->
@@ -532,12 +540,7 @@ module UpdateRepository =
                             if old.Value = newValue then
                                 old, []
                             else
-                                CommunalFieldInstanceEntity(
-                                    CommunalField = old.CommunalField,
-                                    FieldName = old.FieldName,
-                                    Value = newValue,
-                                    Created = DateTime.UtcNow,
-                                    EditSummary = command.EditSummary),
+                                updateCommunalField old newValue,
                                 old.CommunalFieldInstance_CardInstances
                                     .Select(fun x -> x.CardInstanceId)
                                     .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
@@ -553,28 +556,27 @@ module UpdateRepository =
                                 |> function
                                 | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
                                 | ac ->
-                                    ac.CardInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
+                                    ac.CardInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalInstances
                                     Some ac
                             ) |> List.choose id
                         let e =
                             if command.TemplateInstance.IsCloze then
-                                let entityIndex = ClozeRegex().TypedMatches(e.CardInstance.FieldValues).Single().clozeIndex.Value
-                                let commandIndex = ClozeRegex().TypedMatches(c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " ").Single().clozeIndex.Value
+                                let entityIndex = e.CardInstance.FieldValues |> getClozeIndex
+                                let commandIndex = c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " " |> getClozeIndex
                                 if entityIndex = commandIndex then
-                                    e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalFields
+                                    e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
                                     e
                                 else
-                                    if associatedEntities.Select(fun x -> ClozeRegex().TypedMatches(x.CardInstance.FieldValues).Single().clozeIndex.Value).Contains commandIndex then
+                                    if associatedEntities.Select(fun x -> getClozeIndex x.CardInstance.FieldValues).Contains commandIndex then
                                         e
                                     else
-                                        let ciEntity = c.CardView.CopyFieldsToNewInstance newCardEntity c.EditSummary communalFields
                                         let ac = acquiredCard.copyToNew tagIds
-                                        ac.Card <- ciEntity.Card
-                                        ac.CardInstance <- ciEntity
+                                        ac.CardInstance <- c.CardView.CopyFieldsToNewInstance newCardEntity c.EditSummary communalInstances
+                                        ac.Card <- ac.CardInstance.Card
                                         db.AcquiredCard.AddI ac
                                         ac
                             else
-                                e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalFields
+                                e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
                                 e
                         e :: associatedEntities
                     )
