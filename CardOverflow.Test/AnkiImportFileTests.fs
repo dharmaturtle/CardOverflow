@@ -322,7 +322,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     
     // go from 1 cloze to 2 clozes
     let cardId = 1
-    let! (command, ac) = SanitizeCardRepository.getEdit c.Db userId cardId
+    let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -334,6 +334,22 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
         }
     let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1007; 1008], instanceIds)
+    Assert.Empty nonClozeCommunals
+    
+    // go from 2 clozes to 1 cloze
+    let cardId = 1
+    let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
+    let command =
+        { command with
+            ViewEditCardCommand.FieldValues =
+                [   {   command.FieldValues.[0] with
+                            Value = "Canberra was founded in {{c1::1913}}."
+                    }
+                    command.FieldValues.[1]
+                ].ToList()
+        }
+    let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
+    Assert.Equal<int seq>([1009], instanceIds)
     Assert.Empty nonClozeCommunals
     } |> TaskResult.assertOk)
 

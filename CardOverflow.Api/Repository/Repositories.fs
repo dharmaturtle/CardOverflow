@@ -449,6 +449,8 @@ module UpdateRepository =
                 .Select(fun x -> createCommunalFieldInstanceEntity command x.EditField.Name)
                 .ToList()
         let getClozeIndex fieldValues = ClozeRegex().TypedMatches(fieldValues).Single().clozeIndex.Value
+        let getClozeIndexes fieldValues = ClozeRegex().TypedMatches(fieldValues).Select(fun x -> x.clozeIndex.Value).ToList()
+        let commandClozeIndexes = command.ClozeFieldValues |> Seq.collect (fun x -> getClozeIndexes x.Value)
         taskResult {
             let! splitCommands =
                 if command.TemplateInstance.IsCloze then
@@ -556,8 +558,10 @@ module UpdateRepository =
                                 |> function
                                 | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
                                 | ac ->
-                                    ac.CardInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalInstances
-                                    Some ac
+                                    if commandClozeIndexes.Contains <| getClozeIndex ac.CardInstance.FieldValues then
+                                        ac.CardInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalInstances
+                                        Some ac
+                                    else None
                             ) |> List.choose id
                         let e =
                             if command.TemplateInstance.IsCloze then
