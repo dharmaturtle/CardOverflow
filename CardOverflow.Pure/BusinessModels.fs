@@ -395,3 +395,7 @@ type EditCardCommand = {
         this.CommunalFieldValues
             .Where(fun x -> not <| this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
             .ToList()
+    member this.ClozeFieldValues =
+        this.CommunalFieldValues
+            .Where(fun x -> this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+            .ToList()

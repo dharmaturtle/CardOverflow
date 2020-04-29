@@ -22,6 +22,7 @@ open FSharp.Control.Tasks
 open System.Security.Cryptography
 open System.Collections.Generic
 open FsToolkit.ErrorHandling
+open ConceptRepositoryTests
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -200,18 +201,17 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
 
     let initialInstance = clozes.First()
     let! editCommand = SanitizeCardRepository.getEdit c.Db userId initialInstance.CardId
-    let (editCommand, _) = editCommand.Value
+    let (editCommand, ac) = editCommand.Value
     Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
     let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
     let updatedCommunalField = communalFields.[0]
     Assert.Contains("microtubules", updatedCommunalField.Value)
     let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
-    let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
-    let! x = SanitizeCardRepository.Update c.Db userId acquired.Value updatedCommand
+    let! x = SanitizeCardRepository.Update c.Db userId ac updatedCommand
     let (instanceIds, communals) = x.Value
     Assert.Equal([("Extra", 1002)], communals)
-    Assert.Equal<int seq>([1008], instanceIds)
+    Assert.Equal<int seq>([1008; 1009; 1010; 1011; 1012], instanceIds)
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
 
@@ -229,9 +229,9 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
     let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
     let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    let (instanceId, communals) = x.Value
+    let (instanceIds, communals) = x.Value
     Assert.Equal([("Extra", 1006)], communals)
-    Assert.Equal<int seq>([1013], instanceId)
+    Assert.Equal<int seq>([1013; 1014; 1015; 1016; 1017], instanceIds)
     for instance in clozes do
         do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
 
@@ -266,7 +266,7 @@ let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
         view.Value.FieldValues.Select(fun x -> x.Value))}
 
 [<Fact>]
-let ``Create cloze card works`` (): Task<unit> = task {
+let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer()
     let testCommunalFields = testCommunalFields c userId
@@ -307,7 +307,7 @@ let ``Create cloze card works`` (): Task<unit> = task {
             assertCount 1 "Portland was founded in {{c2::1845}}."
             assertCount 1 "{{c1::Portland::city}} was founded in 1845."
 
-    let! e = CardRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (e: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
     let expected =
         [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
@@ -316,9 +316,26 @@ let ``Create cloze card works`` (): Task<unit> = task {
     Assert.Equal(expected, e.Results.Select(fun x -> x.Value.CardInstanceMeta.StrippedFront, x.Value.CardInstanceMeta.StrippedBack))
     
     // c1 and c2 cloze pair with communal Extra creates one Extra instance
-    let! (instanceIds, communals) = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
+    let! (instanceIds, (communals: List<string * int>)) = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
     Assert.Equal([ "Extra", 1006 ] , communals)
-    Assert.Equal<int seq>([1005; 1006], instanceIds)}
+    Assert.Equal<int seq>([1005; 1006], instanceIds)
+    
+    // go from 1 cloze to 2 clozes
+    let cardId = 1
+    let! (command, ac) = SanitizeCardRepository.getEdit c.Db userId cardId
+    let command =
+        { command with
+            ViewEditCardCommand.FieldValues =
+                [   {   command.FieldValues.[0] with
+                            Value = "{{c2::Canberra}} was founded in {{c1::1913}}."
+                    }
+                    command.FieldValues.[1]
+                ].ToList()
+        }
+    let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
+    Assert.Equal<int seq>([1007; 1008], instanceIds)
+    Assert.Empty nonClozeCommunals
+    } |> TaskResult.assertOk)
 
 [<Fact>]
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {

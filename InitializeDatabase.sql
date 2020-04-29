@@ -97,7 +97,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
 								WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
 			WHERE	ci."Id" = OLD."CardInstanceId";
 						UPDATE	"Card" c
-			SET		"Users" = ( SELECT	SUM(ci2."Users")
+			SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
 								FROM	"CardInstance" ci2
 								WHERE	ci2."CardId" = c."Id" )
 			FROM	"CardInstance" ci
@@ -110,7 +110,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
 								WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
 			WHERE	ci."Id" = NEW."CardInstanceId";
 						UPDATE	"Card" c
-			SET		"Users" = ( SELECT	SUM(ci2."Users")
+			SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
 								FROM	"CardInstance" ci2
 								WHERE	ci2."CardId" = c."Id" )
 			FROM	"CardInstance" ci

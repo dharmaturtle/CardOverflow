@@ -518,38 +518,101 @@ module CardRepository =
                             e))
                     }
                 | e ->
-                    let communalFields, instanceIds =
-                        e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
-                        |> List.ofSeq
-                        |> List.map (fun old ->
-                            let newValue = command.FieldValues.Single(fun x -> x.EditField.Name = old.FieldName).Value
-                            if old.Value = newValue then
-                                old, []
-                            else
-                                CommunalFieldInstanceEntity(
-                                    CommunalField = old.CommunalField,
-                                    FieldName = old.FieldName,
-                                    Value = newValue,
-                                    Created = DateTime.UtcNow,
-                                    EditSummary = command.EditSummary),
-                                old.CommunalFieldInstance_CardInstances
-                                    .Select(fun x -> x.CardInstanceId)
-                                    .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
-                                |> List.ofSeq)
-                        |> List.unzip
-                    for instanceId in instanceIds |> List.collect id |> List.distinct do
-                        db.AcquiredCard
-                            .Include(fun x -> x.CardInstance)
-                            .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
-                        |> function
-                        | null -> () // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
-                        | ac ->
-                            ac.CardInstance <- command.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
-                    e.CardInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalFields
-                    [e] |> Ok |> Task.FromResult
+                    task {
+                        let getsertTagId (db: CardOverflowDb) (input: string) =
+                            match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
+                            | null ->
+                                let e = TagEntity(Name = input)
+                                db.Tag.AddI e
+                                e
+                            | x -> x
+                        let tags = acquiredCard.Tags |> List.map (getsertTagId db) // lowTODO could optimize. This is single threaded cause async saving causes issues, so try batch saving
+                        do! db.SaveChangesAsyncI()
+                        let tagIds = tags.Select(fun x -> x.Id)
+                        let communalFields, instanceIds =
+                            e.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance)
+                            |> List.ofSeq
+                            |> List.map (fun old ->
+                                let newValue = command.FieldValues.Single(fun x -> x.EditField.Name = old.FieldName).Value
+                                if old.Value = newValue then
+                                    old, []
+                                else
+                                    CommunalFieldInstanceEntity(
+                                        CommunalField = old.CommunalField,
+                                        FieldName = old.FieldName,
+                                        Value = newValue,
+                                        Created = DateTime.UtcNow,
+                                        EditSummary = command.EditSummary),
+                                    old.CommunalFieldInstance_CardInstances
+                                        .Select(fun x -> x.CardInstanceId)
+                                        .Where(fun x -> x <> acquiredCard.CardInstanceMeta.Id)
+                                    |> List.ofSeq)
+                            |> List.unzip
+                        return
+                            if command.TemplateInstance.IsCloze then
+                                let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
+                                AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
+                                |> Result.map (fun max ->
+                                [1s .. int16 max] |> List.map (fun clozeIndex ->
+                                    let zip =
+                                        Seq.zip
+                                            (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
+                                            (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
+                                        |> Map.ofSeq
+                                    { command with
+                                        FieldValues =
+                                            command.FieldValues.Select(fun x ->
+                                            { x with
+                                                Value = zip.[x.EditField.Name]}).ToList() }))
+                            else Ok [ command ]
+                            |> Result.map (List.collect (fun c ->
+                                let associatedEntities =
+                                    instanceIds |> List.collect id |> List.distinct |> List.map (fun instanceId ->
+                                        db.AcquiredCard
+                                            .Include(fun x -> x.CardInstance)
+                                            .SingleOrDefault(fun x -> x.CardInstanceId = instanceId && x.UserId = acquiredCard.UserId)
+                                        |> function
+                                        | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
+                                        | ac ->
+                                            ac.CardInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalFields
+                                            Some ac
+                                    ) |> List.choose id
+                                let e =
+                                    if command.TemplateInstance.IsCloze then
+                                        let entityIndex = ClozeRegex().TypedMatches(e.CardInstance.FieldValues).Single().clozeIndex.Value
+                                        let commandIndex = ClozeRegex().TypedMatches(c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " ").Single().clozeIndex.Value
+                                        if entityIndex = commandIndex then
+                                            e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalFields
+                                            e
+                                        else
+                                            if associatedEntities.Select(fun x -> ClozeRegex().TypedMatches(x.CardInstance.FieldValues).Single().clozeIndex.Value).Contains commandIndex then
+                                                e
+                                            else
+                                                let card =
+                                                    match command.Source with
+                                                    | CopySourceInstanceId instanceId ->
+                                                        CardEntity(AuthorId = acquiredCard.UserId, CopySourceId = Nullable instanceId)
+                                                    | BranchSourceCardId cardId ->
+                                                        CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
+                                                    | Original ->
+                                                        CardEntity(AuthorId = acquiredCard.UserId)
+                                                    |> fun x -> fun () -> x
+                                                    |> Entity
+                                                let ciEntity = c.CardView.CopyFieldsToNewInstance card c.EditSummary communalFields
+                                                let ac = acquiredCard.copyToNew tagIds
+                                                ac.Card <- ciEntity.Card
+                                                ac.CardInstance <- ciEntity
+                                                db.AcquiredCard.AddI ac
+                                                ac
+                                    else
+                                        e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalFields
+                                        e
+                                e :: associatedEntities
+                            ))
+                        }
             do! db.SaveChangesAsyncI()
             return
-                acs.Select(fun x -> x.CardInstanceId).ToList(),
+                acs.Select(fun x -> x.CardInstanceId).Distinct().ToList(),
                 acs.SelectMany(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstance))
                     .Where(fun x -> nonClozeCommunals.Select(fun x -> x.FieldName).Contains x.FieldName)
                     .Select(fun x -> x.FieldName, x.Id)
