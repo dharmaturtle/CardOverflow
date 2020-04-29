@@ -262,7 +262,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! (instanceId, x) = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    let! (instanceId, x) = UpdateRepository.card c.Db acquiredCard updated.load
     Assert.Equal<int seq>([newCardInstanceId], instanceId)
     Assert.Empty x
 
@@ -320,7 +320,7 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
             FieldValues = [].ToList()
             TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
             Source = Original
-        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
+        } |> UpdateRepository.card c.Db ac
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
@@ -349,7 +349,7 @@ let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
     Assert.Empty view.FieldValues
 
 [<Fact>]
-let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields, also copying``() : Task<unit> = task {
+let ``UpdateRepository.card on basic card updates the fields, also copying``() : Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let tags = ["a"; "b"]
@@ -369,7 +369,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
                 ).ToList()
     }
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    let! x = UpdateRepository.card c.Db acquiredCard updated.load
     let (instanceId, x) = x.Value
     Assert.Equal<int seq>([1002], instanceId)
     Assert.Empty x
@@ -428,7 +428,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
                 ).ToList()
     }
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard updated.load
+    let! x = UpdateRepository.card c.Db acquiredCard updated.load
     let (instanceId, x) = x.Value
     Assert.Equal<int seq>([1003], instanceId)
     Assert.Empty x
@@ -442,7 +442,7 @@ let ``CardRepository.UpdateFieldsToNewInstance on basic card updates the fields,
     let! copy = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
     let (copy, _) = copy.Value
     
-    let! x = CardRepository.UpdateFieldsToNewInstance c.Db acquiredCard copy.load
+    let! x = UpdateRepository.card c.Db acquiredCard copy.load
     
     Assert.Equal("You can't copy your own cards. Yet. Contact us if you really want this feature.", x.error)
 

@@ -56,7 +56,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
             FieldValues = [].ToList()
             TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
             Source = Original
-        } |> CardRepository.UpdateFieldsToNewInstance c.Db ac
+        } |> UpdateRepository.card c.Db ac
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = oldInstanceId)

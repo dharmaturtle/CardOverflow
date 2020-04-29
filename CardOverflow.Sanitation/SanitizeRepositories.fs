@@ -317,7 +317,7 @@ module SanitizeCardRepository =
         let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId) // lowTODO optimize by moving into `else`
         return!
             if Set.isSubset required actual then
-                let update () = CardRepository.UpdateFieldsToNewInstance db acquiredCard command.load
+                let update () = UpdateRepository.card db acquiredCard command.load
                 match card with
                 | null ->
                     update ()

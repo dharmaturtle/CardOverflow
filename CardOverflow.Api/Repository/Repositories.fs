@@ -413,7 +413,9 @@ module CardRepository =
                 }
             }
         }
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
+
+module UpdateRepository =
+    let card (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
         taskResult {
             let! card =
                 if acquiredCard.CardId = 0 then taskResult {
