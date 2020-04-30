@@ -561,7 +561,9 @@ module UpdateRepository =
                                     if commandClozeIndexes.Contains <| getClozeIndex ac.CardInstance.FieldValues then
                                         ac.CardInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.CardInstance.CardId) command.EditSummary communalInstances
                                         Some ac
-                                    else None
+                                    else
+                                        ac.CardState <- CardState.toDb Suspended
+                                        None
                             ) |> List.choose id
                         let e =
                             if command.TemplateInstance.IsCloze then

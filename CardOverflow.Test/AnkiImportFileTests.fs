@@ -288,6 +288,10 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             for id in cardIds do
                 do! testCommunalFields id [clozeText]
         otherTest clozeText }
+    let assertUserHasNormalCardCount expected =
+        c.Db.AcquiredCard.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
+        |> Task.map (fun actual -> Assert.Equal(expected, actual))
+    do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
         c.Db.CardInstance
             .Include(fun x -> x.TemplateInstance)
@@ -299,13 +303,16 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             |> fun x -> Assert.Equal(expected, x)
     do! test 1 "Canberra was founded in {{c1::1913}}."
         <| assertCount 1
+    do! assertUserHasNormalCardCount 1
     do! test 1 "{{c1::Canberra::city}} was founded in {{c1::1913}}."
         <| assertCount 1
+    do! assertUserHasNormalCardCount 2
     do! test 2 "{{c1::Portland::city}} was founded in {{c2::1845}}."
         <| fun clozeText ->
             assertCount 0 clozeText
             assertCount 1 "Portland was founded in {{c2::1845}}."
             assertCount 1 "{{c1::Portland::city}} was founded in 1845."
+    do! assertUserHasNormalCardCount 4
 
     let! (e: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
     let expected =
@@ -314,11 +321,13 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             "[ city ] was founded in 1845.", "[ Portland ] was founded in 1845. extra"
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
     Assert.Equal(expected, e.Results.Select(fun x -> x.Value.CardInstanceMeta.StrippedFront, x.Value.CardInstanceMeta.StrippedBack))
+    do! assertUserHasNormalCardCount 4
     
     // c1 and c2 cloze pair with communal Extra creates one Extra instance
     let! (instanceIds, (communals: List<string * int>)) = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
     Assert.Equal([ "Extra", 1006 ] , communals)
     Assert.Equal<int seq>([1005; 1006], instanceIds)
+    do! assertUserHasNormalCardCount 6
     
     // go from 1 cloze to 2 clozes
     let cardId = 1
@@ -335,6 +344,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1007; 1008], instanceIds)
     Assert.Empty nonClozeCommunals
+    do! assertUserHasNormalCardCount 7
     
     // go from 2 clozes to 1 cloze
     let cardId = 1
@@ -351,6 +361,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1009], instanceIds)
     Assert.Empty nonClozeCommunals
+    do! assertUserHasNormalCardCount 6
     
     // multiple c1's works
     let cardId = 1
@@ -367,6 +378,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1010], instanceIds)
     Assert.Empty nonClozeCommunals
+    do! assertUserHasNormalCardCount 6
     } |> TaskResult.assertOk)
 
 [<Fact>]
