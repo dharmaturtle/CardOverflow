@@ -295,10 +295,6 @@ type CommunalFieldInstance with
         Id = entity.Id
         FieldName = entity.FieldName
         Value = entity.Value }
-    static member loadLatest (entity: LatestCommunalFieldInstanceEntity) = {   
-        Id = entity.CommunalFieldInstanceId
-        FieldName = entity.FieldName
-        Value = entity.Value }
 
 type CardInstanceMeta with
     static member load isAcquired isLatest (entity: CardInstanceEntity) (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) =

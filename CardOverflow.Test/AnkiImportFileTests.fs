@@ -283,7 +283,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     .Select(fun x -> x.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.Id)
                     .ToListAsync()
             for id in communalFieldInstanceIds do
-                Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = id))
+                Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = id))
             let! cardIds = (getCardInstances clozeText).Select(fun x -> x.CardId).ToListAsync()
             for id in cardIds do
                 do! testCommunalFields id [clozeText]
@@ -434,11 +434,11 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     do! test <| None <| fun i ->
             Assert.Equal(cardInstanceId, i.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
             Assert.Equal(1001, i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
-            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = i.Id))
+            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = i.Id))
     do! test <| Some cardInstanceId <| fun i ->
             Assert.Equal([1001; 1002], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId))
             Assert.Equal([1001; 1001], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstanceId))
-            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.CommunalFieldInstanceId = i.Id))
+            Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = i.Id))
     Assert.SingleI c.Db.CommunalField
     Assert.SingleI c.Db.CommunalFieldInstance }
 

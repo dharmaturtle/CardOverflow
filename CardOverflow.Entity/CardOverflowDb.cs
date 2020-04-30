@@ -26,7 +26,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<File_CardInstanceEntity> File_CardInstance { get; set; }
         public virtual DbSet<FilterEntity> Filter { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
-        private DbSet<LatestCommunalFieldInstanceEntity> _LatestCommunalFieldInstanceTracked { get; set; }
         private DbSet<LatestTemplateInstanceEntity> _LatestTemplateInstanceTracked { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
@@ -333,13 +332,6 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
                 entity.HasIndex(e => e.AcquiredCardId);
-            });
-
-            modelBuilder.Entity<LatestCommunalFieldInstanceEntity>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.ToView("LatestCommunalFieldInstance");
             });
 
             modelBuilder.Entity<LatestTemplateInstanceEntity>(entity =>

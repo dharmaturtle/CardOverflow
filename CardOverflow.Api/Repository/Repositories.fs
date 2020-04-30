@@ -35,7 +35,7 @@ module CommunalFieldRepository =
             db.LatestCommunalFieldInstance
                 .Where(fun x -> x.Value.Contains query)
                 .ToListAsync()
-        return x |> Seq.map CommunalFieldInstance.loadLatest |> toResizeArray
+        return x |> Seq.map CommunalFieldInstance.load |> toResizeArray
         }
 
 module FeedbackRepository =

@@ -109,7 +109,7 @@ namespace CardOverflow.Entity {
     public IQueryable<CardRelationshipCountEntity> CardRelationshipCount => _CardRelationshipCountTracked.AsNoTracking();
     public IQueryable<CardTagCountEntity> CardTagCount => _CardTagCountTracked.AsNoTracking();
     public IQueryable<CardInstanceEntity> LatestCardInstance => CardInstance.Where(x => x.Card.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<LatestCommunalFieldInstanceEntity> LatestCommunalFieldInstance => _LatestCommunalFieldInstanceTracked.AsNoTracking();
+    public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<LatestTemplateInstanceEntity> LatestTemplateInstance => _LatestTemplateInstanceTracked.AsNoTracking();
 
   }
