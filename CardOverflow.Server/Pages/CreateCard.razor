@@ -16,7 +16,7 @@
 @if (_card == null || _templates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@_card Templates=@_templates />
+  <EditCardDetail Card=@_card Templates=@_templates NewEditCardOnSave=true />
 }
 
 @code {

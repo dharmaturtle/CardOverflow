@@ -16,12 +16,12 @@
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@EditCard OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
-    <fieldset>
+    <fieldset disabled=@_IsDisabled>
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
             @foreach (var field in EditCard.FieldValues) {
-              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) MustBeCommunal=@(EditCard.TemplateInstance.ClozeFields.Contains(field.EditField.Name)) />
+              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) MustBeCommunal=@(EditCard.TemplateInstance.ClozeFields.Contains(field.EditField.Name)) IsDisabled=@_IsDisabled />
             }
           </div>
           <div class="col-sm">
@@ -87,9 +87,31 @@
               <button type="button" class="btn btn-primary" @onclick=@UpdateCard>Save</button>
             </span>
           </div>
-          <div class="row">
+          <div class="row float-right">
             <DataAnnotationsValidator />
             <ValidationSummary />
+            @if (_resultingInstanceIds != null) {
+              @if (_resultingInstanceIds.Count() == 1) {
+                <span>
+                  Saved! Link to
+                  <a href="cardinstance/@_resultingInstanceIds.Single()">
+                    card.
+                  </a>
+                </span>
+              } else {
+                <span>
+                  Saved! Link to cards:&nbsp;
+                </span>
+                @foreach (var (resultingInstanceId, i) in _resultingInstanceIds.Select((id, i) => (id, i))) {
+                  <a href="cardinstance/@resultingInstanceId">
+                    card @(i + 1)
+                  </a>
+                  @if (i + 1 != _resultingInstanceIds.Count()) {
+                    <span>,&nbsp;</span>
+                  }
+                }
+              }
+            }
           </div>
         </div>
       </div>
@@ -100,13 +122,15 @@
 @code {
   [Parameter] public AcquiredCard Card { get; set; }
   [Parameter] public ViewEditCardCommand EditCard { get; set; }
+  [Parameter] public bool NewEditCardOnSave { get; set; }
   [Parameter] public IEnumerable<ViewTemplateWithAllInstances> Templates { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   private IEnumerable<ViewTemplateInstance> SelectedTemplateInstances;
   private int SelectedTemplateId;
   private int SelectedTemplateInstanceId;
-  private bool NewEditCardOnSave;
   private int _SelectedCardSettingId;
+  private bool _IsDisabled;
+  private List<int> _resultingInstanceIds;
 
   protected override async Task OnInitializedAsync() {
     if (Templates == null) {
@@ -114,7 +138,6 @@
     }
     if (EditCard == null) {
       EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), CardSource.Original);
-      NewEditCardOnSave = true;
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
@@ -126,13 +149,15 @@
   }
 
   async Task UpdateCard() {
+    _IsDisabled = true;
     var result = await DbExecutor.QueryAsync(db => SanitizeCardRepository.Update(db, User.Id, Card, EditCard));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
+      _resultingInstanceIds = result.ResultValue.Item1;
       if (NewEditCardOnSave) {
         var fieldValues = EditCard.FieldValues.Select(x => {
           if (EditCard.CommunalNonClozeFieldValues.Contains(x)) {
-            var communalInstanceId = result.ResultValue.Single(xx => x.EditField.Name == xx.Item1).Item2;
+            var communalInstanceId = result.ResultValue.Item2.Single(xx => x.EditField.Name == xx.Item1).Item2;
             return new EditFieldAndValue(x.EditField, x.Value, new CommunalFieldValue(communalInstanceId, new List<int> { Card.CardInstanceMeta.Id }));
           } else {
             return new EditFieldAndValue(x.EditField, "", x.Communal);
@@ -140,6 +165,7 @@
         }).ToList();
         EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance, CardSource.Original);
         UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
+        _IsDisabled = false;
       }
     } else {
       ToastService.ShowError(result.ErrorValue);
