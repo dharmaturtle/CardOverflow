@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections;
 using CardOverflow.Pure;
 using static Microsoft.EntityFrameworkCore.EF;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace CardOverflow.Entity {
 
@@ -79,11 +80,16 @@ namespace CardOverflow.Entity {
         .Apply(order);
     }
 
+    private IEnumerable<T> _filter<T>(List<EntityEntry> entityEntries) =>
+      entityEntries.Where(x =>
+        x.Entity is T
+        && (x.State == EntityState.Added || x.State == EntityState.Modified)
+      ).Select(x => x.Entity).Cast<T>();
+
     private void _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var x in entries.Where(x => x.Entity is TemplateInstanceEntity)) {
-        var template = (TemplateInstanceEntity)x.Entity;
+      foreach (var template in _filter<TemplateInstanceEntity>(entries)) {
         template.Hash = _entityHasher.TemplateInstanceHasher.Invoke((template, sha512));
         template.CWeightTsVectorHelper =
           Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
@@ -91,14 +97,12 @@ namespace CardOverflow.Entity {
             .Append(MappingTools.stripHtmlTags(template.AnswerTemplate))
             .Apply(x => string.Join(' ', x));
       }
-      foreach (var x in entries.Where(x => x.Entity is CardInstanceEntity)) {
-        var card = (CardInstanceEntity)x.Entity;
+      foreach (var card in _filter<CardInstanceEntity>(entries)) {
         var templateHash = card.TemplateInstance?.Hash ?? TemplateInstance.Find(card.TemplateInstanceId).Hash;
         card.Hash = _entityHasher.CardInstanceHasher.Invoke((card, templateHash, sha512));
         card.TsVectorHelper = MappingTools.stripHtmlTags(card.FieldValues);
       }
-      foreach (var x in entries.Where(x => x.Entity is CommunalFieldInstanceEntity)) {
-        var communalFieldInstance = (CommunalFieldInstanceEntity)x.Entity;
+      foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
     }
