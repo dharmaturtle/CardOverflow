@@ -351,6 +351,22 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1009], instanceIds)
     Assert.Empty nonClozeCommunals
+    
+    // multiple c1's works
+    let cardId = 1
+    let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
+    let command =
+        { command with
+            ViewEditCardCommand.FieldValues =
+                [   {   command.FieldValues.[0] with
+                            Value = "{{c1::Canberra}} was founded in {{c1::1913}}."
+                    }
+                    command.FieldValues.[1]
+                ].ToList()
+        }
+    let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
+    Assert.Equal<int seq>([1010], instanceIds)
+    Assert.Empty nonClozeCommunals
     } |> TaskResult.assertOk)
 
 [<Fact>]

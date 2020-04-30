@@ -566,7 +566,7 @@ module UpdateRepository =
                         let e =
                             if command.TemplateInstance.IsCloze then
                                 let entityIndex = e.CardInstance.FieldValues |> getClozeIndex
-                                let commandIndex = c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " " |> getClozeIndex
+                                let commandIndex = c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " " |> getClozeIndexes |> Seq.distinct |> Seq.exactlyOne
                                 if entityIndex = commandIndex then
                                     e.CardInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
                                     e
