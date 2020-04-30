@@ -85,6 +85,12 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.AcquiredCards)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.CardInstance)
+                    .WithMany(p => p.AcquiredCards)
+                    .HasPrincipalKey(p => new { p.CardId, p.Id })
+                    .HasForeignKey(d => new { d.CardId, d.CardInstanceId })
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<AcquiredCardIsLatestEntity>(entity =>

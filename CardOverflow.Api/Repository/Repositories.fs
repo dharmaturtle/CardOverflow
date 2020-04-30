@@ -578,7 +578,6 @@ module UpdateRepository =
                                     else
                                         let ac = acquiredCard.copyToNew tagIds
                                         ac.CardInstance <- c.CardView.CopyFieldsToNewInstance newCardEntity c.EditSummary communalInstances
-                                        ac.Card <- ac.CardInstance.Card
                                         db.AcquiredCard.AddI ac
                                         ac
                             else
