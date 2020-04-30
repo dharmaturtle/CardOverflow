@@ -269,10 +269,6 @@ type CardInstanceView with
         CardInstanceView.toView
             entity.TemplateInstance
             entity.FieldValues
-    static member loadLatest (entity: LatestCardInstanceEntity) =
-        CardInstanceView.toView
-            entity.TemplateInstance
-            entity.FieldValues
     member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
         entity.CommunalFieldInstance_CardInstances <-
@@ -312,30 +308,6 @@ type CardInstanceMeta with
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
             IsLatest = isLatest
-            IsAcquired = isAcquired
-            StrippedFront = MappingTools.stripHtmlTagsForDisplay front
-            StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
-            Relationships = relationshipCounts.Select(fun x ->
-                {   Name = x.Name
-                    SourceCardId = x.SourceCardId
-                    TargetCardId = x.TargetCardId
-                    IsAcquired = usersRelationships.Contains x.Name
-                    Users = x.Count
-                })  |> Seq.toList
-            Tags = tagCounts.Select(fun x ->
-                {   Name = x.Name
-                    Count = x.Count
-                    IsAcquired = usersTags.Contains x.Name
-                }) |> Seq.toList
-        }
-    static member loadLatest isAcquired (entity: LatestCardInstanceEntity) (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) =
-        let front, back, _, _ = entity |> CardInstanceView.loadLatest |> fun x -> x.FrontBackFrontSynthBackSynth
-        {   Id = entity.CardInstanceId
-            Created = entity.Created
-            Modified = entity.Modified |> Option.ofNullable
-            IsDmca = entity.IsDmca
-            IsLatest = true
             IsAcquired = isAcquired
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back

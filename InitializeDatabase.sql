@@ -188,28 +188,6 @@ CREATE TABLE public."CardInstance" (
 
 ALTER TABLE public."CardInstance" OWNER TO postgres;
 
-CREATE VIEW public."LatestCardInstance" AS
- SELECT c."AuthorId",
-    c."Users" AS "CardUsers",
-    i1."Id" AS "CardInstanceId",
-    i1."CardId",
-    i1."Created",
-    i1."Modified",
-    i1."IsDmca",
-    i1."FieldValues",
-    i1."TemplateInstanceId",
-    i1."Users" AS "InstanceUsers",
-    i1."EditSummary",
-    i1."AnkiNoteId",
-    i1."AnkiNoteOrd"
-   FROM ((public."Card" c
-     JOIN public."CardInstance" i1 ON ((c."Id" = i1."CardId")))
-     LEFT JOIN public."CardInstance" i2 ON (((c."Id" = i2."CardId") AND ((i1."Created" < i2."Created") OR ((i1."Created" = i2."Created") AND (i1."Id" < i2."Id"))))))
-  WHERE ((i2."Id" IS NULL) AND (c."BranchSourceId" IS NULL) AND c."IsListed");
-
-
-ALTER TABLE public."LatestCardInstance" OWNER TO postgres;
-
 CREATE VIEW public."AcquiredCardIsLatest" AS
  SELECT a."Id",
     a."UserId",
@@ -220,9 +198,9 @@ CREATE VIEW public."AcquiredCardIsLatest" AS
     a."Due",
     a."CardSettingId",
     a."IsLapsed",
-    (l."CardInstanceId" IS NULL) AS "IsLatest"
+    (c."LatestInstanceId" IS NULL) AS "IsLatest"
    FROM (public."AcquiredCard" a
-     LEFT JOIN public."LatestCardInstance" l ON ((l."CardInstanceId" = a."CardInstanceId")));
+     LEFT JOIN public."Card" c ON ((c."LatestInstanceId" = a."CardInstanceId")));
 
 
 ALTER TABLE public."AcquiredCardIsLatest" OWNER TO postgres;

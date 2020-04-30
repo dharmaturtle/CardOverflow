@@ -44,7 +44,7 @@ namespace CardOverflow.Entity {
     }
 
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public IOrderedQueryable<LatestCardInstanceEntity> SearchLatestCardInstance(
+    public IOrderedQueryable<CardInstanceEntity> SearchLatestCardInstance(
       string searchTerm,
       string plain,
       string wildcard,
@@ -54,22 +54,22 @@ namespace CardOverflow.Entity {
           NpgsqlTsRankingNormalization.DivideBy1PlusLogLength
         | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
 
-      IQueryable<LatestCardInstanceEntity> where(IQueryable<LatestCardInstanceEntity> query) =>
+      IQueryable<CardInstanceEntity> where(IQueryable<CardInstanceEntity> query) =>
         String.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x =>
-          x.CardInstance.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x => x.Tag.TsVector.Matches(
+          x.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x => x.Tag.TsVector.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)))))
-            || x.CardInstance.TsVector.Matches(
+            || x.TsVector.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
 
-      IOrderedQueryable<LatestCardInstanceEntity> order(IQueryable<LatestCardInstanceEntity> query) =>
+      IOrderedQueryable<CardInstanceEntity> order(IQueryable<CardInstanceEntity> query) =>
         searchOrder == SearchOrder.Popularity
-        ? query.OrderByDescending(x => x.CardUsers)
+        ? query.OrderByDescending(x => x.Card.Users)
         : query.OrderByDescending(x =>
-          x.CardInstance.TsVector.RankCoverDensity(
+          x.TsVector.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
-          + (((float?)x.CardInstance.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
+          + (((float?)x.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
             x.Tag.TsVector.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
             )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
@@ -108,7 +108,7 @@ namespace CardOverflow.Entity {
     public IQueryable<CardInstanceTagCountEntity> CardInstanceTagCount => _CardInstanceTagCountTracked.AsNoTracking();
     public IQueryable<CardRelationshipCountEntity> CardRelationshipCount => _CardRelationshipCountTracked.AsNoTracking();
     public IQueryable<CardTagCountEntity> CardTagCount => _CardTagCountTracked.AsNoTracking();
-    public IQueryable<LatestCardInstanceEntity> LatestCardInstance => _LatestCardInstanceTracked.AsNoTracking();
+    public IQueryable<CardInstanceEntity> LatestCardInstance => CardInstance.Where(x => x.Card.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<LatestCommunalFieldInstanceEntity> LatestCommunalFieldInstance => _LatestCommunalFieldInstanceTracked.AsNoTracking();
     public IQueryable<LatestTemplateInstanceEntity> LatestTemplateInstance => _LatestTemplateInstanceTracked.AsNoTracking();
 

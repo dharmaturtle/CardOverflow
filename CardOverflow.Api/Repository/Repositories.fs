@@ -125,7 +125,7 @@ module HistoryRepository =
 
 module ExploreCardRepository =
     let get (db: CardOverflowDb) userId cardId = taskResult {
-        let! r =
+        let! (r: CardInstanceEntity * List<string> * List<string> * List<string>) =
             db.LatestCardInstance
                 .Include(fun x -> x.Card.Author)
                 .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
@@ -136,16 +136,16 @@ module ExploreCardRepository =
                 .Where(fun x -> x.CardId = cardId)
                 .Select(fun x ->
                     x,
-                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
-                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name).ToList(),
-                    x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name).ToList()
+                    x.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
+                    x.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name).ToList(),
+                    x.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
         let! e, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" cardId)
-        let! tc = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-        let! rc = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
+        let! (tc: List<CardTagCountEntity>) = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
+        let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
         return
-            CardInstanceMeta.loadLatest isAcquired e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+            CardInstanceMeta.load isAcquired true e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
             |> ExploreCard.load e.Card
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
@@ -168,9 +168,8 @@ module ExploreCardRepository =
         let! tc = db.CardTagCount.Where(fun x -> x.CardId = e.CardId).ToListAsync()
         let! rc = db.CardRelationshipCount.Where(fun x -> x.CardId = e.CardId).ToListAsync()
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = e.CardId)
-        let! isLatest = db.LatestCardInstance.AnyAsync(fun x -> x.CardInstanceId = instanceId)
         return
-            CardInstanceMeta.load isAcquired isLatest e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+            CardInstanceMeta.load isAcquired (e.Card.LatestInstanceId = e.Id) e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
             |> ExploreCard.load e.Card
         }
 
@@ -197,17 +196,17 @@ module CardViewRepository =
                 .Include(fun x -> x.TemplateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = aId)
             |> Task.map (Result.requireNotNull (sprintf "Card instance #%i not found" aId))
-        let! (b: LatestCardInstanceEntity) = // verylowTODO optimization try to get this from `a` above
+        let! (b: CardInstanceEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestCardInstance
                 .Include(fun x -> x.TemplateInstance)
                 .SingleAsync(fun x -> x.CardId = a.CardId)
-        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.CardInstanceId
+        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.Id
         return
             CardInstanceView.load a,
             acquiredInstanceIds.Contains a.Id,
-            CardInstanceView.loadLatest b,
-            acquiredInstanceIds.Contains b.CardInstanceId,
-            b.CardInstanceId
+            CardInstanceView.load b,
+            acquiredInstanceIds.Contains b.Id,
+            b.Id
     }
     let instancePair (db: CardOverflowDb) aId bId userId = taskResult {
         let! (instances: CardInstanceEntity ResizeArray) =
@@ -238,7 +237,7 @@ module CardViewRepository =
             .SingleOrDefaultAsync(fun x -> x.CardId = cardId)
         |> Task.map Ok
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Card #%i not found" cardId) x |> Task.FromResult)
-        |> TaskResult.map CardInstanceView.loadLatest
+        |> TaskResult.map CardInstanceView.load
 
 module AcquiredCardRepository =
     let getAcquired (db: CardOverflowDb) userId (testCardInstanceIds: int ResizeArray) =
@@ -387,13 +386,15 @@ module CardRepository =
             let! r =
                 db.SearchLatestCardInstance(searchTerm, plain, wildcard, order).Select(fun x ->
                     x,
-                    x.CardInstance.AcquiredCards.Any(fun x -> x.UserId = userId),
+                    x.AcquiredCards.Any(fun x -> x.UserId = userId),
                     x.TemplateInstance, // .Include fails for some reason, so we have to manually select
-                    x.Author
+                    x.Card,
+                    x.Card.Author
                 ).ToPagedListAsync(pageNumber, 15)
             let squashed =
-                r |> List.ofSeq |> List.map (fun (c, isAcquired, template, author) ->
-                    c.Author <- author
+                r |> List.ofSeq |> List.map (fun (c, isAcquired, template, card, author) ->
+                    c.Card <- card
+                    c.Card.Author <- author
                     c.TemplateInstance <- template
                     c, isAcquired
                 )
@@ -401,10 +402,10 @@ module CardRepository =
                 Results =
                     squashed |> List.map (fun (c, isAcquired) ->
                         {   Id = c.CardId
-                            Author = c.Author.DisplayName
-                            AuthorId = c.AuthorId
-                            Users = c.CardUsers
-                            Instance = CardInstanceMeta.loadLatest isAcquired c Set.empty ResizeArray.empty Set.empty ResizeArray.empty
+                            Author = c.Card.Author.DisplayName
+                            AuthorId = c.Card.AuthorId
+                            Users = c.Card.Users
+                            Instance = CardInstanceMeta.load isAcquired true c Set.empty ResizeArray.empty Set.empty ResizeArray.empty
                         }
                     )
                 Details = {
