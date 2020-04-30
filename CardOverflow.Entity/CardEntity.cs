@@ -29,6 +29,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _BranchName;
+        public int LatestInstanceId { get; set; }
         public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
@@ -40,6 +41,9 @@ namespace CardOverflow.Entity
         [ForeignKey("CopySourceId")]
         [InverseProperty("Cards")]
         public virtual CardInstanceEntity CopySource { get; set; }
+        [ForeignKey("LatestInstanceId")]
+        [InverseProperty("CardLatestInstances")]
+        public virtual CardInstanceEntity LatestInstance { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
         [InverseProperty("Card")]

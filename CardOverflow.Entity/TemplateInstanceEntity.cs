@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
         public TemplateInstanceEntity()
         {
             CardInstances = new HashSet<CardInstanceEntity>();
+            Templates = new HashSet<TemplateEntity>();
             User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
         }
 
@@ -133,6 +134,8 @@ namespace CardOverflow.Entity
         public virtual TemplateEntity Template { get; set; }
         [InverseProperty("TemplateInstance")]
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
+        [InverseProperty("LatestInstance")]
+        public virtual ICollection<TemplateEntity> Templates { get; set; }
         [InverseProperty("TemplateInstance")]
         public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
     }

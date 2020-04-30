@@ -116,6 +116,11 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.Cards)
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.LatestInstance)
+                    .WithMany(p => p.CardLatestInstances)
+                    .HasForeignKey(d => d.LatestInstanceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<CardInstanceEntity>(entity =>
@@ -240,6 +245,11 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.Author)
                     .WithMany(p => p.CommunalFields)
                     .HasForeignKey(d => d.AuthorId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.LatestInstance)
+                    .WithMany(p => p.CommunalFields)
+                    .HasForeignKey(d => d.LatestInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -440,6 +450,11 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.Author)
                     .WithMany(p => p.Templates)
                     .HasForeignKey(d => d.AuthorId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.LatestInstance)
+                    .WithMany(p => p.Templates)
+                    .HasForeignKey(d => d.LatestInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
