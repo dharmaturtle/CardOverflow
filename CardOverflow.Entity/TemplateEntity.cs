@@ -16,6 +16,7 @@ namespace CardOverflow.Entity
         [Key]
         public int Id { get; set; }
         public int AuthorId { get; set; }
+        public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Templates")]

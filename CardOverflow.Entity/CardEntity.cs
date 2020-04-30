@@ -20,16 +20,26 @@ namespace CardOverflow.Entity
         public int Users { get; set; }
         public int? CopySourceId { get; set; }
         public int? BranchSourceId { get; set; }
+        [StringLength(64)]
+        public string BranchName {
+            get => _BranchName;
+            set {
+                if (value.Length > 64) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and BranchName has a maximum length of 64. Attempted value: {value}");
+                _BranchName = value;
+            }
+        }
+        private string _BranchName;
+        public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("CopySourceId")]
-        [InverseProperty("Cards")]
-        public virtual CardInstanceEntity CopySource { get; set; }
         [ForeignKey("BranchSourceId")]
         [InverseProperty("BranchChildren")]
         public virtual CardEntity BranchSource { get; set; }
+        [ForeignKey("CopySourceId")]
+        [InverseProperty("Cards")]
+        public virtual CardInstanceEntity CopySource { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
         [InverseProperty("Card")]
