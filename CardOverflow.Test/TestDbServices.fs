@@ -59,7 +59,7 @@ module TestTemplateRepo =
             db.LatestTemplateInstance
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (TemplateInstance.loadLatest >> ViewTemplateInstance.load) |> toResizeArray
+        return x |> Seq.map (TemplateInstance.load >> ViewTemplateInstance.load) |> toResizeArray
         }
     let SearchEarliest (db: CardOverflowDb) (query: string) = task {
         let! x =

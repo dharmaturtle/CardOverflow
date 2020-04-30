@@ -196,7 +196,7 @@ module SanitizeTemplate =
             db.LatestTemplateInstance
                 .Where(fun x ->
                     String.IsNullOrWhiteSpace searchTerm ||
-                    x.TemplateInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
+                    x.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
                 ).Select(fun x ->
                     x.Template.TemplateInstances.Select(fun x -> x.User_TemplateInstances.Count).ToList(), // lowTODO sum here
                     x.User_TemplateInstances.Any(fun x -> x.UserId = userId),
@@ -204,7 +204,7 @@ module SanitizeTemplate =
                 ).ToPagedListAsync(pageNumber, 15)
         return {
             Results = r |> Seq.map (fun (users, isAcquired, l) ->
-                l |> TemplateInstance.loadLatest |> ViewSearchTemplateInstance.load (users.Sum()) isAcquired) |> toResizeArray
+                l |> TemplateInstance.load |> ViewSearchTemplateInstance.load (users.Sum()) isAcquired) |> toResizeArray
             Details = {
                 CurrentPage = r.PageNumber
                 PageCount = r.PageCount

@@ -621,31 +621,6 @@ CREATE TABLE public."TemplateInstance" (
 
 ALTER TABLE public."TemplateInstance" OWNER TO postgres;
 
-CREATE VIEW public."LatestTemplateInstance" AS
- SELECT t."AuthorId",
-    i1."Id" AS "TemplateInstanceId",
-    i1."TemplateId",
-    i1."Name",
-    i1."Css",
-    i1."Created",
-    i1."Modified",
-    i1."LatexPre",
-    i1."LatexPost",
-    i1."IsDmca",
-    i1."QuestionTemplate",
-    i1."AnswerTemplate",
-    i1."ShortQuestionTemplate",
-    i1."ShortAnswerTemplate",
-    i1."Fields",
-    i1."EditSummary",
-    i1."AnkiId"
-   FROM ((public."Template" t
-     JOIN public."TemplateInstance" i1 ON ((t."Id" = i1."TemplateId")))
-     LEFT JOIN public."TemplateInstance" i2 ON (((t."Id" = i2."TemplateId") AND ((i1."Created" < i2."Created") OR ((i1."Created" = i2."Created") AND (i1."Id" < i2."Id"))))))
-  WHERE ((i2."Id" IS NULL) AND t."IsListed");
-
-
-ALTER TABLE public."LatestTemplateInstance" OWNER TO postgres;
 
 CREATE TABLE public."PotentialSignups" (
     "Id" integer NOT NULL,

@@ -78,7 +78,7 @@ module TemplateRepository =
         db.LatestTemplateInstance
             .SingleOrDefaultAsync(fun x -> x.TemplateId = templateId)
         |> Task.map (Result.requireNotNull <| sprintf "Template #%i not found" templateId)
-        |> TaskResult.map TemplateInstance.loadLatest
+        |> TaskResult.map TemplateInstance.load
     let instance (db: CardOverflowDb) instanceId =
         db.TemplateInstance
             .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
