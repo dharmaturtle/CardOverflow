@@ -293,6 +293,10 @@ module SanitizeCardRepository =
                     Source = source
                 } |> Ok }
     let getBranch (db: CardOverflowDb) userId cardId = taskResult {
+        let! (card: CardEntity) = db.Card.SingleAsync(fun x -> x.Id = cardId)
+        do! if card.BranchSourceId.HasValue
+            then Error "You can't branch a branch"
+            else Ok ()
         let! ac = CardRepository.getNew db userId
         let! cardInstanceId =
             db.LatestCardInstance.SingleAsync(fun x -> x.CardId = cardId)

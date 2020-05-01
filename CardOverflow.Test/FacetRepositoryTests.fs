@@ -501,6 +501,17 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [1001, 0; 1002, 1; 1003, 1
              1004, 1
             ]
+
+    // user2 branchs their branch (card3)
+    let userId = 2
+    let cardId = 3
+    let! old = SanitizeCardRepository.getBranch c.Db userId cardId
+    Assert.Equal("You can't branch a branch", old.error)
+    do! assertCount
+            [1,    2;             2, 1; 3, 1]
+            [1001, 0; 1002, 1; 1003, 1
+             1004, 1
+            ]
     }
     
 // fuck merge
