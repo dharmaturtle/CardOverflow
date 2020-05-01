@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -99,7 +99,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
     LANGUAGE plpgsql
     AS $$
     BEGIN
-		IF (TG_OP = 'DELETE' OR TG_OP = 'UPDATE') THEN
+		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"CardInstance" ci
             SET		"Users" = ( SELECT Count(*)
                                 FROM "AcquiredCard"
@@ -122,7 +122,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
             WHERE   branch."Id" = OLD."CardId"
             AND   branchSource."Id" = branch."BranchSourceId";
         END IF;
-        IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"CardInstance" ci
             SET		"Users" = ( SELECT Count(*)
                                 FROM "AcquiredCard"
