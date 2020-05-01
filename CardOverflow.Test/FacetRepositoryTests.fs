@@ -512,6 +512,17 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [1001, 0; 1002, 1; 1003, 1
              1004, 1
             ]
+
+    // user2 branchs missing card
+    let userId = 2
+    let cardId = 117
+    let! old = SanitizeCardRepository.getBranch c.Db userId cardId
+    Assert.Equal("Card #117 doesn't exist", old.error)
+    do! assertCount
+            [1,    2;             2, 1; 3, 1]
+            [1001, 0; 1002, 1; 1003, 1
+             1004, 1
+            ]
     }
     
 // fuck merge
