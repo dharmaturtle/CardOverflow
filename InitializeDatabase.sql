@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -105,21 +105,16 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
                                 FROM "AcquiredCard"
                                 WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
             WHERE	ci."Id" = OLD."CardInstanceId";
-            UPDATE	"Card" c
-            SET		"Users" = ( SELECT	COALESCE(SUM(ci."Users"), 0)
-                                FROM	"CardInstance" ci
-                                WHERE	ci."CardId" = c."Id" )
-            WHERE	c."Id" = OLD."CardId";
-            UPDATE  "Card" branchSource
+            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
                                 WHERE ( branchSource."Id" = c."Id" OR
                                         branchSource."Id" = c."BranchSourceId" )
                                         AND  ac."CardState" <> 3 )
-            FROM    "Card" branch
-            WHERE   branch."Id" = OLD."CardId"
-            AND   branchSource."Id" = branch."BranchSourceId";
+            FROM    "Card" c1
+            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = OLD."CardId"
+            WHERE branchSource."Id" = c1."Id";
         END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"CardInstance" ci
@@ -127,21 +122,16 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
                                 FROM "AcquiredCard"
                                 WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
             WHERE	ci."Id" = NEW."CardInstanceId";
-            UPDATE	"Card" c
-            SET		"Users" = ( SELECT	COALESCE(SUM(ci."Users"), 0)
-                                FROM	"CardInstance" ci
-                                WHERE	ci."CardId" = c."Id" )
-            WHERE	c."Id" = NEW."CardId";
-            UPDATE  "Card" branchSource
+            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
                                 WHERE ( branchSource."Id" = c."Id" OR
                                         branchSource."Id" = c."BranchSourceId" )
                                         AND  ac."CardState" <> 3 )
-            FROM    "Card" branch
-            WHERE   branch."Id" = NEW."CardId"
-            AND   branchSource."Id" = branch."BranchSourceId";
+            FROM    "Card" c1
+            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = NEW."CardId"
+            WHERE branchSource."Id" = c1."Id";
         END IF;
         RETURN NULL;
     END;

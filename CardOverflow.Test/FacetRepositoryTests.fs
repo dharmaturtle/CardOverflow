@@ -562,6 +562,16 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
              ogEdit_i, 1 ;
              branch_i, 1 ]
+
+    // adventures in acquiring and unacquiring cards
+    let adventurerId = 3
+    do! CardRepository.AcquireCardAsync c.Db adventurerId og_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyBranch_c, 1
+             branch_c, 1 ]
+            [og_i,     1 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
+             ogEdit_i, 1 ;
+             branch_i, 1 ]
     }
     
 // fuck merge
