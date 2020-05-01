@@ -347,6 +347,21 @@ let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
 
 [<Fact>]
 let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
+    let og_c = 1
+    let copy_c = 2
+    let branch_c = 3
+    let copy2x_c = 4
+    let copyBranch_c = 5
+    let og_i = 1001
+    let ogEdit_i = 1002
+    let copy_i = 1003
+    let branch_i = 1004
+    let copy2x_i = 1005
+    let copyBranch_i = 1006
+
+    let user1 = 1
+    let user2 = 2
+    
     use c = new TestContainer()
     let assertCount (cardsIdsAndCounts: _ list) (cardInstanceIdsAndCounts: _ list) = task {
         do! c.Db.Card.CountAsync()
@@ -359,17 +374,15 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         for id, count in cardInstanceIdsAndCounts do
             do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
-    let userId = 1
     let tags = ["a"; "b"]
-    let! _ = addBasicCard c.Db userId tags
-    let cardId = 1
+    let! _ = addBasicCard c.Db user1 tags
     do! assertCount
-            [1, 1]
-            [1001, 1]
+            [og_c, 1]
+            [og_i, 1]
 
     // updated by user1
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getEdit c.Db userId cardId
+    let! old = SanitizeCardRepository.getEdit c.Db user1 og_c
     let old, ac = old.Value
     let updated = {
         old with
@@ -381,11 +394,11 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceId, x = x.Value
-    Assert.Equal<int seq>([1002], instanceId)
+    Assert.Equal<int seq>([ogEdit_i], instanceId)
     Assert.Empty x
     do! assertCount
-            [1, 1]
-            [1001, 0; 1002, 1]
+            [og_c, 1]
+            [og_i, 0; ogEdit_i, 1]
     
     let asserts userId cardId newValue instanceCountForCard revisionCount tags = task {
         let! refreshed = CardViewRepository.get c.Db cardId
@@ -417,7 +430,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest
     }
     
-    do! asserts userId cardId newValue 2 2
+    do! asserts user1 og_c newValue 2 2
             [ { Name = "a"
                 Count = 1
                 IsAcquired = true }
@@ -426,10 +439,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 IsAcquired = true }]
             
     // copy by user2
-    let userId = 2
-    let cardInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
+    let! old = SanitizeCardRepository.getCopy c.Db user2 ogEdit_i
     let old, ac = old.Value
     let updated = {
         old with
@@ -441,30 +452,27 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let (instanceIds, communals) = x.Value
-    let copyInstanceId = 1003
-    Assert.Equal<int seq>([copyInstanceId], instanceIds)
+    Assert.Equal<int seq>([copy_i], instanceIds)
     Assert.Empty communals
     do! assertCount
-            [1,    1;             2, 1]
-            [1001, 0; 1002, 1; 1003, 1]
+            [og_c, 1;              copy_c, 1]
+            [og_i, 0; ogEdit_i, 1; copy_i, 1]
 
-    do! asserts userId 2 newValue 1 1 []
+    do! asserts user2 copy_c newValue 1 1 []
 
     // missing copy
-    let cardInstanceId = 1337
+    let missingInstanceId = 1337
     
-    let! old = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
+    let! old = SanitizeCardRepository.getCopy c.Db user2 missingInstanceId
     
-    Assert.Equal(sprintf "Card instance %i not found" cardInstanceId, old.error)
+    Assert.Equal(sprintf "Card instance %i not found" missingInstanceId, old.error)
     do! assertCount
-            [1,    1;             2, 1]
-            [1001, 0; 1002, 1; 1003, 1]
+            [og_c, 1;              copy_c, 1]
+            [og_i, 0; ogEdit_i, 1; copy_i, 1]
 
-    // user2 branchs card1
-    let userId = 2
-    let cardId = 1
+    // user2 branchs og_c
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getBranch c.Db userId cardId
+    let! old = SanitizeCardRepository.getBranch c.Db user2 og_c
     let old, ac = old.Value
     let updated = {
         old with
@@ -476,41 +484,39 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds, communals = x.Value
-    let branchInstanceId = 1004
-    Assert.Equal<int seq>([branchInstanceId], instanceIds)
+    Assert.Equal<int seq>([branch_i], instanceIds)
     Assert.Empty communals
-    let! x = ExploreCardRepository.instance c.Db userId branchInstanceId
-    do! asserts userId x.Value.Id newValue 1 1 []
+    let! x = ExploreCardRepository.instance c.Db user2 branch_i
+    do! asserts user2 x.Value.Id newValue 1 1 []
     do! assertCount
-            [1,    2;             2, 1; 3, 1]
-            [1001, 0; 1002, 1; 1003, 1
-             1004, 1
-            ]
+            [og_c,     2 ;    copy_c, 1 ;
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;
+             ogEdit_i, 1 ;
+             branch_i, 1 ]
 
-    // user2 branchs their branch (card3)
-    let userId = 2
-    let cardId = 3
-    let! old = SanitizeCardRepository.getBranch c.Db userId cardId
+    // user2 tries to branch their branch
+    let! old = SanitizeCardRepository.getBranch c.Db user2 branch_c
     Assert.Equal("You can't branch a branch", old.error)
     do! assertCount
-            [1,    2;             2, 1; 3, 1]
-            [1001, 0; 1002, 1; 1003, 1
-             1004, 1
-            ]
+            [og_c,     2 ;    copy_c, 1 ;
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;
+             ogEdit_i, 1 ;
+             branch_i, 1 ]
 
     // user2 branchs missing card
-    let userId = 2
-    let cardId = 117
-    let! old = SanitizeCardRepository.getBranch c.Db userId cardId
-    Assert.Equal("Card #117 doesn't exist", old.error)
+    let! old = SanitizeCardRepository.getBranch c.Db user2 missingInstanceId
+    Assert.Equal(sprintf "Card #%i doesn't exist" missingInstanceId, old.error)
     do! assertCount
-            [1,    2;             2, 1; 3, 1]
-            [1001, 0; 1002, 1; 1003, 1
-             1004, 1
-            ]
+            [og_c,     2 ;    copy_c, 1 ;
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;
+             ogEdit_i, 1 ;
+             branch_i, 1 ]
 
     // user2 copies their copy
-    let! x = SanitizeCardRepository.getCopy c.Db userId copyInstanceId
+    let! x = SanitizeCardRepository.getCopy c.Db user2 copy_i
     let old, ac = x.Value
     let updated = {
         old with
@@ -522,20 +528,19 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds, communals = x.Value
-    let instanceId = 1005
-    Assert.Equal<int seq>([instanceId], instanceIds)
+    Assert.Equal<int seq>([copy2x_i], instanceIds)
     Assert.Empty communals
-    let! x = ExploreCardRepository.instance c.Db userId instanceId
-    do! asserts userId x.Value.Id newValue 1 1 []
+    let! x = ExploreCardRepository.instance c.Db user2 copy2x_i
+    do! asserts user2 x.Value.Id newValue 1 1 []
     do! assertCount
-            [1,    2;             2, 1; 3, 1; 4, 1]
-            [1001, 0; 1002, 1; 1003, 1
-             1004, 1;                         1005, 1;
-            ]
+            [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;
+             ogEdit_i, 1 ;
+             branch_i, 1 ]
     
     // user2 copies their branch
-    let userId = 2
-    let! old = SanitizeCardRepository.getCopy c.Db userId branchInstanceId
+    let! old = SanitizeCardRepository.getCopy c.Db user2 branch_i
     let old, ac = old.Value
     let updated = {
         old with
@@ -547,16 +552,16 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds, communals = x.Value
-    let instanceId = 1006
-    Assert.Equal<int seq>([instanceId], instanceIds)
+    Assert.Equal<int seq>([copyBranch_i], instanceIds)
     Assert.Empty communals
-    let! x = ExploreCardRepository.instance c.Db userId instanceId
-    do! asserts userId x.Value.Id newValue 1 1 []
+    let! x = ExploreCardRepository.instance c.Db user2 copyBranch_i
+    do! asserts user2 x.Value.Id newValue 1 1 []
     do! assertCount
-            [1,    2;             2, 1; 3, 1; 4, 1;    5,1]
-            [1001, 0; 1002, 1; 1003, 1
-             1004, 1;                         1005, 1; 1006, 1
-            ]
+            [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyBranch_c, 1
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
+             ogEdit_i, 1 ;
+             branch_i, 1 ]
     }
     
 // fuck merge
