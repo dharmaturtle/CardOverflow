@@ -572,6 +572,34 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     1 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
              ogEdit_i, 1 ;
              branch_i, 1 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyBranch_c, 1
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
+             ogEdit_i, 2 ;
+             branch_i, 1 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copy_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 1 ;    copyBranch_c, 1
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 1 ;    copyBranch_i, 1
+             ogEdit_i, 2 ;
+             branch_i, 1 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copy2x_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 2 ;    copyBranch_c, 1
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 2 ;    copyBranch_i, 1
+             ogEdit_i, 2 ;
+             branch_i, 1 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copyBranch_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 2 ;    copyBranch_c, 2
+             branch_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 2 ;    copyBranch_i, 2
+             ogEdit_i, 2 ;
+             branch_i, 1 ]
     }
     
 // fuck merge
