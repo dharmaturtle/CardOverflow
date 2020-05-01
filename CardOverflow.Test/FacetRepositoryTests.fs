@@ -250,10 +250,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     let oldCardInstanceId = 1001
     let newCardInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
-    let! acquiredCard = 
-        (CardRepository.GetAcquired c.Db userId cardId)
-            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> x.Result.Value)
-    let! (old, _) = SanitizeCardRepository.getEdit c.Db userId cardId
+    let! old, ac = SanitizeCardRepository.getEdit c.Db userId cardId
     let updated = {
         old with
             ViewEditCardCommand.FieldValues =
@@ -262,7 +259,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! (instanceId, x) = UpdateRepository.card c.Db acquiredCard updated.load
+    let! (instanceId, x) = UpdateRepository.card c.Db ac updated.load
     Assert.Equal<int seq>([newCardInstanceId], instanceId)
     Assert.Empty x
 
@@ -479,10 +476,10 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds, communals = x.Value
-    let instanceId = 1004
-    Assert.Equal<int seq>([instanceId], instanceIds)
+    let branchInstanceId = 1004
+    Assert.Equal<int seq>([branchInstanceId], instanceIds)
     Assert.Empty communals
-    let! x = ExploreCardRepository.instance c.Db userId instanceId
+    let! x = ExploreCardRepository.instance c.Db userId branchInstanceId
     do! asserts userId x.Value.Id newValue 1 1 []
     do! assertCount
             [1,    2;             2, 1; 3, 1]
@@ -534,6 +531,31 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [1,    2;             2, 1; 3, 1; 4, 1]
             [1001, 0; 1002, 1; 1003, 1
              1004, 1;                         1005, 1;
+            ]
+    
+    // user2 copies their branch
+    let userId = 2
+    let! old = SanitizeCardRepository.getCopy c.Db userId branchInstanceId
+    let old, ac = old.Value
+    let updated = {
+        old with
+            FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! x = UpdateRepository.card c.Db ac updated.load
+    let instanceIds, communals = x.Value
+    let instanceId = 1006
+    Assert.Equal<int seq>([instanceId], instanceIds)
+    Assert.Empty communals
+    let! x = ExploreCardRepository.instance c.Db userId instanceId
+    do! asserts userId x.Value.Id newValue 1 1 []
+    do! assertCount
+            [1,    2;             2, 1; 3, 1; 4, 1;    5,1]
+            [1001, 0; 1002, 1; 1003, 1
+             1004, 1;                         1005, 1; 1006, 1
             ]
     }
     
