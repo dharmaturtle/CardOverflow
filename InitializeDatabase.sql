@@ -1,4 +1,4 @@
-﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -98,35 +98,55 @@ ALTER FUNCTION public.templateinstance_tsvectorfunction() OWNER TO postgres;
 CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-	BEGIN
+    BEGIN
 		IF (TG_OP = 'DELETE' OR TG_OP = 'UPDATE') THEN
-			UPDATE	"CardInstance" ci
-			SET		"Users" = ( SELECT Count(*)
-								FROM "AcquiredCard"
-								WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
-			WHERE	ci."Id" = OLD."CardInstanceId";
+            UPDATE	"CardInstance" ci
+            SET		"Users" = ( SELECT Count(*)
+                                FROM "AcquiredCard"
+                                WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
+            WHERE	ci."Id" = OLD."CardInstanceId";
             UPDATE	"Card" c
-			SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
-								FROM	"CardInstance" ci2
-								WHERE	ci2."CardId" = c."Id" )
-			FROM	"CardInstance" ci
-			WHERE	ci."Id" = OLD."CardInstanceId";
-		END IF;
-		IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-			UPDATE	"CardInstance" ci
-			SET		"Users" = ( SELECT Count(*)
-								FROM "AcquiredCard"
-								WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
-			WHERE	ci."Id" = NEW."CardInstanceId";
-			UPDATE	"Card" c
-			SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
-								FROM	"CardInstance" ci2
-								WHERE	ci2."CardId" = c."Id" )
-			FROM	"CardInstance" ci
-			WHERE	ci."Id" = NEW."CardInstanceId";
-		END IF;
-		RETURN NULL;
-	END;
+            SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
+                                FROM	"CardInstance" ci2
+                                WHERE	ci2."CardId" = c."Id" )
+            FROM	"CardInstance" ci
+            WHERE	ci."Id" = OLD."CardInstanceId";
+            UPDATE  "Card" branchSource
+            SET     "Users" = ( SELECT  COUNT(*)
+                                FROM    "Card" c
+                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
+                                WHERE ( branchSource."Id" = c."Id" OR
+                                        branchSource."Id" = c."BranchSourceId" )
+                                        AND  ac."CardState" <> 3 )
+            FROM    "Card" branch
+            WHERE   branch."Id" = OLD."CardId"
+            AND   branchSource."Id" = branch."BranchSourceId";
+        END IF;
+        IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+            UPDATE	"CardInstance" ci
+            SET		"Users" = ( SELECT Count(*)
+                                FROM "AcquiredCard"
+                                WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
+            WHERE	ci."Id" = NEW."CardInstanceId";
+            UPDATE	"Card" c
+            SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
+                                FROM	"CardInstance" ci2
+                                WHERE	ci2."CardId" = c."Id" )
+            FROM	"CardInstance" ci
+            WHERE	ci."Id" = NEW."CardInstanceId";
+            UPDATE  "Card" branchSource
+            SET     "Users" = ( SELECT  COUNT(*)
+                                FROM    "Card" c
+                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
+                                WHERE ( branchSource."Id" = c."Id" OR
+                                        branchSource."Id" = c."BranchSourceId" )
+                                        AND  ac."CardState" <> 3 )
+            FROM    "Card" branch
+            WHERE   branch."Id" = NEW."CardId"
+            AND   branchSource."Id" = branch."BranchSourceId";
+        END IF;
+        RETURN NULL;
+    END;
 $$;
 
 

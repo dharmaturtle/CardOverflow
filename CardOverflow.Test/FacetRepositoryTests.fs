@@ -474,6 +474,33 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     do! assertCount
             [1,    1;             2, 1]
             [1001, 0; 1002, 1; 1003, 1]
+
+    // user2 branchs card1
+    let userId = 2
+    let cardId = 1
+    let newValue = Guid.NewGuid().ToString()
+    let! old = SanitizeCardRepository.getBranch c.Db userId cardId
+    let old, ac = old.Value
+    let updated = {
+        old with
+            FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! x = UpdateRepository.card c.Db ac updated.load
+    let instanceIds, communals = x.Value
+    let instanceId = 1004
+    Assert.Equal<int seq>([instanceId], instanceIds)
+    Assert.Empty communals
+    let! x = ExploreCardRepository.instance c.Db userId instanceId
+    do! asserts userId x.Value.Id newValue 1 1 []
+    do! assertCount
+            [1,    2;             2, 1; 3, 1]
+            [1001, 0; 1002, 1; 1003, 1
+             1004, 1
+            ]
     }
     
 // fuck merge
