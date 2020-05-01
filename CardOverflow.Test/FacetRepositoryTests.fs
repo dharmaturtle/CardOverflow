@@ -351,13 +351,15 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let copy_c = 2
     let branch_c = 3
     let copy2x_c = 4
-    let copyBranch_c = 5
+    let copyOfBranch_c = 5
+    let branchOfCopy_c = 6
     let og_i = 1001
     let ogEdit_i = 1002
     let copy_i = 1003
     let branch_i = 1004
     let copy2x_i = 1005
-    let copyBranch_i = 1006
+    let copyOfBranch_i = 1006
+    let branchOfCopy_i = 1007
 
     let user1 = 1
     let user2 = 2
@@ -552,62 +554,95 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds, communals = x.Value
-    Assert.Equal<int seq>([copyBranch_i], instanceIds)
+    Assert.Equal<int seq>([copyOfBranch_i], instanceIds)
     Assert.Empty communals
-    let! x = ExploreCardRepository.instance c.Db user2 copyBranch_i
+    let! x = ExploreCardRepository.instance c.Db user2 copyOfBranch_i
     do! asserts user2 x.Value.Id newValue 1 1 []
     do! assertCount
-            [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyBranch_c, 1
+            [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyOfBranch_c, 1
              branch_c, 1 ]
-            [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
+            [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyOfBranch_i, 1
              ogEdit_i, 1 ;
              branch_i, 1 ]
 
-    // adventures in acquiring and unacquiring cards
+    // user2 branches their copy
+    let! old = SanitizeCardRepository.getBranch c.Db user2 copy_c
+    let old, ac = old.Value
+    let updated = {
+        old with
+            FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! x = UpdateRepository.card c.Db ac updated.load
+    let instanceIds, communals = x.Value
+    Assert.Equal<int seq>([branchOfCopy_i], instanceIds)
+    Assert.Empty communals
+    let! x = ExploreCardRepository.instance c.Db user2 branchOfCopy_i
+    do! asserts user2 x.Value.Id newValue 1 1 []
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 1 ;
+             branch_c, 1 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 1 ;
+             ogEdit_i, 1 ;    branchOfCopy_i, 1
+             branch_i, 1 ]
+
+    // adventures in acquiring cards
     let adventurerId = 3
     do! CardRepository.AcquireCardAsync c.Db adventurerId og_i
     do! assertCount
-            [og_c,     3 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyBranch_c, 1
-             branch_c, 1 ]
-            [og_i,     1 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
-             ogEdit_i, 1 ;
+            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
+             branch_c, 1 ;    branchOfCopy_c, 1 ]
+            [og_i,     1 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
+             ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i
     do! assertCount
-            [og_c,     3 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyBranch_c, 1
-             branch_c, 1 ]
-            [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyBranch_i, 1
-             ogEdit_i, 2 ;
+            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
+             branch_c, 1 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
+             ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId copy_i
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 1 ;    copyBranch_c, 1
-             branch_c, 1 ]
-            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 1 ;    copyBranch_i, 1
-             ogEdit_i, 2 ;
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
+             branch_c, 1 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
+             ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId copy2x_i
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 2 ;    copyBranch_c, 1
-             branch_c, 1 ]
-            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 2 ;    copyBranch_i, 1
-             ogEdit_i, 2 ;
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 1
+             branch_c, 1 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;         copy2x_i, 2 ;    copyOfBranch_i, 1
+             ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId copyBranch_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copyOfBranch_i
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 2 ;    copyBranch_c, 2
-             branch_c, 1 ]
-            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 2 ;    copyBranch_i, 2
-             ogEdit_i, 2 ;
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 1 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;    copy2x_c, 2 ;    copyBranch_c, 2
-             branch_c, 2 ]
-            [og_i,     0 ;    copy_i, 2 ;    copy2x_i, 2 ;    copyBranch_i, 2
-             ogEdit_i, 1 ;
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 2 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 1 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+    Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
+    do! CardRepository.AcquireCardAsync c.Db adventurerId branchOfCopy_i
+    Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
+    do! assertCount
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 2 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 1 ;    branchOfCopy_i, 2
              branch_i, 2 ]
     }
     

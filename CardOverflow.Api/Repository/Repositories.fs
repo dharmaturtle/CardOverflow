@@ -297,7 +297,7 @@ module CardRepository =
             card.CardId <- cardInstance.CardId
         return! db.SaveChangesAsyncI ()
         }
-    let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId =
+    let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId = // medTODO needs userId for validation
         db.AcquiredCard.Single(fun x -> x.Id = acquiredCardId)
         |> db.AcquiredCard.RemoveI
         db.SaveChangesAsyncI ()
