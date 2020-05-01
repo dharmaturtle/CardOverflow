@@ -349,18 +349,31 @@ let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
     Assert.Empty view.FieldValues
 
 [<Fact>]
-let ``UpdateRepository.card on basic card updates the fields, also copying``() : Task<unit> = task {
+let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let assertCount (cardsIdsAndCounts: _ list) (cardInstanceIdsAndCounts: _ list) = task {
+        do! c.Db.Card.CountAsync()
+            |> Task.map(fun i -> Assert.Equal(cardsIdsAndCounts.Length, i))
+        do! c.Db.CardInstance.CountAsync()
+            |> Task.map(fun i -> Assert.Equal(cardInstanceIdsAndCounts.Length, i))
+        for id, count in cardsIdsAndCounts do
+            do! c.Db.Card.SingleAsync(fun x -> x.Id = id)
+                |> Task.map (fun c -> Assert.Equal(count, c.Users))
+        for id, count in cardInstanceIdsAndCounts do
+            do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = id)
+                |> Task.map (fun c -> Assert.Equal(count, c.Users))}
+    let userId = 1
     let tags = ["a"; "b"]
     let! _ = addBasicCard c.Db userId tags
     let cardId = 1
+    do! assertCount
+            [1, 1]
+            [1001, 1]
+
+    // updated by user1
     let newValue = Guid.NewGuid().ToString()
-    let! acquiredCard = 
-        (CardRepository.GetAcquired c.Db userId cardId)
-            .ContinueWith(fun (x: Task<Result<AcquiredCard, string>>) -> x.Result.Value)
     let! old = SanitizeCardRepository.getEdit c.Db userId cardId
-    let (old, _) = old.Value
+    let old, ac = old.Value
     let updated = {
         old with
             FieldValues =
@@ -369,10 +382,13 @@ let ``UpdateRepository.card on basic card updates the fields, also copying``() :
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db acquiredCard updated.load
-    let (instanceId, x) = x.Value
+    let! x = UpdateRepository.card c.Db ac updated.load
+    let instanceId, x = x.Value
     Assert.Equal<int seq>([1002], instanceId)
     Assert.Empty x
+    do! assertCount
+            [1, 1]
+            [1001, 0; 1002, 1]
     
     let asserts userId cardId newValue instanceCountForCard revisionCount tags = task {
         let! refreshed = CardViewRepository.get c.Db cardId
@@ -412,14 +428,12 @@ let ``UpdateRepository.card on basic card updates the fields, also copying``() :
                 Count = 1
                 IsAcquired = true }]
             
-    // copy
+    // copy by user2
     let userId = 2
-    let cardId = 2
     let cardInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
-    let! acquiredCard =  CardRepository.getNew c.Db userId
     let! old = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
-    let (old, _) = old.Value
+    let old, ac = old.Value
     let updated = {
         old with
             FieldValues =
@@ -428,23 +442,28 @@ let ``UpdateRepository.card on basic card updates the fields, also copying``() :
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db acquiredCard updated.load
+    let! x = UpdateRepository.card c.Db ac updated.load
     let (instanceId, x) = x.Value
     Assert.Equal<int seq>([1003], instanceId)
     Assert.Empty x
+    do! assertCount
+            [1,    1;             2, 1]
+            [1001, 0; 1002, 1; 1003, 1]
 
-    do! asserts userId cardId newValue 1 1 []
+    do! asserts userId 2 newValue 1 1 []
 
     // already copied
     let cardInstanceId = 1003
     Assert.Equal(userId, c.Db.CardInstance.Include(fun x -> x.Card).Single(fun x -> x.Id = cardInstanceId).Card.AuthorId)
-    let! acquiredCard =  CardRepository.getNew c.Db userId
     let! copy = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
-    let (copy, _) = copy.Value
+    let copy, ac = copy.Value
     
-    let! x = UpdateRepository.card c.Db acquiredCard copy.load
+    let! x = UpdateRepository.card c.Db ac copy.load
     
     Assert.Equal("You can't copy your own cards. Yet. Contact us if you really want this feature.", x.error)
+    do! assertCount
+            [1,    1;             2, 1]
+            [1001, 0; 1002, 1; 1003, 1]
 
     // missing copy
     let cardInstanceId = 1337
@@ -452,6 +471,9 @@ let ``UpdateRepository.card on basic card updates the fields, also copying``() :
     let! old = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
     
     Assert.Equal(sprintf "Card instance %i not found" cardInstanceId, old.error)
+    do! assertCount
+            [1,    1;             2, 1]
+            [1001, 0; 1002, 1; 1003, 1]
     }
     
 // fuck merge

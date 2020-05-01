@@ -70,7 +70,6 @@ type Container with
                 //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
                     .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
-                    //.ConfigureWarnings(fun warnings -> warnings.Throw(RelationalEventId.QueryClientEvaluationWarning) |> ignore) // already the default in EF Core 3, medTODO actually test this
                     //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                     //.EnableSensitiveDataLogging(true)
                     |> ignore)

@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -105,7 +105,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
 								FROM "AcquiredCard"
 								WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
 			WHERE	ci."Id" = OLD."CardInstanceId";
-						UPDATE	"Card" c
+            UPDATE	"Card" c
 			SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
 								FROM	"CardInstance" ci2
 								WHERE	ci2."CardId" = c."Id" )
@@ -118,7 +118,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
 								FROM "AcquiredCard"
 								WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
 			WHERE	ci."Id" = NEW."CardInstanceId";
-						UPDATE	"Card" c
+			UPDATE	"Card" c
 			SET		"Users" = ( SELECT	COALESCE(SUM(ci2."Users"), 0)
 								FROM	"CardInstance" ci2
 								WHERE	ci2."CardId" = c."Id" )
