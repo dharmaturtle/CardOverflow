@@ -277,8 +277,11 @@ module CardRepository =
     }
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        let! cardInstance = db.CardInstance.SingleAsync(fun x -> x.Id = cardInstanceId)
-        match! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardInstance.CardId) with
+        let! cardInstance = db.CardInstance.Include(fun x -> x.Card).SingleAsync(fun x -> x.Id = cardInstanceId)
+        match! db.AcquiredCard.SingleOrDefaultAsync(fun x ->
+                x.UserId = userId && 
+                (x.CardId = cardInstance.CardId || Nullable x.CardId = cardInstance.Card.BranchSourceId)
+            ) with
         | null ->
             let card =
                 AcquiredCard.initialize
