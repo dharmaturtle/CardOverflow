@@ -443,27 +443,15 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
     
     let! x = UpdateRepository.card c.Db ac updated.load
-    let (instanceId, x) = x.Value
-    Assert.Equal<int seq>([1003], instanceId)
-    Assert.Empty x
+    let (instanceIds, communals) = x.Value
+    let copyInstanceId = 1003
+    Assert.Equal<int seq>([copyInstanceId], instanceIds)
+    Assert.Empty communals
     do! assertCount
             [1,    1;             2, 1]
             [1001, 0; 1002, 1; 1003, 1]
 
     do! asserts userId 2 newValue 1 1 []
-
-    // already copied
-    let cardInstanceId = 1003
-    Assert.Equal(userId, c.Db.CardInstance.Include(fun x -> x.Card).Single(fun x -> x.Id = cardInstanceId).Card.AuthorId)
-    let! copy = SanitizeCardRepository.getCopy c.Db userId cardInstanceId
-    let copy, ac = copy.Value
-    
-    let! x = UpdateRepository.card c.Db ac copy.load
-    
-    Assert.Equal("You can't copy your own cards. Yet. Contact us if you really want this feature.", x.error)
-    do! assertCount
-            [1,    1;             2, 1]
-            [1001, 0; 1002, 1; 1003, 1]
 
     // missing copy
     let cardInstanceId = 1337
@@ -522,6 +510,30 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [1,    2;             2, 1; 3, 1]
             [1001, 0; 1002, 1; 1003, 1
              1004, 1
+            ]
+
+    // user2 copies their copy
+    let! x = SanitizeCardRepository.getCopy c.Db userId copyInstanceId
+    let old, ac = x.Value
+    let updated = {
+        old with
+            FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! x = UpdateRepository.card c.Db ac updated.load
+    let instanceIds, communals = x.Value
+    let instanceId = 1005
+    Assert.Equal<int seq>([instanceId], instanceIds)
+    Assert.Empty communals
+    let! x = ExploreCardRepository.instance c.Db userId instanceId
+    do! asserts userId x.Value.Id newValue 1 1 []
+    do! assertCount
+            [1,    2;             2, 1; 3, 1; 4, 1]
+            [1001, 0; 1002, 1; 1003, 1
+             1004, 1;                         1005, 1;
             ]
     }
     

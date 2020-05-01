@@ -426,6 +426,11 @@ module UpdateRepository =
                     CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
                 | Original ->
                     CardEntity(AuthorId = acquiredCard.UserId)
+        let card =
+            if acquiredCard.CardId = 0 then
+                newCardEntity
+            else
+                Id acquiredCard.CardId
         let createCommunalFieldInstanceEntity c fieldName =
             CommunalFieldInstanceEntity(
                 CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
@@ -470,23 +475,6 @@ module UpdateRepository =
                                 { x with
                                     Value = zip.[x.EditField.Name]}).ToList() }))
                 else Ok [ command ]
-            let! card =
-                if acquiredCard.CardId = 0 then taskResult {
-                    do! match command.Source with
-                        | CopySourceInstanceId instanceId -> task {
-                            let! userDoesntOwnInstance = db.CardInstance.AnyAsync(fun x -> x.Id = instanceId && x.Card.AuthorId <> acquiredCard.UserId)
-                            return
-                                if userDoesntOwnInstance then Ok ()
-                                else Error "You can't copy your own cards. Yet. Contact us if you really want this feature."
-                            }
-                        | BranchSourceCardId
-                        | Original -> Ok () |> Task.FromResult
-                    return newCardEntity
-                    }
-                else
-                    Id acquiredCard.CardId
-                    |> Ok
-                    |> Task.FromResult
             let! (tagIds: int ResizeArray) = task {
                 let getsertTagId (input: string) =
                     match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
