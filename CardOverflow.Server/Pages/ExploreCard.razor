@@ -55,8 +55,20 @@
       <h3>Card Settings</h3>
       <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
     }
-    <h3>Tags</h3>
+    <div class="d-flex justify-content-between">
+      <h3>Tags</h3>
+      @if (Card.IsAcquired) {
+        <TagAdder CardId=@Card.Id />
+      }
+    </div>
     <ul class="d-flex flex-wrap list-unstyled">
+      @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+        <li class="m-1">
+          <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
+            <span class="badge badge-success">@tag.Count</span> @tag.Name
+          </button>
+        </li>
+      }
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
           <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.Instance?.IsAcquired ?? true)>
@@ -65,21 +77,6 @@
         </li>
       }
     </ul>
-    @if (Card.IsAcquired) {
-      <h3>Your Tags</h3>
-      <ul class="d-flex flex-wrap list-unstyled">
-        @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
-          <li class="m-1">
-            <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
-              <span class="badge badge-success">@tag.Count</span> @tag.Name
-            </button>
-          </li>
-        }
-        @if (Card.IsAcquired) {
-          <TagAdder CardId=@Card.Id />
-        }
-      </ul>
-    }
   </div>
   <Relationship Card=@Card />
   <div>
@@ -136,6 +133,7 @@
     var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, new TagText { Text = name }, User.Id, Card.Id));
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == name).IsAcquired = true;
+      Card.Tags.Single(t => t.Name == name).Count++;
       StateHasChanged();
     } else {
       ToastService.ShowError(x.ErrorValue);
@@ -146,6 +144,7 @@
     var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, tag, User.Id, Card.Id));
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
+      Card.Tags.Single(t => t.Name == tag).Count--;
       StateHasChanged();
     } else {
       ToastService.ShowError(x.ErrorValue);
