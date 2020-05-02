@@ -37,6 +37,10 @@ module Extensions =
             this |> List.ofSeq
 
     [<Extension>]
+    let ToFList input =
+        input |> List.ofSeq
+
+    [<Extension>]
     let Apply(input, (func: Func<'TInput, 'TOutput>)) = 
         func.Invoke input
 

@@ -10,19 +10,20 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-<select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
-  @foreach (var setting in _settings) {
-    <option value=@setting.Id selected=@(SelectedId == setting.Id)>@setting.Name</option>
-  }
-</select>
+@if (User == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
+    @foreach (var setting in _settings) {
+      <option value=@setting.Id selected=@(SelectedId == setting.Id)>@setting.Name</option>
+    }
+  </select>
+}
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  [Parameter]
-  public int SelectedId { get; set; }
-  [Parameter]
-  public EventCallback<int> SettingSelected { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public int SelectedId { get; set; }
+  [Parameter] public EventCallback<int> SettingSelected { get; set; }
   private List<ViewCardSetting> _settings = new List<ViewCardSetting>();
 
   protected override async Task OnInitializedAsync() {

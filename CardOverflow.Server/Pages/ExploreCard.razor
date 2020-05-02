@@ -1,6 +1,8 @@
 @page "/cardinstance/{InstanceId:int}"
 
 @using Microsoft.FSharp.Core
+@using CardOverflow.Pure
+@using System.Linq
 @using CardOverflow.Entity
 @using CardOverflow.Legacy
 @using CardOverflow.Debug
@@ -58,7 +60,7 @@
     <div class="d-flex justify-content-between">
       <h3>Tags</h3>
       @if (Card.IsAcquired) {
-        <TagAdder CardId=@Card.Id />
+        <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x)) />
       }
     </div>
     <ul class="d-flex flex-wrap list-unstyled">
@@ -71,7 +73,7 @@
       }
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name)) disabled=@(!Card?.Instance?.IsAcquired ?? true)>
+          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Card?.Instance?.IsAcquired ?? true)>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -129,9 +131,12 @@
     }
   }
 
-  async Task AcquireTag(string name) {
+  async Task AcquireTag(string name, bool isNew = true) {
     var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, new TagText { Text = name }, User.Id, Card.Id));
     if (x.IsOk) {
+      if (isNew) {
+        Card.Tags = Card.Tags.Append(new ViewTag(name, 0, false)).ToFList();
+      }
       Card.Tags.Single(t => t.Name == name).IsAcquired = true;
       Card.Tags.Single(t => t.Name == name).Count++;
       StateHasChanged();

@@ -10,17 +10,12 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (User != null) {
-  @foreach (var tag in Tags) {
-    <li class="m-1">
-      <button type="button" class="btn btn-primary btn-sm">
-        <span class="badge badge-success">1</span> @tag
-      </button>
-    </li>
-  }
-  <EditForm Model=@WriteTag OnValidSubmit=@SaveTag>
+@if (User == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <EditForm Model=@_writeTag OnValidSubmit=@_SaveTag>
     <div class="form-group form-inline btn-group">
-      <InputText @bind-Value=@WriteTag.Text class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+      <InputText @bind-Value=@_writeTag.Text class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
       <button type="submit" class="btn btn-primary">Add</button>
       <DataAnnotationsValidator />
       <ValidationSummary />
@@ -29,22 +24,14 @@
 }
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  [Parameter]
-  public int CardId { get; set; }
-  TagText WriteTag = new TagText();
-  List<string> Tags = new List<string>();
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public int CardId { get; set; }
+  [Parameter] public EventCallback<string> AddTag { get; set; }
+  private TagText _writeTag = new TagText();
 
-  async Task SaveTag() {
-    var r = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, WriteTag, User.Id, CardId));
-    if (r.IsOk) {
-      Tags.Add(WriteTag.Text);
-      Tags = Tags.Distinct().ToList();
-      WriteTag.Text = "";
-    } else {
-      ToastService.ShowError(r.ErrorValue);
-    }
+  private async Task _SaveTag() {
+    await AddTag.InvokeAsync(_writeTag.Text);
+    _writeTag.Text = "";
   }
 
 }
