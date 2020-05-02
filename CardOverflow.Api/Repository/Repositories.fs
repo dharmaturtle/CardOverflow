@@ -249,10 +249,6 @@ module AcquiredCardRepository =
 
 module CardRepository =
     let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {
-            do! db.Relationship_AcquiredCard
-                    .Where(fun x -> x.SourceAcquiredCardId = acquiredCardId || x.TargetAcquiredCardId = acquiredCardId)
-                    .ToListAsync()
-                |> Task.map db.Relationship_AcquiredCard.RemoveRange
             do! db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
                 |> Task.map (Result.ofNullable "You don't own that card.")
                 |> TaskResult.map db.AcquiredCard.RemoveI
