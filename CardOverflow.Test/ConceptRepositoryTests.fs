@@ -78,7 +78,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId updatedInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
@@ -641,4 +641,4 @@ let ``New card template has correct hash`` (): Task<unit> = taskResult {
             |> fun x -> TemplateEntity() |> Entity |> x.CopyToNewInstance
             |> TemplateInstanceEntity.hash sha512
     
-        Assert.Equal<BitArray>(dbTemplate.Hash, computedHash) } |> TaskResult.assertOk
+        Assert.Equal<BitArray>(dbTemplate.Hash, computedHash) } |> TaskResult.getOk

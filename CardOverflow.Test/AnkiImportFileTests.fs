@@ -41,7 +41,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     Assert.Equal(7, c.Db.TemplateInstance.Count())
     Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -59,7 +59,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
     Assert.Equal(3, c.Db.File_CardInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (): unit =
@@ -114,7 +114,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     Assert.Equal(3, c.Db.CardInstance.Count())
     Assert.Equal(8, c.Db.TemplateInstance.Count())
     Assert.Equal(6, c.Db.LatestTemplateInstance.Count())
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let! acquired = CardRepository.GetAcquired c.Db userId cardId
@@ -379,7 +379,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     Assert.Equal<int seq>([1010], instanceIds)
     Assert.Empty nonClozeCommunals
     do! assertUserHasNormalCardCount 6
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
@@ -581,4 +581,4 @@ let ``Manual Anki import`` (): Task<unit> = (taskResult {
         |> AnkiImporter.loadFiles (fun sha256 -> db.File |> Seq.tryFind(fun f -> f.Sha256 = sha256))
         |> Task.FromResult
         |> TaskResult.bind(AnkiImporter.save db ankiDb userId)
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)

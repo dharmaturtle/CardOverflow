@@ -15,6 +15,7 @@ open System.IO
 open System.Linq
 open SimpleInjector.Lifestyles
 open FsToolkit.ErrorHandling
+open FSharp.Control.Tasks
 
 module Assert =
     let SingleI x =
@@ -35,5 +36,5 @@ module Extensions =
             Result.getError this
 
 module TaskResult =
-    let assertOk x =
-        x |> TaskResult.defaultWith(fun () -> failwith <| x.GetAwaiter().GetResult().error)
+    let getOk x =
+        x |> Task.map Result.getOk

@@ -278,7 +278,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     let! (missingCard: Result<ExploreCard, string>) = ExploreCardRepository.instance c.Db userId nonexistant
     
     Assert.Equal(sprintf "Card Instance #%i not found" nonexistant, missingCard.error)
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``CardViewRepository.instancePair works``() : Task<unit> = (taskResult {
@@ -302,7 +302,7 @@ let ``CardViewRepository.instancePair works``() : Task<unit> = (taskResult {
     let! (x: Result<_, _>) = CardViewRepository.instancePair c.Db -1 1001 userId
     
     Assert.Equal("Card instance #-1 not found", x.error)
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult {
@@ -331,7 +331,7 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
     Assert.True b_
     Assert.Empty b.FieldValues
     Assert.Equal(updatedInstanceId, bId)
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =

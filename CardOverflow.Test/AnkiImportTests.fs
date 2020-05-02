@@ -296,7 +296,7 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     Assert.Equal(6, c.Db.Template.Count())
     Assert.Equal(8, c.Db.TemplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -420,7 +420,7 @@ let assertHasHistory db ankiDb: Task<unit> = (taskResult {
     let userId = 3
     do! AnkiImporter.save db ankiDb userId Map.empty
     Assert.Equal(110, db.History.Count(fun x -> x.AcquiredCard.UserId = userId))
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 type AllRandomReviews () =
     inherit XunitClassDataBase
@@ -471,7 +471,7 @@ let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> =
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
 
     Assert.Equal(["Basic"; "Deck:Default"; "OtherTag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -502,7 +502,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(7, c.Db.CommunalField.Count())
         Assert.Equal(7, c.Db.TemplateInstance.Count())
         Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
@@ -521,4 +521,4 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` anki
     Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))
     Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    } |> TaskResult.assertOk)
+    } |> TaskResult.getOk)
