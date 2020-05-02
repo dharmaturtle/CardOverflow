@@ -658,14 +658,10 @@ module UserRepository =
         db.User.SingleAsync(fun x -> x.Id = id)
 
 module TagRepository =
-    let AddTo (db: CardOverflowDb) newTag acquiredCardId = task {
-        defaultArg
-            (db.Tag.SingleOrDefault(fun x -> x.Name = newTag) |> Option.ofObj)
-            (TagEntity(Name = newTag))
-        |> fun x -> Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = x)
+    let AddTo (db: CardOverflowDb) acquiredCardId newTag =
+        Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = newTag)
         |> db.Tag_AcquiredCard.AddI
-        return! db.SaveChangesAsyncI ()
-        }
+        db.SaveChangesAsyncI ()
     
     let DeleteFrom (db: CardOverflowDb) tagName acquiredCardId = task {
         let! tag = db.Tag.SingleOrDefaultAsync(fun x -> x.Name = tagName)

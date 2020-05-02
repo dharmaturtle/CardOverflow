@@ -157,8 +157,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
         cardInstanceIds.Count(),
         acquiredCards.Results.Count()
     )
-    let! card = CardRepository.GetAcquired c.Db userId 1
-    let card = card |> Result.getOk
+    let! card = CardRepository.GetAcquired c.Db userId 1 |> TaskResult.getOk
     Assert.Equal(userId, card.UserId)
     
     let userId = 2 // this user acquires the card
@@ -167,21 +166,20 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     else
         do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
         do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
-    let! card = ExploreCardRepository.get c.Db userId 1
+    let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 1
             IsAcquired = false }],
-        card.Value.Tags
+        card.Tags
     )
-    let! card = CardRepository.GetAcquired c.Db userId 1
-    do! TagRepository.AddTo c.Db "a" card.Value.AcquiredCardId
-    let! card = ExploreCardRepository.get c.Db userId 1
+    do! SanitizeTagRepository.AddTo c.Db userId "a" card.Id |> TaskResult.getOk
+    let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "a"
             Count = 2
             IsAcquired = true }],
-        card.Value.Tags
+        card.Tags
     )
 
     let userId = 3 // this user never acquires the card
@@ -191,12 +189,12 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
             cardInstanceIds.Count(),
             cards.Results.Count()
         )
-        let! card = ExploreCardRepository.get c.Db userId 1
+        let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
         Assert.Equal<ViewTag seq>(
             [{  Name = "a"
                 Count = 2
                 IsAcquired = false }],
-            card.Value.Tags
+            card.Tags
         )
     else
         let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""

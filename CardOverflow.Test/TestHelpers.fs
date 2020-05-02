@@ -38,3 +38,5 @@ module Extensions =
 module TaskResult =
     let getOk x =
         x |> Task.map Result.getOk
+    let getError x =
+        x |> Task.map Result.getError

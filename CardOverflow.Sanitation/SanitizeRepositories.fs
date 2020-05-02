@@ -121,23 +121,27 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let validate (db: CardOverflowDb) userId cardId action = task { // medTODO tag length needs validation
-        let! maybeCard = db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+    let private getAcquired (db: CardOverflowDb) userId cardId =
+        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        |> Task.map (Result.requireNotNull "You haven't gotten that card.")
+    let AddTo (db: CardOverflowDb) userId newTagName cardId = taskResult { // medTODO tag length needs validation
+        let! (ac: AcquiredCardEntity) =
+            getAcquired db userId cardId
+        let! (tag: TagEntity option) =
+            db.Tag.SingleOrDefaultAsync(fun x -> x.Name = newTagName)
+            |> Task.map Option.ofObj
+        if tag.IsSome then
+            do! db.Tag_AcquiredCard
+                    .AnyAsync(fun x -> x.AcquiredCardId = ac.Id && x.TagId = tag.Value.Id)
+                |> Task.map (Result.requireFalse <| sprintf "Card #%i for User#%i already has tag \"%s\"" cardId userId newTagName)
         return!
-            maybeCard
-            |> function
-            | null -> Error "You haven't gotten that card." |> Task.FromResult
-            | card -> task {
-                do! action card.Id
-                return () |> Ok
-            }
-        }
-    let AddTo db tag userId cardId =
-        validate db userId cardId
-            <| TagRepository.AddTo db tag.Text
-    let DeleteFrom db tag userId cardId =
-        validate db userId cardId
-            <| TagRepository.DeleteFrom db tag
+            tag
+            |> Option.defaultValue (TagEntity(Name = newTagName))
+            |> TagRepository.AddTo db ac.Id
+    }
+    let DeleteFrom db userId tag cardId =
+        getAcquired db userId cardId
+        |> TaskResult.bind(fun ac -> TagRepository.DeleteFrom db tag ac.Id |> Task.map Ok)
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {

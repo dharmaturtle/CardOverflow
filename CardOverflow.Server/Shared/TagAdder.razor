@@ -26,11 +26,11 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public int CardId { get; set; }
-  [Parameter] public EventCallback<string> AddTag { get; set; }
+  [Parameter] public EventCallback<TagText> AddTag { get; set; }
   private TagText _writeTag = new TagText();
 
   private async Task _SaveTag() {
-    await AddTag.InvokeAsync(_writeTag.Text);
+    await AddTag.InvokeAsync(_writeTag);
     _writeTag.Text = "";
   }
 

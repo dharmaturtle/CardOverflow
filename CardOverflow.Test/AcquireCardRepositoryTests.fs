@@ -55,7 +55,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let ac = ac.Value
     let! batch = CardRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
-    do! TagRepository.AddTo c.Db "tag" ac.AcquiredCardId
+    do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.CardId |> TaskResult.getOk
     let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
     Assert.Equal<int seq>([1003], instanceIds)
     Assert.Empty communals

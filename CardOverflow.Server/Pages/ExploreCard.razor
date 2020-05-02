@@ -60,7 +60,7 @@
     <div class="d-flex justify-content-between">
       <h3>Tags</h3>
       @if (Card.IsAcquired) {
-        <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x)) />
+        <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x.Text)) />
       }
     </div>
     <ul class="d-flex flex-wrap list-unstyled">
@@ -132,7 +132,7 @@
   }
 
   async Task AcquireTag(string name, bool isNew = true) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, new TagText { Text = name }, User.Id, Card.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Card.Id));
     if (x.IsOk) {
       if (isNew) {
         Card.Tags = Card.Tags.Append(new ViewTag(name, 0, false)).ToFList();
@@ -146,7 +146,7 @@
   }
 
   async Task DeleteTag(string tag) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, tag, User.Id, Card.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, User.Id, tag, Card.Id));
     if (x.IsOk) {
       Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
       Card.Tags.Single(t => t.Name == tag).Count--;
