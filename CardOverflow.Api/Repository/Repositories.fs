@@ -662,19 +662,6 @@ module TagRepository =
         Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = newTag)
         |> db.Tag_AcquiredCard.AddI
         db.SaveChangesAsyncI ()
-    
-    let DeleteFrom (db: CardOverflowDb) tagName acquiredCardId = task {
-        let! tag = db.Tag.SingleOrDefaultAsync(fun x -> x.Name = tagName)
-        return!
-            tag
-            |> function
-            | null -> Task.FromResult()
-            | tag ->
-                db.Tag_AcquiredCard.Single(fun x -> x.AcquiredCardId = acquiredCardId && x.TagId = tag.Id)
-                |> db.Tag_AcquiredCard.RemoveI
-                db.SaveChangesAsyncI()
-        }
-
     let Search (db: CardOverflowDb) (input: string) =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, "%" + input + "%")).ToList()
 

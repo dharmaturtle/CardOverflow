@@ -45,5 +45,25 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
         joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
     )
     let! error = SanitizeTagRepository.AddTo c.Db userId tagName cardId |> TaskResult.getError
-    Assert.Equal(sprintf "Card #%i for User#%i already has tag \"%s\"" cardId userId tagName, error)
+    Assert.Equal(sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId tagName, error)
+
+    // Can't delete a tag that doesn't exist
+    do! SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId
+    let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId |> TaskResult.getError
+    Assert.Equal(sprintf "Card #%i for User #%i doesn't have the tag \"%s\"" cardId userId tagName, error)
+    // again
+    let tagName = Guid.NewGuid().ToString()
+    let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId |> TaskResult.getError
+    Assert.Equal(sprintf "Card #%i for User #%i doesn't have the tag \"%s\"" cardId userId tagName, error)
+    
+    // Can't delete a tag from a card that ain't yours
+    let otherUser = 2
+    let! _ = FacetRepositoryTests.addBasicCard c.Db otherUser [tagName]
+    let cardId = 2
+    let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId |> TaskResult.getError
+    Assert.Equal(sprintf "User #%i doesn't have Card #%i." userId cardId, error)
+
+    // Can't add a tag to a card that ain't yours
+    let! error = SanitizeTagRepository.AddTo c.Db userId tagName cardId |> TaskResult.getError
+    Assert.Equal(sprintf "User #%i doesn't have Card #%i." userId cardId, error)
     } |> TaskResult.getOk)

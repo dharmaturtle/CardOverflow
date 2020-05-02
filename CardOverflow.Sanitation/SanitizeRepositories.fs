@@ -123,7 +123,7 @@ type TagText = {
 module SanitizeTagRepository =
     let private getAcquired (db: CardOverflowDb) userId cardId =
         db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
-        |> Task.map (Result.requireNotNull "You haven't gotten that card.")
+        |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
     let AddTo (db: CardOverflowDb) userId newTagName cardId = taskResult { // medTODO tag length needs validation
         let! (ac: AcquiredCardEntity) =
             getAcquired db userId cardId
@@ -133,15 +133,21 @@ module SanitizeTagRepository =
         if tag.IsSome then
             do! db.Tag_AcquiredCard
                     .AnyAsync(fun x -> x.AcquiredCardId = ac.Id && x.TagId = tag.Value.Id)
-                |> Task.map (Result.requireFalse <| sprintf "Card #%i for User#%i already has tag \"%s\"" cardId userId newTagName)
+                |> Task.map (Result.requireFalse <| sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId newTagName)
         return!
             tag
             |> Option.defaultValue (TagEntity(Name = newTagName))
             |> TagRepository.AddTo db ac.Id
     }
-    let DeleteFrom db userId tag cardId =
-        getAcquired db userId cardId
-        |> TaskResult.bind(fun ac -> TagRepository.DeleteFrom db tag ac.Id |> Task.map Ok)
+    let DeleteFrom db userId tag cardId = taskResult {
+        let! (ac: AcquiredCardEntity) = getAcquired db userId cardId
+        let! join =
+            db.Tag_AcquiredCard
+                .SingleOrDefaultAsync(fun x -> x.AcquiredCardId = ac.Id && x.Tag.Name = tag)
+            |> Task.map (Result.requireNotNull <| sprintf "Card #%i for User #%i doesn't have the tag \"%s\"" cardId userId tag)
+        db.Tag_AcquiredCard.RemoveI join
+        return! db.SaveChangesAsyncI()
+    }
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
