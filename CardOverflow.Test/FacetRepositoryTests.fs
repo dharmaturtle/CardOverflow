@@ -644,6 +644,38 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
              ogEdit_i, 1 ;    branchOfCopy_i, 2
              branch_i, 2 ]
+    // adventures in implicit unacquiring
+    let adventurerId = 1 // changing the adventurer!
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardInstanceId = ogEdit_i)
+    do! CardRepository.UnacquireCardAsync c.Db ac.Id
+    Assert.Equal(0, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
+    do! assertCount
+            [og_c,     2 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 2 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 2
+             branch_i, 2 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 2 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 1 ;    branchOfCopy_i, 2
+             branch_i, 2 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId og_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 2 ]
+            [og_i,     1 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 2
+             branch_i, 2 ]
+    do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i
+    do! assertCount
+            [og_c,     3 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 3 ;    branchOfCopy_c, 2 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 2
+             branch_i, 3 ]
     }
     
 // fuck merge
