@@ -646,7 +646,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 2 ]
     // adventures in implicit unacquiring
     let adventurerId = 1 // changing the adventurer!
-    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardInstanceId = ogEdit_i)
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardInstanceId = ogEdit_i && x.UserId = adventurerId)
     do! CardRepository.UnacquireCardAsync c.Db ac.Id
     Assert.Equal(0, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
@@ -676,6 +676,71 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 3 ]
+    // adventures in unacquiring and suspending
+    let adventurerId = 2 // changing the adventurer, again!
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardId = branch_c && x.UserId = adventurerId)
+    do! CardRepository.editState c.Db adventurerId ac.Id CardState.Suspended |> Task.map (fun x -> x.Value)
+    do! assertCount
+            [og_c,     2 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 2 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 2
+             branch_i, 2 ]
+    do! CardRepository.UnacquireCardAsync c.Db ac.Id
+    do! assertCount
+            [og_c,     2 ;    copy_c, 3 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 2 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 2
+             branch_i, 2 ]
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardId = branchOfCopy_c && x.UserId = adventurerId)
+    do! CardRepository.UnacquireCardAsync c.Db ac.Id
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardId = copy2x_c && x.UserId = adventurerId)
+    do! CardRepository.editState c.Db adventurerId ac.Id CardState.Suspended |> Task.map (fun x -> x.Value)
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+    do! CardRepository.UnacquireCardAsync c.Db ac.Id
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+    let adventurerId = 3 // and another change!
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardId = copy2x_c && x.UserId = adventurerId)
+    do! CardRepository.editState c.Db adventurerId ac.Id CardState.Suspended |> Task.map (fun x -> x.Value)
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 0 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 0 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+    do! CardRepository.UnacquireCardAsync c.Db ac.Id
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 0 ;    copyOfBranch_c, 2
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 0 ;    copyOfBranch_i, 2
+             ogEdit_i, 0 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardId = copyOfBranch_c && x.UserId = adventurerId)
+    do! CardRepository.UnacquireCardAsync c.Db ac.Id
+    do! assertCount
+            [og_c,     2 ;    copy_c, 2 ;         copy2x_c, 0 ;    copyOfBranch_c, 1
+             branch_c, 2 ;    branchOfCopy_c, 1 ]
+            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 0 ;    copyOfBranch_i, 1
+             ogEdit_i, 0 ;    branchOfCopy_i, 1
+             branch_i, 2 ]
+
     }
     
 // fuck merge
