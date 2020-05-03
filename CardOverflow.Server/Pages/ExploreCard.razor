@@ -57,29 +57,8 @@
       <h3>Card Settings</h3>
       <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
     }
-    <div class="d-flex justify-content-between">
-      <h3>Tags</h3>
-      @if (Card.IsAcquired) {
-        <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x.Text)) />
-      }
-    </div>
-    <ul class="d-flex flex-wrap list-unstyled">
-      @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
-        <li class="m-1">
-          <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
-            <span class="badge badge-success">@tag.Count</span> @tag.Name
-          </button>
-        </li>
-      }
-      @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
-        <li class="m-1">
-          <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Card?.Instance?.IsAcquired ?? true)>
-            <span class="badge badge-success">@tag.Count</span> @tag.Name
-          </button>
-        </li>
-      }
-    </ul>
   </div>
+  <ExploreCardTag Card=@Card />
   <ExploreCardRelationship Card=@Card />
   <div>
     <h3>Comments</h3>
@@ -128,31 +107,6 @@
       ToastService.ShowInfo("Card setting saved!");
     } else {
       ToastService.ShowError(r.ErrorValue);
-    }
-  }
-
-  async Task AcquireTag(string name, bool isNew = true) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Card.Id));
-    if (x.IsOk) {
-      if (isNew) {
-        Card.Tags = Card.Tags.Append(new ViewTag(name, 0, false)).ToFList();
-      }
-      Card.Tags.Single(t => t.Name == name).IsAcquired = true;
-      Card.Tags.Single(t => t.Name == name).Count++;
-      StateHasChanged();
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
-  }
-
-  async Task DeleteTag(string tag) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, User.Id, tag, Card.Id));
-    if (x.IsOk) {
-      Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
-      Card.Tags.Single(t => t.Name == tag).Count--;
-      StateHasChanged();
-    } else {
-      ToastService.ShowError(x.ErrorValue);
     }
   }
 
