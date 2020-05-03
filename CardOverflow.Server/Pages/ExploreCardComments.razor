@@ -1,0 +1,30 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+
+<div>
+  <h3>Comments</h3>
+  <ul class="list-group">
+    @foreach (var comment in @Card.Comments) {
+      <li class="list-group-item border-0">
+        @comment.User: @comment.Text
+      </li>
+    }
+    <Comment CardId=@Card.Id />
+  </ul>
+</div>
+
+@code {
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+
+}

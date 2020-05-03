@@ -60,17 +60,7 @@
   </div>
   <ExploreCardTag Card=@Card />
   <ExploreCardRelationship Card=@Card />
-  <div>
-    <h3>Comments</h3>
-    <ul class="list-group">
-      @foreach (var comment in @Card.Comments) {
-        <li class="list-group-item border-0">
-          @comment.User: @comment.Text
-        </li>
-      }
-      <Comment CardId=@Card.Id />
-    </ul>
-  </div>
+  <ExploreCardComments Card=@Card />
 }
 
 @code {
