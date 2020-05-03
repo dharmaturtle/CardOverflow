@@ -11,17 +11,45 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 
-<h3>Relationships</h3>
+<div class="d-flex justify-content-between">
+  <h3>Relationships</h3>
+  @if (Card.IsAcquired) {
+    <EditForm Model=@Command OnValidSubmit=@Add>
+      <div class="form-group btn-group">
+        <InputText @bind-Value=@Command.TargetCardLink class="form-control" placeholder="Related Card Link (or #)" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <InputText @bind-Value=@Command.Name class="form-control" placeholder="New Relationship Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <button type="submit" class="btn btn-primary">Add</button>
+      </div>
+      <ValidationSummary />
+      <DataAnnotationsValidator />
+    </EditForm>
+  }
+</div>
 <ul class="list-unstyled">
+  @foreach (var (relationship, cardId) in Card.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
+    <li>
+      <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
+        <span class="curate-tooltip-target">
+          <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+          <span class="badge badge-success">@relationship.Users</span>
+          <span class="curate-tooltip-content">
+            <ResizingIframe CardId=@cardId Front />
+          </span>
+        </span>
+        @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
+      </button>
+      <a href="/card/@cardId">@getHtml(cardId)</a>
+    </li>
+  }
   @foreach (var (relationship, cardId) in Card.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
     <li>
       <button type="button" class="btn btn-outline-primary btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
-          <div class="curate-tooltip-content">
+          <span class="curate-tooltip-content">
             <ResizingIframe CardId=@cardId Front />
-          </div>
+          </span>
         </span>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
@@ -29,52 +57,10 @@
     </li>
   }
 </ul>
-@if (Card.IsAcquired) {
-  <h3>Your Relationships</h3>
-  <ul class="list-unstyled">
-    @foreach (var (relationship, cardId) in Card.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
-      <li>
-        <button type="button" class="btn btn-primary btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
-          <span class="curate-tooltip-target">
-            <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
-            <span class="badge badge-success">@relationship.Users</span>
-            <div class="curate-tooltip-content">
-              <ResizingIframe CardId=@cardId Front />
-            </div>
-          </span>
-          @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
-        </button>
-        <a href="/card/@cardId">@getHtml(cardId)</a>
-      </li>
-    }
-  </ul>
-}
-@if (Card.IsAcquired) {
-  <EditForm Model=@Command OnValidSubmit=@Add>
-    <div class="form-row">
-      <div class="form-group col-md-4">
-        <label for="RelationName">How are they related?</label>
-        <InputText @bind-Value=@Command.Name class="form-control" id="RelationName" placeholder="Name of the relationship" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-      </div>
-      <div class="form-group col-md-7">
-        <label for="TargetCardUrl">Related card URL</label>
-        <InputText @bind-Value=@Command.TargetCardLink class="form-control" id="TargetCardUrl" placeholder="buffbrains.io/card/1234" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-      </div>
-      <div class="form-group col-md-1">
-        <label>&nbsp;</label>
-        <button type="submit" class="btn btn-primary form-control">Add</button>
-      </div>
-    </div>
-    <ValidationSummary />
-    <DataAnnotationsValidator />
-  </EditForm>
-}
 
 @code {
-  [Parameter]
-  public CardOverflow.Pure.ExploreCard Card { get; set; }
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
   AddRelationshipCommand Command;
   IDictionary<int, string> htmlByCardId = new Dictionary<int, string>();
 
