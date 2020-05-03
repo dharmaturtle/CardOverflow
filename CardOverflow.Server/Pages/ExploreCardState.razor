@@ -17,15 +17,15 @@
     <p>Log in to Get</p>
   } else {
     @if (Card.IsAcquired) {
-      <button class="btn btn-danger" @onclick=@(() => _modal.Show())>
+      <button class="btn btn-outline-danger" @onclick=@(() => _modal.Show())>
         Discard
       </button>
       @if (AcquiredCard.CardState.IsSuspended) {
-        <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Normal))>
+        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Normal))>
           Unsuspend
         </button>
       } else {
-        <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Suspended))>
+        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Suspended))>
           Suspend
         </button>
       }
