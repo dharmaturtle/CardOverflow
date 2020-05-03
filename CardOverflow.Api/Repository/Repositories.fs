@@ -486,13 +486,19 @@ module UpdateRepository =
                 do! db.SaveChangesAsyncI()
                 return tags.Select(fun x -> x.Id).ToList()
             }
+            let branchSourceCardId =
+                match command.Source with
+                | BranchSourceCardId x -> Nullable x
+                | _ -> Nullable()
             let! (acquiredCardEntity: AcquiredCardEntity) =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
-                    .SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.AcquiredCardId)
+                    .SingleOrDefaultAsync(fun x ->
+                        (x.Id = acquiredCard.AcquiredCardId)
+                        || (x.UserId = acquiredCard.UserId && Nullable x.CardId = branchSourceCardId))
             let acs =
                 match acquiredCardEntity with
                 | null ->
