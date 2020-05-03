@@ -15,7 +15,13 @@
     <div class="d-flex justify-content-between">
       <h3>Tags</h3>
       @if (Card.IsAcquired) {
-        <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x.Text)) />
+        @if (_showTagAdder) {
+          <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x.Text)) />
+        } else {
+          <button class="btn btn-outline-success" @onclick=@(() => _showTagAdder = true)>
+            <i class="fas fa-plus"></i>
+          </button>
+        }
       }
     </div>
     <ul class="d-flex flex-wrap list-unstyled">
@@ -39,6 +45,7 @@
   @code {
     [CascadingParameter] UserEntity User { get; set; }
     [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+    private bool _showTagAdder;
 
     async Task AcquireTag(string name, bool isNew = true) {
       var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Card.Id));

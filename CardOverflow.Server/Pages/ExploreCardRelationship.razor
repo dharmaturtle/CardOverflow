@@ -11,18 +11,24 @@
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
 
-<div class="d-flex justify-content-between">
+<div class=@(_showAddRelationship ? "" : "d-flex justify-content-between")>
   <h3>Relationships</h3>
   @if (Card.IsAcquired) {
-    <EditForm Model=@Command OnValidSubmit=@Add>
-      <div class="form-group btn-group">
-        <InputText @bind-Value=@Command.TargetCardLink class="form-control" placeholder="Related Card Link (or #)" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <InputText @bind-Value=@Command.Name class="form-control" placeholder="New Relationship Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <button type="submit" class="btn btn-primary">Add</button>
-      </div>
-      <ValidationSummary />
-      <DataAnnotationsValidator />
-    </EditForm>
+    @if (_showAddRelationship) {
+      <EditForm Model=@Command OnValidSubmit=@Add>
+        <div class="form-group btn-group">
+          <InputText @bind-Value=@Command.TargetCardLink class="form-control" placeholder="Related Card Link (or #)" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+          <InputText @bind-Value=@Command.Name class="form-control" placeholder="New Relationship Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+        <ValidationSummary />
+        <DataAnnotationsValidator />
+      </EditForm>
+    } else {
+      <button class="btn btn-outline-success" @onclick=@(() => _showAddRelationship = true)>
+        <i class="fas fa-plus"></i>
+      </button>
+    }
   }
 </div>
 <ul class="list-unstyled">
@@ -63,6 +69,7 @@
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
   AddRelationshipCommand Command;
   IDictionary<int, string> htmlByCardId = new Dictionary<int, string>();
+  private bool _showAddRelationship;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
