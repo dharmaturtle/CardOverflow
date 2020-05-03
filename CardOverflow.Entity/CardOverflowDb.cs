@@ -442,9 +442,6 @@ namespace CardOverflow.Entity
             {
                 entity.ToTable("User");
 
-                entity.HasIndex(e => e.DisplayName)
-                    .IsUnique();
-
                 entity.HasOne(d => d.DefaultCardSetting);
             });
 

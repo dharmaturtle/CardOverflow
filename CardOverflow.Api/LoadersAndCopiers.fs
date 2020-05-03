@@ -424,5 +424,9 @@ type CardRevision with
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
-        SortedMeta = e.CardInstances |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created) |> Seq.mapi (fun i e -> CardInstanceMeta.load isAcquired (i = 0) e Set.empty ResizeArray.empty Set.empty ResizeArray.empty) |> Seq.toList
+        SortedMeta =
+            e.CardInstances
+            |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
+            |> Seq.mapi (fun i e -> CardInstanceMeta.load isAcquired (i = 0) e Set.empty ResizeArray.empty Set.empty ResizeArray.empty)
+            |> Seq.toList
     }

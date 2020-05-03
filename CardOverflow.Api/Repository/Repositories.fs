@@ -143,7 +143,7 @@ module ExploreCardRepository =
         let! e, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" cardId)
         let! (tc: List<CardTagCountEntity>) = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
         let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardId = cardId)
         return
             CardInstanceMeta.load isAcquired true e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
             |> ExploreCard.load e.Card
