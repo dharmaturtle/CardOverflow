@@ -28,7 +28,7 @@
 <ul class="list-unstyled">
   @foreach (var (relationship, cardId) in Card.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
     <li>
-      <button type="button" class="btn btn-outline-success btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
+      <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
@@ -43,7 +43,7 @@
   }
   @foreach (var (relationship, cardId) in Card.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
     <li>
-      <button type="button" class="btn btn-outline-dark btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
+      <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>

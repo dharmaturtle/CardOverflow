@@ -217,3 +217,31 @@ app {
     display: block;
   }
 }
+
+.btn-outline-acquired {
+  border-color: #28a745
+}
+
+  .btn-outline-acquired:hover {
+    border-color: #dc3545
+  }
+
+  .btn-outline-acquired.focus,
+  .btn-outline-acquired:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 .2rem rgba(225, 83, 97, .5)
+  }
+
+.btn-outline-unacquired {
+  border-color: #cccccc
+}
+
+  .btn-outline-unacquired:hover {
+    border-color: #28a745
+  }
+
+  .btn-outline-unacquired.focus,
+  .btn-outline-unacquired:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 .2rem rgba(40, 167, 69, .5)
+  }
