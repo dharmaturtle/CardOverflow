@@ -361,10 +361,10 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
     Assert.Equal(6, c.Db.User_TemplateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
-        [ "Basic"; "Deck:Default"; "OtherTag"; "Tag" ],
+        [ "Basic"; "Deck:Default"; "Othertag"; "Tag" ],
         (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string>(
-        [ "Deck:Default"; "OtherTag" ],
+        [ "Deck:Default"; "Othertag" ],
         c.Db.AcquiredCard
             .Include(fun x -> x.CardInstance)
             .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
@@ -470,7 +470,7 @@ let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> =
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
 
-    Assert.Equal(["Basic"; "Deck:Default"; "OtherTag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
+    Assert.Equal(["Basic"; "Deck:Default"; "Othertag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     } |> TaskResult.getOk)
 
 [<Theory>]

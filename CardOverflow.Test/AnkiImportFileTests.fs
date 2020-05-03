@@ -108,7 +108,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     do! AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
     
     Assert.Equal<string seq>(
-        ["bab::endocrinology::thyroid::thyroidcancer"; "bab::gastroenterology::clinical::livertumors"; "Deck:duplicate cards"; "DifferentCaseRepeatedTag"; "Pathoma::Neoplasia::Tumor_Progression"; "repeatedTag"],
+        ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Deck:Duplicate Cards"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.CardInstance.Count())

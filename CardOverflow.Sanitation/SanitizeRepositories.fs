@@ -125,6 +125,7 @@ module SanitizeTagRepository =
         db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
         |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
     let AddTo (db: CardOverflowDb) userId newTagName cardId = taskResult { // medTODO tag length needs validation
+        let newTagName = MappingTools.toTitleCase newTagName
         let! (ac: AcquiredCardEntity) =
             getAcquired db userId cardId
         let! (tag: TagEntity option) =
@@ -140,6 +141,7 @@ module SanitizeTagRepository =
             |> TagRepository.AddTo db ac.Id
     }
     let DeleteFrom db userId tag cardId = taskResult {
+        let tag = MappingTools.toTitleCase tag
         let! (ac: AcquiredCardEntity) = getAcquired db userId cardId
         let! join =
             db.Tag_AcquiredCard

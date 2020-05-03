@@ -105,6 +105,12 @@ namespace CardOverflow.Entity {
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
+      foreach (var tag in _filter<TagEntity>(entries)) {
+        tag.Name = MappingTools.toTitleCase.Invoke(tag.Name);
+      }
+      foreach (var relationship in _filter<RelationshipEntity>(entries)) {
+        relationship.Name = MappingTools.toTitleCase.Invoke(relationship.Name);
+      }
     }
 
     public IQueryable<AcquiredCardIsLatestEntity> AcquiredCardIsLatest => _AcquiredCardIsLatestTracked.AsNoTracking();

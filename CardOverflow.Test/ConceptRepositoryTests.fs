@@ -84,7 +84,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! _ = FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId ["A"; "B"]
     do! CommentCardEntity (
             CardId = 1,
             UserId = userId,
@@ -102,10 +102,10 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     Assert.NotEmpty <| card.Comments
     Assert.True card.IsAcquired
     Assert.Equal<ViewTag seq>(
-        [{  Name = "a"
+        [{  Name = "A"
             Count = 1
             IsAcquired = true }
-         {  Name = "b"
+         {  Name = "B"
             Count = 1
             IsAcquired = true }],
         card.Tags
@@ -118,7 +118,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! _ = FacetRepositoryTests.addBasicCard c.Db userId ["a"; "b"]
+    let! _ = FacetRepositoryTests.addBasicCard c.Db userId ["A"; "B"]
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
@@ -130,10 +130,10 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     let card = card.Value
     Assert.Equal(1, card.Summary.Users)
     Assert.Equal<ViewTag seq>(
-        [{  Name = "a"
+        [{  Name = "A"
             Count = 1
             IsAcquired = true }
-         {  Name = "b"
+         {  Name = "B"
             Count = 1
             IsAcquired = true }],
         card.Tags)
@@ -150,7 +150,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     
     let userId = 1 // this user creates the card
     for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<int> * ResizeArray<string * int>>) in addCards do
-        let! (_, x) = addCard c.Db userId ["a"]
+        let! (_, x) = addCard c.Db userId ["A"]
         Assert.Empty x
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(
@@ -168,7 +168,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
         do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
-        [{  Name = "a"
+        [{  Name = "A"
             Count = 1
             IsAcquired = false }],
         card.Tags
@@ -176,7 +176,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     do! SanitizeTagRepository.AddTo c.Db userId "a" card.Id |> TaskResult.getOk
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
-        [{  Name = "a"
+        [{  Name = "A"
             Count = 2
             IsAcquired = true }],
         card.Tags
@@ -191,7 +191,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
         )
         let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
         Assert.Equal<ViewTag seq>(
-            [{  Name = "a"
+            [{  Name = "A"
                 Count = 2
                 IsAcquired = false }],
             card.Tags
@@ -204,14 +204,14 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
         )
         let! card1 = ExploreCardRepository.get c.Db userId 1
         Assert.Equal<ViewTag seq>(
-            [{  Name = "a"
+            [{  Name = "A"
                 Count = 2
                 IsAcquired = false }],
             card1.Value.Tags
         )
         let! card2 = ExploreCardRepository.get c.Db userId 2
         Assert.Equal<ViewTag seq>(
-            [{  Name = "a"
+            [{  Name = "A"
                 Count = 1
                 IsAcquired = false }],
             card2.Value.Tags
@@ -310,7 +310,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
 let ``Directional relationship tests``(): Task<unit> = task {
     let cardInstanceIds = [1001; 1002]
     use c = new TestContainer()
-    let relationshipName = "test/relationship"
+    let relationshipName = "Test/Relationship"
     
     let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, acquirer) = task {
@@ -379,7 +379,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
 let ``Nondirectional relationship tests``(): Task<unit> = task {
     let cardInstanceIds = [1001; 1002]
     use c = new TestContainer()
-    let relationshipName = Guid.NewGuid().ToString()
+    let relationshipName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
     let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, acquirer) = task {
@@ -520,8 +520,8 @@ let ``Card search works`` (): Task<unit> = task {
     let term = "relevant "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomCard [less; less] c.Db userId ["tag"]
-    let! _ = FacetRepositoryTests.addBasicCustomCard [more; more] c.Db userId ["tag"]
+    let! _ = FacetRepositoryTests.addBasicCustomCard [less; less] c.Db userId ["tag1"]
+    let! _ = FacetRepositoryTests.addBasicCustomCard [more; more] c.Db userId ["tag2"]
     let! hits = search term
     Assert.Equal(more.Trim(), hits.Results.First().Instance.StrippedFront)
 

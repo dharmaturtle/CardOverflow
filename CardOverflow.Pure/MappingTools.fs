@@ -3,6 +3,7 @@ module MappingTools
 open System
 open System.Linq
 open HtmlAgilityPack
+open System.Globalization
 open System.Web
 open System.Text.RegularExpressions
 
@@ -99,3 +100,6 @@ let stripHtmlTagsForDisplay html =
     if String.IsNullOrWhiteSpace r then
         "[ Empty ]"
     else r
+
+let private textInfo = CultureInfo("en-US", false).TextInfo;
+let toTitleCase = textInfo.ToTitleCase

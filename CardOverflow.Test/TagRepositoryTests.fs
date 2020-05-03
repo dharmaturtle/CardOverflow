@@ -21,7 +21,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
     let cardId = 1
-    let tagName = Guid.NewGuid().ToString()
+    let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
 
     do! SanitizeTagRepository.AddTo c.Db userId tagName cardId
 
@@ -54,7 +54,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId |> TaskResult.getError
     Assert.Equal(sprintf "Card #%i for User #%i doesn't have the tag \"%s\"" cardId userId tagName, error)
     // again
-    let tagName = Guid.NewGuid().ToString()
+    let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId |> TaskResult.getError
     Assert.Equal(sprintf "Card #%i for User #%i doesn't have the tag \"%s\"" cardId userId tagName, error)
     
@@ -81,7 +81,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     let cardInstanceId = 1001
 
     // initial tag has 1 user
-    let tagName = Guid.NewGuid().ToString()
+    let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     let! _ = FacetRepositoryTests.addBasicCard c.Db author [tagName]
     do! assertTagUserCount 1
 

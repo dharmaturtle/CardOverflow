@@ -1,4 +1,4 @@
-﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -1239,13 +1239,13 @@ CREATE INDEX "IX_Relationship_AcquiredCard_RelationshipId" ON public."Relationsh
 CREATE INDEX "IX_Relationship_AcquiredCard_TargetAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("TargetAcquiredCardId");
 
 
-CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree ("Name");
+CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree (UPPER("Name"));
 
 
 CREATE INDEX "IX_Tag_AcquiredCard_AcquiredCardId" ON public."Tag_AcquiredCard" USING btree ("AcquiredCardId");
 
 
-CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree ("Name");
+CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree (UPPER("Name"));
 
 
 CREATE INDEX "IX_Tag_User_TemplateInstance_DefaultTagId" ON public."Tag_User_TemplateInstance" USING btree ("DefaultTagId");
@@ -1258,9 +1258,6 @@ CREATE INDEX "IX_TemplateInstance_TemplateId" ON public."TemplateInstance" USING
 
 
 CREATE INDEX "IX_Template_AuthorId" ON public."Template" USING btree ("AuthorId");
-
-
-CREATE UNIQUE INDEX "IX_User_DisplayName" ON public."User" USING btree ("DisplayName");
 
 
 CREATE INDEX "IX_User_TemplateInstance_DefaultCardSettingId" ON public."User_TemplateInstance" USING btree ("DefaultCardSettingId");

@@ -106,7 +106,7 @@ let addClozeWithSharedExtra fieldValues =
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let tags = ["a"; "b"]
+    let tags = ["A"; "B"]
     
     let! _ = addBasicCard c.Db userId tags
 
@@ -376,7 +376,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         for id, count in cardInstanceIdsAndCounts do
             do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
-    let tags = ["a"; "b"]
+    let tags = ["A"; "B"]
     let! _ = addBasicCard c.Db user1 tags
     do! assertCount
             [og_c, 1]
@@ -433,10 +433,10 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
     
     do! asserts user1 og_c newValue 2 2
-            [ { Name = "a"
+            [ { Name = "A"
                 Count = 1
                 IsAcquired = true }
-              { Name = "b"
+              { Name = "B"
                 Count = 1
                 IsAcquired = true }]
             
