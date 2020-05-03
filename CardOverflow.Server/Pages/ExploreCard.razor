@@ -20,9 +20,7 @@
   <p><em>@_LoadingMessage</em></p>
 } else {
   <div class="d-flex justify-content-between align-items-center">
-    <div>
-      <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard UpdateAcquiredCard=@(x => AcquiredCard = x) UpdateCard=@(x => Card = x) />
-    </div>
+    <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard UpdateAcquiredCard=@(x => AcquiredCard = x) UpdateCard=@(x => Card = x) />
     <div>
       By @Card.Author
       @if (Card.AuthorId == User?.Id) {
@@ -49,9 +47,7 @@
       }
     </div>
   </div>
-  <div>
-    <ResizingIframe CardInstanceId=@Card.Instance.Id Back />
-  </div>
+  <ResizingIframe CardInstanceId=@Card.Instance.Id Back />
   <div>
     @if (Card.IsAcquired) {
       <h3>Card Settings</h3>
