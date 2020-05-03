@@ -14,8 +14,8 @@
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@_writeTag OnValidSubmit=@_SaveTag>
-    <div class="form-group form-inline btn-group">
-      <InputText @bind-Value=@_writeTag.Text class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+    <div class="form-group btn-group">
+      <InputText @bind-Value=@_writeTag.Text class="form-control" placeholder="New Tag Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
       <button type="submit" class="btn btn-primary">Add</button>
       <DataAnnotationsValidator />
       <ValidationSummary />
