@@ -1,0 +1,32 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+
+<div>
+  <h3>Card Settings</h3>
+  <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
+</div>
+
+@code {
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public AcquiredCard AcquiredCard { get; set; }
+
+  private async Task _SetOption(int newId) {
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, User.Id, AcquiredCard.AcquiredCardId, newId));
+    if (r.IsOk) {
+      ToastService.ShowInfo("Card setting saved!");
+    } else {
+      ToastService.ShowError(r.ErrorValue);
+    }
+  }
+
+}
