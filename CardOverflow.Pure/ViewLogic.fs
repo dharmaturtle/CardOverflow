@@ -16,6 +16,13 @@ let toString (timeSpan: TimeSpan) =
     | duration when duration < TimeSpan.FromDays 365.  -> sprintf "%.1f mo" <| timeSpan.TotalDays / 30.
     | _                                                -> sprintf "%.1f yr" <| timeSpan.TotalDays / 365.
 
+let timestampToPretty (timestamp: DateTime) (currentTime: DateTime) =
+    let delta = currentTime - timestamp
+    if delta < TimeSpan.FromDays 31. then
+        toString delta + " ago"
+    else
+        "at " + timestamp.ToString("""MMM d 'xsighx' yy""").Replace("xsighx ", "'")
+
 let insertDiffColors (html: string) =
     let style =
         """<style>
