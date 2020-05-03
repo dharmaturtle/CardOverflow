@@ -106,13 +106,17 @@ type CommentText = {
 }
 
 module SanitizeCommentRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: CommentText) cardId userId = // lowTODO add idempotency key
-        CommentCardEntity(
-            CardId = cardId,
-            UserId = userId,
-            Text = comment.Text,
-            Created = time.utcNow
-        ) |> CommentRepository.addAndSaveAsync db
+    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: string) cardId userId = taskResult { // lowTODO add idempotency key
+        let text = comment.Trim()
+        do! if text.Length >= 15 then Ok () else Error "Comment must be 15 or more characters."
+        return!
+            CommentCardEntity(
+                CardId = cardId,
+                UserId = userId,
+                Text = text,
+                Created = time.utcNow
+            ) |> CommentRepository.addAndSaveAsync db
+        }
 
 [<CLIMutable>]
 type TagText = {

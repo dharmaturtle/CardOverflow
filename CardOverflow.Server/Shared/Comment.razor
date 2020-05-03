@@ -9,6 +9,7 @@
 @using CardOverflow.Server.Data
 @inject TimeProvider Time
 @inject DbExecutor DbExecutor
+@inject IToastService ToastService
 
 @if (User != null) {
   <li class="list-group-item border-0">
@@ -35,9 +36,13 @@
   bool isSaved;
 
   async Task SaveComment() {
-    await DbExecutor.CommandAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment, CardId, User.Id));
-    isSaved = true;
-    await AddComment.InvokeAsync(WriteComment.Text);
+    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment.Text, CardId, User.Id));
+    if (x.IsOk) {
+      isSaved = true;
+      await AddComment.InvokeAsync(WriteComment.Text);
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
   }
 
 }
