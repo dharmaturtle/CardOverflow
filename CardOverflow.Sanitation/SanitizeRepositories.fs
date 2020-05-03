@@ -101,7 +101,7 @@ module SanitizeFilterRepository =
         
 [<CLIMutable>]
 type CommentText = {
-    [<StringLength(500, ErrorMessage = "Comment must be less than 500 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
+    [<StringLength(500, MinimumLength = 15, ErrorMessage = "Comment must be 15 - 500 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Text: string
 }
 

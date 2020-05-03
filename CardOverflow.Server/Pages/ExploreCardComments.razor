@@ -10,21 +10,36 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
 
 <div>
   <h3>Comments</h3>
   <ul class="list-group">
     @foreach (var comment in @Card.Comments) {
       <li class="list-group-item border-0">
-        @comment.User: @comment.Text
+        <div>
+          @comment.Text
+        </div>
+        <div class="font-italic float-right">
+          by
+          <a href="user/@comment.UserId">
+            @comment.User
+          </a>
+          <span class="small text-muted" title=@(comment.Created + " UTC")>
+            - @ViewLogic.timestampToPretty(comment.Created, TimeProvider.utcNow)
+          </span>
+        </div>
       </li>
     }
-    <Comment CardId=@Card.Id />
+    <Comment CardId=@Card.Id AddComment=@_AddComment />
   </ul>
 </div>
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+
+  void _AddComment(string comment) =>
+    Card.Comments = Card.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToFList();
 
 }

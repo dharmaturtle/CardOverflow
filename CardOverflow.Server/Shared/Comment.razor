@@ -12,14 +12,12 @@
 
 @if (User != null) {
   <li class="list-group-item border-0">
-    @if (isSaved) {
-      <p>@User.DisplayName : @WriteComment.Text</p>
-    } else {
+    @if (!isSaved) {
       <EditForm Model=@WriteComment OnValidSubmit=@SaveComment>
-        <div class="form-group form-inline btn-group">
-          <InputText @bind-Value=@WriteComment.Text class="form-control" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-          <button type="submit" class="btn btn-primary">
-            Save
+        <div class="form-group">
+          <InputTextArea @bind-Value=@WriteComment.Text class="form-control" rows="3" placeholder="Use comments to suggest improvements or elicit discussion. Avoid comments like &quot;+1&quot; or &quot;Thanks&quot;." /> @*this seems to break validation: @bind-Value:event="oninput"*@
+          <button type="submit" class="btn btn-primary float-right">
+            Add Comment
           </button>
         </div>
         <DataAnnotationsValidator />
@@ -30,16 +28,16 @@
 }
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
-  [Parameter]
-  public int CardId { get; set; }
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public int CardId { get; set; }
+  [Parameter] public EventCallback<string> AddComment { get; set; }
   CommentText WriteComment = new CommentText();
   bool isSaved;
 
   async Task SaveComment() {
     await DbExecutor.CommandAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment, CardId, User.Id));
     isSaved = true;
+    await AddComment.InvokeAsync(WriteComment.Text);
   }
 
 }

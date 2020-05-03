@@ -54,9 +54,15 @@
       <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
     }
   </div>
-  <ExploreCardTag Card=@Card />
-  <ExploreCardRelationship Card=@Card />
-  <ExploreCardComments Card=@Card />
+  <div class="row">
+    <div class="col-md-6">
+      <ExploreCardTag Card=@Card />
+      <ExploreCardRelationship Card=@Card />
+    </div>
+    <div class="col-md-6">
+      <ExploreCardComments Card=@Card />
+    </div>
+  </div>
 }
 
 @code {
