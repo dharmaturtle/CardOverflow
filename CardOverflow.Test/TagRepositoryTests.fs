@@ -49,6 +49,14 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     let! error = SanitizeTagRepository.AddTo c.Db userId tagName cardId |> TaskResult.getError
     Assert.Equal(sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId tagName, error)
 
+    // Can't add tag to a card twice, even if different casing
+    let caps = tagName.ToUpper()
+    let! error = SanitizeTagRepository.AddTo c.Db userId caps cardId |> TaskResult.getError
+    Assert.Equal(sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId (caps |> MappingTools.toTitleCase), error)
+    let lows = tagName.ToLower()
+    let! error = SanitizeTagRepository.AddTo c.Db userId lows cardId |> TaskResult.getError
+    Assert.Equal(sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId (lows |> MappingTools.toTitleCase), error)
+    
     // Can't delete a tag that doesn't exist
     do! SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName cardId |> TaskResult.getError

@@ -449,17 +449,6 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<u
             |> assertHasHistory c.Db
     }
 
-[<Fact>]
-let ``Tag collation is case insensitive and .Contains works as expected``() : Task<unit> = task { // if we ever change the collation, make sure all .Contains everywhere also work (like the one in AnkiImporter) medTODO remove after ElasticSearch
-    use c = new TestContainer()
-    let userId = 3
-    let upperGuid = Guid.NewGuid().ToString().ToUpper()
-    let! _ = FacetRepositoryTests.addBasicCard c.Db userId [ upperGuid ]
-
-    TagRepository.Search c.Db <| upperGuid.ToLower()
-    
-    |> Assert.SingleI }
-
 [<Theory>]
 [<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {

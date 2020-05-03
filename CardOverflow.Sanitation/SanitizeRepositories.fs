@@ -129,7 +129,7 @@ module SanitizeTagRepository =
         let! (ac: AcquiredCardEntity) =
             getAcquired db userId cardId
         let! (tag: TagEntity option) =
-            db.Tag.SingleOrDefaultAsync(fun x -> x.Name = newTagName)
+            db.Tag.SingleOrDefaultAsync(fun x -> EF.Functions.ILike(x.Name, newTagName))
             |> Task.map Option.ofObj
         if tag.IsSome then
             do! db.Tag_AcquiredCard
