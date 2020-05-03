@@ -1,0 +1,21 @@
+﻿@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject TimeProvider TimeProvider
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+
+<span class="@(_delta >= TimeSpan.Zero ? "" : "text-danger" )">
+  @(ViewLogic.toString(_delta))
+</span>
+
+@code {
+  [Parameter] public DateTime DueDate { get; set; }
+  private TimeSpan _delta => DueDate - TimeProvider.utcNow;
+}

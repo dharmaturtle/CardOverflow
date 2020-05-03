@@ -10,15 +10,59 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
 
 <div>
-  <h3>Card Settings</h3>
-  <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
+  <h4>
+    Personal Details
+  </h4>
+  <div class="d-flex">
+    <strong class="my-2">
+      Card&nbsp;Setting:&nbsp;
+    </strong>
+    <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
+  </div>
+  <div class="d-flex justify-content-between">
+    <div>
+      <strong>
+        Due:
+      </strong>
+      <span title=@(AcquiredCard.Due + "UTC")>
+        <Due DueDate=@AcquiredCard.Due />
+      </span>
+    </div>
+    @if (!_showAdvanced) {
+      <button class="btn" @onclick=@(() => _showAdvanced = true)>
+        <i class="fas fa-ellipsis-h"></i>
+      </button>
+    }
+  </div>
+  @if (_showAdvanced) {
+    <div>
+      <strong>
+        State:
+      </strong>
+      @AcquiredCard.CardState
+    </div>
+    <div>
+      <strong>
+        Is Lapsed:
+      </strong>
+      @AcquiredCard.IsLapsed
+    </div>
+    <div>
+      <strong>
+        Ease Factor:
+      </strong>
+      @(AcquiredCard.EaseFactorInPermille * 10)%
+    </div>
+  }
 </div>
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public AcquiredCard AcquiredCard { get; set; }
+  private bool _showAdvanced;
 
   private async Task _SetOption(int newId) {
     var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, User.Id, AcquiredCard.AcquiredCardId, newId));

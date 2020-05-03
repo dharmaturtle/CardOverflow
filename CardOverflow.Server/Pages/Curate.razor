@@ -54,9 +54,7 @@
                     </a>
                   </td>
                   <td>
-                    <span class="@((card.Due - DateTime.UtcNow) >= TimeSpan.Zero ? "" : "text-danger" )">
-                      @(ViewLogic.toString(card.Due - DateTime.UtcNow))
-                    </span>
+                    <Due DueDate=@card.Due/>
                   </td>
                   <td>
                     @(String.Join(", ", card.Tags))
