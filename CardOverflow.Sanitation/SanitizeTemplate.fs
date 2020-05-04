@@ -24,8 +24,6 @@ type ViewField = {
     [<Required>]
     [<StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be less than 100 characters.")>] // lowTODO the 100 is completely made up; what's the real max?
     Name: string
-    Font: string
-    FontSize: byte
     IsRightToLeft: bool
     Ordinal: int
     IsSticky: bool
@@ -34,16 +32,12 @@ type ViewField = {
 module ViewField =
     let load (bznz: Field): ViewField = {
         Name = bznz.Name
-        Font = bznz.Font
-        FontSize = bznz.FontSize
         IsRightToLeft = bznz.IsRightToLeft
         Ordinal = bznz.Ordinal |> int
         IsSticky = bznz.IsSticky
     }
     let copyTo (view: ViewField): Field = {
         Name = view.Name
-        Font = view.Font
-        FontSize = view.FontSize
         IsRightToLeft = view.IsRightToLeft
         Ordinal = view.Ordinal |> byte
         IsSticky = view.IsSticky

@@ -213,16 +213,12 @@ Back
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {
                 Name = "Front"
-                Font = "Arial"
-                FontSize = 20uy
                 IsRightToLeft = false
                 Ordinal = 0uy
                 IsSticky = false }
             Value = "Front" }
          {  Field = {
                 Name = "Back"
-                Font = "Arial"
-                FontSize = 20uy
                 IsRightToLeft = false
                 Ordinal = 1uy
                 IsSticky = false }

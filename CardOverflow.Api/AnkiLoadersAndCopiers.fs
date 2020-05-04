@@ -406,8 +406,6 @@ module Anki =
                     Fields =
                         get.Required.Field "flds" (Decode.object(fun get ->
                             { Name = get.Required.Field "name" Decode.string
-                              Font = get.Required.Field "font" Decode.string
-                              FontSize = get.Required.Field "size" Decode.int |> byte
                               IsRightToLeft = get.Required.Field "rtl" Decode.bool
                               Ordinal = get.Required.Field "ord" Decode.int |> byte
                               IsSticky = get.Required.Field "sticky" Decode.bool })

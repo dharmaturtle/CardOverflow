@@ -179,20 +179,14 @@ type TemplateInstance with
 }"""
         Fields = [
         {   Name = "Front"
-            Font = "Arial"
-            FontSize = 20uy
             IsRightToLeft = false
             Ordinal = 0uy
             IsSticky = false }
         {   Name = "Back"
-            Font = "Arial"
-            FontSize = 20uy
             IsRightToLeft = false
             Ordinal = 1uy
             IsSticky = false }
         {   Name = "Source"
-            Font = "Arial"
-            FontSize = 20uy
             IsRightToLeft = false
             Ordinal = 2uy
             IsSticky = true
