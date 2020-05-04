@@ -186,8 +186,9 @@ module ExploreCardRepository =
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
             |> Task.map (Result.requireNotNull (sprintf "Card Instance #%i not found" instanceId))
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstanceId = instanceId)
-        return CardInstanceMeta.load isAcquired (e.Card.LatestInstanceId = e.Id) e
-        }
+        let! latest = get db userId e.CardId
+        return CardInstanceMeta.load isAcquired (e.Card.LatestInstanceId = e.Id) e, latest
+    }
 
 module FileRepository =
     let get (db: CardOverflowDb) hash =
