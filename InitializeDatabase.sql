@@ -54,6 +54,10 @@ CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
+        IF (NEW."TsVectorHelper" IS NOT NULL) THEN
+            NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
+            NEW."TsVectorHelper" = NULL;
+        END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW."CardId" <> OLD."CardId")) THEN
 			NEW."BranchSourceIdOrCardId" = ( SELECT COALESCE(c."BranchSourceId", c."Id")
 											 FROM   "Card" c
@@ -174,7 +178,8 @@ CREATE TABLE public."AcquiredCard" (
     "IsLapsed" boolean NOT NULL,
     "PersonalField" text NOT NULL,
     "TsVectorHelper" text,
-    "TsVector" tsvector
+    "TsVector" tsvector,
+    CONSTRAINT "AcquiredCard_TsVectorHelper_IsNull" CHECK (("TsVectorHelper" IS NULL))
 );
 
 

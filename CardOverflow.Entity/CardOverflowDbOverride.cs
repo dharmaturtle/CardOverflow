@@ -106,6 +106,9 @@ namespace CardOverflow.Entity {
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
+      foreach (var acquiredCard in _filter<AcquiredCardEntity>(entries)) {
+        acquiredCard.TsVectorHelper = MappingTools.stripHtmlTags(acquiredCard.PersonalField);
+      }
       foreach (var tag in _filter<TagEntity>(entries)) {
         tag.Name = MappingTools.toTitleCase.Invoke(tag.Name);
       }
