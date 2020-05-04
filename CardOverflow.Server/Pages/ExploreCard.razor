@@ -75,14 +75,21 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    var x = InstanceId == 0
-      ? await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, CardId))
-      : await DbExecutor.QueryAsync(db => ExploreCardRepository.instance(db, User?.Id ?? 0, InstanceId));
-    if (x.IsOk) {
-      Card = x.ResultValue;
+    if (InstanceId == 0) {
+      var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, CardId));
+      if (x.IsOk) {
+        Card = x.ResultValue;
+      } else {
+        showError(x.ErrorValue);
+      }
     } else {
-      ToastService.ShowError(x.ErrorValue);
-      _LoadingMessage = x.ErrorValue;
+      var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.instance(db, User?.Id ?? 0, InstanceId));
+      if (x.IsOk) {
+        var (instance, card) = x.ResultValue; // highTODO do something with instance
+        Card = card;
+      } else {
+        showError(x.ErrorValue);
+      }
     }
     if (User != null && Card != null) {
       var r = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
@@ -91,6 +98,11 @@
       } // the only error so far is due to not acquiring the card, so intentionally not showing it.
     }
     StateHasChanged();
+  }
+
+  private void showError(string error) {
+    ToastService.ShowError(error);
+    _LoadingMessage = error;
   }
 
 }
