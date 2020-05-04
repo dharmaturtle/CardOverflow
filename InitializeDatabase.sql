@@ -12,6 +12,71 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
+            UPDATE	"CardInstance" ci
+            SET		"Users" = ( SELECT Count(*)
+                                FROM "AcquiredCard"
+                                WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
+            WHERE	ci."Id" = OLD."CardInstanceId";
+            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
+            SET     "Users" = ( SELECT  COUNT(*)
+                                FROM    "Card" c
+                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
+                                WHERE ( branchSource."Id" = c."Id" OR
+                                        branchSource."Id" = c."BranchSourceId" )
+                                        AND  ac."CardState" <> 3 )
+            FROM    "Card" c1
+            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = OLD."CardId"
+            WHERE branchSource."Id" = c1."Id";
+        END IF;
+        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
+            UPDATE	"CardInstance" ci
+            SET		"Users" = ( SELECT Count(*)
+                                FROM "AcquiredCard"
+                                WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
+            WHERE	ci."Id" = NEW."CardInstanceId";
+            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
+            SET     "Users" = ( SELECT  COUNT(*)
+                                FROM    "Card" c
+                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
+                                WHERE ( branchSource."Id" = c."Id" OR
+                                        branchSource."Id" = c."BranchSourceId" )
+                                        AND  ac."CardState" <> 3 )
+            FROM    "Card" c1
+            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = NEW."CardId"
+            WHERE branchSource."Id" = c1."Id";
+        END IF;
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
+
+CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        IF (NEW."TsVectorHelper" IS NOT NULL) THEN
+            NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
+            NEW."TsVectorHelper" = NULL;
+        END IF;
+        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW."CardId" <> OLD."CardId")) THEN
+			NEW."BranchSourceIdOrCardId" = ( SELECT COALESCE(c."BranchSourceId", c."Id")
+											 FROM   "Card" c
+											 WHERE  c."Id" = NEW."CardId" );
+		END IF;
+        RETURN NEW;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
+
 CREATE FUNCTION public.fn_cardinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
@@ -49,26 +114,6 @@ $$;
 
 
 ALTER FUNCTION public.fn_communalfieldinstance_beforeinsert() OWNER TO postgres;
-
-CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    BEGIN
-        IF (NEW."TsVectorHelper" IS NOT NULL) THEN
-            NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
-            NEW."TsVectorHelper" = NULL;
-        END IF;
-        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW."CardId" <> OLD."CardId")) THEN
-			NEW."BranchSourceIdOrCardId" = ( SELECT COALESCE(c."BranchSourceId", c."Id")
-											 FROM   "Card" c
-											 WHERE  c."Id" = NEW."CardId" );
-		END IF;
-        RETURN NEW;
-    END;
-$$;
-
-
-ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -114,51 +159,6 @@ $$;
 
 
 ALTER FUNCTION public.fn_templateinstance_beforeinsert() OWNER TO postgres;
-
-CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    BEGIN
-		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
-            UPDATE	"CardInstance" ci
-            SET		"Users" = ( SELECT Count(*)
-                                FROM "AcquiredCard"
-                                WHERE "CardInstanceId" = OLD."CardInstanceId" AND "CardState" <> 3 )
-            WHERE	ci."Id" = OLD."CardInstanceId";
-            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
-            SET     "Users" = ( SELECT  COUNT(*)
-                                FROM    "Card" c
-                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE ( branchSource."Id" = c."Id" OR
-                                        branchSource."Id" = c."BranchSourceId" )
-                                        AND  ac."CardState" <> 3 )
-            FROM    "Card" c1
-            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = OLD."CardId"
-            WHERE branchSource."Id" = c1."Id";
-        END IF;
-        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."CardInstanceId" <> NEW."CardInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
-            UPDATE	"CardInstance" ci
-            SET		"Users" = ( SELECT Count(*)
-                                FROM "AcquiredCard"
-                                WHERE "CardInstanceId" = NEW."CardInstanceId" AND "CardState" <> 3 )
-            WHERE	ci."Id" = NEW."CardInstanceId";
-            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
-            SET     "Users" = ( SELECT  COUNT(*)
-                                FROM    "Card" c
-                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE ( branchSource."Id" = c."Id" OR
-                                        branchSource."Id" = c."BranchSourceId" )
-                                        AND  ac."CardState" <> 3 )
-            FROM    "Card" c1
-            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = NEW."CardId"
-            WHERE branchSource."Id" = c1."Id";
-        END IF;
-        RETURN NULL;
-    END;
-$$;
-
-
-ALTER FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -1320,6 +1320,12 @@ CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 CREATE INDEX idx_fts_templateinstance_tsvector ON public."TemplateInstance" USING gin ("TsVector");
 
 
+CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
+
+
+CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
+
+
 CREATE TRIGGER tr_cardinstance_beforeinsert BEFORE INSERT ON public."CardInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_cardinstance_beforeinsert();
 
 
@@ -1333,12 +1339,6 @@ CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag"
 
 
 CREATE TRIGGER tr_templateinstance_beforeinsert BEFORE INSERT ON public."TemplateInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_templateinstance_beforeinsert();
-
-
-CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
-
-
-CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
 
 
 ALTER TABLE ONLY public."AcquiredCard"
