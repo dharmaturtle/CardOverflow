@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -12,7 +12,7 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-CREATE FUNCTION public.cardinstance_tsvectorfunction() RETURNS trigger
+CREATE FUNCTION public.fn_cardinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -28,9 +28,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.cardinstance_tsvectorfunction() OWNER TO postgres;
+ALTER FUNCTION public.fn_cardinstance_beforeinsert() OWNER TO postgres;
 
-CREATE FUNCTION public.communalfieldinstance_tsvectorfunction() RETURNS trigger
+CREATE FUNCTION public.fn_communalfieldinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -48,7 +48,7 @@ end
 $$;
 
 
-ALTER FUNCTION public.communalfieldinstance_tsvectorfunction() OWNER TO postgres;
+ALTER FUNCTION public.fn_communalfieldinstance_beforeinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -66,7 +66,7 @@ $$;
 
 ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.relationship_tsvectorfunction() RETURNS trigger
+CREATE FUNCTION public.fn_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
@@ -76,9 +76,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.relationship_tsvectorfunction() OWNER TO postgres;
+ALTER FUNCTION public.fn_relationship_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.tag_tsvectorfunction() RETURNS trigger
+CREATE FUNCTION public.fn_tag_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -88,9 +88,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.tag_tsvectorfunction() OWNER TO postgres;
+ALTER FUNCTION public.fn_tag_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.templateinstance_tsvectorfunction() RETURNS trigger
+CREATE FUNCTION public.fn_templateinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -109,9 +109,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.templateinstance_tsvectorfunction() OWNER TO postgres;
+ALTER FUNCTION public.fn_templateinstance_beforeinsert() OWNER TO postgres;
 
-CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() RETURNS trigger
+CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -154,7 +154,7 @@ CREATE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() R
 $$;
 
 
-ALTER FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance() OWNER TO postgres;
+ALTER FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -1315,25 +1315,25 @@ CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 CREATE INDEX idx_fts_templateinstance_tsvector ON public."TemplateInstance" USING gin ("TsVector");
 
 
-CREATE TRIGGER cardinstance_tsvectortrigger BEFORE INSERT ON public."CardInstance" FOR EACH ROW EXECUTE FUNCTION public.cardinstance_tsvectorfunction();
+CREATE TRIGGER tr_cardinstance_beforeinsert BEFORE INSERT ON public."CardInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_cardinstance_beforeinsert();
 
 
-CREATE TRIGGER communalfieldinstance_tsvectortrigger BEFORE INSERT ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.communalfieldinstance_tsvectorfunction();
+CREATE TRIGGER tr_communalfieldinstance_beforeinsert BEFORE INSERT ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_communalfieldinstance_beforeinsert();
 
 
-CREATE TRIGGER relationship_tsvectortrigger BEFORE INSERT OR UPDATE ON public."Relationship" FOR EACH ROW EXECUTE FUNCTION public.relationship_tsvectorfunction();
+CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Relationship" FOR EACH ROW EXECUTE FUNCTION public.fn_relationship_beforeinsertupdate();
 
 
-CREATE TRIGGER tag_tsvectortrigger BEFORE INSERT OR UPDATE ON public."Tag" FOR EACH ROW EXECUTE FUNCTION public.tag_tsvectorfunction();
+CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag" FOR EACH ROW EXECUTE FUNCTION public.fn_tag_beforeinsertupdate();
 
 
-CREATE TRIGGER templateinstance_tsvectortrigger BEFORE INSERT ON public."TemplateInstance" FOR EACH ROW EXECUTE FUNCTION public.templateinstance_tsvectorfunction();
+CREATE TRIGGER tr_templateinstance_beforeinsert BEFORE INSERT ON public."TemplateInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_templateinstance_beforeinsert();
 
 
 CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
 
 
-CREATE TRIGGER trigger_to_update_userscount_of_card_and_cardinstance AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance();
+CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
 
 
 ALTER TABLE ONLY public."AcquiredCard"
