@@ -49,11 +49,6 @@ let ``Delete and Recreate localhost's CardOverflow Database via EF`` (): Task<un
     use __ = AsyncScopedLifestyle.BeginScope c
     do! c.GetInstance<CardOverflowDb>() |> deleteAndRecreateDatabase }
 
-let tweakDevelopmentDbScript =
-    [   """USE [CardOverflow]"""
-        File.ReadAllText @"..\netcoreapp3.1\Stuff\TweakDevelopment.sql"
-    ] |> String.concat "\r\n"
-
 let executeNonQuery command connectionString =
     use connection = new NpgsqlConnection(connectionString)
     connection.Open()
@@ -76,13 +71,19 @@ let fullReset databaseName serverConnectionString =
         <| File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql"
         <| sprintf "%s;Database=%s;" serverConnectionString databaseName
 
+let tweak databaseName serverConnectionString =
+    let serverConnectionString = ConnectionString.value serverConnectionString
+    executeNonQuery
+        <| File.ReadAllText @"..\netcoreapp3.1\Stuff\TweakDevelopment.sql"
+        <| sprintf "%s;Database=%s;" serverConnectionString databaseName
+
 //[<Fact>]
 let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): unit =
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterServerConnectionString
     c.GetInstance<ConnectionString>() |> fullReset "CardOverflow"
-    //c.GetInstance<ConnectionString>() |> tweak "CardOverflow"
+    c.GetInstance<ConnectionString>() |> tweak "CardOverflow"
 
 let fastResetScript =
     let insertMasterData =
