@@ -304,8 +304,6 @@ type CardInstanceMeta = {
     StrippedFront: string
     StrippedBack: string
     CommunalFields: CommunalFieldInstance ResizeArray
-    Relationships: ViewRelationship list
-    Tags: ViewTag list
 }
 
 [<CLIMutable>]

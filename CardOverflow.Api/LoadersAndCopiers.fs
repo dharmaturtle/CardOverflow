@@ -282,7 +282,7 @@ type CommunalFieldInstance with
         Value = entity.Value }
 
 type CardInstanceMeta with
-    static member load isAcquired isLatest (entity: CardInstanceEntity) (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) =
+    static member load isAcquired isLatest (entity: CardInstanceEntity) =
         let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
             CardId = entity.CardId
@@ -294,18 +294,6 @@ type CardInstanceMeta with
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
-            Relationships = relationshipCounts.Select(fun x ->
-                {   Name = x.Name
-                    SourceCardId = x.SourceCardId
-                    TargetCardId = x.TargetCardId
-                    IsAcquired = usersRelationships.Contains x.Name
-                    Users = x.Count
-                })  |> Seq.toList
-            Tags = tagCounts.Select(fun x ->
-                {   Name = x.Name
-                    Count = x.Count
-                    IsAcquired = usersTags.Contains x.Name
-                }) |> Seq.toList
         }
     static member initialize =
         {   Id = 0
@@ -318,8 +306,6 @@ type CardInstanceMeta with
             StrippedFront = ""
             StrippedBack = ""
             CommunalFields = [].ToList()
-            Relationships = []
-            Tags = []
         }
     member this.copyTo (entity: CardInstanceEntity) =
         entity.Created <- this.Created
@@ -378,7 +364,7 @@ type AcquiredCard with
             CardInstanceMeta = CardInstanceMeta.initialize
             Tags = tags
         }
-    static member load (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
+    static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
             {   CardId = entity.CardInstance.CardId
@@ -390,7 +376,7 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
-                CardInstanceMeta = CardInstanceMeta.load isAcquired entity.IsLatest entity.CardInstance usersTags tagCounts usersRelationships relationshipCounts
+                CardInstanceMeta = CardInstanceMeta.load isAcquired entity.IsLatest entity.CardInstance
                 Tags = usersTags |> List.ofSeq
             }
         }
@@ -414,11 +400,23 @@ type ExploreCardSummary with
     }
 
 type ExploreCard with
-    static member load (entity: CardEntity) acquiredStatus instance = {
+    static member load (entity: CardEntity) acquiredStatus (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) instance = {
         Summary = ExploreCardSummary.load instance entity
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
-        Tags = instance.Tags
-        Relationships = instance.Relationships.ToList()
+        Tags =
+            tagCounts.Select(fun x ->
+                {   Name = x.Name
+                    Count = x.Count
+                    IsAcquired = usersTags.Contains x.Name
+                }) |> Seq.toList
+        Relationships =
+            relationshipCounts.Select(fun x ->
+                {   Name = x.Name
+                    SourceCardId = x.SourceCardId
+                    TargetCardId = x.TargetCardId
+                    IsAcquired = usersRelationships.Contains x.Name
+                    Users = x.Count
+                })  |> toResizeArray
         AcquiredStatus = acquiredStatus
     }
 
@@ -430,6 +428,6 @@ type CardRevision with
         SortedMeta =
             e.CardInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.mapi (fun i e -> CardInstanceMeta.load isAcquired (i = 0) e Set.empty ResizeArray.empty Set.empty ResizeArray.empty)
+            |> Seq.mapi (fun i e -> CardInstanceMeta.load isAcquired (i = 0) e)
             |> Seq.toList
     }
