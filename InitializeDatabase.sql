@@ -1,4 +1,4 @@
-﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -49,6 +49,22 @@ $$;
 
 
 ALTER FUNCTION public.communalfieldinstance_tsvectorfunction() OWNER TO postgres;
+
+CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW."CardId" <> OLD."CardId")) THEN
+			NEW."BranchSourceIdOrCardId" = ( SELECT COALESCE(c."BranchSourceId", c."Id")
+											 FROM   "Card" c
+											 WHERE  c."Id" = NEW."CardId" );
+		END IF;
+        RETURN NEW;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.relationship_tsvectorfunction() RETURNS trigger
     LANGUAGE plpgsql
@@ -149,12 +165,16 @@ CREATE TABLE public."AcquiredCard" (
     "UserId" integer NOT NULL,
     "CardId" integer NOT NULL,
     "CardInstanceId" integer NOT NULL,
+    "BranchSourceIdOrCardId" integer NOT NULL,
     "CardState" smallint NOT NULL,
     "EaseFactorInPermille" smallint NOT NULL,
     "IntervalOrStepsIndex" smallint NOT NULL,
     "Due" timestamp without time zone NOT NULL,
     "CardSettingId" integer NOT NULL,
-    "IsLapsed" boolean NOT NULL
+    "IsLapsed" boolean NOT NULL,
+    "PersonalField" text NOT NULL,
+    "TsVectorHelper" text,
+    "TsVector" tsvector
 );
 
 
@@ -178,6 +198,7 @@ ALTER TABLE public."Card" OWNER TO postgres;
 CREATE VIEW public."AcquiredCardIsLatest" AS
  SELECT a."Id",
     a."UserId",
+    a."CardId",
     a."CardInstanceId",
     a."CardState",
     a."EaseFactorInPermille",
@@ -272,7 +293,7 @@ CREATE VIEW public."CardInstanceRelationshipCount" AS
    FROM ((public."Relationship_AcquiredCard" rac
      JOIN public."AcquiredCard" sac ON ((rac."SourceAcquiredCardId" = sac."Id")))
      JOIN public."AcquiredCard" tac ON ((rac."TargetAcquiredCardId" = tac."Id")))
-  WHERE sac."CardState" <> 3 AND tac."CardState" <> 3
+  WHERE ((sac."CardState" <> 3) AND (tac."CardState" <> 3))
   GROUP BY sac."CardInstanceId", tac."CardInstanceId", rac."RelationshipId";
 
 
@@ -305,7 +326,7 @@ CREATE VIEW public."CardInstanceTagCount" AS
    FROM ((public."CardInstance" i
      JOIN public."AcquiredCard" ac ON ((ac."CardInstanceId" = i."Id")))
      JOIN public."Tag_AcquiredCard" ta ON ((ta."AcquiredCardId" = ac."Id")))
-  WHERE ac."CardState" <> 3
+  WHERE (ac."CardState" <> 3)
   GROUP BY i."Id", ta."TagId";
 
 
@@ -333,7 +354,7 @@ CREATE VIEW public."CardRelationshipCount" AS
    FROM ((public."Relationship_AcquiredCard" rac
      JOIN public."AcquiredCard" sac ON ((rac."SourceAcquiredCardId" = sac."Id")))
      JOIN public."AcquiredCard" tac ON ((rac."TargetAcquiredCardId" = tac."Id")))
-  WHERE sac."CardState" <> 3 AND tac."CardState" <> 3
+  WHERE ((sac."CardState" <> 3) AND (tac."CardState" <> 3))
   GROUP BY sac."CardId", tac."CardId", rac."RelationshipId";
 
 
@@ -387,7 +408,7 @@ CREATE VIEW public."CardTagCount" AS
    FROM ((public."Card" c
      JOIN public."AcquiredCard" ac ON ((ac."CardId" = c."Id")))
      JOIN public."Tag_AcquiredCard" ta ON ((ta."AcquiredCardId" = ac."Id")))
-  WHERE ac."CardState" <> 3
+  WHERE (ac."CardState" <> 3)
   GROUP BY c."Id", ta."TagId";
 
 
@@ -1154,6 +1175,10 @@ ALTER TABLE ONLY public."Vote_Feedback"
     ADD CONSTRAINT "PK_Vote_Feedback" PRIMARY KEY ("FeedbackId", "UserId");
 
 
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "UQ_AcquiredCard_UserId_BranchSourceIdOrCardId" UNIQUE ("UserId", "BranchSourceIdOrCardId");
+
+
 ALTER TABLE ONLY public."CardInstance"
     ADD CONSTRAINT "UQ_CardInstance_CardId_Id" UNIQUE ("CardId", "Id");
 
@@ -1239,13 +1264,13 @@ CREATE INDEX "IX_Relationship_AcquiredCard_RelationshipId" ON public."Relationsh
 CREATE INDEX "IX_Relationship_AcquiredCard_TargetAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("TargetAcquiredCardId");
 
 
-CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree (UPPER("Name"));
+CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree (upper(("Name")::text));
 
 
 CREATE INDEX "IX_Tag_AcquiredCard_AcquiredCardId" ON public."Tag_AcquiredCard" USING btree ("AcquiredCardId");
 
 
-CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree (UPPER("Name"));
+CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree (upper(("Name")::text));
 
 
 CREATE INDEX "IX_Tag_User_TemplateInstance_DefaultTagId" ON public."Tag_User_TemplateInstance" USING btree ("DefaultTagId");
@@ -1305,6 +1330,9 @@ CREATE TRIGGER tag_tsvectortrigger BEFORE INSERT OR UPDATE ON public."Tag" FOR E
 CREATE TRIGGER templateinstance_tsvectortrigger BEFORE INSERT ON public."TemplateInstance" FOR EACH ROW EXECUTE FUNCTION public.templateinstance_tsvectorfunction();
 
 
+CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
+
+
 CREATE TRIGGER trigger_to_update_userscount_of_card_and_cardinstance AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance();
 
 
@@ -1318,6 +1346,10 @@ ALTER TABLE ONLY public."AcquiredCard"
 
 ALTER TABLE ONLY public."AcquiredCard"
     ADD CONSTRAINT "FK_AcquiredCard_CardSetting_CardSettingId" FOREIGN KEY ("CardSettingId") REFERENCES public."CardSetting"("Id");
+
+
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "FK_AcquiredCard_Card_BranchSourceIdOrCardId" FOREIGN KEY ("BranchSourceIdOrCardId") REFERENCES public."Card"("Id");
 
 
 ALTER TABLE ONLY public."AcquiredCard"

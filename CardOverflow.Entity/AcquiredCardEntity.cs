@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
@@ -20,13 +21,21 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         public int CardId { get; set; }
         public int CardInstanceId { get; set; }
+        public int BranchSourceIdOrCardId { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
         public DateTime Due { get; set; }
         public int CardSettingId { get; set; }
         public bool IsLapsed { get; set; }
+        [Required]
+        public string PersonalField { get; set; } = "";
+        public string TsVectorHelper { get; set; }
+        public NpgsqlTsVector TsVector { get; set; }
 
+        [ForeignKey("BranchSourceIdOrCardId")]
+        [InverseProperty("AllAcquiredCards")]
+        public virtual CardEntity BranchSourceIdOrCard { get; set; }
         [ForeignKey("CardId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardEntity Card { get; set; }

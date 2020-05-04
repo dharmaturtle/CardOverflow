@@ -122,6 +122,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
+    let cardId = 1
     Assert.Equal<int seq>([1001], instanceIds)
     Assert.Empty communals
     let! template = SanitizeTemplate.AllInstances c.Db 1
@@ -143,26 +144,30 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use db = c.Db
     db.AcquiredCard.AddI <|
         AcquiredCardEntity(
+            CardId = cardId,
             CardInstanceId = i2,
             Due = DateTime.UtcNow,
             UserId = userId,
+            BranchSourceIdOrCardId = cardId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"IX_AcquiredCard_UserId_CardInstanceId\"",
+        "23505: duplicate key value violates unique constraint \"UQ_AcquiredCard_UserId_BranchSourceIdOrCardId\"",
         ex.InnerException.Message)
 
     let i1 = 1001
     use db = c.Db
     db.AcquiredCard.AddI <|
         AcquiredCardEntity(
+            CardId = cardId,
             CardInstanceId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
+            BranchSourceIdOrCardId = cardId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23503: insert or update on table \"AcquiredCard\" violates foreign key constraint \"FK_AcquiredCard_CardInstance_CardId_CardInstanceId\"", 
+        "23505: duplicate key value violates unique constraint \"UQ_AcquiredCard_UserId_BranchSourceIdOrCardId\"",
         ex.InnerException.Message)
     }
 

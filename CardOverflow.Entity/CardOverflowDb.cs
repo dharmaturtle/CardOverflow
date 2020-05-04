@@ -62,13 +62,17 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.UserId);
 
+                entity.HasIndex(e => new { e.UserId, e.BranchSourceIdOrCardId })
+                    .HasName("UQ_AcquiredCard_UserId_BranchSourceIdOrCardId")
+                    .IsUnique();
+
                 entity.HasIndex(e => new { e.UserId, e.CardId })
                     .IsUnique();
 
                 entity.HasIndex(e => new { e.UserId, e.CardInstanceId })
                     .IsUnique();
 
-                entity.HasOne(d => d.CardInstance)
+              entity.HasOne(d => d.CardInstance)
                     .WithMany(p => p.AcquiredCards)
                     .HasForeignKey(d => d.CardInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
@@ -335,9 +339,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
             {
-                entity.HasIndex(e => e.Name)
-                    .IsUnique();
-
                 entity.HasIndex(e => e.TsVector)
                     .HasName("idx_fts_relationship_tsvector")
                     .HasMethod("gin");
@@ -355,23 +356,10 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.Relationship_AcquiredCards)
                     .HasForeignKey(d => d.RelationshipId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.SourceAcquiredCard)
-                    .WithMany(p => p.Relationship_AcquiredCardSourceAcquiredCards)
-                    .HasForeignKey(d => d.SourceAcquiredCardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.TargetAcquiredCard)
-                    .WithMany(p => p.Relationship_AcquiredCardTargetAcquiredCards)
-                    .HasForeignKey(d => d.TargetAcquiredCardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<TagEntity>(entity =>
             {
-                entity.HasIndex(e => e.Name)
-                    .IsUnique();
-
                 entity.HasIndex(e => e.TsVector)
                     .HasName("idx_fts_tag_tsvector")
                     .HasMethod("gin");

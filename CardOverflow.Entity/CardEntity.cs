@@ -9,6 +9,8 @@ namespace CardOverflow.Entity
     {
         public CardEntity()
         {
+            AcquiredCards = new HashSet<AcquiredCardEntity>();
+            AllAcquiredCards = new HashSet<AcquiredCardEntity>();
             CardInstances = new HashSet<CardInstanceEntity>();
             CommentCards = new HashSet<CommentCardEntity>();
             BranchChildren = new HashSet<CardEntity>();
@@ -39,11 +41,13 @@ namespace CardOverflow.Entity
         [InverseProperty("BranchChildren")]
         public virtual CardEntity BranchSource { get; set; }
         [ForeignKey("CopySourceId")]
-        [InverseProperty("Cards")]
+        [InverseProperty("CardCopySources")]
         public virtual CardInstanceEntity CopySource { get; set; }
         [ForeignKey("LatestInstanceId")]
         [InverseProperty("CardLatestInstances")]
         public virtual CardInstanceEntity LatestInstance { get; set; }
+        [InverseProperty("BranchSourceIdOrCard")]
+        public virtual ICollection<AcquiredCardEntity> AllAcquiredCards { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
         [InverseProperty("Card")]
