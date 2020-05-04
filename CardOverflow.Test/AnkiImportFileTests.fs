@@ -521,44 +521,25 @@ let ``EditCardCommand's back works with cloze`` (): unit =
 [<Fact>]
 let ``AnkiDefaults.templateIdByHash is same as initial db`` (): unit =
     let c = new TestContainer()
-    let userId = 1
-    let toEntity (template: AnkiTemplateInstance) =
-        template.CopyToNew userId null
     use hasher = SHA512.Create()
-    let dbidByHash =
-        Anki.parseModels
-            userId
-            InitializeDatabase.ankiModels
-        |> Result.getOk
-        |> List.collect (snd >> List.map toEntity)
-        |> List.mapi (fun i entity ->
-            TemplateInstanceEntity.hashBase64 hasher entity, i + 1
-        ) |> Map.ofList
-    let actualDbIdByHash =
-        c.Db.Template
-            .Include(fun x -> x.TemplateInstances)
-            .AsEnumerable()
-            .SelectMany(fun x -> x.TemplateInstances :> IEnumerable<_>)
-            .Select(fun x -> TemplateInstanceEntity.hashBase64 hasher x, x.Id)
-            |> Map.ofSeq
-
-    dbidByHash |> Map.iter(fun hash expectedId ->
-        Assert.Equal(
-            expectedId,
-            actualDbIdByHash.[hash]))
+    let templates =
+        c.Db.TemplateInstance
+            .OrderBy(fun x -> x.Id)
+            .ToList()
     
-    // testing the stored hash in the db
-    let actualDbIdByHash =
-        c.Db.Template
-            .Include(fun x -> x.TemplateInstances)
-            .AsEnumerable()
-            .SelectMany(fun x -> x.TemplateInstances :> IEnumerable<_>)
-            .Select(fun x -> x.Hash |> CardInstanceEntity.bitArrayToByteArray |> Convert.ToBase64String, x.Id)
-            |> Map.ofSeq
-    dbidByHash |> Map.iter(fun hash expectedId ->
-        Assert.Equal(
-            expectedId,
-            actualDbIdByHash.[hash]))
+    // test that the calculated hash is the same as the one stored in the db
+    for template in templates do
+        let calculated = TemplateInstanceEntity.hashBase64 hasher template
+        let dbValue = CardInstanceEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
+        //for x in TemplateInstanceEntity.hash hasher x do
+        //    Console.Write(if x then "1" else "0")
+        //Console.WriteLine()
+        Assert.Equal(calculated, dbValue)
+
+    // test that AnkiDefaults.templateIdByHash is up to date
+    for i, template in templates |> Seq.mapi (fun i e -> i, e) do
+        let calculated = TemplateInstanceEntity.hashBase64 hasher template
+        Assert.Equal(AnkiDefaults.templateIdByHash.[calculated], i + 1)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {
