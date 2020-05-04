@@ -750,6 +750,84 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 2 ]
 
     }
+
+[<Fact>]
+let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = addBasicCard c.Db userId []
+    let og_c = 1
+    let og_i = 1001
+
+    // tests ExactInstanceAcquired
+    do! ExploreCardRepository.get c.Db userId og_c
+        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired, card.AcquiredStatus))
+    
+    // update card
+    let update_i = 1002
+    let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getEdit c.Db userId og_c
+    let! (instanceIds, x) = UpdateRepository.card c.Db ac command.load
+    Assert.Equal<int seq>([update_i], instanceIds)
+    Assert.Empty x
+
+    // tests ExactInstanceAcquired
+    do! ExploreCardRepository.get c.Db userId og_c
+        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired, card.AcquiredStatus))
+
+    // acquiring old instance doesn't change LatestInstanceId
+    Assert.Equal(update_i, c.Db.Card.Single().LatestInstanceId)
+    do! CardRepository.AcquireCardAsync c.Db userId og_i
+    Assert.Equal(update_i, c.Db.Card.Single().LatestInstanceId)
+
+    // tests OtherInstanceAcquired
+    let! card = ExploreCardRepository.get c.Db userId og_c
+    match card.AcquiredStatus with
+    | OtherInstanceAcquired x -> Assert.Equal(og_i, x)
+    | _ -> failwith "impossible"
+
+    // branch card
+    let branch_i = 1003
+    let branch_c = 2
+    let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getBranch c.Db userId og_c
+    let! (instanceIds, x) = UpdateRepository.card c.Db ac command.load
+    Assert.Equal<int seq>([branch_i], instanceIds)
+    Assert.Empty x
+    
+    // tests LatestBranchAcquired
+    let! card = ExploreCardRepository.get c.Db userId branch_c
+    match card.AcquiredStatus with
+    | LatestBranchAcquired x -> Assert.Equal(branch_i, x)
+    | _ -> failwith "impossible"
+
+    // update branch
+    let updateBranch_i = 1004
+    let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getEdit c.Db userId branch_c
+    let! (instanceIds, x) = UpdateRepository.card c.Db ac command.load
+    Assert.Equal<int seq>([updateBranch_i], instanceIds)
+    Assert.Empty x
+
+    // LatestBranchAcquired
+    let! card = ExploreCardRepository.get c.Db userId branch_c
+    match card.AcquiredStatus with
+    | LatestBranchAcquired x -> Assert.Equal(updateBranch_i, x)
+    | _ -> failwith "impossible"
+
+    // acquiring old instance doesn't change LatestInstanceId
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).LatestInstanceId)
+    do! CardRepository.AcquireCardAsync c.Db userId branch_i
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).LatestInstanceId)
+
+    // tests OtherBranchAcquired
+    let! card = ExploreCardRepository.get c.Db userId branch_c
+    match card.AcquiredStatus with
+    | OtherBranchAcquired x -> Assert.Equal(branch_i, x)
+    | _ -> failwith "impossible"
+
+    // tests NotAcquired
+    let otherUser = 1
+    let! card = ExploreCardRepository.get c.Db otherUser branch_c
+    Assert.Equal(NotAcquired, card.AcquiredStatus)
+    } |> TaskResult.getOk)
     
 // fuck merge
 //[<Fact>]

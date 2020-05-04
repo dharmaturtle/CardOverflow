@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -1290,10 +1290,10 @@ CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 CREATE INDEX idx_fts_templateinstance_tsvector ON public."TemplateInstance" USING gin ("TsVector");
 
 
-CREATE TRIGGER cardinstance_tsvectortrigger BEFORE INSERT OR UPDATE ON public."CardInstance" FOR EACH ROW EXECUTE FUNCTION public.cardinstance_tsvectorfunction();
+CREATE TRIGGER cardinstance_tsvectortrigger BEFORE INSERT ON public."CardInstance" FOR EACH ROW EXECUTE FUNCTION public.cardinstance_tsvectorfunction();
 
 
-CREATE TRIGGER communalfieldinstance_tsvectortrigger BEFORE INSERT OR UPDATE ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.communalfieldinstance_tsvectorfunction();
+CREATE TRIGGER communalfieldinstance_tsvectortrigger BEFORE INSERT ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.communalfieldinstance_tsvectorfunction();
 
 
 CREATE TRIGGER relationship_tsvectortrigger BEFORE INSERT OR UPDATE ON public."Relationship" FOR EACH ROW EXECUTE FUNCTION public.relationship_tsvectorfunction();
@@ -1302,7 +1302,7 @@ CREATE TRIGGER relationship_tsvectortrigger BEFORE INSERT OR UPDATE ON public."R
 CREATE TRIGGER tag_tsvectortrigger BEFORE INSERT OR UPDATE ON public."Tag" FOR EACH ROW EXECUTE FUNCTION public.tag_tsvectorfunction();
 
 
-CREATE TRIGGER templateinstance_tsvectortrigger BEFORE INSERT OR UPDATE ON public."TemplateInstance" FOR EACH ROW EXECUTE FUNCTION public.templateinstance_tsvectorfunction();
+CREATE TRIGGER templateinstance_tsvectortrigger BEFORE INSERT ON public."TemplateInstance" FOR EACH ROW EXECUTE FUNCTION public.templateinstance_tsvectorfunction();
 
 
 CREATE TRIGGER trigger_to_update_userscount_of_card_and_cardinstance AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.trigger_to_update_userscount_of_card_and_cardinstance();
