@@ -124,29 +124,55 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module ExploreCardRepository =
+    let getAcquiredStatus (db: CardOverflowDb) userId cardId rootCardId (rootInstance: CardInstanceEntity) = task {
+        let! ac =
+            db.AcquiredCard
+                .Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CardEntity) -> x.LatestInstance)
+                .SingleOrDefaultAsync(fun x -> x.UserId = userId && (x.CardId = rootCardId || x.CardId = cardId))
+                |> Task.map Option.ofObj
+        return
+            match ac with
+            | None -> NotAcquired
+            | Some ac ->
+                if   ac.CardInstanceId = rootInstance.Id then
+                    ExactInstanceAcquired
+                elif ac.CardId = rootInstance.CardId then
+                    OtherInstanceAcquired ac.CardInstanceId
+                elif rootInstance.Card.BranchChildren.Select(fun x -> x.LatestInstanceId).Contains ac.CardInstanceId then
+                    LatestBranchAcquired ac.CardInstanceId
+                elif rootInstance.Card.BranchChildren.Select(fun x -> x.Id).Contains ac.CardId then
+                    OtherBranchAcquired ac.CardInstanceId
+                else failwith "impossible"
+    }
     let get (db: CardOverflowDb) userId cardId = taskResult {
+        let! rootCardId =
+            db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId)
+            |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
+            |> TaskResult.map (fun x -> x.BranchSourceId |> Option.ofNullable |> Option.defaultValue x.Id)
         let! (r: CardInstanceEntity * List<string> * List<string> * List<string>) =
             db.LatestCardInstance
                 .Include(fun x -> x.Card.Author)
+                .Include(fun x -> x.Card.BranchChildren)
                 .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.TemplateInstance)
-                .Where(fun x -> x.CardId = cardId)
+                .Where(fun x -> x.CardId = rootCardId)
                 .Select(fun x ->
                     x,
                     x.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
                     x.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name).ToList(),
                     x.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
-        let! e, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" cardId)
-        let! (tc: List<CardTagCountEntity>) = db.CardTagCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-        let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
-        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardId = cardId)
+        let! rootInstance, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" rootCardId)
+        let! (tc: List<CardTagCountEntity>) = db.CardTagCount.Where(fun x -> x.CardId = rootCardId).ToListAsync()
+        let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = rootCardId).ToListAsync()
+        let! acquiredStatus = getAcquiredStatus db userId cardId rootCardId rootInstance
         return
-            CardInstanceMeta.load isAcquired true e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
-            |> ExploreCard.load e.Card
+            CardInstanceMeta.load (acquiredStatus = ExactInstanceAcquired) true rootInstance (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+            |> ExploreCard.load rootInstance.Card acquiredStatus
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
         let! (r: CardInstanceEntity * string ResizeArray * string ResizeArray * string ResizeArray) =
@@ -168,9 +194,7 @@ module ExploreCardRepository =
         let! tc = db.CardTagCount.Where(fun x -> x.CardId = e.CardId).ToListAsync()
         let! rc = db.CardRelationshipCount.Where(fun x -> x.CardId = e.CardId).ToListAsync()
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = e.CardId)
-        return
-            CardInstanceMeta.load isAcquired (e.Card.LatestInstanceId = e.Id) e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
-            |> ExploreCard.load e.Card
+        return CardInstanceMeta.load isAcquired (e.Card.LatestInstanceId = e.Id) e (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
 
 module FileRepository =

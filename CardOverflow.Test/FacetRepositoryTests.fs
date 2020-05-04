@@ -263,19 +263,19 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     Assert.Equal<int seq>([newCardInstanceId], instanceId)
     Assert.Empty x
 
-    let! (card1: ExploreCard) = ExploreCardRepository.get      c.Db userId cardId
-    let! (card2: ExploreCard) = ExploreCardRepository.instance c.Db userId newCardInstanceId
+    let! (card1: CardInstanceMeta) = ExploreCardRepository.get      c.Db userId cardId |> TaskResult.map(fun x -> x.Instance)
+    let! (card2: CardInstanceMeta) = ExploreCardRepository.instance c.Db userId newCardInstanceId
     Assert.Equal(card1.InC(), card2.InC())
-    Assert.Equal(newValue                 , card2.Summary.Instance.StrippedFront)
-    Assert.Equal(newValue + " " + newValue, card2.Summary.Instance.StrippedBack)
-    let! (card3: ExploreCard) = ExploreCardRepository.instance c.Db userId oldCardInstanceId
-    Assert.Equal("Front",      card3.Summary.Instance.StrippedFront)
-    Assert.Equal("Front Back", card3.Summary.Instance.StrippedBack)
+    Assert.Equal(newValue                 , card2.StrippedFront)
+    Assert.Equal(newValue + " " + newValue, card2.StrippedBack)
+    let! (card3: CardInstanceMeta) = ExploreCardRepository.instance c.Db userId oldCardInstanceId
+    Assert.Equal("Front",      card3.StrippedFront)
+    Assert.Equal("Front Back", card3.StrippedBack)
 
     // nonexistant id
     let nonexistant = 1337
     
-    let! (missingCard: Result<ExploreCard, string>) = ExploreCardRepository.instance c.Db userId nonexistant
+    let! (missingCard: Result<CardInstanceMeta, string>) = ExploreCardRepository.instance c.Db userId nonexistant
     
     Assert.Equal(sprintf "Card Instance #%i not found" nonexistant, missingCard.error)
     } |> TaskResult.getOk)
@@ -489,7 +489,13 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Equal<int seq>([branch_i], instanceIds)
     Assert.Empty communals
     let! x = ExploreCardRepository.instance c.Db user2 branch_i
-    do! asserts user2 x.Value.Id newValue 1 1 []
+    do! asserts user2 x.Value.CardId newValue 1 1
+            [ { Name = "A"
+                Count = 1
+                IsAcquired = false }
+              { Name = "B"
+                Count = 1
+                IsAcquired = false }]
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ;
              branch_c, 1 ]
@@ -533,7 +539,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Equal<int seq>([copy2x_i], instanceIds)
     Assert.Empty communals
     let! x = ExploreCardRepository.instance c.Db user2 copy2x_i
-    do! asserts user2 x.Value.Id newValue 1 1 []
+    do! asserts user2 x.Value.CardId newValue 1 1 []
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;
              branch_c, 1 ]
@@ -557,7 +563,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Equal<int seq>([copyOfBranch_i], instanceIds)
     Assert.Empty communals
     let! x = ExploreCardRepository.instance c.Db user2 copyOfBranch_i
-    do! asserts user2 x.Value.Id newValue 1 1 []
+    do! asserts user2 x.Value.CardId newValue 1 1 []
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyOfBranch_c, 1
              branch_c, 1 ]
@@ -583,7 +589,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Equal<int seq>([branchOfCopy_i], instanceIds)
     Assert.Empty communals
     let! x = ExploreCardRepository.instance c.Db user2 branchOfCopy_i
-    do! asserts user2 x.Value.Id newValue 1 1 []
+    do! asserts user2 x.Value.CardId newValue 1 1 []
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ;         copy2x_c, 1 ;    copyOfBranch_c, 1 ;
              branch_c, 1 ;    branchOfCopy_c, 1 ]

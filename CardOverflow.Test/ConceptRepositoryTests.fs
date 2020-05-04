@@ -100,7 +100,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = view.Value.FrontBackFrontSynthBackSynth
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| card.Comments
-    Assert.True card.IsAcquired
+    Assert.True card.Instance.IsAcquired
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1

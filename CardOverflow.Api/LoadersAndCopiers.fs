@@ -285,6 +285,7 @@ type CardInstanceMeta with
     static member load isAcquired isLatest (entity: CardInstanceEntity) (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) =
         let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
+            CardId = entity.CardId
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
@@ -308,6 +309,7 @@ type CardInstanceMeta with
         }
     static member initialize =
         {   Id = 0
+            CardId = 0
             Created = DateTime.UtcNow
             Modified = None
             IsDmca = false
@@ -412,11 +414,12 @@ type ExploreCardSummary with
     }
 
 type ExploreCard with
-    static member load (entity: CardEntity) instance = {
+    static member load (entity: CardEntity) acquiredStatus instance = {
         Summary = ExploreCardSummary.load instance entity
         Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
         Tags = instance.Tags
         Relationships = instance.Relationships.ToList()
+        AcquiredStatus = acquiredStatus
     }
 
 type CardRevision with

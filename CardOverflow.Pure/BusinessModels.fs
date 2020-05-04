@@ -295,6 +295,7 @@ type ViewRelationship = {
 [<CLIMutable>]
 type CardInstanceMeta = {
     Id: int
+    CardId: int
     Created: DateTime
     Modified: DateTime option
     IsDmca: bool
@@ -340,19 +341,26 @@ type ExploreCardSummary = {
 } with
     member this.IsAcquired = this.Instance.IsAcquired
 
+type ExploreCardAcquiredStatus =
+    | ExactInstanceAcquired
+    | OtherInstanceAcquired of int // card instance ids
+    | LatestBranchAcquired of int
+    | OtherBranchAcquired of int
+    | NotAcquired
+
 [<CLIMutable>]
 type ExploreCard = {
     Summary: ExploreCardSummary
     Tags: ViewTag list
     Relationships: ViewRelationship ResizeArray
     Comments: Comment list
+    AcquiredStatus: ExploreCardAcquiredStatus
 } with
     member this.Id = this.Summary.Id
     //don't add users - the UI needs it to be mutable
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
-    member this.IsAcquired = this.Instance.IsAcquired
 
 type CardRevision = {
     Id: int
