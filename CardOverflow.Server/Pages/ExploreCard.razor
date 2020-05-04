@@ -19,35 +19,18 @@
 @if (Card == null) {
   <p><em>@_LoadingMessage</em></p>
 } else {
-  <div class="d-flex justify-content-between align-items-center">
-    <ExploreCardState Card=@Card AcquiredCard=@AcquiredCard UpdateAcquiredCard=@(x => AcquiredCard = x) UpdateCard=@(x => Card = x) />
-    <div>
-      By @Card.Author
-      @if (Card.AuthorId == User?.Id) {
-        <a href="card/@Card.Id/edit" title="Edit">
-          <span class="oi oi-pencil" />
-        </a>
-      } else {
-        <a href="curate/card/copy/@Card.Instance.Id" title="Edit a Copy">
-          <span class="fas fa-copy" />
-        </a>
-      }
-      <a href="curate/card/branch/@Card.Id" title="Add a Branch">
-        <span class="fas fa-code-branch" />
-      </a>
-      <a href="/card/@Card.Id/revision" title="Revisions">
-        <i class="fas fa-history"></i>
-      </a>
-      @if (Card.Instance.IsLatest) {
-        <span class="fas fa-sync text-success" title="Up to date" />
-      } else {
-        <a href="carddiff/@Card.Instance.Id">
-          <span class="fas fa-sync text-danger" title="Out of date" />
-        </a>
-      }
+  <div class="row">
+    <div class="col-xl">
+      <ExploreCardIFrameHeader Card=@Card AcquiredCard=@AcquiredCard Instance=@Card.Instance />
+      <ResizingIframe CardInstanceId=@Card.Instance.Id Back />
     </div>
+    @if (Instance != null) {
+      <div class="col-xl">
+        <ExploreCardIFrameHeader Card=@Card AcquiredCard=@AcquiredCard Instance=@Instance />
+        <ResizingIframe CardInstanceId=@Instance.Id Back />
+      </div>
+    }
   </div>
-  <ResizingIframe CardInstanceId=@Card.Instance.Id Back />
   <div class="row">
     <div class="col-xl">
       <ExploreCardTag Card=@Card />
@@ -70,6 +53,7 @@
   [Parameter] public int InstanceId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
+  CardInstanceMeta Instance;
   AcquiredCard AcquiredCard;
   private string _LoadingMessage = "Loading...";
 
@@ -85,8 +69,11 @@
     } else {
       var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.instance(db, User?.Id ?? 0, InstanceId));
       if (x.IsOk) {
-        var (instance, card) = x.ResultValue; // highTODO do something with instance
+        var (instance, card) = x.ResultValue;
         Card = card;
+        if (instance.Id != card.Instance.Id) {
+          Instance = instance;
+        }
       } else {
         showError(x.ErrorValue);
       }
