@@ -54,7 +54,7 @@
       <ExploreCardRelationship Card=@Card />
     </div>
     <div class="col-xl">
-      @if (Card.IsAcquired) {
+      @if (Card.IsAnyAcquired) {
         <ExploreCardAcquired AcquiredCard=@AcquiredCard />
       }
       <ExploreCardComments Card=@Card />

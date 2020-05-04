@@ -359,6 +359,10 @@ type ExploreCard = {
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
+    member this.IsAnyAcquired =
+        match this.AcquiredStatus with
+        | NotAcquired -> false
+        | _ -> true
 
 type CardRevision = {
     Id: int

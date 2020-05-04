@@ -16,7 +16,7 @@
   @if (User == null) {
     <p>Log in to Get</p>
   } else {
-    @if (Card.IsAcquired) {
+    @if (Card.IsAnyAcquired) {
       <button class="btn btn-outline-danger" @onclick=@(() => _modal.Show())>
         Discard
       </button>

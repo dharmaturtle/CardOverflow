@@ -13,7 +13,7 @@
 
 <div class=@(_showAddRelationship ? "" : "d-flex justify-content-between")>
   <h4>Relationships</h4>
-  @if (Card.IsAcquired) {
+  @if (Card.IsAnyAcquired) {
     @if (_showAddRelationship) {
       <EditForm Model=@Command OnValidSubmit=@Add>
         <div class="form-group btn-group">
