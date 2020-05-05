@@ -153,7 +153,10 @@ module ExploreCardRepository =
         let! (r: CardInstanceEntity * List<string> * List<string> * List<string>) =
             db.LatestCardInstance
                 .Include(fun x -> x.Card.Author)
-                .Include(fun x -> x.Card.BranchChildren)
+                .Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CardEntity) -> x.LatestInstance.TemplateInstance)
+                .Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CardEntity) -> x.Author)
                 .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)

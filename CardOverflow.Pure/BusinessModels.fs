@@ -339,6 +339,24 @@ type ExploreCardAcquiredStatus =
     | LatestBranchAcquired of int
     | OtherBranchAcquired of int
     | NotAcquired
+    with
+        member this.InstanceId =
+            match this with
+            | ExactInstanceAcquired -> None
+            | OtherInstanceAcquired x -> Some x
+            | LatestBranchAcquired x -> Some x
+            | OtherBranchAcquired x -> Some x
+            | NotAcquired -> None
+
+type Branch = {
+    Name: string
+    Summary: ExploreCardSummary
+} with
+    member this.Id = this.Summary.Id
+    member this.Users = this.Summary.Users
+    member this.Author = this.Summary.Author
+    member this.AuthorId = this.Summary.AuthorId
+    member this.Instance = this.Summary.Instance
 
 [<CLIMutable>]
 type ExploreCard = {
@@ -347,6 +365,7 @@ type ExploreCard = {
     Relationships: ViewRelationship ResizeArray
     Comments: Comment list
     AcquiredStatus: ExploreCardAcquiredStatus
+    Branches: Branch list
 } with
     member this.Id = this.Summary.Id
     //don't add users - the UI needs it to be mutable

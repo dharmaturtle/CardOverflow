@@ -393,6 +393,15 @@ type ExploreCardSummary with
         Instance = instance
     }
 
+type Branch with
+    static member load (status: ExploreCardAcquiredStatus) (card: CardEntity) = {
+        Name = card.BranchName
+        Summary =
+            ExploreCardSummary.load
+                <| CardInstanceMeta.load (card.LatestInstanceId |> Some = status.InstanceId) true card.LatestInstance
+                <| card
+    }
+
 type ExploreCard with
     static member load (entity: CardEntity) acquiredStatus (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) instance = {
         Summary = ExploreCardSummary.load instance entity
@@ -411,6 +420,7 @@ type ExploreCard with
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray
+        Branches = entity.BranchChildren |> Seq.map (Branch.load acquiredStatus) |> List.ofSeq
         AcquiredStatus = acquiredStatus
     }
 
