@@ -21,7 +21,7 @@ let timestampToPretty (timestamp: DateTime) (currentTime: DateTime) =
     if delta < TimeSpan.FromDays 31. then
         toString delta + " ago"
     else
-        "at " + timestamp.ToString("""MMM d 'xsighx' yy""").Replace("xsighx ", "'")
+        "on " + timestamp.ToString("""MMM d 'xsighx' yy""").Replace("xsighx ", "'")
 
 let insertDiffColors (html: string) =
     let style =

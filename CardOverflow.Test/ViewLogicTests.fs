@@ -23,10 +23,10 @@ let ``TimeSpan to string looks pretty`` (): unit =
 let ``timestampToPretty looks pretty`` (): unit =
     ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 1, 2)) |> fun x -> Assert.Equal("1 d ago", x)
     ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 1, 2, 1, 1, 1)) |> fun x -> Assert.Equal("1 d ago", x)
-    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 2, 2)) |> fun x -> Assert.Equal("at Jan 1 '00", x)
-    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2001, 2, 2)) |> fun x -> Assert.Equal("at Jan 1 '00", x)
-    ViewLogic.timestampToPretty (DateTime(2001, 12, 31)) (DateTime(2025, 1, 1)) |> fun x -> Assert.Equal("at Dec 31 '01", x)
-    ViewLogic.timestampToPretty (DateTime(2020, 12, 31)) (DateTime(2025, 1, 1)) |> fun x -> Assert.Equal("at Dec 31 '20", x)
+    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 2, 2)) |> fun x -> Assert.Equal("on Jan 1 '00", x)
+    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2001, 2, 2)) |> fun x -> Assert.Equal("on Jan 1 '00", x)
+    ViewLogic.timestampToPretty (DateTime(2001, 12, 31)) (DateTime(2025, 1, 1)) |> fun x -> Assert.Equal("on Dec 31 '01", x)
+    ViewLogic.timestampToPretty (DateTime(2020, 12, 31)) (DateTime(2025, 1, 1)) |> fun x -> Assert.Equal("on Dec 31 '20", x)
 
 [<Fact>]
 let ``insertDiffColors`` (): unit =
