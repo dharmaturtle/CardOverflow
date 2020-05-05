@@ -16,6 +16,7 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         public int CardId { get; set; }
         public int CardInstanceId { get; set; }
+        public int BranchSourceIdOrCardId { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
@@ -23,6 +24,7 @@ namespace CardOverflow.Entity
         public int CardSettingId { get; set; }
         public bool IsLapsed { get; set; }
         public bool IsLatest { get; set; }
+        public string PersonalField { get; set; }
         public virtual CardInstanceEntity CardInstance { get; set; }
         public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }
     }

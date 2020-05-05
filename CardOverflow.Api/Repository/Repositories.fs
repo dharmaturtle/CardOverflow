@@ -136,7 +136,7 @@ module ExploreCardRepository =
             | None -> NotAcquired
             | Some ac ->
                 if   ac.CardInstanceId = rootInstance.Id then
-                    ExactInstanceAcquired
+                    ExactInstanceAcquired ac.CardInstanceId
                 elif ac.CardId = rootInstance.CardId then
                     OtherInstanceAcquired ac.CardInstanceId
                 elif rootInstance.Card.BranchChildren.Select(fun x -> x.LatestInstanceId).Contains ac.CardInstanceId then
@@ -174,7 +174,7 @@ module ExploreCardRepository =
         let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = rootCardId).ToListAsync()
         let! acquiredStatus = getAcquiredStatus db userId cardId rootCardId rootInstance
         return
-            CardInstanceMeta.load (acquiredStatus = ExactInstanceAcquired) true rootInstance
+            CardInstanceMeta.load (acquiredStatus = ExactInstanceAcquired rootInstance.Id ) true rootInstance
             |> ExploreCard.load rootInstance.Card acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
@@ -326,7 +326,7 @@ module CardRepository =
                 .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
-                .Where(fun x -> x.CardInstance.CardId = cardId && x.UserId = userId) // add CardId
+                .Where(fun x -> (x.CardId = cardId || x.BranchSourceIdOrCardId = cardId) && x.UserId = userId) // add CardId
                 .Select(fun x ->
                     x,
                     x.CardInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList()

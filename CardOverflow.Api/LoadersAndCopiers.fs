@@ -288,6 +288,7 @@ type CardInstanceMeta with
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
             CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
+            Users = entity.Users
         }
     static member initialize =
         {   Id = 0
@@ -300,6 +301,7 @@ type CardInstanceMeta with
             StrippedFront = ""
             StrippedBack = ""
             CommunalFields = [].ToList()
+            Users = 0
         }
     member this.copyTo (entity: CardInstanceEntity) =
         entity.Created <- this.Created
@@ -405,13 +407,13 @@ type Branch with
 type ExploreCard with
     static member load (entity: CardEntity) acquiredStatus (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) instance = {
         Summary = ExploreCardSummary.load instance entity
-        Comments = entity.CommentCards |> Seq.map Comment.load |> List.ofSeq
+        Comments = entity.CommentCards |> Seq.map Comment.load |> toResizeArray
         Tags =
             tagCounts.Select(fun x ->
                 {   Name = x.Name
                     Count = x.Count
                     IsAcquired = usersTags.Contains x.Name
-                }) |> Seq.toList
+                }) |> toResizeArray
         Relationships =
             relationshipCounts.Select(fun x ->
                 {   Name = x.Name
@@ -420,7 +422,7 @@ type ExploreCard with
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray
-        Branches = entity.BranchChildren |> Seq.map (Branch.load acquiredStatus) |> List.ofSeq
+        Branches = entity.BranchChildren |> Seq.map (Branch.load acquiredStatus) |> toResizeArray
         AcquiredStatus = acquiredStatus
     }
 

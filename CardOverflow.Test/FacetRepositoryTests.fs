@@ -751,13 +751,18 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
+    let testGetAcquired cardId instanceId =
+        CardRepository.GetAcquired c.Db userId cardId
+        |> TaskResult.map (fun ac -> Assert.Equal(instanceId, ac.CardInstanceMeta.Id))
+
     let! _ = addBasicCard c.Db userId []
     let og_c = 1
     let og_i = 1001
 
     // tests ExactInstanceAcquired
     do! ExploreCardRepository.get c.Db userId og_c
-        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired, card.AcquiredStatus))
+        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired og_i, card.AcquiredStatus))
+    do! testGetAcquired og_c og_i
     
     // update card
     let update_i = 1002
@@ -768,7 +773,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
 
     // tests ExactInstanceAcquired
     do! ExploreCardRepository.get c.Db userId og_c
-        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired, card.AcquiredStatus))
+        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired update_i, card.AcquiredStatus))
+    do! testGetAcquired og_c update_i
 
     // acquiring old instance doesn't change LatestInstanceId
     Assert.Equal(update_i, c.Db.Card.Single().LatestInstanceId)
@@ -780,6 +786,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     match card.AcquiredStatus with
     | OtherInstanceAcquired x -> Assert.Equal(og_i, x)
     | _ -> failwith "impossible"
+    do! testGetAcquired og_c og_i
 
     // branch card
     let branch_i = 1003
@@ -794,6 +801,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     match card.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(branch_i, x)
     | _ -> failwith "impossible"
+    do! testGetAcquired branch_c branch_i
+    do! testGetAcquired og_c branch_i
 
     // update branch
     let updateBranch_i = 1004
@@ -807,6 +816,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     match card.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(updateBranch_i, x)
     | _ -> failwith "impossible"
+    do! testGetAcquired branch_c updateBranch_i
+    do! testGetAcquired og_c updateBranch_i
 
     // acquiring old instance doesn't change LatestInstanceId
     Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).LatestInstanceId)
@@ -818,6 +829,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     match card.AcquiredStatus with
     | OtherBranchAcquired x -> Assert.Equal(branch_i, x)
     | _ -> failwith "impossible"
+    do! testGetAcquired branch_c branch_i
+    do! testGetAcquired og_c branch_i
 
     // tests NotAcquired
     let otherUser = 1

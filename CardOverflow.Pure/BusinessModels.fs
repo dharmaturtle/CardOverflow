@@ -298,6 +298,7 @@ type CardInstanceMeta = {
     StrippedFront: string
     StrippedBack: string
     CommunalFields: CommunalFieldInstance ResizeArray
+    Users: int
 }
 
 [<CLIMutable>]
@@ -334,15 +335,15 @@ type ExploreCardSummary = {
     member this.IsAcquired = this.Instance.IsAcquired
 
 type ExploreCardAcquiredStatus =
-    | ExactInstanceAcquired
-    | OtherInstanceAcquired of int // card instance ids
+    | ExactInstanceAcquired of int // card instance ids
+    | OtherInstanceAcquired of int
     | LatestBranchAcquired of int
     | OtherBranchAcquired of int
     | NotAcquired
     with
         member this.InstanceId =
             match this with
-            | ExactInstanceAcquired -> None
+            | ExactInstanceAcquired x -> Some x
             | OtherInstanceAcquired x -> Some x
             | LatestBranchAcquired x -> Some x
             | OtherBranchAcquired x -> Some x
@@ -361,11 +362,11 @@ type Branch = {
 [<CLIMutable>]
 type ExploreCard = {
     Summary: ExploreCardSummary
-    Tags: ViewTag list
+    Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
-    Comments: Comment list
+    Comments: Comment ResizeArray
     AcquiredStatus: ExploreCardAcquiredStatus
-    Branches: Branch list
+    Branches: Branch ResizeArray
 } with
     member this.Id = this.Summary.Id
     //don't add users - the UI needs it to be mutable

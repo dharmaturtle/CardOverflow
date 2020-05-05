@@ -205,12 +205,14 @@ CREATE VIEW public."AcquiredCardIsLatest" AS
     a."UserId",
     a."CardId",
     a."CardInstanceId",
+    a."BranchSourceIdOrCardId",
     a."CardState",
     a."EaseFactorInPermille",
     a."IntervalOrStepsIndex",
     a."Due",
     a."CardSettingId",
     a."IsLapsed",
+    a."PersonalField",
     (c."LatestInstanceId" IS NULL) AS "IsLatest"
    FROM (public."AcquiredCard" a
      LEFT JOIN public."Card" c ON ((c."LatestInstanceId" = a."CardInstanceId")));
