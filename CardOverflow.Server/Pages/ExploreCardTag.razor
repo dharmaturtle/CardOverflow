@@ -51,7 +51,7 @@
       var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Card.Id));
       if (x.IsOk) {
         if (isNew) {
-          Card.Tags = Card.Tags.Append(new ViewTag(name, 0, false)).ToFList();
+          Card.Tags = Card.Tags.Append(new ViewTag(name, 0, false)).ToList();
         }
         Card.Tags.Single(t => t.Name == name).IsAcquired = true;
         Card.Tags.Single(t => t.Name == name).Count++;

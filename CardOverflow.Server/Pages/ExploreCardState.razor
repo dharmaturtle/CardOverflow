@@ -70,7 +70,7 @@
   private BSModal _modal;
 
   private async Task _acquire() {
-    await DbExecutor.QueryAsync(db => CardRepository.AcquireCardAsync(db, User.Id, Card.Instance.Id));
+    await DbExecutor.CommandAsync(db => CardRepository.AcquireCardAsync(db, User.Id, Card.Instance.Id));
     var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
     if (ac.IsOk) {
       AcquiredCard = ac.ResultValue;

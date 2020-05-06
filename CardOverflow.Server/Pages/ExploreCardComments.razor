@@ -40,6 +40,6 @@
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
 
   void _AddComment(string comment) =>
-    Card.Comments = Card.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToFList();
+    Card.Comments = Card.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToList();
 
 }
