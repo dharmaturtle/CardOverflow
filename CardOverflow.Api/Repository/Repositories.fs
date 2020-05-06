@@ -124,12 +124,12 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module ExploreCardRepository =
-    let getAcquiredStatus (db: CardOverflowDb) userId cardId rootCardId (rootInstance: CardInstanceEntity) = task {
+    let getAcquiredStatus (db: CardOverflowDb) userId (rootInstance: CardInstanceEntity) = task {
         let! ac =
             db.AcquiredCard
                 .Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
                     .ThenInclude(fun (x: CardEntity) -> x.LatestInstance)
-                .SingleOrDefaultAsync(fun x -> x.UserId = userId && (x.CardId = rootCardId || x.CardId = cardId))
+                .SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchSourceIdOrCardId = rootInstance.CardId)
                 |> Task.map Option.ofObj
         return
             match ac with
@@ -172,7 +172,7 @@ module ExploreCardRepository =
         let! rootInstance, t, rs, rt = r |> Result.ofNullable (sprintf "Card #%i not found" rootCardId)
         let! (tc: List<CardTagCountEntity>) = db.CardTagCount.Where(fun x -> x.CardId = rootCardId).ToListAsync()
         let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = rootCardId).ToListAsync()
-        let! acquiredStatus = getAcquiredStatus db userId cardId rootCardId rootInstance
+        let! acquiredStatus = getAcquiredStatus db userId rootInstance
         return
             CardInstanceMeta.load (acquiredStatus = ExactInstanceAcquired rootInstance.Id ) true rootInstance
             |> ExploreCard.load rootInstance.Card acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc

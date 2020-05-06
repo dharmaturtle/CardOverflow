@@ -848,6 +848,14 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     do! testGetAcquired branch_c2 branch_i2
     do! testGetAcquired og_c branch_i2
 
+    // tests LatestBranchAcquired
+    let! card = ExploreCardRepository.get c.Db userId og_c
+    match card.AcquiredStatus with
+    | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
+    | _ -> failwith "impossible"
+    do! testGetAcquired branch_c2 branch_i2
+    do! testGetAcquired og_c branch_i2
+
     // tests NotAcquired
     let otherUser = 1
     let! card = ExploreCardRepository.get c.Db otherUser branch_c
