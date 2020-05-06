@@ -58,7 +58,14 @@
       <ExploreCardComments Card=@Card />
     </div>
     <div class="col-xl">
-      <ExploreCardComments Card=@Card />
+      <ExploreCardBranch Branches=@Card.Branches
+                         InstanceSelected=@(x => Card.Summary.Instance = x)
+                         Status=@Card.AcquiredStatus
+                         UpdateStatus=@(x => Card.AcquiredStatus = x)
+                         Selected=@Card.Instance
+                         Root=@Card.Instance
+                         Instance=@Instance
+                         UpdateAcquiredCard=@(x => AcquiredCard = x) />
     </div>
   </div>
 }

@@ -1,0 +1,85 @@
+@using System.Linq
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
+
+<h4>Branches</h4>
+<div class="list-group">
+  @foreach (var branch in Branches) {
+    <div class="d-flex h-100">
+      @if (Status.InstanceId?.Value == branch.Instance.Id) {
+        <button class="btn btn-unacquire-card">
+          <div class="d-flex align-items-center flex-column align-middle">
+            <i class="fas fa-bookmark"></i>
+            @branch.Users
+          </div>
+        </button>
+      } else {
+        <button class="btn btn-acquire-card" @onclick=@(() => _Acquire(ExploreCardAcquiredStatus.NewLatestBranchAcquired(branch.Instance.Id)))>
+          <div class="d-flex align-items-center flex-column align-middle">
+            <i class="fas fa-bookmark"></i>
+            @branch.Users
+          </div>
+        </button>
+      }
+      <button class="list-group-item list-group-item-action @(Selected.Id == branch.Instance.Id ? "active" : "border-0")">
+        @branch.Name
+      </button>
+    </div>
+  }
+</div>
+
+@code {
+  [CascadingParameter] UserEntity User { get; set; }
+  [Parameter] public List<Branch> Branches { get; set; }
+  [Parameter] public EventCallback<CardInstanceMeta> InstanceSelected { get; set; }
+  [Parameter] public ExploreCardAcquiredStatus Status { get; set; }
+  [Parameter] public EventCallback<ExploreCardAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public CardInstanceMeta Selected { get; set; }
+  [Parameter] public CardInstanceMeta Root { get; set; }
+  [Parameter] public CardInstanceMeta Instance { get; set; }
+  [Parameter] public EventCallback<AcquiredCard> UpdateAcquiredCard { get; set; }
+
+  private async Task _Acquire(ExploreCardAcquiredStatus status) {
+    var x = await DbExecutor.QueryAsync(db => CardRepository.AcquireCardAsync(db, User.Id, status.InstanceId.Value));
+    if (x.IsOk) {
+      var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Root.CardId));
+      if (ac.IsOk) {
+        await UpdateAcquiredCard.InvokeAsync(ac.ResultValue);
+        _UpdateUsers(-1, Status.InstanceId?.Value);
+        Status = status;
+        await UpdateStatus.InvokeAsync(Status);
+        _UpdateUsers(1, Status.InstanceId?.Value);
+      } else {
+        ToastService.ShowError(ac.ErrorValue);
+      }
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  private void _UpdateUsers(int i, int? instanceId) {
+    var branch = Branches.SingleOrDefault(x => x.Instance.Id == instanceId);
+    if (branch != null) {
+      branch.Summary.Users = branch.Summary.Users + i;
+    }
+    if (instanceId == Root.Id) {
+      Root.Users = Root.Users + i;
+    }
+    if (Instance != null && instanceId == Instance.Id) {
+      Instance.Users = Instance.Users + i;
+    }
+  }
+
+}
