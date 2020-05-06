@@ -513,7 +513,7 @@ module UpdateRepository =
                         .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                     .SingleOrDefaultAsync(fun x ->
                         (x.Id = acquiredCard.AcquiredCardId)
-                        || (x.UserId = acquiredCard.UserId && Nullable x.CardId = branchSourceCardId))
+                        || (x.UserId = acquiredCard.UserId && Nullable x.BranchSourceIdOrCardId = branchSourceCardId))
             let acs =
                 match acquiredCardEntity with
                 | null ->

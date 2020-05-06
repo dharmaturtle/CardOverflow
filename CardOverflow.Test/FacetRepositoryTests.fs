@@ -811,7 +811,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal<int seq>([updateBranch_i], instanceIds)
     Assert.Empty x
 
-    // LatestBranchAcquired
+    // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId branch_c
     match card.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(updateBranch_i, x)
@@ -831,6 +831,22 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     | _ -> failwith "impossible"
     do! testGetAcquired branch_c branch_i
     do! testGetAcquired og_c branch_i
+
+    // branch card again
+    let branch_i2 = 1005
+    let branch_c2 = 3
+    let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getBranch c.Db userId og_c
+    let! (instanceIds, x) = UpdateRepository.card c.Db ac command.load
+    Assert.Equal<int seq>([branch_i2], instanceIds)
+    Assert.Empty x
+
+    // tests LatestBranchAcquired
+    let! card = ExploreCardRepository.get c.Db userId branch_c2
+    match card.AcquiredStatus with
+    | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
+    | _ -> failwith "impossible"
+    do! testGetAcquired branch_c2 branch_i2
+    do! testGetAcquired og_c branch_i2
 
     // tests NotAcquired
     let otherUser = 1
