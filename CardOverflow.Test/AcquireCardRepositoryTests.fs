@@ -32,7 +32,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard
 
-    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.Value.CardInstanceMeta.Id }
+    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.Value.CardInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
     let! ac = getAcquired ()
@@ -138,7 +138,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     Assert.Equal<int seq>([i2], instanceIds)
     Assert.Empty communals
 
-    do! CardRepository.AcquireCardAsync c.Db userId i2 // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the CardInstanceId
+    do! CardRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the CardInstanceId
     Assert.Equal(i2, c.Db.AcquiredCard.Single().CardInstanceId)
     
     use db = c.Db
@@ -192,10 +192,10 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
     
     let acquirerId = 1
-    do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_1
+    do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(2, c.Db.CardInstance.Single(fun x -> x.Id = ci1_1).Users)
-    do! CardRepository.AcquireCardAsync c.Db acquirerId ci2_1
+    do! CardRepository.AcquireCardAsync c.Db acquirerId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c2).Users)
     Assert.Equal(2, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
     // misc
@@ -218,7 +218,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(4, c.Db.AcquiredCard.Count())
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2))
     
-    do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_2
+    do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(2, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

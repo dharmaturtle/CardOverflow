@@ -595,35 +595,35 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // adventures in acquiring cards
     let adventurerId = 3
-    do! CardRepository.AcquireCardAsync c.Db adventurerId og_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId og_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 1 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
              branch_c, 1 ;    branchOfCopy_c, 1 ]
             [og_i,     1 ;    copy_i, 0 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 1 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
              branch_c, 1 ;    branchOfCopy_c, 1 ]
             [og_i,     0 ;    copy_i, 0 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId copy_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copy_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
              branch_c, 1 ;    branchOfCopy_c, 1 ]
             [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId copy2x_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copy2x_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 1
              branch_c, 1 ;    branchOfCopy_c, 1 ]
             [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 1
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId copyOfBranch_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId copyOfBranch_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
              branch_c, 1 ;    branchOfCopy_c, 1 ]
@@ -631,7 +631,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
-    do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
@@ -640,7 +640,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 2 ]
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
-    do! CardRepository.AcquireCardAsync c.Db adventurerId branchOfCopy_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId branchOfCopy_i |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
@@ -659,21 +659,21 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
              branch_c, 2 ;    branchOfCopy_c, 2 ]
             [og_i,     0 ;    copy_i, 0 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
              ogEdit_i, 1 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId og_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId og_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
              branch_c, 2 ;    branchOfCopy_c, 2 ]
             [og_i,     1 ;    copy_i, 0 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i
+    do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i |> TaskResult.getOk
     do! assertCount
             [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
              branch_c, 3 ;    branchOfCopy_c, 2 ]
@@ -848,13 +848,23 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     do! testGetAcquired branch_c2 branch_i2
     do! testGetAcquired og_c branch_i2
 
-    // tests LatestBranchAcquired
+    // tests LatestBranchAcquired with og_c
     let! card = ExploreCardRepository.get c.Db userId og_c
     match card.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
     | _ -> failwith "impossible"
     do! testGetAcquired branch_c2 branch_i2
     do! testGetAcquired og_c branch_i2
+
+    // acquiring old instance doesn't change LatestInstanceId; can also acquire old branch
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).LatestInstanceId)
+    do! CardRepository.AcquireCardAsync c.Db userId branch_i
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).LatestInstanceId)
+
+    // can't acquire missing id
+    let missingId = 9001
+    let! (error: Result<_,_>) = CardRepository.AcquireCardAsync c.Db userId missingId
+    Assert.Equal(error.error, sprintf "Card not found for Instance #%i" missingId)
 
     // tests NotAcquired
     let otherUser = 1

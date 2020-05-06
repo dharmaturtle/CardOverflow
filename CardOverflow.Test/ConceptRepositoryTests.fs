@@ -162,10 +162,10 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     
     let userId = 2 // this user acquires the card
     if cardInstanceIds.Length = 1 then
-        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
+        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
     else
-        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
-        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
+        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
+        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -359,16 +359,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -428,16 +428,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1]
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0]
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
