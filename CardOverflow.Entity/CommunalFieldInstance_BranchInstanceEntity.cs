@@ -5,18 +5,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommunalFieldInstance_CardInstanceEntity
+    public partial class CommunalFieldInstance_BranchInstanceEntity
     {
         [Key]
-        public int CardInstanceId { get; set; }
+        public int BranchInstanceId { get; set; }
         [Key]
         public int CommunalFieldInstanceId { get; set; }
 
-        [ForeignKey("CardInstanceId")]
-        [InverseProperty("CommunalFieldInstance_CardInstances")]
-        public virtual CardInstanceEntity CardInstance { get; set; }
+        [ForeignKey("BranchInstanceId")]
+        [InverseProperty("CommunalFieldInstance_BranchInstances")]
+        public virtual BranchInstanceEntity BranchInstance { get; set; }
         [ForeignKey("CommunalFieldInstanceId")]
-        [InverseProperty("CommunalFieldInstance_CardInstances")]
+        [InverseProperty("CommunalFieldInstance_BranchInstances")]
         public virtual CommunalFieldInstanceEntity CommunalFieldInstance { get; set; }
     }
 }

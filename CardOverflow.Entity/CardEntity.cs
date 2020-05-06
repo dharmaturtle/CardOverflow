@@ -21,18 +21,8 @@ namespace CardOverflow.Entity
         public int AuthorId { get; set; }
         public int Users { get; set; }
         public int? CopySourceId { get; set; }
-        public int? BranchSourceId { get; set; }
-        [StringLength(64)]
-        public string BranchName {
-            get => _BranchName;
-            set {
-                if (value.Length > 64) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and BranchName has a maximum length of 64. Attempted value: {value}");
-                _BranchName = value;
-            }
-        }
-        private string _BranchName;
-        public int LatestInstanceId { get; set; }
         public bool IsListed { get; set; } = true;
+        public int DefaultBranchId { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]
@@ -49,7 +39,7 @@ namespace CardOverflow.Entity
         [InverseProperty("BranchSourceIdOrCard")]
         public virtual ICollection<AcquiredCardEntity> AllAcquiredCards { get; set; }
         [InverseProperty("Card")]
-        public virtual ICollection<CardInstanceEntity> CardInstances { get; set; }
+        public virtual ICollection<BranchEntity> Branches { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
         [InverseProperty("Card")]

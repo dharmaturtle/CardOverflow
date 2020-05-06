@@ -5,18 +5,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class File_CardInstanceEntity
+    public partial class File_BranchInstanceEntity
     {
         [Key]
-        public int CardInstanceId { get; set; }
+        public int BranchInstanceId { get; set; }
         [Key]
         public int FileId { get; set; }
 
-        [ForeignKey("CardInstanceId")]
-        [InverseProperty("File_CardInstances")]
-        public virtual CardInstanceEntity CardInstance { get; set; }
+        [ForeignKey("BranchInstanceId")]
+        [InverseProperty("File_BranchInstances")]
+        public virtual BranchInstanceEntity BranchInstance { get; set; }
         [ForeignKey("FileId")]
-        [InverseProperty("File_CardInstances")]
+        [InverseProperty("File_BranchInstances")]
         public virtual FileEntity File { get; set; }
     }
 }

@@ -10,6 +10,7 @@ namespace CardOverflow.Entity
         public UserEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
+            Branches = new HashSet<BranchEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
             Cards = new HashSet<CardEntity>();
             CommentCards = new HashSet<CommentCardEntity>();
@@ -48,6 +49,8 @@ namespace CardOverflow.Entity
         public virtual CardSettingEntity DefaultCardSetting { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        [InverseProperty("Author")]
+        public virtual ICollection<BranchEntity> Branches { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]

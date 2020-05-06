@@ -5,11 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardInstanceRelationshipCountEntity
+    public partial class BranchInstanceRelationshipCountEntity
     {
-        public int SourceCardInstanceId { get; set; }
-        public int TargetCardInstanceId { get; set; }
-        public int CardInstanceId { get; set; }
+        public int SourceBranchInstanceId { get; set; }
+        public int TargetBranchInstanceId { get; set; }
+        public int BranchInstanceId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;

@@ -18,7 +18,7 @@ using CardOverflow.Debug;
 namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
-    FSharpFunc<(CardInstanceEntity, BitArray, SHA512), BitArray> CardInstanceHasher { get; }
+    FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
     FSharpFunc<(TemplateInstanceEntity, SHA512), BitArray> TemplateInstanceHasher { get; }
   }
 
@@ -46,7 +46,7 @@ namespace CardOverflow.Entity {
     }
 
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public IOrderedQueryable<CardInstanceEntity> SearchLatestCardInstance(
+    public IOrderedQueryable<BranchInstanceEntity> SearchLatestBranchInstance(
       string searchTerm,
       string plain,
       string wildcard,
@@ -56,7 +56,7 @@ namespace CardOverflow.Entity {
           NpgsqlTsRankingNormalization.DivideBy1PlusLogLength
         | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
 
-      IQueryable<CardInstanceEntity> where(IQueryable<CardInstanceEntity> query) =>
+      IQueryable<BranchInstanceEntity> where(IQueryable<BranchInstanceEntity> query) =>
         String.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x =>
@@ -65,9 +65,9 @@ namespace CardOverflow.Entity {
             || x.TsVector.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
 
-      IOrderedQueryable<CardInstanceEntity> order(IQueryable<CardInstanceEntity> query) =>
+      IOrderedQueryable<BranchInstanceEntity> order(IQueryable<BranchInstanceEntity> query) =>
         searchOrder == SearchOrder.Popularity
-        ? query.OrderByDescending(x => x.Card.Users)
+        ? query.OrderByDescending(x => x.Branch.Users)
         : query.OrderByDescending(x =>
           x.TsVector.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
@@ -76,7 +76,7 @@ namespace CardOverflow.Entity {
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
             )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
 
-      return LatestCardInstance
+      return LatestBranchInstance
         .Apply(where)
         .Apply(order);
     }
@@ -98,9 +98,9 @@ namespace CardOverflow.Entity {
             .Append(MappingTools.stripHtmlTags(template.AnswerTemplate))
             .Apply(x => string.Join(' ', x));
       }
-      foreach (var card in _filter<CardInstanceEntity>(entries)) {
+      foreach (var card in _filter<BranchInstanceEntity>(entries)) {
         var templateHash = card.TemplateInstance?.Hash ?? TemplateInstance.Find(card.TemplateInstanceId).Hash;
-        card.Hash = _entityHasher.CardInstanceHasher.Invoke((card, templateHash, sha512));
+        card.Hash = _entityHasher.BranchInstanceHasher.Invoke((card, templateHash, sha512));
         card.TsVectorHelper = MappingTools.stripHtmlTags(card.FieldValues);
       }
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
@@ -118,11 +118,11 @@ namespace CardOverflow.Entity {
     }
 
     public IQueryable<AcquiredCardIsLatestEntity> AcquiredCardIsLatest => _AcquiredCardIsLatestTracked.AsNoTracking();
-    public IQueryable<CardInstanceRelationshipCountEntity> CardInstanceRelationshipCount => _CardInstanceRelationshipCountTracked.AsNoTracking();
-    public IQueryable<CardInstanceTagCountEntity> CardInstanceTagCount => _CardInstanceTagCountTracked.AsNoTracking();
+    public IQueryable<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCount => _BranchInstanceRelationshipCountTracked.AsNoTracking();
+    public IQueryable<BranchInstanceTagCountEntity> BranchInstanceTagCount => _BranchInstanceTagCountTracked.AsNoTracking();
     public IQueryable<CardRelationshipCountEntity> CardRelationshipCount => _CardRelationshipCountTracked.AsNoTracking();
     public IQueryable<CardTagCountEntity> CardTagCount => _CardTagCountTracked.AsNoTracking();
-    public IQueryable<CardInstanceEntity> LatestCardInstance => CardInstance.Where(x => x.Card.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<BranchInstanceEntity> LatestBranchInstance => BranchInstance.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<TemplateInstanceEntity> LatestTemplateInstance => TemplateInstance.Where(x => x.Template.LatestInstanceId == x.Id).AsNoTracking();
 

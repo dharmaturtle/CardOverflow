@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public CommunalFieldInstanceEntity()
         {
-            CommunalFieldInstance_CardInstances = new HashSet<CommunalFieldInstance_CardInstanceEntity>();
+            CommunalFieldInstance_BranchInstances = new HashSet<CommunalFieldInstance_BranchInstanceEntity>();
             CommunalFields = new HashSet<CommunalFieldEntity>();
         }
 
@@ -48,7 +48,7 @@ namespace CardOverflow.Entity
         [InverseProperty("CommunalFieldInstances")]
         public virtual CommunalFieldEntity CommunalField { get; set; }
         [InverseProperty("CommunalFieldInstance")]
-        public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
+        public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
         [InverseProperty("LatestInstance")]
         public virtual ICollection<CommunalFieldEntity> CommunalFields { get; set; }
     }
