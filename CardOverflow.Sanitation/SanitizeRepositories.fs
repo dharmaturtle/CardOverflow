@@ -126,7 +126,7 @@ type TagText = {
 
 module SanitizeTagRepository =
     let private getAcquired (db: CardOverflowDb) userId cardId =
-        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.CardId = cardId)
+        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Branch.CardId = cardId)
         |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
     let AddTo (db: CardOverflowDb) userId newTagName cardId = taskResult { // medTODO tag length needs validation
         let newTagName = MappingTools.toTitleCase newTagName
@@ -196,9 +196,9 @@ module SanitizeRelationshipRepository =
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetCardId = GetCardId command.TargetCardLink
         do! if targetCardId = command.SourceCardId then Error "A card can't be related to itself" else Ok ()
-        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.BranchInstance.CardId = targetCardId || x.BranchInstance.CardId = command.SourceCardId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.BranchInstance.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
-        let! s = acs.SingleOrDefault(fun x -> x.BranchInstance.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
+        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.CardId = targetCardId || x.CardId = command.SourceCardId)).ToListAsync()
+        let! t = acs.SingleOrDefault(fun x -> x.BranchInstance.Branch.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
+        let! s = acs.SingleOrDefault(fun x -> x.BranchInstance.Branch.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid =
@@ -312,12 +312,10 @@ module SanitizeCardRepository =
         let! (card: CardEntity) = db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId)
         do! if card |> isNull then
                 Error <| sprintf "Card #%i doesn't exist"  cardId
-            elif card.BranchSourceId.HasValue then
-                Error "You can't branch a branch"
             else Ok ()
         let! ac = CardRepository.getNew db userId
         let! branchInstanceId =
-            db.LatestBranchInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
+            db.LatestBranchInstance.SingleOrDefaultAsync(fun x -> x.Branch.CardId = cardId)
             |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
             |> TaskResult.map (fun x -> x.Id)
         let! command = _getCommand db branchInstanceId <| BranchSourceCardId cardId

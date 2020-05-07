@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -251,6 +251,7 @@ CREATE TABLE public."BranchInstance" (
     "Id" integer NOT NULL,
     "Created" timestamp without time zone NOT NULL,
     "Modified" timestamp without time zone,
+    "CardId" integer NOT NULL,
     "BranchId" integer NOT NULL,
     "IsDmca" boolean NOT NULL,
     "FieldValues" text NOT NULL,

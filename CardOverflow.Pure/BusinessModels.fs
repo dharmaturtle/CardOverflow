@@ -325,7 +325,7 @@ type Comment = {
 }
 
 [<CLIMutable>]
-type ExploreCardSummary = {
+type ExploreBranchSummary = {
     Id: int
     Users: int
     Author: string
@@ -351,7 +351,7 @@ type ExploreCardAcquiredStatus =
 
 type Branch = {
     Name: string
-    Summary: ExploreCardSummary
+    Summary: ExploreBranchSummary
 } with
     member this.Id = this.Summary.Id
     member this.Users = this.Summary.Users
@@ -361,7 +361,7 @@ type Branch = {
 
 [<CLIMutable>]
 type ExploreCard = {
-    Summary: ExploreCardSummary
+    Summary: ExploreBranchSummary
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
@@ -378,7 +378,7 @@ type ExploreCard = {
         | NotAcquired -> false
         | _ -> true
 
-type CardRevision = {
+type BranchRevision = {
     Id: int
     Author: string
     AuthorId: int

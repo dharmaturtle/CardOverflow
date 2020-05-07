@@ -39,7 +39,6 @@ namespace CardOverflow.Entity
         [InverseProperty("Branches")]
         public virtual CardEntity Card { get; set; }
         [ForeignKey("LatestInstanceId")]
-        [InverseProperty("Branches")]
         public virtual BranchInstanceEntity LatestInstance { get; set; }
         public virtual ICollection<AcquiredCardEntity> AcquiredCardBranchNavigations { get; set; }
         [InverseProperty("Branch")]

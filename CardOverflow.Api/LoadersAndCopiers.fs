@@ -264,8 +264,11 @@ type BranchInstanceView with
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         match card with
-        | Id id -> e.CardId <- id
-        | Entity entity -> e.Card <- entity ()
+        | Id id -> e.Branch.CardId <- id
+        | Entity entity ->
+            let (card: CardEntity) = entity()
+            e.Branch <- card.DefaultBranch
+            //e.Branch.Card <- card
         e.EditSummary <- editSummary
         e
 
@@ -279,7 +282,7 @@ type BranchInstanceMeta with
     static member load isAcquired isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
-            CardId = entity.CardId
+            CardId = entity.Branch.CardId
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
@@ -363,7 +366,7 @@ type AcquiredCard with
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
-            {   CardId = entity.BranchInstance.CardId
+            {   CardId = entity.BranchInstance.Branch.CardId
                 AcquiredCardId = entity.Id
                 UserId = entity.UserId
                 CardState = cardState
@@ -386,8 +389,8 @@ type Comment with
         IsDmca = entity.IsDmca
     }
 
-type ExploreCardSummary with
-    static member load instance (entity: CardEntity) = {
+type ExploreBranchSummary with
+    static member load instance (entity: BranchEntity) = {
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
@@ -396,17 +399,17 @@ type ExploreCardSummary with
     }
 
 type Branch with
-    static member load (status: ExploreCardAcquiredStatus) (card: CardEntity) = {
-        Name = card.BranchName
+    static member load (status: ExploreCardAcquiredStatus) (branch: BranchEntity) = {
+        Name = branch.Name
         Summary =
-            ExploreCardSummary.load
-                <| BranchInstanceMeta.load (card.LatestInstanceId |> Some = status.InstanceId) true card.LatestInstance
-                <| card
+            ExploreBranchSummary.load
+                <| BranchInstanceMeta.load (branch.LatestInstanceId |> Some = status.InstanceId) true branch.LatestInstance
+                <| branch
     }
 
 type ExploreCard with
     static member load (entity: CardEntity) acquiredStatus (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) instance = {
-        Summary = ExploreCardSummary.load instance entity
+        Summary = ExploreBranchSummary.load instance entity.DefaultBranch
         Comments = entity.CommentCards |> Seq.map Comment.load |> toResizeArray
         Tags =
             tagCounts.Select(fun x ->
@@ -422,12 +425,12 @@ type ExploreCard with
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray
-        Branches = entity.BranchChildren |> Seq.map (Branch.load acquiredStatus) |> toResizeArray
+        Branches = entity.Branches |> Seq.map (Branch.load acquiredStatus) |> toResizeArray
         AcquiredStatus = acquiredStatus
     }
 
-type CardRevision with
-    static member load isAcquired (e: CardEntity) = {
+type BranchRevision with
+    static member load isAcquired (e: BranchEntity) = {
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
