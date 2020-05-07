@@ -391,7 +391,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
     let cardId = 1
-    let cardInstanceId = 1001
+    let branchInstanceId = 1001
 
     let test instanceId customTest = task {
         let! acquired = CardRepository.getNew c.Db userId
@@ -424,7 +424,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         Assert.Equal(cardId, field.Id)
         Assert.Equal(3, field.AuthorId)
         let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_BranchInstances).SingleAsync(fun x -> x.Value = communalValue)
-        Assert.Equal(cardInstanceId, instance.Id)
+        Assert.Equal(branchInstanceId, instance.Id)
         Assert.Equal(1, instance.CommunalFieldId)
         Assert.Equal("Back", instance.FieldName)
         Assert.Equal(communalValue, instance.Value)
@@ -432,10 +432,10 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         Assert.Equal(editSummary, instance.EditSummary)
         customTest instance }
     do! test <| None <| fun i ->
-            Assert.Equal(cardInstanceId, i.CommunalFieldInstance_BranchInstances.Single().BranchInstanceId)
+            Assert.Equal(branchInstanceId, i.CommunalFieldInstance_BranchInstances.Single().BranchInstanceId)
             Assert.Equal(1001, i.CommunalFieldInstance_BranchInstances.Single().CommunalFieldInstanceId)
             Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = i.Id))
-    do! test <| Some cardInstanceId <| fun i ->
+    do! test <| Some branchInstanceId <| fun i ->
             Assert.Equal([1001; 1002], i.CommunalFieldInstance_BranchInstances.Select(fun x -> x.BranchInstanceId))
             Assert.Equal([1001; 1001], i.CommunalFieldInstance_BranchInstances.Select(fun x -> x.CommunalFieldInstanceId))
             Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = i.Id))

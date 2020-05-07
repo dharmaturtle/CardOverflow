@@ -276,16 +276,16 @@ type ViewEditCardCommand = {
             .ToList()
 
 module SanitizeCardRepository =
-    let private _getCommand (db: CardOverflowDb) cardInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
+    let private _getCommand (db: CardOverflowDb) branchInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
         let! instance =
             db.BranchInstance
                 .Include(fun x -> x.TemplateInstance)
                 .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances)
-                .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
+                .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
         return
             match instance with
-            | null -> Error <| sprintf "Card instance %i not found" cardInstanceId
+            | null -> Error <| sprintf "Card instance %i not found" branchInstanceId
             | instance ->
                 let communalBranchInstanceIdsAndValueByField =
                     instance.CommunalFieldInstance_BranchInstances
@@ -316,16 +316,16 @@ module SanitizeCardRepository =
                 Error "You can't branch a branch"
             else Ok ()
         let! ac = CardRepository.getNew db userId
-        let! cardInstanceId =
+        let! branchInstanceId =
             db.LatestBranchInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
             |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
             |> TaskResult.map (fun x -> x.Id)
-        let! command = _getCommand db cardInstanceId <| BranchSourceCardId cardId
+        let! command = _getCommand db branchInstanceId <| BranchSourceCardId cardId
         return command, ac
     }
-    let getCopy (db: CardOverflowDb) userId cardInstanceId = taskResult {
+    let getCopy (db: CardOverflowDb) userId branchInstanceId = taskResult {
         let! ac = CardRepository.getNew db userId
-        let! command = _getCommand db cardInstanceId <| CopySourceInstanceId cardInstanceId
+        let! command = _getCommand db branchInstanceId <| CopySourceInstanceId branchInstanceId
         return command, ac
     }
     let getEdit (db: CardOverflowDb) userId cardId = taskResult {

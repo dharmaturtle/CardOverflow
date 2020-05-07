@@ -361,15 +361,15 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let user2 = 2
     
     use c = new TestContainer()
-    let assertCount (cardsIdsAndCounts: _ list) (cardInstanceIdsAndCounts: _ list) = task {
+    let assertCount (cardsIdsAndCounts: _ list) (branchInstanceIdsAndCounts: _ list) = task {
         do! c.Db.Card.CountAsync()
             |> Task.map(fun i -> Assert.Equal(cardsIdsAndCounts.Length, i))
         do! c.Db.BranchInstance.CountAsync()
-            |> Task.map(fun i -> Assert.Equal(cardInstanceIdsAndCounts.Length, i))
+            |> Task.map(fun i -> Assert.Equal(branchInstanceIdsAndCounts.Length, i))
         for id, count in cardsIdsAndCounts do
             do! c.Db.Card.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))
-        for id, count in cardInstanceIdsAndCounts do
+        for id, count in branchInstanceIdsAndCounts do
             do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
     let tags = ["A"; "B"]

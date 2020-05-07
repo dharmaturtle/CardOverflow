@@ -262,9 +262,9 @@ module CardViewRepository =
 module AcquiredCardRepository =
     let getAcquired (db: CardOverflowDb) userId (testBranchInstanceIds: int ResizeArray) =
         db.AcquiredCard.Where(fun x -> testBranchInstanceIds.Contains(x.BranchInstanceId) && x.UserId = userId).Select(fun x -> x.BranchInstanceId).ToListAsync()
-    let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (cardInstanceId: int) =
-        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Card.BranchInstances.Any(fun x -> x.Id = cardInstanceId))
-        |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with the id #%i" cardInstanceId))
+    let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) =
+        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Card.BranchInstances.Any(fun x -> x.Id = branchInstanceId))
+        |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with the id #%i" branchInstanceId))
         |> TaskResult.map (fun x -> x.BranchInstanceId)
 
 module CardRepository =
@@ -291,17 +291,17 @@ module CardRepository =
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstance.CardId = cardId)
         return CardRevision.load isAcquired r
     }
-    let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = taskResult {
+    let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
         let! (defaultCardSettingId: Nullable<int>) = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
-        let! (cardInstance: BranchInstanceEntity) =
+        let! (branchInstance: BranchInstanceEntity) =
             db.BranchInstance
                 .Include(fun x -> x.Card)
-                .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
-            |> Task.map (Result.requireNotNull <| sprintf "Card not found for Instance #%i" cardInstanceId)
+                .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
+            |> Task.map (Result.requireNotNull <| sprintf "Card not found for Instance #%i" branchInstanceId)
         let! (ac: AcquiredCardEntity) =
             db.AcquiredCard.SingleOrDefaultAsync(fun x ->
                 x.UserId = userId && 
-                (x.BranchSourceIdOrCardId = cardInstance.CardId || Nullable x.BranchSourceIdOrCardId = cardInstance.Card.BranchSourceId)
+                (x.BranchSourceIdOrCardId = branchInstance.CardId || Nullable x.BranchSourceIdOrCardId = branchInstance.Card.BranchSourceId)
             )
         match ac with
         | null ->
@@ -311,12 +311,12 @@ module CardRepository =
                     defaultCardSettingId.Value // medTODO handle the null case
                     []
                 |> fun x -> x.copyToNew [] // medTODO get tags from template
-            card.BranchInstanceId <- cardInstanceId
-            card.CardId <- cardInstance.CardId
+            card.BranchInstanceId <- branchInstanceId
+            card.CardId <- branchInstance.CardId
             card |> db.AcquiredCard.AddI
         | card ->
-            card.BranchInstanceId <- cardInstanceId
-            card.CardId <- cardInstance.CardId
+            card.BranchInstanceId <- branchInstanceId
+            card.CardId <- branchInstance.CardId
         return! db.SaveChangesAsyncI ()
         }
     let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId = // medTODO needs userId for validation

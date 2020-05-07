@@ -86,7 +86,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     let author = 1
     let acquirer = 2
     let cardId = 1
-    let cardInstanceId = 1001
+    let branchInstanceId = 1001
 
     // initial tag has 1 user
     let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
@@ -94,7 +94,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     do! assertTagUserCount 1
 
     // initial tag has 2 users after acquisition
-    do! CardRepository.AcquireCardAsync c.Db acquirer cardInstanceId
+    do! CardRepository.AcquireCardAsync c.Db acquirer branchInstanceId
     do! SanitizeTagRepository.AddTo c.Db acquirer tagName cardId
     do! assertTagUserCount 2
 

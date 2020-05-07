@@ -145,7 +145,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal(0, card.Value.Summary.Users) // suspended cards don't count to User count
     }
 
-let testGetAcquired (cardInstanceIds: int list) addCards name = task {
+let testGetAcquired (branchInstanceIds: int list) addCards name = task {
     use c = new TestContainer(false, name)
     
     let userId = 1 // this user creates the card
@@ -154,18 +154,18 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
         Assert.Empty x
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(
-        cardInstanceIds.Count(),
+        branchInstanceIds.Count(),
         acquiredCards.Results.Count()
     )
     let! card = CardRepository.GetAcquired c.Db userId 1 |> TaskResult.getOk
     Assert.Equal(userId, card.UserId)
     
     let userId = 2 // this user acquires the card
-    if cardInstanceIds.Length = 1 then
-        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
+    if branchInstanceIds.Length = 1 then
+        do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     else
-        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
-        do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
+        do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+        do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -183,10 +183,10 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     )
 
     let userId = 3 // this user never acquires the card
-    if cardInstanceIds.Length = 1 then
+    if branchInstanceIds.Length = 1 then
         let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
         Assert.Equal(
-            cardInstanceIds.Count(),
+            branchInstanceIds.Count(),
             cards.Results.Count()
         )
         let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
@@ -199,7 +199,7 @@ let testGetAcquired (cardInstanceIds: int list) addCards name = task {
     else
         let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
         Assert.Equal(
-            cardInstanceIds.Count(),
+            branchInstanceIds.Count(),
             cards.Results.Count()
         )
         let! card1 = ExploreCardRepository.get c.Db userId 1
@@ -308,7 +308,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
 
 [<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
-    let cardInstanceIds = [1001; 1002]
+    let branchInstanceIds = [1001; 1002]
     use c = new TestContainer()
     let relationshipName = "Test/Relationship"
     
@@ -359,16 +359,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -377,7 +377,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
 
 [<Fact>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
-    let cardInstanceIds = [1001; 1002]
+    let branchInstanceIds = [1001; 1002]
     use c = new TestContainer()
     let relationshipName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
@@ -428,16 +428,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[1] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId cardInstanceIds.[0] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
