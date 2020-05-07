@@ -7,9 +7,9 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardInstanceEntity
+    public partial class BranchInstanceEntity
     {
-        public CardInstanceEntity()
+        public BranchInstanceEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             CardCopySources = new HashSet<CardEntity>();
@@ -26,7 +26,7 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        public int CardId { get; set; }
+        public int BranchId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
         public string FieldValues { get; set; }
@@ -50,13 +50,13 @@ namespace CardOverflow.Entity
         public string TsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 
-        [ForeignKey("CardId")]
-        [InverseProperty("CardInstances")]
-        public virtual CardEntity Card { get; set; }
+        [ForeignKey("BranchId")]
+        [InverseProperty("BranchInstances")]
+        public virtual BranchEntity Branch { get; set; }
         [ForeignKey("TemplateInstanceId")]
-        [InverseProperty("CardInstances")]
+        [InverseProperty("BranchInstances")]
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
-        [InverseProperty("CardInstance")]
+        [InverseProperty("BranchInstance")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("CopySource")]
         public virtual ICollection<CardEntity> CardCopySources { get; set; }
@@ -69,7 +69,7 @@ namespace CardOverflow.Entity
 
         public virtual ICollection<CardTagCountEntity> CardTagCounts { get; set; }
         public virtual ICollection<CardRelationshipCountEntity> CardRelationshipCounts { get; set; }
-        public virtual ICollection<CardInstanceTagCountEntity> CardInstanceTagCounts { get; set; }
-        public virtual ICollection<CardInstanceRelationshipCountEntity> CardInstanceRelationshipCounts { get; set; }
+        public virtual ICollection<BranchInstanceTagCountEntity> BranchInstanceTagCounts { get; set; }
+        public virtual ICollection<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCounts { get; set; }
     }
 }
