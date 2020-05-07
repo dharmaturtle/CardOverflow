@@ -148,7 +148,6 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             BranchInstanceId = i2,
             Due = DateTime.UtcNow,
             UserId = userId,
-            BranchSourceIdOrCardId = cardId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
@@ -163,7 +162,6 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             BranchInstanceId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
-            BranchSourceIdOrCardId = cardId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
