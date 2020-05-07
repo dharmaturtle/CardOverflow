@@ -89,7 +89,7 @@ type AnkiCardWrite = {
     Modified: DateTime option
     AuthorId: int
 } with
-    member this.CopyTo (entity: CardInstanceEntity) =
+    member this.CopyTo (entity: BranchInstanceEntity) =
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
@@ -98,10 +98,10 @@ type AnkiCardWrite = {
         entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
         entity.CommunalFieldInstance_CardInstances <-
             this.CommunalFields
-            |> List.map (fun cf -> CommunalFieldInstance_CardInstanceEntity(CardInstance = entity, CommunalFieldInstance = cf))
+            |> List.map (fun cf -> CommunalFieldInstance_BranchInstanceEntity(CardInstance = entity, CommunalFieldInstance = cf))
             |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
-        let entity = CardInstanceEntity()
+        let entity = BranchInstanceEntity()
         entity.EditSummary <- "Imported from Anki"
         entity.Card <-
             CardEntity(
@@ -109,7 +109,7 @@ type AnkiCardWrite = {
             )
         entity.File_CardInstances <-
             files.Select(fun x ->
-                File_CardInstanceEntity(
+                File_BranchInstanceEntity(
                     CardInstance = entity,
                     File = x
                 )
@@ -118,17 +118,17 @@ type AnkiCardWrite = {
         entity
     member this.AcquireEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let templateHash = this.Template |> TemplateInstanceEntity.hash hasher
-        let hash = this.CopyToNew [] |> CardInstanceEntity.hash templateHash hasher
+        let hash = this.CopyToNew [] |> BranchInstanceEntity.hash templateHash hasher
         db.CardInstance
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
 
 type AnkiAcquiredCard = {
     UserId: int
-    CardInstance: CardInstanceEntity
+    CardInstance: BranchInstanceEntity
     TemplateInstance: TemplateInstanceEntity
     CardState: CardState
     IsLapsed: bool
@@ -574,7 +574,7 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardSettingAndDeckTagByDeckId: Map<int64, CardSettingEntity * string>)
-        (cardsAndTagsByNoteId: Map<int64, CardInstanceEntity list * TagEntity list>)
+        (cardsAndTagsByNoteId: Map<int64, BranchInstanceEntity list * TagEntity list>)
         (colCreateDate: DateTime)
         userId
         (usersTags: TagEntity list)

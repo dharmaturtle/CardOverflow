@@ -99,7 +99,7 @@ module TemplateRepository =
             |> Seq.iter(fun ac ->
                 db.Entry(ac.CardInstance).State <- EntityState.Added
                 ac.CardInstance.Id <- ac.CardInstance.GetHashCode()
-                db.Entry(ac.CardInstance).Property(Core.nameof <@ any<CardInstanceEntity>.Id @>).IsTemporary <- true
+                db.Entry(ac.CardInstance).Property(Core.nameof <@ any<BranchInstanceEntity>.Id @>).IsTemporary <- true
                 ac.CardInstance.Created <- DateTime.UtcNow
                 ac.CardInstance.Modified <- Nullable()
                 ac.CardInstance.TemplateInstance <- newTemplateInstance
@@ -124,7 +124,7 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module ExploreCardRepository =
-    let getAcquiredStatus (db: CardOverflowDb) userId (rootInstance: CardInstanceEntity) = task {
+    let getAcquiredStatus (db: CardOverflowDb) userId (rootInstance: BranchInstanceEntity) = task {
         let! ac =
             db.AcquiredCard
                 .Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
@@ -150,7 +150,7 @@ module ExploreCardRepository =
             db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId)
             |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
             |> TaskResult.map (fun x -> x.BranchSourceId |> Option.ofNullable |> Option.defaultValue x.Id)
-        let! (r: CardInstanceEntity * List<string> * List<string> * List<string>) =
+        let! (r: BranchInstanceEntity * List<string> * List<string> * List<string>) =
             db.LatestCardInstance
                 .Include(fun x -> x.Card.Author)
                 .Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
@@ -160,7 +160,7 @@ module ExploreCardRepository =
                 .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.TemplateInstance)
                 .Where(fun x -> x.CardId = rootCardId)
                 .Select(fun x ->
@@ -178,13 +178,13 @@ module ExploreCardRepository =
             |> ExploreCard.load rootInstance.Card acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
-        let! (e: CardInstanceEntity) =
+        let! (e: BranchInstanceEntity) =
             db.CardInstance
                 .Include(fun x -> x.Card.Author)
                 .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.TemplateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
             |> Task.map (Result.requireNotNull (sprintf "Card Instance #%i not found" instanceId))
@@ -211,12 +211,12 @@ module CardViewRepository =
                 .Select(fun x -> x.CardInstanceId)
                 .ToListAsync()
     let instanceWithLatest (db: CardOverflowDb) aId userId = taskResult {
-        let! (a: CardInstanceEntity) =
+        let! (a: BranchInstanceEntity) =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = aId)
             |> Task.map (Result.requireNotNull (sprintf "Card instance #%i not found" aId))
-        let! (b: CardInstanceEntity) = // verylowTODO optimization try to get this from `a` above
+        let! (b: BranchInstanceEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestCardInstance
                 .Include(fun x -> x.TemplateInstance)
                 .SingleAsync(fun x -> x.CardId = a.CardId)
@@ -229,7 +229,7 @@ module CardViewRepository =
             b.Id
     }
     let instancePair (db: CardOverflowDb) aId bId userId = taskResult {
-        let! (instances: CardInstanceEntity ResizeArray) =
+        let! (instances: BranchInstanceEntity ResizeArray) =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
                 .Where(fun x -> x.Id = aId || x.Id = bId)
@@ -286,14 +286,14 @@ module CardRepository =
             db.Card
                 .Include(fun x -> x.Author)
                 .Include(fun x -> x.CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CardInstanceEntity) -> x.TemplateInstance)
+                    .ThenInclude(fun (x: BranchInstanceEntity) -> x.TemplateInstance)
                 .SingleAsync(fun x -> x.Id = cardId)
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
         return CardRevision.load isAcquired r
     }
     let AcquireCardAsync (db: CardOverflowDb) userId cardInstanceId = taskResult {
         let! (defaultCardSettingId: Nullable<int>) = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
-        let! (cardInstance: CardInstanceEntity) =
+        let! (cardInstance: BranchInstanceEntity) =
             db.CardInstance
                 .Include(fun x -> x.Card)
                 .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
@@ -328,7 +328,7 @@ module CardRepository =
             db.AcquiredCardIsLatest
                 .Include(fun x -> x.CardInstance.TemplateInstance)
                 .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.CardInstance.AcquiredCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
@@ -514,9 +514,9 @@ module UpdateRepository =
             let! (acquiredCardEntity: AcquiredCardEntity) =
                 db.AcquiredCard
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
+                        .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
                     .Include(fun x -> x.CardInstance.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
+                        .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                     .SingleOrDefaultAsync(fun x ->
                         (x.Id = acquiredCard.AcquiredCardId)
                         || (x.UserId = acquiredCard.UserId && Nullable x.BranchSourceIdOrCardId = branchSourceCardId))

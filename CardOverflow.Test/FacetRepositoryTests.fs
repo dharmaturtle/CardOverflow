@@ -332,7 +332,7 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
 [<Fact>]
 let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
     let view =
-        CardInstanceEntity(
+        BranchInstanceEntity(
             FieldValues = "",
             TemplateInstance = TemplateInstanceEntity(
                 Fields = "FrontArial20False0FalseBackArial20False1False"

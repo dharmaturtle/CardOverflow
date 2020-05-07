@@ -33,12 +33,12 @@ module TemplateInstanceEntity =
     let hash h e = byteArrayHash h e |> BitArray
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
-module CardInstanceEntity =
+module BranchInstanceEntity =
     let bitArrayToByteArray (bitArray: BitArray) = // https://stackoverflow.com/a/45760138
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
         bitArray.CopyTo(bytes, 0)
         bytes
-    let hash (templateHash: BitArray) (hasher: SHA512) (e: CardInstanceEntity) =
+    let hash (templateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
         e.CommunalFieldInstance_CardInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
@@ -244,19 +244,19 @@ type CardInstanceView with
     static member private toView (templateInstance: TemplateInstanceEntity) (fieldValues: string)=
         {   FieldValues = FieldAndValue.load (Fields.fromString templateInstance.Fields) fieldValues
             TemplateInstance = TemplateInstance.load templateInstance }
-    static member load (entity: CardInstanceEntity) =
+    static member load (entity: BranchInstanceEntity) =
         CardInstanceView.toView
             entity.TemplateInstance
             entity.FieldValues
-    member this.CopyToX (entity: CardInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
+    member this.CopyToX (entity: BranchInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
         entity.CommunalFieldInstance_CardInstances <-
-            communalFields.Select(fun x -> CommunalFieldInstance_CardInstanceEntity(CommunalFieldInstance = x))
+            communalFields.Select(fun x -> CommunalFieldInstance_BranchInstanceEntity(CommunalFieldInstance = x))
             |> entity.CommunalFieldInstance_CardInstances.Concat
             |> toResizeArray
         entity.TemplateInstanceId <- this.TemplateInstance.Id
     member this.CopyToNew communalFields =
-        let entity = CardInstanceEntity()
+        let entity = BranchInstanceEntity()
         this.CopyToX entity communalFields
         entity
     member this.CopyFieldsToNewInstance card editSummary communalFields =
@@ -276,7 +276,7 @@ type CommunalFieldInstance with
         Value = entity.Value }
 
 type CardInstanceMeta with
-    static member load isAcquired isLatest (entity: CardInstanceEntity) =
+    static member load isAcquired isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
             CardId = entity.CardId
@@ -303,12 +303,12 @@ type CardInstanceMeta with
             CommunalFields = [].ToList()
             Users = 0
         }
-    member this.copyTo (entity: CardInstanceEntity) =
+    member this.copyTo (entity: BranchInstanceEntity) =
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.IsDmca <- this.IsDmca
     member this.copyToNew =
-        let e = CardInstanceEntity()
+        let e = BranchInstanceEntity()
         this.copyTo e
         e
 

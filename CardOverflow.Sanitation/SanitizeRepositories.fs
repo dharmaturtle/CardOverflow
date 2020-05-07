@@ -281,7 +281,7 @@ module SanitizeCardRepository =
             db.CardInstance
                 .Include(fun x -> x.TemplateInstance)
                 .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
+                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
                 .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
         return
             match instance with

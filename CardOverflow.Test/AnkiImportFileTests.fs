@@ -134,7 +134,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         c.Db.CardInstance
             .Include(fun x -> x.TemplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
             .Select(CardInstanceView.load)
     let assertCount expected (clozeText: string) =
@@ -296,7 +296,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
         c.Db.CardInstance
             .Include(fun x -> x.TemplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommunalFieldInstance_CardInstanceEntity) -> x.CommunalFieldInstance)
+                .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
             .Select(CardInstanceView.load)
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
@@ -530,7 +530,7 @@ let ``AnkiDefaults.templateIdByHash is same as initial db`` (): unit =
     // test that the calculated hash is the same as the one stored in the db
     for template in templates do
         let calculated = TemplateInstanceEntity.hashBase64 hasher template
-        let dbValue = CardInstanceEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
+        let dbValue = BranchInstanceEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
         //for x in TemplateInstanceEntity.hash hasher x do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
