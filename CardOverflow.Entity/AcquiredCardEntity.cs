@@ -33,15 +33,17 @@ namespace CardOverflow.Entity
         public string TsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 
-        [ForeignKey("BranchSourceIdOrCardId")]
-        [InverseProperty("AllAcquiredCards")]
-        public virtual CardEntity BranchSourceIdOrCard { get; set; }
+        [ForeignKey("BranchId")]
+        [InverseProperty("AcquiredCardBranches")]
+        public virtual BranchEntity Branch { get; set; }
+        //public virtual BranchInstanceEntity BranchI { get; set; }
+        [ForeignKey("BranchInstanceId")]
+        [InverseProperty("AcquiredCards")]
+        public virtual BranchInstanceEntity BranchInstance { get; set; }
+        public virtual BranchEntity BranchNavigation { get; set; }
         [ForeignKey("CardId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardEntity Card { get; set; }
-        [ForeignKey("CardInstanceId")]
-        [InverseProperty("AcquiredCards")]
-        public virtual CardInstanceEntity CardInstance { get; set; }
         [ForeignKey("CardSettingId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardSettingEntity CardSetting { get; set; }

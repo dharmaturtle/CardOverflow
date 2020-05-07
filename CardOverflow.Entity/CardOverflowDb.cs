@@ -72,9 +72,19 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => new { e.UserId, e.CardId })
                     .IsUnique();
 
-              entity.HasOne(d => d.CardInstance)
+                entity.HasOne(d => d.Branch)
+                    .WithMany(p => p.AcquiredCardBranches)
+                    .HasForeignKey(d => d.BranchId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.BranchInstance)
                     .WithMany(p => p.AcquiredCards)
-                    .HasForeignKey(d => d.CardInstanceId)
+                    .HasForeignKey(d => d.BranchInstanceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.AcquiredCards)
+                    .HasForeignKey(d => d.CardId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.CardSetting)
@@ -87,10 +97,16 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.CardInstance)
-                    .WithMany(p => p.AcquiredCards)
+                //entity.HasOne(d => d.BranchI)
+                //    .WithMany(p => p.AcquiredCardBranchIs)
+                //    .HasPrincipalKey(p => new { p.BranchId, p.Id })
+                //    .HasForeignKey(d => new { d.BranchId, d.BranchInstanceId })
+                //    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.BranchNavigation)
+                    .WithMany(p => p.AcquiredCardBranchNavigations)
                     .HasPrincipalKey(p => new { p.CardId, p.Id })
-                    .HasForeignKey(d => new { d.CardId, d.CardInstanceId })
+                    .HasForeignKey(d => new { d.CardId, d.BranchId })
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -125,7 +141,7 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.LatestInstance)
-                    .WithMany(p => p.CardLatestInstances)
+                    .WithMany()
                     .HasForeignKey(d => d.LatestInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -153,9 +169,8 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.BranchInstances)
                     .HasForeignKey(d => d.TemplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-                
-                entity.HasMany(x => x.CardTagCounts)
+
+               entity.HasMany(x => x.CardTagCounts)
                     .WithOne()
                     .HasForeignKey(x => x.CardId);
                 
@@ -163,27 +178,42 @@ namespace CardOverflow.Entity
                     .WithOne()
                     .HasForeignKey(x => x.CardId);
                 
-                entity.HasMany(x => x.CardInstanceTagCounts)
+                entity.HasMany(x => x.BranchInstanceTagCounts)
                     .WithOne()
-                    .HasForeignKey(x => x.CardInstanceId);
+                    .HasForeignKey(x => x.BranchInstanceId);
                 
-                entity.HasMany(x => x.CardInstanceRelationshipCounts)
+                entity.HasMany(x => x.BranchInstanceRelationshipCounts)
                     .WithOne()
-                    .HasForeignKey(x => x.CardInstanceId);
+                    .HasForeignKey(x => x.BranchInstanceId);
             });
 
-            modelBuilder.Entity<CardInstanceRelationshipCountEntity>(entity =>
+            modelBuilder.Entity<BranchInstanceRelationshipCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.SourceCardInstanceId, e.TargetCardInstanceId, e.Name });
+                entity.HasKey(e => new { e.SourceBranchInstanceId, e.TargetBranchInstanceId, e.Name });
                 
-                entity.ToView("CardInstanceRelationshipCount");
+                entity.ToView("BranchInstanceRelationshipCount");
             });
 
-            modelBuilder.Entity<CardInstanceTagCountEntity>(entity =>
+            modelBuilder.Entity<BranchInstanceTagCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CardInstanceId, e.Name });
+                entity.HasKey(e => new { e.BranchInstanceId, e.Name });
                 
-                entity.ToView("CardInstanceTagCount");
+                entity.ToView("BranchInstanceTagCount");
+            });
+
+            modelBuilder.Entity<CardEntity>(entity =>
+            {
+                entity.HasIndex(e => e.AuthorId);
+
+                entity.HasOne(d => d.Author)
+                    .WithMany(p => p.Cards)
+                    .HasForeignKey(d => d.AuthorId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.DefaultBranch)
+                    .WithMany(p => p.Cards)
+                    .HasForeignKey(d => d.DefaultBranchId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<CardRelationshipCountEntity>(entity =>

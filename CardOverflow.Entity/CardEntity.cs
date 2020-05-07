@@ -10,10 +10,8 @@ namespace CardOverflow.Entity
         public CardEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
-            AllAcquiredCards = new HashSet<AcquiredCardEntity>();
-            CardInstances = new HashSet<CardInstanceEntity>();
+            Branches = new HashSet<BranchEntity>();
             CommentCards = new HashSet<CommentCardEntity>();
-            BranchChildren = new HashSet<CardEntity>();
         }
 
         [Key]
@@ -27,24 +25,17 @@ namespace CardOverflow.Entity
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("BranchSourceId")]
-        [InverseProperty("BranchChildren")]
-        public virtual CardEntity BranchSource { get; set; }
         [ForeignKey("CopySourceId")]
         [InverseProperty("CardCopySources")]
-        public virtual CardInstanceEntity CopySource { get; set; }
-        [ForeignKey("LatestInstanceId")]
-        [InverseProperty("CardLatestInstances")]
-        public virtual CardInstanceEntity LatestInstance { get; set; }
-        [InverseProperty("BranchSourceIdOrCard")]
-        public virtual ICollection<AcquiredCardEntity> AllAcquiredCards { get; set; }
+        public virtual BranchInstanceEntity CopySource { get; set; }
+        [ForeignKey("DefaultBranchId")]
+        [InverseProperty("Cards")]
+        public virtual BranchEntity DefaultBranch { get; set; }
+        [InverseProperty("Card")]
+        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<BranchEntity> Branches { get; set; }
         [InverseProperty("Card")]
         public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
-        [InverseProperty("Card")]
-        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        [InverseProperty("BranchSource")]
-        public virtual ICollection<CardEntity> BranchChildren { get; set; }
     }
 }

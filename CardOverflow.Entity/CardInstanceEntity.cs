@@ -12,14 +12,8 @@ namespace CardOverflow.Entity
         public BranchInstanceEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
-            CardCopySources = new HashSet<CardEntity>();
-            CardLatestInstances = new HashSet<CardEntity>();
-            CommunalFieldInstance_CardInstances = new HashSet<CommunalFieldInstance_CardInstanceEntity>();
-            File_CardInstances = new HashSet<File_CardInstanceEntity>();
-            CardTagCounts = new HashSet<CardTagCountEntity>();
-            CardRelationshipCounts = new HashSet<CardRelationshipCountEntity>();
-            CardInstanceTagCounts = new HashSet<CardInstanceTagCountEntity>();
-            CardInstanceRelationshipCounts = new HashSet<CardInstanceRelationshipCountEntity>();
+            CommunalFieldInstance_BranchInstances = new HashSet<CommunalFieldInstance_BranchInstanceEntity>();
+            File_BranchInstances = new HashSet<File_BranchInstanceEntity>();
         }
 
         [Key]
@@ -58,15 +52,14 @@ namespace CardOverflow.Entity
         public virtual TemplateInstanceEntity TemplateInstance { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        //public virtual ICollection<AcquiredCardEntity> AcquiredCardBranchIs { get; set; }
+
         [InverseProperty("CopySource")]
         public virtual ICollection<CardEntity> CardCopySources { get; set; }
-        [InverseProperty("LatestInstance")]
-        public virtual ICollection<CardEntity> CardLatestInstances { get; set; }
-        [InverseProperty("CardInstance")]
-        public virtual ICollection<CommunalFieldInstance_CardInstanceEntity> CommunalFieldInstance_CardInstances { get; set; }
-        [InverseProperty("CardInstance")]
-        public virtual ICollection<File_CardInstanceEntity> File_CardInstances { get; set; }
-
+        [InverseProperty("BranchInstance")]
+        public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
+        [InverseProperty("BranchInstance")]
+        public virtual ICollection<File_BranchInstanceEntity> File_BranchInstances { get; set; }
         public virtual ICollection<CardTagCountEntity> CardTagCounts { get; set; }
         public virtual ICollection<CardRelationshipCountEntity> CardRelationshipCounts { get; set; }
         public virtual ICollection<BranchInstanceTagCountEntity> BranchInstanceTagCounts { get; set; }
