@@ -20,6 +20,7 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
+        public int CardId { get; set; }
         public int BranchId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
