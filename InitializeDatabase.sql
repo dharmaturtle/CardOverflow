@@ -26,9 +26,7 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE ( branchSource."Id" = c."Id" OR
-                                        branchSource."Id" = c."BranchSourceId" )
-                                        AND  ac."CardState" <> 3 )
+                                WHERE   ac."CardState" <> 3 )
             FROM    "Card" c1
             LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = OLD."CardId"
             WHERE branchSource."Id" = c1."Id";
@@ -43,9 +41,7 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE ( branchSource."Id" = c."Id" OR
-                                        branchSource."Id" = c."BranchSourceId" )
-                                        AND  ac."CardState" <> 3 )
+                                WHERE   ac."CardState" <> 3 )
             FROM    "Card" c1
             LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = NEW."CardId"
             WHERE branchSource."Id" = c1."Id";
@@ -57,6 +53,20 @@ $$;
 
 ALTER FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
 
+CREATE FUNCTION public.fn_branch_afterinsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        UPDATE "Card" c
+        SET    "DefaultBranchId" = (NEW."Id")
+        WHERE (c."Id" = NEW."CardId" AND c."DefaultBranchId" = 0);
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_branch_afterinsert() OWNER TO postgres;
+
 CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -65,11 +75,6 @@ CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
             NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
             NEW."TsVectorHelper" = NULL;
         END IF;
-        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW."CardId" <> OLD."CardId")) THEN
-			NEW."BranchSourceIdOrCardId" = ( SELECT COALESCE(c."BranchSourceId", c."Id")
-											 FROM   "Card" c
-											 WHERE  c."Id" = NEW."CardId" );
-		END IF;
         RETURN NEW;
     END;
 $$;
@@ -81,9 +86,9 @@ CREATE FUNCTION public.fn_branchinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  UPDATE "Card" c
+  UPDATE "Branch" b
   SET    "LatestInstanceId" = NEW."Id"
-  WHERE  c."Id" = NEW."CardId";
+  WHERE  b."Id" = NEW."BranchId";
   IF (NEW."TsVectorHelper" IS NOT NULL) THEN
     NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
     NEW."TsVectorHelper" = NULL;
@@ -1356,6 +1361,7 @@ CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 CREATE INDEX idx_fts_templateinstance_tsvector ON public."TemplateInstance" USING gin ("TsVector");
 
 
+CREATE TRIGGER tr_branch_afterinsert AFTER INSERT ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_branch_afterinsert();
 CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
 
 

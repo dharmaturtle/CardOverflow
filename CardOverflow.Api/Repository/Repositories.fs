@@ -433,24 +433,24 @@ module UpdateRepository =
             Entity <| fun () ->
                 match command.Source with
                 | CopySourceInstanceId instanceId ->
-                    let branch = BranchEntity()
-                    CardEntity(
+                    BranchEntity(
                         AuthorId = acquiredCard.UserId,
-                        CopySourceId = Nullable instanceId,
-                        DefaultBranch = branch
-                        //Branches = [branch].ToList()
-                    )
+                        Card =
+                            CardEntity(
+                                AuthorId = acquiredCard.UserId,
+                                CopySourceId = Nullable instanceId
+                            ))
                 | BranchSourceCardId cardId ->
                     failwith "impossible"
                     //db.Card.Single(fun x -> x.Id = cardId)
                     //CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
                 | Original ->
-                    let branch = BranchEntity()
-                    CardEntity(
+                    BranchEntity(
                         AuthorId = acquiredCard.UserId,
-                        DefaultBranch = branch
-                        //Branches = [branch].ToList()
-                    )
+                        Card =
+                            CardEntity(
+                                AuthorId = acquiredCard.UserId
+                            ))
         let card =
             if acquiredCard.CardId = 0 then
                 newCardEntity
@@ -546,6 +546,7 @@ module UpdateRepository =
                                 )) |> List.ofSeq |> List.choose id
                         let e = acquiredCard.copyToNew tagIds
                         e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                        e.Branch <- e.BranchInstance.Branch
                         match card with
                         | Id x ->
                             e.CardId <- x
