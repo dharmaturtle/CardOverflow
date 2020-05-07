@@ -28,10 +28,10 @@ namespace CardOverflow.UserContentApi.Controllers {
     [HttpGet("cardinstance/{id}/back")]
     public async Task<IActionResult> InstanceBack(int id) => _back(await CardViewRepository.instance(_db, id));
 
-    private ContentResult _front(FSharpResult<CardInstanceView, string> view) =>
+    private ContentResult _front(FSharpResult<BranchInstanceView, string> view) =>
       (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item1).ToTextHtmlContent(this);
 
-    private ContentResult _back(FSharpResult<CardInstanceView, string> view) =>
+    private ContentResult _back(FSharpResult<BranchInstanceView, string> view) =>
       (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item2).ToTextHtmlContent(this);
 
   }

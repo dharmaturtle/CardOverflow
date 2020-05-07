@@ -59,15 +59,15 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
         } |> UpdateRepository.card c.Db ac
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
-    do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
+    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map (fun x -> x.Value) |> Seq.toList
 
-    Assert.Equal(updatedInstanceId, cards.Single().CardInstanceMeta.Id)
+    Assert.Equal(updatedInstanceId, cards.Single().BranchInstanceMeta.Id)
 
     // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
     let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId oldInstanceId

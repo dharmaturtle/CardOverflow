@@ -97,8 +97,8 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         |> Result.getOk
     let getFieldValues (templateName: string) =
         cards
-            .Where(fun x -> x.CardInstance.TemplateInstance.Name.Contains templateName)
-            .Select(fun x -> (CardInstanceView.load x.CardInstance).FieldValues.Select(fun x -> x.Value))
+            .Where(fun x -> x.BranchInstance.TemplateInstance.Name.Contains templateName)
+            .Select(fun x -> (BranchInstanceView.load x.BranchInstance).FieldValues.Select(fun x -> x.Value))
 
     Assert.Equal<string seq>(
         [ seq["What is the null hypothesis for the slope?";        @"[$]H_0: \beta_1 = 0[/$]";   "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"]
@@ -196,15 +196,15 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     Assert.Null r.Value
     
     Assert.Equal(18, c.Db.Card.Count())
-    Assert.Equal(18, c.Db.CardInstance.Count())
+    Assert.Equal(18, c.Db.BranchInstance.Count())
     Assert.Equal(AnkiDefaults.templateIdByHash.Count + 3, c.Db.Template.Count())
     Assert.Equal(AnkiDefaults.templateIdByHash.Count + 5, c.Db.TemplateInstance.Count())
 
     let getInstances (templateName: string) =
         c.Db.TemplateInstance
-            .Include(fun x -> x.CardInstances)
+            .Include(fun x -> x.BranchInstances)
             .Where(fun x -> x.Name.Contains templateName)
-            .SelectMany(fun x -> x.CardInstances :> IEnumerable<_>)
+            .SelectMany(fun x -> x.BranchInstances :> IEnumerable<_>)
             .ToListAsync()
     
     let! basic = getInstances "Basic"
@@ -222,7 +222,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let (command, _) = command.Value
         Assert.Equal<int seq>(
             basic.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.sort)
+            command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.sort)
         Assert.Equal(
             communalValue,
             command.FieldValues.Single(fun x -> x.IsCommunal).Value)
@@ -248,7 +248,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let (command, _) = command.Value
         Assert.Equal<int seq>(
             sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
-            command.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
+            command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.distinct |> Seq.sort)
         Assert.Equal<string seq>(
             expectedFieldAndValues |> List.map snd,
             command.CommunalFieldValues.Select(fun x -> x.Value))
@@ -279,7 +279,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let (command, _) = command.Value
         Assert.Equal<int seq>(
             cloze.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues |> Seq.collect (fun x -> x.CommunalCardInstanceIds) |> Seq.distinct |> Seq.sort)
+            command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.distinct |> Seq.sort)
         Assert.Equal<string seq>(
             [communalValue; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"],
             command.CommunalFieldValues.Select(fun x -> x.Value))
@@ -292,7 +292,7 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     do! AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     
     Assert.Equal(2, c.Db.Card.Count())
-    Assert.Equal(2, c.Db.CardInstance.Count())
+    Assert.Equal(2, c.Db.BranchInstance.Count())
     Assert.Equal(6, c.Db.Template.Count())
     Assert.Equal(8, c.Db.TemplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
@@ -339,7 +339,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
         ].ToList(),
-        c.Db.CardInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.BranchInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53"
@@ -353,11 +353,11 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
         ].ToList(),
-        c.Db.CardInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.BranchInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal(10, c.Db.Card.Count())
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
-    Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.CardInstanceId).Distinct().Count())
+    Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
     Assert.Equal(6, c.Db.User_TemplateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
@@ -366,18 +366,18 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal<string>(
         [ "Deck:Default"; "Othertag" ],
         c.Db.AcquiredCard
-            .Include(fun x -> x.CardInstance)
+            .Include(fun x -> x.BranchInstance)
             .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
                 .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
-            .Single(fun c -> c.CardInstance.FieldValues.Contains("mp3"))
+            .Single(fun c -> c.BranchInstance.FieldValues.Contains("mp3"))
             .Tag_AcquiredCards.Select(fun t -> t.Tag.Name)
             |> Seq.sort)
 
     let getInstances (templateName: string) =
         c.Db.TemplateInstance
-            .Include(fun x -> x.CardInstances)
+            .Include(fun x -> x.BranchInstances)
             .Where(fun x -> x.Name.Contains templateName)
-            .SelectMany(fun x -> x.CardInstances :> IEnumerable<_>)
+            .SelectMany(fun x -> x.BranchInstances :> IEnumerable<_>)
             .ToListAsync()
 
     let! instances = getInstances "optional"
@@ -411,7 +411,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
                 Value = "Basic (and reversed card) front" }],
             card.Instance.CommunalFields)
 
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     Assert.Equal(7, c.Db.TemplateInstance.Count())
     Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
     }
@@ -479,14 +479,14 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(0, c.Db.Template.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(10, c.Db.Card.Count())
-        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
-        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
-        Assert.Equal(2, c.Db.CardInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
+        Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
+        Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.Equal(10, c.Db.AcquiredCard.Count())
-        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic Front%")))
-        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic (and reversed card) front%")))
-        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.CardInstance.FieldValues, "%Basic (optional reversed card) front%")))
-        Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.BranchInstance.FieldValues, "%Basic Front%")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.BranchInstance.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.BranchInstance.FieldValues, "%Basic (optional reversed card) front%")))
+        Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
         Assert.Equal(7, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(7, c.Db.CommunalField.Count())
         Assert.Equal(7, c.Db.TemplateInstance.Count())
@@ -509,5 +509,5 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` anki
 
     Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     } |> TaskResult.getOk)

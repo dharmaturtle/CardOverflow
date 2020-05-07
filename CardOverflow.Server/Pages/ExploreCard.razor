@@ -23,7 +23,7 @@
     @if (Instance == null) {
       <div class="col-xl">
         <ExploreCardIFrameHeader Card=@Card AcquiredCard=@AcquiredCard Instance=@Card.Instance />
-        <ResizingIframe CardInstanceId=@Card.Instance.Id Back />
+        <ResizingIframe BranchInstanceId=@Card.Instance.Id Back />
       </div>
     } else {
       <div class="col-xl">
@@ -42,7 +42,7 @@
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
         <ExploreCardIFrameHeader Card=@Card AcquiredCard=@AcquiredCard Instance=@Instance />
-        <ResizingIframe CardInstanceId=@Instance.Id Back />
+        <ResizingIframe BranchInstanceId=@Instance.Id Back />
       </div>
     }
   </div>
@@ -75,7 +75,7 @@
   [Parameter] public int InstanceId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
-  CardInstanceMeta Instance;
+  BranchInstanceMeta Instance;
   AcquiredCard AcquiredCard;
   private string _LoadingMessage = "Loading...";
 

@@ -158,7 +158,7 @@
         var fieldValues = EditCard.FieldValues.Select(x => {
           if (EditCard.CommunalNonClozeFieldValues.Contains(x)) {
             var communalInstanceId = result.ResultValue.Item2.Single(xx => x.EditField.Name == xx.Item1).Item2;
-            return new EditFieldAndValue(x.EditField, x.Value, new CommunalFieldValue(communalInstanceId, new List<int> { Card.CardInstanceMeta.Id }));
+            return new EditFieldAndValue(x.EditField, x.Value, new CommunalFieldValue(communalInstanceId, new List<int> { Card.BranchInstanceMeta.Id }));
           } else {
             return new EditFieldAndValue(x.EditField, "", x.Communal);
           }

@@ -39,7 +39,7 @@ module BranchInstanceEntity =
         bitArray.CopyTo(bytes, 0)
         bytes
     let hash (templateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
-        e.CommunalFieldInstance_CardInstances
+        e.CommunalFieldInstance_BranchInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
             .Append(e.FieldValues)
@@ -240,19 +240,19 @@ type AcquiredTemplateInstance with
           DefaultCardSettingId = entity.User_TemplateInstances.Single().DefaultCardSettingId
           TemplateInstance = TemplateInstance.load entity }
 
-type CardInstanceView with
+type BranchInstanceView with
     static member private toView (templateInstance: TemplateInstanceEntity) (fieldValues: string)=
         {   FieldValues = FieldAndValue.load (Fields.fromString templateInstance.Fields) fieldValues
             TemplateInstance = TemplateInstance.load templateInstance }
     static member load (entity: BranchInstanceEntity) =
-        CardInstanceView.toView
+        BranchInstanceView.toView
             entity.TemplateInstance
             entity.FieldValues
     member this.CopyToX (entity: BranchInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
-        entity.CommunalFieldInstance_CardInstances <-
+        entity.CommunalFieldInstance_BranchInstances <-
             communalFields.Select(fun x -> CommunalFieldInstance_BranchInstanceEntity(CommunalFieldInstance = x))
-            |> entity.CommunalFieldInstance_CardInstances.Concat
+            |> entity.CommunalFieldInstance_BranchInstances.Concat
             |> toResizeArray
         entity.TemplateInstanceId <- this.TemplateInstance.Id
     member this.CopyToNew communalFields =
@@ -275,9 +275,9 @@ type CommunalFieldInstance with
         FieldName = entity.FieldName
         Value = entity.Value }
 
-type CardInstanceMeta with
+type BranchInstanceMeta with
     static member load isAcquired isLatest (entity: BranchInstanceEntity) =
-        let front, back, _, _ = entity |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
+        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
             CardId = entity.CardId
             Created = entity.Created
@@ -287,7 +287,7 @@ type CardInstanceMeta with
             IsAcquired = isAcquired
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            CommunalFields = entity.CommunalFieldInstance_CardInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
+            CommunalFields = entity.CommunalFieldInstance_BranchInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Users = entity.Users
         }
     static member initialize =
@@ -315,12 +315,12 @@ type CardInstanceMeta with
 type QuizCard with
     static member load (entity: AcquiredCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
-            entity.CardInstance |> CardInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
+            entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         result {
             let! cardState = CardState.create entity.CardState
             return {
                 AcquiredCardId = entity.Id
-                CardInstanceId = entity.CardInstanceId
+                BranchInstanceId = entity.BranchInstanceId
                 Due = entity.Due
                 Front = front
                 Back = back
@@ -357,13 +357,13 @@ type AcquiredCard with
             IntervalOrStepsIndex = NewStepsIndex 0uy
             Due = DateTime.UtcNow
             CardSettingId = cardSettingId
-            CardInstanceMeta = CardInstanceMeta.initialize
+            BranchInstanceMeta = BranchInstanceMeta.initialize
             Tags = tags
         }
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
-            {   CardId = entity.CardInstance.CardId
+            {   CardId = entity.BranchInstance.CardId
                 AcquiredCardId = entity.Id
                 UserId = entity.UserId
                 CardState = cardState
@@ -372,7 +372,7 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
-                CardInstanceMeta = CardInstanceMeta.load isAcquired entity.IsLatest entity.CardInstance
+                BranchInstanceMeta = BranchInstanceMeta.load isAcquired entity.IsLatest entity.BranchInstance
                 Tags = usersTags |> List.ofSeq
             }
         }
@@ -400,7 +400,7 @@ type Branch with
         Name = card.BranchName
         Summary =
             ExploreCardSummary.load
-                <| CardInstanceMeta.load (card.LatestInstanceId |> Some = status.InstanceId) true card.LatestInstance
+                <| BranchInstanceMeta.load (card.LatestInstanceId |> Some = status.InstanceId) true card.LatestInstance
                 <| card
     }
 
@@ -432,8 +432,8 @@ type CardRevision with
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
         SortedMeta =
-            e.CardInstances
+            e.BranchInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.mapi (fun i e -> CardInstanceMeta.load isAcquired (i = 0) e)
+            |> Seq.mapi (fun i e -> BranchInstanceMeta.load isAcquired (i = 0) e)
             |> Seq.toList
     }

@@ -36,9 +36,9 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
         |> Task.FromResult
         |> TaskResult.bind(AnkiImporter.save c.Db ankiDb userId)
 
-    Assert.Equal(3, c.Db.File_CardInstance.Count())
+    Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     Assert.Equal(7, c.Db.TemplateInstance.Count())
     Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
     } |> TaskResult.getOk)
@@ -56,9 +56,9 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
             |> Task.FromResult
             |> TaskResult.bind(AnkiImporter.save c.Db ankiDb userId)
 
-    Assert.Equal(3, c.Db.File_CardInstance.Count())
+    Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.CardInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -111,7 +111,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
         ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Deck:Duplicate Cards"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
-    Assert.Equal(3, c.Db.CardInstance.Count())
+    Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(8, c.Db.TemplateInstance.Count())
     Assert.Equal(6, c.Db.LatestTemplateInstance.Count())
     } |> TaskResult.getOk)
@@ -121,7 +121,7 @@ let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let acquired = Result.getOk acquired
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
-        acquired.CardInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
+        acquired.BranchInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
@@ -130,15 +130,15 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let testCommunalFields = testCommunalFields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
     Assert.Null x.Value
-    let allCardInstanceViews =
-        c.Db.CardInstance
+    let allBranchInstanceViews =
+        c.Db.BranchInstance
             .Include(fun x -> x.TemplateInstance)
-            .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+            .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
-            .Select(CardInstanceView.load)
+            .Select(BranchInstanceView.load)
     let assertCount expected (clozeText: string) =
-        allCardInstanceViews
+        allBranchInstanceViews
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
     assertCount 5 "may be remembered with the mnemonic"
@@ -150,7 +150,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: {{c3::Colchicine (antigout)}} V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
             """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: {{c4::Vincristine/Vinblastine (anticancer)}}P: Palcitaxel (anticancer) """
             """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: {{c5::Palcitaxel (anticancer)}} """],
-        c.Db.CardInstance.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
+        c.Db.BranchInstance.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
     Assert.Equal<string seq>(
         [   "<b><br /></b>"
@@ -159,7 +159,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             "<b><br /></b>"
             "<b><br /></b>"
             "<br /><div><br /></div><div>Image here</div>" ],
-        allCardInstanceViews
+        allBranchInstanceViews
             .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value))
     )
     Assert.Equal<string seq>(
@@ -169,13 +169,13 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: {{c4::Vincristine/Vinblastine (anticancer)}}P: Palcitaxel (anticancer)"""
             """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: {{c5::Palcitaxel (anticancer)}}"""
             "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ],
-        allCardInstanceViews
+        allBranchInstanceViews
             .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value))
     )
     Assert.SingleI
-        <| c.Db.CardInstance
+        <| c.Db.BranchInstance
             .Where(fun x -> x.FieldValues.Contains("acute"))
-    Assert.True(c.Db.CardInstance.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
+    Assert.True(c.Db.BranchInstance.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
     let longThing = """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: {{c2::Griseofulvin (antifungal)}} C: {{c3::Colchicine (antigout)}} V: {{c4::Vincristine/Vinblastine (anticancer)}}P: {{c5::Palcitaxel (anticancer)}}"""
     Assert.Equal<string seq>(
         [   longThing
@@ -195,7 +195,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Empty card.Value.Relationships
     Assert.Empty c.Db.Relationship
 
-    let! clozes = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()
+    let! clozes = c.Db.BranchInstance.Where(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()
     for instance in clozes do
         do! testCommunalFields instance.CardId [longThing; ""]
 
@@ -251,7 +251,7 @@ let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (
     }
 
 [<Fact>]
-let ``CardInstanceView.load works on cloze`` (): Task<unit> = task {
+let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
     let! _ = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
@@ -271,20 +271,20 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let testCommunalFields = testCommunalFields c userId
 
-    let getCardInstances clozeText = c.Db.CardInstance.Where(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText))
+    let getBranchInstances clozeText = c.Db.BranchInstance.Where(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
         let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
             let singleCloze = AnkiImportLogic.multipleClozeToSingleCloze i clozeText
-            Assert.SingleI <| c.Db.LatestCardInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
-            Assert.Equal(clozeMaxIndex, c.Db.LatestCardInstance.Count(fun x -> x.CommunalFieldInstance_CardInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))
+            Assert.SingleI <| c.Db.LatestBranchInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
+            Assert.Equal(clozeMaxIndex, c.Db.LatestBranchInstance.Count(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))
             let! communalFieldInstanceIds =
-                (getCardInstances clozeText)
-                    .Select(fun x -> x.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstance.Id)
+                (getBranchInstances clozeText)
+                    .Select(fun x -> x.CommunalFieldInstance_BranchInstances.Single().CommunalFieldInstance.Id)
                     .ToListAsync()
             for id in communalFieldInstanceIds do
                 Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = id))
-            let! cardIds = (getCardInstances clozeText).Select(fun x -> x.CardId).ToListAsync()
+            let! cardIds = (getBranchInstances clozeText).Select(fun x -> x.CardId).ToListAsync()
             for id in cardIds do
                 do! testCommunalFields id [clozeText]
         otherTest clozeText }
@@ -293,12 +293,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
-        c.Db.CardInstance
+        c.Db.BranchInstance
             .Include(fun x -> x.TemplateInstance)
-            .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+            .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
-            .Select(CardInstanceView.load)
+            .Select(BranchInstanceView.load)
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
     do! test 1 "Canberra was founded in {{c1::1913}}."
@@ -320,7 +320,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
             "[ city ] was founded in 1845.", "[ Portland ] was founded in 1845. extra"
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
-    Assert.Equal(expected, e.Results.Select(fun x -> x.Value.CardInstanceMeta.StrippedFront, x.Value.CardInstanceMeta.StrippedBack))
+    Assert.Equal(expected, e.Results.Select(fun x -> x.Value.BranchInstanceMeta.StrippedFront, x.Value.BranchInstanceMeta.StrippedBack))
     do! assertUserHasNormalCardCount 4
     
     // c1 and c2 cloze pair with communal Extra creates one Extra instance
@@ -409,7 +409,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     if f.Name = "Front" then
                                         "Front", None
                                     else
-                                        communalValue, Some { CommunalCardInstanceIds = [0].ToList(); InstanceId = instanceId }
+                                        communalValue, Some { CommunalBranchInstanceIds = [0].ToList(); InstanceId = instanceId }
                                 {   EditField = ViewField.copyTo f
                                     Value = value
                                     Communal = communal
@@ -423,7 +423,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         let! field = c.Db.CommunalField.SingleAsync()
         Assert.Equal(cardId, field.Id)
         Assert.Equal(3, field.AuthorId)
-        let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_CardInstances).SingleAsync(fun x -> x.Value = communalValue)
+        let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_BranchInstances).SingleAsync(fun x -> x.Value = communalValue)
         Assert.Equal(cardInstanceId, instance.Id)
         Assert.Equal(1, instance.CommunalFieldId)
         Assert.Equal("Back", instance.FieldName)
@@ -432,12 +432,12 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         Assert.Equal(editSummary, instance.EditSummary)
         customTest instance }
     do! test <| None <| fun i ->
-            Assert.Equal(cardInstanceId, i.CommunalFieldInstance_CardInstances.Single().CardInstanceId)
-            Assert.Equal(1001, i.CommunalFieldInstance_CardInstances.Single().CommunalFieldInstanceId)
+            Assert.Equal(cardInstanceId, i.CommunalFieldInstance_BranchInstances.Single().BranchInstanceId)
+            Assert.Equal(1001, i.CommunalFieldInstance_BranchInstances.Single().CommunalFieldInstanceId)
             Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = i.Id))
     do! test <| Some cardInstanceId <| fun i ->
-            Assert.Equal([1001; 1002], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId))
-            Assert.Equal([1001; 1001], i.CommunalFieldInstance_CardInstances.Select(fun x -> x.CommunalFieldInstanceId))
+            Assert.Equal([1001; 1002], i.CommunalFieldInstance_BranchInstances.Select(fun x -> x.BranchInstanceId))
+            Assert.Equal([1001; 1001], i.CommunalFieldInstance_BranchInstances.Select(fun x -> x.CommunalFieldInstanceId))
             Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = i.Id))
     Assert.SingleI c.Db.CommunalField
     Assert.SingleI c.Db.CommunalFieldInstance }

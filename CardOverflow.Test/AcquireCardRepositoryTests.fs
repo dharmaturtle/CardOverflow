@@ -32,7 +32,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard
 
-    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.Value.CardInstanceMeta.Id |> TaskResult.getOk }
+    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.Value.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
     let! ac = getAcquired ()
@@ -74,7 +74,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     Assert.NotEmpty c.Db.Tag_AcquiredCard
     let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId // can delete after adding a history, tag, and relationship
     Assert.Null x.Value
-    Assert.Equal(card2, c.Db.AcquiredCard.Include(fun x -> x.CardInstance).Single().CardInstance.CardId) // from the other side of the relationship
+    Assert.Equal(card2, c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.CardId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_AcquiredCard
     Assert.Empty c.Db.History
     Assert.Empty c.Db.Tag_AcquiredCard
@@ -138,14 +138,14 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     Assert.Equal<int seq>([i2], instanceIds)
     Assert.Empty communals
 
-    do! CardRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the CardInstanceId
-    Assert.Equal(i2, c.Db.AcquiredCard.Single().CardInstanceId)
+    do! CardRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
+    Assert.Equal(i2, c.Db.AcquiredCard.Single().BranchInstanceId)
     
     use db = c.Db
     db.AcquiredCard.AddI <|
         AcquiredCardEntity(
             CardId = cardId,
-            CardInstanceId = i2,
+            BranchInstanceId = i2,
             Due = DateTime.UtcNow,
             UserId = userId,
             BranchSourceIdOrCardId = cardId,
@@ -160,7 +160,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     db.AcquiredCard.AddI <|
         AcquiredCardEntity(
             CardId = cardId,
-            CardInstanceId = i1,
+            BranchInstanceId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
             BranchSourceIdOrCardId = cardId,
@@ -181,27 +181,27 @@ let ``AcquireCards works``(): Task<unit> = task {
     let ci1_1 = 1001
     let! _ = FacetRepositoryTests.addBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single().Users)
-    Assert.Equal(1, c.Db.CardInstance.Single().Users)
+    Assert.Equal(1, c.Db.BranchInstance.Single().Users)
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
-    Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_1).Users)
+    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
     
     let c2 = 2
     let ci2_1 = 1002
     let! _ = FacetRepositoryTests.addReversedBasicCard c.Db authorId []
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c2).Users)
-    Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
+    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     
     let acquirerId = 1
     do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
-    Assert.Equal(2, c.Db.CardInstance.Single(fun x -> x.Id = ci1_1).Users)
+    Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
     do! CardRepository.AcquireCardAsync c.Db acquirerId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c2).Users)
-    Assert.Equal(2, c.Db.CardInstance.Single(fun x -> x.Id = ci2_1).Users)
+    Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     // misc
-    Assert.Equal(2, c.Db.CardInstance.Count())
+    Assert.Equal(2, c.Db.BranchInstance.Count())
     Assert.Equal(4, c.Db.AcquiredCard.Count())
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_1));
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_1));
 
     let! r = SanitizeCardRepository.getEdit c.Db authorId c1
     let (command, ac) = r.Value
@@ -212,27 +212,27 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal<int seq>([ci1_2], instanceIds)
     Assert.Empty communals
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
-    Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
+    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
-    Assert.Equal(3, c.Db.CardInstance.Count())
+    Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(4, c.Db.AcquiredCard.Count())
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2))
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2))
     
     do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
-    Assert.Equal(2, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
+    Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
-    Assert.Equal(3, c.Db.CardInstance.Count())
+    Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(4, c.Db.AcquiredCard.Count())
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     do! CardRepository.UnacquireCardAsync c.Db ac.AcquiredCardId
     Assert.Equal(1, c.Db.Card.Single(fun x -> x.Id = c1).Users)
-    Assert.Equal(1, c.Db.CardInstance.Single(fun x -> x.Id = ci1_2).Users)
+    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
-    Assert.Equal(3, c.Db.CardInstance.Count())
+    Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(3, c.Db.AcquiredCard.Count())
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.CardInstanceId = ci1_2));
+    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let count = CardRepository.GetDueCount c.Db acquirerId ""
     Assert.Equal(2, count)

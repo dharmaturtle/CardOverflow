@@ -143,7 +143,7 @@ type IntervalOrStepsIndex =
 
 type QuizCard = {
     AcquiredCardId: int
-    CardInstanceId: int
+    BranchInstanceId: int
     Due: DateTime
     Front: string
     Back: string
@@ -156,7 +156,7 @@ type QuizCard = {
     Settings: CardSetting
 }
 
-//type CardInstance = {
+//type BranchInstance = {
 //    Id: int
 //    Created: DateTime
 //    Modified: DateTime option
@@ -230,7 +230,7 @@ type PagedList<'T> = {
 [<CLIMutable>]
 type CommunalFieldValue = {
     InstanceId: int option
-    CommunalCardInstanceIds: int ResizeArray
+    CommunalBranchInstanceIds: int ResizeArray
 }
 
 [<CLIMutable>]
@@ -244,12 +244,12 @@ type EditFieldAndValue = {
         match this.Communal with
         | Some _ -> true
         | _ -> false
-    member this.CommunalCardInstanceIds =
+    member this.CommunalBranchInstanceIds =
         match this.Communal with
-        | Some x -> x.CommunalCardInstanceIds
+        | Some x -> x.CommunalBranchInstanceIds
         | None -> [].ToList()
 
-type CardInstanceView = {
+type BranchInstanceView = {
     FieldValues: FieldAndValue ResizeArray
     TemplateInstance: TemplateInstance
 } with
@@ -287,7 +287,7 @@ type ViewRelationship = {
         Relationship.split this.Name |> snd
 
 [<CLIMutable>]
-type CardInstanceMeta = {
+type BranchInstanceMeta = {
     Id: int
     CardId: int
     Created: DateTime
@@ -306,7 +306,7 @@ type AcquiredCard = {
     CardId: int
     AcquiredCardId: int
     UserId: int
-    CardInstanceMeta: CardInstanceMeta
+    BranchInstanceMeta: BranchInstanceMeta
     CardState: CardState
     IsLapsed: bool
     EaseFactorInPermille: int16
@@ -330,7 +330,7 @@ type ExploreCardSummary = {
     Users: int
     Author: string
     AuthorId: int
-    Instance: CardInstanceMeta
+    Instance: BranchInstanceMeta
 } with
     member this.IsAcquired = this.Instance.IsAcquired
 
@@ -382,7 +382,7 @@ type CardRevision = {
     Id: int
     Author: string
     AuthorId: int
-    SortedMeta: CardInstanceMeta list
+    SortedMeta: BranchInstanceMeta list
 }
 
 type CardSource =

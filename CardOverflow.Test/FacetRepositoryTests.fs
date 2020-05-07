@@ -49,7 +49,7 @@ let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
             Communal =
                 if f.Name = "Text" then
                     {   InstanceId = None
-                        CommunalCardInstanceIds = [0].ToList()
+                        CommunalBranchInstanceIds = [0].ToList()
                     } |> Some
                 else None
         }).ToList()
@@ -69,11 +69,11 @@ let clozeCommandWithSharedExtra clozeText clozeTemplate = {
                 Communal =
                     if f.Name = "Text" then
                         {   InstanceId = None
-                            CommunalCardInstanceIds = [0].ToList()
+                            CommunalBranchInstanceIds = [0].ToList()
                         } |> Some
                     else
                         {   InstanceId = None
-                            CommunalCardInstanceIds = [0].ToList()
+                            CommunalBranchInstanceIds = [0].ToList()
                         } |> Some
             }).ToList() }
 
@@ -243,8 +243,8 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     let userId = 3
     let! _ = addBasicCard c.Db userId []
     let cardId = 1
-    let oldCardInstanceId = 1001
-    let newCardInstanceId = 1002
+    let oldBranchInstanceId = 1001
+    let newBranchInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
     let! old, ac = SanitizeCardRepository.getEdit c.Db userId cardId
     let updated = {
@@ -256,15 +256,15 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     }
     
     let! (instanceId, x) = UpdateRepository.card c.Db ac updated.load
-    Assert.Equal<int seq>([newCardInstanceId], instanceId)
+    Assert.Equal<int seq>([newBranchInstanceId], instanceId)
     Assert.Empty x
 
-    let! (card1: CardInstanceMeta)    = ExploreCardRepository.get      c.Db userId cardId |> TaskResult.map(fun x -> x.Instance)
-    let! (card2: CardInstanceMeta), _ = ExploreCardRepository.instance c.Db userId newCardInstanceId
+    let! (card1: BranchInstanceMeta)    = ExploreCardRepository.get      c.Db userId cardId |> TaskResult.map(fun x -> x.Instance)
+    let! (card2: BranchInstanceMeta), _ = ExploreCardRepository.instance c.Db userId newBranchInstanceId
     Assert.Equal(card1.InC(), card2.InC())
     Assert.Equal(newValue                 , card2.StrippedFront)
     Assert.Equal(newValue + " " + newValue, card2.StrippedBack)
-    let! (card3: CardInstanceMeta), _ = ExploreCardRepository.instance c.Db userId oldCardInstanceId
+    let! (card3: BranchInstanceMeta), _ = ExploreCardRepository.instance c.Db userId oldBranchInstanceId
     Assert.Equal("Front",      card3.StrippedFront)
     Assert.Equal("Front Back", card3.StrippedBack)
 
@@ -316,10 +316,10 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
         } |> UpdateRepository.card c.Db ac
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
-    do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
     
-    let! (a: CardInstanceView), (a_: bool), (b: CardInstanceView), (b_: bool), bId = CardViewRepository.instanceWithLatest c.Db 1001 userId
+    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = CardViewRepository.instanceWithLatest c.Db 1001 userId
     
     do! CardViewRepository.instance c.Db oldInstanceId
         |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
@@ -330,14 +330,14 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``CardInstance with "" as FieldValues is parsed to empty`` (): unit =
+let ``BranchInstance with "" as FieldValues is parsed to empty`` (): unit =
     let view =
         BranchInstanceEntity(
             FieldValues = "",
             TemplateInstance = TemplateInstanceEntity(
                 Fields = "FrontArial20False0FalseBackArial20False1False"
             ))
-        |> CardInstanceView.load
+        |> BranchInstanceView.load
 
     Assert.Empty view.FieldValues
 
@@ -364,13 +364,13 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let assertCount (cardsIdsAndCounts: _ list) (cardInstanceIdsAndCounts: _ list) = task {
         do! c.Db.Card.CountAsync()
             |> Task.map(fun i -> Assert.Equal(cardsIdsAndCounts.Length, i))
-        do! c.Db.CardInstance.CountAsync()
+        do! c.Db.BranchInstance.CountAsync()
             |> Task.map(fun i -> Assert.Equal(cardInstanceIdsAndCounts.Length, i))
         for id, count in cardsIdsAndCounts do
             do! c.Db.Card.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))
         for id, count in cardInstanceIdsAndCounts do
-            do! c.Db.CardInstance.SingleAsync(fun x -> x.Id = id)
+            do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
     let tags = ["A"; "B"]
     let! _ = addBasicCard c.Db user1 tags
@@ -405,7 +405,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             refreshed.Value.FieldValues.Select(fun x -> x.Value))
         Assert.Equal(
             instanceCountForCard,
-            c.Db.CardInstance.Count(fun x -> x.CardId = cardId))
+            c.Db.BranchInstance.Count(fun x -> x.CardId = cardId))
         let! card = ExploreCardRepository.get c.Db userId cardId
         Assert.Equal<ViewTag seq>(
             tags,
@@ -414,7 +414,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [newValue; newValue],
             refreshed.Value.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
         )
-        let createds = c.Db.CardInstance.Select(fun x -> x.Created) |> Seq.toList
+        let createds = c.Db.BranchInstance.Select(fun x -> x.Created) |> Seq.toList
         Assert.NotEqual(createds.[0], createds.[1])
         let! revisions = CardRepository.Revisions c.Db userId cardId
         Assert.Equal(revisionCount, revisions.SortedMeta.Count())
@@ -650,7 +650,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 2 ]
     // adventures in implicit unacquiring
     let adventurerId = 1 // changing the adventurer!
-    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardInstanceId = ogEdit_i && x.UserId = adventurerId)
+    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.BranchInstanceId = ogEdit_i && x.UserId = adventurerId)
     do! CardRepository.UnacquireCardAsync c.Db ac.Id
     Assert.Equal(0, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
@@ -753,7 +753,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let userId = 3
     let testGetAcquired cardId instanceId =
         CardRepository.GetAcquired c.Db userId cardId
-        |> TaskResult.map (fun ac -> Assert.Equal(instanceId, ac.CardInstanceMeta.Id))
+        |> TaskResult.map (fun ac -> Assert.Equal(instanceId, ac.BranchInstanceMeta.Id))
 
     let! _ = addBasicCard c.Db userId []
     let og_c = 1

@@ -43,12 +43,12 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
-  [Parameter] public EventCallback<CardInstanceMeta> InstanceSelected { get; set; }
+  [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
   [Parameter] public ExploreCardAcquiredStatus Status { get; set; }
   [Parameter] public EventCallback<ExploreCardAcquiredStatus> UpdateStatus { get; set; }
-  [Parameter] public CardInstanceMeta Selected { get; set; }
-  [Parameter] public CardInstanceMeta Root { get; set; }
-  [Parameter] public CardInstanceMeta Instance { get; set; }
+  [Parameter] public BranchInstanceMeta Selected { get; set; }
+  [Parameter] public BranchInstanceMeta Root { get; set; }
+  [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public EventCallback<AcquiredCard> UpdateAcquiredCard { get; set; }
 
   private async Task _Acquire(ExploreCardAcquiredStatus status) {

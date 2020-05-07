@@ -126,7 +126,7 @@ type TagText = {
 
 module SanitizeTagRepository =
     let private getAcquired (db: CardOverflowDb) userId cardId =
-        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardInstance.CardId = cardId)
+        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.CardId = cardId)
         |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
     let AddTo (db: CardOverflowDb) userId newTagName cardId = taskResult { // medTODO tag length needs validation
         let newTagName = MappingTools.toTitleCase newTagName
@@ -196,16 +196,16 @@ module SanitizeRelationshipRepository =
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetCardId = GetCardId command.TargetCardLink
         do! if targetCardId = command.SourceCardId then Error "A card can't be related to itself" else Ok ()
-        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.CardInstance).Where(fun x -> x.UserId = userId && (x.CardInstance.CardId = targetCardId || x.CardInstance.CardId = command.SourceCardId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
-        let! s = acs.SingleOrDefault(fun x -> x.CardInstance.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
+        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.BranchInstance.CardId = targetCardId || x.BranchInstance.CardId = command.SourceCardId)).ToListAsync()
+        let! t = acs.SingleOrDefault(fun x -> x.BranchInstance.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
+        let! s = acs.SingleOrDefault(fun x -> x.BranchInstance.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid =
             if Relationship.isDirectional command.Name then
                 s.Id, t.Id
             else // if non-directional, alter the source/target ids so they're grouped properly in the DB. EG: Source=1,Target=2,Name=X and Source=2,Target=1,Name=X are seen as distinct, so this makes them the same
-                if s.CardInstanceId < t.CardInstanceId then
+                if s.BranchInstanceId < t.BranchInstanceId then
                     s.Id, t.Id
                 else
                     t.Id, s.Id
@@ -278,23 +278,23 @@ type ViewEditCardCommand = {
 module SanitizeCardRepository =
     let private _getCommand (db: CardOverflowDb) cardInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
         let! instance =
-            db.CardInstance
+            db.BranchInstance
                 .Include(fun x -> x.TemplateInstance)
-                .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_CardInstances)
+                .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances)
                 .SingleOrDefaultAsync(fun x -> x.Id = cardInstanceId)
         return
             match instance with
             | null -> Error <| sprintf "Card instance %i not found" cardInstanceId
             | instance ->
-                let communalCardInstanceIdsAndValueByField =
-                    instance.CommunalFieldInstance_CardInstances
+                let communalBranchInstanceIdsAndValueByField =
+                    instance.CommunalFieldInstance_BranchInstances
                         .Select(fun x ->
-                            let ids = x.CommunalFieldInstance.CommunalFieldInstance_CardInstances.Select(fun x -> x.CardInstanceId).ToList()
+                            let ids = x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances.Select(fun x -> x.BranchInstanceId).ToList()
                             x.CommunalFieldInstance.FieldName,
                             (   x.CommunalFieldInstance.Value,
                                 if ids.Any() then
-                                    {   CommunalCardInstanceIds = ids
+                                    {   CommunalBranchInstanceIds = ids
                                         InstanceId = None
                                     } |> Some
                                 else None))
@@ -304,7 +304,7 @@ module SanitizeCardRepository =
                         EditFieldAndValue.load
                             <| Fields.fromString instance.TemplateInstance.Fields
                             <| instance.FieldValues
-                            <| communalCardInstanceIdsAndValueByField
+                            <| communalBranchInstanceIdsAndValueByField
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
                     Source = source
                 } |> Ok }
@@ -317,7 +317,7 @@ module SanitizeCardRepository =
             else Ok ()
         let! ac = CardRepository.getNew db userId
         let! cardInstanceId =
-            db.LatestCardInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
+            db.LatestBranchInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
             |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
             |> TaskResult.map (fun x -> x.Id)
         let! command = _getCommand db cardInstanceId <| BranchSourceCardId cardId
@@ -330,7 +330,7 @@ module SanitizeCardRepository =
     }
     let getEdit (db: CardOverflowDb) userId cardId = taskResult {
         let! ac = CardRepository.GetAcquired db userId cardId
-        let! command = _getCommand db ac.CardInstanceMeta.Id <| Original
+        let! command = _getCommand db ac.BranchInstanceMeta.Id <| Original
         return command, ac
     }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id

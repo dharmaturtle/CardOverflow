@@ -96,9 +96,9 @@ type AnkiCardWrite = {
         entity.TemplateInstance <- this.Template
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
-        entity.CommunalFieldInstance_CardInstances <-
+        entity.CommunalFieldInstance_BranchInstances <-
             this.CommunalFields
-            |> List.map (fun cf -> CommunalFieldInstance_BranchInstanceEntity(CardInstance = entity, CommunalFieldInstance = cf))
+            |> List.map (fun cf -> CommunalFieldInstance_BranchInstanceEntity(BranchInstance = entity, CommunalFieldInstance = cf))
             |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = BranchInstanceEntity()
@@ -107,10 +107,10 @@ type AnkiCardWrite = {
             CardEntity(
                 AuthorId = this.AuthorId
             )
-        entity.File_CardInstances <-
+        entity.File_BranchInstances <-
             files.Select(fun x ->
                 File_BranchInstanceEntity(
-                    CardInstance = entity,
+                    BranchInstance = entity,
                     File = x
                 )
             ).ToList()
@@ -119,8 +119,8 @@ type AnkiCardWrite = {
     member this.AcquireEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let templateHash = this.Template |> TemplateInstanceEntity.hash hasher
         let hash = this.CopyToNew [] |> BranchInstanceEntity.hash templateHash hasher
-        db.CardInstance
-            .Include(fun x -> x.CommunalFieldInstance_CardInstances :> IEnumerable<_>)
+        db.BranchInstance
+            .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
@@ -128,7 +128,7 @@ type AnkiCardWrite = {
 
 type AnkiAcquiredCard = {
     UserId: int
-    CardInstance: BranchInstanceEntity
+    BranchInstance: BranchInstanceEntity
     TemplateInstance: TemplateInstanceEntity
     CardState: CardState
     IsLapsed: bool
@@ -148,8 +148,8 @@ type AnkiAcquiredCard = {
     member this.CopyToNew (tags: TagEntity seq) =
         let entity = AcquiredCardEntity()
         this.CopyTo entity
-        entity.Card <- this.CardInstance.Card
-        entity.CardInstance <- this.CardInstance
+        entity.Card <- this.BranchInstance.Card
+        entity.BranchInstance <- this.BranchInstance
         entity.CardSetting <- this.CardSetting
         entity.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(AcquiredCard = entity, Tag = x)).ToList()
         entity
@@ -157,8 +157,8 @@ type AnkiAcquiredCard = {
         db.AcquiredCard
             .FirstOrDefault(fun c -> 
                 this.UserId = c.UserId &&
-                this.CardInstance.Id = c.CardInstanceId &&
-                this.TemplateInstance.Id = c.CardInstance.TemplateInstanceId
+                this.BranchInstance.Id = c.BranchInstanceId &&
+                this.TemplateInstance.Id = c.BranchInstance.TemplateInstanceId
             )
 
 type AnkiHistory = {
@@ -173,8 +173,8 @@ type AnkiHistory = {
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
-            this.AcquiredCard.CardInstanceId = h.AcquiredCard.CardInstanceId &&
-            this.AcquiredCard.CardInstance.TemplateInstanceId = h.AcquiredCard.CardInstance.TemplateInstanceId &&
+            this.AcquiredCard.BranchInstanceId = h.AcquiredCard.BranchInstanceId &&
+            this.AcquiredCard.BranchInstance.TemplateInstanceId = h.AcquiredCard.BranchInstance.TemplateInstanceId &&
             this.Score = h.Score &&
             this.Timestamp = h.Timestamp &&
             interval = h.IntervalWithUnusedStepsIndex &&
@@ -496,7 +496,7 @@ module Anki =
                             EditSummary = "Imported from Anki",
                             CommunalField = CommunalFieldEntity(AuthorId = userId),
                             Created = DateTime.UtcNow,
-                            CommunalFieldInstance_CardInstances = [].ToList()))
+                            CommunalFieldInstance_BranchInstances = [].ToList()))
                 let toCard fields template noteOrd =
                     let c = {
                         AnkiNoteId = note.Id
@@ -595,7 +595,7 @@ module Anki =
             let entity =
                 let c: AnkiAcquiredCard =
                     { UserId = userId
-                      CardInstance = card
+                      BranchInstance = card
                       TemplateInstance = cti
                       CardState =
                         match ankiCard.Queue with

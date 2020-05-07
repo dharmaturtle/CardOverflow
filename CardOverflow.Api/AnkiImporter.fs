@@ -210,7 +210,7 @@ module AnkiImporter =
                     <| getAcquiredCard
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
-                if x.CardInstance <> null && x.CardInstanceId = 0
+                if x.BranchInstance <> null && x.BranchInstanceId = 0
                 then db.AcquiredCard.AddI x
             )
             histories |> Seq.iter (fun x ->

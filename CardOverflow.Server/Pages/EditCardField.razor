@@ -21,11 +21,11 @@
 @if (Field.IsCommunal) {
   <div>
     <span>Shared with:</span>
-    @foreach (var instanceId in Field.CommunalCardInstanceIds.Where(x => x != Card.CardInstanceMeta.Id)) {
+    @foreach (var instanceId in Field.CommunalBranchInstanceIds.Where(x => x != Card.BranchInstanceMeta.Id)) {
       <span class="curate-tooltip-target">
         <span class="oi oi-eye" aria-hidden="true" />
         <span class="curate-tooltip-content">
-          <ResizingIframe CardInstanceId=@instanceId Front />
+          <ResizingIframe BranchInstanceId=@instanceId Front />
         </span>
       </span>
     }
@@ -102,7 +102,7 @@ Field.Communal =
   : getFieldCommunal(FSharpOption<int>.None);
 
   private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> instanceId) =>
-    Field.CommunalCardInstanceIds.Append(Card.CardInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(instanceId, x));
+    Field.CommunalBranchInstanceIds.Append(Card.BranchInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(instanceId, x));
 
   private async Task Search(SearchCommand searchCommand) {
     _searchResults = await DbExecutor.QueryAsync(db => CommunalFieldRepository.Search(db, searchCommand.Query));
