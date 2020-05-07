@@ -69,7 +69,7 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.TemplateInstanceId)
     Assert.Equal(2, c.Db.TemplateInstance.Count(fun x -> x.TemplateId = templateId))
     Assert.Equal(2, c.Db.BranchInstance.Count())
-    Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.CardId = 1))
+    Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.Branch.CardId = 1))
     let createds = c.Db.TemplateInstance.Where(fun x -> x.TemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = CardViewRepository.get c.Db 1

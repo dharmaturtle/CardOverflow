@@ -405,7 +405,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             refreshed.Value.FieldValues.Select(fun x -> x.Value))
         Assert.Equal(
             instanceCountForCard,
-            c.Db.BranchInstance.Count(fun x -> x.CardId = cardId))
+            c.Db.BranchInstance.Count(fun x -> x.Branch.CardId = cardId))
         let! card = ExploreCardRepository.get c.Db userId cardId
         Assert.Equal<ViewTag seq>(
             tags,
@@ -777,9 +777,9 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     do! testGetAcquired og_c update_i
 
     // acquiring old instance doesn't change LatestInstanceId
-    Assert.Equal(update_i, c.Db.Card.Single().LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Card.Single().DefaultBranch.LatestInstanceId)
     do! CardRepository.AcquireCardAsync c.Db userId og_i
-    Assert.Equal(update_i, c.Db.Card.Single().LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Card.Single().DefaultBranch.LatestInstanceId)
 
     // tests OtherInstanceAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
