@@ -309,6 +309,7 @@ module CardRepository =
             card |> db.AcquiredCard.AddI
         | card ->
             card.BranchInstanceId <- branchInstanceId
+            card.Branch <- branchInstance.Branch
             card.CardId <- branchInstance.Branch.CardId
         return! db.SaveChangesAsyncI ()
         }

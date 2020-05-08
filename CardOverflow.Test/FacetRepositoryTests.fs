@@ -358,7 +358,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let og_i = 1001
     let ogEdit_i = 1002
     let copy_i = 1003
-    let branch_i = 1004
+    let branch_i = 1004 // branch of og_c and og_b_2
     let copy2x_i = 1005
     let copyOfBranch_i = 1006
     let branchOfCopy_i = 1007
@@ -623,41 +623,46 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId copy_i |> TaskResult.getOk
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
-             branch_c, 1 ;    branchOfCopy_c, 1 ]
-            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
+            [og_c,     3 ;    copy_c, 2         ; copy2x_c, 1 ;    copyOfBranch_c, 1 ]
+            [og_b,     2 ;    copy_b, 1         ; copy2x_b, 1 ;    copyOfBranch_b, 1
+             og_b_2,   1 ;    branchOfCopy_b, 1 ]
+            [og_i,     0 ;    copy_i, 1         ; copy2x_i, 1 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId copy2x_i |> TaskResult.getOk
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 1
-             branch_c, 1 ;    branchOfCopy_c, 1 ]
-            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 1
+            [og_c,     3 ;    copy_c, 2         ; copy2x_c, 2 ;    copyOfBranch_c, 1 ]
+            [og_b,     2 ;    copy_b, 1         ; copy2x_b, 2 ;    copyOfBranch_b, 1
+             og_b_2,   1 ;    branchOfCopy_b, 1 ]
+            [og_i,     0 ;    copy_i, 1         ; copy2x_i, 2 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId copyOfBranch_i |> TaskResult.getOk
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
-             branch_c, 1 ;    branchOfCopy_c, 1 ]
-            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+            [og_c,     3 ;    copy_c, 2         ; copy2x_c, 2 ;    copyOfBranch_c, 2 ]
+            [og_b,     2 ;    copy_b, 1         ; copy2x_b, 2 ;    copyOfBranch_b, 2
+             og_b_2,   1 ;    branchOfCopy_b, 1 ]
+            [og_i,     0 ;    copy_i, 1         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! CardRepository.AcquireCardAsync c.Db adventurerId branch_i |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
-             branch_c, 2 ;    branchOfCopy_c, 1 ]
-            [og_i,     0 ;    copy_i, 1 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+            [og_c,     3 ;    copy_c, 2         ; copy2x_c, 2 ;    copyOfBranch_c, 2 ]
+            [og_b,     1 ;    copy_b, 1         ; copy2x_b, 2 ;    copyOfBranch_b, 2
+             og_b_2,   2 ;    branchOfCopy_b, 1 ]
+            [og_i,     0 ;    copy_i, 1         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 2 ]
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! CardRepository.AcquireCardAsync c.Db adventurerId branchOfCopy_i |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
-            [og_c,     3 ;    copy_c, 2 ;         copy2x_c, 2 ;    copyOfBranch_c, 2
-             branch_c, 2 ;    branchOfCopy_c, 2 ]
-            [og_i,     0 ;    copy_i, 0 ;         copy2x_i, 2 ;    copyOfBranch_i, 2
+            [og_c,     3 ;    copy_c, 2         ; copy2x_c, 2 ;    copyOfBranch_c, 2 ]
+            [og_b,     1 ;    copy_b, 0         ; copy2x_b, 2 ;    copyOfBranch_b, 2
+             og_b_2,   2 ;    branchOfCopy_b, 2 ]
+            [og_i,     0 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 2
              branch_i, 2 ]
     // adventures in implicit unacquiring
