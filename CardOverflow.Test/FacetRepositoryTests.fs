@@ -345,10 +345,8 @@ let ``BranchInstance with "" as FieldValues is parsed to empty`` (): unit =
 let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let og_c = 1
     let copy_c = 2
-    let branch_c = 3
     let copy2x_c = 3
     let copyOfBranch_c = 4
-    let branchOfCopy_c = 5
     
     let og_b = 1
     let copy_b = 2
@@ -609,16 +607,18 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let adventurerId = 3
     do! CardRepository.AcquireCardAsync c.Db adventurerId og_i |> TaskResult.getOk
     do! assertCount
-            [og_c,     3 ;    copy_c, 1 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
-             branch_c, 1 ;    branchOfCopy_c, 1 ]
-            [og_i,     1 ;    copy_i, 0 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
+            [og_c,     3 ;    copy_c, 1         ; copy2x_c, 1 ;    copyOfBranch_c, 1 ]
+            [og_b,     2 ;    copy_b, 0         ; copy2x_b, 1 ;    copyOfBranch_b, 1
+             og_b_2,   1 ;    branchOfCopy_b, 1 ]
+            [og_i,     1 ;    copy_i, 0         ; copy2x_i, 1 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId ogEdit_i |> TaskResult.getOk
     do! assertCount
-            [og_c,     3 ;    copy_c, 1 ;         copy2x_c, 1 ;    copyOfBranch_c, 1
-             branch_c, 1 ;    branchOfCopy_c, 1 ]
-            [og_i,     0 ;    copy_i, 0 ;         copy2x_i, 1 ;    copyOfBranch_i, 1
+            [og_c,     3 ;    copy_c, 1         ; copy2x_c, 1 ;    copyOfBranch_c, 1 ]
+            [og_b,     2 ;    copy_b, 0         ; copy2x_b, 1 ;    copyOfBranch_b, 1
+             og_b_2,   1 ;    branchOfCopy_b, 1 ]
+            [og_i,     0 ;    copy_i, 0         ; copy2x_i, 1 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     do! CardRepository.AcquireCardAsync c.Db adventurerId copy_i |> TaskResult.getOk

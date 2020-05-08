@@ -294,7 +294,7 @@ module CardRepository =
                 .Include(fun x -> x.Branch)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Card not found for Instance #%i" branchInstanceId)
-        let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstanceId = branchInstanceId)
+        let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardId = branchInstance.CardId)
         match ac with
         | null ->
             let card =
@@ -304,6 +304,7 @@ module CardRepository =
                     []
                 |> fun x -> x.copyToNew [] // medTODO get tags from template
             card.BranchInstanceId <- branchInstanceId
+            card.Branch <- branchInstance.Branch
             card.CardId <- branchInstance.Branch.CardId
             card |> db.AcquiredCard.AddI
         | card ->
