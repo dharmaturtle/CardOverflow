@@ -215,7 +215,7 @@ module CardViewRepository =
         let! (b: BranchInstanceEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestBranchInstance
                 .Include(fun x -> x.TemplateInstance)
-                .SingleAsync(fun x -> x.Branch.CardId = a.Branch.CardId)
+                .SingleAsync(fun x -> x.CardId = a.CardId)
         let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.Id
         return
             BranchInstanceView.load a,
