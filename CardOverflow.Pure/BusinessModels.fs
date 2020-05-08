@@ -289,6 +289,7 @@ type ViewRelationship = {
 [<CLIMutable>]
 type BranchInstanceMeta = {
     Id: int
+    BranchId: int
     CardId: int
     Created: DateTime
     Modified: DateTime option

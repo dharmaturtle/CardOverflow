@@ -288,6 +288,7 @@ type BranchInstanceMeta with
     static member load isAcquired isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
+            BranchId = entity.BranchId
             CardId = entity.CardId
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
@@ -301,6 +302,7 @@ type BranchInstanceMeta with
         }
     static member initialize =
         {   Id = 0
+            BranchId = 0
             CardId = 0
             Created = DateTime.UtcNow
             Modified = None

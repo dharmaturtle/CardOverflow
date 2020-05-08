@@ -137,7 +137,7 @@ module ExploreCardRepository =
             | Some ac ->
                 if   ac.BranchInstanceId = rootInstance.Id then
                     ExactInstanceAcquired ac.BranchInstanceId
-                elif ac.CardId = rootInstance.Branch.CardId then
+                elif ac.CardId = rootInstance.CardId then
                     OtherInstanceAcquired ac.BranchInstanceId
                 elif rootInstance.Branch.Card.Branches.Select(fun x -> x.LatestInstanceId).Contains ac.BranchInstanceId then
                     LatestBranchAcquired ac.BranchInstanceId
@@ -147,7 +147,7 @@ module ExploreCardRepository =
     }
     let get (db: CardOverflowDb) userId cardId = taskResult {
         let! (r: BranchInstanceEntity * List<string> * List<string> * List<string>) =
-            db.LatestBranchInstance
+            db.LatestDefaultBranchInstance
                 .Include(fun x -> x.Card.Author)
                 .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.TemplateInstance)
@@ -248,7 +248,7 @@ module CardViewRepository =
         | x -> return Ok <| BranchInstanceView.load x
     }
     let get (db: CardOverflowDb) cardId =
-        db.LatestBranchInstance
+        db.LatestDefaultBranchInstance
             .Include(fun x -> x.TemplateInstance)
             .SingleOrDefaultAsync(fun x -> x.Branch.CardId = cardId)
         |> Task.map Ok
@@ -440,10 +440,10 @@ module UpdateRepository =
                                 AuthorId = acquiredCard.UserId,
                                 CopySourceId = Nullable instanceId
                             ))
-                | BranchSourceCardId _ ->
-                    failwith "impossible"
-                    //db.Card.Single(fun x -> x.Id = cardId)
-                    //CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
+                | BranchSourceCardId cardId ->
+                    BranchEntity(
+                        AuthorId = acquiredCard.UserId,
+                        Card = db.Card.Single(fun x -> x.Id = cardId))
                 | Original ->
                     BranchEntity(
                         AuthorId = acquiredCard.UserId,
@@ -555,7 +555,6 @@ module UpdateRepository =
                         | Entity _ ->
                             e.Card <- e.BranchInstance.Branch.Card
                         db.AcquiredCard.AddI e
-                        db.SaveChanges()
                         e)
                 | e ->
                     let communalInstances, instanceIds =
@@ -609,6 +608,7 @@ module UpdateRepository =
                                         ac
                             else
                                 e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                                e.Branch <- e.BranchInstance.Branch
                                 e
                         e :: associatedEntities
                     )

@@ -1,4 +1,4 @@
-﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -22,14 +22,12 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                 FROM "AcquiredCard"
                                 WHERE "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )
             WHERE	ci."Id" = OLD."BranchInstanceId";
-            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
+            UPDATE  "Card" card
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE   ac."CardState" <> 3 )
-            FROM    "Card" c1
-            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = OLD."CardId"
-            WHERE branchSource."Id" = c1."Id";
+                                WHERE   ac."CardState" <> 3 AND ac."CardId" = OLD."CardId")
+            WHERE card."Id" = OLD."CardId";
         END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
@@ -37,14 +35,12 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                 FROM "AcquiredCard"
                                 WHERE "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )
             WHERE	ci."Id" = NEW."BranchInstanceId";
-            UPDATE  "Card" branchSource -- https://stackoverflow.com/a/34806364
+            UPDATE  "Card" card
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE   ac."CardState" <> 3 )
-            FROM    "Card" c1
-            LEFT JOIN "Card" c2 ON c1."Id" = c2."Id" AND c2."Id" = NEW."CardId"
-            WHERE branchSource."Id" = c1."Id";
+                                WHERE   ac."CardState" <> 3 AND ac."CardId" = NEW."CardId")
+            WHERE card."Id" = NEW."CardId";
         END IF;
         RETURN NULL;
     END;

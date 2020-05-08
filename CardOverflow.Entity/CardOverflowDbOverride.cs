@@ -123,6 +123,7 @@ namespace CardOverflow.Entity {
     public IQueryable<CardRelationshipCountEntity> CardRelationshipCount => _CardRelationshipCountTracked.AsNoTracking();
     public IQueryable<CardTagCountEntity> CardTagCount => _CardTagCountTracked.AsNoTracking();
     public IQueryable<BranchInstanceEntity> LatestBranchInstance => BranchInstance.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<BranchInstanceEntity> LatestDefaultBranchInstance => LatestBranchInstance.Where(x => x.Branch.Card.DefaultBranchId == x.BranchId).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<TemplateInstanceEntity> LatestTemplateInstance => TemplateInstance.Where(x => x.Template.LatestInstanceId == x.Id).AsNoTracking();
 
