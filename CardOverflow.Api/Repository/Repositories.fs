@@ -418,7 +418,7 @@ module CardRepository =
                         {   Id = c.CardId
                             Author = c.Card.Author.DisplayName
                             AuthorId = c.Card.AuthorId
-                            Users = c.Branch.Users
+                            Users = c.Card.Users
                             Instance = BranchInstanceMeta.load isAcquired true c
                         }
                     )
