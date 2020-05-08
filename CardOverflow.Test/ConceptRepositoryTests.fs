@@ -634,7 +634,7 @@ let ``New card template has correct hash`` (): Task<unit> = taskResult {
         let computedHash =
             initialTemplate.Editable
             |> ViewTemplateInstance.copyTo
-            |> fun x -> TemplateEntity() |> Entity |> x.CopyToNewInstance
+            |> fun x -> TemplateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
             |> TemplateInstanceEntity.hash sha512
     
         Assert.Equal<BitArray>(dbTemplate.Hash, computedHash) } |> TaskResult.getOk

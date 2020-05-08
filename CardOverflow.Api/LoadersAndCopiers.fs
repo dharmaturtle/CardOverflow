@@ -240,6 +240,10 @@ type AcquiredTemplateInstance with
           DefaultCardSettingId = entity.User_TemplateInstances.Single().DefaultCardSettingId
           TemplateInstance = TemplateInstance.load entity }
 
+type IdPairOrEntity<'a> =
+    | CardIdAndBranchId of int * int
+    | Entity of 'a
+
 type BranchInstanceView with
     static member private toView (templateInstance: TemplateInstanceEntity) (fieldValues: string)=
         {   FieldValues = FieldAndValue.load (Fields.fromString templateInstance.Fields) fieldValues
@@ -264,7 +268,9 @@ type BranchInstanceView with
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         match card with
-        | Id id -> e.Branch.CardId <- id
+        | CardIdAndBranchId (cardId, branchId) ->
+            e.CardId <- cardId
+            e.BranchId <- branchId
         | Entity entity ->
             let (branch: BranchEntity) = entity ()
             e.Card <- branch.Card
@@ -282,7 +288,7 @@ type BranchInstanceMeta with
     static member load isAcquired isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
         {   Id = entity.Id
-            CardId = entity.Branch.CardId
+            CardId = entity.CardId
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
@@ -339,6 +345,7 @@ type QuizCard with
 type AcquiredCard with
     member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) =
         entity.UserId <- this.UserId
+        entity.BranchId <- this.BranchId
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
@@ -352,6 +359,7 @@ type AcquiredCard with
         e
     static member initialize userId cardSettingId tags =
         {   CardId = 0
+            BranchId = 0
             AcquiredCardId = 0
             UserId = userId
             CardState = CardState.Normal
@@ -366,7 +374,8 @@ type AcquiredCard with
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
-            {   CardId = entity.BranchInstance.Branch.CardId
+            {   CardId = entity.CardId
+                BranchId = entity.BranchId
                 AcquiredCardId = entity.Id
                 UserId = entity.UserId
                 CardState = cardState

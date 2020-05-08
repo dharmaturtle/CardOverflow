@@ -87,7 +87,7 @@ module TemplateRepository =
     let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: TemplateInstance) = task {
         let template =
             if instance.TemplateId = 0 then
-                Entity <| TemplateEntity(AuthorId = userId)
+                IdOrEntity.Entity <| TemplateEntity(AuthorId = userId)
             else    
                 Id <| instance.TemplateId
         let newTemplateInstance = instance.CopyToNewInstance template
@@ -430,7 +430,7 @@ module CardRepository =
 module UpdateRepository =
     let card (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
         let newCardEntity =
-            Entity <| fun () ->
+            IdPairOrEntity.Entity <| fun () ->
                 match command.Source with
                 | CopySourceInstanceId instanceId ->
                     BranchEntity(
@@ -440,7 +440,7 @@ module UpdateRepository =
                                 AuthorId = acquiredCard.UserId,
                                 CopySourceId = Nullable instanceId
                             ))
-                | BranchSourceCardId cardId ->
+                | BranchSourceCardId _ ->
                     failwith "impossible"
                     //db.Card.Single(fun x -> x.Id = cardId)
                     //CardEntity(AuthorId = acquiredCard.UserId, BranchSourceId = Nullable cardId)
@@ -455,7 +455,7 @@ module UpdateRepository =
             if acquiredCard.CardId = 0 then
                 newCardEntity
             else
-                Id acquiredCard.CardId
+                IdPairOrEntity.CardIdAndBranchId (acquiredCard.CardId, acquiredCard.BranchId)
         let createCommunalFieldInstanceEntity c fieldName =
             CommunalFieldInstanceEntity(
                 CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
@@ -549,11 +549,11 @@ module UpdateRepository =
                         e.Branch <- e.BranchInstance.Branch
                         //e.Card <- e.BranchInstance.Branch.Card
                         match card with
-                        | Id x ->
-                            e.CardId <- x
+                        | CardIdAndBranchId (cardId, branchId) ->
+                            e.CardId <- cardId
+                            e.BranchId <- branchId
                         | Entity _ ->
                             e.Card <- e.BranchInstance.Branch.Card
-                        e.BranchInstance.Branch.Card.D("I'm not null")
                         db.AcquiredCard.AddI e
                         db.SaveChanges()
                         e)
@@ -583,7 +583,7 @@ module UpdateRepository =
                                 | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
                                 | ac ->
                                     if commandClozeIndexes.Contains <| getClozeIndex ac.BranchInstance.FieldValues then
-                                        ac.BranchInstance <- c.CardView.CopyFieldsToNewInstance (Id ac.BranchInstance.Branch.CardId) command.EditSummary communalInstances
+                                        ac.BranchInstance <- c.CardView.CopyFieldsToNewInstance (CardIdAndBranchId (ac.CardId, ac.BranchId)) command.EditSummary communalInstances
                                         Some ac
                                     else
                                         ac.CardState <- CardState.toDb Suspended
@@ -595,6 +595,7 @@ module UpdateRepository =
                                 let commandIndex = c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " " |> getClozeIndexes |> Seq.distinct |> Seq.exactlyOne
                                 if entityIndex = commandIndex then
                                     e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                                    e.Branch <- e.BranchInstance.Branch
                                     e
                                 else
                                     if associatedEntities.Select(fun x -> getClozeIndex x.BranchInstance.FieldValues).Contains commandIndex then
@@ -602,6 +603,8 @@ module UpdateRepository =
                                     else
                                         let ac = acquiredCard.copyToNew tagIds
                                         ac.BranchInstance <- c.CardView.CopyFieldsToNewInstance newCardEntity c.EditSummary communalInstances
+                                        ac.Branch <- ac.BranchInstance.Branch
+                                        ac.Card <- ac.BranchInstance.Card
                                         db.AcquiredCard.AddI ac
                                         ac
                             else

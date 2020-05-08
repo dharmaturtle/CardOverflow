@@ -304,6 +304,7 @@ type BranchInstanceMeta = {
 [<CLIMutable>]
 type AcquiredCard = {
     CardId: int
+    BranchId: int
     AcquiredCardId: int
     UserId: int
     BranchInstanceMeta: BranchInstanceMeta
