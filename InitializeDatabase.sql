@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -22,6 +22,11 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                 FROM "AcquiredCard"
                                 WHERE "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )
             WHERE	ci."Id" = OLD."BranchInstanceId";
+            UPDATE	"Branch" b
+            SET		"Users" = ( SELECT Count(*)
+                                FROM "AcquiredCard"
+                                WHERE "BranchId" = OLD."BranchId" AND "CardState" <> 3 )
+            WHERE	b."Id" = OLD."BranchId";
             UPDATE  "Card" card
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c
@@ -35,6 +40,11 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                 FROM "AcquiredCard"
                                 WHERE "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )
             WHERE	ci."Id" = NEW."BranchInstanceId";
+            UPDATE	"Branch" b
+            SET		"Users" = ( SELECT Count(*)
+                                FROM "AcquiredCard"
+                                WHERE "BranchId" = NEW."BranchId" AND "CardState" <> 3 )
+            WHERE	b."Id" = NEW."BranchId";
             UPDATE  "Card" card
             SET     "Users" = ( SELECT  COUNT(*)
                                 FROM    "Card" c

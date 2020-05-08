@@ -344,13 +344,19 @@ let ``BranchInstance with "" as FieldValues is parsed to empty`` (): unit =
 [<Fact>]
 let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let og_c = 1
-    let og_b = 1
     let copy_c = 2
-    let copy_b = 2
     let branch_c = 3
     let copy2x_c = 3
     let copyOfBranch_c = 4
     let branchOfCopy_c = 5
+    
+    let og_b = 1
+    let copy_b = 2
+    let og_b_2 = 3
+    let copy2x_b = 4
+    let copyOfBranch_b = 5
+    let branchOfCopy_b = 6
+
     let og_i = 1001
     let ogEdit_i = 1002
     let copy_i = 1003
@@ -363,13 +369,18 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let user2 = 2
     
     use c = new TestContainer()
-    let assertCount (cardsIdsAndCounts: _ list) _ (branchInstanceIdsAndCounts: _ list) = task {
+    let assertCount (cardsIdsAndCounts: _ list) (branchIdsAndCounts: _ list) (branchInstanceIdsAndCounts: _ list) = task {
         do! c.Db.Card.CountAsync()
             |> Task.map(fun i -> Assert.Equal(cardsIdsAndCounts.Length, i))
+        do! c.Db.Branch.CountAsync()
+            |> Task.map(fun i -> Assert.Equal(branchIdsAndCounts.Length, i))
         do! c.Db.BranchInstance.CountAsync()
             |> Task.map(fun i -> Assert.Equal(branchInstanceIdsAndCounts.Length, i))
         for id, count in cardsIdsAndCounts do
             do! c.Db.Card.SingleAsync(fun x -> x.Id = id)
+                |> Task.map (fun c -> Assert.Equal(count, c.Users))
+        for id, count in branchIdsAndCounts do
+            do! c.Db.Branch.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))
         for id, count in branchInstanceIdsAndCounts do
             do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
@@ -458,7 +469,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Empty communals
     do! assertCount
             [og_c, 1;              copy_c, 1]
-            [og_b, 1]
+            [og_b, 1;              copy_b, 1]
             [og_i, 0; ogEdit_i, 1; copy_i, 1]
 
     do! asserts user2 copy_c copy_b copy_i newValue 1 1 []
@@ -471,7 +482,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Equal(sprintf "Card instance %i not found" missingInstanceId, old.error)
     do! assertCount
             [og_c, 1;              copy_c, 1]
-            [og_b, 1]
+            [og_b, 1;              copy_b, 1]
             [og_i, 0; ogEdit_i, 1; copy_i, 1]
 
     // user2 branchs og_c
@@ -500,7 +511,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 IsAcquired = false }]
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ]
-            [og_b, 1]
+            [og_b,     1 ;    copy_b, 1 ;
+             og_b_2,   1 ]
             [og_i,     0 ;    copy_i, 1 ;
              ogEdit_i, 1 ;
              branch_i, 1 ]
@@ -510,7 +522,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     Assert.Equal(sprintf "Card #%i doesn't exist" missingInstanceId, old.error)
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ]
-            [og_b, 1]
+            [og_b,     1 ;    copy_b, 1 ;
+             og_b_2,   1 ]
             [og_i,     0 ;    copy_i, 1 ;
              ogEdit_i, 1 ;
              branch_i, 1 ]
@@ -534,7 +547,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     do! asserts user2 x.CardId x.BranchId x.Id newValue 1 1 []
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ]
-            [og_b, 1]
+            [og_b,     1 ;    copy_b, 1 ;    copy2x_b, 1 ;
+             og_b_2,   1 ]
             [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;
              ogEdit_i, 1 ;
              branch_i, 1 ]
@@ -558,7 +572,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     do! asserts user2 x.CardId x.BranchId x.Id newValue 1 1 []
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ;    copy2x_c, 1 ;    copyOfBranch_c, 1 ]
-            [branch_c, 1 ]
+            [og_b,     1 ;    copy_b, 1 ;    copy2x_b, 1 ;    copyOfBranch_b, 1
+             og_b_2,   1 ]
             [og_i,     0 ;    copy_i, 1 ;    copy2x_i, 1 ;    copyOfBranch_i, 1
              ogEdit_i, 1 ;
              branch_i, 1 ]
@@ -583,9 +598,10 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let! x, _ = ExploreCardRepository.instance c.Db user2 branchOfCopy_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 2 1 []
     do! assertCount
-            [og_c,     2 ;    copy_c, 1 ;         copy2x_c, 1 ;    copyOfBranch_c, 1 ]
-            [branch_c, 1 ;    branchOfCopy_c, 1 ]
-            [og_i,     0 ;    copy_i, 0 ;         copy2x_i, 1 ;    copyOfBranch_i, 1 ;
+            [og_c,     2 ;    copy_c, 1         ; copy2x_c, 1 ;    copyOfBranch_c, 1 ]
+            [og_b,     1 ;    copy_b, 0         ; copy2x_b, 1 ;    copyOfBranch_b, 1
+             og_b_2,   1 ;    branchOfCopy_b, 1 ]
+            [og_i,     0 ;    copy_i, 0         ; copy2x_i, 1 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 1 ]
 
