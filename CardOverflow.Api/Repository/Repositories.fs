@@ -415,10 +415,10 @@ module CardRepository =
             return {
                 Results =
                     squashed |> List.map (fun (c, isAcquired) ->
-                        {   Id = c.Branch.CardId
+                        {   Id = c.CardId
                             Author = c.Card.Author.DisplayName
                             AuthorId = c.Card.AuthorId
-                            Users = c.Branch.Card.Users
+                            Users = c.Branch.Users
                             Instance = BranchInstanceMeta.load isAcquired true c
                         }
                     )
