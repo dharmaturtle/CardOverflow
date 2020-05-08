@@ -402,13 +402,13 @@ module CardRepository =
                     x,
                     x.AcquiredCards.Any(fun x -> x.UserId = userId),
                     x.TemplateInstance, // .Include fails for some reason, so we have to manually select
-                    x.Branch.Card,
-                    x.Branch.Card.Author
+                    x.Card,
+                    x.Card.Author
                 ).ToPagedListAsync(pageNumber, 15)
             let squashed =
                 r |> List.ofSeq |> List.map (fun (c, isAcquired, template, card, author) ->
-                    c.Branch.Card <- card
-                    c.Branch.Card.Author <- author
+                    c.Card <- card
+                    c.Card.Author <- author
                     c.TemplateInstance <- template
                     c, isAcquired
                 )
@@ -416,8 +416,8 @@ module CardRepository =
                 Results =
                     squashed |> List.map (fun (c, isAcquired) ->
                         {   Id = c.Branch.CardId
-                            Author = c.Branch.Card.Author.DisplayName
-                            AuthorId = c.Branch.Card.AuthorId
+                            Author = c.Card.Author.DisplayName
+                            AuthorId = c.Card.AuthorId
                             Users = c.Branch.Card.Users
                             Instance = BranchInstanceMeta.load isAcquired true c
                         }

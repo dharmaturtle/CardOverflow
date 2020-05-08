@@ -197,8 +197,8 @@ module SanitizeRelationshipRepository =
         let! targetCardId = GetCardId command.TargetCardLink
         do! if targetCardId = command.SourceCardId then Error "A card can't be related to itself" else Ok ()
         let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.CardId = targetCardId || x.CardId = command.SourceCardId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.BranchInstance.Branch.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
-        let! s = acs.SingleOrDefault(fun x -> x.BranchInstance.Branch.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
+        let! t = acs.SingleOrDefault(fun x -> x.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
+        let! s = acs.SingleOrDefault(fun x -> x.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid =
