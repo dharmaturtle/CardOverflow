@@ -31,7 +31,7 @@
 @code {
   [Parameter] public int Id { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
-  CardOverflow.Pure.CardRevision Revision;
+  CardOverflow.Pure.BranchRevision Revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
