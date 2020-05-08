@@ -258,10 +258,16 @@ module CardViewRepository =
 module AcquiredCardRepository =
     let getAcquired (db: CardOverflowDb) userId (testBranchInstanceIds: int ResizeArray) =
         db.AcquiredCard.Where(fun x -> testBranchInstanceIds.Contains(x.BranchInstanceId) && x.UserId = userId).Select(fun x -> x.BranchInstanceId).ToListAsync()
-    let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) =
-        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstanceId = branchInstanceId)
-        |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with the id #%i" branchInstanceId))
-        |> TaskResult.map (fun x -> x.BranchInstanceId)
+    let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) = taskResult {
+        let! branchId =
+            db.BranchInstance.SingleOrDefaultAsync(fun x-> x.Id = branchInstanceId)
+            |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found" branchInstanceId))
+            |> TaskResult.map(fun x -> x.BranchId)
+        return!
+            db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
+            |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with the id #%i" branchInstanceId))
+            |> TaskResult.map (fun x -> x.BranchInstanceId)
+    }
 
 module CardRepository =
     let deleteAcquired (db: CardOverflowDb) userId acquiredCardId = taskResult {

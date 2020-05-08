@@ -65,7 +65,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
-    let cards = cards.Results |> Seq.map (fun x -> x.Value) |> Seq.toList
+    let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
     Assert.Equal(updatedInstanceId, cards.Single().BranchInstanceMeta.Id)
 
