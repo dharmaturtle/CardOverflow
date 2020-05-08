@@ -811,9 +811,9 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     do! testGetAcquired og_c update_i
 
     // acquiring old instance doesn't change LatestInstanceId
-    Assert.Equal(update_i, c.Db.Card.Single().DefaultBranch.LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Card.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
     do! CardRepository.AcquireCardAsync c.Db userId og_i
-    Assert.Equal(update_i, c.Db.Card.Single().DefaultBranch.LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Card.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
 
     // tests OtherInstanceAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
@@ -824,48 +824,48 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
 
     // branch card
     let branch_i = 1003
-    let branch_c = 2
+    let branch_b = 2
     let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getBranch c.Db userId og_c
     let! (instanceIds, x) = UpdateRepository.card c.Db ac command.load
     Assert.Equal<int seq>([branch_i], instanceIds)
     Assert.Empty x
     
     // tests LatestBranchAcquired
-    let! card = ExploreCardRepository.get c.Db userId branch_c
+    let! card = ExploreCardRepository.get c.Db userId branch_b
     match card.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(branch_i, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired branch_c branch_i
+    do! testGetAcquired branch_b branch_i
     do! testGetAcquired og_c branch_i
 
     // update branch
     let updateBranch_i = 1004
-    let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getEdit c.Db userId branch_c
+    let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getEdit c.Db userId branch_b
     let! (instanceIds, x) = UpdateRepository.card c.Db ac command.load
     Assert.Equal<int seq>([updateBranch_i], instanceIds)
     Assert.Empty x
 
     // tests LatestBranchAcquired
-    let! card = ExploreCardRepository.get c.Db userId branch_c
+    let! card = ExploreCardRepository.get c.Db userId branch_b
     match card.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(updateBranch_i, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired branch_c updateBranch_i
+    do! testGetAcquired branch_b updateBranch_i
     do! testGetAcquired og_c updateBranch_i
 
     // acquiring old instance doesn't change LatestInstanceId
-    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).Branches.Single().LatestInstanceId)
-    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).DefaultBranch.LatestInstanceId)
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_b).Branches.Single().LatestInstanceId)
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_b).DefaultBranch.LatestInstanceId)
     do! CardRepository.AcquireCardAsync c.Db userId branch_i
-    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).Branches.Single().LatestInstanceId)
-    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).DefaultBranch.LatestInstanceId)
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_b).Branches.Single().LatestInstanceId)
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_b).DefaultBranch.LatestInstanceId)
 
     // tests OtherBranchAcquired
-    let! card = ExploreCardRepository.get c.Db userId branch_c
+    let! card = ExploreCardRepository.get c.Db userId branch_b
     match card.AcquiredStatus with
     | OtherBranchAcquired x -> Assert.Equal(branch_i, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired branch_c branch_i
+    do! testGetAcquired branch_b branch_i
     do! testGetAcquired og_c branch_i
 
     // branch card again
@@ -893,9 +893,9 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     do! testGetAcquired og_c branch_i2
 
     // acquiring old instance doesn't change LatestInstanceId; can also acquire old branch
-    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).DefaultBranch.LatestInstanceId)
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_b).DefaultBranch.LatestInstanceId)
     do! CardRepository.AcquireCardAsync c.Db userId branch_i
-    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_c).DefaultBranch.LatestInstanceId)
+    Assert.Equal(updateBranch_i, c.Db.Card.Single(fun x -> x.Id = branch_b).DefaultBranch.LatestInstanceId)
 
     // can't acquire missing id
     let missingId = 9001
@@ -904,7 +904,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
 
     // tests NotAcquired
     let otherUser = 1
-    let! card = ExploreCardRepository.get c.Db otherUser branch_c
+    let! card = ExploreCardRepository.get c.Db otherUser branch_b
     Assert.Equal(NotAcquired, card.AcquiredStatus)
     } |> TaskResult.getOk)
     
