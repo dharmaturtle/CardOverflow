@@ -208,13 +208,13 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             .ToListAsync()
     
     let! basic = getInstances "Basic"
-    for card in basic do
-        let! card = ExploreCardRepository.get c.Db userId card.CardId
+    for branchInstance in basic do
+        let! card = ExploreCardRepository.get c.Db userId branchInstance.CardId
         let card = card.Value
         Assert.Empty card.Relationships
         let communalValue = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"
         Assert.Equal(
-            { Id = 1001
+            { Id = 1003
               FieldName = "Source"
               Value = communalValue },
             card.Instance.CommunalFields.Single())
@@ -229,8 +229,8 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
-        ["More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""
-         "Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""]
+        ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
+         "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
     for card in sketchy do
         let! card = ExploreCardRepository.get c.Db userId card.CardId
         let card = card.Value
@@ -243,7 +243,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             expectedFieldAndValues,
             view.Value.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
-                .Select(fun x -> x.Field.Name, x.Value))
+                .Select(fun x -> x.Field.Name, x.Value).OrderBy(fun x -> x))
         let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
         let (command, _) = command.Value
         Assert.Equal<int seq>(
@@ -251,7 +251,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.distinct |> Seq.sort)
         Assert.Equal<string seq>(
             expectedFieldAndValues |> List.map snd,
-            command.CommunalFieldValues.Select(fun x -> x.Value))
+            command.CommunalFieldValues.Select(fun x -> x.Value) |> Seq.sort)
 
     let! cloze = getInstances "Cloze"
     for instance in cloze do

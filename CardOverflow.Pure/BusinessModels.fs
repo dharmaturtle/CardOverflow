@@ -363,6 +363,7 @@ type Branch = {
 
 [<CLIMutable>]
 type ExploreCard = {
+    Id: int
     Summary: ExploreBranchSummary
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
@@ -370,7 +371,6 @@ type ExploreCard = {
     AcquiredStatus: ExploreCardAcquiredStatus
     Branches: Branch ResizeArray
 } with
-    member this.Id = this.Summary.Id
     //don't add users - the UI needs it to be mutable
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
