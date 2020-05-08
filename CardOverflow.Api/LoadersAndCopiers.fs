@@ -418,7 +418,7 @@ type Branch with
 
 type ExploreCard with
     static member load (entity: CardEntity) acquiredStatus (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) instance = {
-        Summary = ExploreBranchSummary.load instance entity.DefaultBranch
+        Summary = ExploreBranchSummary.load instance <| entity.Branches.Single(fun x -> x.Id = entity.DefaultBranchId)
         Comments = entity.CommentCards |> Seq.map Comment.load |> toResizeArray
         Tags =
             tagCounts.Select(fun x ->

@@ -129,7 +129,7 @@ module ExploreCardRepository =
             db.AcquiredCard
                 .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance)
-                .SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardId = rootInstance.Branch.CardId)
+                .SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardId = rootInstance.CardId)
                 |> Task.map Option.ofObj
         return
             match ac with
@@ -148,17 +148,17 @@ module ExploreCardRepository =
     let get (db: CardOverflowDb) userId cardId = taskResult {
         let! (r: BranchInstanceEntity * List<string> * List<string> * List<string>) =
             db.LatestBranchInstance
-                //.Include(fun x -> x.Card.Author)
-                //.Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
-                //    .ThenInclude(fun (x: CardEntity) -> x.LatestInstance.TemplateInstance)
-                //.Include(fun x -> x.Card.BranchChildren :> IEnumerable<_>)
-                //    .ThenInclude(fun (x: CardEntity) -> x.Author)
-                //.Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
-                    //.ThenInclude(fun (x: CommentCardEntity) -> x.User)
+                .Include(fun x -> x.Card.Author)
+                .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
+                    .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.TemplateInstance)
+                .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
+                    .ThenInclude(fun (x: BranchEntity) -> x.Author)
+                .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.TemplateInstance)
-                //.Where(fun x -> x.CardId = rootCardId)
+                .Where(fun x -> x.CardId = cardId)
                 .Select(fun x ->
                     x,
                     x.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
@@ -171,7 +171,7 @@ module ExploreCardRepository =
         let! acquiredStatus = getAcquiredStatus db userId rootInstance
         return
             BranchInstanceMeta.load (acquiredStatus = ExactInstanceAcquired rootInstance.Id ) true rootInstance
-            |> ExploreCard.load rootInstance.Branch.Card acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+            |> ExploreCard.load rootInstance.Card acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
         let! (e: BranchInstanceEntity) =
