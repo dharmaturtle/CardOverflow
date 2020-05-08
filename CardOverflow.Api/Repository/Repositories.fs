@@ -547,12 +547,15 @@ module UpdateRepository =
                         let e = acquiredCard.copyToNew tagIds
                         e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
                         e.Branch <- e.BranchInstance.Branch
+                        //e.Card <- e.BranchInstance.Branch.Card
                         match card with
                         | Id x ->
                             e.CardId <- x
                         | Entity _ ->
                             e.Card <- e.BranchInstance.Branch.Card
+                        e.BranchInstance.Branch.Card.D("I'm not null")
                         db.AcquiredCard.AddI e
+                        db.SaveChanges()
                         e)
                 | e ->
                     let communalInstances, instanceIds =

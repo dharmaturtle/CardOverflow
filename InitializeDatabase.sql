@@ -1225,6 +1225,10 @@ ALTER TABLE ONLY public."BranchInstance"
     ADD CONSTRAINT "UQ_BranchInstance_BranchId_Id" UNIQUE ("BranchId", "Id");
 
 
+ALTER TABLE ONLY public."BranchInstance"
+    ADD CONSTRAINT "UQ_BranchInstance_CardId_Id" UNIQUE ("CardId", "Id");
+
+
 ALTER TABLE ONLY public."Branch"
     ADD CONSTRAINT "UQ_Branch_CardId_Id" UNIQUE ("CardId", "Id");
 
@@ -1389,6 +1393,10 @@ ALTER TABLE ONLY public."AcquiredCard"
 
 ALTER TABLE ONLY public."AcquiredCard"
     ADD CONSTRAINT "FK_AcquiredCard_BranchInstance_BranchInstanceId_BranchId" FOREIGN KEY ("BranchId", "BranchInstanceId") REFERENCES public."BranchInstance"("BranchId", "Id");
+
+   
+ALTER TABLE ONLY public."BranchInstance"
+    ADD CONSTRAINT "FK_BranchInstance_Branch_CardId_BranchId" FOREIGN KEY ("CardId", "BranchId") REFERENCES public."Branch"("CardId", "Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."AcquiredCard"

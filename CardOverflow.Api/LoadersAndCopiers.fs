@@ -266,7 +266,9 @@ type BranchInstanceView with
         match card with
         | Id id -> e.Branch.CardId <- id
         | Entity entity ->
-            e.Branch <- entity ()
+            let (branch: BranchEntity) = entity ()
+            e.Card <- branch.Card
+            e.Branch <- branch
         e.EditSummary <- editSummary
         e
 

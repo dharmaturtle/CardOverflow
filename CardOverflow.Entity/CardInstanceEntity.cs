@@ -45,6 +45,9 @@ namespace CardOverflow.Entity
         public string TsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 
+        [ForeignKey("CardId")]
+        public virtual CardEntity Card { get; set; }
+
         [ForeignKey("BranchId")]
         [InverseProperty("BranchInstances")]
         public virtual BranchEntity Branch { get; set; }
