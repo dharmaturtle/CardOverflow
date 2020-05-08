@@ -315,7 +315,7 @@ module SanitizeCardRepository =
             else Ok ()
         let! ac = CardRepository.getNew db userId
         let! branchInstanceId =
-            db.LatestBranchInstance.SingleOrDefaultAsync(fun x -> x.Branch.CardId = cardId)
+            db.LatestDefaultBranchInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
             |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
             |> TaskResult.map (fun x -> x.Id)
         let! command = _getCommand db branchInstanceId <| BranchSourceCardId cardId

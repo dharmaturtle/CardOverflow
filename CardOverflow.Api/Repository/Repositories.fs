@@ -137,11 +137,11 @@ module ExploreCardRepository =
             | Some ac ->
                 if   ac.BranchInstanceId = rootInstance.Id then
                     ExactInstanceAcquired ac.BranchInstanceId
-                elif ac.CardId = rootInstance.CardId then
+                elif ac.CardId = rootInstance.CardId && ac.BranchId = rootInstance.BranchId then
                     OtherInstanceAcquired ac.BranchInstanceId
-                elif rootInstance.Branch.Card.Branches.Select(fun x -> x.LatestInstanceId).Contains ac.BranchInstanceId then
+                elif rootInstance.Card.Branches.Select(fun x -> x.LatestInstanceId).Contains ac.BranchInstanceId then
                     LatestBranchAcquired ac.BranchInstanceId
-                elif rootInstance.Branch.Card.Branches.Select(fun x -> x.Id).Contains ac.CardId then
+                elif rootInstance.Card.Branches.Select(fun x -> x.Id).Contains ac.CardId then
                     OtherBranchAcquired ac.BranchInstanceId
                 else failwith "impossible"
     }
