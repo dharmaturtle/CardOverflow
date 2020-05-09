@@ -56,17 +56,17 @@ type ViewTemplateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    QuestionTemplate: string
+    QuestionXemplate: string
     AnswerXemplate: string
-    ShortQuestionTemplate: string
+    ShortQuestionXemplate: string
     ShortAnswerXemplate: string
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
 } with
     member this.IsCloze =
-        Cloze.isCloze this.QuestionTemplate
+        Cloze.isCloze this.QuestionXemplate
     member this.ClozeFields =
-        AnkiImportLogic.clozeFields this.QuestionTemplate
+        AnkiImportLogic.clozeFields this.QuestionXemplate
 
 module ViewTemplateInstance =
     let load (bznz: TemplateInstance) = {
@@ -79,9 +79,9 @@ module ViewTemplateInstance =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        QuestionTemplate = bznz.QuestionTemplate
+        QuestionXemplate = bznz.QuestionXemplate
         AnswerXemplate = bznz.AnswerXemplate
-        ShortQuestionTemplate = bznz.ShortQuestionTemplate
+        ShortQuestionXemplate = bznz.ShortQuestionXemplate
         ShortAnswerXemplate = bznz.ShortAnswerXemplate
         EditSummary = bznz.EditSummary
     }
@@ -95,9 +95,9 @@ module ViewTemplateInstance =
         Modified = view.Modified
         LatexPre = view.LatexPre
         LatexPost = view.LatexPost
-        QuestionTemplate = view.QuestionTemplate
+        QuestionXemplate = view.QuestionXemplate
         AnswerXemplate = view.AnswerXemplate
-        ShortQuestionTemplate = view.ShortQuestionTemplate
+        ShortQuestionXemplate = view.ShortQuestionXemplate
         ShortAnswerXemplate = view.ShortAnswerXemplate
         EditSummary = view.EditSummary
     }
@@ -112,9 +112,9 @@ type ViewSearchTemplateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    QuestionTemplate: string
+    QuestionXemplate: string
     AnswerXemplate: string
-    ShortQuestionTemplate: string
+    ShortQuestionXemplate: string
     ShortAnswerXemplate: string
     EditSummary: string
     TemplateUsers: int
@@ -132,9 +132,9 @@ module ViewSearchTemplateInstance =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        QuestionTemplate = bznz.QuestionTemplate
+        QuestionXemplate = bznz.QuestionXemplate
         AnswerXemplate = bznz.AnswerXemplate
-        ShortQuestionTemplate = bznz.ShortQuestionTemplate
+        ShortQuestionXemplate = bznz.ShortQuestionXemplate
         ShortAnswerXemplate = bznz.ShortAnswerXemplate
         EditSummary = bznz.EditSummary
         TemplateUsers = templateUsers

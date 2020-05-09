@@ -239,7 +239,7 @@ type ViewEditCardCommand = {
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
         if this.TemplateInstance.IsCloze then
             result {
-                let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionTemplate
+                let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionXemplate
                 return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                     let zip =
                         Seq.zip
@@ -248,7 +248,7 @@ type ViewEditCardCommand = {
                         |> List.ofSeq
                     CardHtml.generate
                         zip
-                        this.TemplateInstance.QuestionTemplate
+                        this.TemplateInstance.QuestionXemplate
                         this.TemplateInstance.AnswerXemplate
                         this.TemplateInstance.Css
                     |> fun (_, back, _, _) -> back
@@ -257,7 +257,7 @@ type ViewEditCardCommand = {
         else
             CardHtml.generate
                 <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
-                <| this.TemplateInstance.QuestionTemplate
+                <| this.TemplateInstance.QuestionXemplate
                 <| this.TemplateInstance.AnswerXemplate
                 <| this.TemplateInstance.Css
             |> fun (_, back, _, _) -> [back].ToList()

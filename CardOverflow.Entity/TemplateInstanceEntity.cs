@@ -64,14 +64,14 @@ namespace CardOverflow.Entity
         public bool IsDmca { get; set; }
         [Required]
         [StringLength(4000)]
-        public string QuestionTemplate {
-            get => _QuestionTemplate;
+        public string QuestionXemplate {
+            get => _QuestionXemplate;
             set {
-                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionTemplate has a maximum length of 4000. Attempted value: {value}");
-                _QuestionTemplate = value;
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionXemplate has a maximum length of 4000. Attempted value: {value}");
+                _QuestionXemplate = value;
             }
         }
-        private string _QuestionTemplate;
+        private string _QuestionXemplate;
         [Required]
         [StringLength(4000)]
         public string AnswerXemplate {
@@ -84,14 +84,14 @@ namespace CardOverflow.Entity
         private string _AnswerXemplate;
         [Required]
         [StringLength(200)]
-        public string ShortQuestionTemplate {
-            get => _ShortQuestionTemplate;
+        public string ShortQuestionXemplate {
+            get => _ShortQuestionXemplate;
             set {
-                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortQuestionTemplate has a maximum length of 200. Attempted value: {value}");
-                _ShortQuestionTemplate = value;
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortQuestionXemplate has a maximum length of 200. Attempted value: {value}");
+                _ShortQuestionXemplate = value;
             }
         }
-        private string _ShortQuestionTemplate;
+        private string _ShortQuestionXemplate;
         [Required]
         [StringLength(200)]
         public string ShortAnswerXemplate {

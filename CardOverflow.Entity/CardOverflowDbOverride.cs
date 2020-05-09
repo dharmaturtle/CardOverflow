@@ -94,7 +94,7 @@ namespace CardOverflow.Entity {
         template.Hash = _entityHasher.TemplateInstanceHasher.Invoke((template, sha512));
         template.CWeightTsVectorHelper =
           Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
-            .Append(MappingTools.stripHtmlTags(template.QuestionTemplate))
+            .Append(MappingTools.stripHtmlTags(template.QuestionXemplate))
             .Append(MappingTools.stripHtmlTags(template.AnswerXemplate))
             .Apply(x => string.Join(' ', x));
       }

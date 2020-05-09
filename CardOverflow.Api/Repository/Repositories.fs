@@ -495,7 +495,7 @@ module UpdateRepository =
             let! splitCommands =
                 if command.TemplateInstance.IsCloze then
                     let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
-                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionTemplate
+                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionXemplate
                     |> Result.map (fun max ->
                     [1s .. int16 max] |> List.map (fun clozeIndex ->
                         let zip =

@@ -111,18 +111,18 @@ type TemplateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    QuestionTemplate: string
+    QuestionXemplate: string
     AnswerXemplate: string
-    ShortQuestionTemplate: string
+    ShortQuestionXemplate: string
     ShortAnswerXemplate: string
     EditSummary: string
 } with
     member this.IsCloze =
-        Cloze.isCloze this.QuestionTemplate
+        Cloze.isCloze this.QuestionXemplate
     member this.ClozeFields =
-        AnkiImportLogic.clozeFields this.QuestionTemplate
+        AnkiImportLogic.clozeFields this.QuestionXemplate
     member this.FrontBackFrontSynthBackSynth =
-        CardHtml.generate [] this.QuestionTemplate this.AnswerXemplate this.Css
+        CardHtml.generate [] this.QuestionXemplate this.AnswerXemplate this.Css
 
 type AcquiredTemplateInstance = {
     DefaultTags: int seq
@@ -256,7 +256,7 @@ type BranchInstanceView = {
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         CardHtml.generate
             <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
-            <| this.TemplateInstance.QuestionTemplate
+            <| this.TemplateInstance.QuestionXemplate
             <| this.TemplateInstance.AnswerXemplate
             <| this.TemplateInstance.Css
 

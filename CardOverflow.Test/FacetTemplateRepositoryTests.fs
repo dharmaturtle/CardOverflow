@@ -35,17 +35,17 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
-        latestInstance.QuestionTemplate)
+        latestInstance.QuestionXemplate)
     Assert.Equal(1, c.Db.TemplateInstance.Count(fun x -> x.TemplateId = templateId))
 
     // Testing UpdateFieldsToNewInstance
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
-    let newQuestionTemplate = "modified {{Front mutated}}"
+    let newQuestionXemplate = "modified {{Front mutated}}"
     let newTemplateName = "new name"
     let updated =
         { latestInstance with
             Name = newTemplateName
-            QuestionTemplate = newQuestionTemplate
+            QuestionXemplate = newQuestionXemplate
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
         } |> ViewTemplateInstance.copyTo
     
@@ -54,8 +54,8 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
     let! template = SanitizeTemplate.AllInstances c.Db templateId
     let latestInstance = template.Value.Instances |> Seq.maxBy (fun x -> x.Created)
     Assert.Equal(
-        newQuestionTemplate,
-        latestInstance.QuestionTemplate)
+        newQuestionXemplate,
+        latestInstance.QuestionXemplate)
     Assert.Equal(
         newTemplateName,
         latestInstance.Name)
@@ -125,7 +125,7 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
         BusinessLogicTests.assertStripped expectedBack back
     }
     
-    do! testView TemplateRepository.latest templateId newQuestionTemplate <| newQuestionTemplate + " {{Back}}"
+    do! testView TemplateRepository.latest templateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
 
     let priorInstance = template.Value.Instances |> Seq.minBy (fun x -> x.Created)
     do! testView TemplateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"

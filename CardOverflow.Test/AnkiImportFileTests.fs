@@ -459,7 +459,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     }).ToList()
                 TemplateInstance =
                     { TemplateInstance.initialize with
-                        QuestionTemplate = questionTemplate
+                        QuestionXemplate = questionTemplate
                     } |> ViewTemplateInstance.load
                 Source = Original
             }
@@ -498,7 +498,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     }).ToList()
                 TemplateInstance =
                     { TemplateInstance.initialize with
-                        QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
+                        QuestionXemplate = "{{cloze:Front}}{{cloze:Back}}"
                         AnswerXemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                     } |> ViewTemplateInstance.load
                 Source = Original

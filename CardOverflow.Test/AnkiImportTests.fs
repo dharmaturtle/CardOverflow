@@ -42,7 +42,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         myBasic.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}\n\n<script>\nlet uls = document.getElementsByClassName(\"random\");\nlet ulsArray = Array.prototype.slice.call(uls);\n\nlet arrayLength = ulsArray.length;\nfor (let i = 0; i < arrayLength; i++) {\n  let lis = ulsArray[i].getElementsByTagName(\"li\");\n  let lisArray = Array.prototype.slice.call(lis);\n  shuffle(lisArray);\n\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\n    return node.outerHTML;\n  }).join(\"\");\n}\n\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\nfunction shuffle(a) {\n  let j, x, i;\n  for (i = a.length; i; i -= 1) {\n    j = Math.floor(Math.random() * i);\n    x = a[i - 1];\n    a[i - 1] = a[j];\n    a[j] = x;\n  }\n}\n\ndocument.onkeydown = function(evt) {\n  if (evt.keyCode == 90) {\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \n\n    let allDetails = document.getElementsByTagName('details');\n    for (i = 0; i < allDetails.length; i++) {\n      if (!allDetails[i].hasAttribute(\"open\")) {\n        allDetails[i].setAttribute('open', '');\n        break;\n      }\n    }\n  }\n};\n\n</script>",
-        myBasic.QuestionTemplate)
+        myBasic.QuestionXemplate)
     Assert.Equal(
         "<div id=\"front\">\n{{FrontSide}}\n</div>\n\n<hr id=answer>\n\n{{Back}}\n\n<script>\nlet uls = document.getElementsByClassName(\"random\");\nlet ulsArray = Array.prototype.slice.call(uls);\n\nlet arrayLength = ulsArray.length;\nfor (let i = 0; i < arrayLength; i++) {\n  let lis = ulsArray[i].getElementsByTagName(\"li\");\n  let lisArray = Array.prototype.slice.call(lis);\n  shuffle(lisArray);\n\t\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\n    return node.outerHTML;\n  }).join(\"\");\n}\n\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\nfunction shuffle(a) {\n  let j, x, i;\n  for (i = a.length; i; i -= 1) {\n    j = Math.floor(Math.random() * i);\n    x = a[i - 1];\n    a[i - 1] = a[j];\n    a[j] = x;\n  }\n}\n\ndocument.onkeydown = function(evt) {\n  if (evt.keyCode == 90) {\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \n\n    let allDetails = document.getElementsByTagName('details');\n    for (i = 0; i < allDetails.length; i++) {\n      if (!allDetails[i].hasAttribute(\"open\")) {\n        allDetails[i].setAttribute('open', '');\n        break;\n      }\n    }\n  }\n};\n\nlet frontDetails = document.getElementById(\"front\").getElementsByTagName('details')\nfor (i = 0; i < frontDetails.length; i++) {\n  frontDetails[i].setAttribute('open', '');\n}\n\n</script>",
         myBasic.AnswerXemplate)
@@ -65,7 +65,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         [   "<div class=textstyling>\t\t\n{{#Extra Q3}}<font color=\"#DC143C\"></font><br>\n<center>{{Extra Q3}}</center>\n{{/Extra Q3}}\n</div>\n\n"
             "<div class=textstyling>\n{{#Extra Q}}<font color=\"#DC143C\"></font>\n<center>{{Extra Q}}</center>\n{{/Extra Q}}\n</div>\n\n"
             "<div class=textstyling>\n{{#Extra Q2}}<font color=\"#DC143C\"></font><br>\n<center>{{Extra Q2}} </center>\n{{/Extra Q2}}\n</div>\n\n" ],
-        sketchy.Select(fun x -> x.QuestionTemplate))
+        sketchy.Select(fun x -> x.QuestionXemplate))
 
     let cloze = templates.[2].Single()
     Assert.Equal(
@@ -76,7 +76,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
          cloze.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{cloze:Text}}",
-        cloze.QuestionTemplate)
+        cloze.QuestionXemplate)
     Assert.Equal(
         "{{cloze:Text}}<br>\n\n\n{{Extra}}\n",
         cloze.AnswerXemplate)

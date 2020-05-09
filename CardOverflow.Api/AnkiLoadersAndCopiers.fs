@@ -38,9 +38,9 @@ type AnkiTemplateInstance = {
     DefaultCardSettingId: int
     LatexPre: string
     LatexPost: string
-    QuestionTemplate: string
+    QuestionXemplate: string
     AnswerXemplate: string
-    ShortQuestionTemplate: string
+    ShortQuestionXemplate: string
     ShortAnswerXemplate: string
     DeckId: int64
     IsCloze: bool
@@ -57,9 +57,9 @@ type AnkiTemplateInstance = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-        entity.QuestionTemplate <- this.QuestionTemplate
+        entity.QuestionXemplate <- this.QuestionXemplate
         entity.AnswerXemplate <- this.AnswerXemplate
-        entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
+        entity.ShortQuestionXemplate <- this.ShortQuestionXemplate
         entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
         entity.EditSummary <- "Imported from Anki"
     member this.CopyToNew userId defaultCardSetting =
@@ -281,7 +281,7 @@ module Anki =
         ReducedFields: Field list
         FieldsByOrdinal: (int16 * Field list) list
     } with
-        member this.QuestionTemplate = this.Template.QuestionTemplate
+        member this.QuestionXemplate = this.Template.QuestionXemplate
         member this.AnswerXemplate = this.Template.AnswerXemplate
         member this.Ordinal = this.Template.Ordinal
     let parseModels userId =
@@ -294,7 +294,7 @@ module Anki =
             let communalFields =
                 templates.Head.ReducedFields
                 |> List.filter (fun field ->
-                    templates.Count(fun t -> contains t.QuestionTemplate t.AnswerXemplate field.Name)
+                    templates.Count(fun t -> contains t.QuestionXemplate t.AnswerXemplate field.Name)
                     |> function
                     | 1 -> false
                     | _ -> true
@@ -302,8 +302,8 @@ module Anki =
             let communalFieldNames = communalFields |> List.map (fun x -> x.Name)
             let rec reduceLoop templates =
                 let combine (newT: TempTemplate) (oldT: TempTemplate) =
-                    let newQA = [newT.QuestionTemplate; newT.AnswerXemplate] |> joinByUnitSeparator
-                    let oldQA = [oldT.QuestionTemplate; oldT.AnswerXemplate] |> joinByUnitSeparator
+                    let newQA = [newT.QuestionXemplate; newT.AnswerXemplate] |> joinByUnitSeparator
+                    let oldQA = [oldT.QuestionXemplate; oldT.AnswerXemplate] |> joinByUnitSeparator
                     if  standardizeWhitespace (BraceRegex().Replace(newQA, "")) =
                         standardizeWhitespace (BraceRegex().Replace(oldQA, "")) then
                         let getFields x =
@@ -353,7 +353,7 @@ module Anki =
             let templateSpecificFieldsByTemplate =
                 let usedFieldsByTemplate =
                     templates |> List.map(fun t ->
-                        let qa = [t.QuestionTemplate; t.AnswerXemplate] |> joinByUnitSeparator
+                        let qa = [t.QuestionXemplate; t.AnswerXemplate] |> joinByUnitSeparator
                         t, BraceRegex().TypedMatches(qa).Select(fun x -> x.fieldName.Value) |> List.ofSeq
                     ) |> Map.ofList
                 templates |> List.map(fun t ->
@@ -389,9 +389,9 @@ module Anki =
             let templates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
                             {|Name = g.Required.Field "name" Decode.string
-                              QuestionTemplate = g.Required.Field "qfmt" Decode.string
+                              QuestionXemplate = g.Required.Field "qfmt" Decode.string
                               AnswerXemplate = g.Required.Field "afmt" Decode.string
-                              ShortQuestionTemplate = g.Required.Field "bqfmt" Decode.string
+                              ShortQuestionXemplate = g.Required.Field "bqfmt" Decode.string
                               ShortAnswerXemplate = g.Required.Field "bafmt" Decode.string
                               Ordinal = g.Required.Field "ord" Decode.int |> int16 |})
                               |> Decode.list )
@@ -414,9 +414,9 @@ module Anki =
                               Ordinal = get.Required.Field "ord" Decode.int |> byte
                               IsSticky = get.Required.Field "sticky" Decode.bool })
                             |> Decode.list)
-                    QuestionTemplate = template.QuestionTemplate
+                    QuestionXemplate = template.QuestionXemplate
                     AnswerXemplate = template.AnswerXemplate
-                    ShortQuestionTemplate = template.ShortQuestionTemplate
+                    ShortQuestionXemplate = template.ShortQuestionXemplate
                     ShortAnswerXemplate = template.ShortAnswerXemplate
                     Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
                     Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
@@ -528,7 +528,7 @@ module Anki =
                                     AnkiImportLogic.maxClozeIndex
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
                                         <| valueByFieldName
-                                        <| template.Template.QuestionTemplate
+                                        <| template.Template.QuestionXemplate
                                 return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                                     toCard
                                         <| AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex fieldValues

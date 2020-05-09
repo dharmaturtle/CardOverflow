@@ -20,9 +20,9 @@ module TemplateInstanceEntity =
             e.Css
             e.LatexPre
             e.LatexPost
-            e.QuestionTemplate
+            e.QuestionXemplate
             e.AnswerXemplate
-            e.ShortQuestionTemplate
+            e.ShortQuestionXemplate
             e.ShortAnswerXemplate
             e.Fields
         ]
@@ -163,9 +163,9 @@ type TemplateInstance with
         Modified = entity.Modified |> Option.ofNullable
         LatexPre = entity.LatexPre
         LatexPost = entity.LatexPost
-        QuestionTemplate = entity.QuestionTemplate
+        QuestionXemplate = entity.QuestionXemplate
         AnswerXemplate = entity.AnswerXemplate
-        ShortQuestionTemplate = entity.ShortQuestionTemplate
+        ShortQuestionXemplate = entity.ShortQuestionXemplate
         ShortAnswerXemplate = entity.ShortAnswerXemplate
         EditSummary = entity.EditSummary }
     static member initialize = {
@@ -202,13 +202,13 @@ type TemplateInstance with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        QuestionTemplate = """{{Front}}"""
+        QuestionXemplate = """{{Front}}"""
         AnswerXemplate = """{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}"""
-        ShortQuestionTemplate = ""
+        ShortQuestionXemplate = ""
         ShortAnswerXemplate = ""
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: TemplateInstanceEntity) =
@@ -219,9 +219,9 @@ type TemplateInstance with
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-        entity.QuestionTemplate <- this.QuestionTemplate
+        entity.QuestionXemplate <- this.QuestionXemplate
         entity.AnswerXemplate <- this.AnswerXemplate
-        entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
+        entity.ShortQuestionXemplate <- this.ShortQuestionXemplate
         entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
         entity.EditSummary <- this.EditSummary
     member this.CopyToNewInstance template =
