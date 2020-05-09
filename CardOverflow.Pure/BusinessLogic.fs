@@ -26,20 +26,20 @@ module Relationship =
             name
 
 module Cloze =
-    let isCloze questionTemplate =
-        ClozeTemplateRegex().IsMatch questionTemplate
+    let isCloze questionXemplate =
+        ClozeTemplateRegex().IsMatch questionXemplate
 
 module CardHtml =
-    let generate fieldNameValueMap questionTemplate answerTemplate css =
-        let questionTemplate, answerTemplate =
+    let generate fieldNameValueMap questionXemplate answerXemplate css =
+        let questionXemplate, answerXemplate =
             fieldNameValueMap
             |> List.filter(fun (_, value) -> ClozeRegex().IsMatch value)
             |> List.tryExactlyOne
             |> function
-            | None -> questionTemplate, answerTemplate
+            | None -> questionXemplate, answerXemplate
             | Some (fieldName, _) ->
                 let irrelevantCloze = Regex <| "{{cloze:(?!" + fieldName + ").+?}}"
-                irrelevantCloze.Replace(questionTemplate, ""), irrelevantCloze.Replace(answerTemplate, "")
+                irrelevantCloze.Replace(questionXemplate, ""), irrelevantCloze.Replace(answerXemplate, "")
         let replaceFields isFront template =
             (template, fieldNameValueMap)
             ||> List.fold(fun (previous: string) (fieldName, value) -> 
@@ -85,9 +85,9 @@ module CardHtml =
                 cloze
             )
         let frontSide =
-            replaceFields true questionTemplate
+            replaceFields true questionXemplate
         let backSide =
-            (replaceFields false answerTemplate).Replace("{{FrontSide}}", replaceFields false questionTemplate)
+            (replaceFields false answerXemplate).Replace("{{FrontSide}}", replaceFields false questionXemplate)
         let htmlBase =
             sprintf """<!DOCTYPE html>
     <head>
@@ -124,7 +124,7 @@ module CardHtml =
         htmlBase frontSide,
         htmlBase backSide,
         MappingTools.stripHtmlTagsForDisplay <| frontSide,
-        MappingTools.stripHtmlTagsForDisplay <| (replaceFields false answerTemplate).Replace("{{FrontSide}}", "")
+        MappingTools.stripHtmlTagsForDisplay <| (replaceFields false answerXemplate).Replace("{{FrontSide}}", "")
 
 type DateCount = {
     Date: DateTime

@@ -42,7 +42,7 @@ module AnkiImportLogic =
                 field.Replace(m.Value, m.answer.Value))
     let multipleClozeToSingleClozeList (index: int16) =
         List.map (multipleClozeToSingleCloze index)
-    let clozeFields questionTemplate =
-        ClozeTemplateRegex().TypedMatches questionTemplate
+    let clozeFields questionXemplate =
+        ClozeTemplateRegex().TypedMatches questionXemplate
         |> Seq.map(fun x -> x.fieldName.Value)
         |> List.ofSeq

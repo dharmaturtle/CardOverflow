@@ -169,15 +169,15 @@
       <BSTab>
         <BSTabLabel>
           Templates
-          @if (_HasDifferences(_questionTemplateDiff()) || _HasDifferences(_answerTemplateDiff())) {
+          @if (_HasDifferences(_questionXemplateDiff()) || _HasDifferences(_answerXemplateDiff())) {
             <i class="fas fa-asterisk"></i>
           }
         </BSTabLabel>
         <BSTabContent>
           <h4>Question Template</h4>
-          <iframe srcdoc=@_questionTemplateDiff() style="width: 100%; height: 40vh; resize:vertical;" />
+          <iframe srcdoc=@_questionXemplateDiff() style="width: 100%; height: 40vh; resize:vertical;" />
           <h4>Answer Template</h4>
-          <iframe srcdoc=@_answerTemplateDiff() style="width: 100%; height: 40vh; resize:vertical;" />
+          <iframe srcdoc=@_answerXemplateDiff() style="width: 100%; height: 40vh; resize:vertical;" />
         </BSTabContent>
       </BSTab>
       <BSTab>
@@ -254,8 +254,8 @@
   private string _holisticFrontDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item1, _b.FrontBackFrontSynthBackSynth.Item1);
   private string _holisticBackDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2);
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
-  private string _questionTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.QuestionXemplate, _b.TemplateInstance.QuestionXemplate);
-  private string _answerTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerXemplate, _b.TemplateInstance.AnswerXemplate);
+  private string _questionXemplateDiff() => ViewLogic.diff(_a.TemplateInstance.QuestionXemplate, _b.TemplateInstance.QuestionXemplate);
+  private string _answerXemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerXemplate, _b.TemplateInstance.AnswerXemplate);
   private bool _HasDifferences(string diff) => diff.Contains("<ins ") || diff.Contains("<del ");
 
   private void _OnOk() =>

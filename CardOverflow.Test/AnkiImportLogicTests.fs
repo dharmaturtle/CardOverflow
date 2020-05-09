@@ -8,19 +8,19 @@ open System
 
 [<Fact>]
 let ``AnkiImportLogic.clozeFields works with one cloze``(): unit =
-    let questionTemplate = "{{cloze:Text}}<br>{{Extra}}"
+    let questionXemplate = "{{cloze:Text}}<br>{{Extra}}"
     let expected = "Text"
     
-    let actal = AnkiImportLogic.clozeFields questionTemplate |> Seq.exactlyOne
+    let actal = AnkiImportLogic.clozeFields questionXemplate |> Seq.exactlyOne
     
     Assert.Equal(expected, actal)
 
 [<Fact>]
 let ``AnkiImportLogic.clozeFields works with two clozes``(): unit =
-    let questionTemplate = "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
+    let questionXemplate = "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
     let expected = ["Field1"; "Field2"]
     
-    let actual = AnkiImportLogic.clozeFields questionTemplate
+    let actual = AnkiImportLogic.clozeFields questionXemplate
     
     Assert.Equal<string seq>(expected, actual)
 

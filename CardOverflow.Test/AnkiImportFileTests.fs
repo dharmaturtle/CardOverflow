@@ -444,7 +444,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` (): unit =
-    let test text expected questionTemplate =
+    let test text expected questionXemplate =
         let view =
             {   EditSummary = ""
                 FieldValues =
@@ -459,11 +459,11 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     }).ToList()
                 TemplateInstance =
                     { TemplateInstance.initialize with
-                        QuestionXemplate = questionTemplate
+                        QuestionXemplate = questionXemplate
                     } |> ViewTemplateInstance.load
                 Source = Original
             }
-        if questionTemplate.Contains "cloze" then
+        if questionXemplate.Contains "cloze" then
             Assert.Equal<string seq>(["Front"], view.TemplateInstance.ClozeFields)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
