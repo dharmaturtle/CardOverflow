@@ -5,29 +5,29 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class User_TemplateInstanceEntity
+    public partial class User_CollateInstanceEntity
     {
-        public User_TemplateInstanceEntity()
+        public User_CollateInstanceEntity()
         {
-            Tag_User_TemplateInstances = new HashSet<Tag_User_TemplateInstanceEntity>();
+            Tag_User_CollateInstances = new HashSet<Tag_User_CollateInstanceEntity>();
         }
 
         [Key]
         public int UserId { get; set; }
         [Key]
-        public int TemplateInstanceId { get; set; }
+        public int CollateInstanceId { get; set; }
         public int DefaultCardSettingId { get; set; }
 
         [ForeignKey("DefaultCardSettingId")]
-        [InverseProperty("User_TemplateInstances")]
+        [InverseProperty("User_CollateInstances")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }
-        [ForeignKey("TemplateInstanceId")]
-        [InverseProperty("User_TemplateInstances")]
-        public virtual TemplateInstanceEntity TemplateInstance { get; set; }
+        [ForeignKey("CollateInstanceId")]
+        [InverseProperty("User_CollateInstances")]
+        public virtual CollateInstanceEntity CollateInstance { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("User_TemplateInstances")]
+        [InverseProperty("User_CollateInstances")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("User_TemplateInstance")]
-        public virtual ICollection<Tag_User_TemplateInstanceEntity> Tag_User_TemplateInstances { get; set; }
+        [InverseProperty("User_CollateInstance")]
+        public virtual ICollection<Tag_User_CollateInstanceEntity> Tag_User_CollateInstances { get; set; }
     }
 }

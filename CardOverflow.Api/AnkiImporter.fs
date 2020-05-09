@@ -18,7 +18,7 @@ open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
-    let templateIdByHash = // lowTODO could make this a byte array
+    let collateIdByHash = // lowTODO could make this a byte array
         [("P5HBK1v2Py3t62boE6sQjZJAYqp9SAmB0M1dg/mNv1pOo14rp7j5mAJNTTMhDRDn6v7NdRL2ezj89SB+SXNe+g==", 1)
          ("ernv8U58XNXkcrk57BcLjabVoxxtkssTNPDfPSbbgxjH1ws3XOOsUCvmp8NNKPU70EhBolhL6DYHHLpy6XqvdA==", 2)
          ("fNwLGKChD3VRZcB5GipDH8WVU8GgbEVcfO2Ai+QNzy6jJSjyZZFTJelvj5Agk/HjWh4xifvqZ4y9fkJe26md3Q==", 3)
@@ -72,7 +72,7 @@ module AnkiImporter =
         (getTags: string list -> TagEntity list)
         (cardSettings: CardSettingEntity ResizeArray)
         defaultCardSetting
-        getTemplates
+        getCollates
         getCard
         getAcquiredCard
         getHistory =
@@ -112,28 +112,28 @@ module AnkiImporter =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
                     cardSettingByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
-            let! templatesByModelId =
-                let toEntity (template: AnkiTemplateInstance) =
+            let! collatesByModelId =
+                let toEntity (collate: AnkiCollateInstance) =
                     let defaultCardSetting =
-                        cardSettingAndDeckNameByDeckId.TryFind template.DeckId
+                        cardSettingAndDeckNameByDeckId.TryFind collate.DeckId
                         |> function
                         | Some (cardSetting, _) -> cardSetting
                         | None -> defaultCardSetting // veryLowTODO some anki models have invalid deck ids. Perhaps log this
-                    getTemplates template
+                    getCollates collate
                     |> function
-                    | Some (e: TemplateInstanceEntity) ->
-                        if e.User_TemplateInstances.Any(fun x -> x.UserId = userId) |> not then
-                            User_TemplateInstanceEntity(
+                    | Some (e: CollateInstanceEntity) ->
+                        if e.User_CollateInstances.Any(fun x -> x.UserId = userId) |> not then
+                            User_CollateInstanceEntity(
                                 UserId = userId,
-                                Tag_User_TemplateInstances =
-                                    (template.DefaultTags.ToList()
-                                    |> Seq.map (fun x -> Tag_User_TemplateInstanceEntity(UserId = userId, DefaultTagId = x))
+                                Tag_User_CollateInstances =
+                                    (collate.DefaultTags.ToList()
+                                    |> Seq.map (fun x -> Tag_User_CollateInstanceEntity(UserId = userId, DefaultTagId = x))
                                     |> fun x -> x.ToList()),
                                 DefaultCardSetting = defaultCardSetting)
-                            |> e.User_TemplateInstances.Add
+                            |> e.User_CollateInstances.Add
                         e
-                    | None -> template.CopyToNew userId defaultCardSetting
-                    |> fun x -> {| Entity = x; Template = template |}
+                    | None -> collate.CopyToNew userId defaultCardSetting
+                    |> fun x -> {| Entity = x; Collate = collate |}
                 Anki.parseModels userId col.Models
                 |> Result.map (fun x -> x |> Map.ofList |> Map.map (fun _ x -> List.map toEntity x))
             let usersTags =
@@ -151,7 +151,7 @@ module AnkiImporter =
                 |> Seq.toList
             let! cardsAndTagsByNoteId =
                 Anki.parseNotes
-                    templatesByModelId
+                    collatesByModelId
                     usersTags
                     userId
                     fileEntityByAnkiFileName
@@ -173,18 +173,18 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()
         let defaultCardSetting = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.Id = userId).DefaultCardSetting
-        let getTemplateInstance (templateInstance: AnkiTemplateInstance) =
-            let ti = templateInstance.CopyToNew userId defaultCardSetting
-            let hash = TemplateInstanceEntity.hashBase64 hasher ti
-            AnkiDefaults.templateIdByHash.TryFind hash
+        let getCollateInstance (collateInstance: AnkiCollateInstance) =
+            let ti = collateInstance.CopyToNew userId defaultCardSetting
+            let hash = CollateInstanceEntity.hashBase64 hasher ti
+            AnkiDefaults.collateIdByHash.TryFind hash
             |> function
             | Some id ->
-                db.TemplateInstance
-                    .Include(fun x -> x.User_TemplateInstances)
+                db.CollateInstance
+                    .Include(fun x -> x.User_CollateInstances)
                     .Single(fun x -> x.Id = id)
             | None ->
-                db.TemplateInstance
-                    .Include(fun x -> x.User_TemplateInstances)
+                db.CollateInstance
+                    .Include(fun x -> x.User_CollateInstances)
                     .OrderBy(fun x -> x.Created)
                     .FirstOrDefault(fun x -> x.Hash = ti.Hash)
             |> Option.ofObj
@@ -205,7 +205,7 @@ module AnkiImporter =
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
                     <| defaultCardSetting
-                    <| getTemplateInstance
+                    <| getCollateInstance
                     <| getCard
                     <| getAcquiredCard
                     <| getHistory

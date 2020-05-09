@@ -18,7 +18,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
         private DbSet<CardTagCountEntity> _CardTagCountTracked { get; set; }
         public virtual DbSet<CommentCardEntity> CommentCard { get; set; }
-        public virtual DbSet<CommentTemplateEntity> CommentTemplate { get; set; }
+        public virtual DbSet<CommentCollateEntity> CommentCollate { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
         public virtual DbSet<CommunalFieldInstanceEntity> CommunalFieldInstance { get; set; }
         public virtual DbSet<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstance { get; set; }
@@ -32,13 +32,13 @@ namespace CardOverflow.Entity
         public virtual DbSet<Relationship_AcquiredCardEntity> Relationship_AcquiredCard { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_AcquiredCardEntity> Tag_AcquiredCard { get; set; }
-        public virtual DbSet<Tag_User_TemplateInstanceEntity> Tag_User_TemplateInstance { get; set; }
-        public virtual DbSet<TemplateEntity> Template { get; set; }
-        public virtual DbSet<TemplateInstanceEntity> TemplateInstance { get; set; }
+        public virtual DbSet<Tag_User_CollateInstanceEntity> Tag_User_CollateInstance { get; set; }
+        public virtual DbSet<CollateEntity> Collate { get; set; }
+        public virtual DbSet<CollateInstanceEntity> CollateInstance { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
-        public virtual DbSet<User_TemplateInstanceEntity> User_TemplateInstance { get; set; }
+        public virtual DbSet<User_CollateInstanceEntity> User_CollateInstance { get; set; }
         public virtual DbSet<Vote_CommentCardEntity> Vote_CommentCard { get; set; }
-        public virtual DbSet<Vote_CommentTemplateEntity> Vote_CommentTemplate { get; set; }
+        public virtual DbSet<Vote_CommentCollateEntity> Vote_CommentCollate { get; set; }
         public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -152,7 +152,7 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.Hash);
 
-                entity.HasIndex(e => e.TemplateInstanceId);
+                entity.HasIndex(e => e.CollateInstanceId);
 
                 entity.HasIndex(e => e.TsVector)
                     .HasMethod("gin");
@@ -165,9 +165,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.BranchId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.TemplateInstance)
+                entity.HasOne(d => d.CollateInstance)
                     .WithMany(p => p.BranchInstances)
-                    .HasForeignKey(d => d.TemplateInstanceId)
+                    .HasForeignKey(d => d.CollateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                entity.HasMany(x => x.CardTagCounts)
@@ -257,19 +257,19 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommentTemplateEntity>(entity =>
+            modelBuilder.Entity<CommentCollateEntity>(entity =>
             {
-                entity.HasIndex(e => e.TemplateId);
+                entity.HasIndex(e => e.CollateId);
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasOne(d => d.Template)
-                    .WithMany(p => p.CommentTemplates)
-                    .HasForeignKey(d => d.TemplateId)
+                entity.HasOne(d => d.Collate)
+                    .WithMany(p => p.CommentCollates)
+                    .HasForeignKey(d => d.CollateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.CommentTemplates)
+                    .WithMany(p => p.CommentCollates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -409,51 +409,51 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Tag_User_TemplateInstanceEntity>(entity =>
+            modelBuilder.Entity<Tag_User_CollateInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.UserId, e.TemplateInstanceId, e.DefaultTagId });
+                entity.HasKey(e => new { e.UserId, e.CollateInstanceId, e.DefaultTagId });
 
                 entity.HasIndex(e => e.DefaultTagId);
 
                 entity.HasOne(d => d.DefaultTag)
-                    .WithMany(p => p.Tag_User_TemplateInstances)
+                    .WithMany(p => p.Tag_User_CollateInstances)
                     .HasForeignKey(d => d.DefaultTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.User_TemplateInstance)
-                    .WithMany(p => p.Tag_User_TemplateInstances)
-                    .HasForeignKey(d => new { d.UserId, d.TemplateInstanceId })
+                entity.HasOne(d => d.User_CollateInstance)
+                    .WithMany(p => p.Tag_User_CollateInstances)
+                    .HasForeignKey(d => new { d.UserId, d.CollateInstanceId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Tag_User_TemplatInst_User_TemplatInst_UserId_TemplatInstId");
             });
 
-            modelBuilder.Entity<TemplateEntity>(entity =>
+            modelBuilder.Entity<CollateEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
 
                 entity.HasOne(d => d.Author)
-                    .WithMany(p => p.Templates)
+                    .WithMany(p => p.Collates)
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.LatestInstance)
-                    .WithMany(p => p.Templates)
+                    .WithMany(p => p.Collates)
                     .HasForeignKey(d => d.LatestInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<TemplateInstanceEntity>(entity =>
+            modelBuilder.Entity<CollateInstanceEntity>(entity =>
             {
                 entity.HasIndex(e => e.Hash);
 
-                entity.HasIndex(e => e.TemplateId);
+                entity.HasIndex(e => e.CollateId);
 
                 entity.HasIndex(e => e.TsVector)
                     .HasMethod("gin");
 
-                entity.HasOne(d => d.Template)
-                    .WithMany(p => p.TemplateInstances)
-                    .HasForeignKey(d => d.TemplateId)
+                entity.HasOne(d => d.Collate)
+                    .WithMany(p => p.CollateInstances)
+                    .HasForeignKey(d => d.CollateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -464,26 +464,26 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.DefaultCardSetting);
             });
 
-            modelBuilder.Entity<User_TemplateInstanceEntity>(entity =>
+            modelBuilder.Entity<User_CollateInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.UserId, e.TemplateInstanceId });
+                entity.HasKey(e => new { e.UserId, e.CollateInstanceId });
 
                 entity.HasIndex(e => e.DefaultCardSettingId);
 
-                entity.HasIndex(e => e.TemplateInstanceId);
+                entity.HasIndex(e => e.CollateInstanceId);
 
                 entity.HasOne(d => d.DefaultCardSetting)
-                    .WithMany(p => p.User_TemplateInstances)
+                    .WithMany(p => p.User_CollateInstances)
                     .HasForeignKey(d => d.DefaultCardSettingId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.TemplateInstance)
-                    .WithMany(p => p.User_TemplateInstances)
-                    .HasForeignKey(d => d.TemplateInstanceId)
+                entity.HasOne(d => d.CollateInstance)
+                    .WithMany(p => p.User_CollateInstances)
+                    .HasForeignKey(d => d.CollateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.User_TemplateInstances)
+                    .WithMany(p => p.User_CollateInstances)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -505,19 +505,19 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Vote_CommentTemplateEntity>(entity =>
+            modelBuilder.Entity<Vote_CommentCollateEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommentTemplateId, e.UserId });
+                entity.HasKey(e => new { e.CommentCollateId, e.UserId });
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasOne(d => d.CommentTemplate)
-                    .WithMany(p => p.Vote_CommentTemplates)
-                    .HasForeignKey(d => d.CommentTemplateId)
+                entity.HasOne(d => d.CommentCollate)
+                    .WithMany(p => p.Vote_CommentCollates)
+                    .HasForeignKey(d => d.CommentCollateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.Vote_CommentTemplates)
+                    .WithMany(p => p.Vote_CommentCollates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });

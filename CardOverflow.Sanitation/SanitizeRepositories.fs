@@ -232,14 +232,14 @@ type ViewEditCardCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateInstance: ViewTemplateInstance
+    CollateInstance: ViewCollateInstance
     Source: CardSource
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-        if this.TemplateInstance.IsCloze then
+        if this.CollateInstance.IsCloze then
             result {
-                let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.TemplateInstance.QuestionXemplate
+                let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName this.CollateInstance.QuestionXemplate
                 return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                     let zip =
                         Seq.zip
@@ -248,38 +248,38 @@ type ViewEditCardCommand = {
                         |> List.ofSeq
                     CardHtml.generate
                         zip
-                        this.TemplateInstance.QuestionXemplate
-                        this.TemplateInstance.AnswerXemplate
-                        this.TemplateInstance.Css
+                        this.CollateInstance.QuestionXemplate
+                        this.CollateInstance.AnswerXemplate
+                        this.CollateInstance.Css
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
             }
         else
             CardHtml.generate
                 <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
-                <| this.TemplateInstance.QuestionXemplate
-                <| this.TemplateInstance.AnswerXemplate
-                <| this.TemplateInstance.Css
+                <| this.CollateInstance.QuestionXemplate
+                <| this.CollateInstance.AnswerXemplate
+                <| this.CollateInstance.Css
             |> fun (_, back, _, _) -> [back].ToList()
             |> Ok
     member this.load =
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            TemplateInstance = this.TemplateInstance |> ViewTemplateInstance.copyTo
+            CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
             Source = this.Source
         }
     member this.CommunalFieldValues =
         this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
     member this.CommunalNonClozeFieldValues =
         this.CommunalFieldValues
-            .Where(fun x -> not <| this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+            .Where(fun x -> not <| this.CollateInstance.ClozeFields.Contains x.EditField.Name)
             .ToList()
 
 module SanitizeCardRepository =
     let private _getCommand (db: CardOverflowDb) branchInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
         let! instance =
             db.BranchInstance
-                .Include(fun x -> x.TemplateInstance)
+                .Include(fun x -> x.CollateInstance)
                 .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
@@ -302,10 +302,10 @@ module SanitizeCardRepository =
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString instance.TemplateInstance.Fields
+                            <| Fields.fromString instance.CollateInstance.Fields
                             <| instance.FieldValues
                             <| communalBranchInstanceIdsAndValueByField
-                    TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
+                    CollateInstance = instance.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
                     Source = source
                 } |> Ok }
     let getBranch (db: CardOverflowDb) userId displayName cardId = taskResult {
@@ -332,7 +332,7 @@ module SanitizeCardRepository =
         return command, ac
     }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let required = command.TemplateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real template instance
+        let required = command.CollateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real collate instance
         let actual = command.CommunalFieldValues.Select(fun x -> x.EditField.Name) |> Set.ofSeq
         let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId) // lowTODO optimize by moving into `else`
         return!

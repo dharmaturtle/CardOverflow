@@ -5,20 +5,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class Tag_User_TemplateInstanceEntity
+    public partial class Tag_User_CollateInstanceEntity
     {
         [Key]
         public int UserId { get; set; }
         [Key]
-        public int TemplateInstanceId { get; set; }
+        public int CollateInstanceId { get; set; }
         [Key]
         public int DefaultTagId { get; set; }
 
         [ForeignKey("DefaultTagId")]
-        [InverseProperty("Tag_User_TemplateInstances")]
+        [InverseProperty("Tag_User_CollateInstances")]
         public virtual TagEntity DefaultTag { get; set; }
-        [ForeignKey("UserId,TemplateInstanceId")]
-        [InverseProperty("Tag_User_TemplateInstances")]
-        public virtual User_TemplateInstanceEntity User_TemplateInstance { get; set; }
+        [ForeignKey("UserId,CollateInstanceId")]
+        [InverseProperty("Tag_User_CollateInstances")]
+        public virtual User_CollateInstanceEntity User_CollateInstance { get; set; }
     }
 }

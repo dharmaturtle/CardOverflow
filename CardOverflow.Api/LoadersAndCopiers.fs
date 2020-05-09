@@ -14,8 +14,8 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 open System.Collections
 
-module TemplateInstanceEntity =
-    let byteArrayHash (hasher: SHA512) (e: TemplateInstanceEntity) =
+module CollateInstanceEntity =
+    let byteArrayHash (hasher: SHA512) (e: CollateInstanceEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -38,19 +38,19 @@ module BranchInstanceEntity =
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
         bitArray.CopyTo(bytes, 0)
         bytes
-    let hash (templateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
+    let hash (collateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
         e.CommunalFieldInstance_BranchInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
             .Append(e.FieldValues)
             .Append(e.AnkiNoteId.ToString())
             .Append(e.AnkiNoteOrd.ToString())
-            .Append(e.TemplateInstance.AnkiId.ToString())
+            .Append(e.CollateInstance.AnkiId.ToString())
         |> Seq.toList
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Array.append (bitArrayToByteArray templateHash)
+        |> Array.append (bitArrayToByteArray collateHash)
         |> hasher.ComputeHash
         |> BitArray
 
@@ -152,11 +152,11 @@ type IdOrEntity<'a> =
     | Id of int
     | Entity of 'a
 
-type TemplateInstance with
-    static member load (entity: TemplateInstanceEntity) = {
+type CollateInstance with
+    static member load (entity: CollateInstanceEntity) = {
         Id = entity.Id
         Name = entity.Name
-        TemplateId = entity.TemplateId
+        CollateId = entity.CollateId
         Css = entity.Css
         Fields = Fields.fromString entity.Fields
         Created = entity.Created
@@ -171,7 +171,7 @@ type TemplateInstance with
     static member initialize = {
         Id = 0
         Name = "New Template"
-        TemplateId = 0
+        CollateId = 0
         Css = """.card {
      font-family: arial;
      font-size: 20px;
@@ -211,7 +211,7 @@ type TemplateInstance with
         ShortQuestionXemplate = ""
         ShortAnswerXemplate = ""
         EditSummary = "Initial creation" }
-    member this.CopyTo (entity: TemplateInstanceEntity) =
+    member this.CopyTo (entity: CollateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -224,33 +224,33 @@ type TemplateInstance with
         entity.ShortQuestionXemplate <- this.ShortQuestionXemplate
         entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
         entity.EditSummary <- this.EditSummary
-    member this.CopyToNewInstance template =
-        let e = TemplateInstanceEntity()
+    member this.CopyToNewInstance collate =
+        let e = CollateInstanceEntity()
         this.CopyTo e
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        match template with
-        | Id id -> e.TemplateId <- id
-        | Entity entity -> e.Template <- entity
+        match collate with
+        | Id id -> e.CollateId <- id
+        | Entity entity -> e.Collate <- entity
         e
 
-type AcquiredTemplateInstance with
-    static member load(entity: TemplateInstanceEntity) =
-        { DefaultTags = entity.User_TemplateInstances.Single().Tag_User_TemplateInstances.Select(fun x -> x.DefaultTagId)
-          DefaultCardSettingId = entity.User_TemplateInstances.Single().DefaultCardSettingId
-          TemplateInstance = TemplateInstance.load entity }
+type AcquiredCollateInstance with
+    static member load(entity: CollateInstanceEntity) =
+        { DefaultTags = entity.User_CollateInstances.Single().Tag_User_CollateInstances.Select(fun x -> x.DefaultTagId)
+          DefaultCardSettingId = entity.User_CollateInstances.Single().DefaultCardSettingId
+          CollateInstance = CollateInstance.load entity }
 
 type IdPairOrEntity<'a> =
     | CardIdAndBranchId of int * int
     | Entity of 'a
 
 type BranchInstanceView with
-    static member private toView (templateInstance: TemplateInstanceEntity) (fieldValues: string)=
-        {   FieldValues = FieldAndValue.load (Fields.fromString templateInstance.Fields) fieldValues
-            TemplateInstance = TemplateInstance.load templateInstance }
+    static member private toView (collateInstance: CollateInstanceEntity) (fieldValues: string)=
+        {   FieldValues = FieldAndValue.load (Fields.fromString collateInstance.Fields) fieldValues
+            CollateInstance = CollateInstance.load collateInstance }
     static member load (entity: BranchInstanceEntity) =
         BranchInstanceView.toView
-            entity.TemplateInstance
+            entity.CollateInstance
             entity.FieldValues
     member this.CopyToX (entity: BranchInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join this.FieldValues
@@ -258,7 +258,7 @@ type BranchInstanceView with
             communalFields.Select(fun x -> CommunalFieldInstance_BranchInstanceEntity(CommunalFieldInstance = x))
             |> entity.CommunalFieldInstance_BranchInstances.Concat
             |> toResizeArray
-        entity.TemplateInstanceId <- this.TemplateInstance.Id
+        entity.CollateInstanceId <- this.CollateInstance.Id
     member this.CopyToNew communalFields =
         let entity = BranchInstanceEntity()
         this.CopyToX entity communalFields

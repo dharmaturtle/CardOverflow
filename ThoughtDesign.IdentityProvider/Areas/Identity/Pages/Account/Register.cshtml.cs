@@ -95,11 +95,11 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
             DisplayName = Input.DisplayName,
             CardSettings = new List<CardSettingEntity> { defaultSetting },
             Filters = new List<FilterEntity> { new FilterEntity { Name = "All", Query = "" } },
-            User_TemplateInstances = _db.TemplateInstance
-              .Where(x => x.Template.AuthorId == 2)
+            User_CollateInstances = _db.CollateInstance
+              .Where(x => x.Collate.AuthorId == 2)
               .Select(x => x.Id)
               .ToList()
-              .Select(id => new User_TemplateInstanceEntity { TemplateInstanceId = id, DefaultCardSetting = defaultSetting })
+              .Select(id => new User_CollateInstanceEntity { CollateInstanceId = id, DefaultCardSetting = defaultSetting })
               .ToList(),
           };
           key.IsUsed = true;

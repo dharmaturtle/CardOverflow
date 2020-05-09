@@ -73,41 +73,41 @@ module CommentRepository =
         db.CommentCard.AddI comment
         db.SaveChangesAsyncI ()
 
-module TemplateRepository =
-    let latest (db: CardOverflowDb) templateId =
-        db.LatestTemplateInstance
-            .SingleOrDefaultAsync(fun x -> x.TemplateId = templateId)
-        |> Task.map (Result.requireNotNull <| sprintf "Template #%i not found" templateId)
-        |> TaskResult.map TemplateInstance.load
+module CollateRepository =
+    let latest (db: CardOverflowDb) collateId =
+        db.LatestCollateInstance
+            .SingleOrDefaultAsync(fun x -> x.CollateId = collateId)
+        |> Task.map (Result.requireNotNull <| sprintf "Collate #%i not found" collateId)
+        |> TaskResult.map CollateInstance.load
     let instance (db: CardOverflowDb) instanceId =
-        db.TemplateInstance
+        db.CollateInstance
             .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
-        |> Task.map (Result.requireNotNull <| sprintf "Template Instance #%i not found" instanceId)
-        |> TaskResult.map TemplateInstance.load
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: TemplateInstance) = task {
-        let template =
-            if instance.TemplateId = 0 then
-                IdOrEntity.Entity <| TemplateEntity(AuthorId = userId)
+        |> Task.map (Result.requireNotNull <| sprintf "Collate Instance #%i not found" instanceId)
+        |> TaskResult.map CollateInstance.load
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: CollateInstance) = task {
+        let collate =
+            if instance.CollateId = 0 then
+                IdOrEntity.Entity <| CollateEntity(AuthorId = userId)
             else    
-                Id <| instance.TemplateId
-        let newTemplateInstance = instance.CopyToNewInstance template
-        db.TemplateInstance.AddI newTemplateInstance
+                Id <| instance.CollateId
+        let newCollateInstance = instance.CopyToNewInstance collate
+        db.CollateInstance.AddI newCollateInstance
         db  
             .AcquiredCard
             .Include(fun x -> x.BranchInstance)
-            .Where(fun x -> x.BranchInstance.TemplateInstanceId = instance.Id)
+            .Where(fun x -> x.BranchInstance.CollateInstanceId = instance.Id)
             |> Seq.iter(fun ac ->
                 db.Entry(ac.BranchInstance).State <- EntityState.Added
                 ac.BranchInstance.Id <- ac.BranchInstance.GetHashCode()
                 db.Entry(ac.BranchInstance).Property(Core.nameof <@ any<BranchInstanceEntity>.Id @>).IsTemporary <- true
                 ac.BranchInstance.Created <- DateTime.UtcNow
                 ac.BranchInstance.Modified <- Nullable()
-                ac.BranchInstance.TemplateInstance <- newTemplateInstance
+                ac.BranchInstance.CollateInstance <- newCollateInstance
             )
-        let! existing = db.User_TemplateInstance.Where(fun x -> x.UserId = userId && x.TemplateInstance.TemplateId = newTemplateInstance.TemplateId).ToListAsync()
-        db.User_TemplateInstance.RemoveRange existing
-        User_TemplateInstanceEntity(UserId = userId, TemplateInstance = newTemplateInstance, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
-        |> db.User_TemplateInstance.AddI
+        let! existing = db.User_CollateInstance.Where(fun x -> x.UserId = userId && x.CollateInstance.CollateId = newCollateInstance.CollateId).ToListAsync()
+        db.User_CollateInstance.RemoveRange existing
+        User_CollateInstanceEntity(UserId = userId, CollateInstance = newCollateInstance, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
+        |> db.User_CollateInstance.AddI
         return! db.SaveChangesAsyncI()
         }
 
@@ -150,14 +150,14 @@ module ExploreCardRepository =
             db.LatestDefaultBranchInstance
                 .Include(fun x -> x.Card.Author)
                 .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.TemplateInstance)
+                    .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.CollateInstance)
                 .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchEntity) -> x.Author)
                 .Include(fun x -> x.Card.CommentCards :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
-                .Include(fun x -> x.TemplateInstance)
+                .Include(fun x -> x.CollateInstance)
                 .Where(fun x -> x.CardId = cardId)
                 .Select(fun x ->
                     x,
@@ -181,7 +181,7 @@ module ExploreCardRepository =
                     .ThenInclude(fun (x: CommentCardEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
-                .Include(fun x -> x.TemplateInstance)
+                .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
             |> Task.map (Result.requireNotNull (sprintf "Card Instance #%i not found" instanceId))
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstanceId = instanceId)
@@ -209,12 +209,12 @@ module CardViewRepository =
     let instanceWithLatest (db: CardOverflowDb) aId userId = taskResult {
         let! (a: BranchInstanceEntity) =
             db.BranchInstance
-                .Include(fun x -> x.TemplateInstance)
+                .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = aId)
             |> Task.map (Result.requireNotNull (sprintf "Card instance #%i not found" aId))
         let! (b: BranchInstanceEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestBranchInstance
-                .Include(fun x -> x.TemplateInstance)
+                .Include(fun x -> x.CollateInstance)
                 .SingleAsync(fun x -> x.CardId = a.CardId)
         let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.Id
         return
@@ -227,7 +227,7 @@ module CardViewRepository =
     let instancePair (db: CardOverflowDb) aId bId userId = taskResult {
         let! (instances: BranchInstanceEntity ResizeArray) =
             db.BranchInstance
-                .Include(fun x -> x.TemplateInstance)
+                .Include(fun x -> x.CollateInstance)
                 .Where(fun x -> x.Id = aId || x.Id = bId)
                 .ToListAsync()
         let! a = Result.requireNotNull (sprintf "Card instance #%i not found" aId) <| instances.SingleOrDefault(fun x -> x.Id = aId)
@@ -242,14 +242,14 @@ module CardViewRepository =
     let instance (db: CardOverflowDb) instanceId = task {
         match!
             db.BranchInstance
-            .Include(fun x -> x.TemplateInstance)
+            .Include(fun x -> x.CollateInstance)
             .SingleOrDefaultAsync(fun x -> x.Id = instanceId) with
         | null -> return Error <| sprintf "Card instance %i not found" instanceId
         | x -> return Ok <| BranchInstanceView.load x
     }
     let get (db: CardOverflowDb) cardId =
         db.LatestDefaultBranchInstance
-            .Include(fun x -> x.TemplateInstance)
+            .Include(fun x -> x.CollateInstance)
             .SingleOrDefaultAsync(fun x -> x.Branch.CardId = cardId)
         |> Task.map Ok
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Card #%i not found" cardId) x |> Task.FromResult)
@@ -288,7 +288,7 @@ module CardRepository =
             db.Branch
                 .Include(fun x -> x.Author)
                 .Include(fun x -> x.BranchInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchInstanceEntity) -> x.TemplateInstance)
+                    .ThenInclude(fun (x: BranchInstanceEntity) -> x.CollateInstance)
                 .SingleAsync(fun x -> x.Id = branchId)
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         return BranchRevision.load isAcquired r
@@ -308,7 +308,7 @@ module CardRepository =
                     userId
                     defaultCardSettingId.Value // medTODO handle the null case
                     []
-                |> fun x -> x.copyToNew [] // medTODO get tags from template
+                |> fun x -> x.copyToNew [] // medTODO get tags from collate
             card.BranchInstanceId <- branchInstanceId
             card.Branch <- branchInstance.Branch
             card.CardId <- branchInstance.Branch.CardId
@@ -326,7 +326,7 @@ module CardRepository =
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = taskResult {
         let! e, t =
             db.AcquiredCardIsLatest
-                .Include(fun x -> x.BranchInstance.TemplateInstance)
+                .Include(fun x -> x.BranchInstance.CollateInstance)
                 .Include(fun x -> x.BranchInstance.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.BranchInstance.AcquiredCards :> IEnumerable<_>)
@@ -348,7 +348,7 @@ module CardRepository =
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.AcquiredCard
-            .Include(fun x -> x.BranchInstance.TemplateInstance)
+            .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
@@ -359,7 +359,7 @@ module CardRepository =
     let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.AcquiredCardIsLatest
-            .Include(fun x -> x.BranchInstance.TemplateInstance)
+            .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
@@ -407,15 +407,15 @@ module CardRepository =
                 db.SearchLatestBranchInstance(searchTerm, plain, wildcard, order).Select(fun x ->
                     x,
                     x.AcquiredCards.Any(fun x -> x.UserId = userId),
-                    x.TemplateInstance, // .Include fails for some reason, so we have to manually select
+                    x.CollateInstance, // .Include fails for some reason, so we have to manually select
                     x.Card,
                     x.Card.Author
                 ).ToPagedListAsync(pageNumber, 15)
             let squashed =
-                r |> List.ofSeq |> List.map (fun (c, isAcquired, template, card, author) ->
+                r |> List.ofSeq |> List.map (fun (c, isAcquired, collate, card, author) ->
                     c.Card <- card
                     c.Card.Author <- author
-                    c.TemplateInstance <- template
+                    c.CollateInstance <- collate
                     c, isAcquired
                 )
             return {
@@ -470,7 +470,7 @@ module UpdateRepository =
                 CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
                 FieldName = fieldName,
                 Value =
-                    if c.TemplateInstance.IsCloze then
+                    if c.CollateInstance.IsCloze then
                         command.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
                     else
                         c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
@@ -493,9 +493,9 @@ module UpdateRepository =
         let commandClozeIndexes = command.ClozeFieldValues |> Seq.collect (fun x -> getClozeIndexes x.Value)
         taskResult {
             let! splitCommands =
-                if command.TemplateInstance.IsCloze then
+                if command.CollateInstance.IsCloze then
                     let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
-                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.TemplateInstance.QuestionXemplate
+                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.CollateInstance.QuestionXemplate
                     |> Result.map (fun max ->
                     [1s .. int16 max] |> List.map (fun clozeIndex ->
                         let zip =
@@ -602,7 +602,7 @@ module UpdateRepository =
                                         None
                             ) |> List.choose id
                         let e =
-                            if command.TemplateInstance.IsCloze then
+                            if command.CollateInstance.IsCloze then
                                 let entityIndex = e.BranchInstance.FieldValues |> getClozeIndex
                                 let commandIndex = c.ClozeFieldValues.Select(fun x -> x.Value) |> String.concat " " |> getClozeIndexes |> Seq.distinct |> Seq.exactlyOne
                                 if entityIndex = commandIndex then

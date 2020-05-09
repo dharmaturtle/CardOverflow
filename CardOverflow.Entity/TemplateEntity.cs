@@ -5,12 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class TemplateEntity
+    public partial class CollateEntity
     {
-        public TemplateEntity()
+        public CollateEntity()
         {
-            CommentTemplates = new HashSet<CommentTemplateEntity>();
-            TemplateInstances = new HashSet<TemplateInstanceEntity>();
+            CommentCollates = new HashSet<CommentCollateEntity>();
+            CollateInstances = new HashSet<CollateInstanceEntity>();
         }
 
         [Key]
@@ -20,14 +20,14 @@ namespace CardOverflow.Entity
         public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
-        [InverseProperty("Templates")]
+        [InverseProperty("Collates")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestInstanceId")]
-        [InverseProperty("Templates")]
-        public virtual TemplateInstanceEntity LatestInstance { get; set; }
-        [InverseProperty("Template")]
-        public virtual ICollection<CommentTemplateEntity> CommentTemplates { get; set; }
-        [InverseProperty("Template")]
-        public virtual ICollection<TemplateInstanceEntity> TemplateInstances { get; set; }
+        [InverseProperty("Collates")]
+        public virtual CollateInstanceEntity LatestInstance { get; set; }
+        [InverseProperty("Collate")]
+        public virtual ICollection<CommentCollateEntity> CommentCollates { get; set; }
+        [InverseProperty("Collate")]
+        public virtual ICollection<CollateInstanceEntity> CollateInstances { get; set; }
     }
 }

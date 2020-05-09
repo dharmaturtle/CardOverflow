@@ -7,13 +7,13 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class TemplateInstanceEntity
+    public partial class CollateInstanceEntity
     {
-        public TemplateInstanceEntity()
+        public CollateInstanceEntity()
         {
             BranchInstances = new HashSet<BranchInstanceEntity>();
-            Templates = new HashSet<TemplateEntity>();
-            User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
+            Collates = new HashSet<CollateEntity>();
+            User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
         }
 
         [Key]
@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public int TemplateId { get; set; }
+        public int CollateId { get; set; }
         [Required]
         [StringLength(4000)]
         public string Css {
@@ -129,14 +129,14 @@ namespace CardOverflow.Entity
         public string CWeightTsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 
-        [ForeignKey("TemplateId")]
-        [InverseProperty("TemplateInstances")]
-        public virtual TemplateEntity Template { get; set; }
-        [InverseProperty("TemplateInstance")]
+        [ForeignKey("CollateId")]
+        [InverseProperty("CollateInstances")]
+        public virtual CollateEntity Collate { get; set; }
+        [InverseProperty("CollateInstance")]
         public virtual ICollection<BranchInstanceEntity> BranchInstances { get; set; }
         [InverseProperty("LatestInstance")]
-        public virtual ICollection<TemplateEntity> Templates { get; set; }
-        [InverseProperty("TemplateInstance")]
-        public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
+        public virtual ICollection<CollateEntity> Collates { get; set; }
+        [InverseProperty("CollateInstance")]
+        public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
     }
 }

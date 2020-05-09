@@ -5,16 +5,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommentTemplateEntity
+    public partial class CommentCollateEntity
     {
-        public CommentTemplateEntity()
+        public CommentCollateEntity()
         {
-            Vote_CommentTemplates = new HashSet<Vote_CommentTemplateEntity>();
+            Vote_CommentCollates = new HashSet<Vote_CommentCollateEntity>();
         }
 
         [Key]
         public int Id { get; set; }
-        public int TemplateId { get; set; }
+        public int CollateId { get; set; }
         public int UserId { get; set; }
         [Required]
         [StringLength(500)]
@@ -29,13 +29,13 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("TemplateId")]
-        [InverseProperty("CommentTemplates")]
-        public virtual TemplateEntity Template { get; set; }
+        [ForeignKey("CollateId")]
+        [InverseProperty("CommentCollates")]
+        public virtual CollateEntity Collate { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("CommentTemplates")]
+        [InverseProperty("CommentCollates")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("CommentTemplate")]
-        public virtual ICollection<Vote_CommentTemplateEntity> Vote_CommentTemplates { get; set; }
+        [InverseProperty("CommentCollate")]
+        public virtual ICollection<Vote_CommentCollateEntity> Vote_CommentCollates { get; set; }
     }
 }

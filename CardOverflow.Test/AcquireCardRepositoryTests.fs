@@ -24,7 +24,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
     Assert.Equal<int seq>([1001], instanceIds)
     Assert.Empty communals
-    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! collate = SanitizeCollate.AllInstances c.Db 1
     let getAcquired () = task { return! CardRepository.GetAcquired c.Db userId 1 }
     let! ac = getAcquired ()
 
@@ -39,7 +39,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+            CollateInstance = collate.Value.Instances.Single() |> ViewCollateInstance.copyTo
             Source = Original
         } |> UpdateRepository.card c.Db ac.Value
     let (instanceIds, communals) = x.Value
@@ -92,7 +92,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
     let! (instanceIds, communals) = FacetRepositoryTests.addBasicCard c.Db userId []
     Assert.Equal<int seq>([1001], instanceIds)
     Assert.Empty communals
-    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! collate = SanitizeCollate.AllInstances c.Db 1
     let! ac = CardRepository.GetAcquired c.Db userId 1
     
     let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
@@ -103,7 +103,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
     let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+            CollateInstance = collate.Value.Instances.Single() |> ViewCollateInstance.copyTo
             Source = Original
         } |> UpdateRepository.card c.Db ac.Value
     let (instanceIds, communals) = x.Value
@@ -125,12 +125,12 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     let cardId = 1
     Assert.Equal<int seq>([1001], instanceIds)
     Assert.Empty communals
-    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! collate = SanitizeCollate.AllInstances c.Db 1
     let! ac = CardRepository.GetAcquired c.Db userId 1
     let! x = 
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateInstance = template.Value.Instances.Single() |> ViewTemplateInstance.copyTo
+            CollateInstance = collate.Value.Instances.Single() |> ViewCollateInstance.copyTo
             Source = Original
         } |> UpdateRepository.card c.Db ac.Value
     let (instanceIds, communals) = x.Value

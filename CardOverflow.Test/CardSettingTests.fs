@@ -67,19 +67,19 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     do! canUpdateIsDefault newId
 
     // Insert new card
-    let! templates = TestTemplateRepo.Search c.Db "Basic"
-    let template = templates.Single(fun x -> x.Name = "Basic")
+    let! collates = TestCollateRepo.Search c.Db "Basic"
+    let collate = collates.Single(fun x -> x.Name = "Basic")
     let! card = CardRepository.getNew c.Db userId
     let! r =
         SanitizeCardRepository.Update c.Db userId card
             {   EditSummary = "Initial creation"
                 FieldValues =
-                    template.Fields.Select(fun f -> {
+                    collate.Fields.Select(fun f -> {
                         EditField = ViewField.copyTo f
                         Value = Guid.NewGuid().ToString()
                         Communal = None
                     }).ToList()
-                TemplateInstance = template
+                CollateInstance = collate
                 Source = Original
             }
     let (instanceId, communals) = r.Value

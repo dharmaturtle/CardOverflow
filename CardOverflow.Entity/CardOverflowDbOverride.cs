@@ -19,7 +19,7 @@ namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
     FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
-    FSharpFunc<(TemplateInstanceEntity, SHA512), BitArray> TemplateInstanceHasher { get; }
+    FSharpFunc<(CollateInstanceEntity, SHA512), BitArray> CollateInstanceHasher { get; }
   }
 
   public enum SearchOrder {
@@ -90,17 +90,17 @@ namespace CardOverflow.Entity {
     private void _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var template in _filter<TemplateInstanceEntity>(entries)) {
-        template.Hash = _entityHasher.TemplateInstanceHasher.Invoke((template, sha512));
-        template.CWeightTsVectorHelper =
-          Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
-            .Append(MappingTools.stripHtmlTags(template.QuestionXemplate))
-            .Append(MappingTools.stripHtmlTags(template.AnswerXemplate))
+      foreach (var collate in _filter<CollateInstanceEntity>(entries)) {
+        collate.Hash = _entityHasher.CollateInstanceHasher.Invoke((collate, sha512));
+        collate.CWeightTsVectorHelper =
+          Fields.fromString.Invoke(collate.Fields).Select(x => x.Name)
+            .Append(MappingTools.stripHtmlTags(collate.QuestionXemplate))
+            .Append(MappingTools.stripHtmlTags(collate.AnswerXemplate))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var card in _filter<BranchInstanceEntity>(entries)) {
-        var templateHash = card.TemplateInstance?.Hash ?? TemplateInstance.Find(card.TemplateInstanceId).Hash;
-        card.Hash = _entityHasher.BranchInstanceHasher.Invoke((card, templateHash, sha512));
+        var collateHash = card.CollateInstance?.Hash ?? CollateInstance.Find(card.CollateInstanceId).Hash;
+        card.Hash = _entityHasher.BranchInstanceHasher.Invoke((card, collateHash, sha512));
         card.TsVectorHelper = MappingTools.stripHtmlTags(card.FieldValues);
       }
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
@@ -125,7 +125,7 @@ namespace CardOverflow.Entity {
     public IQueryable<BranchInstanceEntity> LatestBranchInstance => BranchInstance.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<BranchInstanceEntity> LatestDefaultBranchInstance => LatestBranchInstance.Where(x => x.Branch.Card.DefaultBranchId == x.BranchId).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<TemplateInstanceEntity> LatestTemplateInstance => TemplateInstance.Where(x => x.Template.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<CollateInstanceEntity> LatestCollateInstance => CollateInstance.Where(x => x.Collate.LatestInstanceId == x.Id).AsNoTracking();
 
   }
 }

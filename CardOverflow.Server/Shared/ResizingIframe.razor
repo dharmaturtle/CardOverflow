@@ -17,8 +17,8 @@
 @code {
   [Parameter] public int CardId { get; set; }
   [Parameter] public int BranchInstanceId { get; set; }
-  [Parameter] public int TemplateId { get; set; }
-  [Parameter] public int TemplateInstanceId { get; set; }
+  [Parameter] public int CollateId { get; set; }
+  [Parameter] public int CollateInstanceId { get; set; }
   [Parameter] public int CommunalFieldId { get; set; }
   [Parameter] public int CommunalFieldInstanceId { get; set; }
   [Parameter] public bool Front { get; set; }
@@ -33,10 +33,10 @@
       middle = "card/" + CardId;
     } else if (BranchInstanceId != 0) {
       middle = "cardinstance/" + BranchInstanceId;
-    } else if (TemplateId != 0) {
-      middle = "template/" + TemplateId;
-    } else if (TemplateInstanceId != 0) {
-      middle = "templateinstance/" + TemplateInstanceId;
+    } else if (CollateId != 0) {
+      middle = "collate/" + CollateId;
+    } else if (CollateInstanceId != 0) {
+      middle = "collateinstance/" + CollateInstanceId;
     } else if (CommunalFieldId != 0) {
       middle = "communalfield/" + CommunalFieldId;
     } else if (CommunalFieldInstanceId != 0) {

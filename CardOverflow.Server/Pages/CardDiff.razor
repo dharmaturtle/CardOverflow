@@ -45,11 +45,11 @@
       <a href="cardinstance/@AId">
         Old Card
       </a>
-      @if (_a.TemplateInstance.Id != _b.TemplateInstance.Id) {
+      @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="templateinstance/@_a.TemplateInstance.Id">
+        <a href="collateinstance/@_a.CollateInstance.Id">
           Old Template
         </a>
       }
@@ -69,15 +69,15 @@
       <a href="cardinstance/@BId">
         New Card
       </a>
-      @if (_a.TemplateInstance.Id != _b.TemplateInstance.Id) {
+      @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="templateinstance/@_b.TemplateInstance.Id">
+        <a href="collateinstance/@_b.CollateInstance.Id">
           New Template
         </a>
       } else {
-        <a href="templateinstance/@_a.TemplateInstance.Id" class="float-right">
+        <a href="collateinstance/@_a.CollateInstance.Id" class="float-right">
           Template
         </a>
       }
@@ -184,15 +184,15 @@
         <BSTabLabel>
           Templates detailed
           @if (
-      _templateFields(_a) != _templateFields(_b) ||
-      _a.TemplateInstance.QuestionXemplate != _b.TemplateInstance.QuestionXemplate ||
-      _a.TemplateInstance.AnswerXemplate != _b.TemplateInstance.AnswerXemplate ||
-      _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
+      _collateFields(_a) != _collateFields(_b) ||
+      _a.CollateInstance.QuestionXemplate != _b.CollateInstance.QuestionXemplate ||
+      _a.CollateInstance.AnswerXemplate != _b.CollateInstance.AnswerXemplate ||
+      _a.CollateInstance.Css != _b.CollateInstance.Css) {
       <i class="fas fa-asterisk"></i>
     }
         </BSTabLabel>
         <BSTabContent>
-          <TextDiff OldText=@_templateFields(_a) NewText=@_templateFields(_b) CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_collateFields(_a) NewText=@_collateFields(_b) CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Fields
@@ -202,7 +202,7 @@
               </h6>
             </Header>
           </TextDiff>
-          <TextDiff OldText=@_a.TemplateInstance.QuestionXemplate NewText=@_b.TemplateInstance.QuestionXemplate CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.CollateInstance.QuestionXemplate NewText=@_b.CollateInstance.QuestionXemplate CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Question Template
@@ -212,7 +212,7 @@
               </h6>
             </Header>
           </TextDiff>
-          <TextDiff OldText=@_a.TemplateInstance.AnswerXemplate NewText=@_b.TemplateInstance.AnswerXemplate CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.CollateInstance.AnswerXemplate NewText=@_b.CollateInstance.AnswerXemplate CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Answer Template
@@ -222,7 +222,7 @@
               </h6>
             </Header>
           </TextDiff>
-          <TextDiff OldText=@_a.TemplateInstance.Css NewText=@_b.TemplateInstance.Css CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.CollateInstance.Css NewText=@_b.CollateInstance.Css CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 CSS
@@ -248,14 +248,14 @@
   private BranchInstanceView _b;
   private bool _aIsAcquired;
   private bool _bIsAcquired;
-  private string _templateFields(BranchInstanceView view) => view.TemplateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x));
+  private string _collateFields(BranchInstanceView view) => view.CollateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(BranchInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
   private string _holisticFrontDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item1, _b.FrontBackFrontSynthBackSynth.Item1);
   private string _holisticBackDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2);
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
-  private string _questionXemplateDiff() => ViewLogic.diff(_a.TemplateInstance.QuestionXemplate, _b.TemplateInstance.QuestionXemplate);
-  private string _answerXemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerXemplate, _b.TemplateInstance.AnswerXemplate);
+  private string _questionXemplateDiff() => ViewLogic.diff(_a.CollateInstance.QuestionXemplate, _b.CollateInstance.QuestionXemplate);
+  private string _answerXemplateDiff() => ViewLogic.diff(_a.CollateInstance.AnswerXemplate, _b.CollateInstance.AnswerXemplate);
   private bool _HasDifferences(string diff) => diff.Contains("<ins ") || diff.Contains("<del ");
 
   private void _OnOk() =>

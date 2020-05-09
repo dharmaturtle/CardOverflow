@@ -1,4 +1,4 @@
-@page "/templateinstance/{InstanceId:int}"
+@page "/collateinstance/{InstanceId:int}"
 
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
@@ -91,10 +91,10 @@
         <div class="float-right mt-3 mr-3">
           <div class="row">
             <div class="btn-group">
-              @if (IsDisabled && Template != null) {
+              @if (IsDisabled && Collate != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
-                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Instance = Template.Instances.Single(x => x.Id == id)))>
-                  @foreach (var instance in Template.Instances.OrderByDescending(x => x.Created)) {
+                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Instance = Collate.Instances.Single(x => x.Id == id)))>
+                  @foreach (var instance in Collate.Instances.OrderByDescending(x => x.Created)) {
                     <option value=@instance.Id selected=@(Instance.Id == instance.Id)>
                       @instance.EditSummary - @instance.Created
                     </option>
@@ -119,21 +119,21 @@
   </div>
 }
 @code {
-  [Parameter] public int TemplateId { get; set; }
+  [Parameter] public int CollateId { get; set; }
   [Parameter] public int InstanceId { get; set; }
-  [Parameter] public ViewTemplateInstance Instance { get; set; }
+  [Parameter] public ViewCollateInstance Instance { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public ViewTemplateWithAllInstances Template { get; set; }
+  [Parameter] public ViewCollateWithAllInstances Collate { get; set; }
   private string _loadingMessage = "Loading...";
 
   private async Task _isChildComponent() {
-    var x = (Template == null || (Template.Id != TemplateId && TemplateId != 0))
-      ? await DbExecutor.QueryAsync(db => SanitizeTemplate.AllInstances(db, TemplateId))
-      : FSharpResult<ViewTemplateWithAllInstances, string>.NewOk(Template);
+    var x = (Collate == null || (Collate.Id != CollateId && CollateId != 0))
+      ? await DbExecutor.QueryAsync(db => SanitizeCollate.AllInstances(db, CollateId))
+      : FSharpResult<ViewCollateWithAllInstances, string>.NewOk(Collate);
     if (x.IsOk) {
-      Template = x.ResultValue;
-      Instance = Template.Instances.SingleOrDefault(x => x.Id == NavigationManager.GetQueryInt("InstanceId")) ?? Template.Instances.First();
+      Collate = x.ResultValue;
+      Instance = Collate.Instances.SingleOrDefault(x => x.Id == NavigationManager.GetQueryInt("InstanceId")) ?? Collate.Instances.First();
     } else {
       _loadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
@@ -141,7 +141,7 @@
   }
 
   private async Task _isInstancePage() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.instance(db, InstanceId));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCollate.instance(db, InstanceId));
     if (x.IsOk) {
       Instance = x.ResultValue;
     } else {
@@ -159,7 +159,7 @@
 
   async Task Submit() {
     IsDisabled = true;
-    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.Update(db, User.Id, Instance));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCollate.Update(db, User.Id, Instance));
     if (x.IsOk) {
       ToastService.ShowSuccess("Saved!");
     } else {

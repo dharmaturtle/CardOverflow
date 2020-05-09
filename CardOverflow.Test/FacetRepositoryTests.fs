@@ -18,14 +18,14 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 
-let normalCommand fieldValues templateInstance =
+let normalCommand fieldValues collateInstance =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    {   TemplateInstance = templateInstance
+    {   CollateInstance = collateInstance
         FieldValues =
-            templateInstance.Fields
+            collateInstance.Fields
             |> Seq.sortBy (fun x -> x.Ordinal)
             |> Seq.mapi (fun i field -> {
                 EditField = ViewField.copyTo field
@@ -36,10 +36,10 @@ let normalCommand fieldValues templateInstance =
         Source = Original
     }
 
-let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
+let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
     EditSummary = "Initial creation"
     FieldValues =
-        clozeTemplate.Fields.Select(fun f -> {
+        clozeCollate.Fields.Select(fun f -> {
             EditField = ViewField.copyTo f
             Value =
                 if f.Name = "Text" then
@@ -53,13 +53,13 @@ let clozeCommand clozeText (clozeTemplate: ViewTemplateInstance) = {
                     } |> Some
                 else None
         }).ToList()
-    TemplateInstance = clozeTemplate
+    CollateInstance = clozeCollate
     Source = Original }
 
-let clozeCommandWithSharedExtra clozeText clozeTemplate = {
-    clozeCommand clozeText clozeTemplate with
+let clozeCommandWithSharedExtra clozeText clozeCollate = {
+    clozeCommand clozeText clozeCollate with
         FieldValues =
-            clozeTemplate.Fields.Select(fun f -> {
+            clozeCollate.Fields.Select(fun f -> {
                 EditField = ViewField.copyTo f
                 Value =
                     if f.Name = "Text" then
@@ -77,12 +77,12 @@ let clozeCommandWithSharedExtra clozeText clozeTemplate = {
                         } |> Some
             }).ToList() }
 
-let add templateName createCommand (db: CardOverflowDb) userId tags = task {
-    let! template = TestTemplateRepo.SearchEarliest db templateName
+let add collateName createCommand (db: CardOverflowDb) userId tags = task {
+    let! collate = TestCollateRepo.SearchEarliest db collateName
     let! ac = CardRepository.getNew db userId
     let ac = { ac with Tags = tags }
     let! r =
-        createCommand template
+        createCommand collate
         |> SanitizeCardRepository.Update db userId ac
     return r.Value
     }
@@ -306,12 +306,12 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
     let userId = 3
     let! _ = addBasicCard c.Db userId []
     let! ac = CardRepository.GetAcquired c.Db userId 1
-    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! collate = SanitizeCollate.AllInstances c.Db 1
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
-            TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
+            CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
             Source = Original
         } |> UpdateRepository.card c.Db ac
     let oldInstanceId = 1001
@@ -334,7 +334,7 @@ let ``BranchInstance with "" as FieldValues is parsed to empty`` (): unit =
     let view =
         BranchInstanceEntity(
             FieldValues = "",
-            TemplateInstance = TemplateInstanceEntity(
+            CollateInstance = CollateInstanceEntity(
                 Fields = "FrontArial20False0FalseBackArial20False1False"
             ))
         |> BranchInstanceView.load
@@ -927,7 +927,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
 //            Title = "",
 //            Description = "",
 //            Fields = "",
-//            TemplateId = 1,
+//            CollateId = 1,
 //            Modified = DateTime.UtcNow)
     
 //    CardRepository.AddCard c.Db facet

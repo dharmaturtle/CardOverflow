@@ -44,12 +44,12 @@ module ViewField =
     }
 
 [<CLIMutable>]
-type ViewTemplateInstance = {
+type ViewCollateInstance = {
     Id: int
     [<Required>]
     [<StringLength(100, MinimumLength = 3, ErrorMessage = "Name must be 3-100 characters long.")>]
     Name: string
-    TemplateId: int
+    CollateId: int
     Css: string
     Fields: ViewField ResizeArray
     Created: DateTime
@@ -68,11 +68,11 @@ type ViewTemplateInstance = {
     member this.ClozeFields =
         AnkiImportLogic.clozeFields this.QuestionXemplate
 
-module ViewTemplateInstance =
-    let load (bznz: TemplateInstance) = {
+module ViewCollateInstance =
+    let load (bznz: CollateInstance) = {
         Id = bznz.Id
         Name = bznz.Name
-        TemplateId = bznz.TemplateId
+        CollateId = bznz.CollateId
         Css = bznz.Css
         Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
         Created = bznz.Created
@@ -85,10 +85,10 @@ module ViewTemplateInstance =
         ShortAnswerXemplate = bznz.ShortAnswerXemplate
         EditSummary = bznz.EditSummary
     }
-    let copyTo (view: ViewTemplateInstance): TemplateInstance = {
+    let copyTo (view: ViewCollateInstance): CollateInstance = {
         Id = view.Id
         Name = view.Name
-        TemplateId = view.TemplateId
+        CollateId = view.CollateId
         Css = view.Css
         Fields = view.Fields |> Seq.map ViewField.copyTo |> Seq.toList
         Created = view.Created
@@ -102,10 +102,10 @@ module ViewTemplateInstance =
         EditSummary = view.EditSummary
     }
 
-type ViewSearchTemplateInstance = {
+type ViewSearchCollateInstance = {
     Id: int
     Name: string
-    TemplateId: int
+    CollateId: int
     Css: string
     Fields: ViewField ResizeArray
     Created: DateTime
@@ -117,15 +117,15 @@ type ViewSearchTemplateInstance = {
     ShortQuestionXemplate: string
     ShortAnswerXemplate: string
     EditSummary: string
-    TemplateUsers: int
+    CollateUsers: int
     IsAcquired: bool
 }
 
-module ViewSearchTemplateInstance =
-    let load templateUsers isAcquired (bznz: TemplateInstance) = {
+module ViewSearchCollateInstance =
+    let load collateUsers isAcquired (bznz: CollateInstance) = {
         Id = bznz.Id
         Name = bznz.Name
-        TemplateId = bznz.TemplateId
+        CollateId = bznz.CollateId
         Css = bznz.Css
         Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
         Created = bznz.Created
@@ -137,22 +137,22 @@ module ViewSearchTemplateInstance =
         ShortQuestionXemplate = bznz.ShortQuestionXemplate
         ShortAnswerXemplate = bznz.ShortAnswerXemplate
         EditSummary = bznz.EditSummary
-        TemplateUsers = templateUsers
+        CollateUsers = collateUsers
         IsAcquired = isAcquired
     }
 
 [<CLIMutable>]
-type ViewTemplateWithAllInstances = {
+type ViewCollateWithAllInstances = {
     Id: int
     AuthorId: int
-    Instances: ViewTemplateInstance ResizeArray
-    Editable: ViewTemplateInstance
+    Instances: ViewCollateInstance ResizeArray
+    Editable: ViewCollateInstance
 } with
-    static member load (entity: TemplateEntity) =
+    static member load (entity: CollateEntity) =
         let instances =
-            entity.TemplateInstances
+            entity.CollateInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.map (TemplateInstance.load >> ViewTemplateInstance.load)
+            |> Seq.map (CollateInstance.load >> ViewCollateInstance.load)
             |> toResizeArray
         {   Id = entity.Id
             AuthorId = entity.AuthorId
@@ -162,43 +162,43 @@ type ViewTemplateWithAllInstances = {
                     Id = 0
                     EditSummary = "" }}
     static member initialize userId =
-        let instance = TemplateInstance.initialize |> ViewTemplateInstance.load
+        let instance = CollateInstance.initialize |> ViewCollateInstance.load
         {   Id = 0
             AuthorId = userId
             Instances = [instance].ToList()
             Editable = instance
         }
 
-module SanitizeTemplate =
-    let latest (db: CardOverflowDb) templateId =
-        TemplateRepository.latest db templateId |> TaskResult.map ViewTemplateInstance.load
+module SanitizeCollate =
+    let latest (db: CardOverflowDb) collateId =
+        CollateRepository.latest db collateId |> TaskResult.map ViewCollateInstance.load
     let instance (db: CardOverflowDb) instanceId =
-        TemplateRepository.instance db instanceId |> TaskResult.map ViewTemplateInstance.load
-    let AllInstances (db: CardOverflowDb) templateId = task {
-        let! template =
-            db.Template
-                .Include(fun x -> x.TemplateInstances)
-                .SingleOrDefaultAsync(fun x -> templateId = x.Id)
+        CollateRepository.instance db instanceId |> TaskResult.map ViewCollateInstance.load
+    let AllInstances (db: CardOverflowDb) collateId = task {
+        let! collate =
+            db.Collate
+                .Include(fun x -> x.CollateInstances)
+                .SingleOrDefaultAsync(fun x -> collateId = x.Id)
         return
-            match template with
-            | null -> sprintf "Template #%i doesn't exist" templateId |> Error
-            | x -> Ok <| ViewTemplateWithAllInstances.load x
+            match collate with
+            | null -> sprintf "Collate #%i doesn't exist" collateId |> Error
+            | x -> Ok <| ViewCollateWithAllInstances.load x
         }
     let Search (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
         let! r =
-            db.LatestTemplateInstance
+            db.LatestCollateInstance
                 .Where(fun x ->
                     String.IsNullOrWhiteSpace searchTerm ||
                     x.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
                 ).Select(fun x ->
-                    x.Template.TemplateInstances.Select(fun x -> x.User_TemplateInstances.Count).ToList(), // lowTODO sum here
-                    x.User_TemplateInstances.Any(fun x -> x.UserId = userId),
+                    x.Collate.CollateInstances.Select(fun x -> x.User_CollateInstances.Count).ToList(), // lowTODO sum here
+                    x.User_CollateInstances.Any(fun x -> x.UserId = userId),
                     x
                 ).ToPagedListAsync(pageNumber, 15)
         return {
             Results = r |> Seq.map (fun (users, isAcquired, l) ->
-                l |> TemplateInstance.load |> ViewSearchTemplateInstance.load (users.Sum()) isAcquired) |> toResizeArray
+                l |> CollateInstance.load |> ViewSearchCollateInstance.load (users.Sum()) isAcquired) |> toResizeArray
             Details = {
                 CurrentPage = r.PageNumber
                 PageCount = r.PageCount
@@ -206,26 +206,26 @@ module SanitizeTemplate =
         }}
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
-            db.User_TemplateInstance
+            db.User_CollateInstance
                 .Where(fun x ->  x.UserId = userId)
-                .Select(fun x -> x.TemplateInstance.Template)
+                .Select(fun x -> x.CollateInstance.Collate)
                 .Distinct()
-                .Include(fun x -> x.TemplateInstances)
+                .Include(fun x -> x.CollateInstances)
                 .ToListAsync()
-        return x |> Seq.map ViewTemplateWithAllInstances.load |> toResizeArray
+        return x |> Seq.map ViewCollateWithAllInstances.load |> toResizeArray
         }
-    let Update (db: CardOverflowDb) userId (instance: ViewTemplateInstance) =
+    let Update (db: CardOverflowDb) userId (instance: ViewCollateInstance) =
         let update () = task {
-            let! r = ViewTemplateInstance.copyTo instance |> TemplateRepository.UpdateFieldsToNewInstance db userId
+            let! r = ViewCollateInstance.copyTo instance |> CollateRepository.UpdateFieldsToNewInstance db userId
             return r |> Ok
         }
         if instance.Fields.Count = instance.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
-            db.Template.SingleOrDefault(fun x -> x.Id = instance.TemplateId)
+            db.Collate.SingleOrDefault(fun x -> x.Id = instance.CollateId)
             |> function
             | null -> update ()
-            | template ->
-                if template.AuthorId = userId then 
+            | collate ->
+                if collate.AuthorId = userId then 
                     update ()
-                else Error "You aren't that this template's author." |> Task.FromResult
+                else Error "You aren't that this collate's author." |> Task.FromResult
         else
             Error "Field names must differ" |> Task.FromResult

@@ -12,7 +12,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (Templates == null) {
+@if (Collates == null) {
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@EditCard OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
@@ -21,7 +21,7 @@
         <div class="row">
           <div class="col-sm">
             @foreach (var field in EditCard.FieldValues) {
-              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) MustBeCommunal=@(EditCard.TemplateInstance.ClozeFields.Contains(field.EditField.Name)) IsDisabled=@_IsDisabled />
+              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) MustBeCommunal=@(EditCard.CollateInstance.ClozeFields.Contains(field.EditField.Name)) IsDisabled=@_IsDisabled />
             }
           </div>
           <div class="col-sm">
@@ -34,21 +34,21 @@
               </div>
             </div>
             <div class="row">
-              <a href="Template/@SelectedTemplateId" class="col-sm-2 mt-2">
+              <a href="Collate/@SelectedCollateId" class="col-sm-2 mt-2">
                 Card Template
               </a>
-              <select value=@SelectedTemplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedTemplate(id)))>
-                @foreach (var template in Templates) {
-                  <option value=@template.Id>@template.Editable.Name</option>
+              <select value=@SelectedCollateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedCollate(id)))>
+                @foreach (var collate in Collates) {
+                  <option value=@collate.Id>@collate.Editable.Name</option>
                 }
               </select>
             </div>
             <div class="row">
-              <a href="Template/@SelectedTemplateId?InstanceId=@SelectedTemplateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Collate/@SelectedCollateId?InstanceId=@SelectedCollateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
-              <select value=@SelectedTemplateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedTemplateInstance))>
-                @foreach (var instance in SelectedTemplateInstances) {
+              <select value=@SelectedCollateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedCollateInstance))>
+                @foreach (var instance in SelectedCollateInstances) {
                   <option value=@instance.Id>@instance.Created - @instance.EditSummary</option>
                 }
               </select>
@@ -123,24 +123,24 @@
   [Parameter] public AcquiredCard Card { get; set; }
   [Parameter] public ViewEditCardCommand EditCard { get; set; }
   [Parameter] public bool NewEditCardOnSave { get; set; }
-  [Parameter] public IEnumerable<ViewTemplateWithAllInstances> Templates { get; set; }
+  [Parameter] public IEnumerable<ViewCollateWithAllInstances> Collates { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
-  private IEnumerable<ViewTemplateInstance> SelectedTemplateInstances;
-  private int SelectedTemplateId;
-  private int SelectedTemplateInstanceId;
+  private IEnumerable<ViewCollateInstance> SelectedCollateInstances;
+  private int SelectedCollateId;
+  private int SelectedCollateInstanceId;
   private int _SelectedCardSettingId;
   private bool _IsDisabled;
   private List<int> _resultingInstanceIds;
 
   protected override async Task OnInitializedAsync() {
-    if (Templates == null) {
-      Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User?.Id ?? 0));
+    if (Collates == null) {
+      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User?.Id ?? 0));
     }
     if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Instances.First(), CardSource.Original);
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), CardSource.Original);
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
-    UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
+    UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
   }
 
   private void _SetOption(int newId) {
@@ -163,8 +163,8 @@
             return new EditFieldAndValue(x.EditField, "", x.Communal);
           }
         }).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.TemplateInstance, CardSource.Original);
-        UpdateSelectedTemplate(EditCard.TemplateInstance.TemplateId, EditCard.TemplateInstance.Id);
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, CardSource.Original);
+        UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
         _IsDisabled = false;
       }
     } else {
@@ -172,17 +172,17 @@
     }
   }
 
-  void UpdateSelectedTemplate(int templateId, int? instanceId = null) {
-    SelectedTemplateId = templateId;
-    SelectedTemplateInstances = Templates.Single(t => t.Id == templateId).Instances;
-    UpdateSelectedTemplateInstance(instanceId ?? SelectedTemplateInstances.First().Id);
+  void UpdateSelectedCollate(int collateId, int? instanceId = null) {
+    SelectedCollateId = collateId;
+    SelectedCollateInstances = Collates.Single(t => t.Id == collateId).Instances;
+    UpdateSelectedCollateInstance(instanceId ?? SelectedCollateInstances.First().Id);
   }
 
-  void UpdateSelectedTemplateInstance(int instanceId) {
-    SelectedTemplateInstanceId = instanceId;
-    EditCard.TemplateInstance = Templates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
+  void UpdateSelectedCollateInstance(int instanceId) {
+    SelectedCollateInstanceId = instanceId;
+    EditCard.CollateInstance = Collates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
     var valuesByField = EditCard.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
-    EditCard.FieldValues = EditCard.TemplateInstance.Fields
+    EditCard.FieldValues = EditCard.CollateInstance.Fields
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)

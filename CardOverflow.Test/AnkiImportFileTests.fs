@@ -25,7 +25,7 @@ open FsToolkit.ErrorHandling
 open ConceptRepositoryTests
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer(false, ankiFileName)
@@ -39,12 +39,12 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    Assert.Equal(7, c.Db.TemplateInstance.Count())
-    Assert.Equal(5, c.Db.LatestTemplateInstance.Count())
+    Assert.Equal(7, c.Db.CollateInstance.Count())
+    Assert.Equal(5, c.Db.LatestCollateInstance.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
 let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer(false, ankiFileName)
@@ -77,7 +77,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
 </audio>
 Basic back, no mp3"""
         """<img src="/image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4"><img src="/image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4">"""]
-    let fields = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
+    let fields = AnkiImportTestData.allDefaultCollatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
     let map =
         [ ("png1.png", FileEntity(
             Sha256 = Array.init 32 (fun index -> index + index |> byte)
@@ -112,8 +112,8 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(8, c.Db.TemplateInstance.Count())
-    Assert.Equal(6, c.Db.LatestTemplateInstance.Count())
+    Assert.Equal(8, c.Db.CollateInstance.Count())
+    Assert.Equal(6, c.Db.LatestCollateInstance.Count())
     } |> TaskResult.getOk)
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
@@ -132,7 +132,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Null x.Value
     let allBranchInstanceViews =
         c.Db.BranchInstance
-            .Include(fun x -> x.TemplateInstance)
+            .Include(fun x -> x.CollateInstance)
             .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -240,9 +240,9 @@ let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (
     let userId = 3
     use c = new TestContainer()
     let! card = CardRepository.getNew c.Db userId
-    let! templates = TestTemplateRepo.Search c.Db "Cloze"
+    let! collates = TestCollateRepo.Search c.Db "Cloze"
     let malformedUpdateCommand =
-        let command = FacetRepositoryTests.clozeCommand "Canberra was founded in {{c1::1913}}." (templates.Single(fun x -> x.Name = "Cloze"))
+        let command = FacetRepositoryTests.clozeCommand "Canberra was founded in {{c1::1913}}." (collates.Single(fun x -> x.Name = "Cloze"))
         { command with FieldValues = command.FieldValues.Select(fun x -> { x with Communal = None }).ToList() }
 
     let! r = SanitizeCardRepository.Update c.Db userId card malformedUpdateCommand
@@ -294,7 +294,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
         c.Db.BranchInstance
-            .Include(fun x -> x.TemplateInstance)
+            .Include(fun x -> x.CollateInstance)
             .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -385,8 +385,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
-    let! template =
-        TestTemplateRepo.Search c.Db "Basic"
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
@@ -402,7 +402,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                 acquired
                 {   EditSummary = editSummary
                     FieldValues =
-                        template
+                        collate
                             .Fields
                             .Select(fun f ->
                                 let value, communal =
@@ -415,7 +415,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     Communal = communal
                                 })
                             .ToList()
-                    TemplateInstance = template
+                    CollateInstance = collate
                     Source = Original
                 }
             |> Task.map Result.getOk
@@ -448,7 +448,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    TemplateInstance.initialize.Fields.Select(fun f -> {
+                    CollateInstance.initialize.Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             if f.Name = "Front" then
@@ -457,14 +457,14 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                                 f.Name
                         Communal = None
                     }).ToList()
-                TemplateInstance =
-                    { TemplateInstance.initialize with
+                CollateInstance =
+                    { CollateInstance.initialize with
                         QuestionXemplate = questionXemplate
-                    } |> ViewTemplateInstance.load
+                    } |> ViewCollateInstance.load
                 Source = Original
             }
         if questionXemplate.Contains "cloze" then
-            Assert.Equal<string seq>(["Front"], view.TemplateInstance.ClozeFields)
+            Assert.Equal<string seq>(["Front"], view.CollateInstance.ClozeFields)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expected, x)
@@ -487,7 +487,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    TemplateInstance.initialize.Fields.Select(fun f -> {
+                    CollateInstance.initialize.Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             match f.Name with
@@ -496,14 +496,14 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                             | _ -> "Source goes here"
                         Communal = None
                     }).ToList()
-                TemplateInstance =
-                    { TemplateInstance.initialize with
+                CollateInstance =
+                    { CollateInstance.initialize with
                         QuestionXemplate = "{{cloze:Front}}{{cloze:Back}}"
                         AnswerXemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
-                    } |> ViewTemplateInstance.load
+                    } |> ViewCollateInstance.load
                 Source = Original
             }
-        Assert.Equal<string seq>(["Front"; "Back"], view.TemplateInstance.ClozeFields)
+        Assert.Equal<string seq>(["Front"; "Back"], view.CollateInstance.ClozeFields)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expectedBack, x)
@@ -519,27 +519,27 @@ let ``EditCardCommand's back works with cloze`` (): unit =
             "In 1492, Columbus sailed the ocean [ blue ] .Source goes here" ]
 
 [<Fact>]
-let ``AnkiDefaults.templateIdByHash is same as initial db`` (): unit =
+let ``AnkiDefaults.collateIdByHash is same as initial db`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()
-    let templates =
-        c.Db.TemplateInstance
+    let collates =
+        c.Db.CollateInstance
             .OrderBy(fun x -> x.Id)
             .ToList()
     
     // test that the calculated hash is the same as the one stored in the db
-    for template in templates do
-        let calculated = TemplateInstanceEntity.hashBase64 hasher template
-        let dbValue = BranchInstanceEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
-        //for x in TemplateInstanceEntity.hash hasher x do
+    for collate in collates do
+        let calculated = CollateInstanceEntity.hashBase64 hasher collate
+        let dbValue = BranchInstanceEntity.bitArrayToByteArray collate.Hash |> Convert.ToBase64String
+        //for x in CollateInstanceEntity.hash hasher x do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
         Assert.Equal(calculated, dbValue)
 
-    // test that AnkiDefaults.templateIdByHash is up to date
-    for i, template in templates |> Seq.mapi (fun i e -> i, e) do
-        let calculated = TemplateInstanceEntity.hashBase64 hasher template
-        Assert.Equal(AnkiDefaults.templateIdByHash.[calculated], i + 1)
+    // test that AnkiDefaults.collateIdByHash is up to date
+    for i, collate in collates |> Seq.mapi (fun i e -> i, e) do
+        let calculated = CollateInstanceEntity.hashBase64 hasher collate
+        Assert.Equal(AnkiDefaults.collateIdByHash.[calculated], i + 1)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {

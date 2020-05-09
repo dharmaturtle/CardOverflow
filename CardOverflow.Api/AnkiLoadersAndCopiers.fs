@@ -26,7 +26,7 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiTemplateInstance = {
+type AnkiCollateInstance = {
     AnkiId: int64
     AuthorId: int
     Name: string
@@ -49,7 +49,7 @@ type AnkiTemplateInstance = {
     FieldsByOrdinal: Map<int16, Field list>
     CommunalFields: Field list
 } with
-    member this.CopyTo (entity: TemplateInstanceEntity) =
+    member this.CopyTo (entity: CollateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -63,17 +63,17 @@ type AnkiTemplateInstance = {
         entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
         entity.EditSummary <- "Imported from Anki"
     member this.CopyToNew userId defaultCardSetting =
-        let entity = TemplateInstanceEntity()
-        entity.User_TemplateInstances <-
-            [User_TemplateInstanceEntity(
+        let entity = CollateInstanceEntity()
+        entity.User_CollateInstances <-
+            [User_CollateInstanceEntity(
                 UserId = userId,
-                Tag_User_TemplateInstances =
+                Tag_User_CollateInstances =
                     (this.DefaultTags
-                        .Select(fun x -> Tag_User_TemplateInstanceEntity(UserId = userId, DefaultTagId = x))
+                        .Select(fun x -> Tag_User_CollateInstanceEntity(UserId = userId, DefaultTagId = x))
                         .ToList()),
                 DefaultCardSetting = defaultCardSetting)].ToList()
-        entity.Template <-
-            TemplateEntity(
+        entity.Collate <-
+            CollateEntity(
                 AuthorId = this.AuthorId)
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
@@ -83,7 +83,7 @@ type AnkiCardWrite = {
     AnkiNoteId: int64
     AnkiNoteOrd: int16
     CommunalFields: CommunalFieldInstanceEntity list
-    Template: TemplateInstanceEntity
+    Collate: CollateInstanceEntity
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
@@ -93,7 +93,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.TemplateInstance <- this.Template
+        entity.CollateInstance <- this.Collate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
         entity.CommunalFieldInstance_BranchInstances <-
@@ -120,8 +120,8 @@ type AnkiCardWrite = {
         this.CopyTo entity
         entity
     member this.AcquireEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let templateHash = this.Template |> TemplateInstanceEntity.hash hasher
-        let hash = this.CopyToNew [] |> BranchInstanceEntity.hash templateHash hasher
+        let collateHash = this.Collate |> CollateInstanceEntity.hash hasher
+        let hash = this.CopyToNew [] |> BranchInstanceEntity.hash collateHash hasher
         db.BranchInstance
             .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
@@ -132,7 +132,7 @@ type AnkiCardWrite = {
 type AnkiAcquiredCard = {
     UserId: int
     BranchInstance: BranchInstanceEntity
-    TemplateInstance: TemplateInstanceEntity
+    CollateInstance: CollateInstanceEntity
     CardState: CardState
     IsLapsed: bool
     LapseCount: byte
@@ -162,7 +162,7 @@ type AnkiAcquiredCard = {
             .FirstOrDefault(fun c -> 
                 this.UserId = c.UserId &&
                 this.BranchInstance.Id = c.BranchInstanceId &&
-                this.TemplateInstance.Id = c.BranchInstance.TemplateInstanceId
+                this.CollateInstance.Id = c.BranchInstance.CollateInstanceId
             )
 
 type AnkiHistory = {
@@ -178,7 +178,7 @@ type AnkiHistory = {
         db.History.FirstOrDefault(fun h -> 
             this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
             this.AcquiredCard.BranchInstanceId = h.AcquiredCard.BranchInstanceId &&
-            this.AcquiredCard.BranchInstance.TemplateInstanceId = h.AcquiredCard.BranchInstance.TemplateInstanceId &&
+            this.AcquiredCard.BranchInstance.CollateInstanceId = h.AcquiredCard.BranchInstance.CollateInstanceId &&
             this.Score = h.Score &&
             this.Timestamp = h.Timestamp &&
             interval = h.IntervalWithUnusedStepsIndex &&
@@ -275,33 +275,33 @@ module Anki =
         |> Decode.keyValuePairs
         |> Decode.fromString
     type BraceRegex = Regex< """{{(?<fieldName>.*?)}}""" >
-    type TempTemplate = {
-        Template: AnkiTemplateInstance
+    type TempCollate = {
+        Collate: AnkiCollateInstance
         NewByOldField: (Field * Field) list
         ReducedFields: Field list
         FieldsByOrdinal: (int16 * Field list) list
     } with
-        member this.QuestionXemplate = this.Template.QuestionXemplate
-        member this.AnswerXemplate = this.Template.AnswerXemplate
-        member this.Ordinal = this.Template.Ordinal
+        member this.QuestionXemplate = this.Collate.QuestionXemplate
+        member this.AnswerXemplate = this.Collate.AnswerXemplate
+        member this.Ordinal = this.Collate.Ordinal
     let parseModels userId =
-        let reduceTemplate (templates: AnkiTemplateInstance list) =
-            let templates = templates |> List.map (fun x -> { Template = x; NewByOldField = []; ReducedFields = x.Fields; FieldsByOrdinal = [] })
+        let reduceCollate (collates: AnkiCollateInstance list) =
+            let collates = collates |> List.map (fun x -> { Collate = x; NewByOldField = []; ReducedFields = x.Fields; FieldsByOrdinal = [] })
             let contains questionXemplate answerXemplate fieldName =
                 let qa = MappingTools.joinByUnitSeparator [questionXemplate; answerXemplate]
                 qa.Contains("{{" + fieldName + "}}", StringComparison.OrdinalIgnoreCase) ||
                 qa.Contains("{{type:" + fieldName + "}}", StringComparison.OrdinalIgnoreCase)
             let communalFields =
-                templates.Head.ReducedFields
+                collates.Head.ReducedFields
                 |> List.filter (fun field ->
-                    templates.Count(fun t -> contains t.QuestionXemplate t.AnswerXemplate field.Name)
+                    collates.Count(fun t -> contains t.QuestionXemplate t.AnswerXemplate field.Name)
                     |> function
                     | 1 -> false
                     | _ -> true
-                    || templates.Any(fun t -> t.Template.IsCloze))
+                    || collates.Any(fun t -> t.Collate.IsCloze))
             let communalFieldNames = communalFields |> List.map (fun x -> x.Name)
-            let rec reduceLoop templates =
-                let combine (newT: TempTemplate) (oldT: TempTemplate) =
+            let rec reduceLoop collates =
+                let combine (newT: TempCollate) (oldT: TempCollate) =
                     let newQA = [newT.QuestionXemplate; newT.AnswerXemplate] |> joinByUnitSeparator
                     let oldQA = [oldT.QuestionXemplate; oldT.AnswerXemplate] |> joinByUnitSeparator
                     if  standardizeWhitespace (BraceRegex().Replace(newQA, "")) =
@@ -340,40 +340,40 @@ module Anki =
                         } |> Some
                     else
                         None
-                combination 2 templates
+                combination 2 collates
                 |> Seq.tryPick (fun x ->
                     let a = x.[0]
                     let b = x.[1]
                     combine a b
-                    |> Option.map (fun x -> x :: templates |> List.filter(fun x -> x <> a && x <> b)))
+                    |> Option.map (fun x -> x :: collates |> List.filter(fun x -> x <> a && x <> b)))
                 |> function
                 | Some x -> reduceLoop x
-                | None -> templates
-            let templates = reduceLoop templates
-            let templateSpecificFieldsByTemplate =
-                let usedFieldsByTemplate =
-                    templates |> List.map(fun t ->
+                | None -> collates
+            let collates = reduceLoop collates
+            let collateSpecificFieldsByCollate =
+                let usedFieldsByCollate =
+                    collates |> List.map(fun t ->
                         let qa = [t.QuestionXemplate; t.AnswerXemplate] |> joinByUnitSeparator
                         t, BraceRegex().TypedMatches(qa).Select(fun x -> x.fieldName.Value) |> List.ofSeq
                     ) |> Map.ofList
-                templates |> List.map(fun t ->
-                    let otherTemplatesUsedFields = usedFieldsByTemplate |> Map.toList |> List.filter (fun (x, _) -> x <> t) |> List.collect snd
-                    t, usedFieldsByTemplate.[t] |> List.filter (fun x -> not <| otherTemplatesUsedFields.Contains x))
-            let oldFields = templates |> List.collect (fun x -> x.NewByOldField) |> List.map fst
-            templates |> List.map (fun t ->
-                let otherTemplateSpecificFields = templateSpecificFieldsByTemplate |> List.filter (fun (x, _) -> x <> t) |> List.collect snd
+                collates |> List.map(fun t ->
+                    let otherCollatesUsedFields = usedFieldsByCollate |> Map.toList |> List.filter (fun (x, _) -> x <> t) |> List.collect snd
+                    t, usedFieldsByCollate.[t] |> List.filter (fun x -> not <| otherCollatesUsedFields.Contains x))
+            let oldFields = collates |> List.collect (fun x -> x.NewByOldField) |> List.map fst
+            collates |> List.map (fun t ->
+                let otherCollateSpecificFields = collateSpecificFieldsByCollate |> List.filter (fun (x, _) -> x <> t) |> List.collect snd
                 let fields =
                     t.ReducedFields
                     |> List.filter (fun x ->
-                        (not <| otherTemplateSpecificFields.Contains x.Name && not <| oldFields.Contains x) ||
+                        (not <| otherCollateSpecificFields.Contains x.Name && not <| oldFields.Contains x) ||
                         communalFieldNames.Contains x.Name
                     )
                     |> List.sortBy (fun x -> x.Ordinal)
                     |> List.mapi (fun i x -> { x with Ordinal = byte i})
-                { t.Template with
+                { t.Collate with
                     NewByOldField =
                         if List.isEmpty t.NewByOldField then
-                            List.zip t.Template.Fields t.Template.Fields
+                            List.zip t.Collate.Fields t.Collate.Fields
                         else
                             t.NewByOldField
                         |> Map.ofList
@@ -386,7 +386,7 @@ module Anki =
                     Fields = fields
                     CommunalFields = communalFields})
         Decode.object(fun get ->
-            let templates =
+            let collates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
                             {|Name = g.Required.Field "name" Decode.string
                               QuestionXemplate = g.Required.Field "qfmt" Decode.string
@@ -396,14 +396,14 @@ module Anki =
                               Ordinal = g.Required.Field "ord" Decode.int |> int16 |})
                               |> Decode.list )
                 |> List.sortBy (fun x -> x.Ordinal)
-            templates
-            |> List.map(fun template ->
+            collates
+            |> List.map(fun collate ->
                 let namePostfix =
-                    if templates.Count() >= 2
-                    then " - " + template.Name
+                    if collates.Count() >= 2
+                    then " - " + collate.Name
                     else ""
                 {   AnkiId = get.Required.Field "id" Decode.int64
-                    Ordinal = template.Ordinal
+                    Ordinal = collate.Ordinal
                     AuthorId = userId
                     Name = get.Required.Field "name" Decode.string + namePostfix
                     Css = get.Required.Field "css" Decode.string
@@ -414,10 +414,10 @@ module Anki =
                               Ordinal = get.Required.Field "ord" Decode.int |> byte
                               IsSticky = get.Required.Field "sticky" Decode.bool })
                             |> Decode.list)
-                    QuestionXemplate = template.QuestionXemplate
-                    AnswerXemplate = template.AnswerXemplate
-                    ShortQuestionXemplate = template.ShortQuestionXemplate
-                    ShortAnswerXemplate = template.ShortAnswerXemplate
+                    QuestionXemplate = collate.QuestionXemplate
+                    AnswerXemplate = collate.AnswerXemplate
+                    ShortQuestionXemplate = collate.ShortQuestionXemplate
+                    ShortAnswerXemplate = collate.ShortAnswerXemplate
                     Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
                     Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
                     DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
@@ -429,7 +429,7 @@ module Anki =
                     NewByOldField = Map.empty
                     FieldsByOrdinal = Map.empty
                     CommunalFields = []
-                }) |> reduceTemplate)
+                }) |> reduceCollate)
         |> Decode.keyValuePairs
         |> Decode.fromString
     type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
@@ -468,7 +468,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (templatesByModelId: Map<string, {| Entity: TemplateInstanceEntity; Template: AnkiTemplateInstance |} list>)
+        (collatesByModelId: Map<string, {| Entity: CollateInstanceEntity; Collate: AnkiCollateInstance |} list>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -488,10 +488,10 @@ module Anki =
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
-                let templates = templatesByModelId.[string note.Mid]
+                let collates = collatesByModelId.[string note.Mid]
                 let communalFields =
-                    templates
-                    |> List.collect(fun x -> x.Template.CommunalFields)
+                    collates
+                    |> List.collect(fun x -> x.Collate.CommunalFields)
                     |> List.distinct
                     |> List.map (fun field ->
                         CommunalFieldInstanceEntity(
@@ -501,11 +501,11 @@ module Anki =
                             CommunalField = CommunalFieldEntity(AuthorId = userId),
                             Created = DateTime.UtcNow,
                             CommunalFieldInstance_BranchInstances = [].ToList()))
-                let toCard fields template noteOrd =
+                let toCard fields collate noteOrd =
                     let c = {
                         AnkiNoteId = note.Id
                         AnkiNoteOrd = noteOrd
-                        Template = template
+                        Collate = collate
                         CommunalFields = communalFields
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
@@ -517,33 +517,33 @@ module Anki =
                 let noteIdCardsAndTags =
                     result {
                         let! cards =
-                            if templates.First().Template.IsCloze then result {
-                                let template = templates |> Seq.exactlyOne
+                            if collates.First().Collate.IsCloze then result {
+                                let collate = collates |> Seq.exactlyOne
                                 let valueByFieldName =
                                     Seq.zip
-                                        <| template.Template.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
+                                        <| collate.Collate.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
                                         <| fieldValues
                                     |> Map.ofSeq
                                 let! max =
                                     AnkiImportLogic.maxClozeIndex
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
                                         <| valueByFieldName
-                                        <| template.Template.QuestionXemplate
+                                        <| collate.Collate.QuestionXemplate
                                 return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                                     toCard
                                         <| AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex fieldValues
-                                        <| template.Entity
+                                        <| collate.Entity
                                         <| clozeIndex - 1s // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}
                             else
-                                let instances = templates |> List.collect (fun anon ->
-                                    let template = anon.Template
-                                    let newByOldField = template.NewByOldField
+                                let instances = collates |> List.collect (fun anon ->
+                                    let collate = anon.Collate
+                                    let newByOldField = collate.NewByOldField
                                     let oldFields = newByOldField |> Map.toList |> List.map fst
                                     let newFields = newByOldField |> Map.toList |> List.map snd
-                                    template.FieldsByOrdinal
+                                    collate.FieldsByOrdinal
                                     |> Map.toList
-                                    |> List.map (fun (templateOrdinal, fields) ->
+                                    |> List.map (fun (collateOrdinal, fields) ->
                                         let fields =
                                             fields |> List.map (fun f ->
                                                 oldFields
@@ -561,7 +561,7 @@ module Anki =
                                                     newByOldField.[field].Ordinal, field.Ordinal
                                             ) |> List.sortBy (fun (newOrdinal, _) -> newOrdinal)
                                             |> List.map (fun (_, oldOrdinal) -> fieldValues.[int oldOrdinal])
-                                        toCard fields anon.Entity templateOrdinal
+                                        toCard fields anon.Entity collateOrdinal
                                     ))
                                 instances |> Ok
                         let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
@@ -588,7 +588,7 @@ module Anki =
         let deckTag = usersTags.First(fun x -> x.Name = deckTag)
         let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
         let card = cards.Single(fun x -> x.AnkiNoteOrd = (ankiCard.Ord |> int16 |> Nullable))
-        let cti = card.TemplateInstance
+        let cti = card.CollateInstance
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
@@ -600,7 +600,7 @@ module Anki =
                 let c: AnkiAcquiredCard =
                     { UserId = userId
                       BranchInstance = card
-                      TemplateInstance = cti
+                      CollateInstance = cti
                       CardState =
                         match ankiCard.Queue with
                         | -3L -> UserBuried

@@ -1,5 +1,5 @@
-@page "/template"
-@page "/template/{SelectedId:int}"
+@page "/collate"
+@page "/collate/{SelectedId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,7 +11,7 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_instances?.Select(x => x.TemplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/collate/" CreateLink=@(x => $"/collate/{x}") Ids=@_instances?.Select(x => x.CollateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
   @if (_instances == null) {
@@ -31,15 +31,15 @@
               <span class="oi oi-eye@(instance.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
-                <ResizingIframe TemplateInstanceId=@instance.Id Back />
+                <ResizingIframe CollateInstanceId=@instance.Id Back />
               </div>
             </div>
           </td>
           <td>
-            @instance.TemplateUsers
+            @instance.CollateUsers
           </td>
           <td>
-            <a href="/template/@instance.TemplateId">
+            <a href="/collate/@instance.CollateId">
               @instance.Name
             </a>
           </td>
@@ -49,13 +49,13 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <TemplateEditor TemplateId=@SelectedId.Value />
+  <CollateEditor CollateId=@SelectedId.Value />
 }
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public int? SelectedId { get; set; }
-  private IList<ViewSearchTemplateInstance> _instances;
+  private IList<ViewSearchCollateInstance> _instances;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 
@@ -68,7 +68,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, User?.Id ?? 0, pageNumber, _search.Query));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCollate.Search(db, User?.Id ?? 0, pageNumber, _search.Query));
     _details = pagedList.Details;
     _instances = pagedList.Results.ToList();
   }

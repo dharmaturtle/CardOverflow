@@ -53,21 +53,21 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<CardOverflowDb>()
 
-module TestTemplateRepo =
+module TestCollateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.LatestTemplateInstance
+            db.LatestCollateInstance
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (TemplateInstance.load >> ViewTemplateInstance.load) |> toResizeArray
+        return x |> Seq.map (CollateInstance.load >> ViewCollateInstance.load) |> toResizeArray
         }
     let SearchEarliest (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.TemplateInstance
+            db.CollateInstance
                 .Where(fun x -> x.Name = query)
                 .OrderBy(fun x -> x.Created)
                 .FirstAsync()
-        return x |> TemplateInstance.load |> ViewTemplateInstance.load
+        return x |> CollateInstance.load |> ViewCollateInstance.load
         }
 
 // Sqlite

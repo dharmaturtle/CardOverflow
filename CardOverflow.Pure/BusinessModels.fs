@@ -101,10 +101,10 @@ module Fields =
         MappingTools.splitByRecordSeparator
         >> List.map Field.fromString
 
-type TemplateInstance = {
+type CollateInstance = {
     Id: int
     Name: string
-    TemplateId: int
+    CollateId: int
     Css: string
     Fields: Field list
     Created: DateTime
@@ -124,16 +124,16 @@ type TemplateInstance = {
     member this.FrontBackFrontSynthBackSynth =
         CardHtml.generate [] this.QuestionXemplate this.AnswerXemplate this.Css
 
-type AcquiredTemplateInstance = {
+type AcquiredCollateInstance = {
     DefaultTags: int seq
     DefaultCardSettingId: int
-    TemplateInstance: TemplateInstance
+    CollateInstance: CollateInstance
 }
 
-type Template = {
+type Collate = {
     Id: int
     AuthorId: int
-    LatestInstance: TemplateInstance
+    LatestInstance: CollateInstance
 }
 
 type IntervalOrStepsIndex =
@@ -165,7 +165,7 @@ type QuizCard = {
 
 // medTODO delete?
 //type AcquiredDisplayCard = { // Acquired cause only private tags can be on a card
-//    TemplateName: string
+//    CollateName: string
 //    Front: string
 //    Back: string
 //    Tags: string seq
@@ -251,14 +251,14 @@ type EditFieldAndValue = {
 
 type BranchInstanceView = {
     FieldValues: FieldAndValue ResizeArray
-    TemplateInstance: TemplateInstance
+    CollateInstance: CollateInstance
 } with
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         CardHtml.generate
             <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
-            <| this.TemplateInstance.QuestionXemplate
-            <| this.TemplateInstance.AnswerXemplate
-            <| this.TemplateInstance.Css
+            <| this.CollateInstance.QuestionXemplate
+            <| this.CollateInstance.AnswerXemplate
+            <| this.CollateInstance.Css
 
 type CommunalFieldInstance = {
     Id: int
@@ -405,7 +405,7 @@ with
 type EditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    TemplateInstance: TemplateInstance
+    CollateInstance: CollateInstance
     Source: CardSource
 } with
     member this.CardView = {   
@@ -414,14 +414,14 @@ type EditCardCommand = {
                 {   Field = x.EditField
                     Value =  x.Value
                 }).ToList()
-        TemplateInstance = this.TemplateInstance }
+        CollateInstance = this.CollateInstance }
     member this.CommunalFieldValues =
         this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
     member this.CommunalNonClozeFieldValues =
         this.CommunalFieldValues
-            .Where(fun x -> not <| this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+            .Where(fun x -> not <| this.CollateInstance.ClozeFields.Contains x.EditField.Name)
             .ToList()
     member this.ClozeFieldValues =
         this.CommunalFieldValues
-            .Where(fun x -> this.TemplateInstance.ClozeFields.Contains x.EditField.Name)
+            .Where(fun x -> this.CollateInstance.ClozeFields.Contains x.EditField.Name)
             .ToList()

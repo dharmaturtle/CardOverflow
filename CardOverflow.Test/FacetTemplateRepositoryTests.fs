@@ -1,4 +1,4 @@
-module TemplateRepositoryTests
+module CollateRepositoryTests
 
 open FsToolkit.ErrorHandling
 open LoadersAndCopiers
@@ -19,45 +19,45 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
-    let templateId = 1
+let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
+    let collateId = 1
     let userId = 3
     use c = new TestContainer()
     
-    let! template = SanitizeTemplate.AllInstances c.Db templateId
-    let latestInstance = template.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
+    let! collate = SanitizeCollate.AllInstances c.Db collateId
+    let latestInstance = collate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
-        template.Value.Instances.Single().Name)
+        collate.Value.Instances.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
         latestInstance.QuestionXemplate)
-    Assert.Equal(1, c.Db.TemplateInstance.Count(fun x -> x.TemplateId = templateId))
+    Assert.Equal(1, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
 
     // Testing UpdateFieldsToNewInstance
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
     let newQuestionXemplate = "modified {{Front mutated}}"
-    let newTemplateName = "new name"
+    let newCollateName = "new name"
     let updated =
         { latestInstance with
-            Name = newTemplateName
+            Name = newCollateName
             QuestionXemplate = newQuestionXemplate
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
-        } |> ViewTemplateInstance.copyTo
+        } |> ViewCollateInstance.copyTo
     
-    do! TemplateRepository.UpdateFieldsToNewInstance c.Db userId updated
+    do! CollateRepository.UpdateFieldsToNewInstance c.Db userId updated
 
-    let! template = SanitizeTemplate.AllInstances c.Db templateId
-    let latestInstance = template.Value.Instances |> Seq.maxBy (fun x -> x.Created)
+    let! collate = SanitizeCollate.AllInstances c.Db collateId
+    let latestInstance = collate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
     Assert.Equal(
         newQuestionXemplate,
         latestInstance.QuestionXemplate)
     Assert.Equal(
-        newTemplateName,
+        newCollateName,
         latestInstance.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
@@ -66,11 +66,11 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
     Assert.Equal(1002, c.Db.AcquiredCard.Single().BranchInstanceId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.TemplateInstanceId)
-    Assert.Equal(2, c.Db.TemplateInstance.Count(fun x -> x.TemplateId = templateId))
+        c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.CollateInstanceId)
+    Assert.Equal(2, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
     Assert.Equal(2, c.Db.BranchInstance.Count())
     Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.Branch.CardId = 1))
-    let createds = c.Db.TemplateInstance.Where(fun x -> x.TemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
+    let createds = c.Db.CollateInstance.Where(fun x -> x.CollateId = collateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = CardViewRepository.get c.Db 1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth
@@ -119,21 +119,21 @@ let ``TemplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task 
 
     // test existing
     let testView getView id expectedFront expectedBack = task {
-        let! (actual: Result<TemplateInstance, string>) = getView c.Db id
+        let! (actual: Result<CollateInstance, string>) = getView c.Db id
         let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth
         BusinessLogicTests.assertStripped expectedFront front
         BusinessLogicTests.assertStripped expectedBack back
     }
     
-    do! testView TemplateRepository.latest templateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
+    do! testView CollateRepository.latest collateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
 
-    let priorInstance = template.Value.Instances |> Seq.minBy (fun x -> x.Created)
-    do! testView TemplateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
+    let priorInstance = collate.Value.Instances |> Seq.minBy (fun x -> x.Created)
+    do! testView CollateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
 
     // test missing
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
-    do! testViewError TemplateRepository.latest 0 "Template #0 not found"
-    do! testViewError TemplateRepository.instance 0 "Template Instance #0 not found"
+    do! testViewError CollateRepository.latest 0 "Collate #0 not found"
+    do! testViewError CollateRepository.instance 0 "Collate Instance #0 not found"
     }

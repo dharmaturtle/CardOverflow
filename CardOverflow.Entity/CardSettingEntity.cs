@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
         public CardSettingEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
-            User_TemplateInstances = new HashSet<User_TemplateInstanceEntity>();
+            User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
         }
 
         [Key]
@@ -70,7 +70,7 @@ namespace CardOverflow.Entity
         [InverseProperty("CardSetting")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("DefaultCardSetting")]
-        public virtual ICollection<User_TemplateInstanceEntity> User_TemplateInstances { get; set; }
+        public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
     }
 }
 

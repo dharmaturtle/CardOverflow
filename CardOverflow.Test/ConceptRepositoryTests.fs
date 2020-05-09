@@ -49,12 +49,12 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
     let! ac = CardRepository.GetAcquired c.Db userId 1
-    let! template = SanitizeTemplate.AllInstances c.Db 1
+    let! collate = SanitizeCollate.AllInstances c.Db 1
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
-            TemplateInstance = template.Instances.Single() |> ViewTemplateInstance.copyTo
+            CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
             Source = Original
         } |> UpdateRepository.card c.Db ac
     let oldInstanceId = 1001
@@ -542,58 +542,58 @@ let ``Card search works`` (): Task<unit> = task {
     let! hits = search tag
     Assert.Equal(lorem, hits.Results.First().Instance.StrippedFront)
 
-    // testing template search
-    let search = SanitizeTemplate.Search c.Db userId 1
-    let! templates = search "Cloze"
-    Assert.Equal("Cloze", templates.Results.Single().Name)
-    Assert.Equal(3, templates.Results.Single().TemplateUsers)
-    Assert.False(templates.Results.Single().IsAcquired) // most recent cloze is not acquired because it's missing Extra. Why Damien?
-    let! templates = search "type"
-    Assert.Equal("Basic (type in the answer)", templates.Results.Single().Name)
-    Assert.Equal(3, templates.Results.Single().TemplateUsers)
-    Assert.True(templates.Results.Single().IsAcquired)
-    let! templates = search "Basic"
-    Assert.Equal(4, templates.Results.Count())
-    Assert.True(templates.Results.All(fun x -> x.TemplateUsers = 3))
-    Assert.True(templates.Results.All(fun x -> x.IsAcquired))
+    // testing collate search
+    let search = SanitizeCollate.Search c.Db userId 1
+    let! collates = search "Cloze"
+    Assert.Equal("Cloze", collates.Results.Single().Name)
+    Assert.Equal(3, collates.Results.Single().CollateUsers)
+    Assert.False(collates.Results.Single().IsAcquired) // most recent cloze is not acquired because it's missing Extra. Why Damien?
+    let! collates = search "type"
+    Assert.Equal("Basic (type in the answer)", collates.Results.Single().Name)
+    Assert.Equal(3, collates.Results.Single().CollateUsers)
+    Assert.True(collates.Results.Single().IsAcquired)
+    let! collates = search "Basic"
+    Assert.Equal(4, collates.Results.Count())
+    Assert.True(collates.Results.All(fun x -> x.CollateUsers = 3))
+    Assert.True(collates.Results.All(fun x -> x.IsAcquired))
     }
 
 [<Fact>]
-let ``New user has TheCollective's card templates`` (): Task<unit> = task {
+let ``New user has TheCollective's card collates`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
+    let! myCollates = SanitizeCollate.GetMine c.Db userId
     let theCollectiveId = c.Db.User.Single(fun x -> x.DisplayName = "The Collective").Id
-    for template in myTemplates do
-        Assert.Equal(theCollectiveId, template.AuthorId)
+    for collate in myCollates do
+        Assert.Equal(theCollectiveId, collate.AuthorId)
     }
 
 [<Fact>]
-let ``Updating card template with duplicate field names yields error`` (): Task<unit> = task {
+let ``Updating card collate with duplicate field names yields error`` (): Task<unit> = task {
     let userId = 3
     let fieldName = Guid.NewGuid().ToString()
-    let template = TemplateInstance.initialize |> ViewTemplateInstance.load
-    let template = { template with Fields = template.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
+    let collate = CollateInstance.initialize |> ViewCollateInstance.load
+    let collate = { collate with Fields = collate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
-    let! error = SanitizeTemplate.Update null userId template
+    let! error = SanitizeCollate.Update null userId collate
     
     Assert.Equal("Field names must differ", error.error)
     }
 
 [<Fact>]
-let ``Can create card template and insert a modified one`` (): Task<unit> = task {
+let ``Can create card collate and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let name = Guid.NewGuid().ToString()
-    let initialTemplate = ViewTemplateWithAllInstances.initialize userId
+    let initialCollate = ViewCollateWithAllInstances.initialize userId
 
-    let! x = SanitizeTemplate.Update c.Db userId { initialTemplate.Editable with Name = name }
+    let! x = SanitizeCollate.Update c.Db userId { initialCollate.Editable with Name = name }
     Assert.Null x.Value
-    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
+    let! myCollates = SanitizeCollate.GetMine c.Db userId
 
-    Assert.SingleI(myTemplates.Where(fun x -> x.Editable.Name = name))
+    Assert.SingleI(myCollates.Where(fun x -> x.Editable.Name = name))
     
-    // testing a brand new template, but slightly different
+    // testing a brand new collate, but slightly different
     let fieldName = Guid.NewGuid().ToString()
     let newEditable =
         let newField =
@@ -602,39 +602,39 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
                 Ordinal = 0
                 IsSticky = false
             }
-        {   initialTemplate.Editable with
-                Fields = initialTemplate.Editable.Fields.Append newField |> Core.toResizeArray
+        {   initialCollate.Editable with
+                Fields = initialCollate.Editable.Fields.Append newField |> Core.toResizeArray
         }
-    let! x = SanitizeTemplate.Update c.Db userId newEditable
+    let! x = SanitizeCollate.Update c.Db userId newEditable
     Assert.Null x.Value
     
-    Assert.Equal(2, c.Db.Template.Count(fun x -> x.AuthorId = userId))
-    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    let latestTemplate = myTemplates.OrderBy(fun x -> x.Id).Last().Editable
-    Assert.True(latestTemplate.Fields.Any(fun x -> x.Name = fieldName))
+    Assert.Equal(2, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
+    let! myCollates = SanitizeCollate.GetMine c.Db userId
+    let latestCollate = myCollates.OrderBy(fun x -> x.Id).Last().Editable
+    Assert.True(latestCollate.Fields.Any(fun x -> x.Name = fieldName))
 
-    // updating the slightly different template
+    // updating the slightly different collate
     let name = Guid.NewGuid().ToString()
-    let! x = SanitizeTemplate.Update c.Db userId { latestTemplate with Name = name }
+    let! x = SanitizeCollate.Update c.Db userId { latestCollate with Name = name }
     Assert.Null x.Value
 
-    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).TemplateId)
+    let! myCollates = SanitizeCollate.GetMine c.Db userId
+    Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
     }
 
 [<Fact>]
-let ``New card template has correct hash`` (): Task<unit> = taskResult {
+let ``New card collate has correct hash`` (): Task<unit> = taskResult {
         use c = new TestContainer()
         let userId = 3
-        let initialTemplate = ViewTemplateWithAllInstances.initialize userId
+        let initialCollate = ViewCollateWithAllInstances.initialize userId
         use sha512 = SHA512.Create()
-        do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable
-        let! (dbTemplate: TemplateInstanceEntity) = c.Db.TemplateInstance.SingleAsync(fun x -> x.Template.AuthorId = userId)
+        do! SanitizeCollate.Update c.Db userId initialCollate.Editable
+        let! (dbCollate: CollateInstanceEntity) = c.Db.CollateInstance.SingleAsync(fun x -> x.Collate.AuthorId = userId)
     
         let computedHash =
-            initialTemplate.Editable
-            |> ViewTemplateInstance.copyTo
-            |> fun x -> TemplateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
-            |> TemplateInstanceEntity.hash sha512
+            initialCollate.Editable
+            |> ViewCollateInstance.copyTo
+            |> fun x -> CollateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
+            |> CollateInstanceEntity.hash sha512
     
-        Assert.Equal<BitArray>(dbTemplate.Hash, computedHash) } |> TaskResult.getOk
+        Assert.Equal<BitArray>(dbCollate.Hash, computedHash) } |> TaskResult.getOk

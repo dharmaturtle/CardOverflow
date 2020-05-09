@@ -1,5 +1,5 @@
-@page "/template/curate"
-@page "/template/{TemplateId:int}/curate"
+@page "/collate/curate"
+@page "/collate/{CollateId:int}/curate"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
@@ -16,22 +16,22 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_templates == null) {
+@if (_collates == null) {
   <p><em>"Loading..."</em></p>
 } else {
   <div class="row">
     <div class="col-sm-10">
-      <TemplateEditor Template=@_templates[_selectedIndex] />
+      <CollateEditor Collate=@_collates[_selectedIndex] />
     </div>
     <div class="col-sm-2 list-group">
       <h5 class="text-center">Card Templates</h5>
       <button type="button" class="btn btn-success mb-2" @onclick=@_Add>
         <span class="oi oi-plus"></span>
       </button>
-      @foreach (var x in _templates.Select((t, i) => new { Template = t, Index = i })) {
+      @foreach (var x in _collates.Select((t, i) => new { Collate = t, Index = i })) {
         <button class="list-group-item list-group-item-action @(x.Index == _selectedIndex ? "active" : "")"
                 @onclick=@(() => _selectedIndex = x.Index)>
-          @x.Template.Editable.Name
+          @x.Collate.Editable.Name
         </button>
       }
     </div>
@@ -39,23 +39,23 @@
 }
 
 @code {
-  [Parameter] public int TemplateId { get; set; }
+  [Parameter] public int CollateId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
-  private List<ViewTemplateWithAllInstances> _templates;
+  private List<ViewCollateWithAllInstances> _collates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
     if (User != null) {
-      _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, User.Id));
-      _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
-        .Apply(_templates.IndexOf);
+      _collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User.Id));
+      _selectedIndex = (_collates.SingleOrDefault(x => x.Id == CollateId) ?? _collates.First())
+        .Apply(_collates.IndexOf);
     }
   }
 
   private void _Add() {
-    var t = ViewTemplateWithAllInstances.initialize(User.Id);
-    _templates = _templates.Prepend(t).ToList();
-    _selectedIndex = _templates.IndexOf(t);
+    var t = ViewCollateWithAllInstances.initialize(User.Id);
+    _collates = _collates.Prepend(t).ToList();
+    _selectedIndex = _collates.IndexOf(t);
   }
 
 }

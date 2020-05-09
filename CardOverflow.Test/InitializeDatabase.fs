@@ -1,4 +1,4 @@
-﻿module InitializeDatabase
+module InitializeDatabase
 
 open LoadersAndCopiers
 open Helpers
@@ -31,14 +31,14 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) = task {
     do! UserRepository.add db 2 "The Collective"
     do! UserRepository.add db 3 "RoboTurtle"
     let theCollective = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.DisplayName = "The Collective")
-    let toEntity (template: AnkiTemplateInstance) =
-        template.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting
+    let toEntity (collate: AnkiCollateInstance) =
+        collate.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting
     Anki.parseModels
         theCollective.Id
         ankiModels
     |> Result.getOk
     |> Seq.collect (snd >> Seq.map toEntity)
-    |> db.TemplateInstance.AddRange
+    |> db.CollateInstance.AddRange
     do! db.SaveChangesAsyncI () }
 
 //[<Fact>]
