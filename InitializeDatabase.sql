@@ -1,4 +1,4 @@
-﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -59,20 +59,6 @@ $$;
 
 ALTER FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_branch_afterinsert() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    BEGIN
-        UPDATE "Card" c
-        SET    "DefaultBranchId" = (NEW."Id")
-        WHERE (c."Id" = NEW."CardId" AND c."DefaultBranchId" = 0);
-        RETURN NULL;
-    END;
-$$;
-
-
-ALTER FUNCTION public.fn_branch_afterinsert() OWNER TO postgres;
-
 CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -87,6 +73,20 @@ $$;
 
 
 ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
+
+CREATE FUNCTION public.fn_branch_afterinsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        UPDATE "Card" c
+        SET    "DefaultBranchId" = (NEW."Id")
+        WHERE (c."Id" = NEW."CardId" AND c."DefaultBranchId" = 0);
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_branch_afterinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_branchinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
@@ -1371,11 +1371,13 @@ CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 CREATE INDEX idx_fts_templateinstance_tsvector ON public."TemplateInstance" USING gin ("TsVector");
 
 
-CREATE TRIGGER tr_branch_afterinsert AFTER INSERT ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_branch_afterinsert();
 CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
 
 
 CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
+
+
+CREATE TRIGGER tr_branch_afterinsert AFTER INSERT ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_branch_afterinsert();
 
 
 CREATE TRIGGER tr_branchinstance_beforeinsert BEFORE INSERT ON public."BranchInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_branchinstance_beforeinsert();
@@ -1400,10 +1402,6 @@ ALTER TABLE ONLY public."AcquiredCard"
 ALTER TABLE ONLY public."AcquiredCard"
     ADD CONSTRAINT "FK_AcquiredCard_BranchInstance_BranchInstanceId_BranchId" FOREIGN KEY ("BranchId", "BranchInstanceId") REFERENCES public."BranchInstance"("BranchId", "Id");
 
-   
-ALTER TABLE ONLY public."BranchInstance"
-    ADD CONSTRAINT "FK_BranchInstance_Branch_CardId_BranchId" FOREIGN KEY ("CardId", "BranchId") REFERENCES public."Branch"("CardId", "Id") DEFERRABLE INITIALLY DEFERRED;
-
 
 ALTER TABLE ONLY public."AcquiredCard"
     ADD CONSTRAINT "FK_AcquiredCard_Branch_BranchId" FOREIGN KEY ("BranchId") REFERENCES public."Branch"("Id");
@@ -1427,6 +1425,10 @@ ALTER TABLE ONLY public."AcquiredCard"
 
 ALTER TABLE ONLY public."BranchInstance"
     ADD CONSTRAINT "FK_BranchInstance_Branch_BranchId" FOREIGN KEY ("BranchId") REFERENCES public."Branch"("Id");
+
+
+ALTER TABLE ONLY public."BranchInstance"
+    ADD CONSTRAINT "FK_BranchInstance_Branch_CardId_BranchId" FOREIGN KEY ("CardId", "BranchId") REFERENCES public."Branch"("CardId", "Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."BranchInstance"
