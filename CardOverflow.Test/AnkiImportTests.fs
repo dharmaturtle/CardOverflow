@@ -214,7 +214,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         Assert.Empty card.Relationships
         let communalValue = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"
         Assert.Equal(
-            { Id = 1003
+            { Id = 1004
               FieldName = "Source"
               Value = communalValue },
             card.Instance.CommunalFields.Single())
@@ -267,7 +267,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let card = card.Value
         let communalValue = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
         Assert.Equal(
-            {   Id = 1004
+            {   Id = 1005
                 FieldName = "Text"
                 Value = communalValue },
             card.Instance.CommunalFields.Single(fun x -> x.FieldName = "Text"))
