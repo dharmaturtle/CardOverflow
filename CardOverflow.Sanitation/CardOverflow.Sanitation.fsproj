@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="SanitizeTemplate.fs" />
+    <Compile Include="SanitizeCollate.fs" />
     <Compile Include="SanitizeRepositories.fs" />
     <Compile Include="Anki.fs" />
   </ItemGroup>

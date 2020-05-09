@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -25,13 +25,13 @@
     <None Include="..\TweakDevelopment.sql" Link="Stuff\TweakDevelopment.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.apkg">
+    <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3.colpkg">
+    <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="AnkiExports\AllDefaultTemplatesAndImageAndMp3-21.colpkg">
+    <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3-21.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="AnkiExports\RandomReviews.apkg">
@@ -60,7 +60,7 @@
     <Compile Include="FacetRepositoryTests.fs" />
     <Compile Include="AcquireCardRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
-    <Compile Include="FacetTemplateRepositoryTests.fs" />
+    <Compile Include="CollateRepositoryTests.fs" />
     <Compile Include="CardSettingTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />
