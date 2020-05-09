@@ -74,14 +74,14 @@ namespace CardOverflow.Entity
         private string _QuestionTemplate;
         [Required]
         [StringLength(4000)]
-        public string AnswerTemplate {
-            get => _AnswerTemplate;
+        public string AnswerXemplate {
+            get => _AnswerXemplate;
             set {
-                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerTemplate has a maximum length of 4000. Attempted value: {value}");
-                _AnswerTemplate = value;
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerXemplate has a maximum length of 4000. Attempted value: {value}");
+                _AnswerXemplate = value;
             }
         }
-        private string _AnswerTemplate;
+        private string _AnswerXemplate;
         [Required]
         [StringLength(200)]
         public string ShortQuestionTemplate {
@@ -94,14 +94,14 @@ namespace CardOverflow.Entity
         private string _ShortQuestionTemplate;
         [Required]
         [StringLength(200)]
-        public string ShortAnswerTemplate {
-            get => _ShortAnswerTemplate;
+        public string ShortAnswerXemplate {
+            get => _ShortAnswerXemplate;
             set {
-                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortAnswerTemplate has a maximum length of 200. Attempted value: {value}");
-                _ShortAnswerTemplate = value;
+                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortAnswerXemplate has a maximum length of 200. Attempted value: {value}");
+                _ShortAnswerXemplate = value;
             }
         }
-        private string _ShortAnswerTemplate;
+        private string _ShortAnswerXemplate;
         [Required]
         [StringLength(4000)]
         public string Fields {

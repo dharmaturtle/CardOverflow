@@ -21,9 +21,9 @@ module TemplateInstanceEntity =
             e.LatexPre
             e.LatexPost
             e.QuestionTemplate
-            e.AnswerTemplate
+            e.AnswerXemplate
             e.ShortQuestionTemplate
-            e.ShortAnswerTemplate
+            e.ShortAnswerXemplate
             e.Fields
         ]
         |> List.map standardizeWhitespace
@@ -164,9 +164,9 @@ type TemplateInstance with
         LatexPre = entity.LatexPre
         LatexPost = entity.LatexPost
         QuestionTemplate = entity.QuestionTemplate
-        AnswerTemplate = entity.AnswerTemplate
+        AnswerXemplate = entity.AnswerXemplate
         ShortQuestionTemplate = entity.ShortQuestionTemplate
-        ShortAnswerTemplate = entity.ShortAnswerTemplate
+        ShortAnswerXemplate = entity.ShortAnswerXemplate
         EditSummary = entity.EditSummary }
     static member initialize = {
         Id = 0
@@ -203,13 +203,13 @@ type TemplateInstance with
 """
         LatexPost = """\end{document}"""
         QuestionTemplate = """{{Front}}"""
-        AnswerTemplate = """{{FrontSide}}
+        AnswerXemplate = """{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}"""
         ShortQuestionTemplate = ""
-        ShortAnswerTemplate = ""
+        ShortAnswerXemplate = ""
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: TemplateInstanceEntity) =
         entity.Name <- this.Name
@@ -220,9 +220,9 @@ type TemplateInstance with
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
         entity.QuestionTemplate <- this.QuestionTemplate
-        entity.AnswerTemplate <- this.AnswerTemplate
+        entity.AnswerXemplate <- this.AnswerXemplate
         entity.ShortQuestionTemplate <- this.ShortQuestionTemplate
-        entity.ShortAnswerTemplate <- this.ShortAnswerTemplate
+        entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
         entity.EditSummary <- this.EditSummary
     member this.CopyToNewInstance template =
         let e = TemplateInstanceEntity()

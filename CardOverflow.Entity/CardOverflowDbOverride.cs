@@ -95,7 +95,7 @@ namespace CardOverflow.Entity {
         template.CWeightTsVectorHelper =
           Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
             .Append(MappingTools.stripHtmlTags(template.QuestionTemplate))
-            .Append(MappingTools.stripHtmlTags(template.AnswerTemplate))
+            .Append(MappingTools.stripHtmlTags(template.AnswerXemplate))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var card in _filter<BranchInstanceEntity>(entries)) {

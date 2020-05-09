@@ -57,9 +57,9 @@ type ViewTemplateInstance = {
     LatexPre: string
     LatexPost: string
     QuestionTemplate: string
-    AnswerTemplate: string
+    AnswerXemplate: string
     ShortQuestionTemplate: string
-    ShortAnswerTemplate: string
+    ShortAnswerXemplate: string
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
 } with
@@ -80,9 +80,9 @@ module ViewTemplateInstance =
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
         QuestionTemplate = bznz.QuestionTemplate
-        AnswerTemplate = bznz.AnswerTemplate
+        AnswerXemplate = bznz.AnswerXemplate
         ShortQuestionTemplate = bznz.ShortQuestionTemplate
-        ShortAnswerTemplate = bznz.ShortAnswerTemplate
+        ShortAnswerXemplate = bznz.ShortAnswerXemplate
         EditSummary = bznz.EditSummary
     }
     let copyTo (view: ViewTemplateInstance): TemplateInstance = {
@@ -96,9 +96,9 @@ module ViewTemplateInstance =
         LatexPre = view.LatexPre
         LatexPost = view.LatexPost
         QuestionTemplate = view.QuestionTemplate
-        AnswerTemplate = view.AnswerTemplate
+        AnswerXemplate = view.AnswerXemplate
         ShortQuestionTemplate = view.ShortQuestionTemplate
-        ShortAnswerTemplate = view.ShortAnswerTemplate
+        ShortAnswerXemplate = view.ShortAnswerXemplate
         EditSummary = view.EditSummary
     }
 
@@ -113,9 +113,9 @@ type ViewSearchTemplateInstance = {
     LatexPre: string
     LatexPost: string
     QuestionTemplate: string
-    AnswerTemplate: string
+    AnswerXemplate: string
     ShortQuestionTemplate: string
-    ShortAnswerTemplate: string
+    ShortAnswerXemplate: string
     EditSummary: string
     TemplateUsers: int
     IsAcquired: bool
@@ -133,9 +133,9 @@ module ViewSearchTemplateInstance =
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
         QuestionTemplate = bznz.QuestionTemplate
-        AnswerTemplate = bznz.AnswerTemplate
+        AnswerXemplate = bznz.AnswerXemplate
         ShortQuestionTemplate = bznz.ShortQuestionTemplate
-        ShortAnswerTemplate = bznz.ShortAnswerTemplate
+        ShortAnswerXemplate = bznz.ShortAnswerXemplate
         EditSummary = bznz.EditSummary
         TemplateUsers = templateUsers
         IsAcquired = isAcquired

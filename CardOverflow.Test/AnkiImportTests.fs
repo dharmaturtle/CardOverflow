@@ -45,7 +45,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         myBasic.QuestionTemplate)
     Assert.Equal(
         "<div id=\"front\">\n{{FrontSide}}\n</div>\n\n<hr id=answer>\n\n{{Back}}\n\n<script>\nlet uls = document.getElementsByClassName(\"random\");\nlet ulsArray = Array.prototype.slice.call(uls);\n\nlet arrayLength = ulsArray.length;\nfor (let i = 0; i < arrayLength; i++) {\n  let lis = ulsArray[i].getElementsByTagName(\"li\");\n  let lisArray = Array.prototype.slice.call(lis);\n  shuffle(lisArray);\n\t\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\n    return node.outerHTML;\n  }).join(\"\");\n}\n\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\nfunction shuffle(a) {\n  let j, x, i;\n  for (i = a.length; i; i -= 1) {\n    j = Math.floor(Math.random() * i);\n    x = a[i - 1];\n    a[i - 1] = a[j];\n    a[j] = x;\n  }\n}\n\ndocument.onkeydown = function(evt) {\n  if (evt.keyCode == 90) {\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \n\n    let allDetails = document.getElementsByTagName('details');\n    for (i = 0; i < allDetails.length; i++) {\n      if (!allDetails[i].hasAttribute(\"open\")) {\n        allDetails[i].setAttribute('open', '');\n        break;\n      }\n    }\n  }\n};\n\nlet frontDetails = document.getElementById(\"front\").getElementsByTagName('details')\nfor (i = 0; i < frontDetails.length; i++) {\n  frontDetails[i].setAttribute('open', '');\n}\n\n</script>",
-        myBasic.AnswerTemplate)
+        myBasic.AnswerXemplate)
 
     let sketchy = templates.[1]
     Assert.Equal<string seq>(
@@ -60,7 +60,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         [   "<div class=textstyling>\n<font color=\"#DC143C\"></font><br><u>{{Extra Q3}}</u>\n<br>\n<br>\n{{Extra A3}}\n</div>\n\n<hr>\n<p style=\"font-size: 85%\"><i>\n{{Extra 3}}\n</i><br>\n<hr color=\"white\">\n<div class=entiresketchstyle>\n{{Entire Sketch}}\n<br>\n{{hint:More About This Topic}}\n</div>\n\n\n\n\n\n\n"
             "<div class=textstyling>\n<font color=\"#DC143C\"></font><br><u>{{Extra Q}}</u>\n<br>\n<br>\n{{Extra A}}\n</div>\n\n\t\t\t\n<hr>\n<p style=\"font-size: 92%\"><i>\n{{Extra}}\n</i></hr>\n<hr color=\"white\">\n\n<div class=entiresketchstyle>\n{{Entire Sketch}}\n<br>\n{{hint:More About This Topic}}\n</div>\n\n\n\n\n\n\n\n\n"
             "<div class=textstyling>\n<font color=\"#DC143C\"></font><br><u>{{Extra Q2}}</u>\n<br>\n<br>\n{{Extra A2}}\n</div>\n\n<hr>\n<p style=\"font-size: 85%\"><i>\n{{Extra 2}}\n</i><br>\n<hr color=\"white\">\n\n<div class=entiresketchstyle>\n{{Entire Sketch}}\n<br>\n{{hint:More About This Topic}}\n</div>\n\n\n\n\n\n\n\n" ],
-        sketchy.Select(fun x -> x.AnswerTemplate))
+        sketchy.Select(fun x -> x.AnswerXemplate))
     Assert.Equal<string seq>(
         [   "<div class=textstyling>\t\t\n{{#Extra Q3}}<font color=\"#DC143C\"></font><br>\n<center>{{Extra Q3}}</center>\n{{/Extra Q3}}\n</div>\n\n"
             "<div class=textstyling>\n{{#Extra Q}}<font color=\"#DC143C\"></font>\n<center>{{Extra Q}}</center>\n{{/Extra Q}}\n</div>\n\n"
@@ -79,7 +79,7 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         cloze.QuestionTemplate)
     Assert.Equal(
         "{{cloze:Text}}<br>\n\n\n{{Extra}}\n",
-        cloze.AnswerTemplate)
+        cloze.AnswerXemplate)
 
     let cards, _ =
         let option = CardSettingsRepository.defaultCardSettingsEntity userId

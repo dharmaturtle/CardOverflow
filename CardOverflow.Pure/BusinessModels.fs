@@ -112,9 +112,9 @@ type TemplateInstance = {
     LatexPre: string
     LatexPost: string
     QuestionTemplate: string
-    AnswerTemplate: string
+    AnswerXemplate: string
     ShortQuestionTemplate: string
-    ShortAnswerTemplate: string
+    ShortAnswerXemplate: string
     EditSummary: string
 } with
     member this.IsCloze =
@@ -122,7 +122,7 @@ type TemplateInstance = {
     member this.ClozeFields =
         AnkiImportLogic.clozeFields this.QuestionTemplate
     member this.FrontBackFrontSynthBackSynth =
-        CardHtml.generate [] this.QuestionTemplate this.AnswerTemplate this.Css
+        CardHtml.generate [] this.QuestionTemplate this.AnswerXemplate this.Css
 
 type AcquiredTemplateInstance = {
     DefaultTags: int seq
@@ -257,7 +257,7 @@ type BranchInstanceView = {
         CardHtml.generate
             <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
             <| this.TemplateInstance.QuestionTemplate
-            <| this.TemplateInstance.AnswerTemplate
+            <| this.TemplateInstance.AnswerXemplate
             <| this.TemplateInstance.Css
 
 type CommunalFieldInstance = {

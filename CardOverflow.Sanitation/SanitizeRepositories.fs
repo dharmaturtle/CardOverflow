@@ -249,7 +249,7 @@ type ViewEditCardCommand = {
                     CardHtml.generate
                         zip
                         this.TemplateInstance.QuestionTemplate
-                        this.TemplateInstance.AnswerTemplate
+                        this.TemplateInstance.AnswerXemplate
                         this.TemplateInstance.Css
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
@@ -258,7 +258,7 @@ type ViewEditCardCommand = {
             CardHtml.generate
                 <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
                 <| this.TemplateInstance.QuestionTemplate
-                <| this.TemplateInstance.AnswerTemplate
+                <| this.TemplateInstance.AnswerXemplate
                 <| this.TemplateInstance.Css
             |> fun (_, back, _, _) -> [back].ToList()
             |> Ok

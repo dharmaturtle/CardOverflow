@@ -499,7 +499,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                 TemplateInstance =
                     { TemplateInstance.initialize with
                         QuestionTemplate = "{{cloze:Front}}{{cloze:Back}}"
-                        AnswerTemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
+                        AnswerXemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                     } |> ViewTemplateInstance.load
                 Source = Original
             }

@@ -186,7 +186,7 @@
           @if (
       _templateFields(_a) != _templateFields(_b) ||
       _a.TemplateInstance.QuestionTemplate != _b.TemplateInstance.QuestionTemplate ||
-      _a.TemplateInstance.AnswerTemplate != _b.TemplateInstance.AnswerTemplate ||
+      _a.TemplateInstance.AnswerXemplate != _b.TemplateInstance.AnswerXemplate ||
       _a.TemplateInstance.Css != _b.TemplateInstance.Css) {
       <i class="fas fa-asterisk"></i>
     }
@@ -212,7 +212,7 @@
               </h6>
             </Header>
           </TextDiff>
-          <TextDiff OldText=@_a.TemplateInstance.AnswerTemplate NewText=@_b.TemplateInstance.AnswerTemplate CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.TemplateInstance.AnswerXemplate NewText=@_b.TemplateInstance.AnswerXemplate CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Answer Template
@@ -255,7 +255,7 @@
   private string _holisticBackDiff() => ViewLogic.diff(_a.FrontBackFrontSynthBackSynth.Item2, _b.FrontBackFrontSynthBackSynth.Item2);
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
   private string _questionTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.QuestionTemplate, _b.TemplateInstance.QuestionTemplate);
-  private string _answerTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerTemplate, _b.TemplateInstance.AnswerTemplate);
+  private string _answerTemplateDiff() => ViewLogic.diff(_a.TemplateInstance.AnswerXemplate, _b.TemplateInstance.AnswerXemplate);
   private bool _HasDifferences(string diff) => diff.Contains("<ins ") || diff.Contains("<del ");
 
   private void _OnOk() =>
