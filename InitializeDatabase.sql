@@ -74,19 +74,31 @@ $$;
 
 ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_branch_afterinsert() RETURNS trigger
+CREATE FUNCTION public.fn_branch_afterinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
+    DECLARE
+        default_branch_id integer NOT NULL := 0;
     BEGIN
-        UPDATE "Card" c
-        SET    "DefaultBranchId" = (NEW."Id")
-        WHERE (c."Id" = NEW."CardId" AND c."DefaultBranchId" = 0);
+        IF (TG_OP = 'INSERT') THEN
+            UPDATE "Card" c
+            SET    "DefaultBranchId" = (NEW."Id")
+            WHERE (c."Id" = NEW."CardId" AND c."DefaultBranchId" = 0);
+        END IF;
+        
+        default_branch_id := (SELECT "DefaultBranchId" FROM "Card" c WHERE NEW."CardId" = c."Id");
+        
+        IF ((NEW."Name" IS NOT NULL) AND (default_branch_id = NEW."Id")) THEN
+            RAISE EXCEPTION 'Default Branches must have a null Name. CardId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."CardId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+        ELSIF ((NEW."Name" IS NULL) AND (default_branch_id <> NEW."Id")) THEN
+            RAISE EXCEPTION 'Only Default Branches may have a null Name. CardId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."CardId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+        END IF;
         RETURN NULL;
     END;
 $$;
 
 
-ALTER FUNCTION public.fn_branch_afterinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_branch_afterinsertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_branchinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
@@ -1239,6 +1251,10 @@ ALTER TABLE ONLY public."Branch"
     ADD CONSTRAINT "UQ_Branch_CardId_Id" UNIQUE ("CardId", "Id");
 
 
+ALTER TABLE ONLY public."Branch"
+    ADD CONSTRAINT "UQ_Branch_CardId_Name" UNIQUE ("CardId", "Name");
+
+
 CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
 
 
@@ -1377,7 +1393,7 @@ CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR
 CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
 
 
-CREATE TRIGGER tr_branch_afterinsert AFTER INSERT ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_branch_afterinsert();
+CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_branch_afterinsertupdate();
 
 
 CREATE TRIGGER tr_branchinstance_beforeinsert BEFORE INSERT ON public."BranchInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_branchinstance_beforeinsert();

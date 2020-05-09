@@ -390,7 +390,7 @@ type BranchRevision = {
 type CardSource =
     | Original
     | CopySourceInstanceId of int
-    | BranchSourceCardId of int
+    | BranchSourceCardId of int * string
 with
     member this.TryGetCopySourceInstanceId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with
@@ -398,7 +398,7 @@ with
         | _ -> false
     member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
         match this with
-        | BranchSourceCardId cardId -> x <- cardId; true
+        | BranchSourceCardId (cardId, _) -> x <- cardId; true
         | _ -> false
     
 

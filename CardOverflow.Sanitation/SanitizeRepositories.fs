@@ -308,7 +308,7 @@ module SanitizeCardRepository =
                     TemplateInstance = instance.TemplateInstance |> TemplateInstance.load |> ViewTemplateInstance.load
                     Source = source
                 } |> Ok }
-    let getBranch (db: CardOverflowDb) userId cardId = taskResult {
+    let getBranch (db: CardOverflowDb) userId displayName cardId = taskResult {
         let! (card: CardEntity) = db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId)
         do! if card |> isNull then
                 Error <| sprintf "Card #%i doesn't exist"  cardId
@@ -318,7 +318,7 @@ module SanitizeCardRepository =
             db.LatestDefaultBranchInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
             |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
             |> TaskResult.map (fun x -> x.Id)
-        let! command = _getCommand db branchInstanceId <| BranchSourceCardId cardId
+        let! command = _getCommand db branchInstanceId <| BranchSourceCardId (cardId, sprintf "%s's New Branch" displayName)
         return command, ac
     }
     let getCopy (db: CardOverflowDb) userId branchInstanceId = taskResult {

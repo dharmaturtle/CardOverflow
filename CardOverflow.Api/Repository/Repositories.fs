@@ -448,9 +448,10 @@ module UpdateRepository =
                                 AuthorId = acquiredCard.UserId,
                                 CopySourceId = Nullable instanceId
                             ))
-                | BranchSourceCardId cardId ->
+                | BranchSourceCardId (cardId, name) ->
                     BranchEntity(
                         AuthorId = acquiredCard.UserId,
+                        Name = name,
                         Card = db.Card.Single(fun x -> x.Id = cardId))
                 | Original ->
                     BranchEntity(
@@ -520,10 +521,14 @@ module UpdateRepository =
                 do! db.SaveChangesAsyncI()
                 return tags.Select(fun x -> x.Id).ToList()
             }
-            let branchSourceCardId =
+            let! branchSourceCardId =
                 match command.Source with
-                | BranchSourceCardId cardId -> Nullable cardId
-                | _ -> Nullable()
+                | BranchSourceCardId (cardId, name) ->
+                    db.Branch.AnyAsync(fun x -> x.CardId = cardId && x.Name = name) // veryLowTODO make case insensitive
+                    |> Task.map (Result.requireFalse <| sprintf "Card #%i already has a Branch named '%s'." cardId name)
+                    |> TaskResult.map (fun () -> Nullable cardId)
+                | _ ->
+                    Nullable() |> Ok |> Task.FromResult
             let! (acquiredCardEntity: AcquiredCardEntity) =
                 db.AcquiredCard
                     .Include(fun x -> x.BranchInstance.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)

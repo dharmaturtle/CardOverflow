@@ -47,7 +47,7 @@
     } else if (CopySourceInstanceId != 0) {
       return DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, User.Id, CopySourceInstanceId));
     } else if (BranchSourceCardId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getBranch(db, User.Id, BranchSourceCardId));
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getBranch(db, User.Id, User.DisplayName, BranchSourceCardId));
     } else {
       return FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
     }
