@@ -1,5 +1,6 @@
 namespace CardOverflow.Pure
 
+open FsToolkit.ErrorHandling
 open System.Runtime.InteropServices
 open CardOverflow.Pure.Extensions
 open CardOverflow.Pure.Core
@@ -107,9 +108,7 @@ type Template = {
     Back: string
     ShortFront: string
     ShortBack: string
-} with
-    member this.FrontBackFrontSynthBackSynth css =
-        CardHtml.generate [] this.Front this.Back css
+}
 
 type CollateType =
     | Standard of Template list
@@ -154,6 +153,11 @@ type CollateInstance = {
         match this.Templates with
         | Cloze x -> AnkiImportLogic.clozeFields x.Front
         | _ -> failwith "Not a cloze"
+    member this.FrontBackFrontSynthBackSynth i =
+        this.JustTemplates
+        |> List.map (fun t -> CardHtml.generate [] t.Front t.Back this.Css)
+        |> List.tryItem i
+        |> Result.requireSome ("Index out of range")
 
 type AcquiredCollateInstance = {
     DefaultTags: int seq

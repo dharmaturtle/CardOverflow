@@ -423,7 +423,7 @@ let ``CardHtml renders multiple cloze collates properly 4 with hint``(): unit =
 
 [<Fact>]
 let ``CollateInstance.FrontBackFrontSynthBackSynth works``(): unit =
-    let front, back, _, _ = CollateInstance.initialize.FrontBackFrontSynthBackSynth
+    let front, back, _, _ = CollateInstance.initialize.FrontBackFrontSynthBackSynth 0 |> Result.getOk
     assertStripped
         "{{Front}}"
         front

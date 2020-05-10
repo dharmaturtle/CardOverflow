@@ -35,7 +35,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
         latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
-        latestInstance.QuestionXemplate)
+        latestInstance.FirstTemplate.Front)
     Assert.Equal(1, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
 
     // Testing UpdateFieldsToNewInstance
@@ -45,7 +45,10 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     let updated =
         { latestInstance with
             Name = newCollateName
-            QuestionXemplate = newQuestionXemplate
+            Templates =
+                {   latestInstance.FirstTemplate with
+                        Front = newQuestionXemplate
+                } |> List.singleton |> Standard
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
         } |> ViewCollateInstance.copyTo
     
@@ -55,7 +58,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     let latestInstance = collate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
     Assert.Equal(
         newQuestionXemplate,
-        latestInstance.QuestionXemplate)
+        latestInstance.FirstTemplate.Front)
     Assert.Equal(
         newCollateName,
         latestInstance.Name)
@@ -120,7 +123,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     // test existing
     let testView getView id expectedFront expectedBack = task {
         let! (actual: Result<CollateInstance, string>) = getView c.Db id
-        let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth
+        let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth 0 |> Result.getOk
         BusinessLogicTests.assertStripped expectedFront front
         BusinessLogicTests.assertStripped expectedBack back
     }

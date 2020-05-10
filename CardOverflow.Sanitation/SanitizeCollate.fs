@@ -56,17 +56,22 @@ type ViewCollateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    QuestionXemplate: string
-    AnswerXemplate: string
-    ShortQuestionXemplate: string
-    ShortAnswerXemplate: string
+    Templates: CollateType
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
 } with
     member this.IsCloze =
-        Cloze.isCloze this.QuestionXemplate
+        match this.Templates with
+        | Cloze -> true
+        | _ -> false
     member this.ClozeFields =
-        AnkiImportLogic.clozeFields this.QuestionXemplate
+        match this.Templates with
+        | Cloze x -> AnkiImportLogic.clozeFields x.Front
+        | _ -> failwith "Not a cloze"
+    member this.FirstTemplate =
+        match this.Templates with
+        | Cloze t -> t
+        | Standard ts -> ts.[0]
 
 module ViewCollateInstance =
     let load (bznz: CollateInstance) = {
@@ -79,10 +84,7 @@ module ViewCollateInstance =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        QuestionXemplate = bznz.QuestionXemplate
-        AnswerXemplate = bznz.AnswerXemplate
-        ShortQuestionXemplate = bznz.ShortQuestionXemplate
-        ShortAnswerXemplate = bznz.ShortAnswerXemplate
+        Templates = bznz.Templates
         EditSummary = bznz.EditSummary
     }
     let copyTo (view: ViewCollateInstance): CollateInstance = {
@@ -95,10 +97,7 @@ module ViewCollateInstance =
         Modified = view.Modified
         LatexPre = view.LatexPre
         LatexPost = view.LatexPost
-        QuestionXemplate = view.QuestionXemplate
-        AnswerXemplate = view.AnswerXemplate
-        ShortQuestionXemplate = view.ShortQuestionXemplate
-        ShortAnswerXemplate = view.ShortAnswerXemplate
+        Templates = view.Templates
         EditSummary = view.EditSummary
     }
 
@@ -112,10 +111,7 @@ type ViewSearchCollateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    QuestionXemplate: string
-    AnswerXemplate: string
-    ShortQuestionXemplate: string
-    ShortAnswerXemplate: string
+    Templates: CollateType
     EditSummary: string
     CollateUsers: int
     IsAcquired: bool
@@ -132,10 +128,7 @@ module ViewSearchCollateInstance =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        QuestionXemplate = bznz.QuestionXemplate
-        AnswerXemplate = bznz.AnswerXemplate
-        ShortQuestionXemplate = bznz.ShortQuestionXemplate
-        ShortAnswerXemplate = bznz.ShortAnswerXemplate
+        Templates = bznz.Templates
         EditSummary = bznz.EditSummary
         CollateUsers = collateUsers
         IsAcquired = isAcquired

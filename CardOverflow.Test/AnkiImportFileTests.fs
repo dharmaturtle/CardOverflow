@@ -459,7 +459,10 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     }).ToList()
                 CollateInstance =
                     { CollateInstance.initialize with
-                        QuestionXemplate = questionXemplate
+                        Templates =
+                            {   CollateInstance.initialize.FirstTemplate with
+                                    Front = questionXemplate
+                            } |> List.singleton |> Standard
                     } |> ViewCollateInstance.load
                 Source = Original
             }
@@ -497,9 +500,12 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                         Communal = None
                     }).ToList()
                 CollateInstance =
-                    { CollateInstance.initialize with
-                        QuestionXemplate = "{{cloze:Front}}{{cloze:Back}}"
-                        AnswerXemplate = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
+                    {   CollateInstance.initialize with
+                            Templates =
+                                {   CollateInstance.initialize.FirstTemplate with
+                                        Front = "{{cloze:Front}}{{cloze:Back}}"
+                                        Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
+                                } |> Cloze
                     } |> ViewCollateInstance.load
                 Source = Original
             }
