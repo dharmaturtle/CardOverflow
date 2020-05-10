@@ -543,9 +543,9 @@ let ``AnkiDefaults.collateIdByHash is same as initial db`` (): unit =
         Assert.Equal(calculated, dbValue)
 
     // test that AnkiDefaults.collateIdByHash is up to date
-    for i, collate in collates |> Seq.mapi (fun i e -> i, e) do
-        let calculated = CollateInstanceEntity.hashBase64 hasher collate
-        Assert.Equal(AnkiDefaults.collateIdByHash.[calculated], i + 1)
+    for instance in collates do
+        let calculated = CollateInstanceEntity.hashBase64 hasher instance
+        Assert.Equal(AnkiDefaults.collateInstanceIdByHash.[calculated], instance.Id)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {

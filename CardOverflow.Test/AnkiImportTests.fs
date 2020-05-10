@@ -197,8 +197,8 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     Assert.Equal(18, c.Db.Card.Count())
     Assert.Equal(18, c.Db.BranchInstance.Count())
-    Assert.Equal(AnkiDefaults.collateIdByHash.Count + 3, c.Db.Collate.Count())
-    Assert.Equal(AnkiDefaults.collateIdByHash.Count + 5, c.Db.CollateInstance.Count())
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 3, c.Db.Collate.Count())
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 5, c.Db.CollateInstance.Count())
 
     let getInstances (collateName: string) =
         c.Db.CollateInstance

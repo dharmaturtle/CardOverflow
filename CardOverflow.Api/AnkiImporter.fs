@@ -18,14 +18,14 @@ open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
-    let collateIdByHash = // lowTODO could make this a byte array
-        [("P5HBK1v2Py3t62boE6sQjZJAYqp9SAmB0M1dg/mNv1pOo14rp7j5mAJNTTMhDRDn6v7NdRL2ezj89SB+SXNe+g==", 1)
-         ("ernv8U58XNXkcrk57BcLjabVoxxtkssTNPDfPSbbgxjH1ws3XOOsUCvmp8NNKPU70EhBolhL6DYHHLpy6XqvdA==", 2)
-         ("fNwLGKChD3VRZcB5GipDH8WVU8GgbEVcfO2Ai+QNzy6jJSjyZZFTJelvj5Agk/HjWh4xifvqZ4y9fkJe26md3Q==", 3)
-         ("7+ClF/GvF0L9PVa+XcXy7g56m8OcUnLTribymtexTjsxPoXAe0ukIembGAK+4sS1mWzER9X1BdVx+dhdGnkrsA==", 4)
-         ("T1wKlhZDWRM4b28d9QIBvOLI22qs6IByP7hRCv16kiqNhIi4GBveyojGmcdFo/QZtxw6jAjoaED2ba/eyKe/zg==", 5)
-         ("y1mLwvZCjkxTiLv2WVxRcoYou6F9VkE/bZ+nx394FC1+9dTrwSC6rWiAxmO2BAWarW07vUMu5xS6VfJyGHT67A==", 6)
-         ("CR+o3dEt/yxJuI0efTRyOmyZhQ3czvSfAn1KkyTYL2z4AY5zud4fJQLDobQ6hL9KjEkxNt6hW71t3GaOA4Lq+w==", 7)] |> Map.ofSeq
+    let collateInstanceIdByHash = // lowTODO could make this a byte array
+        [("ib34GPvvP5MfZtcep2WvpdgijSlAKhphVfQbYNueMeBZIDECV0Go0/zor/WrF+NQorYg+LeFMCO1MonOK+N92w==", 1001)
+         ("IYmKQhuvScATMLINL1MeguKoCS3MpSrkUpkQ1+85nwgkc42LM2vlnX9lrl1KJQFNR2d8assNg0dTiy9PZdHfZQ==", 1002)
+         ("G8jRvDO1NQGI9MJOZkITdG9INDNBnstFdA8dTTmTqXtYujU2lQrjdXi91mUdeprMZ4H6EKeqqKdGT/WURozxTw==", 1003)
+         ("ovGg09zctrt0vXbSRKFmBT1QJDXpcLDHLIJs8i9kT7d8VdH6nmF8MXZDEtmR3rxXwE0ARS4jsUdgSfpHDMohRg==", 1004)
+         ("8YrlaFdsX5y5bVrx2VNkQj0W0+1fBI7tKWhHSppYUlXeAVb2NjHu181ioI803Q1gur6t8KC3vSzPG9yB1LyBZA==", 1005)
+         ("np0YnlBrkVnZlCcBJx+pFCbDtjoNkAq9KdRajZlUZGoRwohl1XwysbkUbek3jg1F0vsnhDOHukxH3tI2dUaFNA==", 1006)
+         ("u6xoIrbF6g8gbBv59AQf8Qqgi+Dd2oeS423qDD3EbCkV1RVgbkrLJRVdobsLKOYh5vjiW44fRqO/YlnYPn+4XQ==", 1007)] |> Map.ofSeq
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -176,7 +176,7 @@ module AnkiImporter =
         let getCollateInstance (collateInstance: AnkiCollateInstance) =
             let ti = collateInstance.CopyToNew userId defaultCardSetting
             let hash = CollateInstanceEntity.hashBase64 hasher ti
-            AnkiDefaults.collateIdByHash.TryFind hash
+            AnkiDefaults.collateInstanceIdByHash.TryFind hash
             |> function
             | Some id ->
                 db.CollateInstance
