@@ -335,21 +335,16 @@ module SanitizeCardRepository =
         return command, ac
     }
     let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let required = command.CollateInstance.ClozeFields |> Set.ofSeq // medTODO query db for real collate instance
-        let actual = command.CommunalFieldValues.Select(fun x -> x.EditField.Name) |> Set.ofSeq
-        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId) // lowTODO optimize by moving into `else`
+        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId)
+        let update () = UpdateRepository.card db acquiredCard command.load
         return!
-            if Set.isSubset required actual then
-                let update () = UpdateRepository.card db acquiredCard command.load
-                match card with
-                | null ->
-                    update ()
-                | card ->
-                    if card.AuthorId = authorId
-                    then update ()
-                    else "You aren't that card's author." |> Error |> Task.FromResult
-            else
-                Set.difference required actual |> String.concat ", " |> sprintf "The following cloze fields must be communal: %s" |> Error |> Task.FromResult
+            match card with
+            | null ->
+                update ()
+            | card ->
+                if card.AuthorId = authorId
+                then update ()
+                else "You aren't that card's author." |> Error |> Task.FromResult
         }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
