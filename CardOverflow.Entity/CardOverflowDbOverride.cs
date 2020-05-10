@@ -94,8 +94,7 @@ namespace CardOverflow.Entity {
         collate.Hash = _entityHasher.CollateInstanceHasher.Invoke((collate, sha512));
         collate.CWeightTsVectorHelper =
           Fields.fromString.Invoke(collate.Fields).Select(x => x.Name)
-            .Append(MappingTools.stripHtmlTags(collate.QuestionXemplate))
-            .Append(MappingTools.stripHtmlTags(collate.AnswerXemplate))
+            .Append(MappingTools.stripHtmlTags(collate.Templates))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var card in _filter<BranchInstanceEntity>(entries)) {

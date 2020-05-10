@@ -38,10 +38,7 @@ type AnkiCollateInstance = {
     DefaultCardSettingId: int
     LatexPre: string
     LatexPost: string
-    QuestionXemplate: string
-    AnswerXemplate: string
-    ShortQuestionXemplate: string
-    ShortAnswerXemplate: string
+    Templates: Template list
     DeckId: int64
     IsCloze: bool
     Ordinal: int16
@@ -57,10 +54,7 @@ type AnkiCollateInstance = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-        entity.QuestionXemplate <- this.QuestionXemplate
-        entity.AnswerXemplate <- this.AnswerXemplate
-        entity.ShortQuestionXemplate <- this.ShortQuestionXemplate
-        entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
+        entity.Templates <- this.Templates |> Template.copyToMany
         entity.EditSummary <- "Imported from Anki"
     member this.CopyToNew userId defaultCardSetting =
         let entity = CollateInstanceEntity()

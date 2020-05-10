@@ -63,45 +63,8 @@ namespace CardOverflow.Entity
         private string _LatexPost;
         public bool IsDmca { get; set; }
         [Required]
-        [StringLength(4000)]
-        public string QuestionXemplate {
-            get => _QuestionXemplate;
-            set {
-                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and QuestionXemplate has a maximum length of 4000. Attempted value: {value}");
-                _QuestionXemplate = value;
-            }
-        }
-        private string _QuestionXemplate;
-        [Required]
-        [StringLength(4000)]
-        public string AnswerXemplate {
-            get => _AnswerXemplate;
-            set {
-                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and AnswerXemplate has a maximum length of 4000. Attempted value: {value}");
-                _AnswerXemplate = value;
-            }
-        }
-        private string _AnswerXemplate;
-        [Required]
-        [StringLength(200)]
-        public string ShortQuestionXemplate {
-            get => _ShortQuestionXemplate;
-            set {
-                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortQuestionXemplate has a maximum length of 200. Attempted value: {value}");
-                _ShortQuestionXemplate = value;
-            }
-        }
-        private string _ShortQuestionXemplate;
-        [Required]
-        [StringLength(200)]
-        public string ShortAnswerXemplate {
-            get => _ShortAnswerXemplate;
-            set {
-                if (value.Length > 200) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and ShortAnswerXemplate has a maximum length of 200. Attempted value: {value}");
-                _ShortAnswerXemplate = value;
-            }
-        }
-        private string _ShortAnswerXemplate;
+        public string Templates { get; set; }
+        public short Type { get; set; }
         [Required]
         [StringLength(4000)]
         public string Fields {

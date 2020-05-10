@@ -56,7 +56,6 @@ namespace CardOverflow.Entity
         public virtual CollateInstanceEntity CollateInstance { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        //public virtual ICollection<AcquiredCardEntity> AcquiredCardBranchIs { get; set; }
 
         [InverseProperty("CopySource")]
         public virtual ICollection<CardEntity> CardCopySources { get; set; }

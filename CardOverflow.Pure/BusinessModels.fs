@@ -101,6 +101,30 @@ module Fields =
         MappingTools.splitByRecordSeparator
         >> List.map Field.fromString
 
+type Template = {
+    Name: string
+    Front: string
+    Back: string
+    ShortFront: string
+    ShortBack: string
+} with
+    member this.FrontBackFrontSynthBackSynth css =
+        CardHtml.generate [] this.Front this.Back css
+
+type CollateType =
+    | Standard of Template list
+    | Cloze of Template
+  with
+    member this.toDb =
+        match this with
+        | Standard -> 0s
+        | Cloze -> 1s
+    static member fromDb templates =
+        function
+        | 0s -> Standard templates
+        | 1s -> Cloze <| templates.Single()
+        | x -> failwith <| sprintf "Unable to convert '%i' to a CollateType" x
+
 type CollateInstance = {
     Id: int
     Name: string
@@ -111,18 +135,25 @@ type CollateInstance = {
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    QuestionXemplate: string
-    AnswerXemplate: string
-    ShortQuestionXemplate: string
-    ShortAnswerXemplate: string
+    Templates: CollateType
     EditSummary: string
 } with
+    member this.FirstTemplate =
+        match this.Templates with
+        | Cloze t -> t
+        | Standard ts -> ts.[0]
+    member this.JustTemplates =
+        match this.Templates with
+        | Cloze t -> [t]
+        | Standard ts -> ts
     member this.IsCloze =
-        Cloze.isCloze this.QuestionXemplate
+        match this.Templates with
+        | Cloze -> true
+        | _ -> false
     member this.ClozeFields =
-        AnkiImportLogic.clozeFields this.QuestionXemplate
-    member this.FrontBackFrontSynthBackSynth =
-        CardHtml.generate [] this.QuestionXemplate this.AnswerXemplate this.Css
+        match this.Templates with
+        | Cloze x -> AnkiImportLogic.clozeFields x.Front
+        | _ -> failwith "Not a cloze"
 
 type AcquiredCollateInstance = {
     DefaultTags: int seq
@@ -256,8 +287,8 @@ type BranchInstanceView = {
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         CardHtml.generate
             <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
-            <| this.CollateInstance.QuestionXemplate
-            <| this.CollateInstance.AnswerXemplate
+            <| this.CollateInstance.FirstTemplate.Front
+            <| this.CollateInstance.FirstTemplate.Back
             <| this.CollateInstance.Css
 
 type CommunalFieldInstance = {

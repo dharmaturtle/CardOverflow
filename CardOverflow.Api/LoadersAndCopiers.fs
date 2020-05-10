@@ -20,10 +20,7 @@ module CollateInstanceEntity =
             e.Css
             e.LatexPre
             e.LatexPost
-            e.QuestionXemplate
-            e.AnswerXemplate
-            e.ShortQuestionXemplate
-            e.ShortAnswerXemplate
+            e.Templates
             e.Fields
         ]
         |> List.map standardizeWhitespace
@@ -152,22 +149,38 @@ type IdOrEntity<'a> =
     | Id of int
     | Entity of 'a
 
+type Template with
+    static member load template =
+        let x = template |> MappingTools.splitByUnitSeparator
+        {   Name = x.[0]
+            Front = x.[1]
+            Back = x.[2]
+            ShortFront = x.[3]
+            ShortBack = x.[4]
+        }
+    static member copyTo (t: Template) =
+        [t.Name; t.Front; t.Back; t.ShortFront; t.ShortBack] |> MappingTools.joinByUnitSeparator
+    static member loadMany =
+        MappingTools.splitByRecordSeparator
+        >> List.map Template.load
+    static member copyToMany =
+        List.map Template.copyTo
+        >> MappingTools.joinByRecordSeparator
+
 type CollateInstance with
-    static member load (entity: CollateInstanceEntity) = {
-        Id = entity.Id
-        Name = entity.Name
-        CollateId = entity.CollateId
-        Css = entity.Css
-        Fields = Fields.fromString entity.Fields
-        Created = entity.Created
-        Modified = entity.Modified |> Option.ofNullable
-        LatexPre = entity.LatexPre
-        LatexPost = entity.LatexPost
-        QuestionXemplate = entity.QuestionXemplate
-        AnswerXemplate = entity.AnswerXemplate
-        ShortQuestionXemplate = entity.ShortQuestionXemplate
-        ShortAnswerXemplate = entity.ShortAnswerXemplate
-        EditSummary = entity.EditSummary }
+    static member load (entity: CollateInstanceEntity) =
+        {   Id = entity.Id
+            Name = entity.Name
+            CollateId = entity.CollateId
+            Css = entity.Css
+            Fields = Fields.fromString entity.Fields
+            Created = entity.Created
+            Modified = entity.Modified |> Option.ofNullable
+            LatexPre = entity.LatexPre
+            LatexPost = entity.LatexPost
+            Templates = entity.Type |> CollateType.fromDb (entity.Templates |> Template.loadMany)
+            EditSummary = entity.EditSummary
+        }
     static member initialize = {
         Id = 0
         Name = "New Template"
@@ -202,14 +215,18 @@ type CollateInstance with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        QuestionXemplate = """{{Front}}"""
-        AnswerXemplate = """{{FrontSide}}
+        Templates =
+            Standard [  {   Name = "Card Template"
+                            Front = """{{Front}}"""
+                            Back = """{{FrontSide}}
 
 <hr id=answer>
 
 {{Back}}"""
-        ShortQuestionXemplate = ""
-        ShortAnswerXemplate = ""
+                            ShortFront = ""
+                            ShortBack = ""
+                        }
+                    ]
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: CollateInstanceEntity) =
         entity.Name <- this.Name
@@ -219,10 +236,7 @@ type CollateInstance with
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-        entity.QuestionXemplate <- this.QuestionXemplate
-        entity.AnswerXemplate <- this.AnswerXemplate
-        entity.ShortQuestionXemplate <- this.ShortQuestionXemplate
-        entity.ShortAnswerXemplate <- this.ShortAnswerXemplate
+        entity.Templates <- this.JustTemplates |> Template.copyToMany
         entity.EditSummary <- this.EditSummary
     member this.CopyToNewInstance collate =
         let e = CollateInstanceEntity()

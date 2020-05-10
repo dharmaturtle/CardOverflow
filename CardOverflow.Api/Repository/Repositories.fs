@@ -493,9 +493,11 @@ module UpdateRepository =
         let commandClozeIndexes = command.ClozeFieldValues |> Seq.collect (fun x -> getClozeIndexes x.Value)
         taskResult {
             let! splitCommands =
-                if command.CollateInstance.IsCloze then
+                match command.CollateInstance.Templates with
+                | Standard -> Ok [command]
+                | Cloze template ->
                     let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
-                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName command.CollateInstance.QuestionXemplate
+                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName template.Front
                     |> Result.map (fun max ->
                     [1s .. int16 max] |> List.map (fun clozeIndex ->
                         let zip =
@@ -508,7 +510,6 @@ module UpdateRepository =
                                 command.FieldValues.Select(fun x ->
                                 { x with
                                     Value = zip.[x.EditField.Name]}).ToList() }))
-                else Ok [ command ]
             let! (tagIds: int ResizeArray) = task {
                 let getsertTagId (input: string) =
                     match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
