@@ -113,7 +113,7 @@ module AnkiImporter =
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
                     cardSettingByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
             let! collatesByModelId =
-                let toEntity (collate: AnkiCollateInstance) =
+                let toEntity collateEntity (collate: AnkiCollateInstance) =
                     let defaultCardSetting =
                         cardSettingAndDeckNameByDeckId.TryFind collate.DeckId
                         |> function
@@ -132,10 +132,10 @@ module AnkiImporter =
                                 DefaultCardSetting = defaultCardSetting)
                             |> e.User_CollateInstances.Add
                         e
-                    | None -> collate.CopyToNew userId defaultCardSetting
+                    | None -> collate.CopyToNewWithCollate userId collateEntity defaultCardSetting
                     |> fun x -> {| Entity = x; Collate = collate |}
                 Anki.parseModels userId col.Models
-                |> Result.map (fun x -> x |> Map.ofList |> Map.map (fun _ x -> List.map toEntity x))
+                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> List.map (toEntity <| CollateEntity(AuthorId = userId))))
             let usersTags =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.overValue fst

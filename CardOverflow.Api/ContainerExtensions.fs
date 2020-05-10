@@ -67,11 +67,11 @@ type Container with
             .AddSingleton<ILoggerFactory>(loggerFactory)
             .AddSingleton<IEntityHasher, EntityHasher>()
             .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
-                loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
+                //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
                     .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
                     //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
-                    .EnableSensitiveDataLogging(true)
+                    //.EnableSensitiveDataLogging(true)
                     |> ignore)
             .AddSimpleInjector(container)
             .BuildServiceProvider(true)

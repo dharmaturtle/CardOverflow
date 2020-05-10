@@ -52,7 +52,7 @@ type AnkiCollateInstance = {
         entity.LatexPost <- this.LatexPost
         entity.Templates <- this.Templates |> Template.copyToMany
         entity.EditSummary <- "Imported from Anki"
-    member this.CopyToNew userId defaultCardSetting =
+    member this.CopyToNewWithCollate userId collate defaultCardSetting =
         let entity = CollateInstanceEntity()
         entity.User_CollateInstances <-
             [User_CollateInstanceEntity(
@@ -62,12 +62,12 @@ type AnkiCollateInstance = {
                         .Select(fun x -> Tag_User_CollateInstanceEntity(UserId = userId, DefaultTagId = x))
                         .ToList()),
                 DefaultCardSetting = defaultCardSetting)].ToList()
-        entity.Collate <-
-            CollateEntity(
-                AuthorId = this.AuthorId)
+        entity.Collate <- collate
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
         entity
+    member this.CopyToNew userId defaultCardSetting =
+        this.CopyToNewWithCollate userId (CollateEntity(AuthorId = this.AuthorId)) defaultCardSetting
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
