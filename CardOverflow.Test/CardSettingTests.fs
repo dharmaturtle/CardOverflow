@@ -77,14 +77,12 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                     collate.Fields.Select(fun f -> {
                         EditField = ViewField.copyTo f
                         Value = Guid.NewGuid().ToString()
-                        Communal = None
                     }).ToList()
                 CollateInstance = collate
                 Source = Original
             }
-    let (instanceId, communals) = r.Value
+    let instanceId = r.Value
     Assert.Equal<int seq>([1001], instanceId)
-    Assert.Empty communals
 
     // new card has default option
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)

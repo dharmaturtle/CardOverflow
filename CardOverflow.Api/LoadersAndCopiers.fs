@@ -133,15 +133,10 @@ type FieldAndValue with
         fields |> Seq.sortBy (fun x -> x.Field.Ordinal) |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
 type EditFieldAndValue with
-    static member load (fields: Field list) fieldValues valuesByFieldName =
+    static member load (fields: Field list) fieldValues =
         FieldAndValue.load fields fieldValues
         |> Seq.map (fun { Field = field; Value = value } ->
-            let value, communalValue =
-                valuesByFieldName
-                |> Map.tryFind field.Name
-                |> Option.defaultValue (value, None)
             {   EditField = field
-                Communal = communalValue
                 Value = value }
         ) |> toResizeArray
 

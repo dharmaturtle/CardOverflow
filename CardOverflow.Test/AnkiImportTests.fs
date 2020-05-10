@@ -218,14 +218,6 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
               FieldName = "Source"
               Value = communalValue },
             card.Instance.CommunalFields.Single())
-        let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
-        let (command, _) = command.Value
-        Assert.Equal<int seq>(
-            basic.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.sort)
-        Assert.Equal(
-            communalValue,
-            command.FieldValues.Single(fun x -> x.IsCommunal).Value)
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
@@ -244,14 +236,6 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             view.Value.FieldValues
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value).OrderBy(fun x -> x))
-        let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
-        let (command, _) = command.Value
-        Assert.Equal<int seq>(
-            sketchy.Select(fun x -> x.Id).OrderBy(fun x -> x),
-            command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.distinct |> Seq.sort)
-        Assert.Equal<string seq>(
-            expectedFieldAndValues |> List.map snd,
-            command.CommunalFieldValues.Select(fun x -> x.Value) |> Seq.sort)
 
     let! cloze = getInstances "Cloze"
     for instance in cloze do
@@ -275,14 +259,6 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.Instance.StrippedFront)
         else
             Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.Instance.StrippedFront)
-        let! command = SanitizeCardRepository.getEdit c.Db userId card.Id
-        let (command, _) = command.Value
-        Assert.Equal<int seq>(
-            cloze.Select(fun x -> x.Id) |> Seq.sort,
-            command.FieldValues |> Seq.collect (fun x -> x.CommunalBranchInstanceIds) |> Seq.distinct |> Seq.sort)
-        Assert.Equal<string seq>(
-            [communalValue; "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>"],
-            command.CommunalFieldValues.Select(fun x -> x.Value))
     }
 
 [<Fact>]

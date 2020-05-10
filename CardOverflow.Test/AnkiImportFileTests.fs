@@ -198,56 +198,6 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! clozes = c.Db.BranchInstance.Where(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()
     for instance in clozes do
         do! testCommunalFields instance.CardId [longThing; ""]
-
-    let initialInstance = clozes.First()
-    let! editCommand = SanitizeCardRepository.getEdit c.Db userId initialInstance.CardId
-    let (editCommand, ac) = editCommand.Value
-    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
-    let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
-    let updatedCommunalField = communalFields.[0]
-    Assert.Contains("microtubules", updatedCommunalField.Value)
-    let updatedCommunalField = { updatedCommunalField with Value = Guid.NewGuid().ToString() + updatedCommunalField.Value }
-    let updatedCommand = { editCommand with FieldValues = [updatedCommunalField; communalFields.[1]].ToList() }
-    let! x = SanitizeCardRepository.Update c.Db userId ac updatedCommand
-    let (instanceIds, communals) = x.Value
-    Assert.Equal([("Extra", 1002)], communals)
-    Assert.Equal<int seq>([1008; 1009; 1010; 1011; 1012], instanceIds)
-    for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField.Value; ""]
-
-    let! card = ExploreCardRepository.get c.Db userId <| clozes.First().CardId
-    let! editCommand = SanitizeCardRepository.getEdit c.Db userId card.Value.Id
-    let (editCommand, _) = editCommand.Value
-    Assert.Empty(editCommand.FieldValues.Where(fun x -> not <| x.IsCommunal))
-    let communalFields = editCommand.CommunalFieldValues |> List.ofSeq
-    let updatedCommunalField0 = communalFields.[0]
-    let updatedCommunalField1 = communalFields.[1]
-    Assert.Contains("microtubules", updatedCommunalField0.Value)
-    Assert.Equal("<b><br /></b>", updatedCommunalField1.Value)
-    let updatedCommunalField0 = { updatedCommunalField0 with Value = Guid.NewGuid().ToString() + updatedCommunalField0.Value }
-    let updatedCommunalField1 = { updatedCommunalField1 with Value = Guid.NewGuid().ToString() + updatedCommunalField1.Value }
-    let updatedCommand = { editCommand with FieldValues = [updatedCommunalField0; updatedCommunalField1].ToList() }
-    let! acquired = CardRepository.GetAcquired c.Db userId initialInstance.CardId
-    let! x = SanitizeCardRepository.Update c.Db userId (Result.getOk acquired) updatedCommand
-    let (instanceIds, communals) = x.Value
-    Assert.Equal([("Extra", 1006)], communals)
-    Assert.Equal<int seq>([1013; 1014; 1015; 1016; 1017], instanceIds)
-    for instance in clozes do
-        do! testCommunalFields instance.CardId [updatedCommunalField0.Value; updatedCommunalField1.Value] }
-
-[<Fact>]
-let ``SanitizeCardRepository.Update with malformed cloze command is an error`` (): Task<unit> = task {
-    let userId = 3
-    use c = new TestContainer()
-    let! card = CardRepository.getNew c.Db userId
-    let! collates = TestCollateRepo.Search c.Db "Cloze"
-    let malformedUpdateCommand =
-        let command = FacetRepositoryTests.clozeCommand "Canberra was founded in {{c1::1913}}." (collates.Single(fun x -> x.Name = "Cloze"))
-        { command with FieldValues = command.FieldValues.Select(fun x -> { x with Communal = None }).ToList() }
-
-    let! r = SanitizeCardRepository.Update c.Db userId card malformedUpdateCommand
-
-    Assert.Equal("The following cloze fields must be communal: Text", r.error)
     }
 
 [<Fact>]
@@ -323,12 +273,6 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     Assert.Equal(expected, e.Results.Select(fun x -> x.Value.BranchInstanceMeta.StrippedFront, x.Value.BranchInstanceMeta.StrippedBack))
     do! assertUserHasNormalCardCount 4
     
-    // c1 and c2 cloze pair with communal Extra creates one Extra instance
-    let! (instanceIds, (communals: List<string * int>)) = FacetRepositoryTests.addClozeWithSharedExtra "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
-    Assert.Equal([ "Extra", 1006 ] , communals)
-    Assert.Equal<int seq>([1005; 1006], instanceIds)
-    do! assertUserHasNormalCardCount 6
-    
     // go from 1 cloze to 2 clozes
     let cardId = 1
     let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
@@ -341,9 +285,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
+    let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1007; 1008], instanceIds)
-    Assert.Empty nonClozeCommunals
     do! assertUserHasNormalCardCount 7
     
     // go from 2 clozes to 1 cloze
@@ -358,9 +301,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
+    let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1009], instanceIds)
-    Assert.Empty nonClozeCommunals
     do! assertUserHasNormalCardCount 6
     
     // multiple c1's works
@@ -375,9 +317,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds, nonClozeCommunals = SanitizeCardRepository.Update c.Db userId ac command
+    let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
     Assert.Equal<int seq>([1010], instanceIds)
-    Assert.Empty nonClozeCommunals
     do! assertUserHasNormalCardCount 6
     } |> TaskResult.getOk)
 
@@ -395,7 +336,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 
     let test instanceId customTest = task {
         let! acquired = CardRepository.getNew c.Db userId
-        let! (_, communals) =
+        let! _ =
             SanitizeCardRepository.Update
                 c.Db
                 userId
@@ -405,21 +346,19 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                         collate
                             .Fields
                             .Select(fun f ->
-                                let value, communal =
+                                let value =
                                     if f.Name = "Front" then
-                                        "Front", None
+                                        "Front"
                                     else
-                                        communalValue, Some { CommunalBranchInstanceIds = [0].ToList(); InstanceId = instanceId }
+                                        communalValue
                                 {   EditField = ViewField.copyTo f
                                     Value = value
-                                    Communal = communal
                                 })
                             .ToList()
                     CollateInstance = collate
                     Source = Original
                 }
             |> Task.map Result.getOk
-        Assert.Equal<seq<string * int>>(["Back", 1001], communals)
         let! field = c.Db.CommunalField.SingleAsync()
         Assert.Equal(cardId, field.Id)
         Assert.Equal(3, field.AuthorId)
@@ -455,7 +394,6 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                                 text
                             else
                                 f.Name
-                        Communal = None
                     }).ToList()
                 CollateInstance =
                     { CollateInstance.initialize with
@@ -497,7 +435,6 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                             | "Front" -> front
                             | "Back" -> back
                             | _ -> "Source goes here"
-                        Communal = None
                     }).ToList()
                 CollateInstance =
                     {   CollateInstance.initialize with

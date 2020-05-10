@@ -273,16 +273,7 @@ type EditFieldAndValue = {
     EditField: Field
     [<StringLength(10000)>]
     Value: string
-    Communal: CommunalFieldValue option
-} with
-    member this.IsCommunal =
-        match this.Communal with
-        | Some _ -> true
-        | _ -> false
-    member this.CommunalBranchInstanceIds =
-        match this.Communal with
-        | Some x -> x.CommunalBranchInstanceIds
-        | None -> [].ToList()
+}
 
 type BranchInstanceView = {
     FieldValues: FieldAndValue ResizeArray
@@ -450,13 +441,3 @@ type EditCardCommand = {
                     Value =  x.Value
                 }).ToList()
         CollateInstance = this.CollateInstance }
-    member this.CommunalFieldValues =
-        this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
-    member this.CommunalNonClozeFieldValues =
-        this.CommunalFieldValues
-            .Where(fun x -> not <| this.CollateInstance.ClozeFields.Contains x.EditField.Name)
-            .ToList()
-    member this.ClozeFieldValues =
-        this.CommunalFieldValues
-            .Where(fun x -> this.CollateInstance.ClozeFields.Contains x.EditField.Name)
-            .ToList()

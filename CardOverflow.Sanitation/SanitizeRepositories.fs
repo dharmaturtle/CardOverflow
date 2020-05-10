@@ -271,12 +271,6 @@ type ViewEditCardCommand = {
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
             Source = this.Source
         }
-    member this.CommunalFieldValues =
-        this.FieldValues.Where(fun x -> x.IsCommunal).ToList()
-    member this.CommunalNonClozeFieldValues =
-        this.CommunalFieldValues
-            .Where(fun x -> not <| this.CollateInstance.ClozeFields.Contains x.EditField.Name)
-            .ToList()
 
 module SanitizeCardRepository =
     let private _getCommand (db: CardOverflowDb) branchInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
@@ -307,7 +301,6 @@ module SanitizeCardRepository =
                         EditFieldAndValue.load
                             <| Fields.fromString instance.CollateInstance.Fields
                             <| instance.FieldValues
-                            <| communalBranchInstanceIdsAndValueByField
                     CollateInstance = instance.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
                     Source = source
                 } |> Ok }
