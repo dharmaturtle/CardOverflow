@@ -59,7 +59,7 @@ let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     return r.Value
     }
 
-let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<int>> =
+let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<int> =
     add "Basic (and reversed card) - Card 1" <| normalCommand []
 
 let addBasicCard =
@@ -225,7 +225,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     }
     
     let! instanceId = UpdateRepository.card c.Db ac updated.load
-    Assert.Equal<int seq>([newBranchInstanceId], instanceId)
+    Assert.Equal(newBranchInstanceId, instanceId)
 
     let! (card1: BranchInstanceMeta)    = ExploreCardRepository.get      c.Db userId cardId |> TaskResult.map(fun x -> x.Instance)
     let! (card2: BranchInstanceMeta), _ = ExploreCardRepository.instance c.Db userId newBranchInstanceId
@@ -378,7 +378,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceId = x.Value
-    Assert.Equal<int seq>([ogEdit_i], instanceId)
+    Assert.Equal(ogEdit_i, instanceId)
     do! assertCount
             [og_c, 1]
             [og_b, 1]
@@ -436,7 +436,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds = x.Value
-    Assert.Equal<int seq>([copy_i], instanceIds)
+    Assert.Equal(copy_i, instanceIds)
     do! assertCount
             [og_c, 1;              copy_c, 1]
             [og_b, 1;              copy_b, 1]
@@ -469,7 +469,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds = x.Value
-    Assert.Equal<int seq>([branch_i], instanceIds)
+    Assert.Equal(branch_i, instanceIds)
     let! x, _ = ExploreCardRepository.instance c.Db user2 branch_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 3 1
             [ { Name = "A"
@@ -510,7 +510,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds = x.Value
-    Assert.Equal<int seq>([copy2x_i], instanceIds)
+    Assert.Equal(copy2x_i, instanceIds)
     let! x, _ = ExploreCardRepository.instance c.Db user2 copy2x_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 1 1 []
     do! assertCount
@@ -534,7 +534,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! x = UpdateRepository.card c.Db ac updated.load
     let instanceIds = x.Value
-    Assert.Equal<int seq>([copyOfBranch_i], instanceIds)
+    Assert.Equal(copyOfBranch_i, instanceIds)
     let! x, _ = ExploreCardRepository.instance c.Db user2 copyOfBranch_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 1 1 []
     do! assertCount
@@ -560,7 +560,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let! x = UpdateRepository.card c.Db ac updated.load
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = user2))
     let instanceIds = x.Value
-    Assert.Equal<int seq>([branchOfCopy_i], instanceIds)
+    Assert.Equal(branchOfCopy_i, instanceIds)
     let! x, _ = ExploreCardRepository.instance c.Db user2 branchOfCopy_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 2 1 []
     do! assertCount
@@ -765,7 +765,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let update_i = 1002
     let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getEdit c.Db userId og_c
     let! instanceIds = UpdateRepository.card c.Db ac command.load
-    Assert.Equal<int seq>([update_i], instanceIds)
+    Assert.Equal(update_i, instanceIds)
 
     // tests ExactInstanceAcquired
     do! ExploreCardRepository.get c.Db userId og_c
@@ -789,7 +789,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let branch_b = 2
     let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getBranch c.Db userId username og_c
     let! instanceIds = UpdateRepository.card c.Db ac command.load
-    Assert.Equal<int seq>([branch_i], instanceIds)
+    Assert.Equal(branch_i, instanceIds)
     
     // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
@@ -802,7 +802,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let updateBranch_i = 1004
     let! (command: ViewEditCardCommand), ac = SanitizeCardRepository.getEdit c.Db userId og_c
     let! instanceIds = UpdateRepository.card c.Db ac command.load
-    Assert.Equal<int seq>([updateBranch_i], instanceIds)
+    Assert.Equal(updateBranch_i, instanceIds)
 
     // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
@@ -842,7 +842,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
                 | _ -> failwith "impossible"
         }
     let! instanceIds = UpdateRepository.card c.Db ac command
-    Assert.Equal<int seq>([branch_i2], instanceIds)
+    Assert.Equal(branch_i2, instanceIds)
 
     // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c

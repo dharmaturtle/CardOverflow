@@ -285,8 +285,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
-    Assert.Equal<int seq>([1007; 1008], instanceIds)
+    let! instanceId = SanitizeCardRepository.Update c.Db userId ac command
+    Assert.Equal(1007, instanceId)
     do! assertUserHasNormalCardCount 7
     
     // go from 2 clozes to 1 cloze
@@ -302,7 +302,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 ].ToList()
         }
     let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
-    Assert.Equal<int seq>([1009], instanceIds)
+    Assert.Equal(1009, instanceIds)
     do! assertUserHasNormalCardCount 6
     
     // multiple c1's works
@@ -318,7 +318,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 ].ToList()
         }
     let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
-    Assert.Equal<int seq>([1010], instanceIds)
+    Assert.Equal(1010, instanceIds)
     do! assertUserHasNormalCardCount 6
     } |> TaskResult.getOk)
 

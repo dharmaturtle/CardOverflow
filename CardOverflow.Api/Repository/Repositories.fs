@@ -465,18 +465,6 @@ module UpdateRepository =
                 newCardEntity
             else
                 IdPairOrEntity.CardIdAndBranchId (acquiredCard.CardId, acquiredCard.BranchId)
-        let createCommunalFieldInstanceEntity c fieldName =
-            CommunalFieldInstanceEntity(
-                CommunalField = CommunalFieldEntity(AuthorId = acquiredCard.UserId),
-                FieldName = fieldName,
-                Value =
-                    if c.CollateInstance.IsCloze then
-                        command.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
-                    else
-                        c.FieldValues.Single(fun x -> x.EditField.Name = fieldName).Value
-                    ,
-                Created = DateTime.UtcNow,
-                EditSummary = c.EditSummary)
         let updateCommunalField (old: CommunalFieldInstanceEntity) newValue =
             CommunalFieldInstanceEntity(
                 CommunalField = old.CommunalField,
@@ -489,26 +477,8 @@ module UpdateRepository =
         let commandClozeIndexes =
             match command.CollateInstance.Templates with
             | Cloze t -> getClozeIndexes t.Front
-            | Standard ts -> [].ToList()
+            | _ -> ResizeArray.empty
         taskResult {
-            let! splitCommands =
-                match command.CollateInstance.Templates with
-                | Standard -> Ok [command]
-                | Cloze template ->
-                    let valueByFieldName = command.FieldValues.Select(fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
-                    AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName template.Front
-                    |> Result.map (fun max ->
-                    [1s .. int16 max] |> List.map (fun clozeIndex ->
-                        let zip =
-                            Seq.zip
-                                (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                                (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
-                            |> Map.ofSeq
-                        { command with
-                            FieldValues =
-                                command.FieldValues.Select(fun x ->
-                                { x with
-                                    Value = zip.[x.EditField.Name]}).ToList() }))
             let! (tagIds: int ResizeArray) = task {
                 let getsertTagId (input: string) =
                     match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
@@ -541,19 +511,17 @@ module UpdateRepository =
             let acs =
                 match acquiredCardEntity with
                 | null ->
-                    splitCommands
-                    |> List.map (fun c ->
-                        let e = acquiredCard.copyToNew tagIds
-                        e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary []
-                        e.Branch <- e.BranchInstance.Branch
-                        match card with
-                        | CardIdAndBranchId (cardId, branchId) ->
-                            e.CardId <- cardId
-                            e.BranchId <- branchId
-                        | Entity _ ->
-                            e.Card <- e.BranchInstance.Branch.Card
-                        db.AcquiredCard.AddI e
-                        e)
+                    let e = acquiredCard.copyToNew tagIds
+                    e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary []
+                    e.Branch <- e.BranchInstance.Branch
+                    match card with
+                    | CardIdAndBranchId (cardId, branchId) ->
+                        e.CardId <- cardId
+                        e.BranchId <- branchId
+                    | Entity _ ->
+                        e.Card <- e.BranchInstance.Branch.Card
+                    db.AcquiredCard.AddI e
+                    e
                 | e ->
                     let communalInstances, instanceIds =
                         e.BranchInstance.CommunalFieldInstance_BranchInstances.Select(fun x -> x.CommunalFieldInstance)
@@ -569,50 +537,47 @@ module UpdateRepository =
                                     .Where(fun x -> x <> acquiredCard.BranchInstanceMeta.Id)
                                 |> List.ofSeq)
                         |> List.unzip
-                    splitCommands
-                    |> List.collect (fun c ->
-                        let associatedEntities =
-                            instanceIds |> List.collect id |> List.distinct |> List.map (fun instanceId ->
-                                db.AcquiredCard
-                                    .Include(fun x -> x.BranchInstance)
-                                    .SingleOrDefault(fun x -> x.BranchInstanceId = instanceId && x.UserId = acquiredCard.UserId)
-                                |> function
-                                | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
-                                | ac ->
-                                    if commandClozeIndexes.Contains <| getClozeIndex ac.BranchInstance.FieldValues then
-                                        ac.BranchInstance <- c.CardView.CopyFieldsToNewInstance (CardIdAndBranchId (ac.CardId, ac.BranchId)) command.EditSummary communalInstances
-                                        Some ac
-                                    else
-                                        ac.CardState <- CardState.toDb Suspended
-                                        None
-                            ) |> List.choose id
-                        let e =
-                            match command.CollateInstance.Templates with
-                            | Cloze t ->
-                                let entityIndex = e.BranchInstance.FieldValues |> getClozeIndex
-                                let commandIndex = getClozeIndexes t.Front |> Seq.distinct |> Seq.exactlyOne
-                                if entityIndex = commandIndex then
-                                    e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
-                                    e.Branch <- e.BranchInstance.Branch
-                                    e
+                    let associatedEntities =
+                        instanceIds |> List.collect id |> List.distinct |> List.map (fun instanceId ->
+                            db.AcquiredCard
+                                .Include(fun x -> x.BranchInstance)
+                                .SingleOrDefault(fun x -> x.BranchInstanceId = instanceId && x.UserId = acquiredCard.UserId)
+                            |> function
+                            | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
+                            | ac ->
+                                if commandClozeIndexes.Contains <| getClozeIndex ac.BranchInstance.FieldValues then
+                                    ac.BranchInstance <- command.CardView.CopyFieldsToNewInstance (CardIdAndBranchId (ac.CardId, ac.BranchId)) command.EditSummary communalInstances
+                                    Some ac
                                 else
-                                    if associatedEntities.Select(fun x -> getClozeIndex x.BranchInstance.FieldValues).Contains commandIndex then
-                                        e
-                                    else
-                                        let ac = acquiredCard.copyToNew tagIds
-                                        ac.BranchInstance <- c.CardView.CopyFieldsToNewInstance newCardEntity c.EditSummary communalInstances
-                                        ac.Branch <- ac.BranchInstance.Branch
-                                        ac.Card <- ac.BranchInstance.Card
-                                        db.AcquiredCard.AddI ac
-                                        ac
-                            | Standard _ ->
-                                e.BranchInstance <- c.CardView.CopyFieldsToNewInstance card c.EditSummary communalInstances
+                                    ac.CardState <- CardState.toDb Suspended
+                                    None
+                        ) |> List.choose id
+                    let e =
+                        match command.CollateInstance.Templates with
+                        | Cloze t ->
+                            let entityIndex = e.BranchInstance.FieldValues |> getClozeIndex
+                            let commandIndex = getClozeIndexes t.Front |> Seq.distinct |> Seq.exactlyOne
+                            if entityIndex = commandIndex then
+                                e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalInstances
                                 e.Branch <- e.BranchInstance.Branch
                                 e
-                        e :: associatedEntities
-                    )
+                            else
+                                if associatedEntities.Select(fun x -> getClozeIndex x.BranchInstance.FieldValues).Contains commandIndex then
+                                    e
+                                else
+                                    let ac = acquiredCard.copyToNew tagIds
+                                    ac.BranchInstance <- command.CardView.CopyFieldsToNewInstance newCardEntity command.EditSummary communalInstances
+                                    ac.Branch <- ac.BranchInstance.Branch
+                                    ac.Card <- ac.BranchInstance.Card
+                                    db.AcquiredCard.AddI ac
+                                    ac
+                        | Standard _ ->
+                            e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalInstances
+                            e.Branch <- e.BranchInstance.Branch
+                            e
+                    e
             do! db.SaveChangesAsyncI()
-            return acs.Select(fun x -> x.BranchInstanceId).Distinct().ToList()
+            return acs.BranchInstanceId
         }
 
 module CardSettingsRepository =

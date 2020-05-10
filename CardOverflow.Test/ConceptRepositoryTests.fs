@@ -149,7 +149,7 @@ let testGetAcquired (branchInstanceIds: int list) addCards name = task {
     use c = new TestContainer(false, name)
     
     let userId = 1 // this user creates the card
-    for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<int>>) in addCards do
+    for (addCard: CardOverflowDb -> int -> string list -> Task<int>) in addCards do
         let! _ = addCard c.Db userId ["A"]
         ()
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
@@ -257,7 +257,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
         addRelationshipCommand2, addRelationshipCommand1 ]
 
     let userId = 1 // this user creates the card
-    for (addCard: CardOverflowDb -> int -> string list -> Task<ResizeArray<int>>) in [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ] do
+    for (addCard: CardOverflowDb -> int -> string list -> Task<int>) in [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ] do
         let! _ = addCard c.Db userId []
         ()
 
@@ -294,7 +294,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! instanceId = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal<int seq>([1001], instanceId)
+    Assert.Equal(1001, instanceId)
     let addRelationshipCommand =
         {   Name = ""
             SourceCardId = 1

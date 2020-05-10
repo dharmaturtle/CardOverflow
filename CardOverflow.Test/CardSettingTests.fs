@@ -82,7 +82,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                 Source = Original
             }
     let instanceId = r.Value
-    Assert.Equal<int seq>([1001], instanceId)
+    Assert.Equal(1001, instanceId)
 
     // new card has default option
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)

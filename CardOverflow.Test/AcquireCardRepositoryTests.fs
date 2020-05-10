@@ -22,7 +22,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal<int seq>([1001], instanceIds)
+    Assert.Equal(1001, instanceIds)
     let! collate = SanitizeCollate.AllInstances c.Db 1
     let getAcquired () = task { return! CardRepository.GetAcquired c.Db userId 1 }
     let! ac = getAcquired ()
@@ -42,7 +42,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
             Source = Original
         } |> UpdateRepository.card c.Db ac.Value
     let instanceIds = x.Value
-    Assert.Equal<int seq>([1002], instanceIds)
+    Assert.Equal(1002, instanceIds)
     let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
@@ -55,7 +55,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.CardId |> TaskResult.getOk
     let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal<int seq>([1003], instanceIds)
+    Assert.Equal(1003, instanceIds)
     let! card2 = c.Db.Card.SingleOrDefaultAsync(fun x -> x.Id <> ac.CardId)
     let card2 = card2.Id
     let addRelationshipCommand =
@@ -87,7 +87,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal<int seq>([1001], instanceIds)
+    Assert.Equal(1001, instanceIds)
     let! collate = SanitizeCollate.AllInstances c.Db 1
     let! ac = CardRepository.GetAcquired c.Db userId 1
     
@@ -103,7 +103,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
             Source = Original
         } |> UpdateRepository.card c.Db ac.Value
     let instanceIds = x.Value
-    Assert.Equal<int seq>([1002], instanceIds)
+    Assert.Equal(1002, instanceIds)
     let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
     Assert.Equal(ac.Value.CardState, CardState.Suspended) // still suspended after edit
 
@@ -118,7 +118,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     let userId = 3
     let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
     let cardId = 1
-    Assert.Equal<int seq>([1001], instanceIds)
+    Assert.Equal(1001, instanceIds)
     let! collate = SanitizeCollate.AllInstances c.Db 1
     let! ac = CardRepository.GetAcquired c.Db userId 1
     let! x = 
@@ -129,7 +129,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
         } |> UpdateRepository.card c.Db ac.Value
     let instanceIds = x.Value
     let i2 = 1002
-    Assert.Equal<int seq>([i2], instanceIds)
+    Assert.Equal(i2, instanceIds)
     do! CardRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.AcquiredCard.Single().BranchInstanceId)
     
@@ -199,7 +199,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     let! x = UpdateRepository.card c.Db ac command.load
     let instanceIds = x.Value
     let ci1_2 = 1003
-    Assert.Equal<int seq>([ci1_2], instanceIds)
+    Assert.Equal(ci1_2, instanceIds)
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
