@@ -16,23 +16,31 @@ namespace CardOverflow.UserContentApi.Controllers {
       _db = db;
     }
 
-    [HttpGet("card/{id}/front")]
-    public async Task<IActionResult> Front(int id) => _front(await CardViewRepository.get(_db, id));
+    [HttpGet("card/{id}/{index}/front")]
+    public async Task<IActionResult> Front(int id, int index) => _front(index, await CardViewRepository.get(_db, id));
 
-    [HttpGet("card/{id}/back")]
-    public async Task<IActionResult> Back(int id) => _back(await CardViewRepository.get(_db, id));
+    [HttpGet("card/{id}/{index}/back")]
+    public async Task<IActionResult> Back(int id, int index) => _back(index, await CardViewRepository.get(_db, id));
 
-    [HttpGet("cardinstance/{id}/front")]
-    public async Task<IActionResult> InstanceFront(int id) => _front(await CardViewRepository.instance(_db, id));
+    [HttpGet("cardinstance/{id}/{index}/front")]
+    public async Task<IActionResult> InstanceFront(int id, int index) => _front(index, await CardViewRepository.instance(_db, id));
 
-    [HttpGet("cardinstance/{id}/back")]
-    public async Task<IActionResult> InstanceBack(int id) => _back(await CardViewRepository.instance(_db, id));
+    [HttpGet("cardinstance/{id}/{index}/back")]
+    public async Task<IActionResult> InstanceBack(int id, int index) => _back(index, await CardViewRepository.instance(_db, id));
 
-    private ContentResult _front(FSharpResult<BranchInstanceView, string> view) =>
-      (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item1).ToTextHtmlContent(this);
+    private ContentResult _front(int index, FSharpResult<BranchInstanceView, string> view) =>
+      ( view.IsError
+      ? view.ErrorValue
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).IsError
+      ? view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).ErrorValue
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).ResultValue.Item1).ToTextHtmlContent(this);
 
-    private ContentResult _back(FSharpResult<BranchInstanceView, string> view) =>
-      (view.IsError ? view.ErrorValue : view.ResultValue.FrontBackFrontSynthBackSynth.Item2).ToTextHtmlContent(this);
+    private ContentResult _back(int index, FSharpResult<BranchInstanceView, string> view) =>
+      ( view.IsError
+      ? view.ErrorValue
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).IsError
+      ? view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).ErrorValue
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).ResultValue.Item2).ToTextHtmlContent(this);
 
   }
 }

@@ -157,7 +157,7 @@ type CollateInstance = {
         this.JustTemplates
         |> List.map (fun t -> CardHtml.generate [] t.Front t.Back this.Css)
         |> List.tryItem i
-        |> Result.requireSome ("Index out of range")
+        |> Result.requireSome (sprintf "Index %i out of range" i)
 
 type AcquiredCollateInstance = {
     DefaultTags: int seq
@@ -280,11 +280,18 @@ type BranchInstanceView = {
     CollateInstance: CollateInstance
 } with
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
-        CardHtml.generate
+        this.CollateInstance.JustTemplates.Select(fun t ->
+            CardHtml.generate
             <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
-            <| this.CollateInstance.FirstTemplate.Front
-            <| this.CollateInstance.FirstTemplate.Back
+            <| t.Front
+            <| t.Back
             <| this.CollateInstance.Css
+        ).ToList()
+    member this.FrontBackFrontSynthBackSynthIndex i =
+        this.FrontBackFrontSynthBackSynth
+        |> Seq.tryItem i
+        |> Result.requireSome (sprintf "Index %i out of range" i)
+        
 
 type CommunalFieldInstance = {
     Id: int

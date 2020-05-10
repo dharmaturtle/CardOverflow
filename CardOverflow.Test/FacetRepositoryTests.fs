@@ -405,7 +405,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         let! revisions = CardRepository.Revisions c.Db userId branchId
         Assert.Equal(revisionCount, revisions.SortedMeta.Count())
         let! instance = CardViewRepository.instance c.Db revisions.SortedMeta.[0].Id
-        let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
+        let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
         Assert.Contains(newValue, revision)
     }
     
@@ -418,7 +418,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 IsAcquired = true }]
     let! revisions = CardRepository.Revisions c.Db user1 og_b
     let! instance = CardViewRepository.instance c.Db revisions.SortedMeta.[1].Id
-    let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth
+    let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
     Assert.Contains("Front", original)
     Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest
             

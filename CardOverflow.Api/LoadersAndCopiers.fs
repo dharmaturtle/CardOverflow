@@ -295,7 +295,7 @@ type CommunalFieldInstance with
 
 type BranchInstanceMeta with
     static member load isAcquired isLatest (entity: BranchInstanceEntity) =
-        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
+        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
         {   Id = entity.Id
             BranchId = entity.BranchId
             CardId = entity.CardId
@@ -335,7 +335,7 @@ type BranchInstanceMeta with
 type QuizCard with
     static member load (entity: AcquiredCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
-            entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth
+            entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[0] // highTODO use real index
         result {
             let! cardState = CardState.create entity.CardState
             return {
