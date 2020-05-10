@@ -465,19 +465,8 @@ module UpdateRepository =
                 newCardEntity
             else
                 IdPairOrEntity.CardIdAndBranchId (acquiredCard.CardId, acquiredCard.BranchId)
-        let updateCommunalField (old: CommunalFieldInstanceEntity) newValue =
-            CommunalFieldInstanceEntity(
-                CommunalField = old.CommunalField,
-                FieldName = old.FieldName,
-                Value = newValue,
-                Created = DateTime.UtcNow,
-                EditSummary = command.EditSummary)
         let getClozeIndex fieldValues = ClozeRegex().TypedMatches(fieldValues).Single().clozeIndex.Value
         let getClozeIndexes fieldValues = ClozeRegex().TypedMatches(fieldValues).Select(fun x -> x.clozeIndex.Value).ToList()
-        let commandClozeIndexes =
-            match command.CollateInstance.Templates with
-            | Cloze t -> getClozeIndexes t.Front
-            | _ -> ResizeArray.empty
         taskResult {
             let! (tagIds: int ResizeArray) = task {
                 let getsertTagId (input: string) =
@@ -523,59 +512,25 @@ module UpdateRepository =
                     db.AcquiredCard.AddI e
                     e
                 | e ->
-                    let communalInstances, instanceIds =
-                        e.BranchInstance.CommunalFieldInstance_BranchInstances.Select(fun x -> x.CommunalFieldInstance)
-                        |> List.ofSeq
-                        |> List.map (fun old ->
-                            let newValue = command.FieldValues.Single(fun x -> x.EditField.Name = old.FieldName).Value
-                            if old.Value = newValue then
-                                old, []
-                            else
-                                updateCommunalField old newValue,
-                                old.CommunalFieldInstance_BranchInstances
-                                    .Select(fun x -> x.BranchInstanceId)
-                                    .Where(fun x -> x <> acquiredCard.BranchInstanceMeta.Id)
-                                |> List.ofSeq)
-                        |> List.unzip
-                    let associatedEntities =
-                        instanceIds |> List.collect id |> List.distinct |> List.map (fun instanceId ->
-                            db.AcquiredCard
-                                .Include(fun x -> x.BranchInstance)
-                                .SingleOrDefault(fun x -> x.BranchInstanceId = instanceId && x.UserId = acquiredCard.UserId)
-                            |> function
-                            | null -> None // null when it's an instance that isn't acquired, veryLowTODO filter out the unacquired instances
-                            | ac ->
-                                if commandClozeIndexes.Contains <| getClozeIndex ac.BranchInstance.FieldValues then
-                                    ac.BranchInstance <- command.CardView.CopyFieldsToNewInstance (CardIdAndBranchId (ac.CardId, ac.BranchId)) command.EditSummary communalInstances
-                                    Some ac
-                                else
-                                    ac.CardState <- CardState.toDb Suspended
-                                    None
-                        ) |> List.choose id
-                    let e =
-                        match command.CollateInstance.Templates with
-                        | Cloze t ->
-                            let entityIndex = e.BranchInstance.FieldValues |> getClozeIndex
-                            let commandIndex = getClozeIndexes t.Front |> Seq.distinct |> Seq.exactlyOne
-                            if entityIndex = commandIndex then
-                                e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalInstances
-                                e.Branch <- e.BranchInstance.Branch
-                                e
-                            else
-                                if associatedEntities.Select(fun x -> getClozeIndex x.BranchInstance.FieldValues).Contains commandIndex then
-                                    e
-                                else
-                                    let ac = acquiredCard.copyToNew tagIds
-                                    ac.BranchInstance <- command.CardView.CopyFieldsToNewInstance newCardEntity command.EditSummary communalInstances
-                                    ac.Branch <- ac.BranchInstance.Branch
-                                    ac.Card <- ac.BranchInstance.Card
-                                    db.AcquiredCard.AddI ac
-                                    ac
-                        | Standard _ ->
-                            e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary communalInstances
+                    match command.CollateInstance.Templates with
+                    | Cloze t ->
+                        let entityIndex = e.BranchInstance.FieldValues |> getClozeIndex
+                        let commandIndex = getClozeIndexes t.Front |> Seq.distinct |> Seq.exactlyOne
+                        if entityIndex = commandIndex then
+                            e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary []
                             e.Branch <- e.BranchInstance.Branch
                             e
-                    e
+                        else
+                            let ac = acquiredCard.copyToNew tagIds
+                            ac.BranchInstance <- command.CardView.CopyFieldsToNewInstance newCardEntity command.EditSummary []
+                            ac.Branch <- ac.BranchInstance.Branch
+                            ac.Card <- ac.BranchInstance.Card
+                            db.AcquiredCard.AddI ac
+                            ac
+                    | Standard _ ->
+                        e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary []
+                        e.Branch <- e.BranchInstance.Branch
+                        e
             do! db.SaveChangesAsyncI()
             return acs.BranchInstanceId
         }
