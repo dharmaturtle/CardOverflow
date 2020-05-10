@@ -854,7 +854,7 @@ INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") 
 INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (5, 2, 7, true);
 
 
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1, 'Basic', 1, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (0, 1, 'Basic', 1, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -869,7 +869,7 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 \setlength{\parindent}{0in}
 \begin{document}
 ', '\end{document}', false, '{{Front}}', 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669581, B'11111100100010011000001111010100110110100110111111111100101101001011011111010111011001100001011111001000110101010000100010110001010010010000001001000110010101011011111000010010100100001000000100001011101100111011101011000001100111111011000111111101010110100111001011000101011110101101010011100101000111011001111100011001010000001011001010110010110011001000010010110000000010001110011101010111011111111011001110101110010010000110111111011110000111000011111110101111000001000111111010010010110011100111101001011111', NULL, '''20px'':15 ''align'':18 ''arial'':11 ''back'':3C,6C ''background'':23 ''background-color'':22 ''basic'':1A ''black'':21 ''card'':7 ''center'':19 ''color'':20,24 ''famili'':10 ''font'':9,13 ''font-famili'':8 ''font-siz'':12 ''front'':2C,4C ''frontsid'':5C ''size'':14 ''text'':17 ''text-align'':16 ''white'':25');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (2, 'Basic (and reversed card) - Card 1', 2, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (0, 2, 'Basic (and reversed card) - Card 1', 2, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -884,7 +884,7 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 \setlength{\parindent}{0in}
 \begin{document}
 ', '\end{document}', false, '{{Front}}', 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669577, B'01011110100111011111011110001111011100100011111000111010101010110010011101001110100111011001110000110111111010001101000010110001011001011010101111000101001110001011011001001001110100111100100000101100000011111111101110111100011001001101101111000001000110001110001111101011110100001110110000111010110001110011010100001010110101000110011111100101110000111011001000010100101011111101110000001011000100101000001001000101000110101101001000010111011011001110000000111000010111010100111010010111010111101111010100101110', NULL, '''1'':6A ''20px'':20 ''align'':23 ''arial'':16 ''back'':8C,11C ''background'':28 ''background-color'':27 ''basic'':1A ''black'':26 ''card'':4A,5A,12 ''center'':24 ''color'':25,29 ''famili'':15 ''font'':14,18 ''font-famili'':13 ''font-siz'':17 ''front'':7C,9C ''frontsid'':10C ''revers'':3A ''size'':19 ''text'':22 ''text-align'':21 ''white'':30');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (3, 'Basic (optional reversed card) - Card 1', 3, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (0, 3, 'Basic (optional reversed card) - Card 1', 3, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -899,7 +899,7 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 \setlength{\parindent}{0in}
 \begin{document}
 ', '\end{document}', false, '{{Front}}', 'FrontFalse0FalseBackFalse1FalseAdd ReverseFalse2False', 'Imported from Anki', 1554689669572, B'00111110001110111101000000011000000001011000010111110000101011101000101010100110000000111001111001011000010101001100001011111000101000111010100111001010100000110000010100110110101000100011101000111110101101110000000111010001001001111011000011110011011101001100010110100100000101000100111110100110100010011100101010100100100101111111011011110001000010010000010011001001100011111100011101011010011110001000110010010001110111110101011111100110001100011011110101111110010000100111101011011011100101011011100110111011', NULL, '''1'':6A ''20px'':22 ''add'':9C ''align'':25 ''arial'':18 ''back'':8C,13C ''background'':30 ''background-color'':29 ''basic'':1A ''black'':28 ''card'':4A,5A,14 ''center'':26 ''color'':27,31 ''famili'':17 ''font'':16,20 ''font-famili'':15 ''font-siz'':19 ''front'':7C,11C ''frontsid'':12C ''option'':2A ''revers'':3A,10C ''size'':21 ''text'':24 ''text-align'':23 ''white'':32');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (4, 'Basic (type in the answer)', 4, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (0, 4, 'Basic (type in the answer)', 4, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -915,7 +915,7 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 \begin{document}
 ', '\end{document}', false, '{{Front}}
 {{type:Back}}', 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1587663611565, B'11110111000001111010010111101000100011111111010111101000010000101011111110111100011010100111110110111010101000110100111101110111011100000101111011011001110000110011100101001010010011101100101101110101011001000100111101011001111010111000110101110010110111001000110001111100101000010000001111011110110100100010010110000100100101111101100100011000010000000111110101000111001000111010110110011001001101100010001111100010101010111010111110100000101010111000111010011111000110111011101001011000100111101101010000001101', NULL, '''20px'':21 ''align'':24 ''answer'':5A ''arial'':17 ''back'':7C,10C,12C ''background'':29 ''background-color'':28 ''basic'':1A ''black'':27 ''card'':13 ''center'':25 ''color'':26,30 ''famili'':16 ''font'':15,19 ''font-famili'':14 ''font-siz'':18 ''front'':6C,8C ''frontsid'':11C ''size'':20 ''text'':23 ''text-align'':22 ''type'':2A,9C ''white'':31');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (5, 'Cloze', 5, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1, 5, 'Cloze', 5, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -937,7 +937,7 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 \setlength{\parindent}{0in}
 \begin{document}
 ', '\end{document}', false, '{{cloze:Text}}', 'TextFalse0FalseExtraFalse1False', 'Imported from Anki', 1554689669570, B'11110010001110100101000001101001011010001100001010011010110010000001110011110110111101101011100010101111010000001000000000111101010001110001001111011011010101100011010100010111000000010100111011111100000111011000101001010000101111110101111001001001010101001011000100100001000100010001110100011000110110000111101101010011000100010110001110011001111000111010001011000101001011111001100011101101001110000101110000110001000100000001011100010110000000100110111110110110111101010111101100010011111001011111110101110011', NULL, '''20px'':17 ''align'':20 ''arial'':13 ''background'':25 ''background-color'':24 ''black'':23 ''blue'':34 ''bold'':32 ''card'':9 ''center'':21 ''cloze'':1A,4C,6C,28,36 ''color'':22,26,33,37 ''extra'':3C,8C ''famili'':12 ''font'':11,15,30 ''font-famili'':10 ''font-siz'':14 ''font-weight'':29 ''lightblu'':38 ''nightmod'':35 ''size'':16 ''text'':2C,5C,7C,19 ''text-align'':18 ''weight'':31 ''white'':27');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (6, 'Basic (type in the answer)', 4, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (0, 6, 'Basic (type in the answer)', 4, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -954,7 +954,7 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 ', '\end{document}', false, '{{Front}}
 
 {{type:Back}}', 'FrontFalse0FalseBackFalse1False', 'Answer uses {{Front}} instead of {{FrontSide}} and {{type:Back}} instead of {{Back}} as of Anki v2.1.15', 1587486094455, B'11010011100110101101000101000011011011110100001001110001001100101100101000010001110111010110111110011010001110101000101001001110011000010001010011011101100001011011111001101010100000101111110010110110111110011110010111100011111111100001111000101000101101000111111010101111001010111101011110000011000001000101110110110101000101100000000101100011110001100110110100100000101000000101100110110101101101101101110010111101110000100111010011100111001010000101110110101010010011110100111000011000001011100101111100110111', NULL, '''20px'':22 ''align'':25 ''answer'':5A ''arial'':18 ''back'':7C,10C,13C ''background'':30 ''background-color'':29 ''basic'':1A ''black'':28 ''card'':14 ''center'':26 ''color'':27,31 ''famili'':17 ''font'':16,20 ''font-famili'':15 ''font-siz'':19 ''front'':6C,8C,11C ''size'':21 ''text'':24 ''text-align'':23 ''type'':2A,9C,12C ''white'':32');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (7, 'Cloze', 5, '.card {
+INSERT INTO public."CollateInstance" ("Type", "Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1, 7, 'Cloze', 5, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
