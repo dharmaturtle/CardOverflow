@@ -32,7 +32,7 @@ let normalCommand fieldValues collateInstance =
                 Value = fieldValues.[i]
             }) |> toResizeArray
         EditSummary = "Initial creation"
-        Source = Original
+        Source = NewOriginal
     }
 
 let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
@@ -47,7 +47,7 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
                     "extra"
         }).ToList()
     CollateInstance = clozeCollate
-    Source = Original }
+    Source = NewOriginal }
 
 let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let! collate = TestCollateRepo.SearchEarliest db collateName
@@ -55,7 +55,7 @@ let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let ac = { ac with Tags = tags }
     let! r =
         createCommand collate
-        |> SanitizeCardRepository.Update db userId ac
+        |> SanitizeCardRepository.Update db userId
     return r.Value
     }
 
@@ -224,7 +224,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! instanceId = UpdateRepository.card c.Db ac updated.load
+    let! instanceId = UpdateRepository.card c.Db userId updated.load
     Assert.Equal(newBranchInstanceId, instanceId)
 
     let! (card1: BranchInstanceMeta)    = ExploreCardRepository.get      c.Db userId cardId |> TaskResult.map(fun x -> x.Instance)
@@ -273,7 +273,6 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicCard c.Db userId []
-    let! ac = CardRepository.GetAcquired c.Db userId 1
     let! collate = SanitizeCollate.AllInstances c.Db 1
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =

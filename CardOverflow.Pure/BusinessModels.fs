@@ -322,8 +322,9 @@ type ViewRelationship = {
 [<CLIMutable>]
 type BranchInstanceMeta = {
     Id: int
-    BranchId: int
     CardId: int
+    BranchId: int
+    MaxIndexInclusive: int16
     Created: DateTime
     Modified: DateTime option
     IsDmca: bool
@@ -337,10 +338,10 @@ type BranchInstanceMeta = {
 
 [<CLIMutable>]
 type AcquiredCard = {
-    CardId: int
-    BranchId: int
     AcquiredCardId: int
     UserId: int
+    CardId: int
+    BranchId: int
     BranchInstanceMeta: BranchInstanceMeta
     CardState: CardState
     IsLapsed: bool

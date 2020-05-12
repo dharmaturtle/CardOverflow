@@ -26,6 +26,7 @@ namespace CardOverflow.Entity
         [Required]
         public string FieldValues { get; set; }
         public int CollateInstanceId { get; set; }
+        public short MaxIndexInclusive { get; set; }
         public int Users { get; set; }
         [Required]
         [StringLength(200)]

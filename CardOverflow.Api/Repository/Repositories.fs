@@ -303,16 +303,20 @@ module CardRepository =
         let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardId = branchInstance.CardId)
         match ac with
         | null ->
-            let card =
+            let cardSansIndex =
                 AcquiredCard.initialize
                     userId
                     defaultCardSettingId.Value // medTODO handle the null case
                     []
                 |> fun x -> x.copyToNew [] // medTODO get tags from collate
-            card.BranchInstanceId <- branchInstanceId
-            card.Branch <- branchInstance.Branch
-            card.CardId <- branchInstance.Branch.CardId
-            card |> db.AcquiredCard.AddI
+            [0s .. branchInstance.MaxIndexInclusive]
+            |> List.iter (fun i ->
+                let card = cardSansIndex i
+                card.BranchInstanceId <- branchInstanceId
+                card.Branch <- branchInstance.Branch
+                card.CardId <- branchInstance.Branch.CardId
+                card |> db.AcquiredCard.AddI
+            )
         | card ->
             card.BranchInstanceId <- branchInstanceId
             card.Branch <- branchInstance.Branch

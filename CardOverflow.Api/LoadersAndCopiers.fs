@@ -272,18 +272,12 @@ type BranchInstanceView with
         let entity = BranchInstanceEntity()
         this.CopyToX entity communalFields
         entity
-    member this.CopyFieldsToNewInstance card editSummary communalFields =
+    member this.CopyFieldsToNewInstance (branch: BranchEntity) editSummary communalFields =
         let e = this.CopyToNew communalFields
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        match card with
-        | CardIdAndBranchId (cardId, branchId) ->
-            e.CardId <- cardId
-            e.BranchId <- branchId
-        | Entity entity ->
-            let (branch: BranchEntity) = entity ()
-            e.Card <- branch.Card
-            e.Branch <- branch
+        e.Card <- branch.Card
+        e.Branch <- branch
         e.EditSummary <- editSummary
         e
 
@@ -297,8 +291,9 @@ type BranchInstanceMeta with
     static member load isAcquired isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
         {   Id = entity.Id
-            BranchId = entity.BranchId
             CardId = entity.CardId
+            BranchId = entity.BranchId
+            MaxIndexInclusive = entity.MaxIndexInclusive
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
@@ -311,8 +306,9 @@ type BranchInstanceMeta with
         }
     static member initialize =
         {   Id = 0
-            BranchId = 0
             CardId = 0
+            BranchId = 0
+            MaxIndexInclusive = 0s
             Created = DateTime.UtcNow
             Modified = None
             IsDmca = false
@@ -354,9 +350,10 @@ type QuizCard with
         }
 
 type AcquiredCard with
-    member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) =
+    member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
+        entity.Index <- index
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
@@ -364,9 +361,9 @@ type AcquiredCard with
         entity.CardSettingId <- this.CardSettingId
         entity.Due <- this.Due
         entity.Tag_AcquiredCards <- tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList()
-    member this.copyToNew tagIds =
+    member this.copyToNew tagIds i =
         let e = AcquiredCardEntity()
-        this.copyTo e tagIds
+        this.copyTo e tagIds i
         e
     static member initialize userId cardSettingId tags =
         {   CardId = 0

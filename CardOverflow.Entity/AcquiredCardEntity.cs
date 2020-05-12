@@ -22,6 +22,7 @@ namespace CardOverflow.Entity
         public int CardId { get; set; }
         public int BranchId { get; set; }
         public int BranchInstanceId { get; set; }
+        public short Index { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }

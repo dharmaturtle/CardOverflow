@@ -18,20 +18,20 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     BEGIN
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
-            SET		"Users" = ( SELECT Count(*)
-                                FROM "AcquiredCard"
-                                WHERE "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )
+            SET     "Users" = ( SELECT COUNT(*) FROM ( SELECT DISTINCT ac."CardId"
+                                FROM "AcquiredCard" ac
+                                WHERE "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 ))
             WHERE	ci."Id" = OLD."BranchInstanceId";
             UPDATE	"Branch" b
-            SET		"Users" = ( SELECT Count(*)
-                                FROM "AcquiredCard"
-                                WHERE "BranchId" = OLD."BranchId" AND "CardState" <> 3 )
+            SET		"Users" = ( SELECT COUNT(*) FROM ( SELECT DISTINCT ac."CardId"
+                                FROM "AcquiredCard" ac
+                                WHERE "BranchId" = OLD."BranchId" AND "CardState" <> 3 ))
             WHERE	b."Id" = OLD."BranchId";
             UPDATE  "Card" card
-            SET     "Users" = ( SELECT  COUNT(*)
+            SET     "Users" = ( SELECT COUNT(*) FROM ( SELECT DISTINCT c."Id"
                                 FROM    "Card" c
                                 JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE   ac."CardState" <> 3 AND ac."CardId" = OLD."CardId")
+                                WHERE   ac."CardState" <> 3 AND ac."CardId" = OLD."CardId"))
             WHERE card."Id" = OLD."CardId";
         END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
@@ -1250,13 +1250,13 @@ CREATE INDEX "IX_AcquiredCard_CardState" ON public."AcquiredCard" USING btree ("
 CREATE INDEX "IX_AcquiredCard_UserId" ON public."AcquiredCard" USING btree ("UserId");
 
 
-CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_BranchId" ON public."AcquiredCard" USING btree ("UserId", "BranchId");
+CREATE INDEX "IX_AcquiredCard_UserId_BranchId" ON public."AcquiredCard" USING btree ("UserId", "BranchId");
 
 
 CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_BranchInstanceId_Index" ON public."AcquiredCard" USING btree ("UserId", "BranchInstanceId", "Index");
 
 
-CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_CardId" ON public."AcquiredCard" USING btree ("UserId", "CardId");
+CREATE INDEX "IX_AcquiredCard_UserId_CardId" ON public."AcquiredCard" USING btree ("UserId", "CardId");
 
 
 CREATE UNIQUE INDEX "IX_AlphaBetaKey_Key" ON public."AlphaBetaKey" USING btree ("Key");
