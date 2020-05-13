@@ -22,6 +22,7 @@ open Serilog
 open Microsoft.EntityFrameworkCore.Diagnostics
 open System.Security.Cryptography
 open LoadersAndCopiers
+open CardOverflow.Pure
 
 module Environment =
     let get =
@@ -54,6 +55,9 @@ type EntityHasher () =
             fun struct (branchInstance, collateInstanceHash, sha512) -> BranchInstanceEntity.hash collateInstanceHash sha512 branchInstance
         member val CollateInstanceHasher =
             fun struct (instance, sha512) -> CollateInstanceEntity.hash sha512 instance
+        member _.GetMaxIndexInclusive =
+            fun (e: BranchInstanceEntity) ->
+                (e |> BranchInstanceView.load).MaxIndexInclusive
 
 type Container with
     member container.RegisterStuffTestOnly =

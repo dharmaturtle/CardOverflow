@@ -20,6 +20,7 @@ namespace CardOverflow.Entity {
   public interface IEntityHasher {
     FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
     FSharpFunc<(CollateInstanceEntity, SHA512), BitArray> CollateInstanceHasher { get; }
+    FSharpFunc<BranchInstanceEntity, short> GetMaxIndexInclusive { get; }
   }
 
   public enum SearchOrder {
@@ -36,13 +37,13 @@ namespace CardOverflow.Entity {
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess) {
-      _OnBeforeSaving();
+      _OnBeforeSaving().GetAwaiter().GetResult();
       return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default) {
-      _OnBeforeSaving();
-      return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default) {
+      await _OnBeforeSaving();
+      return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
@@ -87,7 +88,7 @@ namespace CardOverflow.Entity {
         && (x.State == EntityState.Added || x.State == EntityState.Modified)
       ).Select(x => x.Entity).Cast<T>();
 
-    private void _OnBeforeSaving() {
+    private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
       foreach (var collate in _filter<CollateInstanceEntity>(entries)) {
@@ -97,10 +98,14 @@ namespace CardOverflow.Entity {
             .Append(MappingTools.stripHtmlTags(collate.Templates))
             .Apply(x => string.Join(' ', x));
       }
-      foreach (var card in _filter<BranchInstanceEntity>(entries)) {
-        var collateHash = card.CollateInstance?.Hash ?? CollateInstance.Find(card.CollateInstanceId).Hash;
-        card.Hash = _entityHasher.BranchInstanceHasher.Invoke((card, collateHash, sha512));
-        card.TsVectorHelper = MappingTools.stripHtmlTags(card.FieldValues);
+      foreach (var branchInstance in _filter<BranchInstanceEntity>(entries)) {
+        if (branchInstance.CollateInstance == null) {
+          branchInstance.CollateInstance = await CollateInstance.FindAsync(branchInstance.CollateInstanceId);
+        }
+        branchInstance.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(branchInstance);
+        var collateHash = branchInstance.CollateInstance?.Hash ?? CollateInstance.Find(branchInstance.CollateInstanceId).Hash;
+        branchInstance.Hash = _entityHasher.BranchInstanceHasher.Invoke((branchInstance, collateHash, sha512));
+        branchInstance.TsVectorHelper = MappingTools.stripHtmlTags(branchInstance.FieldValues);
       }
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);

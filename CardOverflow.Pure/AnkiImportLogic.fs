@@ -19,14 +19,14 @@ module AnkiImportLogic =
         >> function
         | [] -> Error errorMessage
         | x ->
-            let indexes = x |> List.map (fun x -> x.clozeIndex.Value |> int) |> List.sort
+            let indexes = x |> List.map (fun x -> x.clozeIndex.Value |> int16) |> List.sort
             let max = indexes.Last()
             Seq.zip
-                [ 1 .. max ]
+                [ 1s .. max ]
                 indexes
             |> Seq.forall(fun (x, y) -> x = y)
             |> fun isConsecutive ->
-                match isConsecutive && max > 0 with
+                match isConsecutive && max > 0s with
                 | true -> Ok max
                 | false -> Error errorMessage
     let multipleClozeToSingleCloze (index: int16) field =

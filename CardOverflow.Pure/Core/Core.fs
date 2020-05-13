@@ -105,6 +105,15 @@ module List =
         match xs with
         | [] -> [x]
         | _  -> xs
+    let rec zipOn xs ys equals =
+        match xs, ys with
+        | x :: xs, _ ->
+            let y = ys |> List.filter (equals x) |> List.tryExactlyOne
+            (Some x, y) :: zipOn xs (ys |> List.filter (not << equals x)) equals
+        | _, y :: ys ->
+            let x = xs |> List.filter (equals y) |> List.tryExactlyOne
+            (x, Some y) :: zipOn (xs |> List.filter (not << equals y)) ys equals
+        | [], [] -> []
 
 module ResizeArray =
     let empty<'T> = [].ToList<'T>()

@@ -293,34 +293,45 @@ module CardRepository =
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         return BranchRevision.load isAcquired r
     }
-    let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
+    let acquireCard (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) = taskResult {
         let! (defaultCardSettingId: Nullable<int>) = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
+        let cardSansIndex =
+            AcquiredCard.initialize
+                userId
+                defaultCardSettingId.Value // medTODO handle the null case
+                []
+            |> fun x -> x.copyToNew [] // medTODO get tags from collate
+        let new' =
+            [0s .. branchInstance.MaxIndexInclusive]
+            |> List.map cardSansIndex
+        let! (old': AcquiredCardEntity list) = db.AcquiredCard.Where(fun x -> x.UserId = userId && x.CardId = branchInstance.CardId).ToListAsync() |> Task.map Seq.toList
+        List.zipOn
+            new'
+            old'
+            (fun new' old' -> new'.Index = old'.Index)
+        |> List.iter(
+            function
+            | (None, Some old') ->
+                old'.CardState <- Suspended |> CardState.toDb
+            | (Some new', None) ->
+                new'.BranchInstance <- branchInstance
+                new'.Branch <- branchInstance.Branch
+                new'.Card <- branchInstance.Card
+                db.AcquiredCard.AddI new'
+            | (Some _, Some old') ->
+                old'.BranchInstance <- branchInstance
+                old'.Branch <- branchInstance.Branch
+                old'.Card <- branchInstance.Card
+            | (None, None) -> failwith "impossible"
+        )
+    }
+    let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
         let! (branchInstance: BranchInstanceEntity) =
             db.BranchInstance
-                .Include(fun x -> x.Branch)
+                .Include(fun x -> x.Branch.Card)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
-            |> Task.map (Result.requireNotNull <| sprintf "Card not found for Instance #%i" branchInstanceId)
-        let! (ac: AcquiredCardEntity) = db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardId = branchInstance.CardId)
-        match ac with
-        | null ->
-            let cardSansIndex =
-                AcquiredCard.initialize
-                    userId
-                    defaultCardSettingId.Value // medTODO handle the null case
-                    []
-                |> fun x -> x.copyToNew [] // medTODO get tags from collate
-            [0s .. branchInstance.MaxIndexInclusive]
-            |> List.iter (fun i ->
-                let card = cardSansIndex i
-                card.BranchInstanceId <- branchInstanceId
-                card.Branch <- branchInstance.Branch
-                card.CardId <- branchInstance.Branch.CardId
-                card |> db.AcquiredCard.AddI
-            )
-        | card ->
-            card.BranchInstanceId <- branchInstanceId
-            card.Branch <- branchInstance.Branch
-            card.CardId <- branchInstance.Branch.CardId
+            |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
+        do! acquireCard db userId branchInstance
         return! db.SaveChangesAsyncI ()
         }
     let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId = // medTODO needs userId for validation
@@ -440,103 +451,60 @@ module CardRepository =
         }
 
 module UpdateRepository =
-    let card (db: CardOverflowDb) (acquiredCard: AcquiredCard) (command: EditCardCommand) =
-        let newCardEntity =
-            IdPairOrEntity.Entity <| fun () ->
-                match command.Source with
-                | CopySourceInstanceId instanceId ->
-                    BranchEntity(
-                        AuthorId = acquiredCard.UserId,
-                        Card =
-                            CardEntity(
-                                AuthorId = acquiredCard.UserId,
-                                CopySourceId = Nullable instanceId
-                            ))
-                | BranchSourceCardId (cardId, name) ->
-                    BranchEntity(
-                        AuthorId = acquiredCard.UserId,
-                        Name = name,
-                        Card = db.Card.Single(fun x -> x.Id = cardId))
-                | Original ->
-                    BranchEntity(
-                        AuthorId = acquiredCard.UserId,
-                        Card =
-                            CardEntity(
-                                AuthorId = acquiredCard.UserId
-                            ))
-        let card =
-            if acquiredCard.CardId = 0 then
-                newCardEntity
-            else
-                IdPairOrEntity.CardIdAndBranchId (acquiredCard.CardId, acquiredCard.BranchId)
-        let getClozeIndex fieldValues = ClozeRegex().TypedMatches(fieldValues).Single().clozeIndex.Value
-        let getClozeIndexes fieldValues = ClozeRegex().TypedMatches(fieldValues).Select(fun x -> x.clozeIndex.Value).ToList()
+    let card (db: CardOverflowDb) userId (command: EditCardCommand) =
+        let branchNameCheck branchId name =
+            db.Branch.AnyAsync(fun b -> b.Id = branchId && b.Card.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
+            |> Task.map (Result.requireFalse <| sprintf "The card with Branch #%i already has a Branch named '%s'." branchId name)
+        let branchNameCheckCardId cardId name =
+            db.Card.AnyAsync(fun c -> c.Id = cardId && c.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
+            |> Task.map (Result.requireFalse <| sprintf "Card #%i already has a Branch named '%s'." cardId name)
         taskResult {
-            let! (tagIds: int ResizeArray) = task {
-                let getsertTagId (input: string) =
-                    match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
-                    | null ->
-                        let e = TagEntity(Name = input)
-                        db.Tag.AddI e
-                        e
-                    | x -> x
-                let tags = acquiredCard.Tags |> List.map getsertTagId // lowTODO optimize
-                do! db.SaveChangesAsyncI()
-                return tags.Select(fun x -> x.Id).ToList()
-            }
-            let! branchSourceCardId =
+            let! (branch: BranchEntity) =
                 match command.Source with
-                | BranchSourceCardId (cardId, name) ->
-                    db.Branch.AnyAsync(fun x -> x.CardId = cardId && x.Name = name) // veryLowTODO make case insensitive
-                    |> Task.map (Result.requireFalse <| sprintf "Card #%i already has a Branch named '%s'." cardId name)
-                    |> TaskResult.map (fun () -> Nullable cardId)
-                | _ ->
-                    Nullable() |> Ok |> Task.FromResult
-            let! (acquiredCardEntity: AcquiredCardEntity) =
-                db.AcquiredCard
-                    .Include(fun x -> x.BranchInstance.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalField)
-                    .Include(fun x -> x.BranchInstance.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
-                        .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances)
-                    .SingleOrDefaultAsync(fun x ->
-                        (x.Id = acquiredCard.AcquiredCardId)
-                        || (x.UserId = acquiredCard.UserId && Nullable x.CardId = branchSourceCardId))
-            let acs =
-                match acquiredCardEntity with
-                | null ->
-                    let e = acquiredCard.copyToNew tagIds
-                    e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary []
-                    e.Branch <- e.BranchInstance.Branch
-                    match card with
-                    | CardIdAndBranchId (cardId, branchId) ->
-                        e.CardId <- cardId
-                        e.BranchId <- branchId
-                    | Entity _ ->
-                        e.Card <- e.BranchInstance.Branch.Card
-                    db.AcquiredCard.AddI e
-                    e
-                | e ->
-                    match command.CollateInstance.Templates with
-                    | Cloze t ->
-                        let entityIndex = e.BranchInstance.FieldValues |> getClozeIndex
-                        let commandIndex = getClozeIndexes t.Front |> Seq.distinct |> Seq.exactlyOne
-                        if entityIndex = commandIndex then
-                            e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary []
-                            e.Branch <- e.BranchInstance.Branch
-                            e
-                        else
-                            let ac = acquiredCard.copyToNew tagIds
-                            ac.BranchInstance <- command.CardView.CopyFieldsToNewInstance newCardEntity command.EditSummary []
-                            ac.Branch <- ac.BranchInstance.Branch
-                            ac.Card <- ac.BranchInstance.Card
-                            db.AcquiredCard.AddI ac
-                            ac
-                    | Standard _ ->
-                        e.BranchInstance <- command.CardView.CopyFieldsToNewInstance card command.EditSummary []
-                        e.Branch <- e.BranchInstance.Branch
-                        e
+                    | UpdateBranchId (branchId, name) ->
+                        branchNameCheck branchId name
+                        |> TaskResult.bind (fun () ->
+                            db.Branch.Include(fun x -> x.Card).SingleOrDefaultAsync(fun x -> x.Id = branchId && x.AuthorId = userId)
+                            |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%i doesn't exist or you aren't its author" branchId)
+                        )
+                    | NewCopySourceInstanceId instanceId ->
+                        BranchEntity(
+                            AuthorId = userId,
+                            Card =
+                                CardEntity(
+                                    AuthorId = userId,
+                                    CopySourceId = Nullable instanceId
+                                )) |> Ok |> Task.FromResult
+                    | NewBranchSourceCardId (cardId, name) ->
+                        branchNameCheckCardId cardId name
+                        |> TaskResult.map(fun () ->
+                            BranchEntity(
+                                AuthorId = userId,
+                                Name = name,
+                                CardId = cardId))
+                    | NewOriginal ->
+                        BranchEntity(
+                            AuthorId = userId,
+                            Card =
+                                CardEntity(
+                                    AuthorId = userId
+                                )) |> Ok |> Task.FromResult
+            //let! (tagIds: int ResizeArray) = task { // medTODO uncomment and fix
+            //    let getsertTagId (input: string) =
+            //        match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
+            //        | null ->
+            //            let e = TagEntity(Name = input)
+            //            db.Tag.AddI e
+            //            e
+            //        | x -> x
+            //    //let tags = acquiredCard.Tags |> List.map getsertTagId // lowTODO optimize
+            //    do! db.SaveChangesAsyncI()
+            //    return tags.Select(fun x -> x.Id).ToList()
+            //}
+            let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
+            do! CardRepository.acquireCard db userId branchInstance
             do! db.SaveChangesAsyncI()
-            return acs.BranchInstanceId
+            return branchInstance.BranchId
         }
 
 module CardSettingsRepository =

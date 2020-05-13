@@ -257,6 +257,10 @@ type BranchInstanceView with
     static member private toView (collateInstance: CollateInstanceEntity) (fieldValues: string)=
         {   FieldValues = FieldAndValue.load (Fields.fromString collateInstance.Fields) fieldValues
             CollateInstance = CollateInstance.load collateInstance }
+    member this.MaxIndexInclusive =
+        Helper.maxIndexInclusive
+            (this.CollateInstance.Templates)
+            (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     static member load (entity: BranchInstanceEntity) =
         BranchInstanceView.toView
             entity.CollateInstance
@@ -279,6 +283,7 @@ type BranchInstanceView with
         e.Card <- branch.Card
         e.Branch <- branch
         e.EditSummary <- editSummary
+        e.MaxIndexInclusive <- this.MaxIndexInclusive
         e
 
 type CommunalFieldInstance with

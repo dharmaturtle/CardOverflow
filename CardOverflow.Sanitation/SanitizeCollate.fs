@@ -72,6 +72,10 @@ type ViewCollateInstance = {
         match this.Templates with
         | Cloze t -> t
         | Standard ts -> ts.[0]
+    member this.JustTemplates =
+        match this.Templates with
+        | Cloze t -> [t]
+        | Standard ts -> ts
 
 module ViewCollateInstance =
     let load (bznz: CollateInstance) = {

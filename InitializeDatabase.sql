@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -18,38 +18,44 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     BEGIN
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
-            SET     "Users" = ( SELECT COUNT(*) FROM ( SELECT DISTINCT ac."CardId"
-                                FROM "AcquiredCard" ac
-                                WHERE "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 ))
+            SET     "Users" = ( SELECT  COUNT(*) FROM
+                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                    FROM    "AcquiredCard" ac
+                                    WHERE   "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )_)
             WHERE	ci."Id" = OLD."BranchInstanceId";
             UPDATE	"Branch" b
-            SET		"Users" = ( SELECT COUNT(*) FROM ( SELECT DISTINCT ac."CardId"
-                                FROM "AcquiredCard" ac
-                                WHERE "BranchId" = OLD."BranchId" AND "CardState" <> 3 ))
+            SET		"Users" = ( SELECT  COUNT(*) FROM
+                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                    FROM    "AcquiredCard" ac
+                                    WHERE   "BranchId" = OLD."BranchId" AND "CardState" <> 3 )_)
             WHERE	b."Id" = OLD."BranchId";
             UPDATE  "Card" card
-            SET     "Users" = ( SELECT COUNT(*) FROM ( SELECT DISTINCT c."Id"
-                                FROM    "Card" c
-                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE   ac."CardState" <> 3 AND ac."CardId" = OLD."CardId"))
+            SET     "Users" = ( SELECT  COUNT(*) FROM
+                                  ( SELECT DISTINCT c."Id", ac."UserId"
+                                    FROM    "Card" c
+                                    JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
+                                    WHERE   ac."CardState" <> 3 AND ac."CardId" = OLD."CardId")_)
             WHERE card."Id" = OLD."CardId";
         END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
-            SET		"Users" = ( SELECT Count(*)
-                                FROM "AcquiredCard"
-                                WHERE "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )
+            SET     "Users" = ( SELECT  COUNT(*) FROM
+                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                    FROM    "AcquiredCard" ac
+                                    WHERE   "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )_)
             WHERE	ci."Id" = NEW."BranchInstanceId";
             UPDATE	"Branch" b
-            SET		"Users" = ( SELECT Count(*)
-                                FROM "AcquiredCard"
-                                WHERE "BranchId" = NEW."BranchId" AND "CardState" <> 3 )
+            SET		"Users" = ( SELECT  COUNT(*) FROM
+                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                    FROM    "AcquiredCard" ac
+                                    WHERE   "BranchId" = NEW."BranchId" AND "CardState" <> 3 )_)
             WHERE	b."Id" = NEW."BranchId";
             UPDATE  "Card" card
-            SET     "Users" = ( SELECT  COUNT(*)
-                                FROM    "Card" c
-                                JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                WHERE   ac."CardState" <> 3 AND ac."CardId" = NEW."CardId")
+            SET     "Users" = ( SELECT  COUNT(*) FROM
+                                  ( SELECT DISTINCT c."Id", ac."UserId"
+                                    FROM    "Card" c
+                                    JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
+                                    WHERE   ac."CardState" <> 3 AND ac."CardId" = NEW."CardId")_)
             WHERE card."Id" = NEW."CardId";
         END IF;
         RETURN NULL;
@@ -63,6 +69,11 @@ CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
+		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."Index" <> NEW."Index"))) THEN
+		IF ((SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId") < NEW."Index") THEN
+			RAISE EXCEPTION 'AcquiredCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
+		END IF;
+		END IF;
         IF (NEW."TsVectorHelper" IS NOT NULL) THEN
             NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
             NEW."TsVectorHelper" = NULL;

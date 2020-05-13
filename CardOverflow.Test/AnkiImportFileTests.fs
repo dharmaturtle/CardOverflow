@@ -22,7 +22,6 @@ open FSharp.Control.Tasks
 open System.Security.Cryptography
 open System.Collections.Generic
 open FsToolkit.ErrorHandling
-open ConceptRepositoryTests
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
@@ -206,6 +205,7 @@ let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
     use c = new TestContainer()
     let! _ = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
 
+    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     let! view = CardViewRepository.instance c.Db 1001
     Assert.Equal<string seq>(
         ["{{c1::Portland::city}} was founded in 1845."; "extra"],
@@ -275,7 +275,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     
     // go from 1 cloze to 2 clozes
     let cardId = 1
-    let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
+    let branchId = 1
+    let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -285,13 +286,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceId = SanitizeCardRepository.Update c.Db userId ac command
+    let! instanceId = SanitizeCardRepository.Update c.Db userId command
     Assert.Equal(1007, instanceId)
     do! assertUserHasNormalCardCount 7
     
     // go from 2 clozes to 1 cloze
-    let cardId = 1
-    let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
+    let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -301,13 +301,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
+    let! instanceIds = SanitizeCardRepository.Update c.Db userId command
     Assert.Equal(1009, instanceIds)
     do! assertUserHasNormalCardCount 6
     
     // multiple c1's works
-    let cardId = 1
-    let! command, ac = SanitizeCardRepository.getEdit c.Db userId cardId
+    let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -317,7 +316,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds = SanitizeCardRepository.Update c.Db userId ac command
+    let! instanceIds = SanitizeCardRepository.Update c.Db userId command
     Assert.Equal(1010, instanceIds)
     do! assertUserHasNormalCardCount 6
     } |> TaskResult.getOk)
@@ -335,12 +334,10 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let branchInstanceId = 1001
 
     let test instanceId customTest = task {
-        let! acquired = CardRepository.getNew c.Db userId
         let! _ =
             SanitizeCardRepository.Update
                 c.Db
                 userId
-                acquired
                 {   EditSummary = editSummary
                     FieldValues =
                         collate
@@ -356,7 +353,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                 })
                             .ToList()
                     CollateInstance = collate
-                    Source = Original
+                    Source = NewOriginal
                 }
             |> Task.map Result.getOk
         let! field = c.Db.CommunalField.SingleAsync()
@@ -402,7 +399,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                                     Front = questionXemplate
                             } |> List.singleton |> Standard
                     } |> ViewCollateInstance.load
-                Source = Original
+                Source = NewOriginal
             }
         if questionXemplate.Contains "cloze" then
             Assert.Equal<string seq>(["Front"], view.CollateInstance.ClozeFields)
@@ -444,7 +441,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
                     } |> ViewCollateInstance.load
-                Source = Original
+                Source = NewOriginal
             }
         Assert.Equal<string seq>(["Front"; "Back"], view.CollateInstance.ClozeFields)
         view.Backs.Value

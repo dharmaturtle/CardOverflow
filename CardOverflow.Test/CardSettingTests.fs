@@ -69,9 +69,8 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     // Insert new card
     let! collates = TestCollateRepo.Search c.Db "Basic"
     let collate = collates.Single(fun x -> x.Name = "Basic")
-    let! card = CardRepository.getNew c.Db userId
     let! r =
-        SanitizeCardRepository.Update c.Db userId card
+        SanitizeCardRepository.Update c.Db userId
             {   EditSummary = "Initial creation"
                 FieldValues =
                     collate.Fields.Select(fun f -> {
@@ -79,7 +78,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                         Value = Guid.NewGuid().ToString()
                     }).ToList()
                 CollateInstance = collate
-                Source = Original
+                Source = NewOriginal
             }
     let instanceId = r.Value
     Assert.Equal(1001, instanceId)

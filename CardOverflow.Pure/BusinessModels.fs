@@ -422,19 +422,28 @@ type BranchRevision = {
 }
 
 type CardSource =
-    | Original
-    | CopySourceInstanceId of int
-    | BranchSourceCardId of int * string
+    | NewOriginal
+    | NewCopySourceInstanceId of int
+    | NewBranchSourceCardId of int * string
+    | UpdateBranchId of int * string
 with
     member this.TryGetCopySourceInstanceId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with
-        | CopySourceInstanceId instanceId -> x <- instanceId; true
+        | NewCopySourceInstanceId instanceId -> x <- instanceId; true
         | _ -> false
     member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
         match this with
-        | BranchSourceCardId (cardId, _) -> x <- cardId; true
+        | NewBranchSourceCardId (cardId, _) -> x <- cardId; true
         | _ -> false
-    
+
+module Helper =
+    let maxIndexInclusive templates valueByFieldName =
+        match templates with
+        | Cloze t ->
+            let max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName t.Front |> Result.getOk
+            max - 1s
+        | Standard ts ->
+            (ts.Length |> int16) - 1s
 
 type EditCardCommand = {
     EditSummary: string
@@ -449,3 +458,7 @@ type EditCardCommand = {
                     Value =  x.Value
                 }).ToList()
         CollateInstance = this.CollateInstance }
+    member this.MaxIndexInclusive =
+        Helper.maxIndexInclusive
+            (this.CollateInstance.Templates)
+            (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls

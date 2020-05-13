@@ -48,15 +48,14 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     use c = new TestContainer()
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
-    let! ac = CardRepository.GetAcquired c.Db userId 1
     let! collate = SanitizeCollate.AllInstances c.Db 1
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
-            Source = Original
-        } |> UpdateRepository.card c.Db ac
+            Source = NewOriginal
+        } |> UpdateRepository.card c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)

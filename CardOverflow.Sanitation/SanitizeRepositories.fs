@@ -241,7 +241,7 @@ type ViewEditCardCommand = {
         | Cloze t ->
              result {
                 let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName t.Front
-                return [1 .. max] |> List.map int16 |> List.map (fun clozeIndex ->
+                return [1s .. max] |> List.map int16 |> List.map (fun clozeIndex ->
                     let zip =
                         Seq.zip
                             <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
@@ -272,73 +272,51 @@ type ViewEditCardCommand = {
             Source = this.Source
         }
 
+type UpsertCardSource =
+    | VNewOriginalUserId of int
+    | VNewCopySourceInstanceId of int
+    | VNewBranchSourceCardId of int
+    | VUpdateBranchId of int
+
 module SanitizeCardRepository =
-    let private _getCommand (db: CardOverflowDb) branchInstanceId (source: CardSource) = task { // veryLowTODO validate parentId
-        let! instance =
-            db.BranchInstance
-                .Include(fun x -> x.CollateInstance)
-                .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances)
-                .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
-        return
-            match instance with
-            | null -> Error <| sprintf "Card instance %i not found" branchInstanceId
-            | instance ->
-                let communalBranchInstanceIdsAndValueByField =
-                    instance.CommunalFieldInstance_BranchInstances
-                        .Select(fun x ->
-                            let ids = x.CommunalFieldInstance.CommunalFieldInstance_BranchInstances.Select(fun x -> x.BranchInstanceId).ToList()
-                            x.CommunalFieldInstance.FieldName,
-                            (   x.CommunalFieldInstance.Value,
-                                if ids.Any() then
-                                    {   CommunalBranchInstanceIds = ids
-                                        InstanceId = None
-                                    } |> Some
-                                else None))
-                    |> Map.ofSeq
+    let getUpsert (db: CardOverflowDb) source =
+        let toCommand source (branch: BranchInstanceEntity) =
+            {   EditSummary = ""
+                FieldValues =
+                    EditFieldAndValue.load
+                        <| Fields.fromString branch.CollateInstance.Fields
+                        <| branch.FieldValues
+                CollateInstance = branch.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
+                Source = source
+            }
+        match source with
+        | VNewOriginalUserId userId ->
+            db.User_CollateInstance.Include(fun x -> x.CollateInstance).FirstOrDefaultAsync(fun x -> x.UserId = userId)
+            |> Task.map (Result.requireNotNull (sprintf "User #%i doesn't have any templates" userId))
+            |> TaskResult.map (fun j ->
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString instance.CollateInstance.Fields
-                            <| instance.FieldValues
-                    CollateInstance = instance.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
-                    Source = source
-                } |> Ok }
-    let getBranch (db: CardOverflowDb) userId displayName cardId = taskResult {
-        let! (card: CardEntity) = db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId)
-        do! if card |> isNull then
-                Error <| sprintf "Card #%i doesn't exist"  cardId
-            else Ok ()
-        let! ac = CardRepository.getNew db userId
-        let! branchInstanceId =
-            db.LatestDefaultBranchInstance.SingleOrDefaultAsync(fun x -> x.CardId = cardId)
-            |> Task.map (Result.requireNotNull <| sprintf "Card #%i not found" cardId)
-            |> TaskResult.map (fun x -> x.Id)
-        let! command = _getCommand db branchInstanceId <| BranchSourceCardId (cardId, sprintf "%s's New Branch" displayName)
-        return command, ac
-    }
-    let getCopy (db: CardOverflowDb) userId branchInstanceId = taskResult {
-        let! ac = CardRepository.getNew db userId
-        let! command = _getCommand db branchInstanceId <| CopySourceInstanceId branchInstanceId
-        return command, ac
-    }
-    let getEdit (db: CardOverflowDb) userId cardId = taskResult {
-        let! ac = CardRepository.GetAcquired db userId cardId
-        let! command = _getCommand db ac.BranchInstanceMeta.Id <| Original
-        return command, ac
-    }
-    let Update (db: CardOverflowDb) authorId (acquiredCard: AcquiredCard) (command: ViewEditCardCommand) = task { // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = acquiredCard.CardId)
-        let update () = UpdateRepository.card db acquiredCard command.load
-        return!
-            match card with
-            | null ->
-                update ()
-            | card ->
-                if card.AuthorId = authorId
-                then update ()
-                else "You aren't that card's author." |> Error |> Task.FromResult
-        }
+                            <| Fields.fromString j.CollateInstance.Fields
+                            <| ""
+                    CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
+                    Source = NewOriginal
+                }
+            )
+        | VNewBranchSourceCardId cardId ->
+            db.Card.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = cardId)
+            |> Task.map (Result.requireNotNull (sprintf "Card #%i not found." cardId))
+            |> TaskResult.map(fun card -> toCommand (NewBranchSourceCardId (cardId, "New Branch")) card.DefaultBranch.LatestInstance)
+        | VNewCopySourceInstanceId branchInstanceId ->
+            db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
+            |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId))
+            |> TaskResult.map(toCommand (NewCopySourceInstanceId branchInstanceId))
+        | VUpdateBranchId branchId ->
+            db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
+            |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
+            |> TaskResult.map(fun branch -> toCommand (UpdateBranchId (branchId, branch.Name)) branch.LatestInstance)
+    let Update (db: CardOverflowDb) authorId (command: ViewEditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+        UpdateRepository.card db authorId command.load
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         CardRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =
