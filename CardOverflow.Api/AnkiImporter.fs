@@ -19,13 +19,13 @@ open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
     let collateInstanceIdByHash = // lowTODO could make this a byte array
-        [("ib34GPvvP5MfZtcep2WvpdgijSlAKhphVfQbYNueMeBZIDECV0Go0/zor/WrF+NQorYg+LeFMCO1MonOK+N92w==", 1001)
-         ("IYmKQhuvScATMLINL1MeguKoCS3MpSrkUpkQ1+85nwgkc42LM2vlnX9lrl1KJQFNR2d8assNg0dTiy9PZdHfZQ==", 1002)
-         ("G8jRvDO1NQGI9MJOZkITdG9INDNBnstFdA8dTTmTqXtYujU2lQrjdXi91mUdeprMZ4H6EKeqqKdGT/WURozxTw==", 1003)
-         ("ovGg09zctrt0vXbSRKFmBT1QJDXpcLDHLIJs8i9kT7d8VdH6nmF8MXZDEtmR3rxXwE0ARS4jsUdgSfpHDMohRg==", 1004)
-         ("8YrlaFdsX5y5bVrx2VNkQj0W0+1fBI7tKWhHSppYUlXeAVb2NjHu181ioI803Q1gur6t8KC3vSzPG9yB1LyBZA==", 1005)
-         ("np0YnlBrkVnZlCcBJx+pFCbDtjoNkAq9KdRajZlUZGoRwohl1XwysbkUbek3jg1F0vsnhDOHukxH3tI2dUaFNA==", 1006)
-         ("u6xoIrbF6g8gbBv59AQf8Qqgi+Dd2oeS423qDD3EbCkV1RVgbkrLJRVdobsLKOYh5vjiW44fRqO/YlnYPn+4XQ==", 1007)] |> Map.ofSeq
+        [("UZy5No9bXB8ocH/Ku09J79zMRbxsEaWdQ3gD615gy/uQ2e4Q5MwJIvHgSvP/+YNy1siPw84Ckxqemv26U2HMng==", 1001)
+         ("j0XhB1IW4EnGbASd90hYUm9lptiNUzQsOhxYquycZqQnusfrkChR/9ZAQ9cYxOm859Gl4daIzAMDS2HRDHyrEw==", 1002)
+         ("y+u0/z05knPzHaV8WLRExZMYzStViG3eObOOUn4Jpb0lA21tM4V/QQ49M39LZliv88ALpWR9Fw006K1VLfOouQ==", 1003)
+         ("HxOr/B0otwE7SUDMFci3Jr6bmBe1T069oVxx+DA5DWjW6u7CW0KShWpNgQ7qJEtv2XrMSyXlzPl0XPsnqHkklw==", 1004)
+         ("Yr60c4Ns3yytoOWIp1aBHmAn2WMI6HaxLLxCcMMU4SCWRexkyO5YZlpth4qDy6EWw6ceCjlcYKj0XMtDxJKQUQ==", 1005)
+         ("k1ZVjK9w8kHwIFEpi5yaCw0DxqUQ100nmCtR8tBXkUYrrU4PQNrWlhYjh9Ry8g6NH9b7f6PcriUk3fifj2llUQ==", 1006)
+         ("2m7xLzE8/kKxAC+iMrss/hCKP1Yw83GHqb21Vq846AkpdIq9QTstmPAWluu33teyQ9RSXpYSxyxWGuTbYbGuXw==", 1007)] |> Map.ofSeq
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =

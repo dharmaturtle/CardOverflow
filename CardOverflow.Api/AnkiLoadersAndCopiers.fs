@@ -52,6 +52,7 @@ type AnkiCollateInstance = {
         entity.LatexPost <- this.LatexPost
         entity.Templates <- this.Templates |> Template.copyToMany
         entity.EditSummary <- "Imported from Anki"
+        entity.Type <- if this.IsCloze then 1s else 0s
     member this.CopyToNewWithCollate userId collate defaultCardSetting =
         let entity = CollateInstanceEntity()
         entity.User_CollateInstances <-

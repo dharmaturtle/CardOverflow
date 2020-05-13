@@ -22,6 +22,7 @@ module CollateInstanceEntity =
             e.LatexPost
             e.Templates
             e.Fields
+            e.Type |> string
         ]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator

@@ -4,6 +4,7 @@ open FsToolkit.ErrorHandling
 open System.Runtime.InteropServices
 open CardOverflow.Pure.Extensions
 open CardOverflow.Pure.Core
+open CardOverflow.Debug
 open System
 open System.Linq
 open Microsoft.FSharp.Core.Operators.Checked

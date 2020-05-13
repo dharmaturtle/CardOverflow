@@ -459,16 +459,16 @@ let ``EditCardCommand's back works with cloze`` (): unit =
             "In 1492, Columbus sailed the ocean [ blue ] .Source goes here" ]
 
 [<Fact>]
-let ``AnkiDefaults.collateIdByHash is same as initial db`` (): unit =
+let ``AnkiDefaults.collateIdByHash is same as initial database`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()
-    let collates =
+    let dbCollates =
         c.Db.CollateInstance
             .OrderBy(fun x -> x.Id)
             .ToList()
     
     // test that the calculated hash is the same as the one stored in the db
-    for collate in collates do
+    for collate in dbCollates do
         let calculated = CollateInstanceEntity.hashBase64 hasher collate
         let dbValue = BranchInstanceEntity.bitArrayToByteArray collate.Hash |> Convert.ToBase64String
         //for x in CollateInstanceEntity.hash hasher x do
@@ -477,9 +477,9 @@ let ``AnkiDefaults.collateIdByHash is same as initial db`` (): unit =
         Assert.Equal(calculated, dbValue)
 
     // test that AnkiDefaults.collateIdByHash is up to date
-    for instance in collates do
-        let calculated = CollateInstanceEntity.hashBase64 hasher instance
-        Assert.Equal(AnkiDefaults.collateInstanceIdByHash.[calculated], instance.Id)
+    for dbCollate in dbCollates do
+        let calculated = CollateInstanceEntity.hashBase64 hasher dbCollate
+        Assert.Equal(AnkiDefaults.collateInstanceIdByHash.[calculated], dbCollate.Id)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {
@@ -490,7 +490,7 @@ let ``Manual Anki import`` (): Task<unit> = (taskResult {
     let db = c.Db
     
     //use c = new Container()
-    //c.RegisterStuff
+    //c.RegisterStuffTestOnly
     //c.RegisterStandardConnectionString
     //use __ = AsyncScopedLifestyle.BeginScope c
     //let db = c.GetInstance<CardOverflowDb>()
