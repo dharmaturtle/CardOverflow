@@ -281,6 +281,7 @@ type BranchInstanceView with
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         e.Card <- branch.Card
+        e.CardId <- branch.Card.Id
         e.Branch <- branch
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive

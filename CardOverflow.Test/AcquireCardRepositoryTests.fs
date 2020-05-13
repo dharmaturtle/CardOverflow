@@ -204,15 +204,14 @@ let ``AcquireCards works``(): Task<unit> = task {
             FieldValues = [].ToList()
             Source = UpdateBranchId (b1, "A New Name")
         }
-    let! x = UpdateRepository.card c.Db authorId command.load
-    let instanceIds = x.Value
+    let! branchId = UpdateRepository.card c.Db authorId command.load |> TaskResult.getOk
     let ci1_2 = 1003
-    Assert.Equal(ci1_2, instanceIds)
+    Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Card.Single(fun x -> x.Id = c1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(4, c.Db.AcquiredCard.Count())
+    Assert.Equal(6, c.Db.AcquiredCard.Count())
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2))
     
     do! CardRepository.AcquireCardAsync c.Db acquirerId ci1_2 |> TaskResult.getOk
@@ -220,7 +219,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(4, c.Db.AcquiredCard.Count())
+    Assert.Equal(6, c.Db.AcquiredCard.Count())
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.CardId = c1 && x.UserId = authorId)
@@ -229,13 +228,13 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(3, c.Db.AcquiredCard.Count())
+    Assert.Equal(5, c.Db.AcquiredCard.Count())
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let count = CardRepository.GetDueCount c.Db acquirerId ""
-    Assert.Equal(2, count)
+    Assert.Equal(3, count)
     let count = CardRepository.GetDueCount c.Db authorId ""
-    Assert.Equal(1, count)
+    Assert.Equal(2, count)
 
     let! a = CardRepository.GetQuizBatch c.Db acquirerId ""
     let getId (x: Result<QuizCard, string> seq) = x.First().Value.AcquiredCardId
@@ -244,7 +243,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.NotEqual(getId a, getId b)
 
     let count = CardRepository.GetDueCount c.Db acquirerId ""
-    Assert.Equal(1, count)
+    Assert.Equal(2, count)
 
     // getHeatmap returns one for today
     let! actual = HistoryRepository.getHeatmap c.Db acquirerId
