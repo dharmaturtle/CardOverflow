@@ -203,17 +203,17 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
 let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
-    let! _ = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db userId []
+    let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
 
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     let! view = CardViewRepository.instance c.Db 1001
+    Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
+    Assert.Equal(1s, view.Value.MaxIndexInclusive)
     Assert.Equal<string seq>(
-        ["{{c1::Portland::city}} was founded in 1845."; "extra"],
+        [clozeText; "extra"],
         view.Value.FieldValues.Select(fun x -> x.Value))
-    let! view = CardViewRepository.instance c.Db 1002
-    Assert.Equal<string seq>(
-        ["Portland was founded in {{c2::1845}}."; "extra"],
-        view.Value.FieldValues.Select(fun x -> x.Value))}
+    }
 
 [<Fact>]
 let ``Create cloze card works`` (): Task<unit> = (taskResult {

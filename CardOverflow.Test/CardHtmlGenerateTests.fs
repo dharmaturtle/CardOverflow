@@ -53,7 +53,7 @@ let ``CardHtml generates proper basic card collate``(): unit =
         <hr id=answer>
         {{Back}}"
             ""
-
+            0
     assertBody
         "What is the capital of Canada?"
         front
@@ -79,7 +79,7 @@ let ``CardHtml generates proper basic with optional reversed custom card collate
         <hr id=answer>
         {{Back2}}"
             ""
-
+            0
     assertBody
         "What is Ottawa the capital of?"
         front
@@ -103,7 +103,7 @@ let ``CardHtml generates proper basic with optional reversed custom card collate
         <hr id=answer>
         {{Back}}"
             ""
-
+            0
     assertBody
         "What is the capital of Canada?"
         front
@@ -126,7 +126,7 @@ let ``CardHtml generates proper basic card collate, but with (empty) conditional
         <hr id=answer>
         {{Back}}"
             ""
-
+            0
     assertBody
         "What is the capital of Canada?"
         front
@@ -149,7 +149,7 @@ let ``CardHtml generates proper basic card collate, but with conditional Categor
         <hr id=answer>
         {{Back}}"
             ""
-
+            0
     assertBody
         "Category: Nations and Capitals<br/>What is the capital of Canada?"
         front
@@ -172,7 +172,7 @@ let ``CardHtml generates proper basic card collate, with conditional Category (i
         <hr id=answer>
         {{Back}}"
             ""
-
+            0
     assertBody
         "Category: No category was given<br/>What is the capital of Canada?"
         front
@@ -195,7 +195,7 @@ let ``CardHtml generates proper basic card collate, with conditional Category (i
         <hr id=answer>
         {{Back}}"
             ""
-
+            0
     assertBody
         "What is the capital of Canada?"
         front
@@ -217,7 +217,7 @@ let ``CardHtml renders {{text:FieldName}} properly``(): unit =
         <hr id=answer>
         {{Back}}<br/><a href="http://example.com/search?q={{text:Back}}">check in dictionary</a>"""
             ""
-
+            0
     assertBody
         "What is the capital of Canada?"
         front
@@ -237,7 +237,7 @@ let ``CardHtml renders {{cloze:FieldName}} properly``(): unit =
             "{{cloze:Text}}"
             """{{cloze:Text}}<br>{{Extra}}"""
             ""
-
+            0
     assertBody
         """Canberra was founded in 
         <span class="cloze-brackets-front">[</span>
@@ -263,11 +263,12 @@ let ``CardHtml renders multiple cloze collates properly 1``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
-                "Field2", "In 1492, Columbus sailed the ocean blue."
+                "Field2", "In {{c2::1492}}, Columbus sailed the ocean {{c3::blue}}."
                 "Extra", "Some extra info" ]
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            0
     assertStripped
         "Columbus first crossed the Atlantic in [ ... ]"
         front
@@ -279,12 +280,13 @@ let ``CardHtml renders multiple cloze collates properly 1``(): unit =
 let ``CardHtml renders multiple cloze collates properly 2``(): unit =
     let front, back, _, _ =
         CardHtml.generate
-            [   "Field1", "Columbus first crossed the Atlantic in 1492"
-                "Field2", "In {{c2::1492}}, Columbus sailed the ocean blue."
+            [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
+                "Field2", "In {{c2::1492}}, Columbus sailed the ocean {{c3::blue}}."
                 "Extra", "Some extra info" ]
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            1
     assertStripped
         "In [ ... ] , Columbus sailed the ocean blue."
         front
@@ -296,12 +298,13 @@ let ``CardHtml renders multiple cloze collates properly 2``(): unit =
 let ``CardHtml renders multiple cloze collates properly 3``(): unit =
     let front, back, _, _ =
         CardHtml.generate
-            [   "Field1", "Columbus first crossed the Atlantic in 1492"
-                "Field2", "In 1492, Columbus sailed the ocean {{c3::blue}}."
+            [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
+                "Field2", "In {{c2::1492}}, Columbus sailed the ocean {{c3::blue}}."
                 "Extra", "Some extra info" ]
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            2
     assertStripped
         "In 1492, Columbus sailed the ocean [ ... ] ."
         front
@@ -319,6 +322,7 @@ let ``CardHtml renders multiple cloze collates properly 4``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            0
     assertStripped
         "[ ... ] first crossed the Atlantic in [ ... ]"
         front
@@ -337,7 +341,7 @@ let ``CardHtml renders {{cloze:FieldName}} properly with hint``(): unit =
             "{{cloze:Text}}"
             """{{cloze:Text}}<br>{{Extra}}"""
             ""
-
+            0
     assertBody
         """Canberra was founded in 
         <span class="cloze-brackets-front">[</span>
@@ -358,11 +362,12 @@ let ``CardHtml renders multiple cloze collates properly 1 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
-                "Field2", "In 1492, Columbus sailed the ocean blue."
+                "Field2", "In {{c2::1492::year}}, Columbus sailed the ocean {{c3::blue::color}}."
                 "Extra", "Some extra info" ]
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            0
     assertStripped
         "Columbus first crossed the Atlantic in [ year ]"
         front
@@ -374,12 +379,13 @@ let ``CardHtml renders multiple cloze collates properly 1 with hint``(): unit =
 let ``CardHtml renders multiple cloze collates properly 2 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
-            [   "Field1", "Columbus first crossed the Atlantic in 1492"
-                "Field2", "In {{c2::1492::year}}, Columbus sailed the ocean blue."
+            [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
+                "Field2", "In {{c2::1492::year}}, Columbus sailed the ocean {{c3::blue::color}}."
                 "Extra", "Some extra info" ]
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            1
     assertStripped
         "In [ year ] , Columbus sailed the ocean blue."
         front
@@ -391,12 +397,13 @@ let ``CardHtml renders multiple cloze collates properly 2 with hint``(): unit =
 let ``CardHtml renders multiple cloze collates properly 3 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
-            [   "Field1", "Columbus first crossed the Atlantic in 1492"
-                "Field2", "In 1492, Columbus sailed the ocean {{c3::blue::color}}."
+            [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
+                "Field2", "In {{c2::1492::year}}, Columbus sailed the ocean {{c3::blue::color}}."
                 "Extra", "Some extra info" ]
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            2
     assertStripped
         "In 1492, Columbus sailed the ocean [ color ] ."
         front
@@ -414,6 +421,7 @@ let ``CardHtml renders multiple cloze collates properly 4 with hint``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
+            0
     assertStripped
         "[ person ] first crossed the Atlantic in [ year ]"
         front

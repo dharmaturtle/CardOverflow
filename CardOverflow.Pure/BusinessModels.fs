@@ -156,7 +156,7 @@ type CollateInstance = {
         | _ -> failwith "Not a cloze"
     member this.FrontBackFrontSynthBackSynth i =
         this.JustTemplates
-        |> List.map (fun t -> CardHtml.generate [] t.Front t.Back this.Css)
+        |> List.map (fun t -> CardHtml.generate [] t.Front t.Back this.Css 0)
         |> List.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
@@ -276,18 +276,43 @@ type EditFieldAndValue = {
     Value: string
 }
 
+module Helper =
+    let maxIndexInclusive templates valueByFieldName =
+        match templates with
+        | Cloze t ->
+            let max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName t.Front |> Result.getOk
+            max - 1s
+        | Standard ts ->
+            (ts.Length |> int16) - 1s
+
 type BranchInstanceView = {
     FieldValues: FieldAndValue ResizeArray
     CollateInstance: CollateInstance
 } with
+    member this.MaxIndexInclusive =
+        Helper.maxIndexInclusive
+            (this.CollateInstance.Templates)
+            (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
-        this.CollateInstance.JustTemplates.Select(fun t ->
-            CardHtml.generate
-            <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
-            <| t.Front
-            <| t.Back
-            <| this.CollateInstance.Css
-        ).ToList()
+        match this.CollateInstance.Templates with
+        | Standard ts -> 
+            ts.Select(fun t ->
+                CardHtml.generate
+                <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
+                <| t.Front
+                <| t.Back
+                <| this.CollateInstance.Css
+                <| 0
+            ).ToList()
+        | Cloze t ->
+            [0s .. this.MaxIndexInclusive] |> List.map(fun i ->
+                CardHtml.generate
+                <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
+                <| t.Front
+                <| t.Back
+                <| this.CollateInstance.Css
+                <| i
+            ) |> toResizeArray
     member this.FrontBackFrontSynthBackSynthIndex i =
         this.FrontBackFrontSynthBackSynth
         |> Seq.tryItem i
@@ -436,15 +461,6 @@ with
         match this with
         | NewBranchSourceCardId (cardId, _) -> x <- cardId; true
         | _ -> false
-
-module Helper =
-    let maxIndexInclusive templates valueByFieldName =
-        match templates with
-        | Cloze t ->
-            let max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName t.Front |> Result.getOk
-            max - 1s
-        | Standard ts ->
-            (ts.Length |> int16) - 1s
 
 type EditCardCommand = {
     EditSummary: string

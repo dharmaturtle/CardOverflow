@@ -30,7 +30,7 @@ module Cloze =
         ClozeTemplateRegex().IsMatch questionXemplate
 
 module CardHtml =
-    let generate fieldNameValueMap questionXemplate answerXemplate css =
+    let generate fieldNameValueMap questionXemplate answerXemplate css i =
         let questionXemplate, answerXemplate =
             fieldNameValueMap
             |> List.filter(fun (_, value) -> ClozeRegex().IsMatch value)

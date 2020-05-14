@@ -252,6 +252,7 @@ type ViewEditCardCommand = {
                         t.Front
                         t.Back
                         this.CollateInstance.Css
+                        clozeIndex
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
             }
@@ -262,6 +263,7 @@ type ViewEditCardCommand = {
                     <| t.Front
                     <| t.Back
                     <| this.CollateInstance.Css
+                    <| 0
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
             |> Ok
