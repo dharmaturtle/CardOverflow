@@ -48,6 +48,7 @@
     <Compile Include="CoreTests.fs" />
     <Compile Include="RelationshipTests.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
+    <Compile Include="EditCardCommandTests.fs" />
     <Compile Include="SanitizeTests.fs" />
     <Compile Include="AnkiImportLogicTests.fs" />
     <Compile Include="ResultTests.fs" />
