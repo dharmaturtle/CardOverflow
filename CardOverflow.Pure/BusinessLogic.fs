@@ -30,16 +30,42 @@ module Cloze =
         ClozeTemplateRegex().IsMatch questionXemplate
 
 module CardHtml =
+    type CardIndex =
+        | Standard
+        | Cloze of int16
     let generate fieldNameValueMap questionXemplate answerXemplate css i =
-        let questionXemplate, answerXemplate =
-            fieldNameValueMap
-            |> List.filter(fun (_, value) -> ClozeRegex().IsMatch value)
-            |> List.tryExactlyOne
-            |> function
-            | None -> questionXemplate, answerXemplate
-            | Some (fieldName, _) ->
-                let irrelevantCloze = Regex <| "{{cloze:(?!" + fieldName + ").+?}}"
-                irrelevantCloze.Replace(questionXemplate, ""), irrelevantCloze.Replace(answerXemplate, "")
+        let fieldNameValueMap, questionXemplate, answerXemplate =
+            match i with
+            | Standard ->
+                fieldNameValueMap, questionXemplate, answerXemplate
+            | Cloze i ->
+                let i = i + 1s |> string
+                let clozeFields = ClozeTemplateRegex().TypedMatches(questionXemplate).Select(fun x -> x.fieldName.Value) |> List.ofSeq
+                let fieldNameValueMap, unusedFields =
+                    fieldNameValueMap |> List.partition (fun (fieldName, value) ->
+                        let indexMatch = ClozeRegex().TypedMatches(value).Select(fun x -> x.clozeIndex.Value).Contains i
+                        (indexMatch || (not <| clozeFields.Contains fieldName))
+                    )
+                let fieldNameValueMap =
+                    fieldNameValueMap |> List.map(fun (fieldName, value) ->
+                        let value =
+                            ClozeRegex()
+                                .TypedMatches(value)
+                                .Where(fun x -> x.clozeIndex.Value <> i)
+                                .Select(fun x -> x.CompleteMatch.Value, x.answer.Value)
+                            |> Seq.fold (fun (state: string) (completeMatch, answer) ->
+                                state.Replace(completeMatch, answer)
+                            ) value
+                        fieldName, value
+                    )
+                let qt, at =
+                    ((questionXemplate, answerXemplate), (unusedFields |> List.map fst))
+                    ||> Seq.fold(fun (qt, (at: string)) fieldName ->
+                        let irrelevantCloze = "{{cloze:" + fieldName + "}}"
+                        qt.Replace(irrelevantCloze, ""),
+                        at.Replace(irrelevantCloze, "")
+                    )
+                fieldNameValueMap, qt, at
         let replaceFields isFront template =
             (template, fieldNameValueMap)
             ||> List.fold(fun (previous: string) (fieldName, value) -> 

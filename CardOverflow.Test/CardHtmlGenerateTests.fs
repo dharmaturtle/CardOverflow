@@ -53,7 +53,7 @@ let ``CardHtml generates proper basic card collate``(): unit =
         <hr id=answer>
         {{Back}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "What is the capital of Canada?"
         front
@@ -79,7 +79,7 @@ let ``CardHtml generates proper basic with optional reversed custom card collate
         <hr id=answer>
         {{Back2}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "What is Ottawa the capital of?"
         front
@@ -103,7 +103,7 @@ let ``CardHtml generates proper basic with optional reversed custom card collate
         <hr id=answer>
         {{Back}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "What is the capital of Canada?"
         front
@@ -126,7 +126,7 @@ let ``CardHtml generates proper basic card collate, but with (empty) conditional
         <hr id=answer>
         {{Back}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "What is the capital of Canada?"
         front
@@ -149,7 +149,7 @@ let ``CardHtml generates proper basic card collate, but with conditional Categor
         <hr id=answer>
         {{Back}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "Category: Nations and Capitals<br/>What is the capital of Canada?"
         front
@@ -172,7 +172,7 @@ let ``CardHtml generates proper basic card collate, with conditional Category (i
         <hr id=answer>
         {{Back}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "Category: No category was given<br/>What is the capital of Canada?"
         front
@@ -195,7 +195,7 @@ let ``CardHtml generates proper basic card collate, with conditional Category (i
         <hr id=answer>
         {{Back}}"
             ""
-            0
+            CardHtml.Standard
     assertBody
         "What is the capital of Canada?"
         front
@@ -217,7 +217,7 @@ let ``CardHtml renders {{text:FieldName}} properly``(): unit =
         <hr id=answer>
         {{Back}}<br/><a href="http://example.com/search?q={{text:Back}}">check in dictionary</a>"""
             ""
-            0
+            CardHtml.Standard
     assertBody
         "What is the capital of Canada?"
         front
@@ -237,7 +237,7 @@ let ``CardHtml renders {{cloze:FieldName}} properly``(): unit =
             "{{cloze:Text}}"
             """{{cloze:Text}}<br>{{Extra}}"""
             ""
-            0
+            (CardHtml.Cloze 0s)
     assertBody
         """Canberra was founded in 
         <span class="cloze-brackets-front">[</span>
@@ -268,7 +268,7 @@ let ``CardHtml renders multiple cloze collates properly 1``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            0
+            (CardHtml.Cloze 0s)
     assertStripped
         "Columbus first crossed the Atlantic in [ ... ]"
         front
@@ -286,7 +286,7 @@ let ``CardHtml renders multiple cloze collates properly 2``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            1
+            (CardHtml.Cloze 1s)
     assertStripped
         "In [ ... ] , Columbus sailed the ocean blue."
         front
@@ -304,7 +304,7 @@ let ``CardHtml renders multiple cloze collates properly 3``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            2
+            (CardHtml.Cloze 2s)
     assertStripped
         "In 1492, Columbus sailed the ocean [ ... ] ."
         front
@@ -322,7 +322,7 @@ let ``CardHtml renders multiple cloze collates properly 4``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            0
+            (CardHtml.Cloze 0s)
     assertStripped
         "[ ... ] first crossed the Atlantic in [ ... ]"
         front
@@ -341,7 +341,7 @@ let ``CardHtml renders {{cloze:FieldName}} properly with hint``(): unit =
             "{{cloze:Text}}"
             """{{cloze:Text}}<br>{{Extra}}"""
             ""
-            0
+            (CardHtml.Cloze 0s)
     assertBody
         """Canberra was founded in 
         <span class="cloze-brackets-front">[</span>
@@ -367,7 +367,7 @@ let ``CardHtml renders multiple cloze collates properly 1 with hint``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            0
+            (CardHtml.Cloze 0s)
     assertStripped
         "Columbus first crossed the Atlantic in [ year ]"
         front
@@ -385,7 +385,7 @@ let ``CardHtml renders multiple cloze collates properly 2 with hint``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            1
+            (CardHtml.Cloze 1s)
     assertStripped
         "In [ year ] , Columbus sailed the ocean blue."
         front
@@ -403,7 +403,7 @@ let ``CardHtml renders multiple cloze collates properly 3 with hint``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            2
+            (CardHtml.Cloze 2s)
     assertStripped
         "In 1492, Columbus sailed the ocean [ color ] ."
         front
@@ -421,7 +421,7 @@ let ``CardHtml renders multiple cloze collates properly 4 with hint``(): unit =
             "{{cloze:Field1}}{{cloze:Field2}}"
             "{{cloze:Field1}}{{cloze:Field2}}<br>{{Extra}}"
             ""
-            0
+            (CardHtml.Cloze 0s)
     assertStripped
         "[ person ] first crossed the Atlantic in [ year ]"
         front
@@ -431,7 +431,7 @@ let ``CardHtml renders multiple cloze collates properly 4 with hint``(): unit =
 
 [<Fact>]
 let ``CollateInstance.FrontBackFrontSynthBackSynth works``(): unit =
-    let front, back, _, _ = CollateInstance.initialize.FrontBackFrontSynthBackSynth 0 |> Result.getOk
+    let front, back, _, _ = CollateInstance.initialize.FrontBackFrontSynthBackSynth |> Seq.exactlyOne
     assertStripped
         "{{Front}}"
         front

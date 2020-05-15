@@ -154,10 +154,18 @@ type CollateInstance = {
         match this.Templates with
         | Cloze x -> AnkiImportLogic.clozeFields x.Front
         | _ -> failwith "Not a cloze"
-    member this.FrontBackFrontSynthBackSynth i =
-        this.JustTemplates
-        |> List.map (fun t -> CardHtml.generate [] t.Front t.Back this.Css 0)
-        |> List.tryItem i
+    member this.FrontBackFrontSynthBackSynth = // medTODO split this up
+        match this.Templates with
+        | Standard ts -> 
+            ts.Select(fun t ->
+                CardHtml.generate [] t.Front t.Back this.Css CardHtml.Standard
+            ).ToList()
+        | Cloze t ->
+            CardHtml.generate [] t.Front t.Back this.Css (CardHtml.Cloze 0s)
+            |> List.singleton |> toResizeArray
+    member this.FrontBackFrontSynthBackSynthIndexed i =
+        this.FrontBackFrontSynthBackSynth
+        |> Seq.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
 type AcquiredCollateInstance = {
@@ -302,7 +310,7 @@ type BranchInstanceView = {
                 <| t.Front
                 <| t.Back
                 <| this.CollateInstance.Css
-                <| 0
+                <| CardHtml.Standard
             ).ToList()
         | Cloze t ->
             [0s .. this.MaxIndexInclusive] |> List.map(fun i ->
@@ -311,7 +319,7 @@ type BranchInstanceView = {
                 <| t.Front
                 <| t.Back
                 <| this.CollateInstance.Css
-                <| i
+                <| CardHtml.Cloze i
             ) |> toResizeArray
     member this.FrontBackFrontSynthBackSynthIndex i =
         this.FrontBackFrontSynthBackSynth

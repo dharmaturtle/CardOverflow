@@ -29,17 +29,17 @@ namespace CardOverflow.UserContentApi.Controllers {
     private ContentResult _front(int index, FSharpResult<CollateInstance, string> view) =>
       ( view.IsError
       ? view.ErrorValue
-      : view.ResultValue.FrontBackFrontSynthBackSynth(index).IsError
-      ? view.ResultValue.FrontBackFrontSynthBackSynth(index).ErrorValue
-      : view.ResultValue.FrontBackFrontSynthBackSynth(index).ResultValue.Item1
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).IsError
+      ? view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).ErrorValue
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).ResultValue.Item1
       ) .ToTextHtmlContent(this);
 
     private ContentResult _back(int index, FSharpResult<CollateInstance, string> view) =>
       ( view.IsError
       ? view.ErrorValue
-      : view.ResultValue.FrontBackFrontSynthBackSynth(index).IsError
-      ? view.ResultValue.FrontBackFrontSynthBackSynth(index).ErrorValue
-      : view.ResultValue.FrontBackFrontSynthBackSynth(index).ResultValue.Item2
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).IsError
+      ? view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).ErrorValue
+      : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).ResultValue.Item2
       ) .ToTextHtmlContent(this);
 
   }

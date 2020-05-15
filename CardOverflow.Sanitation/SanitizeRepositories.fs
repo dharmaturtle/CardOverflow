@@ -248,11 +248,11 @@ type ViewEditCardCommand = {
                             <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
                         |> List.ofSeq
                     CardHtml.generate
-                        zip
-                        t.Front
-                        t.Back
-                        this.CollateInstance.Css
-                        clozeIndex
+                        <| zip
+                        <| t.Front
+                        <| t.Back
+                        <| this.CollateInstance.Css
+                        <| CardHtml.Cloze clozeIndex
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
             }
@@ -263,7 +263,7 @@ type ViewEditCardCommand = {
                     <| t.Front
                     <| t.Back
                     <| this.CollateInstance.Css
-                    <| 0
+                    <| CardHtml.Standard
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
             |> Ok

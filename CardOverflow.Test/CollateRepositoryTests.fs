@@ -123,7 +123,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     // test existing
     let testView getView id expectedFront expectedBack = task {
         let! (actual: Result<CollateInstance, string>) = getView c.Db id
-        let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth 0 |> Result.getOk
+        let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth |> Seq.exactlyOne
         BusinessLogicTests.assertStripped expectedFront front
         BusinessLogicTests.assertStripped expectedBack back
     }
