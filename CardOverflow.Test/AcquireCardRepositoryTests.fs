@@ -92,9 +92,12 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
 let ``CardRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal(1001, instanceIds)
-    let! collate = SanitizeCollate.AllInstances c.Db 1
+    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let branchId = 1
+    Assert.Equal(branchId, actualBranchId)
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let! ac = CardRepository.GetAcquired c.Db userId 1
     
     let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
@@ -105,11 +108,11 @@ let ``CardRepository.editState works``(): Task<unit> = task {
     let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
-            CollateInstance = collate.Value.Instances.Single() |> ViewCollateInstance.copyTo
-            Source = NewOriginal
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Source = UpdateBranchId (branchId, null)
         } |> UpdateRepository.card c.Db userId
-    let instanceIds = x.Value
-    Assert.Equal(1002, instanceIds)
+    let actualBranchId = x.Value
+    Assert.Equal(branchId, actualBranchId)
     let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
     Assert.Equal(ac.Value.CardState, CardState.Suspended) // still suspended after edit
 
