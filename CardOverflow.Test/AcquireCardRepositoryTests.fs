@@ -23,9 +23,12 @@ open FsToolkit.ErrorHandling
 let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal(1001, instanceIds)
-    let! collate = SanitizeCollate.AllInstances c.Db 1
+    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let branchId = 1
+    Assert.Equal(branchId, actualBranchId)
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let getAcquired () = task { return! CardRepository.GetAcquired c.Db userId 1 }
     let! ac = getAcquired ()
 
@@ -40,11 +43,11 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
-            CollateInstance = collate.Value.Instances.Single() |> ViewCollateInstance.copyTo
-            Source = NewOriginal
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Source = UpdateBranchId (branchId, null)
         } |> UpdateRepository.card c.Db userId
-    let instanceIds = x.Value
-    Assert.Equal(1002, instanceIds)
+    let actualBranchId = x.Value
+    Assert.Equal(branchId, actualBranchId)
     let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
@@ -56,8 +59,9 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! batch = CardRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.CardId |> TaskResult.getOk
-    let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
-    Assert.Equal(1003, instanceIds)
+    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let newCardBranchId = 2
+    Assert.Equal(newCardBranchId, actualBranchId)
     let! card2 = c.Db.Card.SingleOrDefaultAsync(fun x -> x.Id <> ac.CardId)
     let card2 = card2.Id
     let addRelationshipCommand =
