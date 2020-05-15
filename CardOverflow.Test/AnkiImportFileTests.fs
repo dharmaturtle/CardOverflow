@@ -378,31 +378,50 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     Assert.SingleI c.Db.CommunalField
     Assert.SingleI c.Db.CommunalFieldInstance }
 
+let clozeFields =
+    function
+    | Cloze t -> ClozeTemplateRegex().TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
+    | _ -> failwith "impossible"
+let test text expected collateInstance =
+    let view =
+        {   EditSummary = ""
+            FieldValues =
+                CollateInstance.initialize.Fields.Select(fun f -> {
+                    EditField = f
+                    Value =
+                        if f.Name = "Front" then
+                            text
+                        else
+                            f.Name
+                }).ToList()
+            CollateInstance = collateInstance
+            Source = NewOriginal
+        }
+    if collateInstance.FirstTemplate.Name = "Cloze" then
+        Assert.Equal<string seq>(["Front"], clozeFields view.CollateInstance.Templates)
+    view.Backs.Value
+    |> Seq.map MappingTools.stripHtmlTags
+    |> fun x -> Assert.Equal<string seq>(expected, x)
+
+[<Fact>]
+let ``EditCardCommand's back works with basic`` (): unit =
+    let testOrdinary text expected =
+        test text expected
+            ({ CollateInstance.initialize with
+                Templates =
+                {   Name = "Basic"
+                    Front = "{{Front}}"
+                    Back = "{{Front}} {{Back}}"
+                    ShortFront = ""
+                    ShortBack = ""
+                } |> List.singleton |>Standard
+            } |> ViewCollateInstance.load)
+    testOrdinary
+        "The front"
+        [ "The front Back" ]
+
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` (): unit =
-    let clozeFields =
-        function
-        | Cloze t -> ClozeTemplateRegex().TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
-        | _ -> failwith "impossible"
-    let test text expected collateInstance =
-        let view =
-            {   EditSummary = ""
-                FieldValues =
-                    CollateInstance.initialize.Fields.Select(fun f -> {
-                        EditField = f
-                        Value =
-                            if f.Name = "Front" then
-                                text
-                            else
-                                f.Name
-                    }).ToList()
-                CollateInstance = collateInstance
-                Source = NewOriginal
-            }
-        Assert.Equal<string seq>(["Front"], clozeFields view.CollateInstance.Templates)
-        view.Backs.Value
-        |> Seq.map MappingTools.stripHtmlTags
-        |> fun x -> Assert.Equal<string seq>(expected, x)
     let testCloze text expected =
         test text expected
             ({ CollateInstance.initialize with
