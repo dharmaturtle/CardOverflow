@@ -1,4 +1,4 @@
--- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
+﻿-- lowTODO: make a trigger to ensure that [dbo].[Relationship_AcquiredCard]'s AcquiredCard's UserIds are the same. Do *not* use a CHECK CONSTRAINT; those are unreliable
 -- "Latest*" Sql Views come from https://stackoverflow.com/a/2111420
 
 SET statement_timeout = 0;
@@ -16,6 +16,11 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
+        IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+            IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."CardId" = NEW."CardId") _)) THEN
+                RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."BranchInstanceId"), (SELECT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = 3 AND ac."CardId" = NEW."CardId" LIMIT 1);
+            END IF;
+        END IF;
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ( SELECT  COUNT(*) FROM
@@ -71,7 +76,7 @@ CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     BEGIN
 		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."Index" <> NEW."Index"))) THEN
 		IF ((SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId") < NEW."Index") THEN
-			RAISE EXCEPTION 'AcquiredCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
+			RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
 		END IF;
 		END IF;
         IF (NEW."TsVectorHelper" IS NOT NULL) THEN

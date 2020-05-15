@@ -16,6 +16,8 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Pure
 open CardOverflow.Sanitation
+open FsToolkit
+open FsToolkit.ErrorHandling
 
 [<Fact>]
 let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
@@ -116,34 +118,38 @@ let ``CardRepository.editState works``(): Task<unit> = task {
 let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! instanceIds = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
     let cardId = 1
-    Assert.Equal(1001, instanceIds)
-    let! collate = SanitizeCollate.AllInstances c.Db 1
-    let! ac = CardRepository.GetAcquired c.Db userId 1
-    let! x = 
+    let branchId = 1
+    Assert.Equal(branchId, actualBranchId)
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
+    let! actualBranchId = 
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
-            CollateInstance = collate.Value.Instances.Single() |> ViewCollateInstance.copyTo
-            Source = NewOriginal
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Source = UpdateBranchId (branchId, null)
         } |> UpdateRepository.card c.Db userId
-    let instanceIds = x.Value
     let i2 = 1002
-    Assert.Equal(i2, instanceIds)
+    Assert.Equal(branchId, actualBranchId.Value)
     do! CardRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.AcquiredCard.Single().BranchInstanceId)
+    Assert.Equal(branchId, c.Db.AcquiredCard.Single().BranchId)
+    Assert.Equal(cardId, c.Db.AcquiredCard.Single().CardId)
     
     use db = c.Db
     db.AcquiredCard.AddI <|
         AcquiredCardEntity(
             CardId = cardId,
+            BranchId = branchId,
             BranchInstanceId = i2,
             Due = DateTime.UtcNow,
             UserId = userId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"IX_AcquiredCard_UserId_BranchInstanceId\"",
+        "23505: duplicate key value violates unique constraint \"IX_AcquiredCard_UserId_BranchInstanceId_Index\"",
         ex.InnerException.Message)
 
     let i1 = 1001
@@ -151,13 +157,14 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     db.AcquiredCard.AddI <|
         AcquiredCardEntity(
             CardId = cardId,
+            BranchId = branchId,
             BranchInstanceId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"IX_AcquiredCard_UserId_CardId\"",
+        "P0001: UserId #3 with AcquiredCard #3 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
         ex.InnerException.Message)
     }
 
@@ -202,7 +209,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     let command =
         { r.Value with
             FieldValues = [].ToList()
-            Source = UpdateBranchId (b1, "A New Name")
+            Source = UpdateBranchId (b1, null)
         }
     let! branchId = UpdateRepository.card c.Db authorId command.load |> TaskResult.getOk
     let ci1_2 = 1003

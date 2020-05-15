@@ -453,7 +453,7 @@ module CardRepository =
 module UpdateRepository =
     let card (db: CardOverflowDb) userId (command: EditCardCommand) =
         let branchNameCheck branchId name =
-            db.Branch.AnyAsync(fun b -> b.Id = branchId && b.Card.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
+            db.Branch.AnyAsync(fun b -> b.Id = branchId && b.Card.Branches.Any(fun b -> b.Name = name && b.Id <> branchId)) // veryLowTODO make case insensitive
             |> Task.map (Result.requireFalse <| sprintf "The card with Branch #%i already has a Branch named '%s'." branchId name)
         let branchNameCheckCardId cardId name =
             db.Card.AnyAsync(fun c -> c.Id = cardId && c.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
