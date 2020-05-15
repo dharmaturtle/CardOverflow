@@ -64,10 +64,6 @@ type ViewCollateInstance = {
         match this.Templates with
         | Cloze -> true
         | _ -> false
-    member this.ClozeFields =
-        match this.Templates with
-        | Cloze x -> AnkiImportLogic.clozeFields x.Front
-        | _ -> failwith "Not a cloze"
     member this.FirstTemplate =
         match this.Templates with
         | Cloze t -> t

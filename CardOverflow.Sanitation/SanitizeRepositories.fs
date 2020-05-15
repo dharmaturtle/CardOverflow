@@ -236,19 +236,14 @@ type ViewEditCardCommand = {
     Source: CardSource
 } with
     member this.Backs = 
-        let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
+        let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
         match this.CollateInstance.Templates with
         | Cloze t ->
              result {
-                let! max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName t.Front
-                return [1s .. max] |> List.map int16 |> List.map (fun clozeIndex ->
-                    let zip =
-                        Seq.zip
-                            <| (valueByFieldName |> Seq.map (fun (KeyValue(k, _)) -> k))
-                            <| (valueByFieldName |> Seq.map (fun (KeyValue(_, v)) -> v) |> List.ofSeq |> AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex)
-                        |> List.ofSeq
+                let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (valueByFieldName |> Map.ofSeq) t.Front
+                return [0s .. max] |> List.map (fun clozeIndex ->
                     CardHtml.generate
-                        <| zip
+                        <| valueByFieldName
                         <| t.Front
                         <| t.Back
                         <| this.CollateInstance.Css

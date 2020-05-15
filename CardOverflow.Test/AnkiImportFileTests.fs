@@ -380,7 +380,11 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 
 [<Fact>]
 let ``EditCardCommand's back works with cloze`` (): unit =
-    let test text expected questionXemplate =
+    let clozeFields =
+        function
+        | Cloze t -> ClozeTemplateRegex().TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
+        | _ -> failwith "impossible"
+    let test text expected collateInstance =
         let view =
             {   EditSummary = ""
                 FieldValues =
@@ -392,27 +396,24 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                             else
                                 f.Name
                     }).ToList()
-                CollateInstance =
-                    { CollateInstance.initialize with
-                        Templates =
-                            {   CollateInstance.initialize.FirstTemplate with
-                                    Front = questionXemplate
-                            } |> List.singleton |> Standard
-                    } |> ViewCollateInstance.load
+                CollateInstance = collateInstance
                 Source = NewOriginal
             }
-        if questionXemplate.Contains "cloze" then
-            Assert.Equal<string seq>(["Front"], view.CollateInstance.ClozeFields)
+        Assert.Equal<string seq>(["Front"], clozeFields view.CollateInstance.Templates)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expected, x)
-    let testOrdinary text expected =
-        test text expected "{{Front}}"
-    testOrdinary
-        "The front"
-        [ "The front Back" ]
     let testCloze text expected =
-        test text expected "{{cloze:Front}}"
+        test text expected
+            ({ CollateInstance.initialize with
+                Templates =
+                    {   Name = "Cloze"
+                        Front = "{{cloze:Front}}"
+                        Back = "{{cloze:Front}} {{Back}}"
+                        ShortFront = ""
+                        ShortBack = ""
+                    } |> Cloze
+            } |> ViewCollateInstance.load)
     testCloze
         "{{c1::Canberra::city}} was founded in {{c1::1913}}."
         [   "[ Canberra ] was founded in [ 1913 ] . Back" ]
@@ -443,7 +444,7 @@ let ``EditCardCommand's back works with cloze`` (): unit =
                     } |> ViewCollateInstance.load
                 Source = NewOriginal
             }
-        Assert.Equal<string seq>(["Front"; "Back"], view.CollateInstance.ClozeFields)
+        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.CollateInstance.Templates)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expectedBack, x)

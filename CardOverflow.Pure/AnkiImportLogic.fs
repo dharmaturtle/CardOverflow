@@ -46,3 +46,8 @@ module AnkiImportLogic =
         ClozeTemplateRegex().TypedMatches questionXemplate
         |> Seq.map(fun x -> x.fieldName.Value)
         |> List.ofSeq
+
+module ClozeLogic =
+    let maxClozeIndexInclusive errorMessage (valuesByFieldName: Map<string, string>) =
+        AnkiImportLogic.maxClozeIndex errorMessage valuesByFieldName >>
+        Result.map ((+) -1s)
