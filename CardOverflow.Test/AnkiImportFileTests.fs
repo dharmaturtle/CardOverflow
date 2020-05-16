@@ -319,7 +319,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
 
-[<Fact>]
+//[<Fact>] // medTODO uncomment when you bring back communals
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
