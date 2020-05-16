@@ -29,17 +29,19 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! collate =
         TestCollateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
-    let getAcquired () = task { return! CardRepository.GetAcquired c.Db userId 1 }
+    let getAcquired () = CardRepository.GetAcquired c.Db userId 1
     let! ac = getAcquired ()
+    let ac = ac.Value.Single()
 
-    let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
+    let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard
 
-    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.Value.BranchInstanceMeta.Id |> TaskResult.getOk }
+    let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
     let! ac = getAcquired ()
+    let ac = ac.Value.Single()
     let! x =
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
@@ -48,14 +50,14 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
         } |> UpdateRepository.card c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
-    let! x = CardRepository.deleteAcquired c.Db userId ac.Value.AcquiredCardId
+    let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId
     Assert.Null x.Value
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
 
     let userId = 3
     do! reacquire ()
     let! ac = getAcquired ()
-    let ac = ac.Value
+    let ac = ac.Value.Single()
     let! batch = CardRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.CardId |> TaskResult.getOk
@@ -99,11 +101,13 @@ let ``CardRepository.editState works``(): Task<unit> = task {
         TestCollateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let! ac = CardRepository.GetAcquired c.Db userId 1
+    let ac = ac.Value.Single()
     
-    let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
+    let! x = CardRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
     Assert.Null x.Value
-    let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
-    Assert.Equal(ac.Value.CardState, CardState.Suspended)
+    let! ac = CardRepository.GetAcquired c.Db userId ac.CardId
+    let ac = ac.Value.Single()
+    Assert.Equal(ac.CardState, CardState.Suspended)
 
     let! x =
         {   EditCardCommand.EditSummary = ""
@@ -113,11 +117,12 @@ let ``CardRepository.editState works``(): Task<unit> = task {
         } |> UpdateRepository.card c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
-    let! ac = CardRepository.GetAcquired c.Db userId ac.Value.CardId
-    Assert.Equal(ac.Value.CardState, CardState.Suspended) // still suspended after edit
+    let! ac = CardRepository.GetAcquired c.Db userId ac.CardId
+    let ac = ac.Value.Single()
+    Assert.Equal(ac.CardState, CardState.Suspended) // still suspended after edit
 
     let userId = 2 // other users can't edit card state
-    let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
+    let! x = CardRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
     Assert.Equal("You don't own that card.", x.error)
     }
 

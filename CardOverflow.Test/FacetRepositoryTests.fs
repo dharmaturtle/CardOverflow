@@ -751,7 +751,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let userId = 3
     let testGetAcquired cardId instanceId =
         CardRepository.GetAcquired c.Db userId cardId
-        |> TaskResult.map (fun ac -> Assert.Equal(instanceId, ac.BranchInstanceMeta.Id))
+        |> TaskResult.map (fun ac -> Assert.Equal(instanceId, ac.Single().BranchInstanceMeta.Id))
 
     let! _ = addBasicCard c.Db userId []
     let og_c = 1

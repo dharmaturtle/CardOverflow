@@ -343,7 +343,7 @@ module CardRepository =
         |> db.AcquiredCard.RemoveI
         db.SaveChangesAsyncI ()
     let GetAcquired (db: CardOverflowDb) (userId: int) (cardId: int) = taskResult {
-        let! e, t =
+        let! (e: _ ResizeArray) =
             db.AcquiredCardIsLatest
                 .Include(fun x -> x.BranchInstance.CollateInstance)
                 .Include(fun x -> x.BranchInstance.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
@@ -355,10 +355,12 @@ module CardRepository =
                 .Select(fun x ->
                     x,
                     x.BranchInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList()
-                ).SingleOrDefaultAsync()
-            |> Task.map Core.toOption
-            |> Task.map (Result.requireSome (sprintf "Card #%i not found for User #%i" cardId userId))
-        return! AcquiredCard.load (Set.ofSeq t) e true
+                ).ToListAsync()
+        return!
+            e.Select(fun (e, t) ->
+                AcquiredCard.load (Set.ofSeq t) e true
+            ).ToList()
+            |> Result.consolidate
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)

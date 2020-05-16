@@ -117,7 +117,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
 
 let testCommunalFields (c: TestContainer) userId cardId expected = task {
     let! acquired = CardRepository.GetAcquired c.Db userId cardId
-    let acquired = Result.getOk acquired
+    let acquired = acquired.Value.Single()
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
         acquired.BranchInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}

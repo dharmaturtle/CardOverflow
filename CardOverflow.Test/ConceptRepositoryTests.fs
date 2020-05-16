@@ -138,7 +138,8 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
         card.Tags)
     
     let! ac = CardRepository.GetAcquired c.Db userId card.Id
-    let! x = CardRepository.editState c.Db userId ac.Value.AcquiredCardId CardState.Suspended
+    let ac = ac.Value.Single()
+    let! x = CardRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
     Assert.Null x.Value
     let! card = ExploreCardRepository.get c.Db userId 1
     Assert.Equal(0, card.Value.Summary.Users) // suspended cards don't count to User count
@@ -156,8 +157,9 @@ let testGetAcquired (branchInstanceIds: int list) addCards name = task {
         branchInstanceIds.Count(),
         acquiredCards.Results.Count()
     )
-    let! card = CardRepository.GetAcquired c.Db userId 1 |> TaskResult.getOk
-    Assert.Equal(userId, card.UserId)
+    let! ac = CardRepository.GetAcquired c.Db userId 1
+    let ac = ac.Value.Single()
+    Assert.Equal(userId, ac.UserId)
     
     let userId = 2 // this user acquires the card
     if branchInstanceIds.Length = 1 then
