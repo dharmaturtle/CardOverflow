@@ -293,7 +293,7 @@ module CardRepository =
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         return BranchRevision.load isAcquired r
     }
-    let acquireCard (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) = taskResult {
+    let acquireCardNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) = taskResult {
         let! (defaultCardSettingId: Nullable<int>) = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
         let cardSansIndex =
             AcquiredCard.initialize
@@ -305,25 +305,29 @@ module CardRepository =
             [0s .. branchInstance.MaxIndexInclusive]
             |> List.map cardSansIndex
         let! (old': AcquiredCardEntity list) = db.AcquiredCard.Where(fun x -> x.UserId = userId && x.CardId = branchInstance.CardId).ToListAsync() |> Task.map Seq.toList
-        List.zipOn
-            new'
-            old'
-            (fun new' old' -> new'.Index = old'.Index)
-        |> List.iter(
-            function
-            | (None, Some old') ->
-                db.AcquiredCard.RemoveI old' // highTODO add a warning on the UI that data will be lost
-            | (Some new', None) ->
-                new'.BranchInstance <- branchInstance
-                new'.Branch <- branchInstance.Branch
-                new'.Card <- branchInstance.Card
-                db.AcquiredCard.AddI new'
-            | (Some _, Some old') ->
-                old'.BranchInstance <- branchInstance
-                old'.Branch <- branchInstance.Branch
-                old'.Card <- branchInstance.Card
-            | (None, None) -> failwith "impossible"
-        )
+        return
+            List.zipOn
+                new'
+                old'
+                (fun new' old' -> new'.Index = old'.Index)
+            |> List.map(
+                function
+                | (None, Some old') ->
+                    db.AcquiredCard.RemoveI old' // highTODO add a warning on the UI that data will be lost
+                    None
+                | (Some new', None) ->
+                    new'.BranchInstance <- branchInstance
+                    new'.Branch <- branchInstance.Branch
+                    new'.Card <- branchInstance.Card
+                    db.AcquiredCard.AddI new'
+                    Some new'
+                | (Some _, Some old') ->
+                    old'.BranchInstance <- branchInstance
+                    old'.Branch <- branchInstance.Branch
+                    old'.Card <- branchInstance.Card
+                    Some old'
+                | (None, None) -> failwith "impossible"
+            ) |> List.choose id
     }
     let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
         let! (branchInstance: BranchInstanceEntity) =
@@ -331,7 +335,7 @@ module CardRepository =
                 .Include(fun x -> x.Branch.Card)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        do! acquireCard db userId branchInstance
+        do! acquireCardNoSave db userId branchInstance
         return! db.SaveChangesAsyncI ()
         }
     let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId = // medTODO needs userId for validation
@@ -467,7 +471,7 @@ module UpdateRepository =
                             db.Branch.Include(fun x -> x.Card).SingleOrDefaultAsync(fun x -> x.Id = branchId && x.AuthorId = userId)
                             |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%i doesn't exist or you aren't its author" branchId)
                         )
-                    | NewCopy_SourceInstanceId instanceId ->
+                    | NewCopy_SourceInstanceId_TagIds (instanceId, _) ->
                         BranchEntity(
                             AuthorId = userId,
                             Card =
@@ -482,27 +486,23 @@ module UpdateRepository =
                                 AuthorId = userId,
                                 Name = name,
                                 CardId = cardId))
-                    | NewOriginal ->
+                    | NewOriginal_TagIds ->
                         BranchEntity(
                             AuthorId = userId,
                             Card =
                                 CardEntity(
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            //let! (tagIds: int ResizeArray) = task { // medTODO uncomment and fix
-            //    let getsertTagId (input: string) =
-            //        match db.Tag.SingleOrDefault(fun x -> x.Name = input) with
-            //        | null ->
-            //            let e = TagEntity(Name = input)
-            //            db.Tag.AddI e
-            //            e
-            //        | x -> x
-            //    //let tags = acquiredCard.Tags |> List.map getsertTagId // lowTODO optimize
-            //    do! db.SaveChangesAsyncI()
-            //    return tags.Select(fun x -> x.Id).ToList()
-            //}
             let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
-            do! CardRepository.acquireCard db userId branchInstance
+            let! (acs: AcquiredCardEntity list) = CardRepository.acquireCardNoSave db userId branchInstance
+            match command.Kind with
+            | Update_BranchId_Title
+            | NewBranch_SourceCardId_Title -> ()
+            | NewOriginal_TagIds tagIds
+            | NewCopy_SourceInstanceId_TagIds (_, tagIds) ->
+                for tagId in tagIds do
+                    for ac in acs do
+                        ac.Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
             do! db.SaveChangesAsyncI()
             return branchInstance.BranchId
         }
@@ -578,6 +578,22 @@ module UserRepository =
         db.User.SingleAsync(fun x -> x.Id = id)
 
 module TagRepository =
+    let upsert (db: CardOverflowDb) (newTag: string) = taskResult {
+        do! if newTag.Length > 250 then Error "Tag length exceeds 250" else Ok ()
+        let! (tag: TagEntity option) =
+            db.Tag.SingleOrDefaultAsync(fun x -> x.Name = newTag)
+            |> Task.map Option.ofObj
+        return!
+            match tag with
+            | Some x ->
+                x.Id |> Task.FromResult
+            | None -> task {
+                let tag = TagEntity(Name = newTag)
+                db.Tag.AddI tag
+                do! db.SaveChangesAsyncI()
+                return tag.Id
+            }
+        }
     let AddTo (db: CardOverflowDb) acquiredCardId newTag =
         Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = newTag)
         |> db.Tag_AcquiredCard.AddI

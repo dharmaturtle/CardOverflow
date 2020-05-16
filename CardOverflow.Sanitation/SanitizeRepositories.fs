@@ -297,7 +297,7 @@ module SanitizeCardRepository =
                             <| Fields.fromString j.CollateInstance.Fields
                             <| ""
                     CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
-                    Kind = NewOriginal
+                    Kind = NewOriginal_TagIds []
                 }
             )
         | VNewBranchSourceCardId cardId ->
@@ -307,7 +307,7 @@ module SanitizeCardRepository =
         | VNewCopySourceInstanceId branchInstanceId ->
             db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId))
-            |> TaskResult.map(toCommand (NewCopy_SourceInstanceId branchInstanceId))
+            |> TaskResult.map(toCommand (NewCopy_SourceInstanceId_TagIds (branchInstanceId, [])))
         | VUpdateBranchId branchId ->
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))

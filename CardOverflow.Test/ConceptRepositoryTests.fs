@@ -54,7 +54,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
-            Kind = NewOriginal
+            Kind = NewOriginal_TagIds []
         } |> UpdateRepository.card c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002

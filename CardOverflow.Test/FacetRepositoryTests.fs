@@ -18,7 +18,7 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 
-let normalCommand fieldValues collateInstance =
+let normalCommand fieldValues collateInstance tagIds =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
@@ -32,10 +32,10 @@ let normalCommand fieldValues collateInstance =
                 Value = fieldValues.[i]
             }) |> toResizeArray
         EditSummary = "Initial creation"
-        Kind = NewOriginal
+        Kind = NewOriginal_TagIds tagIds
     }
 
-let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
+let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
     EditSummary = "Initial creation"
     FieldValues =
         clozeCollate.Fields.Select(fun f -> {
@@ -47,12 +47,16 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
                     "extra"
         }).ToList()
     CollateInstance = clozeCollate
-    Kind = NewOriginal }
+    Kind = NewOriginal_TagIds tagIds }
 
 let add collateName createCommand (db: CardOverflowDb) userId tags = task {
+    let tagIds = ResizeArray.empty
+    for tag in tags do
+        let! tagId = TagRepository.upsert db tag |> TaskResult.getOk
+        tagIds.Add tagId
     let! collate = TestCollateRepo.SearchEarliest db collateName
     let! r =
-        createCommand collate
+        createCommand collate (tagIds |> List.ofSeq)
         |> SanitizeCardRepository.Update db userId
     return r.Value
     }
@@ -73,9 +77,10 @@ let addCloze fieldValues =
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let tags = ["A"; "B"]
+    let aTag = Guid.NewGuid().ToString()
+    let bTag = Guid.NewGuid().ToString()
     
-    let! _ = addBasicCard c.Db userId tags
+    let! _ = addBasicCard c.Db userId [aTag; bTag]
 
     Assert.SingleI <| c.Db.Card
     Assert.SingleI <| c.Db.Card
@@ -194,7 +199,7 @@ Back
             |> Seq.sortByDescending (fun x -> x.Field.Name)
     )
     Assert.Equal<string seq>(
-        tags,
+        [aTag; bTag],
         (CardRepository.GetAcquiredPages c.Db userId 1 "")
             .GetAwaiter()
             .GetResult()
@@ -278,7 +283,7 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
-            Kind = NewOriginal
+            Kind = NewOriginal_TagIds []
         } |> UpdateRepository.card c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
@@ -355,8 +360,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             //"XXXXXX".D(sprintf "Branch instance #%i should have count #%i" id count)
             do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
-    let tags = ["A"; "B"]
-    let! _ = addBasicCard c.Db user1 tags
+    let! _ = addBasicCard c.Db user1 []
     do! assertCount
             [og_c, 1]
             [og_b, 1]
