@@ -141,14 +141,16 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
     assertCount 5 "may be remembered with the mnemonic"
+    let longThing = """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: {{c2::Griseofulvin (antifungal)}} C: {{c3::Colchicine (antigout)}} V: {{c4::Vincristine/Vinblastine (anticancer)}}P: {{c5::Palcitaxel (anticancer)}}"""
+    let longThingUs = longThing + " "
     Assert.Equal<string seq>(
         [   """↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic FibrosisImage here"""
             """↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia"""
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: {{c2::Griseofulvin (antifungal)}} C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: {{c3::Colchicine (antigout)}} V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer) """
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: {{c4::Vincristine/Vinblastine (anticancer)}}P: Palcitaxel (anticancer) """
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: {{c5::Palcitaxel (anticancer)}} """],
+            longThingUs
+            longThingUs
+            longThingUs
+            longThingUs
+            longThingUs],
         c.Db.BranchInstance.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
     Assert.Equal<string seq>(
@@ -162,11 +164,11 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value))
     )
     Assert.Equal<string seq>(
-        [   """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)"""
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: {{c2::Griseofulvin (antifungal)}} C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)"""
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: {{c3::Colchicine (antigout)}} V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)"""
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: {{c4::Vincristine/Vinblastine (anticancer)}}P: Palcitaxel (anticancer)"""
-            """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: Mebendazole (antihelminthic)G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: {{c5::Palcitaxel (anticancer)}}"""
+        [   longThing
+            longThing
+            longThing
+            longThing
+            longThing
             "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ],
         allBranchInstanceViews
             .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value))
@@ -175,18 +177,8 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <| c.Db.BranchInstance
             .Where(fun x -> x.FieldValues.Contains("acute"))
     Assert.True(c.Db.BranchInstance.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
-    let longThing = """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: {{c2::Griseofulvin (antifungal)}} C: {{c3::Colchicine (antigout)}} V: {{c4::Vincristine/Vinblastine (anticancer)}}P: {{c5::Palcitaxel (anticancer)}}"""
-    Assert.Equal<string seq>(
-        [   longThing
-            ""
-            "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis"
-            "Image here"],
-        c.Db.CommunalFieldInstance.Select(fun x -> MappingTools.stripHtmlTags x.Value))
     let! card = ExploreCardRepository.get c.Db userId 1
     let card = card.Value
-    Assert.Equal<string seq>(
-        [longThing; ""],
-        card.Instance.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags))
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
         card.Instance.StrippedFront)
