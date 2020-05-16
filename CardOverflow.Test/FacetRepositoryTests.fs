@@ -228,8 +228,8 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! instanceId = UpdateRepository.card c.Db userId updated.load
-    Assert.Equal(newBranchInstanceId, instanceId)
+    let! actualBranchId = UpdateRepository.card c.Db userId updated.load
+    Assert.Equal(branchId, actualBranchId)
 
     let! (card1: BranchInstanceMeta)    = ExploreCardRepository.get      c.Db userId cardId |> TaskResult.map(fun x -> x.Instance)
     let! (card2: BranchInstanceMeta), _ = ExploreCardRepository.instance c.Db userId newBranchInstanceId
@@ -245,7 +245,7 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     
     let! (missingCard: Result<_, _>) = ExploreCardRepository.instance c.Db userId nonexistant
     
-    Assert.Equal(sprintf "Card Instance #%i not found" nonexistant, missingCard.error)
+    Assert.Equal(sprintf "Branch Instance #%i not found" nonexistant, missingCard.error)
     } |> TaskResult.getOk)
 
 [<Fact>]
