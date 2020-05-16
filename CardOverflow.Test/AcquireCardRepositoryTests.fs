@@ -44,7 +44,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
-            Source = UpdateBranchId (branchId, null)
+            Kind = Update_BranchId_Title (branchId, null)
         } |> UpdateRepository.card c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
@@ -109,7 +109,7 @@ let ``CardRepository.editState works``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
-            Source = UpdateBranchId (branchId, null)
+            Kind = Update_BranchId_Title (branchId, null)
         } |> UpdateRepository.card c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
@@ -136,7 +136,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
         {   EditCardCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
-            Source = UpdateBranchId (branchId, null)
+            Kind = Update_BranchId_Title (branchId, null)
         } |> UpdateRepository.card c.Db userId
     let i2 = 1002
     Assert.Equal(branchId, actualBranchId.Value)
@@ -216,7 +216,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     let command =
         { r.Value with
             FieldValues = [].ToList()
-            Source = UpdateBranchId (b1, null)
+            Kind = Update_BranchId_Title (b1, null)
         }
     let! branchId = UpdateRepository.card c.Db authorId command.load |> TaskResult.getOk
     let ci1_2 = 1003

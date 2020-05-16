@@ -460,14 +460,14 @@ module UpdateRepository =
             |> Task.map (Result.requireFalse <| sprintf "Card #%i already has a Branch named '%s'." cardId name)
         taskResult {
             let! (branch: BranchEntity) =
-                match command.Source with
-                    | UpdateBranchId (branchId, name) ->
+                match command.Kind with
+                    | Update_BranchId_Title (branchId, name) ->
                         branchNameCheck branchId name
                         |> TaskResult.bind (fun () ->
                             db.Branch.Include(fun x -> x.Card).SingleOrDefaultAsync(fun x -> x.Id = branchId && x.AuthorId = userId)
                             |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%i doesn't exist or you aren't its author" branchId)
                         )
-                    | NewCopySourceInstanceId instanceId ->
+                    | NewCopy_SourceInstanceId instanceId ->
                         BranchEntity(
                             AuthorId = userId,
                             Card =
@@ -475,7 +475,7 @@ module UpdateRepository =
                                     AuthorId = userId,
                                     CopySourceId = Nullable instanceId
                                 )) |> Ok |> Task.FromResult
-                    | NewBranchSourceCardId (cardId, name) ->
+                    | NewBranch_SourceCardId_Title (cardId, name) ->
                         branchNameCheckCardId cardId name
                         |> TaskResult.map(fun () ->
                             BranchEntity(

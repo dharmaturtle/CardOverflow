@@ -455,26 +455,26 @@ type BranchRevision = {
     SortedMeta: BranchInstanceMeta list
 }
 
-type CardSource =
+type UpsertKind =
     | NewOriginal
-    | NewCopySourceInstanceId of int
-    | NewBranchSourceCardId of int * string
-    | UpdateBranchId of int * string
+    | NewCopy_SourceInstanceId of int
+    | NewBranch_SourceCardId_Title of int * string
+    | Update_BranchId_Title of int * string
 with
     member this.TryGetCopySourceInstanceId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with
-        | NewCopySourceInstanceId instanceId -> x <- instanceId; true
+        | NewCopy_SourceInstanceId instanceId -> x <- instanceId; true
         | _ -> false
     member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
         match this with
-        | NewBranchSourceCardId (cardId, _) -> x <- cardId; true
+        | NewBranch_SourceCardId_Title (cardId, _) -> x <- cardId; true
         | _ -> false
 
 type EditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     CollateInstance: CollateInstance
-    Source: CardSource
+    Kind: UpsertKind
 } with
     member this.CardView = {   
         FieldValues =

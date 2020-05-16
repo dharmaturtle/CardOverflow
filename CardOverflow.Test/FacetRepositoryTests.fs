@@ -32,7 +32,7 @@ let normalCommand fieldValues collateInstance =
                 Value = fieldValues.[i]
             }) |> toResizeArray
         EditSummary = "Initial creation"
-        Source = NewOriginal
+        Kind = NewOriginal
     }
 
 let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
@@ -47,7 +47,7 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) = {
                     "extra"
         }).ToList()
     CollateInstance = clozeCollate
-    Source = NewOriginal }
+    Kind = NewOriginal }
 
 let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let! collate = TestCollateRepo.SearchEarliest db collateName
@@ -278,7 +278,7 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
-            Source = NewOriginal
+            Kind = NewOriginal
         } |> UpdateRepository.card c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
@@ -834,9 +834,9 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
     let command =
         { command.load with
-            Source =
-                match command.load.Source with
-                | NewBranchSourceCardId (id, name) -> NewBranchSourceCardId (id, name + Guid.NewGuid().ToString())
+            Kind =
+                match command.load.Kind with
+                | NewBranch_SourceCardId_Title (id, name) -> NewBranch_SourceCardId_Title (id, name + Guid.NewGuid().ToString())
                 | _ -> failwith "impossible"
         }
     let! instanceIds = UpdateRepository.card c.Db userId command

@@ -78,7 +78,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                         Value = Guid.NewGuid().ToString()
                     }).ToList()
                 CollateInstance = collate
-                Source = NewOriginal
+                Kind = NewOriginal
             }
     let instanceId = r.Value
     Assert.Equal(1001, instanceId)

@@ -233,7 +233,7 @@ type ViewEditCardCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     CollateInstance: ViewCollateInstance
-    Source: CardSource
+    Kind: UpsertKind
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -266,7 +266,7 @@ type ViewEditCardCommand = {
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
-            Source = this.Source
+            Kind = this.Kind
         }
 
 type UpsertCardSource =
@@ -277,14 +277,14 @@ type UpsertCardSource =
 
 module SanitizeCardRepository =
     let getUpsert (db: CardOverflowDb) source =
-        let toCommand source (branch: BranchInstanceEntity) =
+        let toCommand kind (branch: BranchInstanceEntity) =
             {   EditSummary = ""
                 FieldValues =
                     EditFieldAndValue.load
                         <| Fields.fromString branch.CollateInstance.Fields
                         <| branch.FieldValues
                 CollateInstance = branch.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
-                Source = source
+                Kind = kind
             }
         match source with
         | VNewOriginalUserId userId ->
@@ -297,21 +297,21 @@ module SanitizeCardRepository =
                             <| Fields.fromString j.CollateInstance.Fields
                             <| ""
                     CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
-                    Source = NewOriginal
+                    Kind = NewOriginal
                 }
             )
         | VNewBranchSourceCardId cardId ->
             db.Card.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = cardId)
             |> Task.map (Result.requireNotNull (sprintf "Card #%i not found." cardId))
-            |> TaskResult.map(fun card -> toCommand (NewBranchSourceCardId (cardId, "New Branch")) card.DefaultBranch.LatestInstance)
+            |> TaskResult.map(fun card -> toCommand (NewBranch_SourceCardId_Title (cardId, "New Branch")) card.DefaultBranch.LatestInstance)
         | VNewCopySourceInstanceId branchInstanceId ->
             db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId))
-            |> TaskResult.map(toCommand (NewCopySourceInstanceId branchInstanceId))
+            |> TaskResult.map(toCommand (NewCopy_SourceInstanceId branchInstanceId))
         | VUpdateBranchId branchId ->
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
-            |> TaskResult.map(fun branch -> toCommand (UpdateBranchId (branchId, branch.Name)) branch.LatestInstance)
+            |> TaskResult.map(fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance)
     let Update (db: CardOverflowDb) authorId (command: ViewEditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         UpdateRepository.card db authorId command.load
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
