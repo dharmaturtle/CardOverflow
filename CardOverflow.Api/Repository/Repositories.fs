@@ -129,20 +129,23 @@ module ExploreCardRepository =
             db.AcquiredCard
                 .Include(fun x -> x.Card.Branches :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance)
-                .SingleOrDefaultAsync(fun x -> x.UserId = userId && x.CardId = rootInstance.CardId)
-                |> Task.map Option.ofObj
+                .Where(fun x -> x.UserId = userId && x.CardId = rootInstance.CardId)
+                .Select(fun x -> x.CardId, x.BranchId, x.BranchInstanceId)
+                .Distinct()
+                .SingleOrDefaultAsync()
+                |> Task.map Core.toOption
         return
             match ac with
             | None -> NotAcquired
-            | Some ac ->
-                if   ac.BranchInstanceId = rootInstance.Id then
-                    ExactInstanceAcquired ac.BranchInstanceId
-                elif ac.CardId = rootInstance.CardId && ac.BranchId = rootInstance.BranchId then
-                    OtherInstanceAcquired ac.BranchInstanceId
-                elif rootInstance.Card.Branches.Select(fun x -> x.LatestInstanceId).Contains ac.BranchInstanceId then
-                    LatestBranchAcquired ac.BranchInstanceId
-                elif rootInstance.Card.Branches.Select(fun x -> x.Id).Contains ac.CardId then
-                    OtherBranchAcquired ac.BranchInstanceId
+            | Some (cardId, branchId, branchInstanceId) ->
+                if   branchInstanceId = rootInstance.Id then
+                    ExactInstanceAcquired branchInstanceId
+                elif cardId = rootInstance.CardId && branchId = rootInstance.BranchId then
+                    OtherInstanceAcquired branchInstanceId
+                elif rootInstance.Card.Branches.Select(fun x -> x.LatestInstanceId).Contains branchInstanceId then
+                    LatestBranchAcquired branchInstanceId
+                elif rootInstance.Card.Branches.Select(fun x -> x.Id).Contains cardId then
+                    OtherBranchAcquired branchInstanceId
                 else failwith "impossible"
     }
     let get (db: CardOverflowDb) userId cardId = taskResult {
