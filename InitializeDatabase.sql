@@ -358,7 +358,9 @@ ALTER TABLE public."Tag" OWNER TO postgres;
 
 CREATE TABLE public."Tag_AcquiredCard" (
     "TagId" integer NOT NULL,
-    "AcquiredCardId" integer NOT NULL
+    "AcquiredCardId" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "CardId" integer NOT NULL
 );
 
 
@@ -1212,7 +1214,7 @@ ALTER TABLE ONLY public."Tag"
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "AcquiredCardId");
+    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "AcquiredCardId", "UserId", "CardId");
 
 
 ALTER TABLE ONLY public."Tag_User_CollateInstance"
@@ -1239,6 +1241,10 @@ ALTER TABLE ONLY public."Vote_Feedback"
     ADD CONSTRAINT "PK_Vote_Feedback" PRIMARY KEY ("FeedbackId", "UserId");
 
 
+ALTER TABLE ONLY public."AcquiredCard"
+    ADD CONSTRAINT "UQ_AcquiredCard_AcquiredCardId_UserId_CardId" UNIQUE ("Id", "UserId", "CardId");
+
+
 ALTER TABLE ONLY public."BranchInstance"
     ADD CONSTRAINT "UQ_BranchInstance_BranchId_Id" UNIQUE ("BranchId", "Id");
 
@@ -1253,6 +1259,10 @@ ALTER TABLE ONLY public."Branch"
 
 ALTER TABLE ONLY public."Branch"
     ADD CONSTRAINT "UQ_Branch_CardId_Name" UNIQUE ("CardId", "Name");
+
+
+ALTER TABLE ONLY public."Tag_AcquiredCard"
+    ADD CONSTRAINT "UQ_Tag_AcquiredCard_UserId_TagId_CardId" UNIQUE ("UserId", "TagId", "CardId");
 
 
 CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
@@ -1568,6 +1578,10 @@ ALTER TABLE ONLY public."Relationship_AcquiredCard"
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
     ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public."Tag_AcquiredCard"
+    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_CardId" FOREIGN KEY ("AcquiredCardId", "UserId", "CardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"

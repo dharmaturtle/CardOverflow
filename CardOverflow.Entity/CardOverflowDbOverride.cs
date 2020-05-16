@@ -116,6 +116,17 @@ namespace CardOverflow.Entity {
       foreach (var tag in _filter<TagEntity>(entries)) {
         tag.Name = MappingTools.toTitleCase.Invoke(tag.Name);
       }
+      foreach (var j in _filter<Tag_AcquiredCardEntity>(entries)) {
+        if (j.AcquiredCard.CardId == 0) {
+          if (j.AcquiredCard.Card == null) {
+            throw new NullReferenceException("j.AcquiredCard.Card is null and its j.AcquiredCard.CardId is 0. In other words, the Card wasn't set.");
+          }
+          j.Card = j.AcquiredCard.Card;
+        } else {
+          j.CardId = j.AcquiredCard.CardId;
+        }
+        j.UserId = j.AcquiredCard.UserId;
+      }
       foreach (var relationship in _filter<RelationshipEntity>(entries)) {
         relationship.Name = MappingTools.toTitleCase.Invoke(relationship.Name);
       }
