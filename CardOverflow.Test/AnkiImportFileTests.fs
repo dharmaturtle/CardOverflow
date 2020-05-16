@@ -225,9 +225,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let test clozeMaxIndex clozeText otherTest = task {
         let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
-            let singleCloze = AnkiImportLogic.multipleClozeToSingleCloze i clozeText
-            Assert.SingleI <| c.Db.LatestBranchInstance.Where(fun x -> x.FieldValues.Contains singleCloze)
-            Assert.Equal(clozeMaxIndex, c.Db.LatestBranchInstance.Count(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))
+            Assert.SingleI <| c.Db.LatestBranchInstance.Where(fun x -> x.FieldValues.Contains clozeText)
+            Assert.Equal(0, c.Db.LatestBranchInstance.Count(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value = clozeText)))
             let! communalFieldInstanceIds =
                 (getBranchInstances clozeText)
                     .Select(fun x -> x.CommunalFieldInstance_BranchInstances.Single().CommunalFieldInstance.Id)
@@ -259,9 +258,9 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 2
     do! test 2 "{{c1::Portland::city}} was founded in {{c2::1845}}."
         <| fun clozeText ->
-            assertCount 0 clozeText
-            assertCount 1 "Portland was founded in {{c2::1845}}."
-            assertCount 1 "{{c1::Portland::city}} was founded in 1845."
+            assertCount 1 clozeText
+            assertCount 0 "Portland was founded in {{c2::1845}}."
+            assertCount 0 "{{c1::Portland::city}} was founded in 1845."
     do! assertUserHasNormalCardCount 4
 
     let! (e: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
@@ -272,9 +271,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
     Assert.Equal(expected, e.Results.Select(fun x -> x.Value.BranchInstanceMeta.StrippedFront, x.Value.BranchInstanceMeta.StrippedBack))
     do! assertUserHasNormalCardCount 4
-    
+
     // go from 1 cloze to 2 clozes
-    let cardId = 1
     let branchId = 1
     let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
@@ -286,9 +284,9 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceId = SanitizeCardRepository.Update c.Db userId command
-    Assert.Equal(1007, instanceId)
-    do! assertUserHasNormalCardCount 7
+    let! actualBranchId = SanitizeCardRepository.Update c.Db userId command
+    Assert.Equal(branchId, actualBranchId)
+    do! assertUserHasNormalCardCount 5
     
     // go from 2 clozes to 1 cloze
     let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
@@ -301,9 +299,9 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds = SanitizeCardRepository.Update c.Db userId command
-    Assert.Equal(1009, instanceIds)
-    do! assertUserHasNormalCardCount 6
+    let! actualBranchId = SanitizeCardRepository.Update c.Db userId command
+    Assert.Equal(branchId, actualBranchId)
+    do! assertUserHasNormalCardCount 4
     
     // multiple c1's works
     let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
@@ -316,9 +314,9 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! instanceIds = SanitizeCardRepository.Update c.Db userId command
-    Assert.Equal(1010, instanceIds)
-    do! assertUserHasNormalCardCount 6
+    let! actualBranchId = SanitizeCardRepository.Update c.Db userId command
+    Assert.Equal(branchId, actualBranchId)
+    do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
 
 [<Fact>]

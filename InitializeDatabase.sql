@@ -244,6 +244,7 @@ CREATE VIEW public."AcquiredCardIsLatest" AS
     a."CardId",
     a."BranchId",
     a."BranchInstanceId",
+    a."Index",
     a."CardState",
     a."EaseFactorInPermille",
     a."IntervalOrStepsIndex",

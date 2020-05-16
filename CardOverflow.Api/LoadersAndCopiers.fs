@@ -295,8 +295,8 @@ type CommunalFieldInstance with
         Value = entity.Value }
 
 type BranchInstanceMeta with
-    static member load isAcquired isLatest (entity: BranchInstanceEntity) =
-        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
+    static member loadIndex i isAcquired isLatest (entity: BranchInstanceEntity) =
+        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[i]
         {   Id = entity.Id
             CardId = entity.CardId
             BranchId = entity.BranchId
@@ -311,6 +311,7 @@ type BranchInstanceMeta with
             CommunalFields = entity.CommunalFieldInstance_BranchInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Users = entity.Users
         }
+    static member load = BranchInstanceMeta.loadIndex 0
     static member initialize =
         {   Id = 0
             CardId = 0
@@ -399,7 +400,7 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
-                BranchInstanceMeta = BranchInstanceMeta.load isAcquired entity.IsLatest entity.BranchInstance
+                BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isAcquired entity.IsLatest entity.BranchInstance
                 Tags = usersTags |> List.ofSeq
             }
         }

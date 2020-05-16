@@ -312,7 +312,7 @@ module CardRepository =
         |> List.iter(
             function
             | (None, Some old') ->
-                old'.CardState <- Suspended |> CardState.toDb
+                db.AcquiredCard.RemoveI old' // highTODO add a warning on the UI that data will be lost
             | (Some new', None) ->
                 new'.BranchInstance <- branchInstance
                 new'.Branch <- branchInstance.Branch

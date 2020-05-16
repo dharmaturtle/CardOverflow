@@ -392,9 +392,9 @@ module Anki =
                                         <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
                                         <| valueByFieldName
                                         <| collate.Collate.Templates.[0].Front
-                                return [1s .. max] |> List.map int16 |> List.map (fun clozeIndex ->
+                                return [1s .. max] |> List.map (fun clozeIndex ->
                                     toCard
-                                        <| AnkiImportLogic.multipleClozeToSingleClozeList clozeIndex fieldValues
+                                        <| fieldValues
                                         <| collate.Entity
                                         <| clozeIndex - 1s // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}
