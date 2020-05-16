@@ -312,6 +312,9 @@ type BranchInstanceMeta with
             Users = entity.Users
         }
     static member load = BranchInstanceMeta.loadIndex 0
+    static member loadAll isAcquired isLatest (entity: BranchInstanceEntity) =
+        [0 .. int entity.MaxIndexInclusive]
+        |> List.map(fun i -> BranchInstanceMeta.loadIndex i isAcquired isLatest entity)
     static member initialize =
         {   Id = 0
             CardId = 0

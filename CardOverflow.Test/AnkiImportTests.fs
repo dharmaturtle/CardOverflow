@@ -197,12 +197,13 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     Assert.Equal(18, c.Db.Card.Count())
     Assert.Equal(18, c.Db.BranchInstance.Count())
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 3, c.Db.Collate.Count())
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 5, c.Db.CollateInstance.Count())
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 1, c.Db.Collate.Count())
+    Assert.Equal(24, c.Db.CollateInstance.Count())
 
     let getInstances (collateName: string) =
         c.Db.CollateInstance
-            .Include(fun x -> x.BranchInstances)
+            .Include(fun x -> x.BranchInstances :> IEnumerable<_>)
+                .ThenInclude(fun (x: BranchInstanceEntity) -> x.CollateInstance)
             .Where(fun x -> x.Name.Contains collateName)
             .SelectMany(fun x -> x.BranchInstances :> IEnumerable<_>)
             .ToListAsync()
@@ -212,12 +213,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! card = ExploreCardRepository.get c.Db userId branchInstance.CardId
         let card = card.Value
         Assert.Empty card.Relationships
-        let communalValue = "https://classroom.udacity.com/courses/ud201/lessons/1309228537/concepts/1822139350923#"
-        Assert.Equal(
-            { Id = 1004
-              FieldName = "Source"
-              Value = communalValue },
-            card.Instance.CommunalFields.Single())
+        Assert.Empty card.Instance.CommunalFields
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
@@ -227,9 +223,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! card = ExploreCardRepository.get c.Db userId card.CardId
         let card = card.Value
         Assert.Empty card.Relationships
-        Assert.Equal(
-            expectedFieldAndValues,
-            card.Instance.CommunalFields.Select(fun x -> x.FieldName, x.Value))
+        Assert.Empty card.Instance.CommunalFields
         let! view = CardViewRepository.get c.Db card.Id
         Assert.Equal(
             expectedFieldAndValues,
@@ -240,25 +234,12 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     let! cloze = getInstances "Cloze"
     for instance in cloze do
         let! view = CardViewRepository.get c.Db instance.CardId
-        if instance.Id = 1002 then
-            [   "Text", "Toxic adenomas are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
-                "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
-        else
-            [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated TSH receptor"
-                "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
+        [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
+            "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Field.Name, x.Value))
-        let! card = ExploreCardRepository.get c.Db userId instance.CardId
-        let card = card.Value
-        let communalValue = "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
-        Assert.Equal(
-            {   Id = 1005
-                FieldName = "Text"
-                Value = communalValue },
-            card.Instance.CommunalFields.Single(fun x -> x.FieldName = "Text"))
-        if card.Id = 2 then
-            Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", card.Instance.StrippedFront)
-        else
-            Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", card.Instance.StrippedFront)
+        let instances = BranchInstanceMeta.loadAll true true instance
+        Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", instances.[0].StrippedFront)
+        Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", instances.[1].StrippedFront)
     }
 
 [<Fact>]

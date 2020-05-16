@@ -170,7 +170,7 @@ module ExploreCardRepository =
         let! (rc: List<CardRelationshipCountEntity>) = db.CardRelationshipCount.Where(fun x -> x.CardId = cardId).ToListAsync()
         let! acquiredStatus = getAcquiredStatus db userId rootInstance
         return
-            BranchInstanceMeta.load (acquiredStatus = ExactInstanceAcquired rootInstance.Id ) true rootInstance
+            BranchInstanceMeta.load (acquiredStatus = ExactInstanceAcquired rootInstance.Id) true rootInstance
             |> ExploreCard.load rootInstance.Card acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
@@ -183,7 +183,7 @@ module ExploreCardRepository =
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
-            |> Task.map (Result.requireNotNull (sprintf "Card Instance #%i not found" instanceId))
+            |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found" instanceId))
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstanceId = instanceId)
         let! latest = get db userId e.Branch.CardId
         return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
