@@ -506,8 +506,7 @@ module UpdateRepository =
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceInstanceId_TagIds (_, tagIds) ->
                 for tagId in tagIds do
-                    for ac in acs do
-                        ac.Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
+                    acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
             do! db.SaveChangesAsyncI()
             return branchInstance.BranchId
         }
@@ -583,26 +582,6 @@ module UserRepository =
         db.User.SingleAsync(fun x -> x.Id = id)
 
 module TagRepository =
-    let upsert (db: CardOverflowDb) (newTag: string) = taskResult {
-        do! if newTag.Length > 250 then Error "Tag length exceeds 250" else Ok ()
-        let! (tag: TagEntity option) =
-            db.Tag.SingleOrDefaultAsync(fun x -> x.Name = newTag)
-            |> Task.map Option.ofObj
-        return!
-            match tag with
-            | Some x ->
-                x.Id |> Task.FromResult
-            | None -> task {
-                let tag = TagEntity(Name = newTag)
-                db.Tag.AddI tag
-                do! db.SaveChangesAsyncI()
-                return tag.Id
-            }
-        }
-    let AddTo (db: CardOverflowDb) acquiredCardId newTag =
-        Tag_AcquiredCardEntity(AcquiredCardId = acquiredCardId, Tag = newTag)
-        |> db.Tag_AcquiredCard.AddI
-        db.SaveChangesAsyncI ()
     let Search (db: CardOverflowDb) (input: string) =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, "%" + input + "%")).ToList()
 

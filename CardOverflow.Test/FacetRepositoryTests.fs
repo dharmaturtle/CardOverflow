@@ -52,7 +52,7 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
 let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let tagIds = ResizeArray.empty
     for tag in tags do
-        let! tagId = TagRepository.upsert db tag |> TaskResult.getOk
+        let! tagId = SanitizeTagRepository.upsert db tag |> TaskResult.getOk
         tagIds.Add tagId
     let! collate = TestCollateRepo.SearchEarliest db collateName
     let! r =

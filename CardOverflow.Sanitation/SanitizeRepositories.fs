@@ -125,28 +125,41 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let private getAcquired (db: CardOverflowDb) userId cardId =
-        db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Branch.CardId = cardId)
-        |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
-    let AddTo (db: CardOverflowDb) userId newTagName cardId = taskResult { // medTODO tag length needs validation
-        let newTagName = MappingTools.toTitleCase newTagName
-        let! (ac: AcquiredCardEntity) =
-            getAcquired db userId cardId
+    let upsertNoSave (db: CardOverflowDb) (newTag: string) = taskResult {
+        let newTag = MappingTools.toTitleCase newTag
+        do! if newTag.Length > 250 then Error "Tag length exceeds 250" else Ok ()
         let! (tag: TagEntity option) =
-            db.Tag.SingleOrDefaultAsync(fun x -> EF.Functions.ILike(x.Name, newTagName))
+            db.Tag.SingleOrDefaultAsync(fun x -> EF.Functions.ILike(x.Name, newTag))
             |> Task.map Option.ofObj
-        if tag.IsSome then
-            do! db.Tag_AcquiredCard
-                    .AnyAsync(fun x -> x.AcquiredCardId = ac.Id && x.TagId = tag.Value.Id)
-                |> Task.map (Result.requireFalse <| sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId newTagName)
-        return!
-            tag
-            |> Option.defaultValue (TagEntity(Name = newTagName))
-            |> TagRepository.AddTo db ac.Id
+        return
+            tag |> Option.defaultWith(fun () ->
+                let tag = TagEntity(Name = newTag)
+                db.Tag.AddI tag
+                tag
+            )
+        }
+    let upsert (db: CardOverflowDb) (newTag: string) = taskResult {
+        let! (e: TagEntity) = upsertNoSave db newTag
+        do! db.SaveChangesAsyncI()
+        return e.Id
+        }
+    let private getFirstAcquired (db: CardOverflowDb) userId cardId =
+        db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Branch.CardId = cardId)
+        |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
+    let AddTo (db: CardOverflowDb) userId newTag cardId = taskResult { // medTODO tag length needs validation
+        let newTag = MappingTools.toTitleCase newTag
+        let! (ac: AcquiredCardEntity) = getFirstAcquired db userId cardId
+        let! (tag: TagEntity) = upsertNoSave db newTag
+        do! db.Tag_AcquiredCard
+                .AnyAsync(fun x -> x.CardId = cardId && x.UserId = userId && x.TagId = tag.Id)
+            |> Task.map (Result.requireFalse <| sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId newTag)
+        Tag_AcquiredCardEntity(AcquiredCard = ac, Tag = tag)
+        |> db.Tag_AcquiredCard.AddI
+        return! db.SaveChangesAsyncI ()
     }
     let DeleteFrom db userId tag cardId = taskResult {
         let tag = MappingTools.toTitleCase tag
-        let! (ac: AcquiredCardEntity) = getAcquired db userId cardId
+        let! (ac: AcquiredCardEntity) = getFirstAcquired db userId cardId
         let! join =
             db.Tag_AcquiredCard
                 .SingleOrDefaultAsync(fun x -> x.AcquiredCardId = ac.Id && x.Tag.Name = tag)

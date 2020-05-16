@@ -145,7 +145,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal(0, card.Value.Summary.Users) // suspended cards don't count to User count
     }
 
-let testGetAcquired (branchInstanceIds: int list) addCards name = task {
+let testGetAcquired (acCount: int) addCards name = task {
     use c = new TestContainer(false, name)
     
     let userId = 1 // this user creates the card
@@ -153,20 +153,13 @@ let testGetAcquired (branchInstanceIds: int list) addCards name = task {
         let! _ = addCard c.Db userId ["A"]
         ()
     let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
-    Assert.Equal(
-        branchInstanceIds.Count(),
-        acquiredCards.Results.Count()
-    )
+    Assert.Equal(acCount, acquiredCards.Results.Count())
     let! ac = CardRepository.GetAcquired c.Db userId 1
-    let ac = ac.Value.Single()
-    Assert.Equal(userId, ac.UserId)
+    let ac = ac.Value
+    Assert.Equal(userId, ac.Select(fun x -> x.UserId).Distinct().Single())
     
     let userId = 2 // this user acquires the card
-    if branchInstanceIds.Length = 1 then
-        do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    else
-        do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-        do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! CardRepository.AcquireCardAsync c.Db userId 1001 |> TaskResult.getOk
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -182,63 +175,31 @@ let testGetAcquired (branchInstanceIds: int list) addCards name = task {
             IsAcquired = true }],
         card.Tags
     )
+    let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
+    Assert.Equal(1, cards.Results.Count())
 
     let userId = 3 // this user never acquires the card
-    if branchInstanceIds.Length = 1 then
-        let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
-        Assert.Equal(
-            branchInstanceIds.Count(),
-            cards.Results.Count()
-        )
-        let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
-        Assert.Equal<ViewTag seq>(
-            [{  Name = "A"
-                Count = 2
-                IsAcquired = false }],
-            card.Tags
-        )
-    else
-        let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
-        Assert.Equal(
-            branchInstanceIds.Count(),
-            cards.Results.Count()
-        )
-        let! card1 = ExploreCardRepository.get c.Db userId 1
-        Assert.Equal<ViewTag seq>(
-            [{  Name = "A"
-                Count = 2
-                IsAcquired = false }],
-            card1.Value.Tags
-        )
-        let! card2 = ExploreCardRepository.get c.Db userId 2
-        Assert.Equal<ViewTag seq>(
-            [{  Name = "A"
-                Count = 1
-                IsAcquired = false }],
-            card2.Value.Tags
-        )
-    }
+    let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
+    Assert.Equal<ViewTag seq>(
+        [{  Name = "A"
+            Count = 2
+            IsAcquired = false }],
+        card.Tags
+    )}
     
 [<Fact>]
 let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
     testGetAcquired
-        [1001]
+        1
         [ FacetRepositoryTests.addBasicCard ]
         <| nameof ``GetAcquired works when acquiring 1 basic card``
 
 [<Fact>]
-let rec ``GetAcquired works when acquiring 1 card of a pair``(): Task<unit> = 
+let rec ``GetAcquired works when acquiring a pair``(): Task<unit> = 
     testGetAcquired
-        [1001]
+        2
         [ FacetRepositoryTests.addReversedBasicCard ]
-        <| nameof ``GetAcquired works when acquiring 1 card of a pair``
-
-[<Fact>]
-let rec ``GetAcquired works when acquiring 2 cards of a pair``(): Task<unit> =
-    testGetAcquired
-        [1001; 1002]
-        [ FacetRepositoryTests.addBasicCard; FacetRepositoryTests.addReversedBasicCard ]
-        <| nameof ``GetAcquired works when acquiring 2 cards of a pair``
+        <| nameof ``GetAcquired works when acquiring a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
