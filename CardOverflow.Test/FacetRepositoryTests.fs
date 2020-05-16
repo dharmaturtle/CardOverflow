@@ -77,8 +77,8 @@ let addCloze fieldValues =
 let ``CardRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let aTag = Guid.NewGuid().ToString()
-    let bTag = Guid.NewGuid().ToString()
+    let aTag = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
+    let bTag = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
     let! _ = addBasicCard c.Db userId [aTag; bTag]
 
