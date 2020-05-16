@@ -263,8 +263,8 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     let! x = AnkiImporter.save c.Db ankiDb userId Map.empty
     Assert.Null x.Value
     Assert.Equal<IEnumerable<string>>(
-        [   "4/23/2020 19:40:46"
-            "4/23/2020 19:40:46"
+        [   "4/8/2019 02:14:29"
+            "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
@@ -274,9 +274,9 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         c.Db.CollateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
-        [   "4/23/2020 19:40:46"
-            "4/23/2020 19:40:46"
+        [   "6/16/2019 00:51:28"
             "6/16/2019 00:51:28"
+            "6/16/2019 00:51:32"
             "6/16/2019 00:51:32"
             "6/16/2019 00:51:46"
             "6/16/2019 00:51:55"
@@ -316,7 +316,6 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
-    Assert.Equal(6, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal<string>(
         [ "Basic"; "Deck:Default"; "Othertag"; "Tag" ],
         (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
@@ -341,36 +340,20 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     for instance in instances do
         let! card = ExploreCardRepository.get c.Db userId instance.CardId
         let card = card.Value
-        Assert.Empty <| card.Relationships
-        Assert.Equal(
-            [ { Id = 1001
-                FieldName = "Front"
-                Value = "Basic (optional reversed card) front" }
-              { Id = 1002
-                FieldName = "Add Reverse"
-                Value = "Basic (optional reversed card) reverse" }
-              { Id = 1007
-                FieldName = "Back"
-                Value = "Basic (optional reversed card) back" }],
-                card.Instance.CommunalFields)
+        Assert.Empty card.Relationships
+        Assert.Empty card.Instance.CommunalFields
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
         let! card = ExploreCardRepository.get c.Db userId instance.CardId
         let card = card.Value
         Assert.Empty card.Relationships
-        Assert.Equal(
-            [ { Id = 1003
-                FieldName = "Back"
-                Value = "Basic (and reversed card) back" }
-              { Id = 1004
-                FieldName = "Front"
-                Value = "Basic (and reversed card) front" }],
-            card.Instance.CommunalFields)
+        Assert.Empty card.Instance.CommunalFields
 
     Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    Assert.Equal(7, c.Db.CollateInstance.Count())
-    Assert.Equal(5, c.Db.LatestCollateInstance.Count())
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count, c.Db.CollateInstance.Count())
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 2, c.Db.LatestCollateInstance.Count())
     }
 
 let assertHasHistory db ankiDb: Task<unit> = (taskResult {
