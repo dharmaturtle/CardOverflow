@@ -1081,10 +1081,10 @@ SELECT pg_catalog.setval('public."CardSetting_Id_seq"', 4, false);
 SELECT pg_catalog.setval('public."Card_Id_seq"', 1, false);
 
 
-SELECT pg_catalog.setval('public."CollateInstance_Id_seq"', 1001, false);
+SELECT pg_catalog.setval('public."CollateInstance_Id_seq"', 1021, false);
 
 
-SELECT pg_catalog.setval('public."Collate_Id_seq"', 6, false);
+SELECT pg_catalog.setval('public."Collate_Id_seq"', 20, false);
 
 
 SELECT pg_catalog.setval('public."CommentCard_Id_seq"', 1, false);
