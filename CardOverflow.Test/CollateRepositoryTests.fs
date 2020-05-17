@@ -20,10 +20,10 @@ open CardOverflow.Sanitation
 
 [<Fact>]
 let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
-    let collateId = 1
     let userId = 3
     use c = new TestContainer()
     
+    let collateId = c.Db.Collate.Single(fun x -> x.CollateInstances.Any(fun x -> x.Name = "Basic")).Id
     let! collate = SanitizeCollate.AllInstances c.Db collateId
     let latestInstance = collate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
