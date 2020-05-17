@@ -20,13 +20,11 @@
   <p><em>@_LoadingMessage</em></p>
 } else {
   <div class="row">
-    @if (Instance == null) {
-      <div class="col-xl">
+    <div class="col-xl">
+      @if (Instance == null) {
         <ExploreCardIFrameHeader Card=@Card Instance=@Card.Instance />
         <ResizingIframe BranchInstanceId=@Card.Instance.Id Back />
-      </div>
-    } else {
-      <div class="col-xl">
+      } else {
         <div class="alert alert-warning" role="alert">
           This is an old revision created
           <span title=@Instance.Created>
@@ -43,8 +41,8 @@
         </div>
         <ExploreCardIFrameHeader Card=@Card Instance=@Instance />
         <ResizingIframe BranchInstanceId=@Instance.Id Back />
-      </div>
-    }
+      }
+    </div>
   </div>
   <div class="row">
     <div class="col-xl">
@@ -52,9 +50,6 @@
       <ExploreCardRelationship Card=@Card />
     </div>
     <div class="col-xl">
-      @if (Card.IsAnyAcquired) {
-        <ExploreCardAcquired AcquiredCard=@AcquiredCard />
-      }
       <ExploreCardComments Card=@Card />
     </div>
     <div class="col-xl">
@@ -65,7 +60,7 @@
                          Selected=@Card.Instance
                          Root=@Card.Instance
                          Instance=@Instance
-                         UpdateAcquiredCard=@(x => AcquiredCard = x) />
+                         UpdateAcquiredCards=@(x => AcquiredCards = x) />
     </div>
   </div>
 }
@@ -76,7 +71,7 @@
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
   BranchInstanceMeta Instance;
-  AcquiredCard AcquiredCard;
+  List<AcquiredCard> AcquiredCards;
   private string _LoadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -103,7 +98,7 @@
     if (User != null && Card != null) {
       var r = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
       if (r.IsOk) {
-        AcquiredCard = r.ResultValue;
+        AcquiredCards = r.ResultValue;
       } // the only error so far is due to not acquiring the card, so intentionally not showing it.
     }
     StateHasChanged();
