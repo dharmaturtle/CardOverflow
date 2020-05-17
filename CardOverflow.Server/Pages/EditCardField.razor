@@ -12,7 +12,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-<div class="d-flex justify-content-between">
+@*<div class="d-flex justify-content-between">
   <label><b>@Field.EditField.Name: </b></label>
   <button class=@(Field.IsCommunal ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-primary" ) @onclick=@ToggleCommunal type="button" disabled=@MustBeCommunal>
     Communal
@@ -63,14 +63,14 @@
       <iframe srcdoc=@Field.Value style="width: 100%; resize:vertical;" />
     }
   }
-} else {
+} else {*@
   <EjsRichTextEditor @bind-Value=@Field.Value SaveInterval="10" Enabled=@(!IsDisabled)>
     <RichTextEditorIFrameSettings Enable="true" />
     <RichTextEditorToolbarSettings Items=@_tools />
     <RichTextEditorEvents ValueChange=@valueChanged />
   </EjsRichTextEditor>
   <ValidationMessage For=@(() => Field.Value) />
-}
+@*}*@
 
 @code {
   [Parameter] public EditFieldAndValue Field { get; set; }
@@ -87,22 +87,22 @@
   protected override void OnParametersSet() {
     base.OnParametersSet();
     if (MustBeCommunal) {
-      Field.Communal = getFieldCommunal(FSharpOption<int>.None);
+      //Field.Communal = getFieldCommunal(FSharpOption<int>.None);
     }
-    if ((Field.Communal?.Value?.InstanceId?.Value ?? 0) != 0) {
-      _isNew = false;
-      _readOnlyIsVisible = true;
-    }
+    //if ((Field.Communal?.Value?.InstanceId?.Value ?? 0) != 0) {
+    //  _isNew = false;
+    //  _readOnlyIsVisible = true;
+    //}
   }
 
-  private void ToggleCommunal() =>
-Field.Communal =
-  Field.IsCommunal
-  ? FSharpOption<CommunalFieldValue>.None
-  : getFieldCommunal(FSharpOption<int>.None);
+  //  private void ToggleCommunal() =>
+  //Field.Communal =
+  //  Field.IsCommunal
+  //  ? FSharpOption<CommunalFieldValue>.None
+  //  : getFieldCommunal(FSharpOption<int>.None);
 
-  private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> instanceId) =>
-    Field.CommunalBranchInstanceIds.Append(Card.BranchInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(instanceId, x));
+  //private FSharpOption<CommunalFieldValue> getFieldCommunal(FSharpOption<int> instanceId) =>
+  //  Field.CommunalBranchInstanceIds.Append(Card.BranchInstanceMeta.Id).ToList().Apply(x => new CommunalFieldValue(instanceId, x));
 
   private async Task Search(SearchCommand searchCommand) {
     _searchResults = await DbExecutor.QueryAsync(db => CommunalFieldRepository.Search(db, searchCommand.Query));
@@ -112,7 +112,7 @@ Field.Communal =
 
   private void newClicked() {
     _isNew = true;
-    Field.Communal = getFieldCommunal(FSharpOption<int>.None);
+    //Field.Communal = getFieldCommunal(FSharpOption<int>.None);
   }
 
   private Task valueChanged(Syncfusion.EJ2.Blazor.RichTextEditor.ChangeEventArgs args) =>
@@ -121,7 +121,7 @@ Field.Communal =
   private async Task SearchResultClicked(CommunalFieldInstance instance) {
     Field.Value = instance.Value;
     await ValueUpdated.InvokeAsync(instance.Value);
-    Field.Communal = getFieldCommunal(instance.Id);
+    //Field.Communal = getFieldCommunal(instance.Id);
     _readOnlyIsVisible = true;
     _searchResults = new List<CommunalFieldInstance>();
   }
