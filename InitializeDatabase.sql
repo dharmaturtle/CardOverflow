@@ -869,21 +869,21 @@ INSERT INTO public."CardSetting" ("Id", "UserId", "Name", "NewCardsStepsInMinute
 INSERT INTO public."CardSetting" ("Id", "UserId", "Name", "NewCardsStepsInMinutes", "NewCardsMaxPerDay", "NewCardsGraduatingIntervalInDays", "NewCardsEasyIntervalInDays", "NewCardsStartingEaseFactorInPermille", "NewCardsBuryRelated", "MatureCardsMaxPerDay", "MatureCardsEaseFactorEasyBonusFactorInPermille", "MatureCardsIntervalFactorInPermille", "MatureCardsMaximumIntervalInDays", "MatureCardsHardIntervalFactorInPermille", "MatureCardsBuryRelated", "LapsedCardsStepsInMinutes", "LapsedCardsNewIntervalFactorInPermille", "LapsedCardsMinimumIntervalInDays", "LapsedCardsLeechThreshold", "ShowAnswerTimer", "AutomaticallyPlayAudio", "ReplayQuestionAudioOnAnswer") VALUES (3, 3, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
 
 
-INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (9, 2, 1003, true);
-INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (7, 2, 1004, true);
-INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (6, 2, 1005, true);
-INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (10, 2, 1006, true);
-INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (8, 2, 1007, true);
+INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (1, 2, 1003, true);
+INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (2, 2, 1004, true);
+INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (3, 2, 1005, true);
+INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (4, 2, 1006, true);
+INSERT INTO public."Collate" ("Id", "AuthorId", "LatestInstanceId", "IsListed") VALUES (5, 2, 1007, true);
 
 
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1001, 'Basic (optional reversed card) - Card 1', 8, '.card {
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1001, 'Basic', 1, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.572', '2019-06-16 00:51:32', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.581', '2019-06-16 00:53:30', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -894,35 +894,8 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 <hr id=answer>
 
-{{Back}}Card 2{{#Add Reverse}}{{Back}}{{/Add Reverse}}{{FrontSide}}
-
-<hr id=answer>
-
-{{Front}}', 0, 'FrontFalse0FalseBackFalse1FalseAdd ReverseFalse2False', 'Imported from Anki', 1554689669572, B'10001010001110011001110101101100111100011101101000111010111110000001010000001110111111100101001111011101111100101001001011110111001110110011001110100010001111010011011010001000101001011011100111000010000111101100000011010111011110100000011011010011110111110000100110011011011101110000100000100111001100111001000001000100100011110000011101010010110011111111111110011111110000010100111001101011000100111111000111000011011100110100000011001001010110000111100101011001101111110101110111001010100001100011001101111001', NULL, '''/add'':21C ''1'':6A,12C ''2'':17C ''20px'':33 ''add'':9C,18C ''align'':36 ''arial'':29 ''back'':8C,15C,20C ''background'':41 ''background-color'':40 ''basic'':1A ''black'':39 ''card'':4A,5A,11C,16C,25 ''center'':37 ''color'':38,42 ''famili'':28 ''font'':27,31 ''font-famili'':26 ''font-siz'':30 ''front'':7C,13C,24C ''frontsid'':14C,23C ''option'':2A ''revers'':3A,10C,19C,22C ''size'':32 ''text'':35 ''text-align'':34 ''white'':43');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1002, 'Basic (and reversed card) - Card 2', 9, '.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', '\end{document}', false, 'Card 1{{Front}}{{FrontSide}}
-
-<hr id=answer>
-
-{{Back}}Card 2{{Back}}{{FrontSide}}
-
-<hr id=answer>
-
-{{Front}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669577, B'11110001101000101000011111100000010010100110100000000111100100100110001100110110001000001011100111101111000100100001101001001010111101101010011001100101000110111011000111001010001011000011010001011100001110000001101001010101001101110011100101100110001001011110010001011101111000111101011100001001000101001000101011111111011010110000001011000010111010110001100000100011100101110011110111100111100010111010010110000111011010110001000100110011110000001100000011010010100001101000101100110000001111101101010111001000', NULL, '''1'':10C ''2'':6A,15C ''20px'':27 ''align'':30 ''arial'':23 ''back'':8C,13C,16C ''background'':35 ''background-color'':34 ''basic'':1A ''black'':33 ''card'':4A,5A,9C,14C,19 ''center'':31 ''color'':32,36 ''famili'':22 ''font'':21,25 ''font-famili'':20 ''font-siz'':24 ''front'':7C,11C,18C ''frontsid'':12C,17C ''revers'':3A ''size'':26 ''text'':29 ''text-align'':28 ''white'':37');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1003, 'Basic (and reversed card) - Card 1', 9, '.card {
+{{Back}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669581, B'11001001011010101010101000110001111101010000111001001111100000100000111100000100100010101001010011010001001110010101100111010000101100001100000001100011101001010000100011101011101100101110010000011001110101001000101001001111000010111110101010001001011000101101010010110101011100101111000000000010010110110110101101101001011010001100010011100001001010110100111001001111011100001011000111111000011010111101111111111110110001010011101101110101101001000010010010111011000111111111100111110001100101101010011010001010', NULL, '''1'':5C ''20px'':17 ''align'':20 ''arial'':13 ''back'':3C,8C ''background'':25 ''background-color'':24 ''basic'':1A ''black'':23 ''card'':4C,9 ''center'':21 ''color'':22,26 ''famili'':12 ''font'':11,15 ''font-famili'':10 ''font-siz'':14 ''front'':2C,6C ''frontsid'':7C ''size'':16 ''text'':19 ''text-align'':18 ''white'':27');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1002, 'Basic (and reversed card) - Card 1', 2, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -945,57 +918,14 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 <hr id=answer>
 
 {{Front}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669577, B'11010011110101110010110111111111101111001001110001001001110011101100111110111000101001010011111000011010001011010010001010100011110010010001100010110011110101001010101000010001101101100111101110011100110011010111000101001010011111101001000010100101101111011010010011000000101101101011011011001100101000011111111010000010011100001011110011001100111111101101001001100110000110101111010111001111000000111101000010100101001001101011111011101000101100000010110000010111101101011010101010110100110011110001010110011101', NULL, '''1'':6A,10C ''2'':15C ''20px'':27 ''align'':30 ''arial'':23 ''back'':8C,13C,16C ''background'':35 ''background-color'':34 ''basic'':1A ''black'':33 ''card'':4A,5A,9C,14C,19 ''center'':31 ''color'':32,36 ''famili'':22 ''font'':21,25 ''font-famili'':20 ''font-siz'':24 ''front'':7C,11C,18C ''frontsid'':12C,17C ''revers'':3A ''size'':26 ''text'':29 ''text-align'':28 ''white'':37');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1004, 'Basic (type in the answer)', 7, '.card {
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1003, 'Basic (and reversed card) - Card 2', 2, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.571', '2019-06-16 00:51:46', '\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', '\end{document}', false, 'Card 1{{Front}}
-{{type:Back}}{{FrontSide}}
-
-<hr id=answer>
-
-{{Back}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669571, B'11111000110010001101010100111111101110000001010011101101100000001101110010010010000000100011001110101000000100111110110101100100011111011101100100011001111010001010110111110010011100101011110110000101001110101000111000011111000011001001110010110000000101100110101101010111011101110100001111011010010000100100100110100001010101101011001010000001011100000101011100100100110100101111011010011011010111100011001111010010101001001010011100110011100111110010111000111010110111111110010000010101100111100010010011101001', NULL, '''1'':9C ''20px'':23 ''align'':26 ''answer'':5A ''arial'':19 ''back'':7C,12C,14C ''background'':31 ''background-color'':30 ''basic'':1A ''black'':29 ''card'':8C,15 ''center'':27 ''color'':28,32 ''famili'':18 ''font'':17,21 ''font-famili'':16 ''font-siz'':20 ''front'':6C,10C ''frontsid'':13C ''size'':22 ''text'':25 ''text-align'':24 ''type'':2A,11C ''white'':33');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1005, 'Cloze', 6, '.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-
-.cloze {
- font-weight: bold;
- color: blue;
-}
-.nightMode .cloze {
- color: lightblue;
-}', '2019-04-08 02:14:29.57', '2019-06-16 00:51:55', '\documentclass[12pt]{article}
-\special{papersize=3in,5in}
-\usepackage[utf8]{inputenc}
-\usepackage{amssymb,amsmath}
-\pagestyle{empty}
-\setlength{\parindent}{0in}
-\begin{document}
-', '\end{document}', false, 'Cloze{{cloze:Text}}{{cloze:Text}}<br>
-{{Extra}}', 1, 'TextFalse0FalseExtraFalse1False', 'Imported from Anki', 1554689669570, B'01000110011111010010110111001110110000010011011011111011001101001011010100000101101001110001000111100101011010101000000101111000000001101110010010011011110001100001000000010111011011101000110100110100001111010100001000001110110000110010100010000111000001000110100110100010001101110010011000010011011101110001101001100110010110101011011011100001010100011100000111010011100001010110100011000011111001010111100001010000100111000011101000000110000101010010111100111010110100111100001000100011010010010000100110001010', NULL, '''20px'':18 ''align'':21 ''arial'':14 ''background'':26 ''background-color'':25 ''black'':24 ''blue'':35 ''bold'':33 ''card'':10 ''center'':22 ''cloze'':1A,4C,5C,7C,29,37 ''color'':23,27,34,38 ''extra'':3C,9C ''famili'':13 ''font'':12,16,31 ''font-famili'':11 ''font-siz'':15 ''font-weight'':30 ''lightblu'':39 ''nightmod'':36 ''size'':17 ''text'':2C,6C,8C,20 ''text-align'':19 ''weight'':32 ''white'':28');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1006, 'Basic', 10, '.card {
- font-family: arial;
- font-size: 20px;
- text-align: center;
- color: black;
- background-color: white;
-}
-', '2019-04-08 02:14:29.581', '2019-06-16 00:53:30', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1006,8 +936,35 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 <hr id=answer>
 
-{{Back}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669581, B'11001001011010101010101000110001111101010000111001001111100000100000111100000100100010101001010011010001001110010101100111010000101100001100000001100011101001010000100011101011101100101110010000011001110101001000101001001111000010111110101010001001011000101101010010110101011100101111000000000010010110110110101101101001011010001100010011100001001010110100111001001111011100001011000111111000011010111101111111111110110001010011101101110101101001000010010010111011000111111111100111110001100101101010011010001010', NULL, '''1'':5C ''20px'':17 ''align'':20 ''arial'':13 ''back'':3C,8C ''background'':25 ''background-color'':24 ''basic'':1A ''black'':23 ''card'':4C,9 ''center'':21 ''color'':22,26 ''famili'':12 ''font'':11,15 ''font-famili'':10 ''font-siz'':14 ''front'':2C,6C ''frontsid'':7C ''size'':16 ''text'':19 ''text-align'':18 ''white'':27');
-INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1007, 'Basic (optional reversed card) - Card 2', 8, '.card {
+{{Back}}Card 2{{Back}}{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669577, B'11110001101000101000011111100000010010100110100000000111100100100110001100110110001000001011100111101111000100100001101001001010111101101010011001100101000110111011000111001010001011000011010001011100001110000001101001010101001101110011100101100110001001011110010001011101111000111101011100001001000101001000101011111111011010110000001011000010111010110001100000100011100101110011110111100111100010111010010110000111011010110001000100110011110000001100000011010010100001101000101100110000001111101101010111001000', NULL, '''1'':10C ''2'':6A,15C ''20px'':27 ''align'':30 ''arial'':23 ''back'':8C,13C,16C ''background'':35 ''background-color'':34 ''basic'':1A ''black'':33 ''card'':4A,5A,9C,14C,19 ''center'':31 ''color'':32,36 ''famili'':22 ''font'':21,25 ''font-famili'':20 ''font-siz'':24 ''front'':7C,11C,18C ''frontsid'':12C,17C ''revers'':3A ''size'':26 ''text'':29 ''text-align'':28 ''white'':37');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1004, 'Basic (optional reversed card) - Card 1', 3, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', '2019-04-08 02:14:29.572', '2019-06-16 00:51:32', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, 'Card 1{{Front}}{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}Card 2{{#Add Reverse}}{{Back}}{{/Add Reverse}}{{FrontSide}}
+
+<hr id=answer>
+
+{{Front}}', 0, 'FrontFalse0FalseBackFalse1FalseAdd ReverseFalse2False', 'Imported from Anki', 1554689669572, B'10001010001110011001110101101100111100011101101000111010111110000001010000001110111111100101001111011101111100101001001011110111001110110011001110100010001111010011011010001000101001011011100111000010000111101100000011010111011110100000011011010011110111110000100110011011011101110000100000100111001100111001000001000100100011110000011101010010110011111111111110011111110000010100111001101011000100111111000111000011011100110100000011001001010110000111100101011001101111110101110111001010100001100011001101111001', NULL, '''/add'':21C ''1'':6A,12C ''2'':17C ''20px'':33 ''add'':9C,18C ''align'':36 ''arial'':29 ''back'':8C,15C,20C ''background'':41 ''background-color'':40 ''basic'':1A ''black'':39 ''card'':4A,5A,11C,16C,25 ''center'':37 ''color'':38,42 ''famili'':28 ''font'':27,31 ''font-famili'':26 ''font-siz'':30 ''front'':7C,13C,24C ''frontsid'':14C,23C ''option'':2A ''revers'':3A,10C,19C,22C ''size'':32 ''text'':35 ''text-align'':34 ''white'':43');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1005, 'Basic (optional reversed card) - Card 2', 3, '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1030,6 +987,49 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 <hr id=answer>
 
 {{Front}}', 0, 'FrontFalse0FalseBackFalse1FalseAdd ReverseFalse2False', 'Imported from Anki', 1554689669572, B'01011011011101101000111111110100100011000011110001111111010000101000110100000000111101000100010101001100110111010011010001111111000010000101000111111100011010100000110011001111100011101110000110010101101111011010110101101010111101010001110000010111100100001001010000101110010100011011110110000010110111001011010000011001000011110110100001101001110101111110110101111011111010110100110111000010001010110100101001111010011010010100100011100011001101000110101001011000001001111101101110000110100011010111010111111010', NULL, '''/add'':21C ''1'':12C ''2'':6A,17C ''20px'':33 ''add'':9C,18C ''align'':36 ''arial'':29 ''back'':8C,15C,20C ''background'':41 ''background-color'':40 ''basic'':1A ''black'':39 ''card'':4A,5A,11C,16C,25 ''center'':37 ''color'':38,42 ''famili'':28 ''font'':27,31 ''font-famili'':26 ''font-siz'':30 ''front'':7C,13C,24C ''frontsid'':14C,23C ''option'':2A ''revers'':3A,10C,19C,22C ''size'':32 ''text'':35 ''text-align'':34 ''white'':43');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1006, 'Basic (type in the answer)', 4, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', '2019-04-08 02:14:29.571', '2019-06-16 00:51:46', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, 'Card 1{{Front}}
+{{type:Back}}{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}', 0, 'FrontFalse0FalseBackFalse1False', 'Imported from Anki', 1554689669571, B'11111000110010001101010100111111101110000001010011101101100000001101110010010010000000100011001110101000000100111110110101100100011111011101100100011001111010001010110111110010011100101011110110000101001110101000111000011111000011001001110010110000000101100110101101010111011101110100001111011010010000100100100110100001010101101011001010000001011100000101011100100100110100101111011010011011010111100011001111010010101001001010011100110011100111110010111000111010110111111110010000010101100111100010010011101001', NULL, '''1'':9C ''20px'':23 ''align'':26 ''answer'':5A ''arial'':19 ''back'':7C,12C,14C ''background'':31 ''background-color'':30 ''basic'':1A ''black'':29 ''card'':8C,15 ''center'':27 ''color'':28,32 ''famili'':18 ''font'':17,21 ''font-famili'':16 ''font-siz'':20 ''front'':6C,10C ''frontsid'':13C ''size'':22 ''text'':25 ''text-align'':24 ''type'':2A,11C ''white'':33');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1007, 'Cloze', 5, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+.cloze {
+ font-weight: bold;
+ color: blue;
+}
+.nightMode .cloze {
+ color: lightblue;
+}', '2019-04-08 02:14:29.57', '2019-06-16 00:51:55', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, 'Cloze{{cloze:Text}}{{cloze:Text}}<br>
+{{Extra}}', 1, 'TextFalse0FalseExtraFalse1False', 'Imported from Anki', 1554689669570, B'01000110011111010010110111001110110000010011011011111011001101001011010100000101101001110001000111100101011010101000000101111000000001101110010010011011110001100001000000010111011011101000110100110100001111010100001000001110110000110010100010000111000001000110100110100010001101110010011000010011011101110001101001100110010110101011011011100001010100011100000111010011100001010110100011000011111001010111100001010000100111000011101000000110000101010010111100111010110100111100001000100011010010010000100110001010', NULL, '''20px'':18 ''align'':21 ''arial'':14 ''background'':26 ''background-color'':25 ''black'':24 ''blue'':35 ''bold'':33 ''card'':10 ''center'':22 ''cloze'':1A,4C,5C,7C,29,37 ''color'':23,27,34,38 ''extra'':3C,9C ''famili'':13 ''font'':12,16,31 ''font-famili'':11 ''font-siz'':15 ''font-weight'':30 ''lightblu'':39 ''nightmod'':36 ''size'':17 ''text'':2C,6C,8C,20 ''text-align'':19 ''weight'':32 ''white'':28');
 
 
 
