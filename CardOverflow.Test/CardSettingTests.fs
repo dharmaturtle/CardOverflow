@@ -68,6 +68,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
 
     // Insert new card
     let! collates = TestCollateRepo.Search c.Db "Basic"
+    let branchId = 1
     let collate = collates.Single(fun x -> x.Name = "Basic")
     let! r =
         SanitizeCardRepository.Update c.Db userId
@@ -80,8 +81,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                 CollateInstance = collate
                 Kind = NewOriginal_TagIds []
             }
-    let instanceId = r.Value
-    Assert.Equal(1001, instanceId)
+    Assert.Equal(branchId, r.Value)
 
     // new card has default option
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)
