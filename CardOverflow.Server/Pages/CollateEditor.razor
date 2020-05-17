@@ -71,16 +71,18 @@
             </tbody>
           </table>
           <div class="row">
-            <div class="col-sm">
-              <h5 class="text-center">Question Template</h5>
-              <InputTextArea @bind-Value=@Instance.QuestionXemplate class="form-control code" rows="25" />
-              <ValidationMessage For=@(() => Instance.QuestionXemplate) />
-            </div>
-            <div class="col-sm">
-              <h5 class="text-center">Answer Template</h5>
-              <InputTextArea @bind-Value=@Instance.AnswerXemplate class="form-control code" rows="25" />
-              <ValidationMessage For=@(() => Instance.AnswerXemplate) />
-            </div>
+            @foreach (var template in Instance.JustTemplates) {
+              <div class="col-sm">
+                <h5 class="text-center">Question Template</h5>
+                <InputTextArea @bind-Value=@template.Front class="form-control code" rows="25" />
+                <ValidationMessage For=@(() => template.Front) />
+              </div>
+              <div class="col-sm">
+                <h5 class="text-center">Answer Template</h5>
+                <InputTextArea @bind-Value=@template.Back class="form-control code" rows="25" />
+                <ValidationMessage For=@(() => template.Back) />
+              </div>
+            }
             <div class="col-sm">
               <h5 class="text-center">CSS</h5>
               <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />

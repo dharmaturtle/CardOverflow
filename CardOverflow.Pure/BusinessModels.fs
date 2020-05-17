@@ -103,6 +103,7 @@ module Fields =
         MappingTools.splitByRecordSeparator
         >> List.map Field.fromString
 
+[<CLIMutable>]
 type Template = {
     Name: string
     Front: string
