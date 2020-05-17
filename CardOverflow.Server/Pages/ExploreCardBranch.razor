@@ -56,7 +56,7 @@
     if (x.IsOk) {
       var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Root.CardId));
       if (ac.IsOk) {
-        await UpdateAcquiredCard.InvokeAsync(ac.ResultValue.ToList());
+        await UpdateAcquiredCard.InvokeAsync(ac.ResultValue);
         _UpdateUsers(-1, Status.InstanceId?.Value);
         Status = status;
         await UpdateStatus.InvokeAsync(Status);

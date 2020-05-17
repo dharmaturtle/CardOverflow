@@ -363,8 +363,8 @@ module CardRepository =
         return!
             e.Select(fun (e, t) ->
                 AcquiredCard.load (Set.ofSeq t) e true
-            ).ToList()
-            |> Result.consolidate
+            ) |> Result.consolidate
+            |> Result.map toResizeArray
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
