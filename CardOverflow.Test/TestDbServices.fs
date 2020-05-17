@@ -1,6 +1,7 @@
 namespace CardOverflow.Test
 
 open CardOverflow.Api
+open CardOverflow.Debug
 open System
 open System.Linq
 open System.Runtime.CompilerServices

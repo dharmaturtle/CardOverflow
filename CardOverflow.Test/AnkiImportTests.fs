@@ -29,7 +29,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
         AnkiImportTestData.relationships.Cols.Single().Models
         |> Anki.parseModels userId
         |> Result.getOk
-        |> List.collect snd
+        |> List.map snd
         |> List.groupBy (fun x -> x.AnkiId)
         |> List.map snd
     

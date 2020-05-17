@@ -37,7 +37,7 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) = task {
         theCollective.Id
         ankiModels
     |> Result.getOk
-    |> Seq.collect (snd >> Seq.map toEntity)
+    |> Seq.map (snd >> toEntity)
     |> db.CollateInstance.AddRange
     do! db.SaveChangesAsyncI () }
 

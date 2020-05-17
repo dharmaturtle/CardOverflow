@@ -278,33 +278,27 @@ module Anki =
                             }, g.Required.Field "ord" Decode.int |> int16) |> Decode.list )
                 |> List.sortBy (fun (_, ord) -> ord)
                 |> List.map fst
-            collates
-            |> List.map(fun collate ->
-                let namePostfix =
-                    if collates.Count() >= 2
-                    then " - " + collate.Name
-                    else ""
-                {   AnkiId = get.Required.Field "id" Decode.int64
-                    AuthorId = userId
-                    Name = get.Required.Field "name" Decode.string + namePostfix
-                    Css = get.Required.Field "css" Decode.string
-                    Fields =
-                        get.Required.Field "flds" (Decode.object(fun get ->
-                            { Name = get.Required.Field "name" Decode.string
-                              IsRightToLeft = get.Required.Field "rtl" Decode.bool
-                              Ordinal = get.Required.Field "ord" Decode.int |> byte
-                              IsSticky = get.Required.Field "sticky" Decode.bool })
-                            |> Decode.list)
-                    Templates = collates
-                    Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
-                    Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
-                    DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
-                    DefaultCardSettingId = 0
-                    LatexPre = get.Required.Field "latexPre" Decode.string
-                    LatexPost = get.Required.Field "latexPost" Decode.string
-                    DeckId = get.Required.Field "did" Decode.int64
-                    IsCloze = get.Required.Field "type" ankiIntToBool
-                }))
+            {   AnkiId = get.Required.Field "id" Decode.int64
+                AuthorId = userId
+                Name = get.Required.Field "name" Decode.string
+                Css = get.Required.Field "css" Decode.string
+                Fields =
+                    get.Required.Field "flds" (Decode.object(fun get ->
+                        { Name = get.Required.Field "name" Decode.string
+                          IsRightToLeft = get.Required.Field "rtl" Decode.bool
+                          Ordinal = get.Required.Field "ord" Decode.int |> byte
+                          IsSticky = get.Required.Field "sticky" Decode.bool })
+                        |> Decode.list)
+                Templates = collates
+                Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
+                Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
+                DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
+                DefaultCardSettingId = 0
+                LatexPre = get.Required.Field "latexPre" Decode.string
+                LatexPost = get.Required.Field "latexPost" Decode.string
+                DeckId = get.Required.Field "did" Decode.int64
+                IsCloze = get.Required.Field "type" ankiIntToBool
+            })
         |> Decode.keyValuePairs
         |> Decode.fromString
     type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
@@ -343,7 +337,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (collatesByModelId: Map<string, {| Entity: CollateInstanceEntity; Collate: AnkiCollateInstance |} list>)
+        (collateByModelId: Map<string, {| Entity: CollateInstanceEntity; Collate: AnkiCollateInstance |}>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -363,7 +357,7 @@ module Anki =
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
-                let collates = collatesByModelId.[string note.Mid]
+                let collate = collateByModelId.[string note.Mid]
                 let toCard fields collate noteOrd =
                     let c = {
                         AnkiNoteId = note.Id
@@ -380,8 +374,7 @@ module Anki =
                 let noteIdCardsAndTags =
                     result {
                         let! cards =
-                            if collates.First().Collate.IsCloze then result {
-                                let collate = collates |> Seq.exactlyOne
+                            if collate.Collate.IsCloze then result {
                                 let valueByFieldName =
                                     Seq.zip
                                         <| collate.Collate.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
@@ -399,7 +392,9 @@ module Anki =
                                         <| clozeIndex - 1s // ankidb's cards' ord column is 0 indexed for cloze deletions
                                 )}
                             else
-                                collates |> List.mapi (fun i x -> toCard fieldValues x.Entity (i |> int16)) |> Ok
+                                collate.Collate.Templates
+                                |> List.mapi (fun i _ -> toCard fieldValues collate.Entity (i |> int16))
+                                |> Ok
                         let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
                         return (note.Id, (cards, relevantTags))
                     }

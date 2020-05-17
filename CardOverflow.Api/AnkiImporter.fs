@@ -137,7 +137,7 @@ module AnkiImporter =
                     | None -> collate.CopyToNewWithCollate userId collateEntity defaultCardSetting
                     |> fun x -> {| Entity = x; Collate = collate |}
                 Anki.parseModels userId col.Models
-                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> List.map (toEntity <| CollateEntity(AuthorId = userId))))
+                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> (toEntity <| CollateEntity(AuthorId = userId))))
             let usersTags =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.overValue fst
