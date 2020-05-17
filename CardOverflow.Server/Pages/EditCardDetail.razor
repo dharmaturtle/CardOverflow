@@ -105,7 +105,6 @@
 }
 
 @code {
-  [Parameter] public AcquiredCard Card { get; set; }
   [Parameter] public ViewEditCardCommand EditCard { get; set; }
   [Parameter] public bool NewEditCardOnSave { get; set; }
   [Parameter] public IEnumerable<ViewCollateWithAllInstances> Collates { get; set; }
@@ -122,7 +121,7 @@
       Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User?.Id ?? 0));
     }
     if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewOriginal_TagIds.NewNewOriginal_TagIds(FSharpList<int>.Empty));
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty));
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
@@ -141,7 +140,7 @@
       resultingBranchId = result.ResultValue;
       if (NewEditCardOnSave) {
         var fieldValues = EditCard.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewOriginal_TagIds.NewNewOriginal_TagIds(FSharpList<int>.Empty));
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty));
         UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
         _IsDisabled = false;
       }

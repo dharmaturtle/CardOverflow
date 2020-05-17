@@ -1,4 +1,4 @@
-@page "/card/{CardId:int}/edit"
+@page "/branch/{BranchId:int}/edit"
 @page "/curate/card/copy/{CopySourceInstanceId:int}"
 @page "/curate/card/branch/{BranchSourceCardId:int}"
 @attribute [Authorize]
@@ -15,41 +15,39 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_card == null || _command == null) {
+@if (_command == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@_card EditCard=@_command />
+  <EditCardDetail EditCard=@_command />
 }
 
 @code {
-  [Parameter] public int CardId { get; set; }
+  [Parameter] public int BranchId { get; set; }
   [Parameter] public int CopySourceInstanceId { get; set; }
   [Parameter] public int BranchSourceCardId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  AcquiredCard _card;
   ViewEditCardCommand _command;
 
-  private async Task _TrySetCommandAndCard(Task<FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>> result) {
+  private async Task _TrySetCommandAndCard(Task<FSharpResult<ViewEditCardCommand, string>> result) {
     var x = await result;
     if (x.IsOk) {
-      _command = x.ResultValue.Item1;
-      _card = x.ResultValue.Item2;
+      _command = x.ResultValue;
     } else {
       LoadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
     }
   }
 
-  private Task<FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>> _GetCommandAndCard() {
-    if (CardId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getEdit(db, User.Id, CardId));
+  private Task<FSharpResult<ViewEditCardCommand, string>> _GetCommandAndCard() {
+    if (BranchId != 0) {
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVUpdateBranchId(BranchId)));
     } else if (CopySourceInstanceId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getCopy(db, User.Id, CopySourceInstanceId));
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVNewCopySourceInstanceId(CopySourceInstanceId)));
     } else if (BranchSourceCardId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getBranch(db, User.Id, User.DisplayName, BranchSourceCardId));
+      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVNewBranchSourceCardId(BranchSourceCardId)));
     } else {
-      return FSharpResult<Tuple<ViewEditCardCommand, AcquiredCard>, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
+      return FSharpResult<ViewEditCardCommand, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
     }
   }
 
