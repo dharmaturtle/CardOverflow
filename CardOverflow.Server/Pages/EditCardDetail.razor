@@ -21,7 +21,7 @@
         <div class="row">
           <div class="col-sm">
             @foreach (var field in EditCard.FieldValues) {
-              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) MustBeCommunal=@(EditCard.CollateInstance.ClozeFields.Contains(field.EditField.Name)) IsDisabled=@_IsDisabled />
+              <EditCardField Field=@field Card=@Card ValueUpdated=@(x => field.Value = x) IsDisabled=@_IsDisabled />
             }
           </div>
           <div class="col-sm">
@@ -67,13 +67,13 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditCard.Source.TryGetCopySourceInstanceId(out var instanceId)) {
+          @if (EditCard.Kind.TryGetCopySourceInstanceId(out var instanceId)) {
             <span>Copied from</span>
             <a href="cardinstance/@instanceId">
               Card
             </a>
           }
-          @if (EditCard.Source.TryGetBranchSourceCardId(out var cardId)) {
+          @if (EditCard.Kind.TryGetBranchSourceCardId(out var cardId)) {
             <span>Branched from</span>
             <a href="card/@cardId">
               Card
@@ -90,28 +90,13 @@
           <div class="row float-right">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            @if (_resultingInstanceIds != null) {
-              @if (_resultingInstanceIds.Count() == 1) {
-                <span>
-                  Saved! Link to
-                  <a href="cardinstance/@_resultingInstanceIds.Single()">
-                    card.
-                  </a>
-                </span>
-              } else {
-                <span>
-                  Saved! Link to cards:&nbsp;
-                </span>
-                @foreach (var (resultingInstanceId, i) in _resultingInstanceIds.Select((id, i) => (id, i))) {
-                  <a href="cardinstance/@resultingInstanceId">
-                    card @(i + 1)
-                  </a>
-                  @if (i + 1 != _resultingInstanceIds.Count()) {
-                    <span>,&nbsp;</span>
-                  }
-                }
-              }
-            }
+            <span>
+              Saved! Link to
+              @*highTODO fix, there's no /branch*@
+              <a href="branch/@resultingBranchId">
+                card.
+              </a>
+            </span>
           </div>
         </div>
       </div>
@@ -130,14 +115,14 @@
   private int SelectedCollateInstanceId;
   private int _SelectedCardSettingId;
   private bool _IsDisabled;
-  private List<int> _resultingInstanceIds;
+  private int resultingBranchId;
 
   protected override async Task OnInitializedAsync() {
     if (Collates == null) {
       Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User?.Id ?? 0));
     }
     if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), CardSource.Original);
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewOriginal_TagIds.NewNewOriginal_TagIds(FSharpList<int>.Empty));
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
@@ -150,20 +135,13 @@
 
   async Task UpdateCard() {
     _IsDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeCardRepository.Update(db, User.Id, Card, EditCard));
+    var result = await DbExecutor.QueryAsync(db => SanitizeCardRepository.Update(db, User.Id, EditCard));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
-      _resultingInstanceIds = result.ResultValue.Item1;
+      resultingBranchId = result.ResultValue;
       if (NewEditCardOnSave) {
-        var fieldValues = EditCard.FieldValues.Select(x => {
-          if (EditCard.CommunalNonClozeFieldValues.Contains(x)) {
-            var communalInstanceId = result.ResultValue.Item2.Single(xx => x.EditField.Name == xx.Item1).Item2;
-            return new EditFieldAndValue(x.EditField, x.Value, new CommunalFieldValue(communalInstanceId, new List<int> { Card.BranchInstanceMeta.Id }));
-          } else {
-            return new EditFieldAndValue(x.EditField, "", x.Communal);
-          }
-        }).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, CardSource.Original);
+        var fieldValues = EditCard.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewOriginal_TagIds.NewNewOriginal_TagIds(FSharpList<int>.Empty));
         UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
         _IsDisabled = false;
       }
@@ -188,12 +166,10 @@
         (valuesByField.ContainsKey(field.Name)
           ? valuesByField[field.Name] ?? ""
           : "")
-          .Apply(value => {
-            return new EditFieldAndValue(
+          .Apply(value =>
+            new EditFieldAndValue(
               field,
-              value ?? "",
-              EditCard.FieldValues.SingleOrDefault(x => x.EditField.Name == field.Name)?.Communal ?? FSharpOption<CommunalFieldValue>.None);
-          }
+              value ?? "")
       )).ToList();
   }
 
