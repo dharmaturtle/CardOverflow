@@ -199,7 +199,7 @@ Back
             |> Seq.sortByDescending (fun x -> x.Field.Name)
     )
     Assert.Equal<string seq>(
-        [aTag; bTag],
+        [aTag; bTag] |> List.sort,
         (CardRepository.GetAcquiredPages c.Db userId 1 "")
             .GetAwaiter()
             .GetResult()
@@ -207,6 +207,7 @@ Back
             .Single()
             |> Result.getOk
             |> fun x -> x.Tags
+            |> List.sort
     )}
 
 [<Fact>]

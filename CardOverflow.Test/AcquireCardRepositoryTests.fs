@@ -20,7 +20,7 @@ open FsToolkit
 open FsToolkit.ErrorHandling
 
 [<Fact>]
-let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
+let ``CardRepository.deleteAcquiredCard works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
@@ -33,8 +33,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     let! ac = getAcquired ()
     let ac = ac.Value.Single()
 
-    let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId
-    Assert.Null x.Value
+    do! CardRepository.deleteAcquiredCard c.Db userId ac.CardId
     Assert.Empty c.Db.AcquiredCard
 
     let reacquire () = task { do! CardRepository.AcquireCardAsync c.Db userId ac.BranchInstanceMeta.Id |> TaskResult.getOk }
@@ -50,8 +49,7 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
         } |> UpdateRepository.card c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
-    let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId
-    Assert.Null x.Value
+    do! CardRepository.deleteAcquiredCard c.Db userId ac.CardId
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
 
     let userId = 3
@@ -77,17 +75,18 @@ let ``CardRepository.deleteAcquired works``(): Task<unit> = task {
     Assert.NotEmpty c.Db.Relationship_AcquiredCard
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty c.Db.Tag_AcquiredCard
-    let! x = CardRepository.deleteAcquired c.Db userId ac.AcquiredCardId // can delete after adding a history, tag, and relationship
+    do! CardRepository.deleteAcquiredCard c.Db userId ac.CardId // can delete after adding a history, tag, and relationship
     Assert.Null x.Value
     Assert.Equal(card2, c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.CardId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_AcquiredCard
     Assert.Empty c.Db.History
     Assert.Empty c.Db.Tag_AcquiredCard
     
-    do! reacquire ()
-    let otherUserId = 2
-    let! x = CardRepository.deleteAcquired c.Db otherUserId ac.AcquiredCardId
-    Assert.Equal("You don't own that card.", x.error) // other users can't delete your card
+    // uncomment if behavior changes
+    //do! reacquire ()
+    //let otherUserId = 2
+    //do! CardRepository.deleteAcquiredCard c.Db otherUserId ac.CardId
+    //Assert.Equal("You don't own that card.", x.error) // other users can't delete your card
     }
 
 [<Fact>]
