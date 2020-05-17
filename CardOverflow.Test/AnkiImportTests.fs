@@ -35,7 +35,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
     
     let myBasic = collates.[0].First()
     Assert.Equal(
-        "Basic (optional reversed custom card) with source - ReversibleForward",
+        "Basic (optional reversed custom card) with source",
         myBasic.Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"; "Front2"; "Back2"; "Source"],
@@ -49,36 +49,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
 
     let sketchy = collates.[1]
     Assert.Equal<string seq>(
-        ["SketchyPharm - Card 10"
-         "SketchyPharm - Card 11"
-         "SketchyPharm - Card 12"
-         "SketchyPharm - Card 13"
-         "SketchyPharm - Card 14"
-         "SketchyPharm - Card 15"
-         "SketchyPharm - Card 16"
-         "SketchyPharm - Card 17"
-         "SketchyPharm - Card 18"
-         "SketchyPharm - Card 19"
-         "SketchyPharm - Card 20"
-         "SketchyPharm - Card 21"
-         "SketchyPharm - Card 22"
-         "SketchyPharm - Card 23"
-         "SketchyPharm - Card 24"
-         "SketchyPharm - Card 25"
-         "SketchyPharm - Card 26"
-         "SketchyPharm - Card 27"
-         "SketchyPharm - Card 28"
-         "SketchyPharm - Card 29"
-         "SketchyPharm - Card 30"
-         "SketchyPharm - Card 31"
-         "SketchyPharm - Card 32"
-         "SketchyPharm - Card 36"
-         "SketchyPharm - Card 37"
-         "SketchyPharm - Card 38"
-         "SketchyPharm - Card 39"
-         "SketchyPharm - Card 40"
-         "SketchyPharm - Card 8"
-         "SketchyPharm - Card 9" ],
+        ["SketchyPharm"],
         sketchy.Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string seq>(
         ["Entire Sketch"; "Extra"; "Extra 10"; "Extra 11"; "Extra 12"; "Extra 13";
@@ -204,7 +175,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     Assert.Equal(18, c.Db.Card.Count())
     Assert.Equal(18, c.Db.BranchInstance.Count())
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 1, c.Db.Collate.Count())
-    Assert.Equal(24, c.Db.CollateInstance.Count())
+    Assert.Equal(10, c.Db.CollateInstance.Count())
 
     let getInstances (collateName: string) =
         c.Db.CollateInstance
@@ -269,8 +240,8 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     let! x = AnkiImporter.save c.Db ankiDb userId Map.empty
     Assert.Null x.Value
     Assert.Equal<IEnumerable<string>>(
-        [   "4/8/2019 02:14:29"
-            "4/8/2019 02:14:29"
+        [   "4/23/2020 19:40:46"
+            "4/23/2020 19:40:46"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
@@ -280,10 +251,10 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         c.Db.CollateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
-        [   "6/16/2019 00:51:28"
+        [   "4/23/2020 19:40:46"
+            "4/23/2020 19:40:46"
             "6/16/2019 00:51:28"
-            "6/16/2019 00:51:32"
-            "6/16/2019 00:51:32"
+            "6/16/2019 00:51:28"
             "6/16/2019 00:51:46"
             "6/16/2019 00:51:55"
             "6/16/2019 00:53:30"
@@ -357,7 +328,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         Assert.Empty card.Instance.CommunalFields
 
     Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
+    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 1, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count, c.Db.CollateInstance.Count())
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 2, c.Db.LatestCollateInstance.Count())
     }

@@ -62,7 +62,7 @@ let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     }
 
 let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<int> =
-    add "Basic (and reversed card) - Card 1" <| normalCommand []
+    add "Basic (and reversed card)" <| normalCommand []
 
 let addBasicCard =
     add "Basic" <| normalCommand []
