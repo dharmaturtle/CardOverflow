@@ -17,6 +17,7 @@
 @code {
   [Parameter] public int CardId { get; set; }
   [Parameter] public int BranchInstanceId { get; set; }
+  [Parameter] public short? BranchInstanceIndex { get; set; }
   [Parameter] public int CollateId { get; set; }
   [Parameter] public int CollateInstanceId { get; set; }
   [Parameter] public int CommunalFieldId { get; set; }
@@ -32,7 +33,7 @@
     if (CardId != 0) {
       middle = "card/" + CardId;
     } else if (BranchInstanceId != 0) {
-      middle = "cardinstance/" + BranchInstanceId;
+      middle = "branchinstance/" + BranchInstanceId + "/" + BranchInstanceIndex ?? "";
     } else if (CollateId != 0) {
       middle = "collate/" + CollateId;
     } else if (CollateInstanceId != 0) {

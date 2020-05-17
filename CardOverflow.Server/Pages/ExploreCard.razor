@@ -40,7 +40,12 @@
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
         <ExploreCardIFrameHeader Card=@Card Instance=@Instance />
-        <ResizingIframe BranchInstanceId=@Instance.Id Back />
+        @foreach (var i in Instance.Indexes) {
+          <ResizingIframe BranchInstanceId=@Instance.Id BranchInstanceIndex=@i Back />
+          @if (AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Instance.Id)) {
+            <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Instance.Id && x.Index == i)) />
+          }
+        }
       }
     </div>
   </div>
