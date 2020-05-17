@@ -299,8 +299,8 @@ type CommunalFieldInstance with
         Value = entity.Value }
 
 type BranchInstanceMeta with
-    static member loadIndex i isAcquired isLatest (entity: BranchInstanceEntity) =
-        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[i]
+    static member loadIndex (i: int16) isAcquired isLatest (entity: BranchInstanceEntity) =
+        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
             CardId = entity.CardId
             BranchId = entity.BranchId
@@ -315,9 +315,9 @@ type BranchInstanceMeta with
             CommunalFields = entity.CommunalFieldInstance_BranchInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Users = entity.Users
         }
-    static member load = BranchInstanceMeta.loadIndex 0
+    static member load = BranchInstanceMeta.loadIndex 0s
     static member loadAll isAcquired isLatest (entity: BranchInstanceEntity) =
-        [0 .. int entity.MaxIndexInclusive]
+        [0s .. entity.MaxIndexInclusive]
         |> List.map(fun i -> BranchInstanceMeta.loadIndex i isAcquired isLatest entity)
     static member initialize =
         {   Id = 0
@@ -385,6 +385,8 @@ type AcquiredCard with
         {   CardId = 0
             BranchId = 0
             AcquiredCardId = 0
+            BranchInstanceMeta = BranchInstanceMeta.initialize
+            Index = 0s
             UserId = userId
             CardState = CardState.Normal
             IsLapsed = false
@@ -392,7 +394,6 @@ type AcquiredCard with
             IntervalOrStepsIndex = NewStepsIndex 0uy
             Due = DateTime.UtcNow
             CardSettingId = cardSettingId
-            BranchInstanceMeta = BranchInstanceMeta.initialize
             Tags = tags
         }
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
@@ -401,6 +402,8 @@ type AcquiredCard with
             {   CardId = entity.CardId
                 BranchId = entity.BranchId
                 AcquiredCardId = entity.Id
+                BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isAcquired entity.IsLatest entity.BranchInstance
+                Index = entity.Index
                 UserId = entity.UserId
                 CardState = cardState
                 IsLapsed = entity.IsLapsed
@@ -408,7 +411,6 @@ type AcquiredCard with
                 IntervalOrStepsIndex = entity.IntervalOrStepsIndex |> IntervalOrStepsIndex.intervalFromDb
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
-                BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isAcquired entity.IsLatest entity.BranchInstance
                 Tags = usersTags |> List.ofSeq
             }
         }

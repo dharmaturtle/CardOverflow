@@ -301,6 +301,7 @@ type BranchInstanceView = {
         Helper.maxIndexInclusive
             (this.CollateInstance.Templates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
+    member this.Indexes = [0s .. this.MaxIndexInclusive]
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
         match this.CollateInstance.Templates with
         | Standard ts -> 
@@ -368,7 +369,8 @@ type BranchInstanceMeta = {
     StrippedBack: string
     CommunalFields: CommunalFieldInstance ResizeArray
     Users: int
-}
+} with
+    member this.Indexes = [0s .. this.MaxIndexInclusive]
 
 [<CLIMutable>]
 type AcquiredCard = {
@@ -377,6 +379,7 @@ type AcquiredCard = {
     CardId: int
     BranchId: int
     BranchInstanceMeta: BranchInstanceMeta
+    Index: int16
     CardState: CardState
     IsLapsed: bool
     EaseFactorInPermille: int16
