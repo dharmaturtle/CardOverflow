@@ -48,13 +48,16 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     use c = new TestContainer()
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
-    let! collate = SanitizeCollate.AllInstances c.Db 1
+    let branchId = 1
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
-            CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
-            Kind = NewOriginal_TagIds []
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = Update_BranchId_Title (branchId, null)
         } |> UpdateRepository.card c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
@@ -66,7 +69,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     let! (cards: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedInstanceId, cards.Single().BranchInstanceMeta.Id)
+    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
 
     // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
     let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId oldInstanceId
