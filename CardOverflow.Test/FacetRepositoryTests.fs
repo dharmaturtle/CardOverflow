@@ -277,13 +277,16 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicCard c.Db userId []
-    let! collate = SanitizeCollate.AllInstances c.Db 1
+    let branchId = 1
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =
         {   EditCardCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
-            CollateInstance = collate.Instances.Single() |> ViewCollateInstance.copyTo
-            Kind = NewOriginal_TagIds []
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = Update_BranchId_Title (branchId, null)
         } |> UpdateRepository.card c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
