@@ -510,15 +510,15 @@ let ``Card search works`` (): Task<unit> = task {
     let search = SanitizeCollate.Search c.Db userId 1
     let! collates = search "Cloze"
     Assert.Equal("Cloze", collates.Results.Single().Name)
-    Assert.Equal(3, collates.Results.Single().CollateUsers)
+    Assert.Equal(1, collates.Results.Single().CollateUsers)
     Assert.False(collates.Results.Single().IsAcquired) // most recent cloze is not acquired because it's missing Extra. Why Damien?
     let! collates = search "type"
     Assert.Equal("Basic (type in the answer)", collates.Results.Single().Name)
-    Assert.Equal(3, collates.Results.Single().CollateUsers)
+    Assert.Equal(1, collates.Results.Single().CollateUsers)
     Assert.True(collates.Results.Single().IsAcquired)
     let! collates = search "Basic"
     Assert.Equal(4, collates.Results.Count())
-    Assert.True(collates.Results.All(fun x -> x.CollateUsers = 3))
+    Assert.True(collates.Results.All(fun x -> x.CollateUsers = 1))
     Assert.True(collates.Results.All(fun x -> x.IsAcquired))
     }
 
