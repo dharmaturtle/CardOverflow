@@ -30,5 +30,20 @@ namespace ThoughtDesign.WebLibrary {
     public static ContentResult ToTextHtmlContent(this string s, ControllerBase controllerBase) =>
       controllerBase.Content(s, "text/html");
 
+    public static IEnumerable<T> ZipLongest<T1, T2, T>(this IEnumerable<T1> first, IEnumerable<T2> second, Func<T1, T2, T> operation) { // https://stackoverflow.com/a/44010411
+      using var iter1 = first.GetEnumerator();
+      using var iter2 = second.GetEnumerator();
+      while (iter1.MoveNext()) {
+        if (iter2.MoveNext()) {
+          yield return operation(iter1.Current, iter2.Current);
+        } else {
+          yield return operation(iter1.Current, default);
+        }
+      }
+      while (iter2.MoveNext()) {
+        yield return operation(default, iter2.Current);
+      }
+    }
+
   }
 }
