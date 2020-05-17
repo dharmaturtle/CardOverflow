@@ -281,8 +281,12 @@ type BranchInstanceView with
         let e = this.CopyToNew communalFields
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        e.Card <- branch.Card
-        e.CardId <- branch.Card.Id
+        if branch.Card = null then
+            if branch.CardId = 0 then failwith "CardId is 0, you gotta .Include it"
+            e.CardId <- branch.CardId
+        else
+            e.Card <- branch.Card
+            e.CardId <- branch.Card.Id
         e.Branch <- branch
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive
@@ -364,6 +368,7 @@ type AcquiredCard with
     member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
+        entity.CardId <- this.CardId
         entity.Index <- index
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed

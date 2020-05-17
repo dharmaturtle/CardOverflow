@@ -360,7 +360,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             //"XXXXXX".D(sprintf "Branch instance #%i should have count #%i" id count)
             do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
-    let! _ = addBasicCard c.Db user1 []
+    let! _ = addBasicCard c.Db user1 ["A"; "B"]
     do! assertCount
             [og_c, 1]
             [og_b, 1]
@@ -377,9 +377,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db user1 updated.load
-    let instanceId = x.Value
-    Assert.Equal(ogEdit_i, instanceId)
+    let! actualBranchId = UpdateRepository.card c.Db user1 updated.load |> TaskResult.getOk
+    Assert.Equal(og_b, actualBranchId)
     do! assertCount
             [og_c, 1]
             [og_b, 1]
@@ -435,9 +434,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db user2 updated.load
-    let instanceIds = x.Value
-    Assert.Equal(copy_i, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    Assert.Equal(copy_b, actualBranchId)
     do! assertCount
             [og_c, 1;              copy_c, 1]
             [og_b, 1;              copy_b, 1]
@@ -451,7 +449,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! old = SanitizeCardRepository.getUpsert c.Db <| VNewCopySourceInstanceId missingInstanceId
     
-    Assert.Equal(sprintf "Card instance %i not found" missingInstanceId, old.error)
+    Assert.Equal(sprintf "Branch Instance #%i not found." missingInstanceId, old.error)
     do! assertCount
             [og_c, 1;              copy_c, 1]
             [og_b, 1;              copy_b, 1]
@@ -469,9 +467,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db user2 updated.load
-    let instanceIds = x.Value
-    Assert.Equal(branch_i, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    Assert.Equal(og_b_2, actualBranchId)
     let! x, _ = ExploreCardRepository.instance c.Db user2 branch_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 3 1
             [ { Name = "A"
@@ -490,7 +487,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // user2 branchs missing card
     let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId missingCardId
-    Assert.Equal(sprintf "Card #%i doesn't exist" missingInstanceId, old.error)
+    Assert.Equal(sprintf "Card #%i not found." missingInstanceId, old.error)
     do! assertCount
             [og_c,     2 ;    copy_c, 1 ]
             [og_b,     1 ;    copy_b, 1 ;
@@ -510,9 +507,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db user2 updated.load
-    let instanceIds = x.Value
-    Assert.Equal(copy2x_i, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    Assert.Equal(copy2x_b, actualBranchId)
     let! x, _ = ExploreCardRepository.instance c.Db user2 copy2x_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 1 1 []
     do! assertCount
@@ -534,9 +530,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! x = UpdateRepository.card c.Db user2 updated.load
-    let instanceIds = x.Value
-    Assert.Equal(copyOfBranch_i, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    Assert.Equal(copyOfBranch_b, actualBranchId)
     let! x, _ = ExploreCardRepository.instance c.Db user2 copyOfBranch_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 1 1 []
     do! assertCount
@@ -559,10 +554,9 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
     
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = user2))
-    let! x = UpdateRepository.card c.Db user2 updated.load
+    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = user2))
-    let instanceIds = x.Value
-    Assert.Equal(branchOfCopy_i, instanceIds)
+    Assert.Equal(branchOfCopy_b, actualBranchId)
     let! x, _ = ExploreCardRepository.instance c.Db user2 branchOfCopy_i |> TaskResult.getOk
     do! asserts user2 x.CardId x.BranchId x.Id newValue 2 1 []
     do! assertCount

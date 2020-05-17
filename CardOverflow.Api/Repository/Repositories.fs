@@ -322,12 +322,14 @@ module CardRepository =
                     new'.BranchInstance <- branchInstance
                     new'.Branch <- branchInstance.Branch
                     new'.Card <- branchInstance.Card
+                    new'.CardId <- branchInstance.CardId
                     db.AcquiredCard.AddI new'
                     Some new'
                 | (Some _, Some old') ->
                     old'.BranchInstance <- branchInstance
                     old'.Branch <- branchInstance.Branch
                     old'.Card <- branchInstance.Card
+                    old'.CardId <- branchInstance.CardId
                     Some old'
                 | (None, None) -> failwith "impossible"
             ) |> List.choose id
