@@ -22,7 +22,7 @@
   <div class="row">
     @if (Instance == null) {
       <div class="col-xl">
-        <ExploreCardIFrameHeader Card=@Card AcquiredCard=@AcquiredCard Instance=@Card.Instance />
+        <ExploreCardIFrameHeader Card=@Card Instance=@Card.Instance />
         <ResizingIframe BranchInstanceId=@Card.Instance.Id Back />
       </div>
     } else {
@@ -41,7 +41,7 @@
           </a>
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
-        <ExploreCardIFrameHeader Card=@Card AcquiredCard=@AcquiredCard Instance=@Instance />
+        <ExploreCardIFrameHeader Card=@Card Instance=@Instance />
         <ResizingIframe BranchInstanceId=@Instance.Id Back />
       </div>
     }

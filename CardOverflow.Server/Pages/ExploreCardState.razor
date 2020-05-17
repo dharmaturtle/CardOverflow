@@ -20,15 +20,6 @@
       <button class="btn btn-outline-danger" @onclick=@(() => _modal.Show())>
         Discard
       </button>
-      @if (AcquiredCard.CardState.IsSuspended) {
-        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Normal))>
-          Unsuspend
-        </button>
-      } else {
-        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Suspended))>
-          Suspend
-        </button>
-      }
     } else {
       <button class="btn btn-primary" @onclick=@_acquire>
         Collect
@@ -49,7 +40,7 @@
       <em>Suspending will preserve the above data and prevent the card from appearing when you Study.</em>
     </div>
   </BSModalBody>
-  <BSModalFooter >
+  <BSModalFooter>
     <div>
       <BSButton Color="Color.Secondary" OnClick=_modal.Hide type="button">
         Cancel
@@ -64,19 +55,15 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
-  [Parameter] public AcquiredCard AcquiredCard { get; set; }
   [Parameter] public EventCallback<CardOverflow.Pure.ExploreCard> UpdateCard { get; set; }
-  [Parameter] public EventCallback<AcquiredCard> UpdateAcquiredCard { get; set; }
   private BSModal _modal;
 
   private async Task _acquire() {
     await DbExecutor.CommandAsync(db => CardRepository.AcquireCardAsync(db, User.Id, Card.Instance.Id));
     var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
     if (ac.IsOk) {
-      AcquiredCard = ac.ResultValue;
       Card.Instance.IsAcquired = true;
       Card.Summary.Users++;
-      await UpdateAcquiredCard.InvokeAsync(AcquiredCard);
       await UpdateCard.InvokeAsync(Card);
     } else {
       ToastService.ShowError(ac.ErrorValue);
@@ -84,31 +71,11 @@
   }
 
   private async Task _discard() {
-    var x = await DbExecutor.QueryAsync(db => CardRepository.deleteAcquired(db, User.Id, AcquiredCard.AcquiredCardId));
-    if (x.IsOk) {
-      Card.Instance.IsAcquired = false;
-      Card.Summary.Users--;
-      AcquiredCard = null;
-      await UpdateAcquiredCard.InvokeAsync(AcquiredCard);
-      await UpdateCard.InvokeAsync(Card);
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
+    await DbExecutor.CommandAsync(db => CardRepository.deleteAcquiredCard(db, User.Id, Card.Id));
+    Card.Instance.IsAcquired = false;
+    Card.Summary.Users--;
+    await UpdateCard.InvokeAsync(Card);
     _modal.Hide();
-  }
-
-  private async Task _editState(CardState state) {
-    var x = await DbExecutor.QueryAsync(db => CardRepository.editState(db, User.Id, AcquiredCard.AcquiredCardId, state));
-    if (x.IsOk) {
-      AcquiredCard.CardState = state;
-      if (state.IsSuspended) {
-        Card.Summary.Users--;
-      } else {
-        Card.Summary.Users++;
-      }
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
   }
 
 }
