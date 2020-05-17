@@ -1584,7 +1584,7 @@ ALTER TABLE ONLY public."Relationship_AcquiredCard"
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_CardId" FOREIGN KEY ("AcquiredCardId", "UserId", "CardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
+    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_CardId" FOREIGN KEY ("AcquiredCardId", "UserId", "CardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId")  ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
