@@ -210,21 +210,24 @@ module SanitizeRelationshipRepository =
         let! targetCardId = GetCardId command.TargetCardLink
         do! if targetCardId = command.SourceCardId then Error "A card can't be related to itself" else Ok ()
         let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.CardId = targetCardId || x.CardId = command.SourceCardId)).ToListAsync()
-        let! t = acs.SingleOrDefault(fun x -> x.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
-        let! s = acs.SingleOrDefault(fun x -> x.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
+        let! t = acs.FirstOrDefault(fun x -> x.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
+        let! s = acs.FirstOrDefault(fun x -> x.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
-        let sid, tid =
+        let sid, tid, sCardId, tCardId =
             if Relationship.isDirectional command.Name then
-                s.Id, t.Id
+                s.Id, t.Id, s.CardId, t.CardId
             else // if non-directional, alter the source/target ids so they're grouped properly in the DB. EG: Source=1,Target=2,Name=X and Source=2,Target=1,Name=X are seen as distinct, so this makes them the same
                 if s.BranchInstanceId < t.BranchInstanceId then
-                    s.Id, t.Id
+                    s.Id, t.Id, s.CardId, t.CardId
                 else
-                    t.Id, s.Id
+                    t.Id, s.Id, t.CardId, s.CardId
         return!
             Relationship_AcquiredCardEntity(
                 Relationship = r,
+                UserId = userId,
+                SourceCardId = sCardId,
+                TargetCardId = tCardId,
                 SourceAcquiredCardId = sid,
                 TargetAcquiredCardId = tid
             ) |> RelationshipRepository.addAndSaveAsync db

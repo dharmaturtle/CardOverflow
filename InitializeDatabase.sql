@@ -321,9 +321,12 @@ CREATE TABLE public."Relationship" (
 ALTER TABLE public."Relationship" OWNER TO postgres;
 
 CREATE TABLE public."Relationship_AcquiredCard" (
+    "RelationshipId" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "SourceCardId" integer NOT NULL,
+    "TargetCardId" integer NOT NULL,
     "SourceAcquiredCardId" integer NOT NULL,
-    "TargetAcquiredCardId" integer NOT NULL,
-    "RelationshipId" integer NOT NULL
+    "TargetAcquiredCardId" integer NOT NULL
 );
 
 
@@ -358,9 +361,9 @@ ALTER TABLE public."Tag" OWNER TO postgres;
 
 CREATE TABLE public."Tag_AcquiredCard" (
     "TagId" integer NOT NULL,
-    "AcquiredCardId" integer NOT NULL,
     "UserId" integer NOT NULL,
-    "CardId" integer NOT NULL
+    "CardId" integer NOT NULL,
+    "AcquiredCardId" integer NOT NULL
 );
 
 
@@ -1206,7 +1209,7 @@ ALTER TABLE ONLY public."Relationship"
 
 
 ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "PK_Relationship_AcquiredCard" PRIMARY KEY ("SourceAcquiredCardId", "TargetAcquiredCardId", "RelationshipId");
+    ADD CONSTRAINT "PK_Relationship_AcquiredCard" PRIMARY KEY ("RelationshipId", "UserId", "SourceCardId", "TargetCardId");
 
 
 ALTER TABLE ONLY public."Tag"
@@ -1214,7 +1217,7 @@ ALTER TABLE ONLY public."Tag"
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "AcquiredCardId", "UserId", "CardId");
+    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "UserId", "CardId");
 
 
 ALTER TABLE ONLY public."Tag_User_CollateInstance"
@@ -1259,10 +1262,6 @@ ALTER TABLE ONLY public."Branch"
 
 ALTER TABLE ONLY public."Branch"
     ADD CONSTRAINT "UQ_Branch_CardId_Name" UNIQUE ("CardId", "Name");
-
-
-ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "UQ_Tag_AcquiredCard_UserId_TagId_CardId" UNIQUE ("UserId", "TagId", "CardId");
 
 
 CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
@@ -1576,12 +1575,20 @@ ALTER TABLE ONLY public."Relationship_AcquiredCard"
     ADD CONSTRAINT "FK_Relationship_AcquiredCard_Relationship_RelationshipId" FOREIGN KEY ("RelationshipId") REFERENCES public."Relationship"("Id");
 
 
-ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+ALTER TABLE ONLY public."Relationship_AcquiredCard"
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_SourceAcquiredCard_UserId_CardId" FOREIGN KEY ("SourceAcquiredCardId", "UserId", "SourceCardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
+
+
+ALTER TABLE ONLY public."Relationship_AcquiredCard"
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_TargetAcquiredCard_UserId_CardId" FOREIGN KEY ("TargetAcquiredCardId", "UserId", "TargetCardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
     ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_CardId" FOREIGN KEY ("AcquiredCardId", "UserId", "CardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
+
+
+ALTER TABLE ONLY public."Tag_AcquiredCard"
+    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"

@@ -10,11 +10,10 @@ namespace CardOverflow.Entity
         [Key]
         public int TagId { get; set; }
         [Key]
-        public int AcquiredCardId { get; set; }
-        [Key]
         public int UserId { get; set; }
         [Key]
         public int CardId { get; set; }
+        public int AcquiredCardId { get; set; }
 
         [ForeignKey("AcquiredCardId")]
         [InverseProperty("Tag_AcquiredCards")]

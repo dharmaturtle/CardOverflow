@@ -8,11 +8,15 @@ namespace CardOverflow.Entity
     public partial class Relationship_AcquiredCardEntity
     {
         [Key]
-        public int SourceAcquiredCardId { get; set; }
-        [Key]
-        public int TargetAcquiredCardId { get; set; }
-        [Key]
         public int RelationshipId { get; set; }
+        [Key]
+        public int UserId { get; set; }
+        [Key]
+        public int SourceCardId { get; set; }
+        [Key]
+        public int TargetCardId { get; set; }
+        public int SourceAcquiredCardId { get; set; }
+        public int TargetAcquiredCardId { get; set; }
 
         [ForeignKey("RelationshipId")]
         [InverseProperty("Relationship_AcquiredCards")]
