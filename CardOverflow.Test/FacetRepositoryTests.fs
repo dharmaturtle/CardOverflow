@@ -763,8 +763,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     // update card
     let update_i = 1002
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
-    let! instanceIds = UpdateRepository.card c.Db userId command.load
-    Assert.Equal(update_i, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db userId command.load
+    Assert.Equal(og_b, actualBranchId)
 
     // tests ExactInstanceAcquired
     do! ExploreCardRepository.get c.Db userId og_c
@@ -787,8 +787,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let branch_i = 1003
     let branch_b = 2
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_c
-    let! instanceIds = UpdateRepository.card c.Db userId command.load
-    Assert.Equal(branch_i, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db userId command.load
+    Assert.Equal(branch_b, actualBranchId)
     
     // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
@@ -799,9 +799,9 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
 
     // update branch
     let updateBranch_i = 1004
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
-    let! instanceIds = UpdateRepository.card c.Db userId command.load
-    Assert.Equal(updateBranch_i, instanceIds)
+    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branch_b
+    let! actualBranchId = UpdateRepository.card c.Db userId command.load
+    Assert.Equal(branch_b, actualBranchId)
 
     // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
@@ -825,14 +825,14 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     do! testGetAcquired og_c branch_i
 
     // try to branch card again, but fail
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
+    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_c
     let! (error: Result<_,_>) = UpdateRepository.card c.Db userId command.load
     Assert.Equal(sprintf "Card #1 already has a Branch named 'New Branch'.", error.error);
 
     // branch card again
     let branch_i2 = 1005
-    let branch_c2 = 3
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
+    let branch_b2 = 3
+    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_c
     let command =
         { command.load with
             Kind =
@@ -840,8 +840,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
                 | NewBranch_SourceCardId_Title (id, name) -> NewBranch_SourceCardId_Title (id, name + Guid.NewGuid().ToString())
                 | _ -> failwith "impossible"
         }
-    let! instanceIds = UpdateRepository.card c.Db userId command
-    Assert.Equal(branch_i2, instanceIds)
+    let! actualBranchId = UpdateRepository.card c.Db userId command
+    Assert.Equal(branch_b2, actualBranchId)
 
     // tests LatestBranchAcquired
     let! card = ExploreCardRepository.get c.Db userId og_c
@@ -867,7 +867,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     // can't acquire missing id
     let missingId = 9001
     let! (error: Result<_,_>) = CardRepository.AcquireCardAsync c.Db userId missingId
-    Assert.Equal(error.error, sprintf "Card not found for Instance #%i" missingId)
+    Assert.Equal(sprintf "Branch Instance #%i not found" missingId, error.error)
 
     // tests NotAcquired
     let otherUser = 1
