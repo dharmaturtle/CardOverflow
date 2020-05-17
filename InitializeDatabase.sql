@@ -1030,7 +1030,49 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 \begin{document}
 ', '\end{document}', false, 'Cloze{{cloze:Text}}{{cloze:Text}}<br>
 {{Extra}}', 1, 'TextFalse0FalseExtraFalse1False', 'Imported from Anki', 1554689669570, B'01000110011111010010110111001110110000010011011011111011001101001011010100000101101001110001000111100101011010101000000101111000000001101110010010011011110001100001000000010111011011101000110100110100001111010100001000001110110000110010100010000111000001000110100110100010001101110010011000010011011101110001101001100110010110101011011011100001010100011100000111010011100001010110100011000011111001010111100001010000100111000011101000000110000101010010111100111010110100111100001000100011010010010000100110001010', NULL, '''20px'':18 ''align'':21 ''arial'':14 ''background'':26 ''background-color'':25 ''black'':24 ''blue'':35 ''bold'':33 ''card'':10 ''center'':22 ''cloze'':1A,4C,5C,7C,29,37 ''color'':23,27,34,38 ''extra'':3C,9C ''famili'':13 ''font'':12,16,31 ''font-famili'':11 ''font-siz'':15 ''font-weight'':30 ''lightblu'':39 ''nightmod'':36 ''size'':17 ''text'':2C,6C,8C,20 ''text-align'':19 ''weight'':32 ''white'':28');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1008, 'Basic (type in the answer)', 4, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, 'Card 1{{Front}}
 
+{{type:Back}}{{Front}}
+
+<hr id=answer>
+
+{{type:Back}}', 0, 'FrontFalse0FalseBackFalse1False', 'Answer uses {{Front}} instead of {{FrontSide}} and {{type:Back}} instead of {{Back}} as of Anki v2.1.15', 1587486094455, B'10101100111000111110001011111111010001000111110110111000110110100101100100110110111100000110011010111001110010010001101010110111100001001010110110010111011101000110101111000011101000101111011110101011110100101111100011000111011000001110001110110011100011001001011001000001000010100001101110000111010111110111011011101100001110110000110111001000110111101011101100100000110101111101010001001101001101001001000011000000001000100001010010100111111111101100110010000010000000011010100000010100110001001110111010100101', NULL, '''20px'':22 ''align'':25 ''answer'':5A ''arial'':18 ''back'':7C,10C,13C ''background'':30 ''background-color'':29 ''basic'':1A ''black'':28 ''card'':14 ''center'':26 ''color'':27,31 ''famili'':17 ''font'':16,20 ''font-famili'':15 ''font-siz'':19 ''front'':6C,8C,11C ''size'':21 ''text'':24 ''text-align'':23 ''type'':2A,9C,12C ''white'':32');
+INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created", "Modified", "LatexPre", "LatexPost", "IsDmca", "Templates", "Type", "Fields", "EditSummary", "AnkiId", "Hash", "CWeightTsVectorHelper", "TsVector") VALUES (1009, 'Cloze', 5, '.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+.cloze {
+ font-weight: bold;
+ color: blue;
+}
+.nightMode .cloze {
+ color: lightblue;
+}', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+\special{papersize=3in,5in}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb,amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0in}
+\begin{document}
+', '\end{document}', false, 'Cloze{{cloze:Text}}{{cloze:Text}}', 1, 'TextFalse0False', '"Extra" field removed in Anki v2.1.22', 1587670846820, B'10111010111010111111001100010010101100010011001010001001110001000000001001000100101100101001001000000000111101110110001011000100101011110001010101101011011000011011100000011110110000110001001011011000001111111101111011110010100001000111001111001001000110010111001100001101010011101010000100010010101101010000010111000111001010111010110011001100111000111001000000111011101100101100101110101011110001100010000111000111000101100100000001110000000010001011100000010101010010010000110100100000001101011101111100101011', NULL, '''20px'':15 ''align'':18 ''arial'':11 ''background'':23 ''background-color'':22 ''black'':21 ''blue'':32 ''bold'':30 ''card'':7 ''center'':19 ''cloze'':1A,3C,5C,26,34 ''color'':20,24,31,35 ''famili'':10 ''font'':9,13,28 ''font-famili'':8 ''font-siz'':12 ''font-weight'':27 ''lightblu'':36 ''nightmod'':33 ''size'':14 ''text'':2C,4C,6C,17 ''text-align'':16 ''weight'':29 ''white'':25');
 
 
 

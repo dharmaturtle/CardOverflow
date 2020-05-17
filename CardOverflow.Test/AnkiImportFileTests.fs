@@ -381,7 +381,7 @@ let ``AnkiDefaults.collateIdByHash is same as initial database`` (): unit =
     for collate in dbCollates do
         let calculated = CollateInstanceEntity.hashBase64 hasher collate
         let dbValue = BranchInstanceEntity.bitArrayToByteArray collate.Hash |> Convert.ToBase64String
-        //for x in CollateInstanceEntity.hash hasher x do
+        //for x in CollateInstanceEntity.hash hasher collate do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
         Assert.Equal(calculated, dbValue)
@@ -389,6 +389,7 @@ let ``AnkiDefaults.collateIdByHash is same as initial database`` (): unit =
     // test that AnkiDefaults.collateIdByHash is up to date
     for dbCollate in dbCollates do
         let calculated = CollateInstanceEntity.hashBase64 hasher dbCollate
+        //calculated.D(string dbCollate.Id)
         Assert.Equal(AnkiDefaults.collateInstanceIdByHash.[calculated], dbCollate.Id)
 
 //[<Fact>]
