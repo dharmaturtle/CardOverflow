@@ -34,7 +34,11 @@
         </button>
       }
       <button class="list-group-item list-group-item-action @(Selected.Id == branch.Instance.Id ? "active" : "border-0")">
-        @branch.Name
+        @if (@branch.Name == null) {
+        <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
+        } else {
+          @branch.Name
+        }
       </button>
     </div>
   }
