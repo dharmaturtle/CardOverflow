@@ -128,6 +128,11 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     use c = new TestContainer()
     let testCommunalFields = testCommunalFields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
+    Assert.Equal(7, c.Db.AcquiredCard.Count())
+    Assert.Equal(3, c.Db.BranchInstance.Count())
+    Assert.Equal(3, c.Db.Branch.Count())
+    Assert.Equal(3, c.Db.Card.Count())
+    Assert.Equal(4s, c.Db.BranchInstance.Single(fun x -> x.FieldValues.Contains "Drugs").MaxIndexInclusive)
     Assert.Null x.Value
     let allBranchInstanceViews =
         c.Db.BranchInstance
