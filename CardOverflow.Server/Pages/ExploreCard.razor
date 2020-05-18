@@ -81,7 +81,7 @@
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
   BranchInstanceMeta Instance;
-  List<AcquiredCard> AcquiredCards;
+  List<AcquiredCard> AcquiredCards = new List<AcquiredCard>();
   private string _LoadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
