@@ -42,18 +42,14 @@
               </tr>
             </thead>
             <tbody>
-              @foreach (var field in Instance.Fields.OrderBy(x => x.Ordinal)) {
+              @foreach (var (field, i) in Instance.Fields.Select((x, i) => (x, i))) {
                 <tr>
                   <td>
                     <InputText @bind-Value=@field.Name class="form-control" />
                     <ValidationMessage For=@(() => field.Name) />
                   </td>
                   <td>
-                    <InputNumber @bind-Value=@field.Ordinal class="form-control" />
-                    <ValidationMessage For=@(() => field.Ordinal) />
-                  </td>
-                  <td>
-                    <button type="button" class="btn" @onclick=@(() => DeleteField(field.Ordinal)) disabled=@IsDisabled>
+                    <button type="button" class="btn" @onclick=@(() => DeleteField(i)) disabled=@IsDisabled>
                       <span class="oi oi-trash"></span>
                     </button>
                   </td>
@@ -171,13 +167,12 @@
   }
 
   void DeleteField(int ordinal) {
-    Instance.Fields = Instance.Fields
-      .Where(x => x.Ordinal != ordinal).ToList();
+    Instance.Fields.RemoveAt(ordinal);
   }
 
   void AddField() {
     Instance.Fields.Add(new ViewField {
-      Ordinal = Instance.Fields.Max(x => x.Ordinal) + 1
+      Name = "New Field"
     });
   }
 

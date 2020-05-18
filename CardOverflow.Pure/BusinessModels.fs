@@ -78,21 +78,18 @@ type CardSetting = {
 type Field = {
     Name: string
     IsRightToLeft: bool
-    Ordinal: byte
     IsSticky: bool
 } with
     member this.toString =
         [   this.Name
             this.IsRightToLeft |> string
-            this.Ordinal |> string
             this.IsSticky |> string
         ] |> MappingTools.joinByUnitSeparator
     static member fromString x =
         let x = x |> MappingTools.splitByUnitSeparator
         {   Name = x.[0]
             IsRightToLeft = x.[1] = "True"
-            Ordinal = x.[2] |> byte
-            IsSticky = x.[3] = "True"
+            IsSticky = x.[2] = "True"
         }
 
 module Fields =

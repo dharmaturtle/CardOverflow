@@ -563,7 +563,6 @@ let ``Can create card collate and insert a modified one`` (): Task<unit> = task 
         let newField =
             {   Name = fieldName
                 IsRightToLeft = false
-                Ordinal = 0
                 IsSticky = false
             }
         {   initialCollate.Editable with

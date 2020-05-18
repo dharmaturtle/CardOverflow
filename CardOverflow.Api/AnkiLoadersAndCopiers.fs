@@ -286,9 +286,11 @@ module Anki =
                     get.Required.Field "flds" (Decode.object(fun get ->
                         { Name = get.Required.Field "name" Decode.string
                           IsRightToLeft = get.Required.Field "rtl" Decode.bool
-                          Ordinal = get.Required.Field "ord" Decode.int |> byte
-                          IsSticky = get.Required.Field "sticky" Decode.bool })
+                          IsSticky = get.Required.Field "sticky" Decode.bool },
+                        get.Required.Field "ord" Decode.int)
                         |> Decode.list)
+                        |> List.sortBy snd
+                        |> List.map fst
                 Templates = collates
                 Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
                 Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
@@ -377,7 +379,7 @@ module Anki =
                             if collate.Collate.IsCloze then result {
                                 let valueByFieldName =
                                     Seq.zip
-                                        <| collate.Collate.Fields.OrderBy(fun x -> x.Ordinal).Select(fun f -> f.Name)
+                                        <| collate.Collate.Fields.Select(fun f -> f.Name)
                                         <| fieldValues
                                     |> Map.ofSeq
                                 let! max =

@@ -32,7 +32,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
         collate.Value.Instances.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
-        latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
+        latestInstance.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
         latestInstance.FirstTemplate.Front)
@@ -64,7 +64,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
         latestInstance.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
-        latestInstance.Fields.OrderBy(fun x -> x.Ordinal).Select(fun x -> x.Name))
+        latestInstance.Fields.Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.AcquiredCard.Single().UserId)
     Assert.Equal(1002, c.Db.AcquiredCard.Single().BranchInstanceId)
     Assert.Equal(

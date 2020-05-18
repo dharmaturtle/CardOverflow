@@ -213,7 +213,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! view = CardViewRepository.get c.Db instance.CardId
         [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
             "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
-        |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Field.Name, x.Value))
+        |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.Select(fun x -> x.Field.Name, x.Value))
         let instances = BranchInstanceMeta.loadAll true true instance
         Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", instances.[0].StrippedFront)
         Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", instances.[1].StrippedFront)

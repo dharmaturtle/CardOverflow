@@ -125,13 +125,13 @@ type CardSetting with
         entity
 
 type FieldAndValue with
-    static member load (fields: Field seq) fieldValues =
+    static member load (fields: Field list) fieldValues =
         fieldValues |> MappingTools.splitByUnitSeparator |> List.mapi (fun i x -> {
-            Field = fields.Single(fun x -> int x.Ordinal = i)
+            Field = fields.[i]
             Value = x
         }) |> toResizeArray
-    static member join (fields: FieldAndValue seq) =
-        fields |> Seq.sortBy (fun x -> x.Field.Ordinal) |> Seq.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
+    static member join (fields: FieldAndValue list) =
+        fields |> List.map (fun x -> x.Value) |> MappingTools.joinByUnitSeparator
 
 type EditFieldAndValue with
     static member load (fields: Field list) fieldValues =
@@ -189,15 +189,12 @@ type CollateInstance with
         Fields = [
         {   Name = "Front"
             IsRightToLeft = false
-            Ordinal = 0uy
             IsSticky = false }
         {   Name = "Back"
             IsRightToLeft = false
-            Ordinal = 1uy
             IsSticky = false }
         {   Name = "Source"
             IsRightToLeft = false
-            Ordinal = 2uy
             IsSticky = true
         }]
         Created = DateTime.UtcNow
@@ -267,7 +264,7 @@ type BranchInstanceView with
             entity.CollateInstance
             entity.FieldValues
     member this.CopyToX (entity: BranchInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
-        entity.FieldValues <- FieldAndValue.join this.FieldValues
+        entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
         entity.CommunalFieldInstance_BranchInstances <-
             communalFields.Select(fun x -> CommunalFieldInstance_BranchInstanceEntity(CommunalFieldInstance = x))
             |> entity.CommunalFieldInstance_BranchInstances.Concat

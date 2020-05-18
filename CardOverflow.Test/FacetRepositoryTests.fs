@@ -26,7 +26,6 @@ let normalCommand fieldValues collateInstance tagIds =
     {   CollateInstance = collateInstance
         FieldValues =
             collateInstance.Fields
-            |> Seq.sortBy (fun x -> x.Ordinal)
             |> Seq.mapi (fun i field -> {
                 EditField = ViewField.copyTo field
                 Value = fieldValues.[i]
@@ -186,13 +185,11 @@ Back
         [{  Field = {
                 Name = "Front"
                 IsRightToLeft = false
-                Ordinal = 0uy
                 IsSticky = false }
             Value = "Front" }
          {  Field = {
                 Name = "Back"
                 IsRightToLeft = false
-                Ordinal = 1uy
                 IsSticky = false }
             Value = "Back"}],
         view.Value.FieldValues
@@ -402,7 +399,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             card.Value.Tags)
         Assert.Equal<string seq>(
             [newValue; newValue],
-            instance.Value.FieldValues.OrderBy(fun x -> x.Field.Ordinal).Select(fun x -> x.Value)
+            instance.Value.FieldValues.Select(fun x -> x.Value)
         )
         let createds = c.Db.BranchInstance.Select(fun x -> x.Created) |> Seq.toList
         Assert.NotEqual(createds.[0], createds.[1])

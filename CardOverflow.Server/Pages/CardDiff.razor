@@ -255,7 +255,7 @@
   private BranchInstanceView _b;
   private bool _aIsAcquired;
   private bool _bIsAcquired;
-  private string _collateFields(BranchInstanceView view) => view.CollateInstance.Fields.OrderBy(x => x.Ordinal).Select(x => x.Name).Apply(x => String.Join("\r\n", x));
+  private string _collateFields(BranchInstanceView view) => view.CollateInstance.Fields.Select(x => x.Name).Apply(x => String.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(BranchInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
   private List<(string AFront, string ABack, string BFront, string BBack)> _cardZips() =>
@@ -293,8 +293,7 @@
 
   private void _OnOk() =>
     _fieldNames =
-      _a.FieldValues.OrderBy(x => x.Field.Ordinal).Concat(
-        _b.FieldValues.OrderBy(x => x.Field.Ordinal))
+      _a.FieldValues.Concat(_b.FieldValues)
       .Select(x => x.Field.Name).Distinct().ToList();
 
   private void _OnError(string error) {
