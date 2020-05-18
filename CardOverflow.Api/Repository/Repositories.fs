@@ -583,8 +583,11 @@ module UserRepository =
         db.User.SingleAsync(fun x -> x.Id = id)
 
 module TagRepository =
-    let Search (db: CardOverflowDb) (input: string) =
-        db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, "%" + input + "%")).ToList()
+    let searchMany (db: CardOverflowDb) (input: string list) =
+        let input = input |> List.map (fun x -> x.ToLower())
+        db.Tag.Where(fun t -> input.Contains(t.Name.ToLower()))
+    let search (db: CardOverflowDb) (input: string) =
+        db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
 
 module FilterRepository =
     let Create (db: CardOverflowDb) userId name query =

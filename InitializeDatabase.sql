@@ -299,7 +299,6 @@ CREATE TABLE public."BranchInstance" (
     "Users" integer NOT NULL,
     "EditSummary" character varying(200) NOT NULL,
     "AnkiNoteId" bigint,
-    "AnkiNoteOrd" smallint,
     "Hash" bit(512) NOT NULL,
     "TsVectorHelper" text,
     "TsVector" tsvector,

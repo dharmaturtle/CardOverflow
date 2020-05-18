@@ -37,7 +37,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
 
     Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
     Assert.Equal(7, c.Db.CollateInstance.Count())
     Assert.Equal(5, c.Db.LatestCollateInstance.Count())
     } |> TaskResult.getOk)
@@ -57,7 +57,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
 
     Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -107,7 +107,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     do! AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
     
     Assert.Equal<string seq>(
-        ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Deck:Duplicate Cards"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
+        ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
     Assert.Equal(3, c.Db.Card.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
@@ -140,35 +140,23 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         allBranchInstanceViews
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
-    assertCount 5 "may be remembered with the mnemonic"
+    assertCount 1 "may be remembered with the mnemonic"
     let longThing = """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: {{c1::Mebendazole (antihelminthic)}}G: {{c2::Griseofulvin (antifungal)}} C: {{c3::Colchicine (antigout)}} V: {{c4::Vincristine/Vinblastine (anticancer)}}P: {{c5::Palcitaxel (anticancer)}}"""
     let longThingUs = longThing + " "
     Assert.Equal<string seq>(
         [   """↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic FibrosisImage here"""
             """↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia"""
-            longThingUs
-            longThingUs
-            longThingUs
-            longThingUs
             longThingUs],
         c.Db.BranchInstance.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
     Assert.Equal<string seq>(
         [   "<b><br /></b>"
-            "<b><br /></b>"
-            "<b><br /></b>"
-            "<b><br /></b>"
-            "<b><br /></b>"
             "<br /><div><br /></div><div>Image here</div>" ],
         allBranchInstanceViews
             .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value))
     )
     Assert.Equal<string seq>(
         [   longThing
-            longThing
-            longThing
-            longThing
-            longThing
             "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ],
         allBranchInstanceViews
             .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value))

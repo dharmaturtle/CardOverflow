@@ -40,11 +40,12 @@ module BranchInstanceEntity =
         e.CommunalFieldInstance_BranchInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
-            .Append(e.FieldValues)
-            .Append(e.AnkiNoteId.ToString())
-            .Append(e.AnkiNoteOrd.ToString())
-            .Append(e.CollateInstance.AnkiId.ToString())
         |> Seq.toList
+        |> List.append
+            [   e.FieldValues
+                e.AnkiNoteId.ToString()
+                //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by collateHash and e.FieldValues
+                e.CollateInstance.AnkiId.ToString()]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes

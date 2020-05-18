@@ -172,8 +172,8 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     let! r = AnkiImporter.save c.Db AnkiImportTestData.relationships userId Map.empty
     Assert.Null r.Value
     
-    Assert.Equal(18, c.Db.Card.Count())
-    Assert.Equal(18, c.Db.BranchInstance.Count())
+    Assert.Equal(3, c.Db.Card.Count())
+    Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 1, c.Db.Collate.Count())
     Assert.Equal(10, c.Db.CollateInstance.Count())
 
@@ -264,8 +264,6 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32"
             "4/8/2019 02:14:57"
-            "4/8/2019 02:14:57"
-            "4/8/2019 02:15:50"
             "4/8/2019 02:15:50"
             "4/8/2019 02:16:27"
             "4/8/2019 02:16:42"
@@ -278,8 +276,6 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53"
             "4/8/2019 02:15:44"
-            "4/8/2019 02:15:44"
-            "4/8/2019 02:16:22"
             "4/8/2019 02:16:22"
             "4/8/2019 02:16:39"
             "4/8/2019 02:18:05"
@@ -289,15 +285,15 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         ].ToList(),
         c.Db.BranchInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
-    Assert.Equal(10, c.Db.Card.Count())
+    Assert.Equal(8, c.Db.Card.Count())
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
-    Assert.Equal(10, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
+    Assert.Equal(8, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
     Assert.Equal<string>(
-        [ "Basic"; "Deck:Default"; "Othertag"; "Tag" ],
+        [ "Basic"; "Othertag"; "Tag" ],
         (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string>(
-        [ "Deck:Default"; "Othertag" ],
+        [ "Othertag" ],
         c.Db.AcquiredCard
             .Include(fun x -> x.BranchInstance)
             .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
@@ -327,7 +323,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         Assert.Empty card.Relationships
         Assert.Empty card.Instance.CommunalFields
 
-    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 1, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count, c.Db.CollateInstance.Count())
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 2, c.Db.LatestCollateInstance.Count())
@@ -388,22 +384,22 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFi
     for _ in [1..5] do
         do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
         Assert.Equal(2, c.Db.CardSetting.Count(fun x -> x.UserId = userId))
-        Assert.Equal(4, c.Db.Tag.Count())
+        Assert.Equal(3, c.Db.Tag.Count())
         Assert.Equal(5, c.Db.Collate.Count(fun x -> x.AuthorId = theCollectiveId))
         Assert.Equal(7, c.Db.CollateInstance.Count(fun x -> x.Collate.AuthorId = theCollectiveId))
         Assert.Equal(0, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(0, c.Db.CollateInstance.Count(fun x -> x.Collate.AuthorId = userId))
         Assert.Equal(0, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(10, c.Db.Card.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(10, c.Db.Card.Count())
+        Assert.Equal(8, c.Db.Card.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(8, c.Db.Card.Count())
         Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
-        Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
-        Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
+        Assert.Equal(1, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(1, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.Equal(10, c.Db.AcquiredCard.Count())
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.BranchInstance.FieldValues, "%Basic Front%")))
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.BranchInstance.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> EF.Functions.ILike(x.BranchInstance.FieldValues, "%Basic (optional reversed card) front%")))
-        Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+        Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
         Assert.Equal(0, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(0, c.Db.CommunalField.Count())
         Assert.Equal(7, c.Db.CollateInstance.Count())
@@ -426,5 +422,5 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` anki
 
     Assert.Equal(9, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorA))
     Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.EaseFactorInPermille = easeFactorB))
-    Assert.NotEmpty(c.Db.BranchInstance.Where(fun x -> x.AnkiNoteOrd = Nullable 1s))
+    Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
     } |> TaskResult.getOk)

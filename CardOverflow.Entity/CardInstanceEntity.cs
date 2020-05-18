@@ -39,7 +39,6 @@ namespace CardOverflow.Entity
         }
         private string _EditSummary;
         public long? AnkiNoteId { get; set; }
-        public short? AnkiNoteOrd { get; set; }
         [Required]
         [Column(TypeName = "bit(512)")]
         public BitArray Hash { get; set; }

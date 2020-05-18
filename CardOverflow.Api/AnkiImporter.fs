@@ -149,7 +149,7 @@ module AnkiImporter =
                     | _ -> failwith "This should be impossible" )
                 |> Seq.append usersTags
                 |> Seq.toList
-            let! cardsAndTagsByNoteId =
+            let cardsAndTagsByNoteId =
                 Anki.parseNotes
                     collatesByModelId
                     usersTags
@@ -157,14 +157,20 @@ module AnkiImporter =
                     fileEntityByAnkiFileName
                     getCard
                     ankiDb.Notes
-                |> Result.consolidate
-                |> Result.map Map.ofSeq
+                |> Map.ofSeq
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardSettingAndDeckNameByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId usersTags getAcquiredCard)
+                |> List.map (Anki.mapCard cardSettingAndDeckNameByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getAcquiredCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
+            cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.BranchInstance) |> List.iter (fun (_, card) ->
+                match card.BranchInstance.AnkiNoteId |> Option.ofNullable with
+                | None -> ()
+                | Some nid -> 
+                    let _, tags = cardsAndTagsByNoteId.[nid]
+                    card.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(Tag = x)).ToList()
+            )
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByNoteId getHistory) |> Result.consolidate
             return
                 cardByNoteId |> Map.overValue id,
@@ -200,7 +206,7 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| (fun s -> db.Tag.Where(fun t -> s.Contains t.Name) |> Seq.toList) // collation is case insensitive, and .Contains seems to generate the appropriate SQL
+                    <| (TagRepository.searchMany db >> Seq.toList)
                     <| db.CardSetting
                         .Where(fun x -> x.UserId = userId)
                         .ToList()

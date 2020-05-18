@@ -72,7 +72,6 @@ type AnkiCollateInstance = {
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
-    AnkiNoteOrd: int16
     CommunalFields: CommunalFieldInstanceEntity list
     Collate: CollateInstanceEntity
     FieldValues: string
@@ -86,7 +85,6 @@ type AnkiCardWrite = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.CollateInstance <- this.Collate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
-        entity.AnkiNoteOrd <- Nullable this.AnkiNoteOrd
         entity.CommunalFieldInstance_BranchInstances <-
             this.CommunalFields
             |> List.map (fun cf -> CommunalFieldInstance_BranchInstanceEntity(BranchInstance = entity, CommunalFieldInstance = cf))
@@ -124,6 +122,7 @@ type AnkiAcquiredCard = {
     UserId: int
     BranchInstance: BranchInstanceEntity
     CollateInstance: CollateInstanceEntity
+    Index: int16
     CardState: CardState
     IsLapsed: bool
     LapseCount: byte
@@ -132,26 +131,28 @@ type AnkiAcquiredCard = {
     Due: DateTime
     CardSetting: CardSettingEntity
 } with
-    member this.CopyTo (entity: AcquiredCardEntity) =
+    member this.CopyToX (entity: AcquiredCardEntity) i =
         entity.UserId <- this.UserId
+        entity.Index <- i
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
-    member this.CopyToNew (tags: TagEntity seq) =
+    member this.CopyToNew i =
         let entity = AcquiredCardEntity()
-        this.CopyTo entity
+        this.CopyToX entity i
         entity.Card <- this.BranchInstance.Branch.Card
         entity.Branch <- this.BranchInstance.Branch
         entity.BranchInstance <- this.BranchInstance
         entity.CardSetting <- this.CardSetting
-        entity.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(AcquiredCard = entity, Tag = x)).ToList()
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCard
+            .Include(fun x -> x.Tag_AcquiredCards)
             .FirstOrDefault(fun c -> 
                 this.UserId = c.UserId &&
+                this.Index = c.Index &&
                 this.BranchInstance.Id = c.BranchInstanceId &&
                 this.CollateInstance.Id = c.BranchInstance.CollateInstanceId
             )
@@ -360,10 +361,9 @@ module Anki =
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
                 let collate = collateByModelId.[string note.Mid]
-                let toCard fields collate noteOrd =
+                let toCard fields collate =
                     let c = {
                         AnkiNoteId = note.Id
-                        AnkiNoteOrd = noteOrd
                         Collate = collate
                         CommunalFields = []
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
@@ -374,32 +374,15 @@ module Anki =
                         <| getCard c
                         <| c.CopyToNew files
                 let noteIdCardsAndTags =
-                    result {
-                        let! cards =
-                            if collate.Collate.IsCloze then result {
-                                let valueByFieldName =
-                                    Seq.zip
-                                        <| collate.Collate.Fields.Select(fun f -> f.Name)
-                                        <| fieldValues
-                                    |> Map.ofSeq
-                                let! max =
-                                    AnkiImportLogic.maxClozeIndex
-                                        <| sprintf "Anki Note Id #%s is malformed. It claims to be a cloze deletion but doesn't have the syntax of one. Its fields are: %s" (string note.Id) (String.Join(',', fieldValues))
-                                        <| valueByFieldName
-                                        <| collate.Collate.Templates.[0].Front
-                                return [1s .. max] |> List.map (fun clozeIndex ->
-                                    toCard
-                                        <| fieldValues
-                                        <| collate.Entity
-                                        <| clozeIndex - 1s // ankidb's cards' ord column is 0 indexed for cloze deletions
-                                )}
-                            else
-                                collate.Collate.Templates
-                                |> List.mapi (fun i _ -> toCard fieldValues collate.Entity (i |> int16))
-                                |> Ok
-                        let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
-                        return (note.Id, (cards, relevantTags))
-                    }
+                    let cards =
+                        if collate.Collate.IsCloze then
+                            toCard
+                                <| fieldValues
+                                <| collate.Entity
+                        else
+                            toCard fieldValues collate.Entity
+                    let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
+                    note.Id, (cards, relevantTags)
                 parseNotesRec
                     allTags
                     (Seq.append
@@ -411,16 +394,13 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardSettingAndDeckTagByDeckId: Map<int64, CardSettingEntity * string>)
-        (cardsAndTagsByNoteId: Map<int64, BranchInstanceEntity list * TagEntity list>)
+        (cardAndTagsByNoteId: Map<int64, BranchInstanceEntity * TagEntity list>)
         (colCreateDate: DateTime)
         userId
-        (usersTags: TagEntity list)
         getCard
         (ankiCard: Anki.CardEntity) =
-        let cardSetting, deckTag = cardSettingAndDeckTagByDeckId.[ankiCard.Did]
-        let deckTag = usersTags.First(fun x -> x.Name = deckTag)
-        let cards, tags = cardsAndTagsByNoteId.[ankiCard.Nid]
-        let card = cards.Single(fun x -> x.AnkiNoteOrd = (ankiCard.Ord |> int16 |> Nullable))
+        let cardSetting, _ = cardSettingAndDeckTagByDeckId.[ankiCard.Did]
+        let card, _ = cardAndTagsByNoteId.[ankiCard.Nid]
         let cti = card.CollateInstance
         match ankiCard.Type with
         | 0L -> Ok New
@@ -434,6 +414,7 @@ module Anki =
                     { UserId = userId
                       BranchInstance = card
                       CollateInstance = cti
+                      Index = ankiCard.Ord |> int16
                       CardState =
                         match ankiCard.Queue with
                         | -3L -> UserBuried
@@ -471,8 +452,8 @@ module Anki =
                 getCard c
                 |> function
                 | Some entity ->
-                    c.CopyTo entity
+                    c.CopyToX entity (int16 ankiCard.Ord)
                     entity
-                | None -> c.CopyToNew <| Seq.append [deckTag] tags
+                | None -> c.CopyToNew (int16 ankiCard.Ord)
             ankiCard.Id, entity
         )
