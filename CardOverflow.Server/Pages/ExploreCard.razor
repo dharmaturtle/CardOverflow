@@ -23,7 +23,12 @@
     <div class="col-xl">
       @if (Instance == null) {
         <ExploreCardIFrameHeader Card=@Card Instance=@Card.Instance />
-        <ResizingIframe BranchInstanceId=@Card.Instance.Id Back />
+        @foreach (var i in Card.Instance.Indexes) {
+          <ResizingIframe BranchInstance=@((Card.Instance.Id, i)) Back />
+          @if (AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Card.Instance.Id)) {
+            <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Card.Instance.Id && x.Index == i)) />
+          }
+        }
       } else {
         <div class="alert alert-warning" role="alert">
           This is an old revision created
@@ -41,7 +46,7 @@
         </div>
         <ExploreCardIFrameHeader Card=@Card Instance=@Instance />
         @foreach (var i in Instance.Indexes) {
-          <ResizingIframe BranchInstanceId=@Instance.Id BranchInstanceIndex=@i Back />
+          <ResizingIframe BranchInstance=@((Instance.Id, i)) Back />
           @if (AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Instance.Id)) {
             <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Instance.Id && x.Index == i)) />
           }
