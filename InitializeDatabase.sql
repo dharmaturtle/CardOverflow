@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1252,10 +1252,6 @@ ALTER TABLE ONLY public."Branch"
     ADD CONSTRAINT "UQ_Branch_CardId_Id" UNIQUE ("CardId", "Id");
 
 
-ALTER TABLE ONLY public."Branch"
-    ADD CONSTRAINT "UQ_Branch_CardId_Name" UNIQUE ("CardId", "Name");
-
-
 CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
 
 
@@ -1374,6 +1370,9 @@ CREATE INDEX "IX_Vote_CommentCollate_UserId" ON public."Vote_CommentCollate" USI
 
 
 CREATE INDEX "IX_Vote_Feedback_UserId" ON public."Vote_Feedback" USING btree ("UserId");
+
+
+CREATE UNIQUE INDEX "UQ_Branch_CardId_Name" ON public."Branch" USING btree ("CardId", upper(("Name")::text));
 
 
 CREATE INDEX idx_fts_branchinstance_tsvector ON public."BranchInstance" USING gin ("TsVector");
