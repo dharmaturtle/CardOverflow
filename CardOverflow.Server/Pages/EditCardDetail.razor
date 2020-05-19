@@ -118,7 +118,7 @@
 
   protected override async Task OnInitializedAsync() {
     if (Collates == null) {
-      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User?.Id ?? 0));
+      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, User?.Id ?? 0, EditCard.CollateInstance.CollateId));
     }
     if (EditCard == null) {
       EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty));

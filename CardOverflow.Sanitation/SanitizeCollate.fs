@@ -204,6 +204,16 @@ module SanitizeCollate =
                 .ToListAsync()
         return x |> Seq.map ViewCollateWithAllInstances.load |> toResizeArray
         }
+    let GetMineWith (db: CardOverflowDb) userId collateId = task {
+        let! x =
+            db.User_CollateInstance
+                .Where(fun x ->  x.UserId = userId || x.CollateInstance.CollateId = collateId)
+                .Select(fun x -> x.CollateInstance.Collate)
+                .Distinct()
+                .Include(fun x -> x.CollateInstances)
+                .ToListAsync()
+        return x |> Seq.map ViewCollateWithAllInstances.load |> toResizeArray
+        }
     let Update (db: CardOverflowDb) userId (instance: ViewCollateInstance) =
         let update () = task {
             let! r = ViewCollateInstance.copyTo instance |> CollateRepository.UpdateFieldsToNewInstance db userId
