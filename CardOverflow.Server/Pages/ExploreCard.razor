@@ -16,12 +16,12 @@
 @inject NavigationManager NavigationManager
 @inject TimeProvider TimeProvider
 
-@if (Card == null) {
+@if (Card == null || Selected == null) {
   <p><em>@_LoadingMessage</em></p>
 } else {
   <div class="row">
     <div class="col-xl">
-      @if (_isOld) {
+      @if (!Selected.IsLatest) {
         <div class="alert alert-warning" role="alert">
           This is an old revision created
           <span title=@Selected.Created>
@@ -78,7 +78,6 @@
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
   BranchInstanceMeta Selected;
-  bool _isOld;
   List<AcquiredCard> AcquiredCards = new List<AcquiredCard>();
   private string _LoadingMessage = "Loading...";
   private bool _isAcquired() => AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Selected.Id);
