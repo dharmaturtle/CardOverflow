@@ -45,7 +45,7 @@
           </div>
           @if (_isAcquired()) {
             <div class="col-2">
-              <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Selected.Id && x.Index == i)) />
+              <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
             </div>
           }
         </div>
@@ -118,6 +118,14 @@
   private void showError(string error) {
     ToastService.ShowError(error);
     _LoadingMessage = error;
+  }
+
+  private void _CardStateUpdated(CardState state) {
+    if (state.IsSuspended && AcquiredCards.All(x => x.CardState.IsSuspended)) {
+      Card.Summary.Users--;
+    } else if (!state.IsSuspended && AcquiredCards.All(x => !x.CardState.IsSuspended)) {
+      Card.Summary.Users++;
+    }
   }
 
 }

@@ -53,12 +53,24 @@
       </strong>
       @(AcquiredCard.EaseFactorInPermille * 10)%
     </div>
+    <div>
+      @if (AcquiredCard.CardState.IsSuspended) {
+        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Normal))>
+          Unsuspend
+        </button>
+      } else {
+        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Suspended))>
+          Suspend
+        </button>
+      }
+    </div>
   }
 </div>
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public AcquiredCard AcquiredCard { get; set; }
+  [Parameter] public EventCallback<CardState> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
   private async Task _SetOption(int newId) {
@@ -67,6 +79,16 @@
       ToastService.ShowInfo("Card setting saved!");
     } else {
       ToastService.ShowError(r.ErrorValue);
+    }
+  }
+
+  private async Task _editState(CardState state) {
+    var x = await DbExecutor.QueryAsync(db => CardRepository.editState(db, User.Id, AcquiredCard.AcquiredCardId, state));
+    if (x.IsOk) {
+      AcquiredCard.CardState = state;
+      await CardStateUpdated.InvokeAsync(state);
+    } else {
+      ToastService.ShowError(x.ErrorValue);
     }
   }
 
