@@ -21,15 +21,7 @@
 } else {
   <div class="row">
     <div class="col-xl">
-      @if (Instance == null) {
-        <ExploreCardIFrameHeader Card=@Card Instance=@Card.Instance />
-        @foreach (var i in Card.Instance.Indexes) {
-          <ResizingIframe BranchInstance=@((Card.Instance.Id, i)) Back />
-          @if (AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Card.Instance.Id)) {
-            <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Card.Instance.Id && x.Index == i)) />
-          }
-        }
-      } else {
+      @if (_isOld) {
         <div class="alert alert-warning" role="alert">
           This is an old revision created
           <span title=@Instance.Created>
@@ -44,13 +36,19 @@
           </a>
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
-        <ExploreCardIFrameHeader Card=@Card Instance=@Instance />
-        @foreach (var i in Instance.Indexes) {
-          <ResizingIframe BranchInstance=@((Instance.Id, i)) Back />
-          @if (AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Instance.Id)) {
-            <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Instance.Id && x.Index == i)) />
+      }
+      <ExploreCardIFrameHeader Card=@Card Instance=@Instance />
+      @foreach (var i in Instance.Indexes) {
+        <div class="row">
+          <div class=@(_isAcquired() ? "col-10" : "col")>
+            <ResizingIframe BranchInstance=@((Instance.Id, i)) Back />
+          </div>
+          @if (_isAcquired()) {
+            <div class="col-2">
+              <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Instance.Id && x.Index == i)) />
+            </div>
           }
-        }
+        </div>
       }
     </div>
   </div>
@@ -64,7 +62,7 @@
     </div>
     <div class="col-xl">
       <ExploreCardBranch Branches=@Card.Branches
-                         InstanceSelected=@(x => Card.Summary.Instance = x)
+                         InstanceSelected=@(x => Instance = x)
                          Status=@Card.AcquiredStatus
                          UpdateStatus=@(x => Card.AcquiredStatus = x)
                          Selected=@Card.Instance
@@ -81,8 +79,10 @@
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
   BranchInstanceMeta Instance;
+  bool _isOld;
   List<AcquiredCard> AcquiredCards = new List<AcquiredCard>();
   private string _LoadingMessage = "Loading...";
+  private bool _isAcquired() => AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Instance.Id);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -90,6 +90,7 @@
       var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, CardId));
       if (x.IsOk) {
         Card = x.ResultValue;
+        Instance = Card.Instance;
       } else {
         showError(x.ErrorValue);
       }
@@ -98,6 +99,7 @@
       if (x.IsOk) {
         var (instance, card) = x.ResultValue;
         Card = card;
+        Instance = Card.Instance;
         if (instance.Id != card.Instance.Id) {
           Instance = instance;
         }
