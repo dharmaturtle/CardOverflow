@@ -14,7 +14,12 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-<h4>Branches</h4>
+  <div class="d-flex justify-content-between">
+    <h4>Branches</h4>
+    <a class="btn btn-outline-success" href="curate/card/branch/@Root.CardId" title="Add a Branch">
+      <i class="fas fa-plus"></i>
+    </a>
+  </div>
 <div class="list-group">
   @foreach (var branch in Branches) {
     <div class="d-flex h-100">
@@ -35,7 +40,7 @@
       }
       <button class="list-group-item list-group-item-action @(Selected.Id == branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(branch.Instance))">
         @if (@branch.Name == null) {
-        <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
+          <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
         } else {
           @branch.Name
         }
