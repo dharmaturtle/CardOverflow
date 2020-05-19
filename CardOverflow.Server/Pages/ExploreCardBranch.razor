@@ -52,7 +52,6 @@
   [Parameter] public EventCallback<ExploreCardAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public BranchInstanceMeta Root { get; set; }
-  [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
   private async Task _Acquire(ExploreCardAcquiredStatus status) {
@@ -80,9 +79,6 @@
     }
     if (instanceId == Root.Id) {
       Root.Users = Root.Users + i;
-    }
-    if (Instance != null && instanceId == Instance.Id) {
-      Instance.Users = Instance.Users + i;
     }
   }
 
