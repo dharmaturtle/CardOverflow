@@ -29,39 +29,46 @@
             </label>
             <InputText id="nameInput" @bind-Value=@Instance.Name class="form-control mb-2" />
           </div>
-          <table class="table-borderless my-3">
-            <thead>
-              <tr>
-                <th>Field Name</th>
-                <th>Ordinal</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (var (field, i) in Instance.Fields.Select((x, i) => (x, i))) {
+          <div class="row">
+            <table class="table-borderless my-3">
+              <thead>
                 <tr>
+                  <th>Field Name</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var (field, i) in Instance.Fields.Select((x, i) => (x, i))) {
+                  <tr>
+                    <td>
+                      <InputText @bind-Value=@field.Name class="form-control" />
+                      <ValidationMessage For=@(() => field.Name) />
+                    </td>
+                    <td>
+                      <button type="button" class="btn" @onclick=@(() => DeleteField(i)) disabled=@IsDisabled>
+                        <span class="oi oi-trash"></span>
+                      </button>
+                    </td>
+                  </tr>
+                }
+                <tr>
+                  <td></td>
+                  <td></td>
                   <td>
-                    <InputText @bind-Value=@field.Name class="form-control" />
-                    <ValidationMessage For=@(() => field.Name) />
-                  </td>
-                  <td>
-                    <button type="button" class="btn" @onclick=@(() => DeleteField(i)) disabled=@IsDisabled>
-                      <span class="oi oi-trash"></span>
+                    <button type="button" class="btn btn-success" @onclick=AddField disabled=@IsDisabled>
+                      <span class="oi oi-plus"></span>
                     </button>
                   </td>
                 </tr>
-              }
-              <tr>
-                <td></td>
-                <td></td>
-                <td>
-                  <button type="button" class="btn btn-success" @onclick=AddField disabled=@IsDisabled>
-                    <span class="oi oi-plus"></span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+            <div class="col-sm">
+              <h5 class="text-center">CSS</h5>
+              <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
+              <ValidationMessage For=@(() => Instance.Css) />
+            </div>
+          </div>
           <div class="row">
             @foreach (var template in Instance.JustTemplates) {
               <div class="col-sm">
@@ -75,11 +82,6 @@
                 <ValidationMessage For=@(() => template.Back) />
               </div>
             }
-            <div class="col-sm">
-              <h5 class="text-center">CSS</h5>
-              <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
-              <ValidationMessage For=@(() => Instance.Css) />
-            </div>
           </div>
         </fieldset>
         <div class="float-right mt-3 mr-3">
