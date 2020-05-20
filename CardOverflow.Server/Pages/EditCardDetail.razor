@@ -20,6 +20,14 @@
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
+            @if (EditCard.Kind.IsNewBranch_SourceCardId_Title || EditCard.Kind.IsUpdate_BranchId_Title) {
+              <div class="input-group">
+                <label for="branchTitleInput" class="col-form-label mr-2">
+                  Branch Title:
+                </label>
+                <InputText @bind-Value=@EditCard.Title class="form-control" id="branchTitleInput" />
+              </div>
+            }
             @foreach (var field in EditCard.FieldValues) {
               <EditCardField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_IsDisabled />
             }
@@ -121,7 +129,7 @@
       Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, User?.Id ?? 0, EditCard.CollateInstance.CollateId));
     }
     if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty));
+      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
@@ -140,7 +148,7 @@
       resultingBranchId = result.ResultValue;
       if (NewEditCardOnSave) {
         var fieldValues = EditCard.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty));
+        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
         UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
         _IsDisabled = false;
       }

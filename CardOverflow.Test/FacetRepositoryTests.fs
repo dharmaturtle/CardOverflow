@@ -32,6 +32,7 @@ let normalCommand fieldValues collateInstance tagIds =
             }) |> toResizeArray
         EditSummary = "Initial creation"
         Kind = NewOriginal_TagIds tagIds
+        Title = null
     }
 
 let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
@@ -46,7 +47,8 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
                     "extra"
         }).ToList()
     CollateInstance = clozeCollate
-    Kind = NewOriginal_TagIds tagIds }
+    Kind = NewOriginal_TagIds tagIds
+    Title = null }
 
 let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let tagIds = ResizeArray.empty

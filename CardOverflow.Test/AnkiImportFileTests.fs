@@ -337,6 +337,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                             .ToList()
                     CollateInstance = collate
                     Kind = NewOriginal_TagIds []
+                    Title = null
                 }
             |> Task.map Result.getOk
         let! field = c.Db.CommunalField.SingleAsync()

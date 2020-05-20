@@ -250,6 +250,7 @@ type ViewEditCardCommand = {
     FieldValues: EditFieldAndValue ResizeArray
     CollateInstance: ViewCollateInstance
     Kind: UpsertKind
+    Title: string
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -279,10 +280,19 @@ type ViewEditCardCommand = {
             ) |> toResizeArray
             |> Ok
     member this.load =
+        let kind =
+            match this.Title with
+            | null -> this.Kind
+            | title ->
+                match this.Kind with
+                | NewOriginal_TagIds
+                | NewCopy_SourceInstanceId_TagIds -> this.Kind
+                | NewBranch_SourceCardId_Title (id, _) -> NewBranch_SourceCardId_Title (id, title)
+                | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
-            Kind = this.Kind
+            Kind = kind
         }
 
 type UpsertCardSource =
@@ -301,6 +311,12 @@ module SanitizeCardRepository =
                         <| branch.FieldValues
                 CollateInstance = branch.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
                 Kind = kind
+                Title =
+                    match kind with
+                    | NewOriginal_TagIds
+                    | NewCopy_SourceInstanceId_TagIds -> null
+                    | NewBranch_SourceCardId_Title (_, title)
+                    | Update_BranchId_Title (_, title) -> title
             }
         match source with
         | VNewOriginalUserId userId ->
@@ -314,6 +330,7 @@ module SanitizeCardRepository =
                             <| ""
                     CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
                     Kind = NewOriginal_TagIds []
+                    Title = null
                 }
             )
         | VNewBranchSourceCardId cardId ->
