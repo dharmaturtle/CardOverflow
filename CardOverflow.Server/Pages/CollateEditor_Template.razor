@@ -17,14 +17,14 @@
 <div class="card">
   <div class="card-header">
     <h3>
-      <a class="text-muted" type="button" @onclick=@_toggleCollapse>
+      <a type="button" @onclick=@_toggleCollapse>
         @if (isCollapsed) {
-          <span class="oi oi-chevron-right"></span>
+          <span class="text-muted oi oi-chevron-right"></span>
         } else {
-          <span class="oi oi-chevron-bottom"></span>
+          <span class="text-muted oi oi-chevron-bottom"></span>
         }
+        @Template.Name
       </a>
-      @Template.Name
     </h3>
   </div>
   @if (!isCollapsed) {
