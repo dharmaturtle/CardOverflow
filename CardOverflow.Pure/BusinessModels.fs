@@ -107,7 +107,9 @@ type Template = {
     Back: string
     ShortFront: string
     ShortBack: string
-}
+} with
+    member this.FrontBackFrontSynthBackSynth css = // medTODO split this up
+        CardHtml.generate [] this.Front this.Back css CardHtml.Standard
 
 type CollateType =
     | Standard of Template list

@@ -29,15 +29,25 @@
   </div>
   @if (!isCollapsed) {
     <div class="card-body">
-      <div class="">
-        <h5 class="text-center">Question Template</h5>
-        <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
-        <ValidationMessage For=@(() => Template.Front) />
+      <h5 class="text-center">Question Template</h5>
+      <div class="row">
+        <div class="col">
+          <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
+          <ValidationMessage For=@(() => Template.Front) />
+        </div>
+        <div class="col">
+          <iframe sandbox="allow-scripts" srcdoc=@_front style="height: 30vh; width: 100%; resize: vertical;"></iframe>
+        </div>
       </div>
-      <div class="">
-        <h5 class="text-center">Answer Template</h5>
-        <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
-        <ValidationMessage For=@(() => Template.Back) />
+      <h5 class="text-center">Answer Template</h5>
+      <div class="row">
+        <div class="col">
+          <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
+          <ValidationMessage For=@(() => Template.Back) />
+        </div>
+        <div class="col">
+          <iframe sandbox="allow-scripts" srcdoc=@_back style="height: 30vh; width: 100%; resize: vertical;"></iframe>
+        </div>
       </div>
     </div>
   }
@@ -45,8 +55,12 @@
 
 @code {
   [Parameter] public Template Template { get; set; }
+  [Parameter] public string Css { get; set; }
   bool isCollapsed;
 
   private void _toggleCollapse() => isCollapsed = !isCollapsed;
+  private Tuple<string, string, string, string> _x => Template.FrontBackFrontSynthBackSynth(Css);
+  private string _front => _x.Item1;
+  private string _back => _x.Item2;
 
 }
