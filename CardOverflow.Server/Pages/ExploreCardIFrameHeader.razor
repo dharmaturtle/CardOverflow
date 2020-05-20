@@ -13,7 +13,7 @@
 @inject TimeProvider TimeProvider
 
 <div class="d-flex justify-content-between align-items-center">
-  <ExploreCardState Card=@Card UpdateCard=@(x => Card = x) />
+  <ExploreCardState Card=@Card />
   <div>
     By @(_branch.Author)
     @if (_branch.AuthorId == User?.Id) {

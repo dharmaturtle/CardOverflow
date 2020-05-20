@@ -55,16 +55,15 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
-  [Parameter] public EventCallback<CardOverflow.Pure.ExploreCard> UpdateCard { get; set; }
   private BSModal _modal;
 
   private async Task _acquire() {
     await DbExecutor.CommandAsync(db => CardRepository.AcquireCardAsync(db, User.Id, Card.Instance.Id));
     var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
     if (ac.IsOk) {
+      Card.AcquiredStatus = ExploreCardAcquiredStatus.NewExactInstanceAcquired(Card.Instance.Id);
       Card.Instance.IsAcquired = true;
       Card.Summary.Users++;
-      await UpdateCard.InvokeAsync(Card);
     } else {
       ToastService.ShowError(ac.ErrorValue);
     }
@@ -72,9 +71,9 @@
 
   private async Task _discard() {
     await DbExecutor.CommandAsync(db => CardRepository.deleteAcquiredCard(db, User.Id, Card.Id));
+    Card.AcquiredStatus = ExploreCardAcquiredStatus.NotAcquired;
     Card.Instance.IsAcquired = false;
     Card.Summary.Users--;
-    await UpdateCard.InvokeAsync(Card);
     _modal.Hide();
   }
 
