@@ -34,7 +34,7 @@
       }
       @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Card?.Instance?.IsAcquired ?? true)>
+          <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Card.IsAnyAcquired)>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -46,6 +46,16 @@
     [CascadingParameter] UserEntity User { get; set; }
     [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
     private bool _showTagAdder;
+
+    public override async Task SetParametersAsync(ParameterView parameters) {
+      await base.SetParametersAsync(parameters);
+      if (!Card.IsAnyAcquired) {
+        foreach (var tag in Card.Tags.Where(t => t.IsAcquired)) {
+          tag.IsAcquired = false;
+          tag.Count--;
+        }
+      }
+    }
 
     async Task AcquireTag(string name, bool isNew = true) {
       var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Card.Id));

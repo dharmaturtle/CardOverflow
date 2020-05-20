@@ -55,6 +55,7 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+  [Parameter] public EventCallback<CardOverflow.Pure.ExploreCard> UpdateCard { get; set; }
   private BSModal _modal;
 
   private async Task _acquire() {
@@ -64,6 +65,7 @@
       Card.AcquiredStatus = ExploreCardAcquiredStatus.NewExactInstanceAcquired(Card.Instance.Id);
       Card.Instance.IsAcquired = true;
       Card.Summary.Users++;
+      await UpdateCard.InvokeAsync(Card);
     } else {
       ToastService.ShowError(ac.ErrorValue);
     }
@@ -75,6 +77,7 @@
     Card.Instance.IsAcquired = false;
     Card.Summary.Users--;
     _modal.Hide();
+    await UpdateCard.InvokeAsync(Card);
   }
 
 }

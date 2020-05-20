@@ -13,7 +13,7 @@
 @inject TimeProvider TimeProvider
 
 <div class="d-flex justify-content-between align-items-center">
-  <ExploreCardState Card=@Card />
+  <ExploreCardState Card=@Card UpdateCard=@UpdateCard />
   <div>
     By @(_branch.Author)
     @if (_branch.AuthorId == User?.Id) {
@@ -41,6 +41,7 @@
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+  [Parameter] public EventCallback<CardOverflow.Pure.ExploreCard> UpdateCard { get; set; }
   private Branch _branch => Card.Branches.Single(b => b.Id == Instance.BranchId);
 
 }

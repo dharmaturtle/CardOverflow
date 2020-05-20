@@ -37,7 +37,7 @@
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
       }
-      <ExploreCardIFrameHeader Card=@Card Instance=@Selected />
+      <ExploreCardIFrameHeader Card=@Card Instance=@Selected UpdateCard=@(x => Card = x) />
       @foreach (var i in Selected.Indexes) {
         <div class="row">
           <div class=@(_isAcquired() ? "col-10" : "col")>

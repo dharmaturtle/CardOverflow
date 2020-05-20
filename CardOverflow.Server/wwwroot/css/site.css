@@ -222,7 +222,7 @@ app {
   border-color: #28a745
 }
 
-  .btn-outline-acquired:hover {
+  .btn-outline-acquired:hover:enabled {
     border-color: #dc3545
   }
 
@@ -236,7 +236,7 @@ app {
   border-color: #cccccc
 }
 
-  .btn-outline-unacquired:hover {
+  .btn-outline-unacquired:hover:enabled {
     border-color: #28a745
   }
 
@@ -252,7 +252,7 @@ app {
   border-color: #28a745
 }
 
-  .btn-unacquire-card:hover {
+  .btn-unacquire-card:hover:enabled {
     color: #fff;
     background-color: #c82333;
     border-color: #bd2130
@@ -289,7 +289,7 @@ app {
 .btn-acquire-card {
 }
 
-  .btn-acquire-card:hover {
+  .btn-acquire-card:hover:enabled {
     color: #fff;
     background-color: #218838;
     border-color: #1e7e34
