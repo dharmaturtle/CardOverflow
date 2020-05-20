@@ -40,7 +40,7 @@
       <span class="curate-tooltip-target">
         <span class="oi oi-eye@(_aIsAcquired ? " text-success" : "")" aria-hidden="true" />
         <span class="curate-tooltip-content">
-          <ResizingIframe BranchInstanceId=@AId Back />
+          <ResizingIframeBranch BranchInstanceId=@AId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
         </span>
       </span>
       <a href="cardinstance/@AId">
@@ -64,7 +64,7 @@
       <span class="curate-tooltip-target">
         <span class="oi oi-eye@(_bIsAcquired ? " text-success" : "")" aria-hidden="true" />
         <span class="curate-tooltip-content">
-          <ResizingIframe BranchInstanceId=@BId Back />
+          <ResizingIframeBranch BranchInstanceId=@BId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
         </span>
       </span>
       <a href="cardinstance/@BId">

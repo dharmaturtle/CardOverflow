@@ -1,0 +1,24 @@
+@using ThoughtDesign.WebLibrary
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject IJSRuntime Js
+@inject UrlProvider UrlProvider
+
+@foreach (var i in Enumerable.Range(0, MaxIndexInclusive + 1)) {
+  <ResizingIframe BranchInstance=@((BranchInstanceId, (short) i)) Front=@Front Back=@Back />
+}
+
+@code {
+  [Parameter] public int BranchInstanceId { get; set; }
+  [Parameter] public int MaxIndexInclusive { get; set; }
+  [Parameter] public bool Front { get; set; }
+  [Parameter] public bool Back { get; set; }
+
+}

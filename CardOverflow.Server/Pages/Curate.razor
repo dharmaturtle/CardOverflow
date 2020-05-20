@@ -44,7 +44,7 @@
                       <span class="oi oi-eye@(card.BranchInstanceMeta.IsAcquired ? " text-success" : "")" aria-hidden="true" />
                       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                       <div class="curate-tooltip-content">
-                        <ResizingIframe BranchInstanceId=@card.BranchInstanceMeta.Id Front />
+                        <ResizingIframeBranch BranchInstanceId=@card.BranchInstanceMeta.Id MaxIndexInclusive=@card.BranchInstanceMeta.MaxIndexInclusive Front />
                       </div>
                     </div>
                   </td>
