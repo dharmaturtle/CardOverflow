@@ -142,6 +142,7 @@
     await (InstanceId == 0
       ? _isChildComponent()
       : _isInstancePage());
+    IsDisabled = Collate.AuthorId != (User?.Id ?? 0);
   }
 
   async Task Submit() {
