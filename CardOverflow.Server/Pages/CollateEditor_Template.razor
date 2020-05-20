@@ -14,15 +14,22 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-<div class="col-sm">
-  <h5 class="text-center">Question Template</h5>
-  <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
-  <ValidationMessage For=@(() => Template.Front) />
-</div>
-<div class="col-sm">
-  <h5 class="text-center">Answer Template</h5>
-  <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
-  <ValidationMessage For=@(() => Template.Back) />
+<div class="card">
+  <div class="card-header">
+    <h3>@Template.Name</h3>
+  </div>
+  <div class="card-body">
+    <div class="">
+      <h5 class="text-center">Question Template</h5>
+      <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
+      <ValidationMessage For=@(() => Template.Front) />
+    </div>
+    <div class="">
+      <h5 class="text-center">Answer Template</h5>
+      <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
+      <ValidationMessage For=@(() => Template.Back) />
+    </div>
+  </div>
 </div>
 
 @code {
