@@ -13,22 +13,27 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_card == null || _collates == null) {
+@if (_command == null || _collates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail Card=@_card Collates=@_collates NewEditCardOnSave=true />
+  <EditCardDetail EditCard=@_command Collates=@_collates NewEditCardOnSave=true />
 }
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  private AcquiredCard _card;
+  private ViewEditCardCommand _command;
   private IEnumerable<ViewCollateWithAllInstances> _collates;
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     if (User != null) {
-      _card = await DbExecutor.QueryAsync(db => CardRepository.getNew(db, User.Id));
+      var x = await DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVNewOriginalUserId(User.Id)));
+      if (x.IsOk) {
+        _command = x.ResultValue;
+      } else {
+        ToastService.ShowError(x.ErrorValue);
+      }
       _collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User.Id));
     }
   }

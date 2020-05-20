@@ -250,7 +250,7 @@ type ViewEditCardCommand = {
     FieldValues: EditFieldAndValue ResizeArray
     CollateInstance: ViewCollateInstance
     Kind: UpsertKind
-    Title: string
+    Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
