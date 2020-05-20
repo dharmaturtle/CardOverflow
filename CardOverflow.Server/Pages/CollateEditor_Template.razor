@@ -16,23 +16,37 @@
 
 <div class="card">
   <div class="card-header">
-    <h3>@Template.Name</h3>
+    <h3>
+      <a class="text-muted" type="button" @onclick=@_toggleCollapse>
+        @if (isCollapsed) {
+          <span class="oi oi-chevron-right"></span>
+        } else {
+          <span class="oi oi-chevron-bottom"></span>
+        }
+      </a>
+      @Template.Name
+    </h3>
   </div>
-  <div class="card-body">
-    <div class="">
-      <h5 class="text-center">Question Template</h5>
-      <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
-      <ValidationMessage For=@(() => Template.Front) />
+  @if (!isCollapsed) {
+    <div class="card-body">
+      <div class="">
+        <h5 class="text-center">Question Template</h5>
+        <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
+        <ValidationMessage For=@(() => Template.Front) />
+      </div>
+      <div class="">
+        <h5 class="text-center">Answer Template</h5>
+        <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
+        <ValidationMessage For=@(() => Template.Back) />
+      </div>
     </div>
-    <div class="">
-      <h5 class="text-center">Answer Template</h5>
-      <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
-      <ValidationMessage For=@(() => Template.Back) />
-    </div>
-  </div>
+  }
 </div>
 
 @code {
   [Parameter] public Template Template { get; set; }
+  bool isCollapsed;
+
+  private void _toggleCollapse() => isCollapsed = !isCollapsed;
 
 }
