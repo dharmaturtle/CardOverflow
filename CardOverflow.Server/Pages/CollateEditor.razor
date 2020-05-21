@@ -32,11 +32,7 @@
           </div>
           <div class="row">
             <div class="col-sm">
-              <div class="font-weight-bold">Type</div>
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(CollateType.NewStandard(_originalTemplates)))>Standard</button>
-                <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(CollateType.NewCloze(_originalTemplates.First())))>Cloze</button>
-              </div>
+              <CollateEditor_Type Instance=@Instance />
               <table class="table-borderless my-3">
                 <thead>
                   <tr>
@@ -117,15 +113,8 @@
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public int CollateId { get; set; }
   [Parameter] public int InstanceId { get; set; }
-  private ViewCollateInstance _instance;
-  [Parameter] public ViewCollateInstance Instance { get => _instance; set {
-      _instance = value;
-      if (_originalTemplates == null) {
-        _originalTemplates = _instance.JustTemplates;
-      }
-    } }
-  private FSharpList<Template> _originalTemplates;
   [Parameter] public bool IsDisabled { get; set; } = true;
+  [Parameter] public ViewCollateInstance Instance { get; set; }
   [Parameter] public ViewCollateWithAllInstances Collate { get; set; }
   private string _loadingMessage = "Loading...";
 
@@ -180,10 +169,5 @@
       Name = "New Field"
     });
   }
-
-  private bool _isStandard => Instance.Templates.IsStandard;
-  
-  private void _setType(CollateType collateType) =>
-    Instance.Templates = collateType;
 
 }

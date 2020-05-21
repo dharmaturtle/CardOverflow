@@ -1,0 +1,46 @@
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.FSharp.Collections
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@using Microsoft.AspNetCore.WebUtilities
+@using ThoughtDesign.WebLibrary
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject DbExecutor DbExecutor
+
+<div class="font-weight-bold">Type</div>
+<div class="btn-group" role="group">
+  <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(CollateType.NewStandard(_originalTemplates)))>
+    Standard
+  </button>
+  <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(CollateType.NewCloze(_originalTemplates.First())))>
+    Cloze
+  </button>
+</div>
+
+@code {
+  private ViewCollateInstance _instance;
+  [Parameter] public ViewCollateInstance Instance {
+    get => _instance;
+    set {
+      _instance = value;
+      if (_originalTemplates == null) {
+        _originalTemplates = _instance.JustTemplates;
+      }
+    }
+  }
+  private FSharpList<Template> _originalTemplates;
+  
+  private bool _isStandard => Instance.Templates.IsStandard;
+
+  private void _setType(CollateType collateType) =>
+    Instance.Templates = collateType;
+
+}
