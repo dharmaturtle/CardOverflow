@@ -15,8 +15,8 @@
 @inject DbExecutor DbExecutor
 
 <div class="card">
-  <div class="card-header">
-    <h3>
+  <div class="card-header pb-1">
+    <h5>
       <a type="button" @onclick=@_toggleCollapse>
         @if (isCollapsed) {
           <span class="text-muted oi oi-chevron-right"></span>
@@ -25,7 +25,7 @@
         }
         @Template.Name
       </a>
-    </h3>
+    </h5>
   </div>
   @if (!isCollapsed) {
     <div class="card-body">
