@@ -73,11 +73,7 @@
               <ValidationMessage For=@(() => Instance.Css) />
             </div>
           </div>
-          <div class="">
-            @foreach (var template in Instance.JustTemplates) {
-              <CollateEditor_Template Template=@template Css=@Instance.Css />
-            }
-          </div>
+          <CollateEditor_Templates Instance=@Instance />
         </fieldset>
         <div class="float-right mt-3 mr-3">
           <div class="row">

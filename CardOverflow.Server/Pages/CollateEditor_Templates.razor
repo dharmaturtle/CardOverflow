@@ -1,0 +1,27 @@
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.FSharp.Collections
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@using Microsoft.AspNetCore.WebUtilities
+@using ThoughtDesign.WebLibrary
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject DbExecutor DbExecutor
+
+<div class="">
+  @foreach (var template in Instance.JustTemplates) {
+    <CollateEditor_Template Template=@template Css=@Instance.Css />
+  }
+</div>
+
+@code {
+  [Parameter] public ViewCollateInstance Instance { get; set; }
+
+}
