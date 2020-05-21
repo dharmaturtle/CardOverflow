@@ -1,6 +1,7 @@
 @page "/collateinstance/{InstanceId:int}"
 
 @using Microsoft.AspNetCore.Mvc
+@using Microsoft.FSharp.Collections
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -30,39 +31,46 @@
             <InputText id="nameInput" @bind-Value=@Instance.Name class="form-control mb-2" />
           </div>
           <div class="row">
-            <table class="table-borderless my-3">
-              <thead>
-                <tr>
-                  <th>Field Name</th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach (var (field, i) in Instance.Fields.Select((x, i) => (x, i))) {
+            <div class="col-sm">
+              <div class="font-weight-bold">Type</div>
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(CollateType.NewStandard(_originalTemplates)))>Standard</button>
+                <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(CollateType.NewCloze(_originalTemplates.First())))>Cloze</button>
+              </div>
+              <table class="table-borderless my-3">
+                <thead>
                   <tr>
+                    <th>Field Name</th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach (var (field, i) in Instance.Fields.Select((x, i) => (x, i))) {
+                    <tr>
+                      <td>
+                        <InputText @bind-Value=@field.Name class="form-control" />
+                        <ValidationMessage For=@(() => field.Name) />
+                      </td>
+                      <td>
+                        <button type="button" class="btn" @onclick=@(() => DeleteField(i)) disabled=@IsDisabled>
+                          <span class="oi oi-trash"></span>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                  <tr>
+                    <td></td>
+                    <td></td>
                     <td>
-                      <InputText @bind-Value=@field.Name class="form-control" />
-                      <ValidationMessage For=@(() => field.Name) />
-                    </td>
-                    <td>
-                      <button type="button" class="btn" @onclick=@(() => DeleteField(i)) disabled=@IsDisabled>
-                        <span class="oi oi-trash"></span>
+                      <button type="button" class="btn btn-success" @onclick=AddField disabled=@IsDisabled>
+                        <span class="oi oi-plus"></span>
                       </button>
                     </td>
                   </tr>
-                }
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td>
-                    <button type="button" class="btn btn-success" @onclick=AddField disabled=@IsDisabled>
-                      <span class="oi oi-plus"></span>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
             <div class="col-sm">
               <h5 class="text-center">CSS</h5>
               <InputTextArea @bind-Value=@Instance.Css class="form-control code" rows="25" />
@@ -109,7 +117,14 @@
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public int CollateId { get; set; }
   [Parameter] public int InstanceId { get; set; }
-  [Parameter] public ViewCollateInstance Instance { get; set; }
+  private ViewCollateInstance _instance;
+  [Parameter] public ViewCollateInstance Instance { get => _instance; set {
+      _instance = value;
+      if (_originalTemplates == null) {
+        _originalTemplates = _instance.JustTemplates;
+      }
+    } }
+  private FSharpList<Template> _originalTemplates;
   [Parameter] public bool IsDisabled { get; set; } = true;
   [Parameter] public ViewCollateWithAllInstances Collate { get; set; }
   private string _loadingMessage = "Loading...";
@@ -165,5 +180,10 @@
       Name = "New Field"
     });
   }
+
+  private bool _isStandard => Instance.Templates.IsStandard;
+  
+  private void _setType(CollateType collateType) =>
+    Instance.Templates = collateType;
 
 }
