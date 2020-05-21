@@ -598,6 +598,21 @@ let ``Can create card collate and insert a modified one`` (): Task<unit> = task 
     let! myCollates = SanitizeCollate.GetMine c.Db userId
     Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
     Assert.True(myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).IsCloze)
+
+    // updating to multiple templates
+    let name = Guid.NewGuid().ToString()
+    let! x =
+        SanitizeCollate.Update c.Db userId
+            { latestCollate
+                with
+                    Name = name
+                    Templates = Standard [ latestCollate.JustTemplates.First() ; latestCollate.JustTemplates.First() ]
+            }
+    Assert.Null x.Value
+
+    let! myCollates = SanitizeCollate.GetMine c.Db userId
+    Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
+    Assert.Equal(2, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).JustTemplates.Count())
     }
 
 [<Fact>]
