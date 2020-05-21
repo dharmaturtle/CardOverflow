@@ -583,21 +583,37 @@ let ``Can create card collate and insert a modified one`` (): Task<unit> = task 
 
     let! myCollates = SanitizeCollate.GetMine c.Db userId
     Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
+
+    // updating to cloze
+    let name = Guid.NewGuid().ToString()
+    let! x =
+        SanitizeCollate.Update c.Db userId
+            { latestCollate
+                with
+                    Name = name
+                    Templates = Cloze <| latestCollate.JustTemplates.First()
+            }
+    Assert.Null x.Value
+
+    let! myCollates = SanitizeCollate.GetMine c.Db userId
+    Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
+    Assert.True(myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).IsCloze)
     }
 
 [<Fact>]
-let ``New card collate has correct hash`` (): Task<unit> = taskResult {
-        use c = new TestContainer()
-        let userId = 3
-        let initialCollate = ViewCollateWithAllInstances.initialize userId
-        use sha512 = SHA512.Create()
-        do! SanitizeCollate.Update c.Db userId initialCollate.Editable
-        let! (dbCollate: CollateInstanceEntity) = c.Db.CollateInstance.SingleAsync(fun x -> x.Collate.AuthorId = userId)
+let ``New card collate has correct hash`` (): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let initialCollate = ViewCollateWithAllInstances.initialize userId
+    use sha512 = SHA512.Create()
+    do! SanitizeCollate.Update c.Db userId initialCollate.Editable
+    let! (dbCollate: CollateInstanceEntity) = c.Db.CollateInstance.SingleAsync(fun x -> x.Collate.AuthorId = userId)
     
-        let computedHash =
-            initialCollate.Editable
-            |> ViewCollateInstance.copyTo
-            |> fun x -> CollateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
-            |> CollateInstanceEntity.hash sha512
+    let computedHash =
+        initialCollate.Editable
+        |> ViewCollateInstance.copyTo
+        |> fun x -> CollateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
+        |> CollateInstanceEntity.hash sha512
     
-        Assert.Equal<BitArray>(dbCollate.Hash, computedHash) } |> TaskResult.getOk
+    Assert.Equal<BitArray>(dbCollate.Hash, computedHash)
+    } |> TaskResult.getOk)

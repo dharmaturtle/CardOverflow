@@ -232,6 +232,10 @@ type CollateInstance with
         entity.LatexPost <- this.LatexPost
         entity.Templates <- this.JustTemplates |> Template.copyToMany
         entity.EditSummary <- this.EditSummary
+        entity.Type <-
+            match this.Templates with
+            | Standard -> 0s
+            | Cloze -> 1s
     member this.CopyToNewInstance collate =
         let e = CollateInstanceEntity()
         this.CopyTo e
@@ -247,10 +251,6 @@ type AcquiredCollateInstance with
         { DefaultTags = entity.User_CollateInstances.Single().Tag_User_CollateInstances.Select(fun x -> x.DefaultTagId)
           DefaultCardSettingId = entity.User_CollateInstances.Single().DefaultCardSettingId
           CollateInstance = CollateInstance.load entity }
-
-type IdPairOrEntity<'a> =
-    | CardIdAndBranchId of int * int
-    | Entity of 'a
 
 type BranchInstanceView with
     static member private toView (collateInstance: CollateInstanceEntity) (fieldValues: string)=
