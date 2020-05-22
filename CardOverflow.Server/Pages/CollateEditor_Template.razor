@@ -17,18 +17,32 @@
 <div class="card">
   <div class="card-header pb-1">
     <h5 class="d-flex justify-content-between">
-      <a type="button" @onclick=@_toggleCollapse>
-        @if (isCollapsed) {
-          <span class="text-muted oi oi-chevron-right"></span>
-        } else {
-          <span class="text-muted oi oi-chevron-bottom"></span>
-        }
-        @Template.Name
-      </a>
-      @if (DisplayDelete) {
-        <a type="button" @onclick=@Delete.InvokeAsync>
-          <span class="oi oi-trash"></span>
+      <span>
+        <a type="button" @onclick=@_toggleCollapse>
+          @if (isCollapsed) {
+            <span class="text-muted oi oi-chevron-right"></span>
+          } else {
+            <span class="text-muted oi oi-chevron-bottom"></span>
+          }
+          @if (!isEditing) {
+            @Template.Name
+          }
         </a>
+        @if (isEditing) {
+          <InputText @bind-Value=@Template.Name />
+        }
+      </span>
+      @if (!IsDisabled) {
+        <span>
+          <a type="button" @onclick=@(() => isEditing = true)>
+            <span class="text-muted oi oi-pencil"></span>
+          </a>
+          @if (DisplayDelete) {
+            <a type="button" @onclick=@Delete.InvokeAsync>
+              <span class="oi oi-trash"></span>
+            </a>
+          }
+        </span>
       }
     </h5>
   </div>
@@ -63,7 +77,9 @@
   [Parameter] public string Css { get; set; }
   [Parameter] public EventCallback Delete { get; set; }
   [Parameter] public bool DisplayDelete { get; set; }
+  [Parameter] public bool IsDisabled { get; set; }
   bool isCollapsed;
+  bool isEditing;
 
   private void _toggleCollapse() => isCollapsed = !isCollapsed;
   private Tuple<string, string, string, string> _x => Template.FrontBackFrontSynthBackSynth(Css);
