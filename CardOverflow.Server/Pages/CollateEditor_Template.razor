@@ -16,7 +16,7 @@
 
 <div class="card">
   <div class="card-header pb-1">
-    <h5>
+    <h5 class="d-flex justify-content-between">
       <a type="button" @onclick=@_toggleCollapse>
         @if (isCollapsed) {
           <span class="text-muted oi oi-chevron-right"></span>
@@ -25,6 +25,11 @@
         }
         @Template.Name
       </a>
+      @if (DisplayDelete) {
+        <a type="button" @onclick=@Delete.InvokeAsync>
+          <span class="oi oi-trash"></span>
+        </a>
+      }
     </h5>
   </div>
   @if (!isCollapsed) {
@@ -56,6 +61,8 @@
 @code {
   [Parameter] public Template Template { get; set; }
   [Parameter] public string Css { get; set; }
+  [Parameter] public EventCallback Delete { get; set; }
+  [Parameter] public bool DisplayDelete { get; set; }
   bool isCollapsed;
 
   private void _toggleCollapse() => isCollapsed = !isCollapsed;

@@ -28,7 +28,7 @@
 </div>
 <div class="">
   @foreach (var template in Instance.JustTemplates) {
-    <CollateEditor_Template Template=@template Css=@Instance.Css />
+    <CollateEditor_Template Template=@template Css=@Instance.Css DisplayDelete=@(Instance.JustTemplates.Count() >= 2) Delete=@(() => DeleteTemplate(template)) />
   }
 </div>
 
@@ -39,6 +39,11 @@
 
   private Task AddTemplate() =>
     Instance.JustTemplates.Append(Template.initStandard).ToFList()
+    .Apply(CollateType.NewStandard)
+    .Apply(UpdateCollateType.InvokeAsync);
+
+  private Task DeleteTemplate(Template template) =>
+    Instance.JustTemplates.Where(x => x != template).ToFList()
     .Apply(CollateType.NewStandard)
     .Apply(UpdateCollateType.InvokeAsync);
 
