@@ -15,6 +15,17 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
+<div class="d-flex justify-content-between mt-3">
+  <div></div>
+  <h3>Templates</h3>
+  <div>
+    @if (Instance.Templates.IsStandard) {
+      <button type="button" class="btn btn-success" @onclick=AddTemplate disabled=@IsDisabled>
+        <span class="oi oi-plus"></span>
+      </button>
+    }
+  </div>
+</div>
 <div class="">
   @foreach (var template in Instance.JustTemplates) {
     <CollateEditor_Template Template=@template Css=@Instance.Css />
@@ -23,5 +34,12 @@
 
 @code {
   [Parameter] public ViewCollateInstance Instance { get; set; }
+  [Parameter] public EventCallback<CollateType> UpdateCollateType { get; set; }
+  [Parameter] public bool IsDisabled { get; set; }
+
+  private Task AddTemplate() =>
+    Instance.JustTemplates.Append(Template.initStandard).ToFList()
+    .Apply(CollateType.NewStandard)
+    .Apply(UpdateCollateType.InvokeAsync);
 
 }

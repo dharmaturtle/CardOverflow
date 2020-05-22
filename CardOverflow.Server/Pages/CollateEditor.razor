@@ -32,7 +32,7 @@
           </div>
           <div class="row">
             <div class="col-sm">
-              <CollateEditor_Type Instance=@Instance />
+              <CollateEditor_Type Instance=@Instance UpdateCollateType=@(x => Instance.Templates = x) />
               <table class="table-borderless my-3">
                 <thead>
                   <tr>
@@ -73,7 +73,7 @@
               <ValidationMessage For=@(() => Instance.Css) />
             </div>
           </div>
-          <CollateEditor_Templates Instance=@Instance />
+          <CollateEditor_Templates Instance=@Instance IsDisabled=@IsDisabled UpdateCollateType=@(x => Instance.Templates = x) />
         </fieldset>
         <div class="float-right mt-3 mr-3">
           <div class="row">

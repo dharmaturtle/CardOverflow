@@ -37,10 +37,11 @@
     }
   }
   private FSharpList<Template> _originalTemplates;
-  
+  [Parameter] public EventCallback<CollateType> UpdateCollateType { get; set; }
+
   private bool _isStandard => Instance.Templates.IsStandard;
 
-  private void _setType(CollateType collateType) =>
-    Instance.Templates = collateType;
+  private Task _setType(CollateType collateType) =>
+    UpdateCollateType.InvokeAsync(collateType);
 
 }

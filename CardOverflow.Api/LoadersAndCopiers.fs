@@ -209,18 +209,7 @@ type CollateInstance with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        Templates =
-            Standard [  {   Name = "Card Template"
-                            Front = """{{Front}}"""
-                            Back = """{{FrontSide}}
-
-<hr id=answer>
-
-{{Back}}"""
-                            ShortFront = ""
-                            ShortBack = ""
-                        }
-                    ]
+        Templates = CollateType.initStandard
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: CollateInstanceEntity) =
         entity.Name <- this.Name

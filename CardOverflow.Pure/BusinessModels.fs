@@ -110,6 +110,17 @@ type Template = {
 } with
     member this.FrontBackFrontSynthBackSynth css = // medTODO split this up
         CardHtml.generate [] this.Front this.Back css CardHtml.Standard
+    static member initStandard =
+        {   Name = "New Template"
+            Front = """{{Front}}"""
+            Back = """{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}"""
+            ShortFront = ""
+            ShortBack = ""
+        }
 
 type CollateType =
     | Standard of Template list
@@ -124,6 +135,8 @@ type CollateType =
         | 0s -> Standard templates
         | 1s -> Cloze <| templates.Single()
         | x -> failwith <| sprintf "Unable to convert '%i' to a CollateType" x
+    static member initStandard =
+        Template.initStandard |> List.singleton |> Standard
 
 type CollateInstance = {
     Id: int
