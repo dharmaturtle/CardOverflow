@@ -323,7 +323,7 @@
   }
 
   private async Task _GetNewCard() {
-    await DbExecutor.CommandAsync(db => CardRepository.AcquireCardAsync(db, User.Id, BId));
+    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, User.Id, BId));
     var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, User.Id, new List<int> { AId, BId }));
     _aIsAcquired = acquiredIds.Contains(AId);
     _bIsAcquired = acquiredIds.Contains(BId);

@@ -116,7 +116,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     } |> TaskResult.getOk)
 
 let testCommunalFields (c: TestContainer) userId stackId expected = task {
-    let! acquired = CardRepository.GetAcquired c.Db userId stackId
+    let! acquired = StackRepository.GetAcquired c.Db userId stackId
     let acquired = acquired.Value.Single()
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
@@ -248,7 +248,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             assertCount 0 "{{c1::Portland::city}} was founded in 1845."
     do! assertUserHasNormalCardCount 4
 
-    let! (e: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (e: PagedList<Result<AcquiredCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
     let expected =
         [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"

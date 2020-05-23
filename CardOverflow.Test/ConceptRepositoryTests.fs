@@ -38,7 +38,7 @@ let ``Getting 10 pages of GetAcquiredPages takes less than 1 minute``(): Task<un
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        let! _ = CardRepository.GetAcquiredPages db userId i ""
+        let! _ = StackRepository.GetAcquiredPages db userId i ""
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     }
@@ -66,7 +66,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
-    let! (cards: PagedList<Result<AcquiredCard, string>>) = CardRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (cards: PagedList<Result<AcquiredCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
@@ -124,7 +124,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        let! _ = CardRepository.SearchAsync c.Db userId i SearchOrder.Popularity ""
+        let! _ = StackRepository.SearchAsync c.Db userId i SearchOrder.Popularity ""
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
@@ -140,9 +140,9 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
             IsAcquired = true }],
         card.Tags)
     
-    let! ac = CardRepository.GetAcquired c.Db userId card.Id
+    let! ac = StackRepository.GetAcquired c.Db userId card.Id
     let ac = ac.Value.Single()
-    let! x = CardRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
     Assert.Null x.Value
     let! card = ExploreCardRepository.get c.Db userId 1
     Assert.Equal(0, card.Value.Summary.Users) // suspended cards don't count to User count
@@ -155,14 +155,14 @@ let testGetAcquired (acCount: int) addCards name = task {
     for (addCard: CardOverflowDb -> int -> string list -> Task<int>) in addCards do
         let! _ = addCard c.Db userId ["A"]
         ()
-    let! acquiredCards = CardRepository.GetAcquiredPages c.Db userId 1 ""
+    let! acquiredCards = StackRepository.GetAcquiredPages c.Db userId 1 ""
     Assert.Equal(acCount, acquiredCards.Results.Count())
-    let! ac = CardRepository.GetAcquired c.Db userId 1
+    let! ac = StackRepository.GetAcquired c.Db userId 1
     let ac = ac.Value
     Assert.Equal(userId, ac.Select(fun x -> x.UserId).Distinct().Single())
     
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId 1001 |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId 1001 |> TaskResult.getOk
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -178,8 +178,8 @@ let testGetAcquired (acCount: int) addCards name = task {
             IsAcquired = true }],
         card.Tags
     )
-    let! cards = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
-    Assert.Equal(1, cards.Results.Count())
+    let! stacks = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
+    Assert.Equal(1, stacks.Results.Count())
 
     let userId = 3 // this user never acquires the card
     let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
@@ -323,16 +323,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -392,16 +392,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user acquires the card
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = 3 // this user acquires card in opposite order from user2
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
-    do! CardRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
@@ -458,7 +458,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicCustomCard [front; back] c.Db userId ["custom"]
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
-    let search = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity
+    let search = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity
     
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
@@ -479,7 +479,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! cards = search clozeText
     Assert.Equal(3, cards.Results.Single().Id)
 
-    let search = CardRepository.SearchAsync c.Db userId 1 SearchOrder.Relevance
+    let search = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Relevance
     // testing relevance
     let term = "relevant "
     let less = String.replicate 1 term

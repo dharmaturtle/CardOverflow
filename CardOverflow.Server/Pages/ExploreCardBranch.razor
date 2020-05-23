@@ -60,9 +60,9 @@
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
   private async Task _Acquire(ExploreCardAcquiredStatus status) {
-    var x = await DbExecutor.QueryAsync(db => CardRepository.AcquireCardAsync(db, User.Id, status.InstanceId.Value));
+    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, User.Id, status.InstanceId.Value));
     if (x.IsOk) {
-      var ac = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Root.StackId));
+      var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Root.StackId));
       if (ac.IsOk) {
         await UpdateAcquiredCards.InvokeAsync(ac.ResultValue);
         _UpdateUsers(-1, Status.InstanceId?.Value);

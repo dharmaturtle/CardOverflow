@@ -106,7 +106,7 @@
       }
     }
     if (User != null && Card != null) {
-      var r = await DbExecutor.QueryAsync(db => CardRepository.GetAcquired(db, User.Id, Card.Id));
+      var r = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Card.Id));
       if (r.IsOk) {
         AcquiredCards = r.ResultValue;
       } // the only error so far is due to not acquiring the card, so intentionally not showing it.

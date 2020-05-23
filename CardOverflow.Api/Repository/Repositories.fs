@@ -272,7 +272,7 @@ module AcquiredCardRepository =
             |> TaskResult.map (fun x -> x.BranchInstanceId)
     }
 
-module CardRepository =
+module StackRepository =
     let deleteAcquiredCard (db: CardOverflowDb) userId stackId = task {
         do! db.AcquiredCard.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
             |> Task.map db.AcquiredCard.RemoveRange
@@ -500,7 +500,7 @@ module UpdateRepository =
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
             let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
-            let! (acs: AcquiredCardEntity list) = CardRepository.acquireCardNoSave db userId branchInstance
+            let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance
             match command.Kind with
             | Update_BranchId_Title
             | NewBranch_SourceCardId_Title -> ()

@@ -35,7 +35,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Revision = await DbExecutor.QueryAsync(db => CardRepository.Revisions(db, User?.Id ?? 0, Id));
+    Revision = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, User?.Id ?? 0, Id));
     StateHasChanged();
   }
 

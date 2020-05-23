@@ -83,7 +83,7 @@
   }
 
   private async Task _editState(CardState state) {
-    var x = await DbExecutor.QueryAsync(db => CardRepository.editState(db, User.Id, AcquiredCard.AcquiredCardId, state));
+    var x = await DbExecutor.QueryAsync(db => StackRepository.editState(db, User.Id, AcquiredCard.AcquiredCardId, state));
     if (x.IsOk) {
       AcquiredCard.CardState = state;
       await CardStateUpdated.InvokeAsync(state);

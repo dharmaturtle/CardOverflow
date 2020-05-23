@@ -62,7 +62,7 @@ module ViewFilterWithDue =
         UserId = e.UserId
         Name = e.Name
         Query = e.Query
-        Due = CardRepository.GetDueCount db e.UserId e.Query
+        Due = StackRepository.GetDueCount db e.UserId e.Query
     }
 
 module SanitizeFilterRepository =
@@ -348,9 +348,9 @@ module SanitizeCardRepository =
     let Update (db: CardOverflowDb) authorId (command: ViewEditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         UpdateRepository.card db authorId command.load
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
-        CardRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
+        StackRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =
-        CardRepository.GetAcquiredPages db userId pageNumber searchCommand.Query
+        StackRepository.GetAcquiredPages db userId pageNumber searchCommand.Query
 
 [<CLIMutable>]
 type PotentialSignupCommand = {
