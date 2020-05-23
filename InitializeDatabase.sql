@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -16,51 +16,51 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     AS $$
     BEGIN
         IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-            IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."CardId" = NEW."CardId") _)) THEN
-                RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."BranchInstanceId"), (SELECT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = 3 AND ac."CardId" = NEW."CardId" LIMIT 1);
+            IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."StackId" = NEW."StackId") _)) THEN
+                RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."BranchInstanceId"), (SELECT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = 3 AND ac."StackId" = NEW."StackId" LIMIT 1);
             END IF;
         END IF;
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
                                     FROM    "AcquiredCard" ac
                                     WHERE   "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )_)
             WHERE	ci."Id" = OLD."BranchInstanceId";
             UPDATE	"Branch" b
             SET		"Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
                                     FROM    "AcquiredCard" ac
                                     WHERE   "BranchId" = OLD."BranchId" AND "CardState" <> 3 )_)
             WHERE	b."Id" = OLD."BranchId";
-            UPDATE  "Card" card
+            UPDATE  "Stack" stack
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT c."Id", ac."UserId"
-                                    FROM    "Card" c
-                                    JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                    WHERE   ac."CardState" <> 3 AND ac."CardId" = OLD."CardId")_)
-            WHERE card."Id" = OLD."CardId";
+                                  ( SELECT DISTINCT s."Id", ac."UserId"
+                                    FROM    "Stack" s
+                                    JOIN    "AcquiredCard" ac on ac."StackId" = s."Id"
+                                    WHERE   ac."CardState" <> 3 AND ac."StackId" = OLD."StackId")_)
+            WHERE stack."Id" = OLD."StackId";
         END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
                                     FROM    "AcquiredCard" ac
                                     WHERE   "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )_)
             WHERE	ci."Id" = NEW."BranchInstanceId";
             UPDATE	"Branch" b
             SET		"Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."CardId", ac."UserId"
+                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
                                     FROM    "AcquiredCard" ac
                                     WHERE   "BranchId" = NEW."BranchId" AND "CardState" <> 3 )_)
             WHERE	b."Id" = NEW."BranchId";
-            UPDATE  "Card" card
+            UPDATE  "Stack" stack
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT c."Id", ac."UserId"
-                                    FROM    "Card" c
-                                    JOIN    "AcquiredCard" ac on ac."CardId" = c."Id"
-                                    WHERE   ac."CardState" <> 3 AND ac."CardId" = NEW."CardId")_)
-            WHERE card."Id" = NEW."CardId";
+                                  ( SELECT DISTINCT s."Id", ac."UserId"
+                                    FROM    "Stack" s
+                                    JOIN    "AcquiredCard" ac on ac."StackId" = s."Id"
+                                    WHERE   ac."CardState" <> 3 AND ac."StackId" = NEW."StackId")_)
+            WHERE stack."Id" = NEW."StackId";
         END IF;
         RETURN NULL;
     END;
@@ -96,17 +96,17 @@ CREATE FUNCTION public.fn_branch_afterinsertupdate() RETURNS trigger
         default_branch_id integer NOT NULL := 0;
     BEGIN
         IF (TG_OP = 'INSERT') THEN
-            UPDATE "Card" c
+            UPDATE "Stack" s
             SET    "DefaultBranchId" = (NEW."Id")
-            WHERE (c."Id" = NEW."CardId" AND c."DefaultBranchId" = 0);
+            WHERE (s."Id" = NEW."StackId" AND s."DefaultBranchId" = 0);
         END IF;
         
-        default_branch_id := (SELECT "DefaultBranchId" FROM "Card" c WHERE NEW."CardId" = c."Id");
+        default_branch_id := (SELECT "DefaultBranchId" FROM "Stack" s WHERE NEW."StackId" = s."Id");
         
         IF ((NEW."Name" IS NOT NULL) AND (default_branch_id = NEW."Id")) THEN
-            RAISE EXCEPTION 'Default Branches must have a null Name. CardId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."CardId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
         ELSIF ((NEW."Name" IS NULL) AND (default_branch_id <> NEW."Id")) THEN
-            RAISE EXCEPTION 'Only Default Branches may have a null Name. CardId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."CardId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
         END IF;
         RETURN NULL;
     END;
@@ -217,7 +217,7 @@ SET default_table_access_method = heap;
 CREATE TABLE public."AcquiredCard" (
     "Id" integer NOT NULL,
     "UserId" integer NOT NULL,
-    "CardId" integer NOT NULL,
+    "StackId" integer NOT NULL,
     "BranchId" integer NOT NULL,
     "BranchInstanceId" integer NOT NULL,
     "Index" smallint NOT NULL,
@@ -241,7 +241,7 @@ CREATE TABLE public."Branch" (
     "Id" integer NOT NULL,
     "Name" character varying(64),
     "AuthorId" integer NOT NULL,
-    "CardId" integer NOT NULL,
+    "StackId" integer NOT NULL,
     "LatestInstanceId" integer NOT NULL,
     "Users" integer NOT NULL,
     "IsListed" boolean NOT NULL
@@ -253,7 +253,7 @@ ALTER TABLE public."Branch" OWNER TO postgres;
 CREATE VIEW public."AcquiredCardIsLatest" AS
  SELECT a."Id",
     a."UserId",
-    a."CardId",
+    a."StackId",
     a."BranchId",
     a."BranchInstanceId",
     a."Index",
@@ -304,7 +304,7 @@ CREATE TABLE public."BranchInstance" (
     "Id" integer NOT NULL,
     "Created" timestamp without time zone NOT NULL,
     "Modified" timestamp without time zone,
-    "CardId" integer NOT NULL,
+    "StackId" integer NOT NULL,
     "BranchId" integer NOT NULL,
     "IsDmca" boolean NOT NULL,
     "FieldValues" text NOT NULL,
@@ -334,8 +334,8 @@ ALTER TABLE public."Relationship" OWNER TO postgres;
 CREATE TABLE public."Relationship_AcquiredCard" (
     "RelationshipId" integer NOT NULL,
     "UserId" integer NOT NULL,
-    "SourceCardId" integer NOT NULL,
-    "TargetCardId" integer NOT NULL,
+    "SourceStackId" integer NOT NULL,
+    "TargetStackId" integer NOT NULL,
     "SourceAcquiredCardId" integer NOT NULL,
     "TargetAcquiredCardId" integer NOT NULL
 );
@@ -373,7 +373,7 @@ ALTER TABLE public."Tag" OWNER TO postgres;
 CREATE TABLE public."Tag_AcquiredCard" (
     "TagId" integer NOT NULL,
     "UserId" integer NOT NULL,
-    "CardId" integer NOT NULL,
+    "StackId" integer NOT NULL,
     "AcquiredCardId" integer NOT NULL
 );
 
@@ -416,36 +416,6 @@ ALTER TABLE public."Branch" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTI
 );
 
 
-CREATE TABLE public."Card" (
-    "Id" integer NOT NULL,
-    "AuthorId" integer NOT NULL,
-    "Users" integer NOT NULL,
-    "CopySourceId" integer,
-    "DefaultBranchId" integer NOT NULL,
-    "IsListed" boolean NOT NULL
-);
-
-
-ALTER TABLE public."Card" OWNER TO postgres;
-
-CREATE VIEW public."CardRelationshipCount" AS
- SELECT sac."CardId" AS "SourceCardId",
-    tac."CardId" AS "TargetCardId",
-    unnest(ARRAY[sac."CardId", tac."CardId"]) AS "CardId",
-    ( SELECT r."Name"
-           FROM public."Relationship" r
-          WHERE (r."Id" = rac."RelationshipId")
-         LIMIT 1) AS "Name",
-    count(*) AS "Count"
-   FROM ((public."Relationship_AcquiredCard" rac
-     JOIN public."AcquiredCard" sac ON ((rac."SourceAcquiredCardId" = sac."Id")))
-     JOIN public."AcquiredCard" tac ON ((rac."TargetAcquiredCardId" = tac."Id")))
-  WHERE ((sac."CardState" <> 3) AND (tac."CardState" <> 3))
-  GROUP BY sac."CardId", tac."CardId", rac."RelationshipId";
-
-
-ALTER TABLE public."CardRelationshipCount" OWNER TO postgres;
-
 CREATE TABLE public."CardSetting" (
     "Id" integer NOT NULL,
     "UserId" integer NOT NULL,
@@ -476,32 +446,6 @@ ALTER TABLE public."CardSetting" OWNER TO postgres;
 
 ALTER TABLE public."CardSetting" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public."CardSetting_Id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
-CREATE VIEW public."CardTagCount" AS
- SELECT c."Id" AS "CardId",
-    ( SELECT t."Name"
-           FROM public."Tag" t
-          WHERE (t."Id" = ta."TagId")
-         LIMIT 1) AS "Name",
-    count(*) AS "Count"
-   FROM ((public."Card" c
-     JOIN public."AcquiredCard" ac ON ((ac."CardId" = c."Id")))
-     JOIN public."Tag_AcquiredCard" ta ON ((ta."AcquiredCardId" = ac."Id")))
-  WHERE (ac."CardState" <> 3)
-  GROUP BY c."Id", ta."TagId";
-
-
-ALTER TABLE public."CardTagCount" OWNER TO postgres;
-
-ALTER TABLE public."Card" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public."Card_Id_seq"
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -564,28 +508,6 @@ ALTER TABLE public."Collate" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENT
 );
 
 
-CREATE TABLE public."CommentCard" (
-    "Id" integer NOT NULL,
-    "CardId" integer NOT NULL,
-    "UserId" integer NOT NULL,
-    "Text" character varying(500) NOT NULL,
-    "Created" timestamp without time zone NOT NULL,
-    "IsDmca" boolean NOT NULL
-);
-
-
-ALTER TABLE public."CommentCard" OWNER TO postgres;
-
-ALTER TABLE public."CommentCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public."CommentCard_Id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
 CREATE TABLE public."CommentCollate" (
     "Id" integer NOT NULL,
     "CollateId" integer NOT NULL,
@@ -600,6 +522,28 @@ ALTER TABLE public."CommentCollate" OWNER TO postgres;
 
 ALTER TABLE public."CommentCollate" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public."CommentCollate_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+CREATE TABLE public."CommentStack" (
+    "Id" integer NOT NULL,
+    "StackId" integer NOT NULL,
+    "UserId" integer NOT NULL,
+    "Text" character varying(500) NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "IsDmca" boolean NOT NULL
+);
+
+
+ALTER TABLE public."CommentStack" OWNER TO postgres;
+
+ALTER TABLE public."CommentStack" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CommentStack_Id_seq"
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -808,6 +752,62 @@ ALTER TABLE public."Relationship" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS 
 );
 
 
+CREATE TABLE public."Stack" (
+    "Id" integer NOT NULL,
+    "AuthorId" integer NOT NULL,
+    "Users" integer NOT NULL,
+    "CopySourceId" integer,
+    "DefaultBranchId" integer NOT NULL,
+    "IsListed" boolean NOT NULL
+);
+
+
+ALTER TABLE public."Stack" OWNER TO postgres;
+
+CREATE VIEW public."StackRelationshipCount" AS
+ SELECT sac."StackId" AS "SourceStackId",
+    tac."StackId" AS "TargetStackId",
+    unnest(ARRAY[sac."StackId", tac."StackId"]) AS "StackId",
+    ( SELECT r."Name"
+           FROM public."Relationship" r
+          WHERE (r."Id" = rac."RelationshipId")
+         LIMIT 1) AS "Name",
+    count(*) AS "Count"
+   FROM ((public."Relationship_AcquiredCard" rac
+     JOIN public."AcquiredCard" sac ON ((rac."SourceAcquiredCardId" = sac."Id")))
+     JOIN public."AcquiredCard" tac ON ((rac."TargetAcquiredCardId" = tac."Id")))
+  WHERE ((sac."CardState" <> 3) AND (tac."CardState" <> 3))
+  GROUP BY sac."StackId", tac."StackId", rac."RelationshipId";
+
+
+ALTER TABLE public."StackRelationshipCount" OWNER TO postgres;
+
+CREATE VIEW public."StackTagCount" AS
+ SELECT s."Id" AS "StackId",
+    ( SELECT t."Name"
+           FROM public."Tag" t
+          WHERE (t."Id" = ta."TagId")
+         LIMIT 1) AS "Name",
+    count(*) AS "Count"
+   FROM ((public."Stack" s
+     JOIN public."AcquiredCard" ac ON ((ac."StackId" = s."Id")))
+     JOIN public."Tag_AcquiredCard" ta ON ((ta."AcquiredCardId" = ac."Id")))
+  WHERE (ac."CardState" <> 3)
+  GROUP BY s."Id", ta."TagId";
+
+
+ALTER TABLE public."StackTagCount" OWNER TO postgres;
+
+ALTER TABLE public."Stack" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."Stack_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
 ALTER TABLE public."Tag" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public."Tag_Id_seq"
     START WITH 1
@@ -862,14 +862,6 @@ ALTER TABLE public."User" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY
 );
 
 
-CREATE TABLE public."Vote_CommentCard" (
-    "CommentCardId" integer NOT NULL,
-    "UserId" integer NOT NULL
-);
-
-
-ALTER TABLE public."Vote_CommentCard" OWNER TO postgres;
-
 CREATE TABLE public."Vote_CommentCollate" (
     "CommentCollateId" integer NOT NULL,
     "UserId" integer NOT NULL
@@ -878,6 +870,14 @@ CREATE TABLE public."Vote_CommentCollate" (
 
 ALTER TABLE public."Vote_CommentCollate" OWNER TO postgres;
 
+CREATE TABLE public."Vote_CommentStack" (
+    "CommentStackId" integer NOT NULL,
+    "UserId" integer NOT NULL
+);
+
+
+ALTER TABLE public."Vote_CommentStack" OWNER TO postgres;
+
 CREATE TABLE public."Vote_Feedback" (
     "FeedbackId" integer NOT NULL,
     "UserId" integer NOT NULL
@@ -885,8 +885,6 @@ CREATE TABLE public."Vote_Feedback" (
 
 
 ALTER TABLE public."Vote_Feedback" OWNER TO postgres;
-
-
 
 
 
@@ -1095,6 +1093,8 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 
 
+
+
 INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (1, 'Admin', 1, true, true, 0, 4, 20, 0, false);
 INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (2, 'The Collective', 2, true, true, 0, 4, 20, 0, false);
 INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (3, 'RoboTurtle', 3, true, true, 0, 4, 20, 0, false);
@@ -1128,19 +1128,16 @@ SELECT pg_catalog.setval('public."Branch_Id_seq"', 1, false);
 SELECT pg_catalog.setval('public."CardSetting_Id_seq"', 4, false);
 
 
-SELECT pg_catalog.setval('public."Card_Id_seq"', 1, false);
-
-
 SELECT pg_catalog.setval('public."CollateInstance_Id_seq"', 1008, false);
 
 
 SELECT pg_catalog.setval('public."Collate_Id_seq"', 6, false);
 
 
-SELECT pg_catalog.setval('public."CommentCard_Id_seq"', 1, false);
-
-
 SELECT pg_catalog.setval('public."CommentCollate_Id_seq"', 1, false);
+
+
+SELECT pg_catalog.setval('public."CommentStack_Id_seq"', 1, false);
 
 
 SELECT pg_catalog.setval('public."CommunalFieldInstance_Id_seq"', 1001, false);
@@ -1170,6 +1167,9 @@ SELECT pg_catalog.setval('public."PotentialSignups_Id_seq"', 1, false);
 SELECT pg_catalog.setval('public."Relationship_Id_seq"', 1, false);
 
 
+SELECT pg_catalog.setval('public."Stack_Id_seq"', 1, false);
+
+
 SELECT pg_catalog.setval('public."Tag_Id_seq"', 1, false);
 
 
@@ -1192,10 +1192,6 @@ ALTER TABLE ONLY public."BranchInstance"
     ADD CONSTRAINT "PK_BranchInstance" PRIMARY KEY ("Id");
 
 
-ALTER TABLE ONLY public."Card"
-    ADD CONSTRAINT "PK_Card" PRIMARY KEY ("Id");
-
-
 ALTER TABLE ONLY public."CardSetting"
     ADD CONSTRAINT "PK_CardSetting" PRIMARY KEY ("Id");
 
@@ -1208,12 +1204,12 @@ ALTER TABLE ONLY public."CollateInstance"
     ADD CONSTRAINT "PK_CollateInstance" PRIMARY KEY ("Id");
 
 
-ALTER TABLE ONLY public."CommentCard"
-    ADD CONSTRAINT "PK_CommentCard" PRIMARY KEY ("Id");
-
-
 ALTER TABLE ONLY public."CommentCollate"
     ADD CONSTRAINT "PK_CommentCollate" PRIMARY KEY ("Id");
+
+
+ALTER TABLE ONLY public."CommentStack"
+    ADD CONSTRAINT "PK_CommentStack" PRIMARY KEY ("Id");
 
 
 ALTER TABLE ONLY public."CommunalField"
@@ -1261,7 +1257,11 @@ ALTER TABLE ONLY public."Relationship"
 
 
 ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "PK_Relationship_AcquiredCard" PRIMARY KEY ("RelationshipId", "UserId", "SourceCardId", "TargetCardId");
+    ADD CONSTRAINT "PK_Relationship_AcquiredCard" PRIMARY KEY ("RelationshipId", "UserId", "SourceStackId", "TargetStackId");
+
+
+ALTER TABLE ONLY public."Stack"
+    ADD CONSTRAINT "PK_Stack" PRIMARY KEY ("Id");
 
 
 ALTER TABLE ONLY public."Tag"
@@ -1269,7 +1269,7 @@ ALTER TABLE ONLY public."Tag"
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "UserId", "CardId");
+    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("TagId", "UserId", "StackId");
 
 
 ALTER TABLE ONLY public."Tag_User_CollateInstance"
@@ -1284,12 +1284,12 @@ ALTER TABLE ONLY public."User_CollateInstance"
     ADD CONSTRAINT "PK_User_CollateInstance" PRIMARY KEY ("UserId", "CollateInstanceId");
 
 
-ALTER TABLE ONLY public."Vote_CommentCard"
-    ADD CONSTRAINT "PK_Vote_CommentCard" PRIMARY KEY ("CommentCardId", "UserId");
-
-
 ALTER TABLE ONLY public."Vote_CommentCollate"
     ADD CONSTRAINT "PK_Vote_CommentCollate" PRIMARY KEY ("CommentCollateId", "UserId");
+
+
+ALTER TABLE ONLY public."Vote_CommentStack"
+    ADD CONSTRAINT "PK_Vote_CommentStack" PRIMARY KEY ("CommentStackId", "UserId");
 
 
 ALTER TABLE ONLY public."Vote_Feedback"
@@ -1297,7 +1297,7 @@ ALTER TABLE ONLY public."Vote_Feedback"
 
 
 ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "UQ_AcquiredCard_AcquiredCardId_UserId_CardId" UNIQUE ("Id", "UserId", "CardId");
+    ADD CONSTRAINT "UQ_AcquiredCard_AcquiredCardId_UserId_StackId" UNIQUE ("Id", "UserId", "StackId");
 
 
 ALTER TABLE ONLY public."BranchInstance"
@@ -1305,11 +1305,11 @@ ALTER TABLE ONLY public."BranchInstance"
 
 
 ALTER TABLE ONLY public."BranchInstance"
-    ADD CONSTRAINT "UQ_BranchInstance_CardId_Id" UNIQUE ("CardId", "Id");
+    ADD CONSTRAINT "UQ_BranchInstance_StackId_Id" UNIQUE ("StackId", "Id");
 
 
 ALTER TABLE ONLY public."Branch"
-    ADD CONSTRAINT "UQ_Branch_CardId_Id" UNIQUE ("CardId", "Id");
+    ADD CONSTRAINT "UQ_Branch_StackId_Id" UNIQUE ("StackId", "Id");
 
 
 CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
@@ -1330,7 +1330,7 @@ CREATE INDEX "IX_AcquiredCard_UserId_BranchId" ON public."AcquiredCard" USING bt
 CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_BranchInstanceId_Index" ON public."AcquiredCard" USING btree ("UserId", "BranchInstanceId", "Index");
 
 
-CREATE INDEX "IX_AcquiredCard_UserId_CardId" ON public."AcquiredCard" USING btree ("UserId", "CardId");
+CREATE INDEX "IX_AcquiredCard_UserId_StackId" ON public."AcquiredCard" USING btree ("UserId", "StackId");
 
 
 CREATE UNIQUE INDEX "IX_AlphaBetaKey_Key" ON public."AlphaBetaKey" USING btree ("Key");
@@ -1348,9 +1348,6 @@ CREATE INDEX "IX_BranchInstance_Hash" ON public."BranchInstance" USING btree ("H
 CREATE INDEX "IX_CardSetting_UserId" ON public."CardSetting" USING btree ("UserId");
 
 
-CREATE INDEX "IX_Card_AuthorId" ON public."Card" USING btree ("AuthorId");
-
-
 CREATE INDEX "IX_CollateInstance_CollateId" ON public."CollateInstance" USING btree ("CollateId");
 
 
@@ -1360,16 +1357,16 @@ CREATE INDEX "IX_CollateInstance_Hash" ON public."CollateInstance" USING btree (
 CREATE INDEX "IX_Collate_AuthorId" ON public."Collate" USING btree ("AuthorId");
 
 
-CREATE INDEX "IX_CommentCard_CardId" ON public."CommentCard" USING btree ("CardId");
-
-
-CREATE INDEX "IX_CommentCard_UserId" ON public."CommentCard" USING btree ("UserId");
-
-
 CREATE INDEX "IX_CommentCollate_CollateId" ON public."CommentCollate" USING btree ("CollateId");
 
 
 CREATE INDEX "IX_CommentCollate_UserId" ON public."CommentCollate" USING btree ("UserId");
+
+
+CREATE INDEX "IX_CommentStack_StackId" ON public."CommentStack" USING btree ("StackId");
+
+
+CREATE INDEX "IX_CommentStack_UserId" ON public."CommentStack" USING btree ("UserId");
 
 
 CREATE INDEX "IX_CommunalFieldInstance_BranchInstance_BranchInstanceId" ON public."CommunalFieldInstance_BranchInstance" USING btree ("BranchInstanceId");
@@ -1402,10 +1399,16 @@ CREATE INDEX "IX_History_AcquiredCardId" ON public."History" USING btree ("Acqui
 CREATE INDEX "IX_Relationship_AcquiredCard_RelationshipId" ON public."Relationship_AcquiredCard" USING btree ("RelationshipId");
 
 
+CREATE INDEX "IX_Relationship_AcquiredCard_SourceAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("SourceAcquiredCardId");
+
+
 CREATE INDEX "IX_Relationship_AcquiredCard_TargetAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("TargetAcquiredCardId");
 
 
 CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree (upper(("Name")::text));
+
+
+CREATE INDEX "IX_Stack_AuthorId" ON public."Stack" USING btree ("AuthorId");
 
 
 CREATE INDEX "IX_Tag_AcquiredCard_AcquiredCardId" ON public."Tag_AcquiredCard" USING btree ("AcquiredCardId");
@@ -1423,16 +1426,16 @@ CREATE INDEX "IX_User_CollateInstance_CollateInstanceId" ON public."User_Collate
 CREATE INDEX "IX_User_CollateInstance_DefaultCardSettingId" ON public."User_CollateInstance" USING btree ("DefaultCardSettingId");
 
 
-CREATE INDEX "IX_Vote_CommentCard_UserId" ON public."Vote_CommentCard" USING btree ("UserId");
-
-
 CREATE INDEX "IX_Vote_CommentCollate_UserId" ON public."Vote_CommentCollate" USING btree ("UserId");
+
+
+CREATE INDEX "IX_Vote_CommentStack_UserId" ON public."Vote_CommentStack" USING btree ("UserId");
 
 
 CREATE INDEX "IX_Vote_Feedback_UserId" ON public."Vote_Feedback" USING btree ("UserId");
 
 
-CREATE UNIQUE INDEX "UQ_Branch_CardId_Name" ON public."Branch" USING btree ("CardId", upper(("Name")::text));
+CREATE UNIQUE INDEX "UQ_Branch_StackId_Name" ON public."Branch" USING btree ("StackId", upper(("Name")::text));
 
 
 CREATE UNIQUE INDEX "UQ_Deck_UserId_Name" ON public."Deck" USING btree ("UserId", upper(("Name")::text));
@@ -1493,7 +1496,7 @@ ALTER TABLE ONLY public."AcquiredCard"
 
 
 ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Branch_BranchId_CardId" FOREIGN KEY ("CardId", "BranchId") REFERENCES public."Branch"("CardId", "Id");
+    ADD CONSTRAINT "FK_AcquiredCard_Branch_BranchId_StackId" FOREIGN KEY ("StackId", "BranchId") REFERENCES public."Branch"("StackId", "Id");
 
 
 ALTER TABLE ONLY public."AcquiredCard"
@@ -1501,11 +1504,11 @@ ALTER TABLE ONLY public."AcquiredCard"
 
 
 ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Card_CardId" FOREIGN KEY ("CardId") REFERENCES public."Card"("Id");
+    ADD CONSTRAINT "FK_AcquiredCard_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
 
 
 ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
+    ADD CONSTRAINT "FK_AcquiredCard_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
 
 
 ALTER TABLE ONLY public."AcquiredCard"
@@ -1517,7 +1520,7 @@ ALTER TABLE ONLY public."BranchInstance"
 
 
 ALTER TABLE ONLY public."BranchInstance"
-    ADD CONSTRAINT "FK_BranchInstance_Branch_CardId_BranchId" FOREIGN KEY ("CardId", "BranchId") REFERENCES public."Branch"("CardId", "Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_BranchInstance_Branch_StackId_BranchId" FOREIGN KEY ("StackId", "BranchId") REFERENCES public."Branch"("StackId", "Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."BranchInstance"
@@ -1529,7 +1532,7 @@ ALTER TABLE ONLY public."Branch"
 
 
 ALTER TABLE ONLY public."Branch"
-    ADD CONSTRAINT "FK_Branch_Card_CardId" FOREIGN KEY ("CardId") REFERENCES public."Card"("Id");
+    ADD CONSTRAINT "FK_Branch_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
 
 
 ALTER TABLE ONLY public."Branch"
@@ -1538,18 +1541,6 @@ ALTER TABLE ONLY public."Branch"
 
 ALTER TABLE ONLY public."CardSetting"
     ADD CONSTRAINT "FK_CardSetting_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
-
-
-ALTER TABLE ONLY public."Card"
-    ADD CONSTRAINT "FK_Card_BranchInstance_CopySourceId" FOREIGN KEY ("CopySourceId") REFERENCES public."BranchInstance"("Id");
-
-
-ALTER TABLE ONLY public."Card"
-    ADD CONSTRAINT "FK_Card_Branch_DefaultBranchId" FOREIGN KEY ("DefaultBranchId") REFERENCES public."Branch"("Id") DEFERRABLE INITIALLY DEFERRED;
-
-
-ALTER TABLE ONLY public."Card"
-    ADD CONSTRAINT "FK_Card_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
 
 
 ALTER TABLE ONLY public."CollateInstance"
@@ -1564,18 +1555,6 @@ ALTER TABLE ONLY public."Collate"
     ADD CONSTRAINT "FK_Collate_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
 
 
-ALTER TABLE ONLY public."CommunalFieldInstance_BranchInstance"
-    ADD CONSTRAINT "FK_CommFieldInst_CardInst_CommFieldInst_CommFieldInstId" FOREIGN KEY ("CommunalFieldInstanceId") REFERENCES public."CommunalFieldInstance"("Id");
-
-
-ALTER TABLE ONLY public."CommentCard"
-    ADD CONSTRAINT "FK_CommentCard_Card_CardId" FOREIGN KEY ("CardId") REFERENCES public."Card"("Id");
-
-
-ALTER TABLE ONLY public."CommentCard"
-    ADD CONSTRAINT "FK_CommentCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
-
-
 ALTER TABLE ONLY public."CommentCollate"
     ADD CONSTRAINT "FK_CommentCollate_Collate_CollateId" FOREIGN KEY ("CollateId") REFERENCES public."Collate"("Id");
 
@@ -1584,8 +1563,20 @@ ALTER TABLE ONLY public."CommentCollate"
     ADD CONSTRAINT "FK_CommentCollate_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
 
 
+ALTER TABLE ONLY public."CommentStack"
+    ADD CONSTRAINT "FK_CommentStack_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
+
+
+ALTER TABLE ONLY public."CommentStack"
+    ADD CONSTRAINT "FK_CommentStack_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
 ALTER TABLE ONLY public."CommunalFieldInstance_BranchInstance"
-    ADD CONSTRAINT "FK_CommunalFieldInst_CardInst_CardInst_CardInstId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
+    ADD CONSTRAINT "FK_CommunalFieldInstance_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
+
+
+ALTER TABLE ONLY public."CommunalFieldInstance_BranchInstance"
+    ADD CONSTRAINT "FK_CommunalFieldInstance_BranchInstance_CommunalFieldInstanceId" FOREIGN KEY ("CommunalFieldInstanceId") REFERENCES public."CommunalFieldInstance"("Id");
 
 
 ALTER TABLE ONLY public."CommunalFieldInstance"
@@ -1641,15 +1632,27 @@ ALTER TABLE ONLY public."Relationship_AcquiredCard"
 
 
 ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_SourceAcquiredCard_UserId_CardId" FOREIGN KEY ("SourceAcquiredCardId", "UserId", "SourceCardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_SourceAcquiredCard_UserId_StackId" FOREIGN KEY ("SourceAcquiredCardId", "UserId", "SourceStackId") REFERENCES public."AcquiredCard"("Id", "UserId", "StackId");
 
 
 ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_TargetAcquiredCard_UserId_CardId" FOREIGN KEY ("TargetAcquiredCardId", "UserId", "TargetCardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId");
+    ADD CONSTRAINT "FK_Relationship_AcquiredCard_TargetAcquiredCard_UserId_StackId" FOREIGN KEY ("TargetAcquiredCardId", "UserId", "TargetStackId") REFERENCES public."AcquiredCard"("Id", "UserId", "StackId");
+
+
+ALTER TABLE ONLY public."Stack"
+    ADD CONSTRAINT "FK_Stack_BranchInstance_CopySourceId" FOREIGN KEY ("CopySourceId") REFERENCES public."BranchInstance"("Id");
+
+
+ALTER TABLE ONLY public."Stack"
+    ADD CONSTRAINT "FK_Stack_Branch_DefaultBranchId" FOREIGN KEY ("DefaultBranchId") REFERENCES public."Branch"("Id") DEFERRABLE INITIALLY DEFERRED;
+
+
+ALTER TABLE ONLY public."Stack"
+    ADD CONSTRAINT "FK_Stack_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_CardId" FOREIGN KEY ("AcquiredCardId", "UserId", "CardId") REFERENCES public."AcquiredCard"("Id", "UserId", "CardId") ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_StackId" FOREIGN KEY ("AcquiredCardId", "UserId", "StackId") REFERENCES public."AcquiredCard"("Id", "UserId", "StackId") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."Tag_AcquiredCard"
@@ -1684,20 +1687,20 @@ ALTER TABLE ONLY public."User_CollateInstance"
     ADD CONSTRAINT "FK_User_CollateInstance_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
 
 
-ALTER TABLE ONLY public."Vote_CommentCard"
-    ADD CONSTRAINT "FK_Vote_CommentCard_CommentCard_CommentCardId" FOREIGN KEY ("CommentCardId") REFERENCES public."CommentCard"("Id");
-
-
-ALTER TABLE ONLY public."Vote_CommentCard"
-    ADD CONSTRAINT "FK_Vote_CommentCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
-
-
 ALTER TABLE ONLY public."Vote_CommentCollate"
     ADD CONSTRAINT "FK_Vote_CommentCollate_CommentCollate_CommentCollateId" FOREIGN KEY ("CommentCollateId") REFERENCES public."CommentCollate"("Id");
 
 
 ALTER TABLE ONLY public."Vote_CommentCollate"
     ADD CONSTRAINT "FK_Vote_CommentCollate_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+ALTER TABLE ONLY public."Vote_CommentStack"
+    ADD CONSTRAINT "FK_Vote_CommentStack_CommentStack_CommentStackId" FOREIGN KEY ("CommentStackId") REFERENCES public."CommentStack"("Id");
+
+
+ALTER TABLE ONLY public."Vote_CommentStack"
+    ADD CONSTRAINT "FK_Vote_CommentStack_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
 
 
 ALTER TABLE ONLY public."Vote_Feedback"
