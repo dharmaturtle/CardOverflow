@@ -411,6 +411,16 @@ type Comment = {
 }
 
 [<CLIMutable>]
+type ExploreStackSummary = {
+    Id: int
+    Users: int
+    Author: string
+    AuthorId: int
+    Instance: BranchInstanceMeta
+} with
+    member this.IsAcquired = this.Instance.IsAcquired
+
+[<CLIMutable>]
 type ExploreBranchSummary = {
     Id: int
     Users: int

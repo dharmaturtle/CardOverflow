@@ -11,10 +11,10 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/stack/{x}") Ids=@branches?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/stack/{x}") Ids=@_stacks?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
 </div>
 @if (SelectedStackId == null) {
-  @if (branches == null) {
+  @if (_stacks == null) {
     <p><em>Loading...</em></p>
   } else {
     <table class="table">
@@ -23,31 +23,31 @@
         <th>Users</th>
         <th>Name</th>
       </tr>
-      @foreach (var branch in branches) {
+      @foreach (var stack in _stacks) {
         <tr>
           <td>
             <div class="curate-tooltip-target">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="oi oi-eye@(branch.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+              <span class="oi oi-eye@(stack.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
-                <ResizingIframeBranch BranchInstanceId=@branch.Instance.Id Front />
+                <ResizingIframeBranch BranchInstanceId=@stack.Instance.Id Front />
               </div>
             </div>
           </td>
           <td>
-            @branch.Users
+            @stack.Users
           </td>
           <td>
-            <a href="/branch/@branch.Id">
-              @branch.Instance.StrippedFront
+            <a href="/stack/@stack.Id">
+              @stack.Instance.StrippedFront
             </a>
           </td>
         </tr>
       }
     </table>
   }
-  <Pager Details=@details PageChanged=@PageChanged />
+  <Pager Details=@_details PageChanged=@PageChanged />
 } else {
   <ExploreStack StackId=@SelectedStackId.Value />
 }
@@ -55,27 +55,27 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public int? SelectedStackId { get; set; }
-  private IList<CardOverflow.Pure.ExploreBranchSummary> branches;
-  private PagedListDetails details;
-  private SearchCommand search = new SearchCommand { Query = "" };
+  private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
+  private PagedListDetails _details;
+  private SearchCommand _search = new SearchCommand { Query = "" };
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (SelectedStackId == null && branches == null) {
+    if (SelectedStackId == null && _stacks == null) {
       await PageChanged(1);
       StateHasChanged();
     }
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, search)); // highTODO this should return stacks, not branches
-    details = pagedList.Details;
-    branches = pagedList.Results.ToList();
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, _search));
+    _details = pagedList.Details;
+    _stacks = pagedList.Results.ToList();
   }
 
   Task SearchClicked(SearchCommand newSearch) {
     SelectedStackId = null;
-    search = newSearch;
+    _search = newSearch;
     return PageChanged(1);
   }
 

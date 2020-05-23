@@ -446,7 +446,7 @@ module StackRepository =
             return {
                 Results =
                     squashed |> List.map (fun (c, isAcquired) ->
-                        {   Id = c.StackId
+                        {   ExploreStackSummary.Id = c.StackId
                             Author = c.Stack.Author.DisplayName
                             AuthorId = c.Stack.AuthorId
                             Users = c.Stack.Users
