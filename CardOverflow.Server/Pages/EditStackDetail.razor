@@ -29,7 +29,7 @@
               </div>
             }
             @foreach (var field in EditStack.FieldValues) {
-              <EditCardField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_IsDisabled />
+              <EditStackField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_IsDisabled />
             }
           </div>
           <div class="col-sm">

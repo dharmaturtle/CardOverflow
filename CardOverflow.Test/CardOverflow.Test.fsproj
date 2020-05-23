@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -48,7 +48,7 @@
     <Compile Include="CoreTests.fs" />
     <Compile Include="RelationshipTests.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
-    <Compile Include="EditCardCommandTests.fs" />
+    <Compile Include="EditStackCommandTests.fs" />
     <Compile Include="SanitizeTests.fs" />
     <Compile Include="AnkiImportLogicTests.fs" />
     <Compile Include="ResultTests.fs" />

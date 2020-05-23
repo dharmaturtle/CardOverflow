@@ -1,4 +1,4 @@
-module EditCardCommandTests
+module EditStackCommandTests
 
 open CardOverflow.Api
 open ContainerExtensions

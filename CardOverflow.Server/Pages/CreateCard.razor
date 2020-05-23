@@ -16,7 +16,7 @@
 @if (_command == null || _collates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditCardDetail EditCard=@_command Collates=@_collates NewEditStackOnSave=true />
+  <EditStackDetail EditStack=@_command Collates=@_collates NewEditStackOnSave=true />
 }
 
 @code {
