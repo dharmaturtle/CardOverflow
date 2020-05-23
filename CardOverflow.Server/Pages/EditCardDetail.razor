@@ -81,7 +81,7 @@
               Card
             </a>
           }
-          @if (EditCard.Kind.TryGetBranchSourceCardId(out var stackId)) {
+          @if (EditCard.Kind.TryGetBranchSourceStackId(out var stackId)) {
             <span>Branched from</span>
             <a href="stack/@stackId">
               Card
@@ -114,7 +114,7 @@
 
 @code {
   [Parameter] public ViewEditCardCommand EditCard { get; set; }
-  [Parameter] public bool NewEditCardOnSave { get; set; }
+  [Parameter] public bool NewEditStackOnSave { get; set; }
   [Parameter] public IEnumerable<ViewCollateWithAllInstances> Collates { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   private IEnumerable<ViewCollateInstance> SelectedCollateInstances;
@@ -146,7 +146,7 @@
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       resultingBranchId = result.ResultValue;
-      if (NewEditCardOnSave) {
+      if (NewEditStackOnSave) {
         var fieldValues = EditCard.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
         EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
         UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);

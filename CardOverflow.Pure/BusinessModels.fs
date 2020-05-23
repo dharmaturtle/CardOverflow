@@ -481,7 +481,7 @@ with
         match this with
         | NewCopy_SourceInstanceId_TagIds (instanceId, _) -> x <- instanceId; true
         | _ -> false
-    member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
+    member this.TryGetBranchSourceStackId([<Out>] x:byref<_>) =
         match this with
         | NewBranch_SourceStackId_Title (stackId, _) -> x <- stackId; true
         | _ -> false

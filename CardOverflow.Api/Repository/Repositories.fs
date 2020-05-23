@@ -465,7 +465,7 @@ module UpdateRepository =
         let branchNameCheck branchId name =
             db.Branch.AnyAsync(fun b -> b.Id = branchId && b.Stack.Branches.Any(fun b -> b.Name = name && b.Id <> branchId)) // veryLowTODO make case insensitive
             |> Task.map (Result.requireFalse <| sprintf "The stack with Branch #%i already has a Branch named '%s'." branchId name)
-        let branchNameCheckCardId stackId name =
+        let branchNameCheckStackId stackId name =
             db.Stack.AnyAsync(fun s -> s.Id = stackId && s.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
             |> Task.map (Result.requireFalse <| sprintf "Stack #%i already has a Branch named '%s'." stackId name)
         taskResult {
@@ -486,7 +486,7 @@ module UpdateRepository =
                                     CopySourceId = Nullable instanceId
                                 )) |> Ok |> Task.FromResult
                     | NewBranch_SourceStackId_Title (stackId, name) ->
-                        branchNameCheckCardId stackId name
+                        branchNameCheckStackId stackId name
                         |> TaskResult.map(fun () ->
                             BranchEntity(
                                 AuthorId = userId,
