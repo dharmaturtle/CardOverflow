@@ -77,14 +77,14 @@
         <div class="col-sm">
           @if (EditStack.Kind.TryGetCopySourceInstanceId(out var instanceId)) {
             <span>Copied from</span>
-            <a href="cardinstance/@instanceId">
+            <a href="branchinstance/@instanceId">
               Card
             </a>
           }
           @if (EditStack.Kind.TryGetBranchSourceStackId(out var stackId)) {
             <span>Branched from</span>
             <a href="stack/@stackId">
-              Card
+              Stack
             </a>
           }
         </div>
