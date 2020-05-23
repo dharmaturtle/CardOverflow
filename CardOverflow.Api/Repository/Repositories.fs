@@ -485,7 +485,7 @@ module UpdateRepository =
                                     AuthorId = userId,
                                     CopySourceId = Nullable instanceId
                                 )) |> Ok |> Task.FromResult
-                    | NewBranch_SourceCardId_Title (stackId, name) ->
+                    | NewBranch_SourceStackId_Title (stackId, name) ->
                         branchNameCheckCardId stackId name
                         |> TaskResult.map(fun () ->
                             BranchEntity(
@@ -503,7 +503,7 @@ module UpdateRepository =
             let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance
             match command.Kind with
             | Update_BranchId_Title
-            | NewBranch_SourceCardId_Title -> ()
+            | NewBranch_SourceStackId_Title -> ()
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceInstanceId_TagIds (_, tagIds) ->
                 for tagId in tagIds do

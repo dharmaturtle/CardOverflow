@@ -837,7 +837,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
         { command.load with
             Kind =
                 match command.load.Kind with
-                | NewBranch_SourceCardId_Title (id, name) -> NewBranch_SourceCardId_Title (id, name + Guid.NewGuid().ToString())
+                | NewBranch_SourceStackId_Title (id, name) -> NewBranch_SourceStackId_Title (id, name + Guid.NewGuid().ToString())
                 | _ -> failwith "impossible"
         }
     let! actualBranchId = UpdateRepository.card c.Db userId command

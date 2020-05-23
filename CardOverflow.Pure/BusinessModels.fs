@@ -474,7 +474,7 @@ type BranchRevision = {
 type UpsertKind =
     | NewOriginal_TagIds of int list
     | NewCopy_SourceInstanceId_TagIds of int * int list
-    | NewBranch_SourceCardId_Title of int * string
+    | NewBranch_SourceStackId_Title of int * string
     | Update_BranchId_Title of int * string
 with
     member this.TryGetCopySourceInstanceId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
@@ -483,7 +483,7 @@ with
         | _ -> false
     member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
         match this with
-        | NewBranch_SourceCardId_Title (stackId, _) -> x <- stackId; true
+        | NewBranch_SourceStackId_Title (stackId, _) -> x <- stackId; true
         | _ -> false
 
 type EditCardCommand = {

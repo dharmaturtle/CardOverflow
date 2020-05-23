@@ -205,7 +205,7 @@ module SanitizeRelationshipRepository =
         let x = StackIdRegex().TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
         if x.Success 
         then Ok <| int x.Value
-        else Error "Couldn't find the card ID"
+        else Error <| sprintf "Couldn't find the Stack Id in '%s'" input
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetStackId = GetStackId command.TargetStackLink
         do! if targetStackId = command.SourceStackId then Error "A stack can't be related to itself" else Ok ()
@@ -287,7 +287,7 @@ type ViewEditCardCommand = {
                 match this.Kind with
                 | NewOriginal_TagIds
                 | NewCopy_SourceInstanceId_TagIds -> this.Kind
-                | NewBranch_SourceCardId_Title (id, _) -> NewBranch_SourceCardId_Title (id, title)
+                | NewBranch_SourceStackId_Title (id, _) -> NewBranch_SourceStackId_Title (id, title)
                 | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
         {   EditCardCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
@@ -315,7 +315,7 @@ module SanitizeCardRepository =
                     match kind with
                     | NewOriginal_TagIds
                     | NewCopy_SourceInstanceId_TagIds -> null
-                    | NewBranch_SourceCardId_Title (_, title)
+                    | NewBranch_SourceStackId_Title (_, title)
                     | Update_BranchId_Title (_, title) -> title
             }
         match source with
@@ -336,7 +336,7 @@ module SanitizeCardRepository =
         | VNewBranchSourceCardId stackId ->
             db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |> Task.map (Result.requireNotNull (sprintf "Stack #%i not found." stackId))
-            |> TaskResult.map(fun stack -> toCommand (NewBranch_SourceCardId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance)
+            |> TaskResult.map(fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance)
         | VNewCopySourceInstanceId branchInstanceId ->
             db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId))
