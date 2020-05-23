@@ -346,7 +346,7 @@ module SanitizeCardRepository =
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
             |> TaskResult.map(fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance)
     let Update (db: CardOverflowDb) authorId (command: ViewEditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        UpdateRepository.card db authorId command.load
+        UpdateRepository.stack db authorId command.load
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =

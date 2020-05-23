@@ -46,7 +46,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.card c.Db userId
+        } |> UpdateRepository.stack c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
     do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId
@@ -113,7 +113,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.card c.Db userId
+        } |> UpdateRepository.stack c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
     let! ac = StackRepository.GetAcquired c.Db userId ac.StackId
@@ -141,7 +141,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.card c.Db userId
+        } |> UpdateRepository.stack c.Db userId
     let i2 = 1002
     Assert.Equal(branchId, actualBranchId.Value)
     do! StackRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
@@ -222,7 +222,7 @@ let ``AcquireCards works``(): Task<unit> = task {
             FieldValues = [].ToList()
             Kind = Update_BranchId_Title (b1, null)
         }
-    let! branchId = UpdateRepository.card c.Db authorId command.load |> TaskResult.getOk
+    let! branchId = UpdateRepository.stack c.Db authorId command.load |> TaskResult.getOk
     let ci1_2 = 1003
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)

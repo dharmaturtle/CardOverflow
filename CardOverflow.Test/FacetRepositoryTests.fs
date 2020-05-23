@@ -228,7 +228,7 @@ let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! actualBranchId = UpdateRepository.card c.Db userId updated.load
+    let! actualBranchId = UpdateRepository.stack c.Db userId updated.load
     Assert.Equal(branchId, actualBranchId)
 
     let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Instance)
@@ -287,7 +287,7 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.card c.Db userId
+        } |> UpdateRepository.stack c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
@@ -380,7 +380,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! actualBranchId = UpdateRepository.card c.Db user1 updated.load |> TaskResult.getOk
+    let! actualBranchId = UpdateRepository.stack c.Db user1 updated.load |> TaskResult.getOk
     Assert.Equal(og_b, actualBranchId)
     do! assertCount
             [og_s, 1]
@@ -437,7 +437,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    let! actualBranchId = UpdateRepository.stack c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(copy_b, actualBranchId)
     do! assertCount
             [og_s, 1;              copy_s, 1]
@@ -470,7 +470,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    let! actualBranchId = UpdateRepository.stack c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(og_b_2, actualBranchId)
     let! x, _ = ExploreStackRepository.instance c.Db user2 branch_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 3 1
@@ -510,7 +510,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    let! actualBranchId = UpdateRepository.stack c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(copy2x_b, actualBranchId)
     let! x, _ = ExploreStackRepository.instance c.Db user2 copy2x_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 1 1 []
@@ -533,7 +533,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 ).ToList()
     }
     
-    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    let! actualBranchId = UpdateRepository.stack c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(copyOfBranch_b, actualBranchId)
     let! x, _ = ExploreStackRepository.instance c.Db user2 copyOfBranch_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 1 1 []
@@ -557,7 +557,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
     
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = user2))
-    let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
+    let! actualBranchId = UpdateRepository.stack c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = user2))
     Assert.Equal(branchOfCopy_b, actualBranchId)
     let! x, _ = ExploreStackRepository.instance c.Db user2 branchOfCopy_i |> TaskResult.getOk
@@ -763,7 +763,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     // update card
     let update_i = 1002
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
-    let! actualBranchId = UpdateRepository.card c.Db userId command.load
+    let! actualBranchId = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(og_b, actualBranchId)
 
     // tests ExactInstanceAcquired
@@ -787,7 +787,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     let branch_i = 1003
     let branch_b = 2
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
-    let! actualBranchId = UpdateRepository.card c.Db userId command.load
+    let! actualBranchId = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(branch_b, actualBranchId)
     
     // tests LatestBranchAcquired
@@ -800,7 +800,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     // update branch
     let updateBranch_i = 1004
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branch_b
-    let! actualBranchId = UpdateRepository.card c.Db userId command.load
+    let! actualBranchId = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(branch_b, actualBranchId)
 
     // tests LatestBranchAcquired
@@ -826,7 +826,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
 
     // try to branch card again, but fail
     let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
-    let! (error: Result<_,_>) = UpdateRepository.card c.Db userId command.load
+    let! (error: Result<_,_>) = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(sprintf "Stack #1 already has a Branch named 'New Branch'.", error.error);
 
     // branch card again
@@ -840,7 +840,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
                 | NewBranch_SourceStackId_Title (id, name) -> NewBranch_SourceStackId_Title (id, name + Guid.NewGuid().ToString())
                 | _ -> failwith "impossible"
         }
-    let! actualBranchId = UpdateRepository.card c.Db userId command
+    let! actualBranchId = UpdateRepository.stack c.Db userId command
     Assert.Equal(branch_b2, actualBranchId)
 
     // tests LatestBranchAcquired
