@@ -214,7 +214,7 @@ module StackViewRepository =
             db.BranchInstance
                 .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = aId)
-            |> Task.map (Result.requireNotNull (sprintf "Card instance #%i not found" aId))
+            |> Task.map (Result.requireNotNull (sprintf "Branch instance #%i not found" aId))
         let! (b: BranchInstanceEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestBranchInstance
                 .Include(fun x -> x.CollateInstance)
@@ -268,7 +268,7 @@ module AcquiredCardRepository =
             |> TaskResult.map(fun x -> x.BranchId)
         return!
             db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
-            |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with the id #%i" branchInstanceId))
+            |> Task.map (Result.requireNotNull (sprintf "You don't have any cards with Branch Instance #%i" branchInstanceId))
             |> TaskResult.map (fun x -> x.BranchInstanceId)
     }
 
