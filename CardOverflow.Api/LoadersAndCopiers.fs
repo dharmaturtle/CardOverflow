@@ -333,7 +333,7 @@ type BranchInstanceMeta with
 type QuizCard with
     static member load (entity: AcquiredCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
-            entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[0] // highTODO use real index
+            entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int entity.Index]
         result {
             let! cardState = CardState.create entity.CardState
             return {
