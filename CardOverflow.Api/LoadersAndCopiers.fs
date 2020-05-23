@@ -421,11 +421,11 @@ type ExploreBranchSummary with
     }
 
 type Branch with
-    static member load (status: ExploreCardAcquiredStatus) (branch: BranchEntity) = {
+    static member load (status: ExploreStackAcquiredStatus) (branch: BranchEntity) = {
         Name = branch.Name
         Summary =
             ExploreBranchSummary.load
-                <| BranchInstanceMeta.load (branch.LatestInstanceId |> Some = status.InstanceId) true branch.LatestInstance
+                <| BranchInstanceMeta.load (branch.LatestInstanceId |> Some = status.BranchInstanceId) true branch.LatestInstance
                 <| branch
     }
 

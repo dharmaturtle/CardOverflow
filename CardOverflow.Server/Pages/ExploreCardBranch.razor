@@ -23,7 +23,7 @@
 <div class="list-group">
   @foreach (var branch in Branches) {
     <div class="d-flex h-100">
-      @if (Status.InstanceId?.Value == branch.Instance.Id) {
+      @if (Status.BranchInstanceId?.Value == branch.Instance.Id) {
         <button class="btn btn-unacquire-card">
           <div class="d-flex align-items-center flex-column align-middle">
             <i class="fas fa-bookmark"></i>
@@ -31,7 +31,7 @@
           </div>
         </button>
       } else {
-        <button class="btn btn-acquire-card" @onclick=@(() => _Acquire(ExploreCardAcquiredStatus.NewLatestBranchAcquired(branch.Instance.Id)))>
+        <button class="btn btn-acquire-card" @onclick=@(() => _Acquire(ExploreStackAcquiredStatus.NewLatestBranchAcquired(branch.Instance.Id)))>
           <div class="d-flex align-items-center flex-column align-middle">
             <i class="fas fa-bookmark"></i>
             @branch.Users
@@ -53,22 +53,22 @@
   [CascadingParameter] UserEntity User { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public ExploreCardAcquiredStatus Status { get; set; }
-  [Parameter] public EventCallback<ExploreCardAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
+  [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public BranchInstanceMeta Root { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
-  private async Task _Acquire(ExploreCardAcquiredStatus status) {
-    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, User.Id, status.InstanceId.Value));
+  private async Task _Acquire(ExploreStackAcquiredStatus status) {
+    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, User.Id, status.BranchInstanceId.Value));
     if (x.IsOk) {
       var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Root.StackId));
       if (ac.IsOk) {
         await UpdateAcquiredCards.InvokeAsync(ac.ResultValue);
-        _UpdateUsers(-1, Status.InstanceId?.Value);
+        _UpdateUsers(-1, Status.BranchInstanceId?.Value);
         Status = status;
         await UpdateStatus.InvokeAsync(Status);
-        _UpdateUsers(1, Status.InstanceId?.Value);
+        _UpdateUsers(1, Status.BranchInstanceId?.Value);
       } else {
         ToastService.ShowError(ac.ErrorValue);
       }

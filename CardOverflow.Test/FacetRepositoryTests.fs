@@ -743,7 +743,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
 
 [<Fact>]
-let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : Task<unit> = (taskResult {
+let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let testGetAcquired stackId instanceId =

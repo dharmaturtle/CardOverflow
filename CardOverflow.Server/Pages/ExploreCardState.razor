@@ -62,7 +62,7 @@
     await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, User.Id, Stack.Instance.Id));
     var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Stack.Id));
     if (ac.IsOk) {
-      Stack.AcquiredStatus = ExploreCardAcquiredStatus.NewExactInstanceAcquired(Stack.Instance.Id);
+      Stack.AcquiredStatus = ExploreStackAcquiredStatus.NewExactInstanceAcquired(Stack.Instance.Id);
       Stack.Instance.IsAcquired = true;
       Stack.Summary.Users++;
       await UpdateStack.InvokeAsync(Stack);
@@ -73,7 +73,7 @@
 
   private async Task _discard() {
     await DbExecutor.CommandAsync(db => StackRepository.deleteAcquiredCard(db, User.Id, Stack.Id));
-    Stack.AcquiredStatus = ExploreCardAcquiredStatus.NotAcquired;
+    Stack.AcquiredStatus = ExploreStackAcquiredStatus.NotAcquired;
     Stack.Instance.IsAcquired = false;
     Stack.Summary.Users--;
     _modal.Hide();

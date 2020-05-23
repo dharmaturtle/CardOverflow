@@ -420,14 +420,14 @@ type ExploreBranchSummary = {
 } with
     member this.IsAcquired = this.Instance.IsAcquired
 
-type ExploreCardAcquiredStatus =
-    | ExactInstanceAcquired of int // card instance ids
+type ExploreStackAcquiredStatus =
+    | ExactInstanceAcquired of int
     | OtherInstanceAcquired of int
     | LatestBranchAcquired of int
     | OtherBranchAcquired of int
     | NotAcquired
     with
-        member this.InstanceId =
+        member this.BranchInstanceId =
             match this with
             | ExactInstanceAcquired x -> Some x
             | OtherInstanceAcquired x -> Some x
@@ -452,7 +452,7 @@ type ExploreStack = {
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
-    AcquiredStatus: ExploreCardAcquiredStatus
+    AcquiredStatus: ExploreStackAcquiredStatus
     Branches: Branch ResizeArray
 } with
     //don't add users - the UI needs it to be mutable
