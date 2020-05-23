@@ -54,8 +54,8 @@
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreCard Stack { get; set; }
-  [Parameter] public EventCallback<CardOverflow.Pure.ExploreCard> UpdateStack { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
+  [Parameter] public EventCallback<CardOverflow.Pure.ExploreStack> UpdateStack { get; set; }
   private BSModal _modal;
 
   private async Task _acquire() {

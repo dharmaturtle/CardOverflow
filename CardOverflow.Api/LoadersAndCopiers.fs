@@ -429,7 +429,7 @@ type Branch with
                 <| branch
     }
 
-type ExploreCard with
+type ExploreStack with
     static member load (entity: StackEntity) acquiredStatus (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) instance = {
         Id = entity.Id
         Summary = ExploreBranchSummary.load instance <| entity.Branches.Single(fun x -> x.Id = entity.DefaultBranchId)

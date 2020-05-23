@@ -37,7 +37,7 @@
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreCard Stack { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
 
   void _AddComment(string comment) =>
     Stack.Comments = Stack.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToList();

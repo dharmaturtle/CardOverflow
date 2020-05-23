@@ -174,7 +174,7 @@ module ExploreStackRepository =
         let! acquiredStatus = getAcquiredStatus db userId rootInstance
         return
             BranchInstanceMeta.load (acquiredStatus = ExactInstanceAcquired rootInstance.Id) true rootInstance
-            |> ExploreCard.load rootInstance.Stack acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+            |> ExploreStack.load rootInstance.Stack acquiredStatus (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
         let! (e: BranchInstanceEntity) =

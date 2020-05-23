@@ -76,7 +76,7 @@
   [Parameter] public int StackId { get; set; }
   [Parameter] public int InstanceId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
-  CardOverflow.Pure.ExploreCard Stack;
+  CardOverflow.Pure.ExploreStack Stack;
   BranchInstanceMeta Selected;
   List<AcquiredCard> AcquiredCards = new List<AcquiredCard>();
   private string _LoadingMessage = "Loading...";

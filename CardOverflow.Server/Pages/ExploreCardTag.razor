@@ -44,7 +44,7 @@
 
   @code {
     [CascadingParameter] UserEntity User { get; set; }
-    [Parameter] public CardOverflow.Pure.ExploreCard Stack { get; set; }
+    [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
     private bool _showTagAdder;
 
     public override async Task SetParametersAsync(ParameterView parameters) {

@@ -446,7 +446,7 @@ type Branch = {
     member this.Instance = this.Summary.Instance
 
 [<CLIMutable>]
-type ExploreCard = {
+type ExploreStack = {
     Id: int
     Summary: ExploreBranchSummary
     Tags: ViewTag ResizeArray
