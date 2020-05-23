@@ -187,7 +187,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     let! basic = getInstances "Basic"
     for branchInstance in basic do
-        let! stack = ExploreCardRepository.get c.Db userId branchInstance.StackId
+        let! stack = ExploreStackRepository.get c.Db userId branchInstance.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
         Assert.Empty stack.Instance.CommunalFields
@@ -197,7 +197,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
          "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
     for card in sketchy do
-        let! stack = ExploreCardRepository.get c.Db userId card.StackId
+        let! stack = ExploreStackRepository.get c.Db userId card.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
         Assert.Empty stack.Instance.CommunalFields
@@ -311,14 +311,14 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
 
     let! instances = getInstances "optional"
     for instance in instances do
-        let! stack = ExploreCardRepository.get c.Db userId instance.StackId
+        let! stack = ExploreStackRepository.get c.Db userId instance.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
         Assert.Empty stack.Instance.CommunalFields
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
-        let! stack = ExploreCardRepository.get c.Db userId instance.StackId
+        let! stack = ExploreStackRepository.get c.Db userId instance.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
         Assert.Empty stack.Instance.CommunalFields

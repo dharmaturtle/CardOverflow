@@ -14,7 +14,7 @@
   <div>
     <div class="d-flex justify-content-between">
       <h4>Tags</h4>
-      @if (Card.IsAnyAcquired) {
+      @if (Stack.IsAnyAcquired) {
         @if (_showTagAdder) {
           <TagAdder AddTag=@(x => AcquireTag(x.Text)) />
         } else {
@@ -25,16 +25,16 @@
       }
     </div>
     <ul class="d-flex flex-wrap list-unstyled">
-      @foreach (var tag in @Card.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+      @foreach (var tag in Stack.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
           <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
       }
-      @foreach (var tag in @Card.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+      @foreach (var tag in Stack.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
         <li class="m-1">
-          <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Card.IsAnyAcquired)>
+          <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Stack.IsAnyAcquired)>
             <span class="badge badge-success">@tag.Count</span> @tag.Name
           </button>
         </li>
@@ -44,13 +44,13 @@
 
   @code {
     [CascadingParameter] UserEntity User { get; set; }
-    [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+    [Parameter] public CardOverflow.Pure.ExploreCard Stack { get; set; }
     private bool _showTagAdder;
 
     public override async Task SetParametersAsync(ParameterView parameters) {
       await base.SetParametersAsync(parameters);
-      if (!Card.IsAnyAcquired) {
-        foreach (var tag in Card.Tags.Where(t => t.IsAcquired)) {
+      if (!Stack.IsAnyAcquired) {
+        foreach (var tag in Stack.Tags.Where(t => t.IsAcquired)) {
           tag.IsAcquired = false;
           tag.Count--;
         }
@@ -58,13 +58,13 @@
     }
 
     async Task AcquireTag(string name, bool isNew = true) {
-      var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Card.Id));
+      var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, User.Id, name, Stack.Id));
       if (x.IsOk) {
         if (isNew) {
-          Card.Tags = Card.Tags.Append(new ViewTag(name, 0, false)).ToList();
+          Stack.Tags = Stack.Tags.Append(new ViewTag(name, 0, false)).ToList();
         }
-        Card.Tags.Single(t => t.Name == name).IsAcquired = true;
-        Card.Tags.Single(t => t.Name == name).Count++;
+        Stack.Tags.Single(t => t.Name == name).IsAcquired = true;
+        Stack.Tags.Single(t => t.Name == name).Count++;
         StateHasChanged();
       } else {
         ToastService.ShowError(x.ErrorValue);
@@ -72,10 +72,10 @@
     }
 
     async Task DeleteTag(string tag) {
-      var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, User.Id, tag, Card.Id));
+      var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, User.Id, tag, Stack.Id));
       if (x.IsOk) {
-        Card.Tags.Single(t => t.Name == tag).IsAcquired = false;
-        Card.Tags.Single(t => t.Name == tag).Count--;
+        Stack.Tags.Single(t => t.Name == tag).IsAcquired = false;
+        Stack.Tags.Single(t => t.Name == tag).Count--;
         StateHasChanged();
       } else {
         ToastService.ShowError(x.ErrorValue);

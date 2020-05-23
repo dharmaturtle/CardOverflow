@@ -210,7 +210,7 @@ Back
     )}
 
 [<Fact>]
-let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
+let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicCard c.Db userId []
@@ -231,19 +231,19 @@ let ``ExploreCardRepository.getInstance works``() : Task<unit> = (taskResult {
     let! actualBranchId = UpdateRepository.card c.Db userId updated.load
     Assert.Equal(branchId, actualBranchId)
 
-    let! (branch1: BranchInstanceMeta)    = ExploreCardRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Instance)
-    let! (branch2: BranchInstanceMeta), _ = ExploreCardRepository.instance c.Db userId newBranchInstanceId
+    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Instance)
+    let! (branch2: BranchInstanceMeta), _ = ExploreStackRepository.instance c.Db userId newBranchInstanceId
     Assert.Equal(branch1.InC(), branch2.InC())
     Assert.Equal(newValue                 , branch2.StrippedFront)
     Assert.Equal(newValue + " " + newValue, branch2.StrippedBack)
-    let! (card3: BranchInstanceMeta), _ = ExploreCardRepository.instance c.Db userId oldBranchInstanceId
+    let! (card3: BranchInstanceMeta), _ = ExploreStackRepository.instance c.Db userId oldBranchInstanceId
     Assert.Equal("Front",      card3.StrippedFront)
     Assert.Equal("Front Back", card3.StrippedBack)
 
     // nonexistant id
     let nonexistant = 1337
     
-    let! (missingCard: Result<_, _>) = ExploreCardRepository.instance c.Db userId nonexistant
+    let! (missingCard: Result<_, _>) = ExploreStackRepository.instance c.Db userId nonexistant
     
     Assert.Equal(sprintf "Branch Instance #%i not found" nonexistant, missingCard.error)
     } |> TaskResult.getOk)
@@ -395,10 +395,10 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         Assert.Equal(
             instanceCountForStack,
             c.Db.BranchInstance.Count(fun x -> x.StackId = stackId))
-        let! card = ExploreCardRepository.get c.Db userId stackId
+        let! stack = ExploreStackRepository.get c.Db userId stackId
         Assert.Equal<ViewTag seq>(
             tags,
-            card.Value.Tags)
+            stack.Value.Tags)
         Assert.Equal<string seq>(
             [newValue; newValue],
             instance.Value.FieldValues.Select(fun x -> x.Value)
@@ -472,7 +472,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(og_b_2, actualBranchId)
-    let! x, _ = ExploreCardRepository.instance c.Db user2 branch_i |> TaskResult.getOk
+    let! x, _ = ExploreStackRepository.instance c.Db user2 branch_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 3 1
             [ { Name = "A"
                 Count = 1
@@ -512,7 +512,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(copy2x_b, actualBranchId)
-    let! x, _ = ExploreCardRepository.instance c.Db user2 copy2x_i |> TaskResult.getOk
+    let! x, _ = ExploreStackRepository.instance c.Db user2 copy2x_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 1 1 []
     do! assertCount
             [og_s,     2 ;    copy_s, 1 ;    copy2x_s, 1 ]
@@ -535,7 +535,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     
     let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(copyOfBranch_b, actualBranchId)
-    let! x, _ = ExploreCardRepository.instance c.Db user2 copyOfBranch_i |> TaskResult.getOk
+    let! x, _ = ExploreStackRepository.instance c.Db user2 copyOfBranch_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 1 1 []
     do! assertCount
             [og_s,     2 ;    copy_s, 1 ;    copy2x_s, 1 ;    copyOfBranch_s, 1 ]
@@ -560,7 +560,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let! actualBranchId = UpdateRepository.card c.Db user2 updated.load |> TaskResult.getOk
     Assert.Equal(4, c.Db.AcquiredCard.Count(fun x -> x.UserId = user2))
     Assert.Equal(branchOfCopy_b, actualBranchId)
-    let! x, _ = ExploreCardRepository.instance c.Db user2 branchOfCopy_i |> TaskResult.getOk
+    let! x, _ = ExploreStackRepository.instance c.Db user2 branchOfCopy_i |> TaskResult.getOk
     do! asserts user2 x.StackId x.BranchId x.Id newValue 2 1 []
     do! assertCount
             [og_s,     2 ;    copy_s, 1         ; copy2x_s, 1 ;    copyOfBranch_s, 1 ]
@@ -743,7 +743,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
 
 [<Fact>]
-let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Task<unit> = (taskResult {
+let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let testGetAcquired stackId instanceId =
@@ -756,7 +756,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     let og_i = 1001
 
     // tests ExactInstanceAcquired
-    do! ExploreCardRepository.get c.Db userId og_s
+    do! ExploreStackRepository.get c.Db userId og_s
         |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired og_i, card.AcquiredStatus))
     do! testGetAcquired og_s og_i
     
@@ -767,7 +767,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal(og_b, actualBranchId)
 
     // tests ExactInstanceAcquired
-    do! ExploreCardRepository.get c.Db userId og_s
+    do! ExploreStackRepository.get c.Db userId og_s
         |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired update_i, card.AcquiredStatus))
     do! testGetAcquired og_s update_i
 
@@ -777,8 +777,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
 
     // tests OtherInstanceAcquired
-    let! card = ExploreCardRepository.get c.Db userId og_s
-    match card.AcquiredStatus with
+    let! stack = ExploreStackRepository.get c.Db userId og_s
+    match stack.AcquiredStatus with
     | OtherInstanceAcquired x -> Assert.Equal(og_i, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s og_i
@@ -791,8 +791,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal(branch_b, actualBranchId)
     
     // tests LatestBranchAcquired
-    let! card = ExploreCardRepository.get c.Db userId og_s
-    match card.AcquiredStatus with
+    let! stack = ExploreStackRepository.get c.Db userId og_s
+    match stack.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(branch_i, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i
@@ -804,7 +804,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal(branch_b, actualBranchId)
 
     // tests LatestBranchAcquired
-    let! stack = ExploreCardRepository.get c.Db userId og_s
+    let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(updateBranch_i, x)
     | _ -> failwith "impossible"
@@ -818,8 +818,8 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
 
     // tests OtherBranchAcquired
-    let! card = ExploreCardRepository.get c.Db userId og_s
-    match card.AcquiredStatus with
+    let! stack = ExploreStackRepository.get c.Db userId og_s
+    match stack.AcquiredStatus with
     | OtherBranchAcquired x -> Assert.Equal(branch_i, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i
@@ -844,15 +844,15 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
     Assert.Equal(branch_b2, actualBranchId)
 
     // tests LatestBranchAcquired
-    let! stack = ExploreCardRepository.get c.Db userId og_s
+    let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i2
 
     // tests LatestBranchAcquired with og_s
-    let! card = ExploreCardRepository.get c.Db userId og_s
-    match card.AcquiredStatus with
+    let! stack = ExploreStackRepository.get c.Db userId og_s
+    match stack.AcquiredStatus with
     | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i2
@@ -871,7 +871,7 @@ let ``ExploreCardRepository.get works for all ExploreCardAcquiredStatus``() : Ta
 
     // tests NotAcquired
     let otherUser = 1
-    let! stack = ExploreCardRepository.get c.Db otherUser og_s
+    let! stack = ExploreStackRepository.get c.Db otherUser og_s
     Assert.Equal(NotAcquired, stack.AcquiredStatus)
     } |> TaskResult.getOk)
     

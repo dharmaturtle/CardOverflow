@@ -170,13 +170,13 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <| c.Db.BranchInstance
             .Where(fun x -> x.FieldValues.Contains("acute"))
     Assert.True(c.Db.BranchInstance.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
-    let! card = ExploreCardRepository.get c.Db userId 1
-    let card = card.Value
+    let! stack = ExploreStackRepository.get c.Db userId 1
+    let stack = stack.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        card.Instance.StrippedFront)
-    let! card = ExploreCardRepository.get c.Db userId 1
-    Assert.Empty card.Value.Relationships
+        stack.Instance.StrippedFront)
+    let! stack = ExploreStackRepository.get c.Db userId 1
+    Assert.Empty stack.Value.Relationships
     Assert.Empty c.Db.Relationship
 
     let! clozes = c.Db.BranchInstance.Where(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()

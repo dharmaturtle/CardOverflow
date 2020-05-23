@@ -95,7 +95,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         ) |> CommentRepository.addAndSaveAsync c.Db
     let stackId = 1
         
-    let! stack = ExploreCardRepository.get c.Db userId stackId
+    let! stack = ExploreStackRepository.get c.Db userId stackId
     let stack = stack.Value
     let! view = CardViewRepository.get c.Db stackId
         
@@ -113,8 +113,8 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         stack.Tags
     )
     
-    let! card = ExploreCardRepository.get c.Db userId 9999
-    Assert.Equal("Stack #9999 not found", card.error) }
+    let! stack = ExploreStackRepository.get c.Db userId 9999
+    Assert.Equal("Stack #9999 not found", stack.error) }
 
 [<Fact>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
@@ -128,9 +128,9 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
-    let! card = ExploreCardRepository.get c.Db userId 1
-    let card = card.Value
-    Assert.Equal(1, card.Summary.Users)
+    let! stack = ExploreStackRepository.get c.Db userId 1
+    let stack = stack.Value
+    Assert.Equal(1, stack.Summary.Users)
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
@@ -138,14 +138,14 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
          {  Name = "B"
             Count = 1
             IsAcquired = true }],
-        card.Tags)
+        stack.Tags)
     
-    let! ac = StackRepository.GetAcquired c.Db userId card.Id
+    let! ac = StackRepository.GetAcquired c.Db userId stack.Id
     let ac = ac.Value.Single()
     let! x = StackRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
     Assert.Null x.Value
-    let! card = ExploreCardRepository.get c.Db userId 1
-    Assert.Equal(0, card.Value.Summary.Users) // suspended cards don't count to User count
+    let! stack = ExploreStackRepository.get c.Db userId 1
+    Assert.Equal(0, stack.Value.Summary.Users) // suspended cards don't count to User count
     }
 
 let testGetAcquired (acCount: int) addCards name = task {
@@ -163,31 +163,31 @@ let testGetAcquired (acCount: int) addCards name = task {
     
     let userId = 2 // this user acquires the card
     do! StackRepository.AcquireCardAsync c.Db userId 1001 |> TaskResult.getOk
-    let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
             IsAcquired = false }],
-        card.Tags
+        stack.Tags
     )
-    do! SanitizeTagRepository.AddTo c.Db userId "a" card.Id |> TaskResult.getOk
-    let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
+    do! SanitizeTagRepository.AddTo c.Db userId "a" stack.Id |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
             IsAcquired = true }],
-        card.Tags
+        stack.Tags
     )
     let! stacks = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
 
     let userId = 3 // this user never acquires the card
-    let! card = ExploreCardRepository.get c.Db userId 1 |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
             IsAcquired = false }],
-        card.Tags
+        stack.Tags
     )}
     
 [<Fact>]
@@ -228,28 +228,28 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
-    let! card = ExploreCardRepository.get c.Db userId 1
-    Assert.Equal(1, card.Value.Relationships.Single().Users)
-    let! card = ExploreCardRepository.get c.Db userId 2
-    Assert.Equal(1, card.Value.Relationships.Single().Users)
+    let! stack = ExploreStackRepository.get c.Db userId 1
+    Assert.Equal(1, stack.Value.Relationships.Single().Users)
+    let! stack = ExploreStackRepository.get c.Db userId 2
+    Assert.Equal(1, stack.Value.Relationships.Single().Users)
 
     let successfulRemove () = task {
         let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
         Assert.Null r.Value
-        let! card = ExploreCardRepository.get c.Db userId 1
-        Assert.Equal(0, card.Value.Relationships.Count)
-        let! card = ExploreCardRepository.get c.Db userId 2
-        Assert.Equal(0, card.Value.Relationships.Count) }
+        let! stack = ExploreStackRepository.get c.Db userId 1
+        Assert.Equal(0, stack.Value.Relationships.Count)
+        let! stack = ExploreStackRepository.get c.Db userId 2
+        Assert.Equal(0, stack.Value.Relationships.Count) }
     do! successfulRemove ()
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
     let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
     Assert.Equal(sprintf "Relationship not found between source Stack #2 and target Stack #1 with name \"%s\"." relationshipName, r.error)
-    let! card = ExploreCardRepository.get c.Db userId 1
-    Assert.Equal(1, card.Value.Relationships.Count)
-    let! card = ExploreCardRepository.get c.Db userId 2
-    Assert.Equal(1, card.Value.Relationships.Count)
+    let! stack = ExploreStackRepository.get c.Db userId 1
+    Assert.Equal(1, stack.Value.Relationships.Count)
+    let! stack = ExploreStackRepository.get c.Db userId 2
+    Assert.Equal(1, stack.Value.Relationships.Count)
     do! successfulRemove ()
 
     return commands }
@@ -283,40 +283,40 @@ let ``Directional relationship tests``(): Task<unit> = task {
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
         Assert.Null x.Value
-        let! card = ExploreCardRepository.get c.Db userId 1
-        let card = card.Value
-        Assert.Equal(2, card.Relationships.Single().Users)
-        Assert.True(card.Relationships.Single().IsAcquired)
-        let! card = ExploreCardRepository.get c.Db userId 2
-        let card = card.Value
-        Assert.Equal(2, card.Relationships.Single().Users)
-        Assert.True(card.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 1
+        let stack = stack.Value
+        Assert.Equal(2, stack.Relationships.Single().Users)
+        Assert.True(stack.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 2
+        let stack = stack.Value
+        Assert.Equal(2, stack.Relationships.Single().Users)
+        Assert.True(stack.Relationships.Single().IsAcquired)
 
         let successfulRemove () = task {
             let! r = SanitizeRelationshipRepository.Remove c.Db acquirer.SourceStackId (int acquirer.TargetStackLink) userId relationshipName
             Assert.Null r.Value
-            let! card = ExploreCardRepository.get c.Db userId 1
-            let card = card.Value
-            Assert.Equal(1, card.Relationships.Count)
-            Assert.False(card.Relationships.Single().IsAcquired)
-            let! card = ExploreCardRepository.get c.Db userId 2
-            let card = card.Value
-            Assert.Equal(1, card.Relationships.Count)
-            Assert.False(card.Relationships.Single().IsAcquired) }
+            let! stack = ExploreStackRepository.get c.Db userId 1
+            let stack = stack.Value
+            Assert.Equal(1, stack.Relationships.Count)
+            Assert.False(stack.Relationships.Single().IsAcquired)
+            let! stack = ExploreStackRepository.get c.Db userId 2
+            let stack = stack.Value
+            Assert.Equal(1, stack.Relationships.Count)
+            Assert.False(stack.Relationships.Single().IsAcquired) }
         do! successfulRemove ()
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
         Assert.Null x.Value
         let! r = SanitizeRelationshipRepository.Remove c.Db (int acquirer.TargetStackLink) acquirer.SourceStackId userId relationshipName
         Assert.Equal(sprintf "Relationship not found between source Stack #%i and target Stack #%i with name \"%s\"." (int acquirer.TargetStackLink) acquirer.SourceStackId relationshipName, r.error)
-        let! card = ExploreCardRepository.get c.Db userId 1
-        let card = card.Value
-        Assert.Equal(1, card.Relationships.Count)
-        Assert.True(card.Relationships.Single().IsAcquired)
-        let! card = ExploreCardRepository.get c.Db userId 2
-        let card = card.Value
-        Assert.Equal(1, card.Relationships.Count)
-        Assert.True(card.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 1
+        let stack = stack.Value
+        Assert.Equal(1, stack.Relationships.Count)
+        Assert.True(stack.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 2
+        let stack = stack.Value
+        Assert.Equal(1, stack.Relationships.Count)
+        Assert.True(stack.Relationships.Single().IsAcquired)
             
         do! successfulRemove ()
         let! r = SanitizeRelationshipRepository.Remove c.Db acquirer.SourceStackId (int acquirer.TargetStackLink) 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
@@ -352,40 +352,34 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
         Assert.Null x.Value
-        let! card = ExploreCardRepository.get c.Db userId 1
-        let card = card.Value
-        Assert.Equal(2, card.Relationships.Single().Users)
-        Assert.True(card.Relationships.Single().IsAcquired)
-        let! card = ExploreCardRepository.get c.Db userId 2
-        let card = card.Value
-        Assert.Equal(2, card.Relationships.Single().Users)
-        Assert.True(card.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+        Assert.Equal(2, stack.Relationships.Single().Users)
+        Assert.True(stack.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 2 |> TaskResult.getOk
+        Assert.Equal(2, stack.Relationships.Single().Users)
+        Assert.True(stack.Relationships.Single().IsAcquired)
 
         let successfulRemove () = task {
             let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
             Assert.Null r.Value
-            let! card = ExploreCardRepository.get c.Db userId 1
-            let card = card.Value
-            Assert.Equal(1, card.Relationships.Count)
-            Assert.False(card.Relationships.Single().IsAcquired)
-            let! card = ExploreCardRepository.get c.Db userId 2
-            let card = card.Value
-            Assert.Equal(1, card.Relationships.Count)
-            Assert.False(card.Relationships.Single().IsAcquired) }
+            let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+            Assert.Equal(1, stack.Relationships.Count)
+            Assert.False(stack.Relationships.Single().IsAcquired)
+            let! stack = ExploreStackRepository.get c.Db userId 2 |> TaskResult.getOk
+            Assert.Equal(1, stack.Relationships.Count)
+            Assert.False(stack.Relationships.Single().IsAcquired) }
         do! successfulRemove ()
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId acquirer
         Assert.Null x.Value
         let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
         Assert.Equal(sprintf "Relationship not found between source Stack #2 and target Stack #1 with name \"%s\"." relationshipName, r.error)
-        let! card = ExploreCardRepository.get c.Db userId 1
-        let card = card.Value
-        Assert.Equal(1, card.Relationships.Count)
-        Assert.True(card.Relationships.Single().IsAcquired)
-        let! card = ExploreCardRepository.get c.Db userId 2
-        let card = card.Value
-        Assert.Equal(1, card.Relationships.Count)
-        Assert.True(card.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+        Assert.Equal(1, stack.Relationships.Count)
+        Assert.True(stack.Relationships.Single().IsAcquired)
+        let! stack = ExploreStackRepository.get c.Db userId 2 |> TaskResult.getOk
+        Assert.Equal(1, stack.Relationships.Count)
+        Assert.True(stack.Relationships.Single().IsAcquired)
             
         do! successfulRemove ()
         let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk

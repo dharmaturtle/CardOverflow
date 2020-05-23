@@ -123,7 +123,7 @@ module HistoryRepository =
             }).ToListAsync()
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
-module ExploreCardRepository =
+module ExploreStackRepository =
     let getAcquiredStatus (db: CardOverflowDb) userId (rootInstance: BranchInstanceEntity) = task {
         let! ac =
             db.AcquiredCard
