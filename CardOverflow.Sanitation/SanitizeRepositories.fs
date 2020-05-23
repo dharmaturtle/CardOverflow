@@ -289,7 +289,7 @@ type ViewEditCardCommand = {
                 | NewCopy_SourceInstanceId_TagIds -> this.Kind
                 | NewBranch_SourceStackId_Title (id, _) -> NewBranch_SourceStackId_Title (id, title)
                 | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
-        {   EditCardCommand.EditSummary = this.EditSummary
+        {   EditStackCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
             Kind = kind

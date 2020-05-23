@@ -54,7 +54,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let secondVersion = Guid.NewGuid().ToString()
     let! _ =
-        {   EditCardCommand.EditSummary = secondVersion
+        {   EditStackCommand.EditSummary = secondVersion
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)

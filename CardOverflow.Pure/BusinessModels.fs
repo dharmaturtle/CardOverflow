@@ -486,7 +486,7 @@ with
         | NewBranch_SourceStackId_Title (stackId, _) -> x <- stackId; true
         | _ -> false
 
-type EditCardCommand = {
+type EditStackCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     CollateInstance: CollateInstance

@@ -42,7 +42,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
     let! ac = getAcquired ()
     let ac = ac.Value.Single()
     let! x =
-        {   EditCardCommand.EditSummary = ""
+        {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
@@ -109,7 +109,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     Assert.Equal(ac.CardState, CardState.Suspended)
 
     let! x =
-        {   EditCardCommand.EditSummary = ""
+        {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
@@ -137,7 +137,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
         TestCollateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let! actualBranchId = 
-        {   EditCardCommand.EditSummary = ""
+        {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)

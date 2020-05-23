@@ -50,7 +50,7 @@ let test text expected collateInstance =
     |> fun x -> Assert.Equal<string seq>(expected, x)
 
 [<Fact>]
-let ``EditCardCommand's back works with basic`` (): unit =
+let ``EditStackCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
             ({ CollateInstance.initialize with
@@ -67,7 +67,7 @@ let ``EditCardCommand's back works with basic`` (): unit =
         [ "The front Back" ]
 
 [<Fact>]
-let ``EditCardCommand's back works with cloze`` (): unit =
+let ``EditStackCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
             ({ CollateInstance.initialize with
