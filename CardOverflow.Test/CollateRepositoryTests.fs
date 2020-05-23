@@ -39,7 +39,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
 
     // Testing UpdateFieldsToNewInstance
-    let! _ = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let newQuestionXemplate = "modified {{Front mutated}}"
     let newCollateName = "new name"
     let updated =

@@ -62,13 +62,13 @@ let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     return r.Value
     }
 
-let addReversedBasicCard: CardOverflowDb -> int -> string list -> Task<int> =
+let addReversedBasicStack: CardOverflowDb -> int -> string list -> Task<int> =
     add "Basic (and reversed card)" <| normalCommand []
 
-let addBasicCard =
+let addBasicStack =
     add "Basic" <| normalCommand []
 
-let addBasicCustomCard fieldValues =
+let addBasicCustomStack fieldValues =
     add "Basic" <| normalCommand fieldValues
 
 let addCloze fieldValues =
@@ -81,7 +81,7 @@ let ``StackRepository.CreateCard on a basic facet acquires 1 card/facet``(): Tas
     let aTag = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     let bTag = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
-    let! _ = addBasicCard c.Db userId [aTag; bTag]
+    let! _ = addBasicStack c.Db userId [aTag; bTag]
 
     Assert.SingleI <| c.Db.Stack
     Assert.SingleI <| c.Db.Stack
@@ -213,7 +213,7 @@ Back
 let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
-    let! _ = addBasicCard c.Db userId []
+    let! _ = addBasicStack c.Db userId []
     let stackId = 1
     let branchId = 1
     let oldBranchInstanceId = 1001
@@ -253,8 +253,8 @@ let ``StackViewRepository.instancePair works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let otherUserId = 2
-    let! _ = addBasicCard c.Db userId []
-    let! _ = addBasicCard c.Db otherUserId []
+    let! _ = addBasicStack c.Db userId []
+    let! _ = addBasicStack c.Db otherUserId []
     
     let! a, (a_: bool), b, (b_:bool) = StackViewRepository.instancePair c.Db 1001 1002 userId
     
@@ -276,7 +276,7 @@ let ``StackViewRepository.instancePair works``() : Task<unit> = (taskResult {
 let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
-    let! _ = addBasicCard c.Db userId []
+    let! _ = addBasicStack c.Db userId []
     let branchId = 1
     let! collate =
         TestCollateRepo.Search c.Db "Basic"
@@ -363,7 +363,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             //"XXXXXX".D(sprintf "Branch instance #%i should have count #%i" id count)
             do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
-    let! _ = addBasicCard c.Db user1 ["A"; "B"]
+    let! _ = addBasicStack c.Db user1 ["A"; "B"]
     do! assertCount
             [og_s, 1]
             [og_b, 1]
@@ -750,7 +750,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
         StackRepository.GetAcquired c.Db userId stackId
         |> TaskResult.map (fun ac -> Assert.Equal(instanceId, ac.Single().BranchInstanceMeta.Id))
 
-    let! _ = addBasicCard c.Db userId []
+    let! _ = addBasicStack c.Db userId []
     let og_s = 1
     let og_b = 1
     let og_i = 1001

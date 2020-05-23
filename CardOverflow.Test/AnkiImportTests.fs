@@ -367,7 +367,7 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<u
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
     let userId = 3
-    let! _ = FacetRepositoryTests.addBasicCard c.Db userId [ "Tag"; "Deck:Default" ]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [ "Tag"; "Deck:Default" ]
     Assert.Equal(2, c.Db.Tag.Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty

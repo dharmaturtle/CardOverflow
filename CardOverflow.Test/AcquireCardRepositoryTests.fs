@@ -23,7 +23,7 @@ open FsToolkit.ErrorHandling
 let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
     let! collate =
@@ -59,7 +59,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
     let! batch = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.StackId |> TaskResult.getOk
-    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let newCardBranchId = 2
     Assert.Equal(newCardBranchId, actualBranchId)
     let! stack2 = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> ac.StackId)
@@ -93,7 +93,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
 let ``StackRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
     let! collate =
@@ -129,7 +129,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
 let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! actualBranchId = FacetRepositoryTests.addBasicCard c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let stackId = 1
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
@@ -188,7 +188,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     let s1 = 1
     let b1 = 1
     let ci1_1 = 1001
-    let! _ = FacetRepositoryTests.addBasicCard c.Db authorId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single().Users)
     Assert.Equal(1, c.Db.BranchInstance.Single().Users)
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
@@ -197,7 +197,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     
     let s2 = 2
     let ci2_1 = 1002
-    let! _ = FacetRepositoryTests.addReversedBasicCard c.Db authorId []
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.AcquiredCard.Count())
