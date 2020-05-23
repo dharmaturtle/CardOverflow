@@ -68,7 +68,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCardRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, search)); // highTODO this should return stacks, not branches
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, search)); // highTODO this should return stacks, not branches
     details = pagedList.Details;
     branches = pagedList.Results.ToList();
   }

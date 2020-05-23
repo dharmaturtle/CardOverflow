@@ -259,7 +259,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
     // go from 1 cloze to 2 clozes
     let branchId = 1
-    let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
+    let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -269,12 +269,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeCardRepository.Update c.Db userId command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 5
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
+    let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -284,12 +284,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeCardRepository.Update c.Db userId command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 4
     
     // multiple c1's works
-    let! command = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branchId
+    let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
             ViewEditCardCommand.FieldValues =
@@ -299,7 +299,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeCardRepository.Update c.Db userId command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
@@ -318,7 +318,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
 
     let test instanceId customTest = task {
         let! _ =
-            SanitizeCardRepository.Update
+            SanitizeStackRepository.Update
                 c.Db
                 userId
                 {   EditSummary = editSummary

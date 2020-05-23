@@ -102,7 +102,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCardRepository.GetAcquiredPages(db, User?.Id ?? 0, pageNumber, search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.GetAcquiredPages(db, User?.Id ?? 0, pageNumber, search));
     details = pagedList.Details;
     cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
     if (pagedList.Results.Any(x => x.IsError)) {

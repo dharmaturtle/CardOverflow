@@ -58,7 +58,7 @@ let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let! collate = TestCollateRepo.SearchEarliest db collateName
     let! r =
         createCommand collate (tagIds |> List.ofSeq)
-        |> SanitizeCardRepository.Update db userId
+        |> SanitizeStackRepository.Update db userId
     return r.Value
     }
 
@@ -219,7 +219,7 @@ let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
     let oldBranchInstanceId = 1001
     let newBranchInstanceId = 1002
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getUpsert c.Db (VUpdateBranchId branchId)
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
         old with
             ViewEditCardCommand.FieldValues =
@@ -371,7 +371,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // updated by user1
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId og_b
     let updated = {
         old.Value with
             FieldValues =
@@ -427,7 +427,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             
     // copy by user2
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewCopySourceInstanceId ogEdit_i
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceInstanceId ogEdit_i
     let old = old.Value
     let updated = {
         old with
@@ -450,7 +450,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let missingInstanceId = 1337
     let missingCardId = 1337
     
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewCopySourceInstanceId missingInstanceId
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceInstanceId missingInstanceId
     
     Assert.Equal(sprintf "Branch Instance #%i not found." missingInstanceId, old.error)
     do! assertCount
@@ -460,7 +460,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // user2 branchs og_s
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let old = old.Value
     let updated = {
         old with
@@ -489,7 +489,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 branchs missing card
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId missingCardId
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId missingCardId
     Assert.Equal(sprintf "Stack #%i not found." missingInstanceId, old.error)
     do! assertCount
             [og_s,     2 ;    copy_s, 1 ]
@@ -500,7 +500,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 copies their copy
-    let! x = SanitizeCardRepository.getUpsert c.Db <| VNewCopySourceInstanceId copy_i
+    let! x = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceInstanceId copy_i
     let old = x.Value
     let updated = {
         old with
@@ -523,7 +523,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
     
     // user2 copies their branch
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewCopySourceInstanceId branch_i
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceInstanceId branch_i
     let old = old.Value
     let updated = {
         old with
@@ -546,7 +546,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 branches their copy
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId copy_s
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId copy_s
     let old = old.Value
     let updated = {
         old with
@@ -762,7 +762,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     
     // update card
     let update_i = 1002
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId og_b
+    let! (command: ViewEditCardCommand) = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId og_b
     let! actualBranchId = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(og_b, actualBranchId)
 
@@ -786,7 +786,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     // branch card
     let branch_i = 1003
     let branch_b = 2
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
+    let! (command: ViewEditCardCommand) = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let! actualBranchId = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(branch_b, actualBranchId)
     
@@ -799,7 +799,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
 
     // update branch
     let updateBranch_i = 1004
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId branch_b
+    let! (command: ViewEditCardCommand) = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branch_b
     let! actualBranchId = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(branch_b, actualBranchId)
 
@@ -825,14 +825,14 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     do! testGetAcquired og_s branch_i
 
     // try to branch card again, but fail
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
+    let! (command: ViewEditCardCommand) = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let! (error: Result<_,_>) = UpdateRepository.stack c.Db userId command.load
     Assert.Equal(sprintf "Stack #1 already has a Branch named 'New Branch'.", error.error);
 
     // branch card again
     let branch_i2 = 1005
     let branch_b2 = 3
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
+    let! (command: ViewEditCardCommand) = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let command =
         { command.load with
             Kind =

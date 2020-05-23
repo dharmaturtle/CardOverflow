@@ -142,7 +142,7 @@
 
   async Task UpdateCard() {
     _IsDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeCardRepository.Update(db, User.Id, EditCard));
+    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, User.Id, EditCard));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       resultingBranchId = result.ResultValue;

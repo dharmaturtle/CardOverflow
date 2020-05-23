@@ -301,7 +301,7 @@ type UpsertCardSource =
     | VNewBranchSourceStackId of int
     | VUpdateBranchId of int
 
-module SanitizeCardRepository =
+module SanitizeStackRepository =
     let getUpsert (db: CardOverflowDb) source =
         let toCommand kind (branch: BranchInstanceEntity) =
             {   EditSummary = ""

@@ -28,7 +28,7 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     if (User != null) {
-      var x = await DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVNewOriginalUserId(User.Id)));
+      var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewOriginalUserId(User.Id)));
       if (x.IsOk) {
         _command = x.ResultValue;
       } else {

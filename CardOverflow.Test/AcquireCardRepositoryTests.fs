@@ -216,7 +216,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_1));
 
     // update branch
-    let! r = SanitizeCardRepository.getUpsert c.Db <| VUpdateBranchId b1
+    let! r = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId b1
     let command =
         { r.Value with
             FieldValues = [].ToList()

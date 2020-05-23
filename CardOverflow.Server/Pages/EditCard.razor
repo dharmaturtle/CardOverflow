@@ -41,11 +41,11 @@
 
   private Task<FSharpResult<ViewEditCardCommand, string>> _GetCommandAndCard() {
     if (BranchId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVUpdateBranchId(BranchId)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdateBranchId(BranchId)));
     } else if (CopySourceInstanceId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVNewCopySourceInstanceId(CopySourceInstanceId)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySourceInstanceId(CopySourceInstanceId)));
     } else if (BranchSourceStackId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeCardRepository.getUpsert(db, UpsertCardSource.NewVNewBranchSourceStackId(BranchSourceStackId)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranchSourceStackId(BranchSourceStackId)));
     } else {
       return FSharpResult<ViewEditCardCommand, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
     }
