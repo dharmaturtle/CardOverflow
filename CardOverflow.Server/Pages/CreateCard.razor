@@ -22,7 +22,7 @@
 @code {
   [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  private ViewEditCardCommand _command;
+  private ViewEditStackCommand _command;
   private IEnumerable<ViewCollateWithAllInstances> _collates;
 
   protected override async Task OnParametersSetAsync() {

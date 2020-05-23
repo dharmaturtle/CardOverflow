@@ -27,9 +27,9 @@
   [Parameter] public int BranchSourceStackId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
-  ViewEditCardCommand _command;
+  ViewEditStackCommand _command;
 
-  private async Task _TrySetCommandAndCard(Task<FSharpResult<ViewEditCardCommand, string>> result) {
+  private async Task _TrySetCommandAndCard(Task<FSharpResult<ViewEditStackCommand, string>> result) {
     var x = await result;
     if (x.IsOk) {
       _command = x.ResultValue;
@@ -39,7 +39,7 @@
     }
   }
 
-  private Task<FSharpResult<ViewEditCardCommand, string>> _GetCommandAndCard() {
+  private Task<FSharpResult<ViewEditStackCommand, string>> _GetCommandAndCard() {
     if (BranchId != 0) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdateBranchId(BranchId)));
     } else if (CopySourceInstanceId != 0) {
@@ -47,7 +47,7 @@
     } else if (BranchSourceStackId != 0) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranchSourceStackId(BranchSourceStackId)));
     } else {
-      return FSharpResult<ViewEditCardCommand, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
+      return FSharpResult<ViewEditStackCommand, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
     }
   }
 

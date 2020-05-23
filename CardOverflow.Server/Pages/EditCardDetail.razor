@@ -15,20 +15,20 @@
 @if (Collates == null) {
   <p><em>Loading...</em></p>
 } else {
-  <EditForm Model=@EditCard OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
+  <EditForm Model=@EditStack OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
     <fieldset disabled=@_IsDisabled>
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @if (EditCard.Kind.IsNewBranch_SourceStackId_Title || EditCard.Kind.IsUpdate_BranchId_Title) {
+            @if (EditStack.Kind.IsNewBranch_SourceStackId_Title || EditStack.Kind.IsUpdate_BranchId_Title) {
               <div class="input-group">
                 <label for="branchTitleInput" class="col-form-label mr-2">
                   Branch Title:
                 </label>
-                <InputText @bind-Value=@EditCard.Title class="form-control" id="branchTitleInput" />
+                <InputText @bind-Value=@EditStack.Title class="form-control" id="branchTitleInput" />
               </div>
             }
-            @foreach (var field in EditCard.FieldValues) {
+            @foreach (var field in EditStack.FieldValues) {
               <EditCardField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_IsDisabled />
             }
           </div>
@@ -61,13 +61,13 @@
                 }
               </select>
             </div>
-            @if (EditCard.Backs.IsOk) {
-              @foreach (var back in EditCard.Backs.ResultValue) {
+            @if (EditStack.Backs.IsOk) {
+              @foreach (var back in EditStack.Backs.ResultValue) {
                 <iframe sandbox="allow-scripts" srcdoc=@back style="height: 80vh; width: 100%; resize: vertical;"></iframe>
               }
             } else {
               <span>
-                Error: @EditCard.Backs.ErrorValue
+                Error: @EditStack.Backs.ErrorValue
               </span>
             }
           </div>
@@ -75,13 +75,13 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditCard.Kind.TryGetCopySourceInstanceId(out var instanceId)) {
+          @if (EditStack.Kind.TryGetCopySourceInstanceId(out var instanceId)) {
             <span>Copied from</span>
             <a href="cardinstance/@instanceId">
               Card
             </a>
           }
-          @if (EditCard.Kind.TryGetBranchSourceStackId(out var stackId)) {
+          @if (EditStack.Kind.TryGetBranchSourceStackId(out var stackId)) {
             <span>Branched from</span>
             <a href="stack/@stackId">
               Card
@@ -91,7 +91,7 @@
         <div class="col-sm">
           <div class="row mx-1">
             <span class="btn-group w-100">
-              <InputText @bind-Value=@EditCard.EditSummary class="form-control w-100" placeholder="Edit Summary" />
+              <InputText @bind-Value=@EditStack.EditSummary class="form-control w-100" placeholder="Edit Summary" />
               <button type="button" class="btn btn-primary" @onclick=@UpdateCard>Save</button>
             </span>
           </div>
@@ -113,7 +113,7 @@
 }
 
 @code {
-  [Parameter] public ViewEditCardCommand EditCard { get; set; }
+  [Parameter] public ViewEditStackCommand EditStack { get; set; }
   [Parameter] public bool NewEditStackOnSave { get; set; }
   [Parameter] public IEnumerable<ViewCollateWithAllInstances> Collates { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
@@ -126,13 +126,13 @@
 
   protected override async Task OnInitializedAsync() {
     if (Collates == null) {
-      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, User?.Id ?? 0, EditCard.CollateInstance.CollateId));
+      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, User?.Id ?? 0, EditStack.CollateInstance.CollateId));
     }
-    if (EditCard == null) {
-      EditCard = new ViewEditCardCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+    if (EditStack == null) {
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
     }
     _SelectedCardSettingId = User.DefaultCardSettingId.Value;
-    UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
+    UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
   }
 
   private void _SetOption(int newId) {
@@ -142,14 +142,14 @@
 
   async Task UpdateCard() {
     _IsDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, User.Id, EditCard));
+    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, User.Id, EditStack));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       resultingBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
-        var fieldValues = EditCard.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditCard = new ViewEditCardCommand(EditCard.EditSummary, fieldValues, EditCard.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
-        UpdateSelectedCollate(EditCard.CollateInstance.CollateId, EditCard.CollateInstance.Id);
+        var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
+        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+        UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
         _IsDisabled = false;
       }
     } else {
@@ -165,9 +165,9 @@
 
   void UpdateSelectedCollateInstance(int instanceId) {
     SelectedCollateInstanceId = instanceId;
-    EditCard.CollateInstance = Collates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
-    var valuesByField = EditCard.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
-    EditCard.FieldValues = EditCard.CollateInstance.Fields
+    EditStack.CollateInstance = Collates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
+    var valuesByField = EditStack.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
+    EditStack.FieldValues = EditStack.CollateInstance.Fields
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)

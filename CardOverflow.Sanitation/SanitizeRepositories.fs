@@ -243,7 +243,7 @@ type SearchCommand = {
 }
 
 [<CLIMutable>]
-type ViewEditCardCommand = {
+type ViewEditStackCommand = {
     [<Required>]
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
@@ -345,7 +345,7 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
             |> TaskResult.map(fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance)
-    let Update (db: CardOverflowDb) authorId (command: ViewEditCardCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+    let Update (db: CardOverflowDb) authorId (command: ViewEditStackCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         UpdateRepository.stack db authorId command.load
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query

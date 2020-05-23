@@ -262,7 +262,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
-            ViewEditCardCommand.FieldValues =
+            ViewEditStackCommand.FieldValues =
                 [   {   command.FieldValues.[0] with
                             Value = "{{c2::Canberra}} was founded in {{c1::1913}}."
                     }
@@ -277,7 +277,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
-            ViewEditCardCommand.FieldValues =
+            ViewEditStackCommand.FieldValues =
                 [   {   command.FieldValues.[0] with
                             Value = "Canberra was founded in {{c1::1913}}."
                     }
@@ -292,7 +292,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
-            ViewEditCardCommand.FieldValues =
+            ViewEditStackCommand.FieldValues =
                 [   {   command.FieldValues.[0] with
                             Value = "{{c1::Canberra}} was founded in {{c1::1913}}."
                     }
