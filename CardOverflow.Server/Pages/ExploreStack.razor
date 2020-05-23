@@ -37,7 +37,7 @@
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
       }
-      <ExploreCardIFrameHeader Stack=@Stack Instance=@Selected UpdateStack=@(x => Stack = x) />
+      <ExploreStackIFrameHeader Stack=@Stack Instance=@Selected UpdateStack=@(x => Stack = x) />
       @foreach (var i in Selected.Indexes) {
         <div class="row">
           <div class=@(_isAcquired() ? "col-10" : "col")>
@@ -45,7 +45,7 @@
           </div>
           @if (_isAcquired()) {
             <div class="col-2">
-              <ExploreCardAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
+              <ExploreStackAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
             </div>
           }
         </div>
@@ -54,14 +54,14 @@
   </div>
   <div class="row">
     <div class="col-xl">
-      <ExploreCardTag Stack=@Stack />
-      <ExploreCardRelationship Stack=@Stack />
+      <ExploreStackTag Stack=@Stack />
+      <ExploreStackRelationship Stack=@Stack />
     </div>
     <div class="col-xl">
-      <ExploreCardComments Stack=@Stack />
+      <ExploreStackComments Stack=@Stack />
     </div>
     <div class="col-xl">
-      <ExploreCardBranch Branches=@Stack.Branches
+      <ExploreStackBranch Branches=@Stack.Branches
                          InstanceSelected=@(x => Selected = x)
                          Status=@Stack.AcquiredStatus
                          UpdateStatus=@(x => Stack.AcquiredStatus = x)
