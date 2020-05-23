@@ -16,7 +16,7 @@
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@EditStack OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
-    <fieldset disabled=@_IsDisabled>
+    <fieldset disabled=@_isDisabled>
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
@@ -29,7 +29,7 @@
               </div>
             }
             @foreach (var field in EditStack.FieldValues) {
-              <EditStackField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_IsDisabled />
+              <EditStackField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_isDisabled />
             }
           </div>
           <div class="col-sm">
@@ -38,25 +38,25 @@
                 Card Setting
               </a>
               <div class="col-sm-10 px-0">
-                <CardSettingSelector SettingSelected=_SetOption SelectedId=_SelectedCardSettingId />
+                <CardSettingSelector SettingSelected=_SetOption SelectedId=_selectedCardSettingId />
               </div>
             </div>
             <div class="row">
-              <a href="Collate/@SelectedCollateId" class="col-sm-2 mt-2">
+              <a href="Collate/@_selectedCollateId" class="col-sm-2 mt-2">
                 Card Template
               </a>
-              <select value=@SelectedCollateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedCollate(id)))>
+              <select value=@_selectedCollateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedCollate(id)))>
                 @foreach (var collate in Collates) {
                   <option value=@collate.Id>@collate.Editable.Name</option>
                 }
               </select>
             </div>
             <div class="row">
-              <a href="Collate/@SelectedCollateId?InstanceId=@SelectedCollateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Collate/@_selectedCollateId?InstanceId=@_selectedCollateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
-              <select value=@SelectedCollateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedCollateInstance))>
-                @foreach (var instance in SelectedCollateInstances) {
+              <select value=@_selectedCollateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedCollateInstance))>
+                @foreach (var instance in _selectedCollateInstances) {
                   <option value=@instance.Id>@instance.Created - @instance.EditSummary</option>
                 }
               </select>
@@ -101,7 +101,7 @@
             <span>
               Saved! Link to
               @*highTODO fix, there's no /branch*@
-              <a href="branch/@resultingBranchId">
+              <a href="branch/@_resultingBranchId">
                 card.
               </a>
             </span>
@@ -115,14 +115,14 @@
 @code {
   [Parameter] public ViewEditStackCommand EditStack { get; set; }
   [Parameter] public bool NewEditStackOnSave { get; set; }
-  [Parameter] public IEnumerable<ViewCollateWithAllInstances> Collates { get; set; }
+  [Parameter] public List<ViewCollateWithAllInstances> Collates { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
-  private IEnumerable<ViewCollateInstance> SelectedCollateInstances;
-  private int SelectedCollateId;
-  private int SelectedCollateInstanceId;
-  private int _SelectedCardSettingId;
-  private bool _IsDisabled;
-  private int resultingBranchId;
+  private List<ViewCollateInstance> _selectedCollateInstances;
+  private int _selectedCollateId;
+  private int _selectedCollateInstanceId;
+  private int _selectedCardSettingId;
+  private bool _isDisabled;
+  private int _resultingBranchId;
 
   protected override async Task OnInitializedAsync() {
     if (Collates == null) {
@@ -131,26 +131,26 @@
     if (EditStack == null) {
       EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
     }
-    _SelectedCardSettingId = User.DefaultCardSettingId.Value;
+    _selectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
   }
 
   private void _SetOption(int newId) {
-    _SelectedCardSettingId = newId;
+    _selectedCardSettingId = newId;
     //Card.CardSettingId = newId; //highTODO fix
   }
 
   async Task UpdateCard() {
-    _IsDisabled = true;
+    _isDisabled = true;
     var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, User.Id, EditStack));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
-      resultingBranchId = result.ResultValue;
+      _resultingBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
         var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
         EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
         UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
-        _IsDisabled = false;
+        _isDisabled = false;
       }
     } else {
       ToastService.ShowError(result.ErrorValue);
@@ -158,13 +158,13 @@
   }
 
   void UpdateSelectedCollate(int collateId, int? instanceId = null) {
-    SelectedCollateId = collateId;
-    SelectedCollateInstances = Collates.Single(t => t.Id == collateId).Instances;
-    UpdateSelectedCollateInstance(instanceId ?? SelectedCollateInstances.First().Id);
+    _selectedCollateId = collateId;
+    _selectedCollateInstances = Collates.Single(t => t.Id == collateId).Instances;
+    UpdateSelectedCollateInstance(instanceId ?? _selectedCollateInstances.First().Id);
   }
 
   void UpdateSelectedCollateInstance(int instanceId) {
-    SelectedCollateInstanceId = instanceId;
+    _selectedCollateInstanceId = instanceId;
     EditStack.CollateInstance = Collates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
     var valuesByField = EditStack.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
     EditStack.FieldValues = EditStack.CollateInstance.Fields
