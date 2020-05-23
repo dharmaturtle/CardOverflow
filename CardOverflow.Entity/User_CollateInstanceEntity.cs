@@ -18,12 +18,12 @@ namespace CardOverflow.Entity
         public int CollateInstanceId { get; set; }
         public int DefaultCardSettingId { get; set; }
 
-        [ForeignKey("DefaultCardSettingId")]
-        [InverseProperty("User_CollateInstances")]
-        public virtual CardSettingEntity DefaultCardSetting { get; set; }
         [ForeignKey("CollateInstanceId")]
         [InverseProperty("User_CollateInstances")]
         public virtual CollateInstanceEntity CollateInstance { get; set; }
+        [ForeignKey("DefaultCardSettingId")]
+        [InverseProperty("User_CollateInstances")]
+        public virtual CardSettingEntity DefaultCardSetting { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("User_CollateInstances")]
         public virtual UserEntity User { get; set; }

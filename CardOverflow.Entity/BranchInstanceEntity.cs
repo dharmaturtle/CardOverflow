@@ -26,7 +26,6 @@ namespace CardOverflow.Entity
         [Required]
         public string FieldValues { get; set; }
         public int CollateInstanceId { get; set; }
-        public short MaxIndexInclusive { get; set; }
         public int Users { get; set; }
         [Required]
         [StringLength(200)]
@@ -44,6 +43,7 @@ namespace CardOverflow.Entity
         public BitArray Hash { get; set; }
         public string TsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
+        public short MaxIndexInclusive { get; set; }
 
         [ForeignKey("CardId")]
         public virtual CardEntity Card { get; set; }

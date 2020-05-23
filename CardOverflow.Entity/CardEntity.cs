@@ -19,8 +19,8 @@ namespace CardOverflow.Entity
         public int AuthorId { get; set; }
         public int Users { get; set; }
         public int? CopySourceId { get; set; }
-        public bool IsListed { get; set; } = true;
         public int DefaultBranchId { get; set; }
+        public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Cards")]

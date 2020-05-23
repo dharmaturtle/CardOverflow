@@ -28,6 +28,7 @@ namespace CardOverflow.Entity
         public short IntervalOrStepsIndex { get; set; }
         public DateTime Due { get; set; }
         public int CardSettingId { get; set; }
+        public int? DeckId { get; set; }
         public bool IsLapsed { get; set; }
         [Required]
         public string PersonalField { get; set; } = "";
@@ -37,7 +38,6 @@ namespace CardOverflow.Entity
         [ForeignKey("BranchId")]
         [InverseProperty("AcquiredCardBranches")]
         public virtual BranchEntity Branch { get; set; }
-        //public virtual BranchInstanceEntity BranchI { get; set; }
         [ForeignKey("BranchInstanceId")]
         [InverseProperty("AcquiredCards")]
         public virtual BranchInstanceEntity BranchInstance { get; set; }
@@ -48,6 +48,9 @@ namespace CardOverflow.Entity
         [ForeignKey("CardSettingId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardSettingEntity CardSetting { get; set; }
+        [ForeignKey("DeckId")]
+        [InverseProperty("AcquiredCards")]
+        public virtual DeckEntity Deck { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("AcquiredCards")]
         public virtual UserEntity User { get; set; }
