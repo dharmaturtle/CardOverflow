@@ -1,5 +1,5 @@
 @page "/curate"
-@page "/card/{SelectedInstanceId:int}/curate"
+@page "/stack/{SelectedInstanceId:int}/curate"
 @attribute [Authorize]
 
 @using Microsoft.FSharp.Core
@@ -49,7 +49,7 @@
                     </div>
                   </td>
                   <td>
-                    <a href="/card/@card.BranchInstanceMeta.Id/curate">
+                    <a href="/branchinstance/@card.BranchInstanceMeta.Id/curate">
                       @card.BranchInstanceMeta.StrippedFront
                     </a>
                   </td>
