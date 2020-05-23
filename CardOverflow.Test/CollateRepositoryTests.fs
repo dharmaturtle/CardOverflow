@@ -76,7 +76,7 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.StackId = 1))
     let createds = c.Db.CollateInstance.Where(fun x -> x.CollateId = collateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
-    let! x = CardViewRepository.get c.Db 1
+    let! x = StackViewRepository.get c.Db 1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth.[0]
     Assert.Equal(
         """<!DOCTYPE html>

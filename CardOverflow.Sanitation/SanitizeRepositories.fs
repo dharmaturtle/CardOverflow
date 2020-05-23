@@ -298,7 +298,7 @@ type ViewEditCardCommand = {
 type UpsertCardSource =
     | VNewOriginalUserId of int
     | VNewCopySourceInstanceId of int
-    | VNewBranchSourceCardId of int
+    | VNewBranchSourceStackId of int
     | VUpdateBranchId of int
 
 module SanitizeCardRepository =
@@ -333,7 +333,7 @@ module SanitizeCardRepository =
                     Title = null
                 }
             )
-        | VNewBranchSourceCardId stackId ->
+        | VNewBranchSourceStackId stackId ->
             db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |> Task.map (Result.requireNotNull (sprintf "Stack #%i not found." stackId))
             |> TaskResult.map(fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance)

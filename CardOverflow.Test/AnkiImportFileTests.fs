@@ -192,7 +192,7 @@ let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
 
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
-    let! view = CardViewRepository.instance c.Db 1001
+    let! view = StackViewRepository.instance c.Db 1001
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
     Assert.Equal<string seq>(

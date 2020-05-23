@@ -17,16 +17,16 @@ namespace CardOverflow.UserContentApi.Controllers {
     }
 
     [HttpGet("branch/{id}/{index}/front")]
-    public async Task<IActionResult> Front(int id, int index) => _Front(index, await CardViewRepository.get(_db, id));
+    public async Task<IActionResult> Front(int id, int index) => _Front(index, await StackViewRepository.get(_db, id));
 
     [HttpGet("branch/{id}/{index}/back")]
-    public async Task<IActionResult> Back(int id, int index) => _Back(index, await CardViewRepository.get(_db, id));
+    public async Task<IActionResult> Back(int id, int index) => _Back(index, await StackViewRepository.get(_db, id));
 
     [HttpGet("branchinstance/{id}/{index}/front")]
-    public async Task<IActionResult> InstanceFront(int id, int index) => _Front(index, await CardViewRepository.instance(_db, id));
+    public async Task<IActionResult> InstanceFront(int id, int index) => _Front(index, await StackViewRepository.instance(_db, id));
 
     [HttpGet("branchinstance/{id}/{index}/back")]
-    public async Task<IActionResult> InstanceBack(int id, int index) => _Back(index, await CardViewRepository.instance(_db, id));
+    public async Task<IActionResult> InstanceBack(int id, int index) => _Back(index, await StackViewRepository.instance(_db, id));
 
     private ContentResult _Front(int index, FSharpResult<BranchInstanceView, string> view) =>
       ( view.IsError

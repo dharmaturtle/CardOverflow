@@ -199,7 +199,7 @@ module FileRepository =
         |> Task.map (Result.requireNotNull ())
         |> TaskResult.map (fun x -> x.Data)
 
-module CardViewRepository =
+module StackViewRepository =
     let private getAcquiredInstanceIds (db: CardOverflowDb) userId aId bId =
         if userId = 0 then
             [].ToListAsync()
@@ -233,8 +233,8 @@ module CardViewRepository =
                 .Include(fun x -> x.CollateInstance)
                 .Where(fun x -> x.Id = aId || x.Id = bId)
                 .ToListAsync()
-        let! a = Result.requireNotNull (sprintf "Card instance #%i not found" aId) <| instances.SingleOrDefault(fun x -> x.Id = aId)
-        let! b = Result.requireNotNull (sprintf "Card instance #%i not found" bId) <| instances.SingleOrDefault(fun x -> x.Id = bId)
+        let! a = Result.requireNotNull (sprintf "Branch instance #%i not found" aId) <| instances.SingleOrDefault(fun x -> x.Id = aId)
+        let! b = Result.requireNotNull (sprintf "Branch instance #%i not found" bId) <| instances.SingleOrDefault(fun x -> x.Id = bId)
         let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId bId
         return
             BranchInstanceView.load a,

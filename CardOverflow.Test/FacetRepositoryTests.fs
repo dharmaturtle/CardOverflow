@@ -182,7 +182,7 @@ Back
         |> fun x -> x.Back
         , false, true
     )
-    let! view = CardViewRepository.get c.Db 1
+    let! view = StackViewRepository.get c.Db 1
     Assert.Equal<FieldAndValue seq>(
         [{  Field = {
                 Name = "Front"
@@ -249,31 +249,31 @@ let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``CardViewRepository.instancePair works``() : Task<unit> = (taskResult {
+let ``StackViewRepository.instancePair works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let otherUserId = 2
     let! _ = addBasicCard c.Db userId []
     let! _ = addBasicCard c.Db otherUserId []
     
-    let! a, (a_: bool), b, (b_:bool) = CardViewRepository.instancePair c.Db 1001 1002 userId
+    let! a, (a_: bool), b, (b_:bool) = StackViewRepository.instancePair c.Db 1001 1002 userId
     
     Assert.Equal(a.InC(), b.InC())
     Assert.True(a_)
     Assert.False(b_)
 
     // missing instanceId
-    let! (x: Result<_, _>) = CardViewRepository.instancePair c.Db 1001 -1 userId
+    let! (x: Result<_, _>) = StackViewRepository.instancePair c.Db 1001 -1 userId
     
-    Assert.Equal("Card instance #-1 not found", x.error)
+    Assert.Equal("Branch instance #-1 not found", x.error)
     
-    let! (x: Result<_, _>) = CardViewRepository.instancePair c.Db -1 1001 userId
+    let! (x: Result<_, _>) = StackViewRepository.instancePair c.Db -1 1001 userId
     
-    Assert.Equal("Card instance #-1 not found", x.error)
+    Assert.Equal("Branch instance #-1 not found", x.error)
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult {
+let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicCard c.Db userId []
@@ -293,9 +293,9 @@ let ``CardViewRepository.instanceWithLatest works``() : Task<unit> = (taskResult
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
     
-    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = CardViewRepository.instanceWithLatest c.Db 1001 userId
+    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db 1001 userId
     
-    do! CardViewRepository.instance c.Db oldInstanceId
+    do! StackViewRepository.instance c.Db oldInstanceId
         |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
     Assert.False a_
     Assert.True b_
@@ -388,7 +388,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i, 0; ogEdit_i, 1]
     
     let asserts userId stackId branchId instanceId newValue instanceCountForStack revisionCount tags = task {
-        let! instance = CardViewRepository.instance c.Db instanceId
+        let! instance = StackViewRepository.instance c.Db instanceId
         Assert.Equal<string seq>(
             [newValue; newValue],
             instance.Value.FieldValues.Select(fun x -> x.Value))
@@ -407,7 +407,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         Assert.NotEqual(createds.[0], createds.[1])
         let! revisions = StackRepository.Revisions c.Db userId branchId
         Assert.Equal(revisionCount, revisions.SortedMeta.Count())
-        let! instance = CardViewRepository.instance c.Db revisions.SortedMeta.[0].Id
+        let! instance = StackViewRepository.instance c.Db revisions.SortedMeta.[0].Id
         let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
         Assert.Contains(newValue, revision)
     }
@@ -420,7 +420,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
                 Count = 1
                 IsAcquired = true }]
     let! revisions = StackRepository.Revisions c.Db user1 og_b
-    let! instance = CardViewRepository.instance c.Db revisions.SortedMeta.[1].Id
+    let! instance = StackViewRepository.instance c.Db revisions.SortedMeta.[1].Id
     let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
     Assert.Contains("Front", original)
     Assert.True(revisions.SortedMeta.Single(fun x -> x.IsLatest).Id > revisions.SortedMeta.Single(fun x -> not x.IsLatest).Id) // tests that Latest really came after NotLatest
@@ -460,7 +460,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // user2 branchs og_s
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_s
+    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let old = old.Value
     let updated = {
         old with
@@ -489,7 +489,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 branchs missing card
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId missingCardId
+    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId missingCardId
     Assert.Equal(sprintf "Stack #%i not found." missingInstanceId, old.error)
     do! assertCount
             [og_s,     2 ;    copy_s, 1 ]
@@ -546,7 +546,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 branches their copy
-    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId copy_s
+    let! old = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId copy_s
     let old = old.Value
     let updated = {
         old with
@@ -786,7 +786,7 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     // branch card
     let branch_i = 1003
     let branch_b = 2
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_s
+    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let! actualBranchId = UpdateRepository.card c.Db userId command.load
     Assert.Equal(branch_b, actualBranchId)
     
@@ -825,14 +825,14 @@ let ``ExploreStackRepository.get works for all ExploreCardAcquiredStatus``() : T
     do! testGetAcquired og_s branch_i
 
     // try to branch card again, but fail
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_s
+    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let! (error: Result<_,_>) = UpdateRepository.card c.Db userId command.load
     Assert.Equal(sprintf "Stack #1 already has a Branch named 'New Branch'.", error.error);
 
     // branch card again
     let branch_i2 = 1005
     let branch_b2 = 3
-    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceCardId og_s
+    let! (command: ViewEditCardCommand) = SanitizeCardRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
     let command =
         { command.load with
             Kind =
