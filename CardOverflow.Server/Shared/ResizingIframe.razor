@@ -15,7 +15,7 @@
         style="width: 1px; min-width: 100%; height:100px;" />
 
 @code {
-  [Parameter] public int CardId { get; set; }
+  [Parameter] public int StackId { get; set; }
   [Parameter] public (int BranchInstanceId, short Index) BranchInstance { get; set; }
   [Parameter] public int CollateId { get; set; }
   [Parameter] public int CollateInstanceId { get; set; }
@@ -29,8 +29,8 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     var middle = "";
-    if (CardId != 0) {
-      middle = "card/" + CardId;
+    if (StackId != 0) {
+      middle = "stack/" + StackId;
     } else if (!BranchInstance.Equals(default)) {
       middle = "branchinstance/" + BranchInstance.BranchInstanceId + "/" + BranchInstance.Index;
     } else if (CollateId != 0) {

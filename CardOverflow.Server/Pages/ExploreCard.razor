@@ -28,7 +28,7 @@
             @(ViewLogic.timestampToPretty(Selected.Created, TimeProvider.utcNow)).
           </span>
           The present URL is a permanent link to this revision, which may differ significantly from the
-          <a href="card/@Selected.CardId">
+          <a href="stack/@Selected.StackId">
             current revision.
           </a>
           <a href="carddiff/@Selected.Id">
@@ -73,7 +73,7 @@
 }
 
 @code {
-  [Parameter] public int CardId { get; set; }
+  [Parameter] public int StackId { get; set; }
   [Parameter] public int InstanceId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreCard Card;
@@ -85,7 +85,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     if (InstanceId == 0) {
-      var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, CardId));
+      var x = await DbExecutor.QueryAsync(db => ExploreCardRepository.get(db, User?.Id ?? 0, StackId));
       if (x.IsOk) {
         Card = x.ResultValue;
         Selected = Card.Instance;

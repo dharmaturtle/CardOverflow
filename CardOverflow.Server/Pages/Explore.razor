@@ -1,5 +1,5 @@
 @page "/explore"
-@page "/card/{SelectedCardId:int}"
+@page "/card/{SelectedStackId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,9 +11,9 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/card/{x}") Ids=@branches?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedCardId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/stack/{x}") Ids=@branches?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
 </div>
-@if (SelectedCardId == null) {
+@if (SelectedStackId == null) {
   @if (branches == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -23,24 +23,24 @@
         <th>Users</th>
         <th>Name</th>
       </tr>
-      @foreach (var card in branches) {
+      @foreach (var branch in branches) {
         <tr>
           <td>
             <div class="curate-tooltip-target">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="oi oi-eye@(card.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
+              <span class="oi oi-eye@(branch.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="curate-tooltip-content">
-                <ResizingIframe CardId=@card.Id Front/>
+                <ResizingIframeBranch BranchInstanceId=@branch.Instance.Id Front />
               </div>
             </div>
           </td>
           <td>
-            @card.Users
+            @branch.Users
           </td>
           <td>
-            <a href="/card/@card.Id">
-              @card.Instance.StrippedFront
+            <a href="/branch/@branch.Id">
+              @branch.Instance.StrippedFront
             </a>
           </td>
         </tr>
@@ -49,32 +49,32 @@
   }
   <Pager Details=@details PageChanged=@PageChanged />
 } else {
-  <ExploreCard CardId=@SelectedCardId.Value />
+  <ExploreCard StackId=@SelectedStackId.Value />
 }
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public int? SelectedCardId { get; set; }
+  [Parameter] public int? SelectedStackId { get; set; }
   private IList<CardOverflow.Pure.ExploreBranchSummary> branches;
   private PagedListDetails details;
   private SearchCommand search = new SearchCommand { Query = "" };
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (SelectedCardId == null && branches == null) {
+    if (SelectedStackId == null && branches == null) {
       await PageChanged(1);
       StateHasChanged();
     }
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCardRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCardRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, search)); // highTODO this should return stacks, not branches
     details = pagedList.Details;
     branches = pagedList.Results.ToList();
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedCardId = null;
+    SelectedStackId = null;
     search = newSearch;
     return PageChanged(1);
   }

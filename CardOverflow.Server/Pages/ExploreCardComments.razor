@@ -15,7 +15,7 @@
 <div>
   <h4>Comments</h4>
   <ul class="list-group">
-    @foreach (var comment in @Card.Comments) {
+    @foreach (var comment in Stack.Comments) {
       <li class="list-group-item border-0">
         <div>
           @comment.Text
@@ -31,15 +31,15 @@
         </div>
       </li>
     }
-    <Comment CardId=@Card.Id AddComment=@_AddComment />
+    <Comment StackId=@Stack.Id AddComment=@_AddComment />
   </ul>
 </div>
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreCard Stack { get; set; }
 
   void _AddComment(string comment) =>
-    Card.Comments = Card.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToList();
+    Stack.Comments = Stack.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToList();
 
 }

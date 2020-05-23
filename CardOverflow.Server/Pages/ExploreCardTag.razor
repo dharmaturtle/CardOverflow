@@ -16,7 +16,7 @@
       <h4>Tags</h4>
       @if (Card.IsAnyAcquired) {
         @if (_showTagAdder) {
-          <TagAdder CardId=@Card.Id AddTag=@(x => AcquireTag(x.Text)) />
+          <TagAdder AddTag=@(x => AcquireTag(x.Text)) />
         } else {
           <button class="btn btn-outline-success" @onclick=@(() => _showTagAdder = true)>
             <i class="fas fa-plus"></i>

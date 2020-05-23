@@ -30,13 +30,13 @@
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public int CardId { get; set; }
+  [Parameter] public int StackId { get; set; }
   [Parameter] public EventCallback<string> AddComment { get; set; }
   CommentText WriteComment = new CommentText();
   bool isSaved;
 
   async Task SaveComment() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment.Text, CardId, User.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment.Text, StackId, User.Id));
     if (x.IsOk) {
       isSaved = true;
       await AddComment.InvokeAsync(WriteComment.Text);

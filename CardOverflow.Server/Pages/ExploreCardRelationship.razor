@@ -13,11 +13,11 @@
 
 <div class=@(_showAddRelationship ? "" : "d-flex justify-content-between")>
   <h4>Relationships</h4>
-  @if (Card.IsAnyAcquired) {
+  @if (Stack.IsAnyAcquired) {
     @if (_showAddRelationship) {
       <EditForm Model=@Command OnValidSubmit=@Add>
         <div class="form-group btn-group">
-          <InputText @bind-Value=@Command.TargetCardLink class="form-control" placeholder="Related Card Link (or #)" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+          <InputText @bind-Value=@Command.TargetStackLink class="form-control" placeholder="Related Card Link (or #)" /> @*this seems to break validation: @bind-Value:event="oninput"*@
           <InputText @bind-Value=@Command.Name class="form-control" placeholder="New Relationship Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
           <button type="submit" class="btn btn-primary">Add</button>
         </div>
@@ -32,49 +32,49 @@
   }
 </div>
 <ul class="list-unstyled">
-  @foreach (var (relationship, cardId) in Card.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
+  @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
-      <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
+      <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
           <span class="curate-tooltip-content">
-            <ResizingIframe CardId=@cardId Front />
+            <ResizingIframe StackId=@stackId Front />
           </span>
         </span>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
-      <a href="/card/@cardId">@getHtml(cardId)</a>
+      <a href="/stack/@stackId">@getHtml(stackId)</a>
     </li>
   }
-  @foreach (var (relationship, cardId) in Card.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceCardId == Card.Id ? x.TargetCardId : x.SourceCardId))) {
+  @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
-      <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceCardId, relationship.TargetCardId))>
+      <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
         <span class="curate-tooltip-target">
           <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
           <span class="badge badge-success">@relationship.Users</span>
           <span class="curate-tooltip-content">
-            <ResizingIframe CardId=@cardId Front />
+            <ResizingIframe StackId=@stackId Front />
           </span>
         </span>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
-      <a href="/card/@cardId">@htmlByCardId[cardId]</a>
+      <a href="/stack/@stackId">@htmlByCardId[stackId]</a>
     </li>
   }
 </ul>
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreCard Card { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreCard Stack { get; set; }
   AddRelationshipCommand Command;
   IDictionary<int, string> htmlByCardId = new Dictionary<int, string>();
   private bool _showAddRelationship;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Command = new AddRelationshipCommand { SourceCardId = Card.Id };
-    var relationshipIds = Card.Relationships.SelectMany(x => new List<int> { x.SourceCardId, x.TargetCardId }).Distinct().Where(x => x != Card.Id).ToList();
+    Command = new AddRelationshipCommand { SourceStackId = Stack.Id };
+    var relationshipIds = Stack.Relationships.SelectMany(x => new List<int> { x.SourceStackId, x.TargetStackId }).Distinct().Where(x => x != Stack.Id).ToList();
     htmlByCardId = relationshipIds.ToDictionary(x => x, _ => "");
     htmlByCardId = (await relationshipIds.Select(async x => (x, await UserContentHttpClient.GetStrippedFront(x)))
       .Apply(Task.WhenAll))
@@ -82,39 +82,39 @@
     StateHasChanged();
   }
 
-  string getHtml(int cardId) =>
-    htmlByCardId.ContainsKey(cardId)
-    ? htmlByCardId[cardId]
+  string getHtml(int stackId) =>
+    htmlByCardId.ContainsKey(stackId)
+    ? htmlByCardId[stackId]
     : "Loading...";
 
   async Task Add() {
     var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, Command));
     if (x.IsOk) {
-      var targetCardId = SanitizeRelationshipRepository.GetCardId(Command.TargetCardLink).ResultValue;
-      Card.Relationships = Card.Relationships.Append(new ViewRelationship(Command.Name, Card.Id, targetCardId, true, 1)).ToList();
-      if (targetCardId != Card.Id && !htmlByCardId.ContainsKey(targetCardId)) { // lazy GetStrippedFront - don't use TryAdd
-        htmlByCardId.Add(targetCardId, await UserContentHttpClient.GetStrippedFront(targetCardId));
+      var targetStackId = SanitizeRelationshipRepository.GetStackId(Command.TargetStackLink).ResultValue;
+      Stack.Relationships = Stack.Relationships.Append(new ViewRelationship(Command.Name, Stack.Id, targetStackId, true, 1)).ToList();
+      if (targetStackId != Stack.Id && !htmlByCardId.ContainsKey(targetStackId)) { // lazy GetStrippedFront - don't use TryAdd
+        htmlByCardId.Add(targetStackId, await UserContentHttpClient.GetStrippedFront(targetStackId));
       }
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
   }
 
-  async Task Acquire(string name, int sourceCardId, int targetCardId) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, new AddRelationshipCommand(name, sourceCardId, targetCardId.ToString())));
+  async Task Acquire(string name, int sourceStackId, int targetStackId) {
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, new AddRelationshipCommand(name, sourceStackId, targetStackId.ToString())));
     if (x.IsOk) {
-      Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).IsAcquired = true;
-      Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).Users++;
+      Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsAcquired = true;
+      Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users++;
       StateHasChanged();
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
   }
 
-  async Task Unacquire(string name, int sourceCardId, int targetCardId) {
-    await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceCardId, targetCardId, User.Id, name));
-    Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).IsAcquired = false;
-    Card.Relationships.Single(r => r.SourceCardId == sourceCardId && r.TargetCardId == targetCardId && r.Name == name).Users--;
+  async Task Unacquire(string name, int sourceStackId, int targetStackId) {
+    await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceStackId, targetStackId, User.Id, name));
+    Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsAcquired = false;
+    Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users--;
     StateHasChanged();
   }
 

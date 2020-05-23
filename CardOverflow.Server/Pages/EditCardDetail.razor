@@ -81,9 +81,9 @@
               Card
             </a>
           }
-          @if (EditCard.Kind.TryGetBranchSourceCardId(out var cardId)) {
+          @if (EditCard.Kind.TryGetBranchSourceCardId(out var stackId)) {
             <span>Branched from</span>
-            <a href="card/@cardId">
+            <a href="stack/@stackId">
               Card
             </a>
           }
