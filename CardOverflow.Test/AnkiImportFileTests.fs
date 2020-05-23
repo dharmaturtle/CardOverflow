@@ -109,14 +109,14 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     Assert.Equal<string seq>(
         ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
-    Assert.Equal(3, c.Db.Card.Count())
+    Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(8, c.Db.CollateInstance.Count())
     Assert.Equal(6, c.Db.LatestCollateInstance.Count())
     } |> TaskResult.getOk)
 
-let testCommunalFields (c: TestContainer) userId cardId expected = task {
-    let! acquired = CardRepository.GetAcquired c.Db userId cardId
+let testCommunalFields (c: TestContainer) userId stackId expected = task {
+    let! acquired = CardRepository.GetAcquired c.Db userId stackId
     let acquired = acquired.Value.Single()
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
@@ -131,7 +131,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Equal(7, c.Db.AcquiredCard.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(3, c.Db.Branch.Count())
-    Assert.Equal(3, c.Db.Card.Count())
+    Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(4s, c.Db.BranchInstance.Single(fun x -> x.FieldValues.Contains "Drugs").MaxIndexInclusive)
     Assert.Null x.Value
     let allBranchInstanceViews =
@@ -181,7 +181,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
 
     let! clozes = c.Db.BranchInstance.Where(fun x -> x.CommunalFieldInstance_BranchInstances.Any(fun x -> x.CommunalFieldInstance.Value.Contains "mnemonic")).ToListAsync()
     for instance in clozes do
-        do! testCommunalFields instance.CardId [longThing; ""]
+        do! testCommunalFields instance.StackId [longThing; ""]
     }
 
 [<Fact>]
@@ -218,8 +218,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     .ToListAsync()
             for id in communalFieldInstanceIds do
                 Assert.True(c.Db.LatestCommunalFieldInstance.Any(fun x -> x.Id = id))
-            let! cardIds = (getBranchInstances clozeText).Select(fun x -> x.CardId).ToListAsync()
-            for id in cardIds do
+            let! stackIds = (getBranchInstances clozeText).Select(fun x -> x.StackId).ToListAsync()
+            for id in stackIds do
                 do! testCommunalFields id [clozeText]
         otherTest clozeText }
     let assertUserHasNormalCardCount expected =
@@ -313,7 +313,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
-    let cardId = 1
+    let stackId = 1
     let branchInstanceId = 1001
 
     let test instanceId customTest = task {
@@ -341,7 +341,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                 }
             |> Task.map Result.getOk
         let! field = c.Db.CommunalField.SingleAsync()
-        Assert.Equal(cardId, field.Id)
+        Assert.Equal(stackId, field.Id)
         Assert.Equal(3, field.AuthorId)
         let! instance = c.Db.CommunalFieldInstance.Include(fun x -> x.CommunalFieldInstance_BranchInstances).SingleAsync(fun x -> x.Value = communalValue)
         Assert.Equal(branchInstanceId, instance.Id)

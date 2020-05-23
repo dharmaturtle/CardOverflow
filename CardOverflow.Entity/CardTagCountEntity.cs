@@ -5,9 +5,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardTagCountEntity
+    public partial class StackTagCountEntity
     {
-        public int CardId { get; set; }
+        public int StackId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;

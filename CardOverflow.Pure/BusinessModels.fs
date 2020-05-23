@@ -357,8 +357,8 @@ type ViewTag = {
 [<CLIMutable>]
 type ViewRelationship = {
     Name: string
-    SourceCardId: int
-    TargetCardId: int
+    SourceStackId: int
+    TargetStackId: int
     IsAcquired: bool
     Users: int
 } with
@@ -370,7 +370,7 @@ type ViewRelationship = {
 [<CLIMutable>]
 type BranchInstanceMeta = {
     Id: int
-    CardId: int
+    StackId: int
     BranchId: int
     MaxIndexInclusive: int16
     Created: DateTime
@@ -389,7 +389,7 @@ type BranchInstanceMeta = {
 type AcquiredCard = {
     AcquiredCardId: int
     UserId: int
-    CardId: int
+    StackId: int
     BranchId: int
     BranchInstanceMeta: BranchInstanceMeta
     Index: int16
@@ -483,7 +483,7 @@ with
         | _ -> false
     member this.TryGetBranchSourceCardId([<Out>] x:byref<_>) =
         match this with
-        | NewBranch_SourceCardId_Title (cardId, _) -> x <- cardId; true
+        | NewBranch_SourceCardId_Title (stackId, _) -> x <- stackId; true
         | _ -> false
 
 type EditCardCommand = {

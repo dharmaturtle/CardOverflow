@@ -106,12 +106,12 @@ type CommentText = {
 }
 
 module SanitizeCommentRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: string) cardId userId = taskResult { // lowTODO add idempotency key
+    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: string) stackId userId = taskResult { // lowTODO add idempotency key
         let text = comment.Trim()
         do! if text.Length >= 15 then Ok () else Error "Comment must be 15 or more characters."
         return!
-            CommentCardEntity(
-                CardId = cardId,
+            CommentStackEntity(
+                StackId = stackId,
                 UserId = userId,
                 Text = text,
                 Created = time.utcNow
@@ -143,27 +143,27 @@ module SanitizeTagRepository =
         do! db.SaveChangesAsyncI()
         return e.Id
         }
-    let private getFirstAcquired (db: CardOverflowDb) userId cardId =
-        db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Branch.CardId = cardId)
-        |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Card #%i." userId cardId)
-    let AddTo (db: CardOverflowDb) userId newTag cardId = taskResult { // medTODO tag length needs validation
+    let private getFirstAcquired (db: CardOverflowDb) userId stackId =
+        db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Branch.StackId = stackId)
+        |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
+    let AddTo (db: CardOverflowDb) userId newTag stackId = taskResult { // medTODO tag length needs validation
         let newTag = MappingTools.toTitleCase newTag
-        let! (ac: AcquiredCardEntity) = getFirstAcquired db userId cardId
+        let! (ac: AcquiredCardEntity) = getFirstAcquired db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
         do! db.Tag_AcquiredCard
-                .AnyAsync(fun x -> x.CardId = cardId && x.UserId = userId && x.TagId = tag.Id)
-            |> Task.map (Result.requireFalse <| sprintf "Card #%i for User #%i already has tag \"%s\"" cardId userId newTag)
+                .AnyAsync(fun x -> x.StackId = stackId && x.UserId = userId && x.TagId = tag.Id)
+            |> Task.map (Result.requireFalse <| sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId newTag)
         Tag_AcquiredCardEntity(AcquiredCard = ac, Tag = tag)
         |> db.Tag_AcquiredCard.AddI
         return! db.SaveChangesAsyncI ()
     }
-    let DeleteFrom db userId tag cardId = taskResult {
+    let DeleteFrom db userId tag stackId = taskResult {
         let tag = MappingTools.toTitleCase tag
-        let! (ac: AcquiredCardEntity) = getFirstAcquired db userId cardId
+        let! (ac: AcquiredCardEntity) = getFirstAcquired db userId stackId
         let! join =
             db.Tag_AcquiredCard
                 .SingleOrDefaultAsync(fun x -> x.AcquiredCardId = ac.Id && x.Tag.Name = tag)
-            |> Task.map (Result.requireNotNull <| sprintf "Card #%i for User #%i doesn't have the tag \"%s\"" cardId userId tag)
+            |> Task.map (Result.requireNotNull <| sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tag)
         db.Tag_AcquiredCard.RemoveI join
         return! db.SaveChangesAsyncI()
     }
@@ -195,45 +195,45 @@ type AddRelationshipCommand = {
     [<StringLength(250, ErrorMessage = "Name must be less than 250 characters.")>]
     Name: string
     [<Required>]
-    SourceCardId: int
+    SourceStackId: int
     [<Required>]
-    TargetCardLink: string
+    TargetStackLink: string
 }
-type CardIdRegex = Regex< """(?<cardId>\d+)$""" >
+type StackIdRegex = Regex< """(?<stackId>\d+)$""" >
 module SanitizeRelationshipRepository =
-    let GetCardId input =
-        let x = CardIdRegex().TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
+    let GetStackId input =
+        let x = StackIdRegex().TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
         if x.Success 
         then Ok <| int x.Value
         else Error "Couldn't find the card ID"
     let Add (db: CardOverflowDb) userId command = taskResult {
-        let! targetCardId = GetCardId command.TargetCardLink
-        do! if targetCardId = command.SourceCardId then Error "A card can't be related to itself" else Ok ()
-        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.CardId = targetCardId || x.CardId = command.SourceCardId)).ToListAsync()
-        let! t = acs.FirstOrDefault(fun x -> x.CardId = targetCardId) |> Result.ofNullable (sprintf "You haven't acquired the linked card (Card #%i)." targetCardId)
-        let! s = acs.FirstOrDefault(fun x -> x.CardId = command.SourceCardId) |> Result.ofNullable (sprintf "You haven't acquired the source card (Card #%i)." command.SourceCardId)
+        let! targetStackId = GetStackId command.TargetStackLink
+        do! if targetStackId = command.SourceStackId then Error "A stack can't be related to itself" else Ok ()
+        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.StackId = targetStackId || x.StackId = command.SourceStackId)).ToListAsync()
+        let! t = acs.FirstOrDefault(fun x -> x.StackId = targetStackId) |> Result.ofNullable (sprintf "You haven't acquired the linked stack (Stack #%i)." targetStackId)
+        let! s = acs.FirstOrDefault(fun x -> x.StackId = command.SourceStackId) |> Result.ofNullable (sprintf "You haven't acquired the source stack (Stack #%i)." command.SourceStackId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
-        let sid, tid, sCardId, tCardId =
+        let sid, tid, sStackId, tStackId =
             if Relationship.isDirectional command.Name then
-                s.Id, t.Id, s.CardId, t.CardId
+                s.Id, t.Id, s.StackId, t.StackId
             else // if non-directional, alter the source/target ids so they're grouped properly in the DB. EG: Source=1,Target=2,Name=X and Source=2,Target=1,Name=X are seen as distinct, so this makes them the same
                 if s.BranchInstanceId < t.BranchInstanceId then
-                    s.Id, t.Id, s.CardId, t.CardId
+                    s.Id, t.Id, s.StackId, t.StackId
                 else
-                    t.Id, s.Id, t.CardId, s.CardId
+                    t.Id, s.Id, t.StackId, s.StackId
         return!
             Relationship_AcquiredCardEntity(
                 Relationship = r,
                 UserId = userId,
-                SourceCardId = sCardId,
-                TargetCardId = tCardId,
+                SourceStackId = sStackId,
+                TargetStackId = tStackId,
                 SourceAcquiredCardId = sid,
                 TargetAcquiredCardId = tid
             ) |> RelationshipRepository.addAndSaveAsync db
         }
-    let Remove db sourceInstanceId targetCardId userId name =
-        RelationshipRepository.removeAndSaveAsync db sourceInstanceId targetCardId userId name // don't eta reduce - consumed by C#
+    let Remove db sourceInstanceId targetStackId userId name =
+        RelationshipRepository.removeAndSaveAsync db sourceInstanceId targetStackId userId name // don't eta reduce - consumed by C#
 
 [<CLIMutable>]
 type SearchCommand = {
@@ -333,10 +333,10 @@ module SanitizeCardRepository =
                     Title = null
                 }
             )
-        | VNewBranchSourceCardId cardId ->
-            db.Card.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = cardId)
-            |> Task.map (Result.requireNotNull (sprintf "Card #%i not found." cardId))
-            |> TaskResult.map(fun card -> toCommand (NewBranch_SourceCardId_Title (cardId, "New Branch")) card.DefaultBranch.LatestInstance)
+        | VNewBranchSourceCardId stackId ->
+            db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
+            |> Task.map (Result.requireNotNull (sprintf "Stack #%i not found." stackId))
+            |> TaskResult.map(fun stack -> toCommand (NewBranch_SourceCardId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance)
         | VNewCopySourceInstanceId branchInstanceId ->
             db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId))

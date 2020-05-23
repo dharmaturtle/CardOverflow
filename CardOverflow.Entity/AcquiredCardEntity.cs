@@ -19,7 +19,7 @@ namespace CardOverflow.Entity
         [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int CardId { get; set; }
+        public int StackId { get; set; }
         public int BranchId { get; set; }
         public int BranchInstanceId { get; set; }
         public short Index { get; set; }
@@ -42,9 +42,9 @@ namespace CardOverflow.Entity
         [InverseProperty("AcquiredCards")]
         public virtual BranchInstanceEntity BranchInstance { get; set; }
         public virtual BranchEntity BranchNavigation { get; set; }
-        [ForeignKey("CardId")]
+        [ForeignKey("StackId")]
         [InverseProperty("AcquiredCards")]
-        public virtual CardEntity Card { get; set; }
+        public virtual StackEntity Stack { get; set; }
         [ForeignKey("CardSettingId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardSettingEntity CardSetting { get; set; }

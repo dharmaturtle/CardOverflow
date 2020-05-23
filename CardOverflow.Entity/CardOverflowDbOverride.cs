@@ -117,13 +117,13 @@ namespace CardOverflow.Entity {
         tag.Name = MappingTools.toTitleCase.Invoke(tag.Name);
       }
       foreach (var j in _filter<Tag_AcquiredCardEntity>(entries)) {
-        if (j.AcquiredCard.CardId == 0) {
-          if (j.AcquiredCard.Card == null) {
-            throw new NullReferenceException("j.AcquiredCard.Card is null and its j.AcquiredCard.CardId is 0. In other words, the Card wasn't set.");
+        if (j.AcquiredCard.StackId == 0) {
+          if (j.AcquiredCard.Stack == null) {
+            throw new NullReferenceException("j.AcquiredCard.Stack is null and its j.AcquiredCard.StackId is 0. In other words, the Stack wasn't set.");
           }
-          j.Card = j.AcquiredCard.Card;
+          j.Stack = j.AcquiredCard.Stack;
         } else {
-          j.CardId = j.AcquiredCard.CardId;
+          j.StackId = j.AcquiredCard.StackId;
         }
         j.UserId = j.AcquiredCard.UserId;
       }
@@ -135,10 +135,10 @@ namespace CardOverflow.Entity {
     public IQueryable<AcquiredCardIsLatestEntity> AcquiredCardIsLatest => _AcquiredCardIsLatestTracked.AsNoTracking();
     public IQueryable<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCount => _BranchInstanceRelationshipCountTracked.AsNoTracking();
     public IQueryable<BranchInstanceTagCountEntity> BranchInstanceTagCount => _BranchInstanceTagCountTracked.AsNoTracking();
-    public IQueryable<CardRelationshipCountEntity> CardRelationshipCount => _CardRelationshipCountTracked.AsNoTracking();
-    public IQueryable<CardTagCountEntity> CardTagCount => _CardTagCountTracked.AsNoTracking();
+    public IQueryable<StackRelationshipCountEntity> StackRelationshipCount => _StackRelationshipCountTracked.AsNoTracking();
+    public IQueryable<StackTagCountEntity> StackTagCount => _StackTagCountTracked.AsNoTracking();
     public IQueryable<BranchInstanceEntity> LatestBranchInstance => BranchInstance.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<BranchInstanceEntity> LatestDefaultBranchInstance => LatestBranchInstance.Where(x => x.Branch.Card.DefaultBranchId == x.BranchId).AsNoTracking();
+    public IQueryable<BranchInstanceEntity> LatestDefaultBranchInstance => LatestBranchInstance.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<CollateInstanceEntity> LatestCollateInstance => CollateInstance.Where(x => x.Collate.LatestInstanceId == x.Id).AsNoTracking();
 

@@ -20,7 +20,7 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        public int CardId { get; set; }
+        public int StackId { get; set; }
         public int BranchId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
@@ -45,8 +45,8 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
         public short MaxIndexInclusive { get; set; }
 
-        [ForeignKey("CardId")]
-        public virtual CardEntity Card { get; set; }
+        [ForeignKey("StackId")]
+        public virtual StackEntity Stack { get; set; }
 
         [ForeignKey("BranchId")]
         [InverseProperty("BranchInstances")]
@@ -58,13 +58,13 @@ namespace CardOverflow.Entity
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
 
         [InverseProperty("CopySource")]
-        public virtual ICollection<CardEntity> CardCopySources { get; set; }
+        public virtual ICollection<StackEntity> StackCopySources { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<File_BranchInstanceEntity> File_BranchInstances { get; set; }
-        public virtual ICollection<CardTagCountEntity> CardTagCounts { get; set; }
-        public virtual ICollection<CardRelationshipCountEntity> CardRelationshipCounts { get; set; }
+        public virtual ICollection<StackTagCountEntity> StackTagCounts { get; set; }
+        public virtual ICollection<StackRelationshipCountEntity> StackRelationshipCounts { get; set; }
         public virtual ICollection<BranchInstanceTagCountEntity> BranchInstanceTagCounts { get; set; }
         public virtual ICollection<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCounts { get; set; }
     }

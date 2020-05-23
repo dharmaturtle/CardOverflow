@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
     
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int CardId { get; set; }
+        public int StackId { get; set; }
         public int BranchId { get; set; }
         public int BranchInstanceId { get; set; }
         public short Index { get; set; }

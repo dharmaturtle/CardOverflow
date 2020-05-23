@@ -268,12 +268,12 @@ type BranchInstanceView with
         let e = this.CopyToNew communalFields
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        if branch.Card = null then
-            if branch.CardId = 0 then failwith "CardId is 0, you gotta .Include it"
-            e.CardId <- branch.CardId
+        if branch.Stack = null then
+            if branch.StackId = 0 then failwith "StackId is 0, you gotta .Include it"
+            e.StackId <- branch.StackId
         else
-            e.Card <- branch.Card
-            e.CardId <- branch.Card.Id
+            e.Stack <- branch.Stack
+            e.StackId <- branch.Stack.Id
         e.Branch <- branch
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive
@@ -289,7 +289,7 @@ type BranchInstanceMeta with
     static member loadIndex (i: int16) isAcquired isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
-            CardId = entity.CardId
+            StackId = entity.StackId
             BranchId = entity.BranchId
             MaxIndexInclusive = entity.MaxIndexInclusive
             Created = entity.Created
@@ -308,7 +308,7 @@ type BranchInstanceMeta with
         |> List.map(fun i -> BranchInstanceMeta.loadIndex i isAcquired isLatest entity)
     static member initialize =
         {   Id = 0
-            CardId = 0
+            StackId = 0
             BranchId = 0
             MaxIndexInclusive = 0s
             Created = DateTime.UtcNow
@@ -355,7 +355,7 @@ type AcquiredCard with
     member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
-        entity.CardId <- this.CardId
+        entity.StackId <- this.StackId
         entity.Index <- index
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
@@ -369,7 +369,7 @@ type AcquiredCard with
         this.copyTo e tagIds i
         e
     static member initialize userId cardSettingId tags =
-        {   CardId = 0
+        {   StackId = 0
             BranchId = 0
             AcquiredCardId = 0
             BranchInstanceMeta = BranchInstanceMeta.initialize
@@ -386,7 +386,7 @@ type AcquiredCard with
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
-            {   CardId = entity.CardId
+            {   StackId = entity.StackId
                 BranchId = entity.BranchId
                 AcquiredCardId = entity.Id
                 BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isAcquired entity.IsLatest entity.BranchInstance
@@ -403,7 +403,7 @@ type AcquiredCard with
         }
 
 type Comment with
-    static member load (entity: CommentCardEntity) = {
+    static member load (entity: CommentStackEntity) = {
         User = entity.User.DisplayName
         UserId = entity.UserId
         Text = entity.Text
@@ -430,10 +430,10 @@ type Branch with
     }
 
 type ExploreCard with
-    static member load (entity: CardEntity) acquiredStatus (usersTags: string Set) (tagCounts: CardTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: CardRelationshipCountEntity ResizeArray) instance = {
+    static member load (entity: StackEntity) acquiredStatus (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) instance = {
         Id = entity.Id
         Summary = ExploreBranchSummary.load instance <| entity.Branches.Single(fun x -> x.Id = entity.DefaultBranchId)
-        Comments = entity.CommentCards |> Seq.map Comment.load |> toResizeArray
+        Comments = entity.CommentStacks |> Seq.map Comment.load |> toResizeArray
         Tags =
             tagCounts.Select(fun x ->
                 {   Name = x.Name
@@ -443,8 +443,8 @@ type ExploreCard with
         Relationships =
             relationshipCounts.Select(fun x ->
                 {   Name = x.Name
-                    SourceCardId = x.SourceCardId
-                    TargetCardId = x.TargetCardId
+                    SourceStackId = x.SourceStackId
+                    TargetStackId = x.TargetStackId
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray

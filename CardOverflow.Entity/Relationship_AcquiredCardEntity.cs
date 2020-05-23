@@ -12,9 +12,9 @@ namespace CardOverflow.Entity
         [Key]
         public int UserId { get; set; }
         [Key]
-        public int SourceCardId { get; set; }
+        public int SourceStackId { get; set; }
         [Key]
-        public int TargetCardId { get; set; }
+        public int TargetStackId { get; set; }
         public int SourceAcquiredCardId { get; set; }
         public int TargetAcquiredCardId { get; set; }
 

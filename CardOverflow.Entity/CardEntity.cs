@@ -5,13 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CardEntity
+    public partial class StackEntity
     {
-        public CardEntity()
+        public StackEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             Branches = new HashSet<BranchEntity>();
-            CommentCards = new HashSet<CommentCardEntity>();
+            CommentStacks = new HashSet<CommentStackEntity>();
         }
 
         [Key]
@@ -23,19 +23,18 @@ namespace CardOverflow.Entity
         public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
-        [InverseProperty("Cards")]
+        [InverseProperty("Stacks")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("CopySourceId")]
-        [InverseProperty("CardCopySources")]
+        [InverseProperty("StackCopySources")]
         public virtual BranchInstanceEntity CopySource { get; set; }
         [ForeignKey("DefaultBranchId")]
-        [InverseProperty("Cards")]
         public virtual BranchEntity DefaultBranch { get; set; }
-        [InverseProperty("Card")]
+        [InverseProperty("Stack")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-        [InverseProperty("Card")]
+        [InverseProperty("Stack")]
         public virtual ICollection<BranchEntity> Branches { get; set; }
-        [InverseProperty("Card")]
-        public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
+        [InverseProperty("Stack")]
+        public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
     }
 }

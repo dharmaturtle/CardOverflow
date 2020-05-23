@@ -9,8 +9,8 @@ open CardOverflow.Sanitation
 open CardOverflow.Test
 
 [<Fact>]
-let ``GetCardId fails on bork``(): unit =
-    SanitizeRelationshipRepository.GetCardId "bork"
+let ``GetStackId fails on bork``(): unit =
+    SanitizeRelationshipRepository.GetStackId "bork"
     |> Result.isOk
     |> Assert.False
 
@@ -63,7 +63,7 @@ type GetCardIdIsOkData () =
 
 [<Theory>]
 [<ClassData(typeof<GetCardIdIsOkData>)>]
-let ``GetCardId works`` expected raw : unit =
-    SanitizeRelationshipRepository.GetCardId raw
+let ``GetStackId works`` expected raw : unit =
+    SanitizeRelationshipRepository.GetStackId raw
     |> Result.getOk
     |> fun x -> Assert.Equal(expected, x)

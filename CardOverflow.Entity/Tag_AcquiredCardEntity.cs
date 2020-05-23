@@ -12,7 +12,7 @@ namespace CardOverflow.Entity
         [Key]
         public int UserId { get; set; }
         [Key]
-        public int CardId { get; set; }
+        public int StackId { get; set; }
         public int AcquiredCardId { get; set; }
 
         [ForeignKey("AcquiredCardId")]
@@ -21,7 +21,7 @@ namespace CardOverflow.Entity
         [ForeignKey("TagId")]
         [InverseProperty("Tag_AcquiredCards")]
         public virtual TagEntity Tag { get; set; }
-        [ForeignKey("CardId")]
-        public virtual CardEntity Card { get; set; }
+        [ForeignKey("StackId")]
+        public virtual StackEntity Stack { get; set; }
     }
 }

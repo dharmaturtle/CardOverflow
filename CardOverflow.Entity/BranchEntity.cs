@@ -12,7 +12,6 @@ namespace CardOverflow.Entity
             AcquiredCardBranchNavigations = new HashSet<AcquiredCardEntity>();
             AcquiredCardBranches = new HashSet<AcquiredCardEntity>();
             BranchInstances = new HashSet<BranchInstanceEntity>();
-            Cards = new HashSet<CardEntity>();
         }
 
         [Key]
@@ -27,7 +26,7 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public int AuthorId { get; set; }
-        public int CardId { get; set; }
+        public int StackId { get; set; }
         public int LatestInstanceId { get; set; }
         public int Users { get; set; }
         public bool IsListed { get; set; }
@@ -35,9 +34,9 @@ namespace CardOverflow.Entity
         [ForeignKey("AuthorId")]
         [InverseProperty("Branches")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("CardId")]
+        [ForeignKey("StackId")]
         [InverseProperty("Branches")]
-        public virtual CardEntity Card { get; set; }
+        public virtual StackEntity Stack { get; set; }
         [ForeignKey("LatestInstanceId")]
         public virtual BranchInstanceEntity LatestInstance { get; set; }
         public virtual ICollection<AcquiredCardEntity> AcquiredCardBranchNavigations { get; set; }
@@ -45,7 +44,5 @@ namespace CardOverflow.Entity
         public virtual ICollection<AcquiredCardEntity> AcquiredCardBranches { get; set; }
         [InverseProperty("Branch")]
         public virtual ICollection<BranchInstanceEntity> BranchInstances { get; set; }
-        [InverseProperty("DefaultBranch")]
-        public virtual ICollection<CardEntity> Cards { get; set; }
     }
 }

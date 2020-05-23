@@ -12,16 +12,16 @@ namespace CardOverflow.Entity
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             Branches = new HashSet<BranchEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
-            Cards = new HashSet<CardEntity>();
+            Stacks = new HashSet<StackEntity>();
             Collates = new HashSet<CollateEntity>();
-            CommentCards = new HashSet<CommentCardEntity>();
+            CommentStacks = new HashSet<CommentStackEntity>();
             CommentCollates = new HashSet<CommentCollateEntity>();
             CommunalFields = new HashSet<CommunalFieldEntity>();
             Decks = new HashSet<DeckEntity>();
             Feedbacks = new HashSet<FeedbackEntity>();
             Filters = new HashSet<FilterEntity>();
             User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
-            Vote_CommentCards = new HashSet<Vote_CommentCardEntity>();
+            Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
             Vote_CommentCollates = new HashSet<Vote_CommentCollateEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
@@ -56,11 +56,11 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<CardEntity> Cards { get; set; }
+        public virtual ICollection<StackEntity> Stacks { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<CollateEntity> Collates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentCardEntity> CommentCards { get; set; }
+        public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CommentCollateEntity> CommentCollates { get; set; }
         [InverseProperty("Author")]
@@ -74,7 +74,7 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentCardEntity> Vote_CommentCards { get; set; }
+        public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentCollateEntity> Vote_CommentCollates { get; set; }
         [InverseProperty("User")]

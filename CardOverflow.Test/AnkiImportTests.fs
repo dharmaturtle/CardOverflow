@@ -172,7 +172,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     let! r = AnkiImporter.save c.Db AnkiImportTestData.relationships userId Map.empty
     Assert.Null r.Value
     
-    Assert.Equal(3, c.Db.Card.Count())
+    Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 1, c.Db.Collate.Count())
     Assert.Equal(10, c.Db.CollateInstance.Count())
@@ -187,21 +187,21 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     let! basic = getInstances "Basic"
     for branchInstance in basic do
-        let! card = ExploreCardRepository.get c.Db userId branchInstance.CardId
-        let card = card.Value
-        Assert.Empty card.Relationships
-        Assert.Empty card.Instance.CommunalFields
+        let! stack = ExploreCardRepository.get c.Db userId branchInstance.StackId
+        let stack = stack.Value
+        Assert.Empty stack.Relationships
+        Assert.Empty stack.Instance.CommunalFields
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
         ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
          "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
     for card in sketchy do
-        let! card = ExploreCardRepository.get c.Db userId card.CardId
-        let card = card.Value
-        Assert.Empty card.Relationships
-        Assert.Empty card.Instance.CommunalFields
-        let! view = CardViewRepository.get c.Db card.Id
+        let! stack = ExploreCardRepository.get c.Db userId card.StackId
+        let stack = stack.Value
+        Assert.Empty stack.Relationships
+        Assert.Empty stack.Instance.CommunalFields
+        let! view = CardViewRepository.get c.Db stack.Id
         Assert.Equal(
             expectedFieldAndValues,
             view.Value.FieldValues
@@ -210,7 +210,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
 
     let! cloze = getInstances "Cloze"
     for instance in cloze do
-        let! view = CardViewRepository.get c.Db instance.CardId
+        let! view = CardViewRepository.get c.Db instance.StackId
         [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
             "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.Select(fun x -> x.Field.Name, x.Value))
@@ -225,7 +225,7 @@ let ``Can import myHighPriority, but really testing duplicate card collates`` ()
     let userId = 3
     do! AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     
-    Assert.Equal(2, c.Db.Card.Count())
+    Assert.Equal(2, c.Db.Stack.Count())
     Assert.Equal(2, c.Db.BranchInstance.Count())
     Assert.Equal(6, c.Db.Collate.Count())
     Assert.Equal(8, c.Db.CollateInstance.Count())
@@ -285,7 +285,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         ].ToList(),
         c.Db.BranchInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
-    Assert.Equal(8, c.Db.Card.Count())
+    Assert.Equal(8, c.Db.Stack.Count())
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     Assert.Equal(8, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
@@ -311,17 +311,17 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
 
     let! instances = getInstances "optional"
     for instance in instances do
-        let! card = ExploreCardRepository.get c.Db userId instance.CardId
-        let card = card.Value
-        Assert.Empty card.Relationships
-        Assert.Empty card.Instance.CommunalFields
+        let! stack = ExploreCardRepository.get c.Db userId instance.StackId
+        let stack = stack.Value
+        Assert.Empty stack.Relationships
+        Assert.Empty stack.Instance.CommunalFields
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
-        let! card = ExploreCardRepository.get c.Db userId instance.CardId
-        let card = card.Value
-        Assert.Empty card.Relationships
-        Assert.Empty card.Instance.CommunalFields
+        let! stack = ExploreCardRepository.get c.Db userId instance.StackId
+        let stack = stack.Value
+        Assert.Empty stack.Relationships
+        Assert.Empty stack.Instance.CommunalFields
 
     Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 1, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
@@ -390,8 +390,8 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFi
         Assert.Equal(0, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(0, c.Db.CollateInstance.Count(fun x -> x.Collate.AuthorId = userId))
         Assert.Equal(0, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(8, c.Db.Card.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(8, c.Db.Card.Count())
+        Assert.Equal(8, c.Db.Stack.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(8, c.Db.Stack.Count())
         Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
         Assert.Equal(1, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(1, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
