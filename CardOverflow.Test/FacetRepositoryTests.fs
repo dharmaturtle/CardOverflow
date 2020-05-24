@@ -212,7 +212,7 @@ Back
     )}
 
 [<Fact>]
-let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
+let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicStack c.Db userId []
@@ -248,6 +248,44 @@ let ``ExploreStackRepository.getInstance works``() : Task<unit> = (taskResult {
     let! (missingCard: Result<_, _>) = ExploreStackRepository.instance c.Db userId nonexistant
     
     Assert.Equal(sprintf "Branch Instance #%i not found" nonexistant, missingCard.error)
+    } |> TaskResult.getOk)
+
+[<Fact>]
+let ``ExploreStackRepository.branch works``() : Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = addBasicStack c.Db userId []
+    let stackId = 1
+    let branchId = 1
+    let oldBranchInstanceId = 1001
+    let newBranchInstanceId = 1002
+    let newValue = Guid.NewGuid().ToString()
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
+    let updated = {
+        old with
+            ViewEditStackCommand.FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! actualBranchId = UpdateRepository.stack c.Db userId updated.load
+    Assert.Equal(branchId, actualBranchId)
+
+    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Instance)
+    let! (branch2: BranchInstanceMeta), _ = ExploreStackRepository.branch   c.Db userId branchId
+    Assert.Equal(branch1.InC(), branch2.InC())
+    Assert.Equal(newValue                 , branch2.StrippedFront)
+    Assert.Equal(newValue + " " + newValue, branch2.StrippedBack)
+    Assert.Equal(branchId, branch2.BranchId)
+    Assert.Equal(newBranchInstanceId, branch2.Id)
+
+    // nonexistant id
+    let nonexistant = 1337
+    
+    let! (missingCard: Result<_, _>) = ExploreStackRepository.branch c.Db userId nonexistant
+    
+    Assert.Equal(sprintf "Branch #%i not found" nonexistant, missingCard.error)
     } |> TaskResult.getOk)
 
 [<Fact>]

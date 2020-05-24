@@ -191,6 +191,21 @@ module ExploreStackRepository =
         let! latest = get db userId e.StackId
         return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
+    let branch (db: CardOverflowDb) userId branchId = taskResult {
+        let! (e: BranchInstanceEntity) =
+            db.LatestBranchInstance
+                .Include(fun x -> x.Branch.Stack.Author)
+                .Include(fun x -> x.Branch.Stack.CommentStacks :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommentStackEntity) -> x.User)
+                .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
+                .Include(fun x -> x.CollateInstance)
+                .SingleOrDefaultAsync(fun x -> x.BranchId = branchId)
+            |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found" branchId))
+        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
+        let! latest = get db userId e.StackId
+        return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
+    }
 
 module FileRepository =
     let get (db: CardOverflowDb) hash =
