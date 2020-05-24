@@ -83,8 +83,10 @@
   private bool _isAcquired() => AcquiredCards.Any(x => x.BranchInstanceMeta.Id == Selected.Id);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
+    var oldStackId = StackId;
+    var oldBranchInstanceId = BranchInstanceId;
     await base.SetParametersAsync(parameters);
-    if (StackId.HasValue) {
+    if (StackId.HasValue && oldStackId != StackId) {
       var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, User?.Id ?? 0, StackId.Value));
       if (x.IsOk) {
         _stack = x.ResultValue;
@@ -92,7 +94,7 @@
       } else {
         showError(x.ErrorValue);
       }
-    } else if (BranchInstanceId.HasValue) {
+    } else if (BranchInstanceId.HasValue && oldBranchInstanceId != BranchInstanceId) {
       var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, User?.Id ?? 0, BranchInstanceId.Value));
       if (x.IsOk) {
         var (instance, stack) = x.ResultValue;
