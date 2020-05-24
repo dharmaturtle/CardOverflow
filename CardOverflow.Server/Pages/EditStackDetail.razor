@@ -129,7 +129,7 @@
       Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, User?.Id ?? 0, EditStack.CollateInstance.CollateId));
     }
     if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
     }
     _selectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
@@ -137,7 +137,7 @@
 
   private void _SetOption(int newId) {
     _selectedCardSettingId = newId;
-    //Card.CardSettingId = newId; //highTODO fix
+    EditStack.EditAcquiredCard.CardSettingId = newId;
   }
 
   async Task UpdateCard() {
@@ -148,7 +148,7 @@
       _resultingBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
         var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
         UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
         _isDisabled = false;
       }
