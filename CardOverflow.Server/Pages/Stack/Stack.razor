@@ -60,19 +60,21 @@
     </div>
     <div class="col-xl">
       <Stack_Branch Branches=@_stack.Branches
-                         InstanceSelected=@(x => Selected = x)
-                         Status=@_stack.AcquiredStatus
-                         UpdateStatus=@(x => _stack.AcquiredStatus = x)
-                         Selected=@Selected
-                         Root=@_stack.Instance
-                         UpdateAcquiredCards=@(x => AcquiredCards = x) />
+                    InstanceSelected=@(x => Selected = x)
+                    Status=@_stack.AcquiredStatus
+                    UpdateStatus=@(x => _stack.AcquiredStatus = x)
+                    Selected=@Selected
+                    Root=@_stack.Instance
+                    UpdateAcquiredCards=@(x => AcquiredCards = x) />
     </div>
   </div>
 }
 
 @code {
-  [Parameter] public int StackId { get; set; }
-  [Parameter] public int InstanceId { get; set; }
+  [Parameter] public int? StackId { get; set; }
+  [Parameter] public int? BranchId { get; set; }
+  [Parameter] public int? BranchInstanceId { get; set; }
+  [Parameter] public bool IsCurate { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
   CardOverflow.Pure.ExploreStack _stack;
   BranchInstanceMeta Selected;
@@ -82,16 +84,16 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (InstanceId == 0) {
-      var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, User?.Id ?? 0, StackId));
+    if (StackId.HasValue) {
+      var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, User?.Id ?? 0, StackId.Value));
       if (x.IsOk) {
         _stack = x.ResultValue;
         Selected = _stack.Instance;
       } else {
         showError(x.ErrorValue);
       }
-    } else {
-      var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, User?.Id ?? 0, InstanceId));
+    } else if (BranchInstanceId.HasValue) {
+      var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, User?.Id ?? 0, BranchInstanceId.Value));
       if (x.IsOk) {
         var (instance, stack) = x.ResultValue;
         _stack = stack;

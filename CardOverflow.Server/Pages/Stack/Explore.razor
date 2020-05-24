@@ -52,7 +52,7 @@
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public int? SelectedStackId { get; set; }
+  private int? SelectedStackId { get; set; }
   private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };

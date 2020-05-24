@@ -62,7 +62,7 @@
           <Pager Details=@details PageChanged=@PageChanged />
         </div>
       } else {
-        <Stack InstanceId=@SelectedInstanceId.Value />
+        <Stack BranchInstanceId=@SelectedInstanceId.Value />
       }
     </div>
   </div>
@@ -70,7 +70,7 @@
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public int? SelectedInstanceId { get; set; }
+  private int? SelectedInstanceId { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<AcquiredCard> cards;
   private PagedListDetails details;
