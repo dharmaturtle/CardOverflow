@@ -11,10 +11,12 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
+@implements IDisposable
 
-@if (My.ToLower() == "my") {
+@if (My?.ToLower() == "my") {
   <Curate SelectedInstanceId=@SelectedInstanceId />
 } else {
   <Explore SelectedStackId=@SelectedStackId />
@@ -24,5 +26,26 @@
   [Parameter] public int? SelectedInstanceId { get; set; }
   [Parameter] public int? SelectedStackId { get; set; }
   [Parameter] public string My { get; set; }
+  private int? _branchId;
+  private int? _branchInstanceId;
+
+  protected override void OnInitialized() {
+    GetQueryStringValues();
+    NavigationManager.LocationChanged += HandleLocationChanged; // https://chrissainty.com/working-with-query-strings-in-blazor/
+  }
+
+  void HandleLocationChanged(object sender, LocationChangedEventArgs e) {
+    GetQueryStringValues();
+    StateHasChanged();
+  }
+
+  void GetQueryStringValues() {
+    NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
+    NavigationManager.TryGetQueryString<int?>("branchinstance", out _branchInstanceId);
+  }
+
+  public void Dispose() {
+    NavigationManager.LocationChanged -= HandleLocationChanged;
+  }
 
 }

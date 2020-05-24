@@ -9,7 +9,7 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/explore/" CreateLink=@(x => $"/stack/{x}") Ids=@_stacks?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/stack/" CreateLink=@(x => $"/stack/{x}") Ids=@_stacks?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
 </div>
 @if (SelectedStackId == null) {
   @if (_stacks == null) {
