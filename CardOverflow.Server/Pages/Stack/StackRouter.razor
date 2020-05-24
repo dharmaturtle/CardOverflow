@@ -1,0 +1,28 @@
+@page "/stack"
+@page "/stack/{SelectedStackId:int}"
+@page "/{My}/stack"
+@page "/{My}/stack/{SelectedInstanceId:int}"
+
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+
+@if (My == "my") {
+  <Curate SelectedInstanceId=@SelectedInstanceId />
+} else {
+  <Explore SelectedStackId=@SelectedStackId />
+}
+
+@code {
+  [Parameter] public int? SelectedInstanceId { get; set; }
+  [Parameter] public int? SelectedStackId { get; set; }
+  [Parameter] public string My { get; set; }
+
+}
