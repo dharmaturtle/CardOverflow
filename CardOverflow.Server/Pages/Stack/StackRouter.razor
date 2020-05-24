@@ -1,7 +1,6 @@
 @page "/stack"
 @page "/stack/{StackId:int}"
 @page "/{My}/stack"
-@page "/{My}/stack/{BranchInstanceId:int}"
 
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -16,8 +15,8 @@
 @inject NavigationManager NavigationManager
 @implements IDisposable
 
-@if (StackId.HasValue || _branchId.HasValue || BranchInstanceId.HasValue) {
-  <Stack StackId=@StackId BranchId=@_branchId BranchInstanceId=@BranchInstanceId IsCurate=@_isCurate />
+@if (StackId.HasValue || _branchId.HasValue || _branchInstanceId.HasValue) {
+  <Stack StackId=@StackId BranchId=@_branchId BranchInstanceId=@_branchInstanceId IsCurate=@_isCurate />
 } else if (_isCurate) {
   <Curate />
 } else {
@@ -25,9 +24,9 @@
 }
 
 @code {
-  [Parameter] public int? BranchInstanceId { get; set; }
   [Parameter] public int? StackId { get; set; }
   [Parameter] public string My { get; set; }
+  private int? _branchInstanceId { get; set; }
   private int? _branchId;
   private bool _isCurate => My?.ToLower() == "my";
 
@@ -42,10 +41,12 @@
   }
 
   void GetQueryStringValues() {
-    NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
-    if (BranchInstanceId == default) {
-      NavigationManager.TryGetQueryString<int?>("branchinstance", out var branchInstanceId);
-      BranchInstanceId = branchInstanceId;
+    if (StackId == null) {
+      NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
+      if (_branchInstanceId == null) {
+        NavigationManager.TryGetQueryString<int?>("branchinstance", out var branchInstanceId);
+        _branchInstanceId = branchInstanceId;
+      }
     }
   }
 
