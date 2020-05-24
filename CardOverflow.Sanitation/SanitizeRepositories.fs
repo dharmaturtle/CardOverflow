@@ -243,6 +243,27 @@ type SearchCommand = {
 }
 
 [<CLIMutable>]
+type ViewEditAcquiredCardCommand = {
+    CardState: CardState
+    CardSettingId: int Option
+    DeckId: int Option
+    [<StringLength(2000, ErrorMessage = "The Personal Field must be less than 2000 characters")>]
+    PersonalField: string
+} with
+    static member init = {
+        CardState = Normal
+        CardSettingId = None
+        DeckId = None
+        PersonalField = ""
+    }
+    member this.toDomain = {
+        EditAcquiredCardCommand.CardState = this.CardState
+        CardSettingId = this.CardSettingId
+        DeckId = this.DeckId
+        PersonalField = this.PersonalField
+    }
+
+[<CLIMutable>]
 type ViewEditStackCommand = {
     [<Required>]
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
@@ -251,6 +272,7 @@ type ViewEditStackCommand = {
     CollateInstance: ViewCollateInstance
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
+    EditAcquiredCard: ViewEditAcquiredCardCommand
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -293,6 +315,7 @@ type ViewEditStackCommand = {
             FieldValues = this.FieldValues
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
             Kind = kind
+            EditAcquiredCard = this.EditAcquiredCard.toDomain
         }
 
 type UpsertCardSource =
@@ -317,6 +340,7 @@ module SanitizeStackRepository =
                     | NewCopy_SourceInstanceId_TagIds -> null
                     | NewBranch_SourceStackId_Title (_, title)
                     | Update_BranchId_Title (_, title) -> title
+                EditAcquiredCard = ViewEditAcquiredCardCommand.init
             }
         match source with
         | VNewOriginalUserId userId ->
@@ -331,6 +355,7 @@ module SanitizeStackRepository =
                     CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
                     Kind = NewOriginal_TagIds []
                     Title = null
+                    EditAcquiredCard = ViewEditAcquiredCardCommand.init
                 }
             )
         | VNewBranchSourceStackId stackId ->
@@ -345,8 +370,14 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
             |> TaskResult.map(fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance)
-    let Update (db: CardOverflowDb) authorId (command: ViewEditStackCommand) = // medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        UpdateRepository.stack db authorId command.load
+    let Update (db: CardOverflowDb) userId (command: ViewEditStackCommand) = taskResult {// medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
+        do! match command.EditAcquiredCard.CardSettingId with 
+            | Some id ->
+                db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
+                |> Task.map (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+            | None -> Ok () |> Task.FromResult
+        return! UpdateRepository.stack db userId command.load
+        }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =

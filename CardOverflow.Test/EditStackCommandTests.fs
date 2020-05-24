@@ -42,6 +42,7 @@ let test text expected collateInstance =
             CollateInstance = collateInstance
             Kind = NewOriginal_TagIds []
             Title = null
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init
         }
     if collateInstance.FirstTemplate.Name = "Cloze" then
         Assert.Equal<string seq>(["Front"], clozeFields view.CollateInstance.Templates)
@@ -109,6 +110,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                     } |> ViewCollateInstance.load
                 Kind = NewOriginal_TagIds []
                 Title = null
+                EditAcquiredCard = ViewEditAcquiredCardCommand.init
             }
         Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.CollateInstance.Templates)
         view.Backs.Value

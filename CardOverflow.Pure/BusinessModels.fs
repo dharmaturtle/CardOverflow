@@ -496,11 +496,19 @@ with
         | NewBranch_SourceStackId_Title (stackId, _) -> x <- stackId; true
         | _ -> false
 
+type EditAcquiredCardCommand = {
+    CardState: CardState
+    CardSettingId: int Option
+    DeckId: int Option
+    PersonalField: string
+}
+
 type EditStackCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     CollateInstance: CollateInstance
     Kind: UpsertKind
+    EditAcquiredCard: EditAcquiredCardCommand
 } with
     member this.CardView = {   
         FieldValues =

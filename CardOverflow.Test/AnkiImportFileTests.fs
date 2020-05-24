@@ -22,6 +22,7 @@ open FSharp.Control.Tasks
 open System.Security.Cryptography
 open System.Collections.Generic
 open FsToolkit.ErrorHandling
+open CardOverflow.Pure.Core
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
@@ -201,6 +202,68 @@ let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
     }
 
 [<Fact>]
+let ``Create card works with ViewEditAcquiredCardCommand`` (): Task<unit> = (taskResult {
+    let userId = 3
+    use c = new TestContainer()
+    let getAcquiredCard branchId =
+        c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
+        |> Task.map (fun x -> x.StackId)
+        |> Task.bind (fun stackId -> StackRepository.GetAcquired c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
+    let! collateInstance = TestCollateRepo.SearchEarliest c.Db "Basic"
+    let getCommand acCommand =
+        {   CollateInstance = collateInstance
+            FieldValues =
+                let fieldValues = ["Front value"; "Back value"]
+                collateInstance.Fields
+                |> Seq.mapi (fun i field -> {
+                    EditField = ViewField.copyTo field
+                    Value = fieldValues.[i]
+                }) |> toResizeArray
+            EditSummary = "Initial creation"
+            Kind = NewOriginal_TagIds []
+            Title = null
+            EditAcquiredCard = acCommand
+        }
+
+    // insert new stack with invalid settingsId
+    let invalidCardId = 1337
+    let! (error: Result<_,_>) =
+        {   ViewEditAcquiredCardCommand.init with
+                CardSettingId = Some invalidCardId }
+        |> getCommand
+        |> SanitizeStackRepository.Update c.Db userId
+    Assert.Equal(sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" invalidCardId userId, error.error)
+
+    // insert new setting
+    let! (options: ViewCardSetting ResizeArray) = SanitizeCardSettingRepository.getAll c.Db userId
+    let options =
+        options.Append
+            { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
+                IsDefault = false }
+        |> toResizeArray
+    let! (ids: _ list) = SanitizeCardSettingRepository.upsertMany c.Db userId options
+    let defaultSettingId = ids.First()
+    let latestSettingId = ids.Last()
+
+    // insert new stack with default settingsId
+    let! branchId =
+        ViewEditAcquiredCardCommand.init
+        |> getCommand
+        |> SanitizeStackRepository.Update c.Db userId
+    let! (card: AcquiredCard) = getAcquiredCard branchId
+    Assert.Equal(defaultSettingId, card.CardSettingId)
+    
+    // insert new stack with latest settingsId
+    let! branchId =
+        {   ViewEditAcquiredCardCommand.init with
+                CardSettingId = Some latestSettingId }
+        |> getCommand
+        |> SanitizeStackRepository.Update c.Db userId
+    let! (card: AcquiredCard) = getAcquiredCard branchId
+    Assert.Equal(latestSettingId, card.CardSettingId)
+    } |> TaskResult.getOk)
+
+[<Fact>]
 let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer()
@@ -338,6 +401,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                     CollateInstance = collate
                     Kind = NewOriginal_TagIds []
                     Title = null
+                    EditAcquiredCard = ViewEditAcquiredCardCommand.init
                 }
             |> Task.map Result.getOk
         let! field = c.Db.CommunalField.SingleAsync()

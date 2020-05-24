@@ -33,6 +33,7 @@ let normalCommand fieldValues collateInstance tagIds =
         EditSummary = "Initial creation"
         Kind = NewOriginal_TagIds tagIds
         Title = null
+        EditAcquiredCard = ViewEditAcquiredCardCommand.init
     }
 
 let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
@@ -48,7 +49,8 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
         }).ToList()
     CollateInstance = clozeCollate
     Kind = NewOriginal_TagIds tagIds
-    Title = null }
+    Title = null
+    EditAcquiredCard = ViewEditAcquiredCardCommand.init }
 
 let add collateName createCommand (db: CardOverflowDb) userId tags = task {
     let tagIds = ResizeArray.empty
@@ -287,6 +289,7 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain
         } |> UpdateRepository.stack c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
