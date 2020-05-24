@@ -84,6 +84,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     var oldStackId = StackId;
+    var oldBranchId = BranchId;
     var oldBranchInstanceId = BranchInstanceId;
     await base.SetParametersAsync(parameters);
     if (StackId.HasValue && oldStackId != StackId) {
@@ -91,6 +92,18 @@
       if (x.IsOk) {
         _stack = x.ResultValue;
         Selected = _stack.Instance;
+      } else {
+        showError(x.ErrorValue);
+      }
+    } else if (BranchId.HasValue && oldBranchId != BranchId) {
+      var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.branch(db, User?.Id ?? 0, BranchId.Value));
+      if (x.IsOk) {
+        var (instance, stack) = x.ResultValue;
+        _stack = stack;
+        Selected = _stack.Instance;
+        if (instance.Id != stack.Instance.Id) {
+          Selected = instance;
+        }
       } else {
         showError(x.ErrorValue);
       }

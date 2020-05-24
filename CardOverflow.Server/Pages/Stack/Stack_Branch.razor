@@ -14,12 +14,12 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-  <div class="d-flex justify-content-between">
-    <h4>Branches</h4>
-    <a class="btn btn-outline-success" href="curate/stack/branch/@Root.StackId" title="Add a Branch">
-      <i class="fas fa-plus"></i>
-    </a>
-  </div>
+<div class="d-flex justify-content-between">
+  <h4>Branches</h4>
+  <a class="btn btn-outline-success" href="curate/stack/branch/@Root.StackId" title="Add a Branch">
+    <i class="fas fa-plus"></i>
+  </a>
+</div>
 <div class="list-group">
   @foreach (var branch in Branches) {
     <div class="d-flex h-100">
