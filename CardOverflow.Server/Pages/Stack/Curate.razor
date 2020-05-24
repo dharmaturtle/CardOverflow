@@ -18,7 +18,7 @@
     </div>
     <div class="col-sm-10">
       <div class="d-flex justify-content-between align-items-center">
-        <SearchBar SearchClicked="@SearchClicked" BackLink="/curate/" CreateLink=@(x => $"/my/stack?branchinstance={x}") Ids=@cards?.Select(x => x.BranchInstanceMeta.Id.ToString())?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
+        <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?branchinstance={x}") Ids=@cards?.Select(x => x.BranchInstanceMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
       </div>
       @if (SelectedInstanceId == null) {
         <div>
@@ -62,7 +62,7 @@
           <Pager Details=@details PageChanged=@PageChanged />
         </div>
       } else {
-        <Stack BranchInstanceId=@SelectedInstanceId.Value />
+        <Stack BranchInstanceId=@SelectedInstanceId.Value IsCurate=true />
       }
     </div>
   </div>
@@ -70,7 +70,7 @@
 
 @code {
   [CascadingParameter] UserEntity User { get; set; }
-  private int? SelectedInstanceId { get; set; }
+  [Parameter] public int? SelectedInstanceId { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<AcquiredCard> cards;
   private PagedListDetails details;

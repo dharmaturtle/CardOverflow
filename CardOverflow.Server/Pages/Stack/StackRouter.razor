@@ -15,12 +15,10 @@
 @inject NavigationManager NavigationManager
 @implements IDisposable
 
-@if (StackId.HasValue || _branchId.HasValue || _branchInstanceId.HasValue) {
-  <Stack StackId=@StackId BranchId=@_branchId BranchInstanceId=@_branchInstanceId IsCurate=@_isCurate />
-} else if (_isCurate) {
-  <Curate />
+@if (_isCurate) {
+  <Curate SelectedInstanceId=@_branchInstanceId />
 } else {
-  <Explore />
+  <Explore SelectedStackId=@StackId BranchId=@_branchId BranchInstanceId=@_branchInstanceId />
 }
 
 @code {
@@ -43,10 +41,8 @@
   void GetQueryStringValues() {
     if (StackId == null) {
       NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
-      if (_branchInstanceId == null) {
-        NavigationManager.TryGetQueryString<int?>("branchinstance", out var branchInstanceId);
-        _branchInstanceId = branchInstanceId;
-      }
+      NavigationManager.TryGetQueryString<int?>("branchinstance", out var branchInstanceId);
+      _branchInstanceId = branchInstanceId;
     }
   }
 
