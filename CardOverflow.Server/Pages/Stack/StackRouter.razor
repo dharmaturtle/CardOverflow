@@ -14,7 +14,7 @@
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
 
-@if (My == "my") {
+@if (My.ToLower() == "my") {
   <Curate SelectedInstanceId=@SelectedInstanceId />
 } else {
   <Explore SelectedStackId=@SelectedStackId />

@@ -13,7 +13,7 @@
 @inject TimeProvider TimeProvider
 
 <div class="d-flex justify-content-between align-items-center">
-  <ExploreStackState Stack=@Stack UpdateStack=@UpdateStack />
+  <Stack_State Stack=@Stack UpdateStack=@UpdateStack />
   <div>
     By @(_branch.Author)
     @if (_branch.AuthorId == User?.Id) {

@@ -14,7 +14,7 @@
 @inject NavigationManager NavigationManager
 @inject TimeProvider TimeProvider
 
-@if (Stack == null || Selected == null) {
+@if (_stack == null || Selected == null) {
   <p><em>@_LoadingMessage</em></p>
 } else {
   <div class="row">
@@ -35,7 +35,7 @@
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
       }
-      <ExploreStackIFrameHeader Stack=@Stack Instance=@Selected UpdateStack=@(x => Stack = x) />
+      <Stack_IFrameHeader Stack=@_stack Instance=@Selected UpdateStack=@(x => _stack = x) />
       @foreach (var i in Selected.Indexes) {
         <div class="row">
           <div class=@(_isAcquired() ? "col-10" : "col")>
@@ -43,7 +43,7 @@
           </div>
           @if (_isAcquired()) {
             <div class="col-2">
-              <ExploreStackAcquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
+              <Stack_Acquired AcquiredCard=@(AcquiredCards.Single(x => x.BranchInstanceMeta.Id == Selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
             </div>
           }
         </div>
@@ -52,19 +52,19 @@
   </div>
   <div class="row">
     <div class="col-xl">
-      <ExploreStackTag Stack=@Stack />
-      <ExploreStackRelationship Stack=@Stack />
+      <Stack_Tag Stack=@_stack />
+      <Stack_Relationship Stack=@_stack />
     </div>
     <div class="col-xl">
-      <ExploreStackComments Stack=@Stack />
+      <Stack_Comments Stack=@_stack />
     </div>
     <div class="col-xl">
-      <ExploreStackBranch Branches=@Stack.Branches
+      <Stack_Branch Branches=@_stack.Branches
                          InstanceSelected=@(x => Selected = x)
-                         Status=@Stack.AcquiredStatus
-                         UpdateStatus=@(x => Stack.AcquiredStatus = x)
+                         Status=@_stack.AcquiredStatus
+                         UpdateStatus=@(x => _stack.AcquiredStatus = x)
                          Selected=@Selected
-                         Root=@Stack.Instance
+                         Root=@_stack.Instance
                          UpdateAcquiredCards=@(x => AcquiredCards = x) />
     </div>
   </div>
@@ -74,7 +74,7 @@
   [Parameter] public int StackId { get; set; }
   [Parameter] public int InstanceId { get; set; }
   [CascadingParameter] UserEntity User { get; set; }
-  CardOverflow.Pure.ExploreStack Stack;
+  CardOverflow.Pure.ExploreStack _stack;
   BranchInstanceMeta Selected;
   List<AcquiredCard> AcquiredCards = new List<AcquiredCard>();
   private string _LoadingMessage = "Loading...";
@@ -85,8 +85,8 @@
     if (InstanceId == 0) {
       var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, User?.Id ?? 0, StackId));
       if (x.IsOk) {
-        Stack = x.ResultValue;
-        Selected = Stack.Instance;
+        _stack = x.ResultValue;
+        Selected = _stack.Instance;
       } else {
         showError(x.ErrorValue);
       }
@@ -94,8 +94,8 @@
       var x = await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, User?.Id ?? 0, InstanceId));
       if (x.IsOk) {
         var (instance, stack) = x.ResultValue;
-        Stack = stack;
-        Selected = Stack.Instance;
+        _stack = stack;
+        Selected = _stack.Instance;
         if (instance.Id != stack.Instance.Id) {
           Selected = instance;
         }
@@ -103,8 +103,8 @@
         showError(x.ErrorValue);
       }
     }
-    if (User != null && Stack != null) {
-      var r = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Stack.Id));
+    if (User != null && _stack != null) {
+      var r = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, _stack.Id));
       if (r.IsOk) {
         AcquiredCards = r.ResultValue;
       } // the only error so far is due to not acquiring the card, so intentionally not showing it.
@@ -119,9 +119,9 @@
 
   private void _CardStateUpdated(CardState state) {
     if (state.IsSuspended && AcquiredCards.All(x => x.CardState.IsSuspended)) {
-      Stack.Summary.Users--;
+      _stack.Summary.Users--;
     } else if (!state.IsSuspended && AcquiredCards.All(x => !x.CardState.IsSuspended)) {
-      Stack.Summary.Users++;
+      _stack.Summary.Users++;
     }
   }
 
