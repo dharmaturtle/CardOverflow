@@ -5,6 +5,7 @@ open CardOverflow.Api
 open CardOverflow.Pure
 open CardOverflow.Debug
 open CardOverflow.Entity
+open CardOverflow.Pure.Core
 open CardOverflow.Entity.Anki
 open System
 open System.Linq
@@ -70,6 +71,7 @@ module AnkiImporter =
         userId
         fileEntityByAnkiFileName
         (getTags: string list -> TagEntity list)
+        (getDecks: string list -> DeckEntity list)
         (cardSettings: CardSettingEntity ResizeArray)
         defaultCardSetting
         getCollates
@@ -108,14 +110,22 @@ module AnkiImporter =
                     if filtered.Length = tuples.Length then
                         filtered |> List.map (fun (id, name, conf) -> (id, (name, conf.Value))) |> Map.ofList |> Ok
                     else Error "Cannot import filtered decks. Please delete all filtered decks - they're temporary https://apps.ankiweb.net/docs/am-manual.html#filtered-decks" ) // lowTODO name the filtered decks
-            let cardSettingAndDeckNameByDeckId =
+            let decks =
+                deckNameAndDeckConfigurationIdByDeckId
+                |> Map.overValue (fun (deck, _) -> deck)
+                |> List.ofSeq
+                |> getDecks
+            let cardSettingAndDeckByDeckId =
                 deckNameAndDeckConfigurationIdByDeckId
                 |> Map.map (fun _ (deckName, deckConfigurationId) ->
-                    cardSettingByDeckConfigurationId.[string deckConfigurationId], "Deck:" + deckName)
+                    cardSettingByDeckConfigurationId.[string deckConfigurationId],
+                    decks.SingleOrDefault(fun x -> x.Name = deckName)
+                    |?? lazy (DeckEntity(UserId = userId, Name = deckName))
+                )
             let! collatesByModelId =
                 let toEntity collateEntity (collate: AnkiCollateInstance) =
                     let defaultCardSetting =
-                        cardSettingAndDeckNameByDeckId.TryFind collate.DeckId
+                        cardSettingAndDeckByDeckId.TryFind collate.DeckId
                         |> function
                         | Some (cardSetting, _) -> cardSetting
                         | None -> defaultCardSetting // veryLowTODO some anki models have invalid deck ids. Perhaps log this
@@ -136,19 +146,6 @@ module AnkiImporter =
                     |> fun x -> {| Entity = x; Collate = collate |}
                 Anki.parseModels userId col.Models
                 |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> (toEntity <| CollateEntity(AuthorId = userId))))
-            let usersTags =
-                deckNameAndDeckConfigurationIdByDeckId
-                |> Map.overValue fst
-                |> Seq.distinct
-                |> Seq.map ((+) "Deck:")
-                |> Seq.map (fun deckTag -> 
-                    getTags [ deckTag ] // lowTODO only query once when you have all the deck names
-                    |> function
-                    | [ e ] -> e
-                    | [] -> TagEntity(Name = deckTag)
-                    | _ -> failwith "This should be impossible" )
-                |> Seq.append usersTags
-                |> Seq.toList
             let cardsAndTagsByNoteId =
                 Anki.parseNotes
                     collatesByModelId
@@ -161,7 +158,7 @@ module AnkiImporter =
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardSettingAndDeckNameByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getAcquiredCard)
+                |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getAcquiredCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.BranchInstance) |> List.iter (fun (_, card) ->
@@ -207,6 +204,7 @@ module AnkiImporter =
                     userId
                     fileEntityByAnkiFileName
                     <| (TagRepository.searchMany db >> Seq.toList)
+                    <| (DeckRepository.searchMany db userId >> Seq.toList)
                     <| db.CardSetting
                         .Where(fun x -> x.UserId = userId)
                         .ToList()

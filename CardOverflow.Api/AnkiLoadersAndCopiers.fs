@@ -129,9 +129,11 @@ type AnkiAcquiredCard = {
     EaseFactorInPermille: int16
     IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
+    Deck: DeckEntity
     CardSetting: CardSettingEntity
 } with
     member this.CopyToX (entity: AcquiredCardEntity) i =
+        entity.Deck <- this.Deck
         entity.UserId <- this.UserId
         entity.Index <- i
         entity.CardState <- CardState.toDb this.CardState
@@ -393,13 +395,13 @@ module Anki =
                 cardsAndTagsByNoteId
         parseNotesRec initialTags []
     let mapCard
-        (cardSettingAndDeckTagByDeckId: Map<int64, CardSettingEntity * string>)
+        (cardSettingAndDeckByDeckId: Map<int64, CardSettingEntity * DeckEntity>)
         (cardAndTagsByNoteId: Map<int64, BranchInstanceEntity * TagEntity list>)
         (colCreateDate: DateTime)
         userId
         getCard
         (ankiCard: Anki.CardEntity) =
-        let cardSetting, _ = cardSettingAndDeckTagByDeckId.[ankiCard.Did]
+        let cardSetting, deck = cardSettingAndDeckByDeckId.[ankiCard.Did]
         let card, _ = cardAndTagsByNoteId.[ankiCard.Nid]
         let cti = card.CollateInstance
         match ankiCard.Type with
@@ -448,6 +450,7 @@ module Anki =
                             |> float
                             |> TimeSpan.FromDays
                             |> (+) colCreateDate
+                      Deck = deck
                       CardSetting = cardSetting }
                 getCard c
                 |> function

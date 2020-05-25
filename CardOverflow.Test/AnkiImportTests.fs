@@ -99,6 +99,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
             userId
             Map.empty
             (fun _ -> [])
+            (fun _ -> [])
             ([option].ToList())
             option
             (fun _ -> None)
@@ -290,6 +291,10 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal(8, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
     Assert.Equal<string>(
+        "Default",
+        c.Db.Deck.Single(fun x -> x.UserId = userId).Name
+    )
+    Assert.Equal<string>(
         [ "Basic"; "Othertag"; "Tag" ],
         (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
     Assert.Equal<string>(
@@ -301,6 +306,12 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             .Single(fun c -> c.BranchInstance.FieldValues.Contains("mp3"))
             .Tag_AcquiredCards.Select(fun t -> t.Tag.Name)
             |> Seq.sort)
+    Assert.Equal<string>(
+        "Default",
+        c.Db.AcquiredCard
+            .Include(fun x -> x.Deck)
+            .Single(fun c -> c.BranchInstance.FieldValues.Contains("mp3"))
+            .Deck.Name)
 
     let getInstances (collateName: string) =
         c.Db.CollateInstance
@@ -404,6 +415,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFi
         Assert.Equal(0, c.Db.CommunalField.Count())
         Assert.Equal(7, c.Db.CollateInstance.Count())
         Assert.Equal(5, c.Db.LatestCollateInstance.Count())
+        Assert.Equal(1, c.Db.Deck.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]

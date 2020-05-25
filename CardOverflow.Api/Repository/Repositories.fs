@@ -607,6 +607,11 @@ module TagRepository =
     let search (db: CardOverflowDb) (input: string) =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
 
+module DeckRepository =
+    let searchMany (db: CardOverflowDb) userId (input: string list) =
+        let input = input |> List.map (fun x -> x.ToLower())
+        db.Deck.Where(fun t -> input.Contains(t.Name.ToLower()) && t.UserId = userId)
+
 module FilterRepository =
     let Create (db: CardOverflowDb) userId name query =
         FilterEntity(

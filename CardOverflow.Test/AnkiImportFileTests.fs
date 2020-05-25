@@ -110,6 +110,7 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     Assert.Equal<string seq>(
         ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
         c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
+    Assert.Equal("duplicate cards", c.Db.Deck.Single().Name)
     Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(8, c.Db.CollateInstance.Count())
