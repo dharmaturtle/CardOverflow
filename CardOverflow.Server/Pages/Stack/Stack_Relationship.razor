@@ -65,7 +65,8 @@
 </ul>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
   AddRelationshipCommand Command;
   IDictionary<int, string> htmlByCardId = new Dictionary<int, string>();
@@ -79,6 +80,7 @@
     htmlByCardId = (await relationshipIds.Select(async x => (x, await UserContentHttpClient.GetStrippedFront(x)))
       .Apply(Task.WhenAll))
       .ToDictionary(x => x.Item1, x => x.Item2);
+    _user = await UserTask;
     StateHasChanged();
   }
 
@@ -88,7 +90,7 @@
     : "Loading...";
 
   async Task Add() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, Command));
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, _user.Id, Command));
     if (x.IsOk) {
       var targetStackId = SanitizeRelationshipRepository.GetStackId(Command.TargetStackLink).ResultValue;
       Stack.Relationships = Stack.Relationships.Append(new ViewRelationship(Command.Name, Stack.Id, targetStackId, true, 1)).ToList();
@@ -101,7 +103,7 @@
   }
 
   async Task Acquire(string name, int sourceStackId, int targetStackId) {
-    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, User.Id, new AddRelationshipCommand(name, sourceStackId, targetStackId.ToString())));
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, _user.Id, new AddRelationshipCommand(name, sourceStackId, targetStackId.ToString())));
     if (x.IsOk) {
       Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsAcquired = true;
       Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users++;
@@ -112,7 +114,7 @@
   }
 
   async Task Unacquire(string name, int sourceStackId, int targetStackId) {
-    await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceStackId, targetStackId, User.Id, name));
+    await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceStackId, targetStackId, _user.Id, name));
     Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsAcquired = false;
     Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users--;
     StateHasChanged();

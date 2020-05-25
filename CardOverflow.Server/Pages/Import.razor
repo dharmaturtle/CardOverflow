@@ -1,5 +1,5 @@
 @page "/import"
-
+@attribute [Authorize]
 @using CardOverflow.Sanitation
 @using CardOverflow.Entity
 @using System.IO
@@ -45,8 +45,7 @@
 @code {
   ElementReference dropTargetElement;
   IFileReaderRef dropReference;
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
 
   const string _dropClass = "droptarget";
   string DropClass { get; set; } = _dropClass;
@@ -112,14 +111,16 @@
       Output += $"Beginning import... this  may take a while.{nl}";
       this.StateHasChanged();
 
+      var user = await UserTask;
+
       try {
-        var x = await DbExecutor.QueryAsync(db => SanitizeAnki.Import(db, downloadPath, User.Id));
+        var x = await DbExecutor.QueryAsync(db => SanitizeAnki.Import(db, downloadPath, user.Id));
         if (x.IsOk) {
           Output += $"Import complete!.{nl}";
         } else {
           Output += $"Error(s) importing: " + x.ErrorValue;
         }
-      } catch (Exception) {
+      } catch (Exception) { // medTODO log errors
         Output += "Unexpected errors occured while importing. Please email me and attach the file that you tried to import. Thanks!";
       }
       this.StateHasChanged();

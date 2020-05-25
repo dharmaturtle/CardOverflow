@@ -63,7 +63,8 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public string Query { get; set; }
   [Parameter] public EventCallback<SearchCommand> DeckClicked { get; set; }
   private List<ViewFilter> _filters = new List<ViewFilter>();
@@ -71,7 +72,8 @@
   BSModal Modal;
 
   protected override async Task OnInitializedAsync() {
-    _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Get(db, User?.Id ?? 0));
+    _user = await UserTask;
+    _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Get(db, _user.Id));
   }
 
   async Task Save() {
@@ -85,7 +87,7 @@
 
   async Task Delete() {
     _filters.Remove(_activeFilter);
-    var x = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Delete(db, User.Id, _activeFilter));
+    var x = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.Delete(db, _user.Id, _activeFilter));
     if (x.IsOk) {
       ToastService.ShowSuccess("Deleted!");
     } else {
@@ -95,7 +97,7 @@
   }
 
   void Create() {
-    _activeFilter = new ViewFilter(0, User.Id, "New Filter", Query);
+    _activeFilter = new ViewFilter(0, _user.Id, "New Filter", Query);
     Modal.Show();
   }
 

@@ -16,7 +16,7 @@
   <Stack_State Stack=@Stack UpdateStack=@UpdateStack />
   <div>
     By @(_branch.Author)
-    @if (_branch.AuthorId == User?.Id) {
+    @if (_branch.AuthorId == _user.Id) {
       <a href="branch/@_branch.Id/edit" title="Edit">
         <span class="oi oi-pencil" />
       </a>
@@ -38,10 +38,16 @@
 </div>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
   [Parameter] public EventCallback<CardOverflow.Pure.ExploreStack> UpdateStack { get; set; }
   private Branch _branch => Stack.Branches.Single(b => b.Id == Instance.BranchId);
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+  }
 
 }

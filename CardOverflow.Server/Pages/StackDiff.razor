@@ -54,7 +54,7 @@
           Old Template
         </a>
       }
-      @if (_aIsAcquired && !_bIsAcquired) {
+      @if (_aIsAcquired && !_bIsAcquired && _user.IsAuthenticated) {
         <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewCard>
           Get New Card
         </button>
@@ -249,7 +249,8 @@
 @code {
   [Parameter] public int AId { get; set; }
   [Parameter] public int BId { get; set; }
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   private string _loadingMessage = "Loading...";
   private BranchInstanceView _a;
   private BranchInstanceView _b;
@@ -303,8 +304,9 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
+    _user = await UserTask;
     if (BId == 0) {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, AId, User?.Id ?? 0));
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, AId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsAcquired, _b, _bIsAcquired, BId) = x.ResultValue;
         _OnOk();
@@ -312,7 +314,7 @@
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, AId, BId, User?.Id ?? 0));
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, AId, BId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsAcquired, _b, _bIsAcquired) = x.ResultValue;
         _OnOk();
@@ -323,8 +325,8 @@
   }
 
   private async Task _GetNewCard() {
-    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, User.Id, BId));
-    var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, User.Id, new List<int> { AId, BId }));
+    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, BId));
+    var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, _user.Id, new List<int> { AId, BId }));
     _aIsAcquired = acquiredIds.Contains(AId);
     _bIsAcquired = acquiredIds.Contains(BId);
   }

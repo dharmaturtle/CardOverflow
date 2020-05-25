@@ -10,27 +10,24 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (User == null) {
-  <p><em>Loading...</em></p>
-} else {
-  <EditForm Model=@_writeTag OnValidSubmit=@_SaveTag>
-    <div class="form-group btn-group">
-      <InputText @bind-Value=@_writeTag.Text class="form-control" placeholder="New Tag Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-      <button type="submit" class="btn btn-primary">Add</button>
-      <DataAnnotationsValidator />
-      <ValidationSummary />
-    </div>
-  </EditForm>
-}
+  <AuthorizeView Context="_">
+    <EditForm Model=@_writeTag OnValidSubmit=@_SaveTag>
+      <div class="form-group btn-group">
+        <InputText @bind-Value=@_writeTag.Text class="form-control" placeholder="New Tag Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <button type="submit" class="btn btn-primary">Add</button>
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+      </div>
+    </EditForm>
+  </AuthorizeView>
 
-@code {
-  [CascadingParameter] UserEntity User { get; set; }
-  [Parameter] public EventCallback<TagText> AddTag { get; set; }
-  private TagText _writeTag = new TagText();
+  @code {
+    [Parameter] public EventCallback<TagText> AddTag { get; set; }
+    private TagText _writeTag = new TagText();
 
-  private async Task _SaveTag() {
-    await AddTag.InvokeAsync(_writeTag);
-    _writeTag.Text = "";
-  }
+    private async Task _SaveTag() {
+      await AddTag.InvokeAsync(_writeTag);
+      _writeTag.Text = "";
+    }
 
-}
+  } 

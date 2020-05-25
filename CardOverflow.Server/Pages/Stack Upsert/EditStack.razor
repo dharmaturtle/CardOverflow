@@ -25,7 +25,6 @@
   [Parameter] public int BranchId { get; set; }
   [Parameter] public int CopySourceInstanceId { get; set; }
   [Parameter] public int BranchSourceStackId { get; set; }
-  [CascadingParameter] UserEntity User { get; set; }
   string LoadingMessage = "Loading...";
   ViewEditStackCommand _command;
 
@@ -53,10 +52,8 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (User != null) {
-      await _GetCommandAndCard().Apply(_TrySetCommandAndCard);
-      StateHasChanged();
-    }
+    await _GetCommandAndCard().Apply(_TrySetCommandAndCard);
+    StateHasChanged();
   }
 
 }

@@ -19,6 +19,18 @@ open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 open LoadersAndCopiers
 
+type UserClaims = {
+    Id: int
+    DisplayName: string
+    Email: string
+} with
+    static member init = {
+        Id = 0
+        DisplayName = ""
+        Email = ""
+    }
+    member this.IsAuthenticated = this.Id <> UserClaims.init.Id
+
 [<CLIMutable>]
 type ViewField = {
     [<Required>]

@@ -40,15 +40,15 @@
 }
 
 @code {
-  [CascadingParameter] public UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   private List<ViewCardSetting> _settings;
   private ViewCardSetting _selected;
 
   protected override async Task OnParametersSetAsync() {
-    if (User != null) {
-      _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, User.Id));
-      _selected = _settings.Single(x => x.IsDefault);
-    }
+    _user = await UserTask;
+    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, _user.Id));
+    _selected = _settings.Single(x => x.IsDefault);
   }
 
   private void _Select(int index) =>
@@ -68,7 +68,7 @@
   }
 
   private async Task Save() {
-    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.upsertMany(db, User.Id, _settings));
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.upsertMany(db, _user.Id, _settings));
     if (r.IsOk) {
       if (r.ResultValue.Count() == _settings.Count()) {
         foreach (var x in r.ResultValue.Select((id, i) => new { NewId = id, Index = i })) {

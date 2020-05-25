@@ -40,20 +40,21 @@
 
 @code {
   [Parameter] public int CollateId { get; set; }
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   private List<ViewCollateWithAllInstances> _collates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
-    if (User != null) {
-      _collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User.Id));
+    if (_user.IsAuthenticated) {
+      _collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, _user.Id));
       _selectedIndex = (_collates.SingleOrDefault(x => x.Id == CollateId) ?? _collates.First())
         .Apply(_collates.IndexOf);
     }
   }
 
   private void _Add() {
-    var t = ViewCollateWithAllInstances.initialize(User.Id);
+    var t = ViewCollateWithAllInstances.initialize(_user.Id);
     _collates = _collates.Prepend(t).ToList();
     _selectedIndex = _collates.IndexOf(t);
   }

@@ -9,7 +9,7 @@
 @using CardOverflow.Server.Data
 @inject DbExecutor DbExecutor
 
-@if (User != null) {
+<AuthorizeView Context="_">
   <div style="position: fixed; bottom: 0px; left: 20px; z-index: 999;">
     @if (!isExpanded) {
       <button class="btn btn-secondary btn-sm" @onclick=ToggleExpand>
@@ -63,20 +63,25 @@
       </div>
     }
   </div>
-}
+</AuthorizeView>
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   Feedback feedbackPayload = new Feedback() { Priority = "3" };
   bool isExpanded;
   bool isSaved;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+  }
 
   void ToggleExpand() =>
     isExpanded = !isExpanded;
 
   async Task Save() {
-    await DbExecutor.CommandAsync(db => SanitizeFeedback.addAndSaveAsync(db, User.Id, feedbackPayload));
+    await DbExecutor.CommandAsync(db => SanitizeFeedback.addAndSaveAsync(db, _user.Id, feedbackPayload));
     isSaved = true;
   }
 

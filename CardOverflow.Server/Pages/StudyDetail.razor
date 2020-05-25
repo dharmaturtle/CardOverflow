@@ -11,9 +11,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 
-@if (User == null) {
-  <p><em>You aren't signed in dude.</em></p>
-} else if (batch == null) {
+if (batch == null) {
   <p><em>Loading...</em></p>
 } else if (!batch.Any()) {
   <h1 class="text-center">No cards due!</h1>
@@ -76,8 +74,8 @@
 @code {
   string iframeSrcdoc;
   bool isFront;
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter]
   public string Query { get; set; }
   List<FSharpResult<QuizCard, string>> batch;
@@ -92,12 +90,12 @@
   string GoodInterval;
   string EasyInterval;
 
-  protected override async Task OnInitializedAsync() {
-    if (User != null) {
-      batch = await DbExecutor.QueryAsync(db => StackRepository.GetQuizBatch(db, User.Id, Query));
-      if (batch.Any()) {
-        await ShowFront();
-      }
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    batch = await DbExecutor.QueryAsync(db => StackRepository.GetQuizBatch(db, _user.Id, Query));
+    if (batch.Any()) {
+      await ShowFront();
     }
   }
 
@@ -115,11 +113,11 @@
 
   async Task FocusButton() =>
     await (
-      isFront 
-      ? ShowAnswerButton 
+      isFront
+      ? ShowAnswerButton
       : GoodButton
     ).Focus(Js);
-  
+
 
   async Task ShowFront() {
     frontVisible = TimeProvider.utcNow;
@@ -135,7 +133,7 @@
     }
     StateHasChanged();
     if (batch.Count() <= 1) {
-      batch.AddRange(await DbExecutor.QueryAsync(db => StackRepository.GetQuizBatch(db, User.Id, Query)));
+      batch.AddRange(await DbExecutor.QueryAsync(db => StackRepository.GetQuizBatch(db, _user.Id, Query)));
     }
   }
 

@@ -10,24 +10,27 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-@if (User == null) {
-  <p><em>Loading...</em></p>
-} else {
+<AuthorizeView>
   <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
     @foreach (var setting in _settings) {
       <option value=@setting.Id selected=@(SelectedId == setting.Id)>@setting.Name</option>
     }
   </select>
-}
+</AuthorizeView>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public int SelectedId { get; set; }
   [Parameter] public EventCallback<int> SettingSelected { get; set; }
   private List<ViewCardSetting> _settings = new List<ViewCardSetting>();
 
-  protected override async Task OnInitializedAsync() {
-    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, User.Id));
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    var user = await UserTask;
+    _settings = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.getAll(db, user.Id));
+    if (SelectedId == default) {
+      SelectedId = _settings.Single(x => x.IsDefault).Id;
+    }
   }
 
   private async Task _SetSelected(int newId) {

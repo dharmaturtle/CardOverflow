@@ -106,7 +106,8 @@
   </div>
 }
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public int CollateId { get; set; }
   [Parameter] public int InstanceId { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
@@ -139,15 +140,16 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
+    _user = await UserTask;
     await (InstanceId == 0
       ? _isChildComponent()
       : _isInstancePage());
-    IsDisabled = Collate.AuthorId != (User?.Id ?? 0);
+    IsDisabled = Collate.AuthorId != _user.Id;
   }
 
   async Task Submit() {
     IsDisabled = true;
-    var x = await DbExecutor.QueryAsync(db => SanitizeCollate.Update(db, User.Id, Instance));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCollate.Update(db, _user.Id, Instance));
     if (x.IsOk) {
       ToastService.ShowSuccess("Saved!");
     } else {

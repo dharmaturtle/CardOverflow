@@ -9,9 +9,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (User == null) {
-  <div>Loading...</div>
-} else {
+<AuthorizeView>
   <div class="row">
     <div class="col-sm-2">
       <CurateStackFilters Query=@search.Query DeckClicked=@SearchClicked />
@@ -50,7 +48,7 @@
                     </a>
                   </td>
                   <td>
-                    <Due DueDate=@card.Due/>
+                    <Due DueDate=@card.Due />
                   </td>
                   <td>
                     @(String.Join(", ", card.Tags))
@@ -66,10 +64,11 @@
       }
     </div>
   </div>
-}
+</AuthorizeView>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedInstanceId { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<AcquiredCard> cards;
@@ -77,14 +76,15 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (User != null) {
+    _user = await UserTask;
+    if (_user.IsAuthenticated) {
       if (SelectedInstanceId == null && cards == null) {
         await PageChanged(1);
         StateHasChanged();
       }
       if (SelectedInstanceId != null) {
         if (cards == null || (cards != null && !cards.Any(card => card.BranchInstanceMeta.Id == SelectedInstanceId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquiredInstanceFromInstance(db, User.Id, SelectedInstanceId.Value));
+          var x = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquiredInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
           if (x.IsOk) {
             SelectedInstanceId = x.ResultValue;
           } else {
@@ -98,7 +98,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.GetAcquiredPages(db, User?.Id ?? 0, pageNumber, search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.GetAcquiredPages(db, _user.Id, pageNumber, search));
     details = pagedList.Details;
     cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
     if (pagedList.Results.Any(x => x.IsError)) {

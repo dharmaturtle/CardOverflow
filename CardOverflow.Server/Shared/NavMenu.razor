@@ -1,3 +1,4 @@
+@using CardOverflow.Sanitation
 @using CardOverflow.Entity
 @using ThoughtDesign.WebLibrary
 @inject UrlProvider UrlProvider
@@ -60,7 +61,7 @@
         </li>
         <li class="nav-item sidebarnav-item px-3">
           <NavLink class="nav-link" Match="NavLinkMatch.All" href=@(UrlProvider.IdentityProvider + "identity/account/manage")>
-            <span class="oi oi-person" aria-hidden="true"></span> Hi @User?.DisplayName!
+            <span class="oi oi-person" aria-hidden="true"></span> Hi @_user.DisplayName!
           </NavLink>
         </li>
         <li class="nav-item sidebarnav-item px-3">
@@ -86,10 +87,16 @@
 </div>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   private bool _collapseNavMenu = true;
 
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+  }
+
   private void _ToggleNavMenu() =>
-    _collapseNavMenu = !_collapseNavMenu;
-  
+  _collapseNavMenu = !_collapseNavMenu;
+
 }

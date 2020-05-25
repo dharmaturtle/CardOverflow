@@ -30,12 +30,13 @@
 
 @code {
   [Parameter] public int Id { get; set; }
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   CardOverflow.Pure.BranchRevision Revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    Revision = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, User?.Id ?? 0, Id));
+    var user = await UserTask;
+    Revision = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id));
     StateHasChanged();
   }
 

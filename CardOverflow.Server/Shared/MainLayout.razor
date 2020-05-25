@@ -1,14 +1,16 @@
 ﻿@using ThoughtDesign.WebLibrary
+@using System.Security.Claims
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Api
 @using CardOverflow.Pure
+@using CardOverflow.Sanitation
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject CardOverflowDb Db
 @inject UrlProvider UrlProvider
 
-<CascadingValue Value=@User>
+<CascadingValue Value=@_userTask>
   <BlazoredToasts Timeout="10" />
   <div class="sidebar">
     <NavMenu />
@@ -24,22 +26,27 @@
 </CascadingValue>
 
 @code {
-  UserEntity User; // medTODO make business object
+  Task<UserClaims> _userTask;
 
-  protected override async Task OnInitializedAsync() {
-    var userId =
-      (await AuthenticationStateProvider.GetAuthenticationStateAsync())
-      .User
-      .Claims
-      .SingleOrDefault(x =>
-        x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" &&
-        x.OriginalIssuer == UrlProvider.IdentityProvider.TrimEnd('/') &&
-        x.Issuer == UrlProvider.IdentityProvider.TrimEnd('/')
-      )?.Value.Apply(int.Parse);
-    User =
-      userId == null
-      ? null
-      : await UserRepository.Get(Db, userId.Value); ;
+  protected override void OnInitialized() {
+    _userTask = AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(x => toUserClaims(x.Result));
+  }
+
+  private UserClaims toUserClaims(AuthenticationState state) {
+    if (state.User.Identity.IsAuthenticated) {
+      var userId = state.User.Claims.Single(x =>
+          x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" &&
+          x.OriginalIssuer == UrlProvider.IdentityProvider.TrimEnd('/') &&
+          x.Issuer == UrlProvider.IdentityProvider.TrimEnd('/')
+        ).Value.Apply(int.Parse);
+      var email = state.User.Claims.Single(x =>
+          x.Type == "name" &&
+          x.OriginalIssuer == "OpenIdConnect" &&
+          x.Issuer == "OpenIdConnect"
+        ).Value;
+      return new UserClaims(userId, "", email); //highTODO add real DisplayName
+    }
+    return UserClaims.init;
   }
 
 }

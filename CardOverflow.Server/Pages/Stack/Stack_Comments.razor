@@ -36,10 +36,12 @@
 </div>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
 
-  void _AddComment(string comment) =>
-    Stack.Comments = Stack.Comments.Append(new Pure.Comment(User.DisplayName, User.Id, comment, TimeProvider.utcNow, false)).ToList();
+  async Task _AddComment(string comment) {
+    var user = await UserTask;
+    Stack.Comments = Stack.Comments.Append(new Pure.Comment(user.DisplayName, user.Id, comment, TimeProvider.utcNow, false)).ToList();
+  }
 
 }

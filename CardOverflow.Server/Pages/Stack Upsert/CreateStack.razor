@@ -20,22 +20,22 @@
 }
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   string LoadingMessage = "Loading...";
   private ViewEditStackCommand _command;
   private List<ViewCollateWithAllInstances> _collates;
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    if (User != null) {
-      var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewOriginalUserId(User.Id)));
-      if (x.IsOk) {
-        _command = x.ResultValue;
-      } else {
-        ToastService.ShowError(x.ErrorValue);
-      }
-      _collates = (await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, User.Id))).ToList();
+    var user = await UserTask;
+    var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewOriginalUserId(user.Id)));
+    if (x.IsOk) {
+      _command = x.ResultValue;
+    } else {
+      ToastService.ShowError(x.ErrorValue);
     }
+    _collates = (await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, user.Id))).ToList();
   }
 
 }

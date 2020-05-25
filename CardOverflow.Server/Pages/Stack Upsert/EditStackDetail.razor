@@ -38,7 +38,7 @@
                 Card Setting
               </a>
               <div class="col-sm-10 px-0">
-                <CardSettingSelector SettingSelected=_SetOption SelectedId=_selectedCardSettingId />
+                <CardSettingSelector SettingSelected=_SetOption />
               </div>
             </div>
             <div class="row">
@@ -116,33 +116,33 @@
   [Parameter] public ViewEditStackCommand EditStack { get; set; }
   [Parameter] public bool NewEditStackOnSave { get; set; }
   [Parameter] public List<ViewCollateWithAllInstances> Collates { get; set; }
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   private List<ViewCollateInstance> _selectedCollateInstances;
   private int _selectedCollateId;
   private int _selectedCollateInstanceId;
-  private int _selectedCardSettingId;
   private bool _isDisabled;
   private int _resultingBranchId;
 
-  protected override async Task OnInitializedAsync() {
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
     if (Collates == null) {
-      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, User?.Id ?? 0, EditStack.CollateInstance.CollateId));
+      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, _user.Id, EditStack.CollateInstance.CollateId));
     }
     if (EditStack == null) {
       EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
     }
-    _selectedCardSettingId = User.DefaultCardSettingId.Value;
     UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
   }
 
   private void _SetOption(int newId) {
-    _selectedCardSettingId = newId;
     EditStack.EditAcquiredCard.CardSettingId = newId;
   }
 
   async Task UpdateCard() {
     _isDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, User.Id, EditStack));
+    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, EditStack));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       _resultingBranchId = result.ResultValue;

@@ -51,7 +51,8 @@
 }
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedStackId { get; set; }
   [Parameter] public int? BranchId { get; set; }
   [Parameter] public int? BranchInstanceId { get; set; }
@@ -61,6 +62,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
+    _user = await UserTask;
     if (SelectedStackId == null && _stacks == null) {
       await PageChanged(1);
       StateHasChanged();
@@ -68,7 +70,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.SearchAsync(db, User?.Id ?? 0, pageNumber, _search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.SearchAsync(db, _user.Id, pageNumber, _search));
     _details = pagedList.Details;
     _stacks = pagedList.Results.ToList();
   }

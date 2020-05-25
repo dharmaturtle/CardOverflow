@@ -11,7 +11,7 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-@if (User != null) {
+@if (_user.IsAuthenticated) {
   <li class="list-group-item border-0">
     @if (!isSaved) {
       <EditForm Model=@WriteComment OnValidSubmit=@SaveComment>
@@ -29,14 +29,20 @@
 }
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public int StackId { get; set; }
   [Parameter] public EventCallback<string> AddComment { get; set; }
   CommentText WriteComment = new CommentText();
   bool isSaved;
 
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+  }
+
   async Task SaveComment() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment.Text, StackId, User.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment.Text, StackId, _user.Id));
     if (x.IsOk) {
       isSaved = true;
       await AddComment.InvokeAsync(WriteComment.Text);

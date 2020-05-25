@@ -1,4 +1,5 @@
 @page "/study"
+@attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -14,9 +15,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 
-@if (User == null) {
-  <p><em>You aren't signed in dude.</em></p>
-} else if (_selectedFilter == null) {
+if (_selectedFilter == null) {
   <div class="container">
     <Heatmap />
     <table class="table">
@@ -43,8 +42,7 @@
 }
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<ViewFilterWithDue> _filters = new List<ViewFilterWithDue>();
   private ViewFilterWithDue _selectedFilter;
 
@@ -54,9 +52,8 @@
   }
 
   protected override async Task OnInitializedAsync() {
-    if (User != null) {
-      _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.GetWithDue(db, User.Id));
-    }
+    var user = await UserTask;
+    _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.GetWithDue(db, user.Id));
   }
 
 }

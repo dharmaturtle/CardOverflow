@@ -13,19 +13,22 @@
 
 <div>
   Used by <span class="badge badge-success">@Stack.Summary.Users</span>
-  @if (User == null) {
-    <p>Log in to Get</p>
-  } else {
-    @if (Stack.IsAnyAcquired) {
-      <button class="btn btn-outline-danger" @onclick=@(() => _modal.Show())>
-        Discard
-      </button>
-    } else {
-      <button class="btn btn-primary" @onclick=@_acquire>
-        Collect
-      </button>
-    }
-  }
+  <AuthorizeView>
+    <Authorized>
+      @if (Stack.IsAnyAcquired) {
+        <button class="btn btn-outline-danger" @onclick=@(() => _modal.Show())>
+          Discard
+        </button>
+      } else {
+        <button class="btn btn-primary" @onclick=@_acquire>
+          Collect
+        </button>
+      }
+    </Authorized>
+    <NotAuthorized>
+      <p>Log in to Collect</p>
+    </NotAuthorized>
+  </AuthorizeView>
 </div>
 
 <BSModal @ref=_modal>
@@ -53,14 +56,15 @@
 </BSModal>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
   [Parameter] public EventCallback<CardOverflow.Pure.ExploreStack> UpdateStack { get; set; }
   private BSModal _modal;
 
   private async Task _acquire() {
-    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, User.Id, Stack.Instance.Id));
-    var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Stack.Id));
+    var user = await UserTask;
+    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, user.Id, Stack.Instance.Id));
+    var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, user.Id, Stack.Id));
     if (ac.IsOk) {
       Stack.AcquiredStatus = ExploreStackAcquiredStatus.NewExactInstanceAcquired(Stack.Instance.Id);
       Stack.Instance.IsAcquired = true;
@@ -72,7 +76,8 @@
   }
 
   private async Task _discard() {
-    await DbExecutor.CommandAsync(db => StackRepository.deleteAcquiredCard(db, User.Id, Stack.Id));
+    var user = await UserTask;
+    await DbExecutor.CommandAsync(db => StackRepository.deleteAcquiredCard(db, user.Id, Stack.Id));
     Stack.AcquiredStatus = ExploreStackAcquiredStatus.NotAcquired;
     Stack.Instance.IsAcquired = false;
     Stack.Summary.Users--;

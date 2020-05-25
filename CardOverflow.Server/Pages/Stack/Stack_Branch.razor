@@ -50,7 +50,7 @@
 </div>
 
 @code {
-  [CascadingParameter] UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
   [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
@@ -60,9 +60,10 @@
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
   private async Task _Acquire(ExploreStackAcquiredStatus status) {
-    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, User.Id, status.BranchInstanceId.Value));
+    var user = await UserTask;
+    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, user.Id, status.BranchInstanceId.Value));
     if (x.IsOk) {
-      var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, User.Id, Root.StackId));
+      var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, user.Id, Root.StackId));
       if (ac.IsOk) {
         await UpdateAcquiredCards.InvokeAsync(ac.ResultValue);
         _UpdateUsers(-1, Status.BranchInstanceId?.Value);

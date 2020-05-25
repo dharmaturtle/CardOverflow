@@ -216,15 +216,14 @@
 </ul>
 
 @code {
-  [CascadingParameter]
-  UserEntity User { get; set; }
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
 
   private CardOverflow.Pure.Heatmap _heatmap = new CardOverflow.Pure.Heatmap(ListModule.Empty<DateCountLevel>(), 0, 0, 0, 0);
 
-  protected override async Task OnInitializedAsync() {
-    if (User != null) {
-      _heatmap = await DbExecutor.QueryAsync(x => HistoryRepository.getHeatmap(x, User.Id));
-    }
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    var user = await UserTask;
+    _heatmap = await DbExecutor.QueryAsync(x => HistoryRepository.getHeatmap(x, user.Id));
   }
 
 }
