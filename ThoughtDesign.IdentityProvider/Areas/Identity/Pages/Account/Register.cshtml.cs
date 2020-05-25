@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 using CardOverflow.Api;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
   [AllowAnonymous]
@@ -49,7 +50,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
 
     public class InputModel {
       [Required]
-      [StringLength(32, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+      [StringLength(32, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 3)]
       [Display(Name = "Display Name")]
       public string DisplayName { get; set; }
 
@@ -88,41 +89,47 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
         var result = await _userManager.CreateAsync(user, Input.Password);
         if (result.Succeeded) {
           _logger.LogInformation("User created a new account with password.");
+          
+          var result2 = await _userManager.AddClaimAsync(user, new Claim("display_name", Input.DisplayName));
+          if (result.Succeeded) {
+            var defaultSetting = CardSettingsRepository.defaultCardSettingsEntity.Invoke(0);
+            var cardOverflowUser = new UserEntity {
+              Id = user.Id,
+              DisplayName = Input.DisplayName,
+              CardSettings = new List<CardSettingEntity> { defaultSetting },
+              Filters = new List<FilterEntity> { new FilterEntity { Name = "All", Query = "" } },
+              User_CollateInstances = _db.CollateInstance
+                .Where(x => x.Collate.AuthorId == 2)
+                .Select(x => x.Id)
+                .ToList()
+                .Select(id => new User_CollateInstanceEntity { CollateInstanceId = id, DefaultCardSetting = defaultSetting })
+                .ToList(),
+            };
+            key.IsUsed = true;
+            _db.User.Add(cardOverflowUser);
+            await _db.SaveChangesAsync();
+            cardOverflowUser.DefaultCardSetting = defaultSetting;
+            await _db.SaveChangesAsync();
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Page(
+                "/Account/ConfirmEmail",
+                pageHandler: null,
+                values: new { area = "Identity", userId = user.Id, code = code },
+                protocol: Request.Scheme);
 
-          var defaultSetting = CardSettingsRepository.defaultCardSettingsEntity.Invoke(0);
-          var cardOverflowUser = new UserEntity {
-            Id = user.Id,
-            DisplayName = Input.DisplayName,
-            CardSettings = new List<CardSettingEntity> { defaultSetting },
-            Filters = new List<FilterEntity> { new FilterEntity { Name = "All", Query = "" } },
-            User_CollateInstances = _db.CollateInstance
-              .Where(x => x.Collate.AuthorId == 2)
-              .Select(x => x.Id)
-              .ToList()
-              .Select(id => new User_CollateInstanceEntity { CollateInstanceId = id, DefaultCardSetting = defaultSetting })
-              .ToList(),
-          };
-          key.IsUsed = true;
-          _db.User.Add(cardOverflowUser);
-          await _db.SaveChangesAsync();
-          cardOverflowUser.DefaultCardSetting = defaultSetting;
-          await _db.SaveChangesAsync();
-          var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-          code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-          var callbackUrl = Url.Page(
-              "/Account/ConfirmEmail",
-              pageHandler: null,
-              values: new { area = "Identity", userId = user.Id, code = code },
-              protocol: Request.Scheme);
+            await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-          await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-              $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-          if (_userManager.Options.SignIn.RequireConfirmedAccount) {
-            return RedirectToPage("RegisterConfirmation", new { email = Input.Email });
-          } else {
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return LocalRedirect(returnUrl);
+            if (_userManager.Options.SignIn.RequireConfirmedAccount) {
+              return RedirectToPage("RegisterConfirmation", new { email = Input.Email });
+            } else {
+              await _signInManager.SignInAsync(user, isPersistent: false);
+              return LocalRedirect(returnUrl);
+            }
+          }
+          foreach (var error in result.Errors) {
+            ModelState.AddModelError(string.Empty, error.Description);
           }
         }
         foreach (var error in result.Errors) {

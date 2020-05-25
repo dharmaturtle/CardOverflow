@@ -94,6 +94,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
+    StateHasChanged();
   }
 
   private void _ToggleNavMenu() =>
