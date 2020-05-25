@@ -146,7 +146,8 @@ module SanitizeTagRepository =
     let private getFirstAcquired (db: CardOverflowDb) userId stackId =
         db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.BranchInstance.Branch.StackId = stackId)
         |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
-    let AddTo (db: CardOverflowDb) userId newTag stackId = taskResult { // medTODO tag length needs validation
+    let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
+        do! newTag.Length <= 250 |> Result.requireTrue "Tag name must be less than 250 characters"
         let newTag = MappingTools.toTitleCase newTag
         let! (ac: AcquiredCardEntity) = getFirstAcquired db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
