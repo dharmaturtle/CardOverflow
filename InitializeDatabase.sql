@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1412,6 +1412,9 @@ CREATE INDEX "IX_Stack_AuthorId" ON public."Stack" USING btree ("AuthorId");
 
 
 CREATE INDEX "IX_Tag_AcquiredCard_AcquiredCardId" ON public."Tag_AcquiredCard" USING btree ("AcquiredCardId");
+
+
+CREATE UNIQUE INDEX "IX_Tag_AcquiredCard_TagId_StackId_UserId" ON public."Tag_AcquiredCard" USING btree ("TagId", "StackId", "UserId");
 
 
 CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree (upper(("Name")::text));
