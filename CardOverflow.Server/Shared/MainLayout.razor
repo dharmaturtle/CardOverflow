@@ -35,7 +35,7 @@
   private UserClaims toUserClaims(AuthenticationState state) {
     if (state.User.Identity.IsAuthenticated) {
       var userId = state.User.Claims.Single(x =>
-          x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" &&
+          x.Type == "sub" &&
           x.OriginalIssuer == UrlProvider.IdentityProvider.TrimEnd('/') &&
           x.Issuer == UrlProvider.IdentityProvider.TrimEnd('/')
         ).Value.Apply(int.Parse);
@@ -44,7 +44,12 @@
           x.OriginalIssuer == "OpenIdConnect" &&
           x.Issuer == "OpenIdConnect"
         ).Value;
-      return new UserClaims(userId, "", email); //highTODO add real DisplayName
+      var displayName = state.User.Claims.Single(x =>
+          x.Type == "display_name" &&
+          x.OriginalIssuer == "OpenIdConnect" &&
+          x.Issuer == "OpenIdConnect"
+        ).Value;
+      return new UserClaims(userId, displayName, email);
     }
     return UserClaims.init;
   }

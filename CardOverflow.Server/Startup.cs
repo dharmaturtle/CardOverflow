@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using ThoughtDesign.WebLibrary;
 using System;
+using Microsoft.AspNetCore.Authentication;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -28,6 +30,7 @@ namespace CardOverflow.Server {
     public Startup(IWebHostEnvironment environment, IConfiguration configuration) {
       Environment = environment;
       Configuration = configuration;
+      JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -48,6 +51,9 @@ namespace CardOverflow.Server {
           options.ResponseType = "code id_token";
           options.Scope.Add("openid");
           options.Scope.Add("profile");
+          options.Scope.Add("display_name"); // Ref: https://www.pluralsight.com/courses/asp-dotnet-core-oauth2-openid-connect-securing/ Securing ASP.NET Core with OAuth2 and OpenID Connect/Working with Claims in Your Web Application/Demo - Getting Ready for Calling the UserInfo Endpoint
+          options.ClaimActions.MapUniqueJsonKey("display_name", "display_name");
+          options.ClaimActions.DeleteClaims("sid", "idp", "s_hash", "auth_time", "amr");
           options.SaveTokens = true;
           options.GetClaimsFromUserInfoEndpoint = true;
         });

@@ -18,6 +18,7 @@ namespace ThoughtDesign.IdentityProvider {
       new IdentityResource[] {
         new IdentityResources.OpenId(),
         new IdentityResources.Profile(),
+        new IdentityResource("display_name", new List<string> { "display_name"})
       };
 
     public static IEnumerable<ApiResource> Apis =>
@@ -35,7 +36,8 @@ namespace ThoughtDesign.IdentityProvider {
           AllowOfflineAccess = true,
           AllowedScopes = {
             IdentityServerConstants.StandardScopes.OpenId,
-            IdentityServerConstants.StandardScopes.Profile
+            IdentityServerConstants.StandardScopes.Profile,
+            "display_name"
           },
         },
       };
@@ -43,7 +45,7 @@ namespace ThoughtDesign.IdentityProvider {
     public static void SeedDatabase(IApplicationBuilder app) {
       using var serviceScope = app.ApplicationServices
         .GetService<IServiceScopeFactory>().CreateScope();
-      
+
       serviceScope.ServiceProvider
         .GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
 
