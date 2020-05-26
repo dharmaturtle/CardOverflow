@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -264,6 +264,7 @@ CREATE VIEW public."AcquiredCardIsLatest" AS
     a."CardSettingId",
     a."IsLapsed",
     a."PersonalField",
+    a."DeckId",
     (b."LatestInstanceId" IS NULL) AS "IsLatest"
    FROM (public."AcquiredCard" a
      LEFT JOIN public."Branch" b ON ((b."LatestInstanceId" = a."BranchInstanceId")));

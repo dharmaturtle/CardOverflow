@@ -400,6 +400,7 @@ type AcquiredCard = {
     Due: DateTime
     CardSettingId: int
     Tags: string list
+    DeckId: int Option
 }
 
 type Comment = {

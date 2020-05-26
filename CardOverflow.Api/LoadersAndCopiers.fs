@@ -382,6 +382,7 @@ type AcquiredCard with
             Due = DateTime.UtcNow
             CardSettingId = cardSettingId
             Tags = tags
+            DeckId = None
         }
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
@@ -399,6 +400,7 @@ type AcquiredCard with
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
                 Tags = usersTags |> List.ofSeq
+                DeckId = entity.DeckId |> Option.ofNullable
             }
         }
 
