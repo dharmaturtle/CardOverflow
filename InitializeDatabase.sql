@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -831,7 +831,8 @@ ALTER TABLE public."Tag_User_CollateInstance" OWNER TO postgres;
 CREATE TABLE public."User" (
     "Id" integer NOT NULL,
     "DisplayName" character varying(32) NOT NULL,
-    "DefaultCardSettingId" integer,
+    "DefaultCardSettingId" integer NOT NULL,
+    "DefaultDeckId" integer NOT NULL,
     "ShowNextReviewTime" boolean NOT NULL,
     "ShowRemainingCardCount" boolean NOT NULL,
     "MixNewAndReview" smallint NOT NULL,
@@ -1070,6 +1071,9 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 
 
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "TsVector") VALUES (1, 1, 'Default Deck', false, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "TsVector") VALUES (2, 2, 'Default Deck', false, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "TsVector") VALUES (3, 3, 'Default Deck', false, NULL);
 
 
 
@@ -1096,9 +1100,9 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 
 
-INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (1, 'Admin', 1, true, true, 0, 4, 20, 0, false);
-INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (2, 'The Collective', 2, true, true, 0, 4, 20, 0, false);
-INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (3, 'RoboTurtle', 3, true, true, 0, 4, 20, 0, false);
+INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (1, 'Admin', 1, 1, true, true, 0, 4, 20, 0, false);
+INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (2, 'The Collective', 2, 2, true, true, 0, 4, 20, 0, false);
+INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (3, 'RoboTurtle', 3, 3, true, true, 0, 4, 20, 0, false);
 
 
 INSERT INTO public."User_CollateInstance" ("UserId", "CollateInstanceId", "DefaultCardSettingId") VALUES (3, 1001, 3);
@@ -1676,7 +1680,7 @@ ALTER TABLE ONLY public."Tag_User_CollateInstance"
 
 
 ALTER TABLE ONLY public."User"
-    ADD CONSTRAINT "FK_User_CardSetting_DefaultCardSettingId" FOREIGN KEY ("DefaultCardSettingId") REFERENCES public."CardSetting"("Id");
+    ADD CONSTRAINT "FK_User_CardSetting_DefaultCardSettingId" FOREIGN KEY ("DefaultCardSettingId") REFERENCES public."CardSetting"("Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."User_CollateInstance"
@@ -1689,6 +1693,10 @@ ALTER TABLE ONLY public."User_CollateInstance"
 
 ALTER TABLE ONLY public."User_CollateInstance"
     ADD CONSTRAINT "FK_User_CollateInstance_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+
+
+ALTER TABLE ONLY public."User"
+    ADD CONSTRAINT "FK_User_Deck_DefaultDeckId" FOREIGN KEY ("DefaultDeckId") REFERENCES public."Deck"("Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."Vote_CommentCollate"
