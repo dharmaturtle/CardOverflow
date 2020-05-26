@@ -64,6 +64,7 @@
     <Compile Include="CollateRepositoryTests.fs" />
     <Compile Include="CardSettingTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
+    <Compile Include="DeckRepositoryTests.fs" />
     <Compile Include="AnkiImportTestData.fs" />
     <Compile Include="AnkiImportTests.fs" />
     <Compile Include="AnkiImportFileTests.fs" />

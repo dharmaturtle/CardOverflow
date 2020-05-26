@@ -348,6 +348,14 @@ type CommunalFieldInstance = {
 }
 
 [<CLIMutable>]
+type ViewDeck = {
+    Id: int
+    IsPublic: bool
+    Name: string
+    Count: int
+}
+
+[<CLIMutable>]
 type ViewTag = {
     Name: string
     Count: int

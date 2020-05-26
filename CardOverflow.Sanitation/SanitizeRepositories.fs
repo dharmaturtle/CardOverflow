@@ -169,6 +169,54 @@ module SanitizeTagRepository =
         return! db.SaveChangesAsyncI()
     }
 
+module SanitizeDeckRepository =
+    let create (db: CardOverflowDb) userId (newDeck: string) = taskResult {
+        do! if newDeck.Length > 250 then Error <| sprintf "Deck name '%s' is too long. It must be less than 250 characters." newDeck else Ok ()
+        do! db.Deck.AnyAsync(fun x -> x.Name = newDeck && x.UserId = userId)
+            |> Task.map (Result.requireFalse <| sprintf "User #%i already has a Deck named '%s'" userId newDeck)
+        let deck = DeckEntity(Name = newDeck, UserId = userId)
+        db.Deck.AddI deck
+        do! db.SaveChangesAsyncI()
+        return deck.Id
+    }
+    let switch (db: CardOverflowDb) userId deckId acquiredCardId = taskResult {
+        let! (ac: AcquiredCardEntity) =
+            db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+            |> Task.map (Result.requireNotNull <| sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
+        match deckId with
+        | None ->
+            ac.DeckId <- Nullable()
+        | Some deckId ->
+            let! (deck: DeckEntity) =
+                db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
+                |> Task.map (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+            ac.DeckId <- deck.Id |> Nullable
+        return! db.SaveChangesAsyncI ()
+    }
+    let get (db: CardOverflowDb) userId = taskResult {
+        let! defaultDeckCount =
+            db.AcquiredCard.CountAsync(fun x -> x.DeckId = Nullable() && x.UserId = userId)
+        let! decks =
+            db.Deck.Where(fun x -> x.UserId = userId)
+                .Select(fun x ->
+                    x,
+                    x.AcquiredCards.Count
+                )
+                .ToListAsync()
+            |> Task.map (Seq.map(fun (deck, count) -> {
+                ViewDeck.Id = deck.Id
+                Name = deck.Name
+                IsPublic = deck.IsPublic
+                Count = count
+            }) >> List.ofSeq)
+        return
+            {   ViewDeck.Id = 0
+                Name = "Default"
+                IsPublic = false
+                Count = defaultDeckCount
+            } :: decks
+    }
+
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
         let! card = db.AcquiredCard.SingleAsync(fun x -> x.Id = acquiredCardId)
