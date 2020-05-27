@@ -351,6 +351,7 @@ type CommunalFieldInstance = {
 type ViewDeck = {
     Id: int
     IsPublic: bool
+    IsDefault: bool
     Name: string
     Count: int
 }

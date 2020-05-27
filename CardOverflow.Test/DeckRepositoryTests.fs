@@ -25,6 +25,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let defaultDeck =
         {   Id = defaultDeckId
             IsPublic = false
+            IsDefault = true
             Name = "Default Deck"
             Count = 0 }
 
@@ -45,6 +46,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let newDeck =
         {   defaultDeck with
                 Id = newDeckId
+                IsDefault = false
                 Name = newDeckName }
 
     let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId

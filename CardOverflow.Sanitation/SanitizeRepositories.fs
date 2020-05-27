@@ -188,19 +188,23 @@ module SanitizeDeckRepository =
         ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
-    let get (db: CardOverflowDb) userId =
-        db.Deck.Where(fun x -> x.UserId = userId)
-            .Select(fun x ->
-                x,
-                x.AcquiredCards.Count
-            )
-            .ToListAsync()
-        |> Task.map (Seq.map(fun (deck, count) -> {
-            Id = deck.Id
-            Name = deck.Name
-            IsPublic = deck.IsPublic
-            Count = count
-        }) >> List.ofSeq)
+    let get (db: CardOverflowDb) userId = task {
+        let! defaultDeckId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultDeckId).SingleAsync()
+        return!
+            db.Deck.Where(fun x -> x.UserId = userId)
+                .Select(fun x ->
+                    x,
+                    x.AcquiredCards.Count
+                )
+                .ToListAsync()
+            |> Task.map (Seq.map(fun (deck, count) -> {
+                Id = deck.Id
+                Name = deck.Name
+                IsPublic = deck.IsPublic
+                IsDefault = defaultDeckId = deck.Id
+                Count = count
+            }) >> List.ofSeq)
+    }
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
