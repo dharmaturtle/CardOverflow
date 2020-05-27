@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
         public short IntervalOrStepsIndex { get; set; }
         public DateTime Due { get; set; }
         public int CardSettingId { get; set; }
-        public int? DeckId { get; set; }
+        public int DeckId { get; set; }
         public bool IsLapsed { get; set; }
         [Required]
         public string PersonalField { get; set; } = "";

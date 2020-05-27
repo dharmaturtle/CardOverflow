@@ -311,11 +311,16 @@ module StackRepository =
         return BranchRevision.load isAcquired r
     }
     let acquireCardNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) = taskResult {
-        let! (defaultCardSettingId: Nullable<int>) = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
+        let! ((defaultCardSettingId, deckId): int * int) =
+            db.User.Where(fun x -> x.Id = userId).Select(fun x ->
+                x.DefaultCardSettingId,
+                x.DefaultDeckId
+            ).SingleAsync()
         let cardSansIndex =
             AcquiredCard.initialize
                 userId
-                defaultCardSettingId.Value // medTODO handle the null case
+                defaultCardSettingId
+                deckId
                 []
             |> fun x -> x.copyToNew [] // medTODO get tags from collate
         let new' =
@@ -383,7 +388,7 @@ module StackRepository =
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return AcquiredCard.initialize userId user.DefaultCardSettingId.Value [] // lowTODO handle the null
+        return AcquiredCard.initialize userId user.DefaultCardSettingId user.DefaultDeckId []
         }
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
@@ -517,8 +522,8 @@ module UpdateRepository =
             let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
             let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance
             for ac in acs do
-                command.EditAcquiredCard.CardSettingId
-                |> Option.iter(fun id -> ac.CardSettingId <- id)
+                ac.CardSettingId <- command.EditAcquiredCard.CardSettingId
+                ac.DeckId <- command.EditAcquiredCard.DeckId
             match command.Kind with
             | Update_BranchId_Title
             | NewBranch_SourceStackId_Title -> ()
@@ -581,7 +586,7 @@ module CardSettingsRepository =
     let getAll (db: CardOverflowDb) userId = task {
             let! user = db.User.SingleAsync(fun x -> x.Id = userId)
             let! r = db.CardSetting.Where(fun x -> x.UserId = userId).ToListAsync()
-            return r |> Seq.map (fun o -> CardSetting.load (o.Id = user.DefaultCardSettingId.Value) o)
+            return r |> Seq.map (fun o -> CardSetting.load (o.Id = user.DefaultCardSettingId) o)
         }
 
 module UserRepository =

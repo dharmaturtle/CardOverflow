@@ -38,7 +38,8 @@ namespace CardOverflow.Entity
             }
         }
         private string _DisplayName;
-        public int? DefaultCardSettingId { get; set; }
+        public int DefaultCardSettingId { get; set; }
+        public int DefaultDeckId { get; set; }
         public bool ShowNextReviewTime { get; set; }
         public bool ShowRemainingCardCount { get; set; }
         public short MixNewAndReview { get; set; }

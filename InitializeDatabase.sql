@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -226,7 +226,7 @@ CREATE TABLE public."AcquiredCard" (
     "IntervalOrStepsIndex" smallint NOT NULL,
     "Due" timestamp without time zone NOT NULL,
     "CardSettingId" integer NOT NULL,
-    "DeckId" integer,
+    "DeckId" integer NOT NULL,
     "IsLapsed" boolean NOT NULL,
     "PersonalField" text NOT NULL,
     "TsVectorHelper" text,
@@ -1151,7 +1151,7 @@ SELECT pg_catalog.setval('public."CommunalFieldInstance_Id_seq"', 1001, false);
 SELECT pg_catalog.setval('public."CommunalField_Id_seq"', 1, false);
 
 
-SELECT pg_catalog.setval('public."Deck_Id_seq"', 1, false);
+SELECT pg_catalog.setval('public."Deck_Id_seq"', 4, false);
 
 
 SELECT pg_catalog.setval('public."Feedback_Id_seq"', 1, false);

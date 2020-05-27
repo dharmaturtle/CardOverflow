@@ -58,7 +58,7 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002

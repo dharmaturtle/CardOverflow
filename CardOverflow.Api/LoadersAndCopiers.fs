@@ -364,11 +364,12 @@ type AcquiredCard with
         entity.CardSettingId <- this.CardSettingId
         entity.Due <- this.Due
         entity.Tag_AcquiredCards <- tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList()
+        entity.DeckId <- this.DeckId
     member this.copyToNew tagIds i =
         let e = AcquiredCardEntity()
         this.copyTo e tagIds i
         e
-    static member initialize userId cardSettingId tags =
+    static member initialize userId cardSettingId deckId tags =
         {   StackId = 0
             BranchId = 0
             AcquiredCardId = 0
@@ -382,7 +383,7 @@ type AcquiredCard with
             Due = DateTime.UtcNow
             CardSettingId = cardSettingId
             Tags = tags
-            DeckId = None
+            DeckId = deckId
         }
     static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
@@ -400,7 +401,7 @@ type AcquiredCard with
                 Due = entity.Due
                 CardSettingId = entity.CardSettingId
                 Tags = usersTags |> List.ofSeq
-                DeckId = entity.DeckId |> Option.ofNullable
+                DeckId = entity.DeckId
             }
         }
 

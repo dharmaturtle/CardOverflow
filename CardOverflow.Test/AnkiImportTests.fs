@@ -290,9 +290,9 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal(10, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
     Assert.Equal(8, c.Db.User.Include(fun x -> x.AcquiredCards).Single(fun x -> x.Id = userId).AcquiredCards.Select(fun x -> x.BranchInstanceId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
-    Assert.Equal<string>(
-        "Default",
-        c.Db.Deck.Single(fun x -> x.UserId = userId).Name
+    Assert.Equal<string seq>(
+        [ "Default"; "Default Deck" ] |> Seq.sort,
+        c.Db.Deck.Where(fun x -> x.UserId = userId).Select(fun x -> x.Name) |> Seq.sort
     )
     Assert.Equal<string>(
         [ "Basic"; "Othertag"; "Tag" ],
@@ -415,7 +415,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFi
         Assert.Equal(0, c.Db.CommunalField.Count())
         Assert.Equal(7, c.Db.CollateInstance.Count())
         Assert.Equal(5, c.Db.LatestCollateInstance.Count())
-        Assert.Equal(1, c.Db.Deck.Count())
+        Assert.Equal(4, c.Db.Deck.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]

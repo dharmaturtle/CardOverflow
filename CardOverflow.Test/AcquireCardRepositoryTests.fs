@@ -46,7 +46,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
@@ -114,7 +114,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
@@ -143,7 +143,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let i2 = 1002
     Assert.Equal(branchId, actualBranchId.Value)
@@ -175,7 +175,8 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             BranchInstanceId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
-            CardSettingId = userId)
+            CardSettingId = userId,
+            DeckId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
         "P0001: UserId #3 with AcquiredCard #3 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
@@ -225,7 +226,7 @@ let ``AcquireCards works``(): Task<unit> = task {
             FieldValues = [].ToList()
             Kind = Update_BranchId_Title (b1, null)
         }
-    let! branchId = UpdateRepository.stack c.Db authorId command.load |> TaskResult.getOk
+    let! branchId = SanitizeStackRepository.Update c.Db authorId command |> TaskResult.getOk
     let ci1_2 = 1003
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)

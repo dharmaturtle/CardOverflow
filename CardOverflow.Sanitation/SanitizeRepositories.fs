@@ -183,39 +183,24 @@ module SanitizeDeckRepository =
         let! (ac: AcquiredCardEntity) =
             db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             |> Task.map (Result.requireNotNull <| sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
-        match deckId with
-        | None ->
-            ac.DeckId <- Nullable()
-        | Some deckId ->
-            let! (deck: DeckEntity) =
-                db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
-                |> Task.map (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
-            ac.DeckId <- deck.Id |> Nullable
+        do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
+            |> Task.map (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
-    let get (db: CardOverflowDb) userId = taskResult {
-        let! defaultDeckCount =
-            db.AcquiredCard.CountAsync(fun x -> x.DeckId = Nullable() && x.UserId = userId)
-        let! decks =
-            db.Deck.Where(fun x -> x.UserId = userId)
-                .Select(fun x ->
-                    x,
-                    x.AcquiredCards.Count
-                )
-                .ToListAsync()
-            |> Task.map (Seq.map(fun (deck, count) -> {
-                ViewDeck.Id = deck.Id
-                Name = deck.Name
-                IsPublic = deck.IsPublic
-                Count = count
-            }) >> List.ofSeq)
-        return
-            {   ViewDeck.Id = 0
-                Name = "Default"
-                IsPublic = false
-                Count = defaultDeckCount
-            } :: decks
-    }
+    let get (db: CardOverflowDb) userId =
+        db.Deck.Where(fun x -> x.UserId = userId)
+            .Select(fun x ->
+                x,
+                x.AcquiredCards.Count
+            )
+            .ToListAsync()
+        |> Task.map (Seq.map(fun (deck, count) -> {
+            Id = deck.Id
+            Name = deck.Name
+            IsPublic = deck.IsPublic
+            Count = count
+        }) >> List.ofSeq)
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
@@ -305,10 +290,10 @@ type ViewEditAcquiredCardCommand = {
         DeckId = None
         PersonalField = ""
     }
-    member this.toDomain = {
+    member this.toDomain deckId cardSettingId = {
         EditAcquiredCardCommand.CardState = this.CardState
-        CardSettingId = this.CardSettingId
-        DeckId = this.DeckId
+        CardSettingId = cardSettingId
+        DeckId = deckId
         PersonalField = this.PersonalField
     }
 
@@ -350,7 +335,7 @@ type ViewEditStackCommand = {
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
             |> Ok
-    member this.load =
+    member this.load deckId cardSettingId =
         let kind =
             match this.Title with
             | null -> this.Kind
@@ -364,7 +349,7 @@ type ViewEditStackCommand = {
             FieldValues = this.FieldValues
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
             Kind = kind
-            EditAcquiredCard = this.EditAcquiredCard.toDomain
+            EditAcquiredCard = this.EditAcquiredCard.toDomain deckId cardSettingId
         }
 
 type UpsertCardSource =
@@ -420,12 +405,39 @@ module SanitizeStackRepository =
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
             |> TaskResult.map(fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance)
     let Update (db: CardOverflowDb) userId (command: ViewEditStackCommand) = taskResult {// medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        do! match command.EditAcquiredCard.CardSettingId with 
+        let! cardSettingId =
+            match command.EditAcquiredCard.CardSettingId with 
             | Some id ->
                 db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
                 |> Task.map (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-            | None -> Ok () |> Task.FromResult
-        return! UpdateRepository.stack db userId command.load
+                |> TaskResult.map (fun () -> id)
+            | None ->
+                db.User
+                    .Where(fun x -> x.Id = userId)
+                    .Select(fun x -> x.DefaultCardSettingId)
+                    .SingleAsync()
+                    |> Task.map Ok
+        let! deckId =
+            match command.EditAcquiredCard.DeckId with
+            | None ->
+                db.User
+                    .Where(fun x -> x.Id = userId)
+                    .Select(fun x -> x.DefaultDeckId)
+                    .SingleAsync()
+                    |> Task.map Ok
+            | Some id ->
+                db.Deck.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
+                |> Task.map (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+                |> TaskResult.map(fun () -> id)
+        //let command =
+        //    {   command with
+        //            EditAcquiredCard = {
+        //                command.EditAcquiredCard with
+        //                    DeckId = Some deckId
+        //                    CardSettingId = Some cardSettingId
+        //            }
+        //    }
+        return! UpdateRepository.stack db userId <| command.load deckId cardSettingId
         }
     let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query

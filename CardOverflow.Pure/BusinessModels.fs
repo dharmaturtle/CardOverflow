@@ -408,7 +408,7 @@ type AcquiredCard = {
     Due: DateTime
     CardSettingId: int
     Tags: string list
-    DeckId: int Option
+    DeckId: int
 }
 
 type Comment = {
@@ -507,8 +507,8 @@ with
 
 type EditAcquiredCardCommand = {
     CardState: CardState
-    CardSettingId: int Option
-    DeckId: int Option
+    CardSettingId: int
+    DeckId: int
     PersonalField: string
 }
 
