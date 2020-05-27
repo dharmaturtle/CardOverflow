@@ -41,7 +41,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 
     // get yields 2 decks
     let! (decks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
-    Assert.Equal<ViewDeck list>(
+    Assert.areEquivalent
         [{  Id = defaultDeckId
             IsPublic = false
             Name = "Default Deck"
@@ -49,15 +49,15 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
          {  Id = deckId
             IsPublic = false
             Name = deckName
-            Count = 0 }
-        ], decks)
+            Count = 0 }]
+        decks
 
     // new cards are in the "Default" deck
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let stackId = 1
     let! (decks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
 
-    Assert.Equal<ViewDeck list>(
+    Assert.areEquivalent
         [{  Id = defaultDeckId
             IsPublic = false
             Name = "Default Deck"
@@ -65,8 +65,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
          {  Id = deckId
             IsPublic = false
             Name = deckName
-            Count = 0 }
-        ], decks)
+            Count = 0 }]
+        decks
     let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
     let card = card.Single()
     Assert.Equal(defaultDeckId, card.DeckId)
@@ -75,7 +75,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.switch c.Db userId deckId card.AcquiredCardId
     
     let! (decks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
-    Assert.Equal<ViewDeck list>(
+    Assert.areEquivalent
         [{  Id = defaultDeckId
             IsPublic = false
             Name = "Default Deck"
@@ -83,8 +83,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
          {  Id = deckId
             IsPublic = false
             Name = deckName
-            Count = 1 }
-        ], decks)
+            Count = 1 }]
+        decks
     let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
     let card = card.Single()
     Assert.Equal(deckId, card.DeckId)
@@ -93,7 +93,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.switch c.Db userId deckId card.AcquiredCardId
     
     let! (decks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
-    Assert.Equal<ViewDeck list>(
+    Assert.areEquivalent
         [{  Id = defaultDeckId
             IsPublic = false
             Name = "Default Deck"
@@ -101,8 +101,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
          {  Id = deckId
             IsPublic = false
             Name = deckName
-            Count = 1 }
-        ], decks)
+            Count = 1 }]
+        decks
     let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
     let card = card.Single()
     Assert.Equal(deckId, card.DeckId)
@@ -111,7 +111,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.switch c.Db userId defaultDeckId card.AcquiredCardId
     
     let! (decks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
-    Assert.Equal<ViewDeck list>(
+    Assert.areEquivalent
         [{  Id = defaultDeckId
             IsPublic = false
             Name = "Default Deck"
@@ -119,8 +119,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
          {  Id = deckId
             IsPublic = false
             Name = deckName
-            Count = 0 }
-        ], decks)
+            Count = 0 }]
+        decks
     let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
     let card = card.Single()
     Assert.Equal(defaultDeckId, card.DeckId)

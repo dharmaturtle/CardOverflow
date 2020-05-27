@@ -20,6 +20,10 @@ open FSharp.Control.Tasks
 module Assert =
     let SingleI x =
         Assert.Single x |> ignore
+    let areEquivalent (x: 'T seq) (y: 'T seq) =
+        Assert.Equal<'T>
+            (x |> Seq.sort |> List.ofSeq
+            ,y |> Seq.sort |> List.ofSeq)
 
 type XunitClassDataBase(generator : obj [] seq) = // https://stackoverflow.com/questions/35026735/
     interface seq<obj []> with
