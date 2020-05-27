@@ -24,6 +24,8 @@ module Assert =
         Assert.Equal<'T>
             (x |> Seq.sort |> List.ofSeq
             ,y |> Seq.sort |> List.ofSeq)
+    let equal (x: 'T) (y: 'T) =
+        Assert.Equal<'T>(x, y)
 
 type XunitClassDataBase(generator : obj [] seq) = // https://stackoverflow.com/questions/35026735/
     interface seq<obj []> with
