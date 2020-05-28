@@ -180,12 +180,25 @@ module SanitizeDeckRepository =
         return deck.Id
     }
     let delete (db: CardOverflowDb) userId deckId = taskResult {
-        let! (deck: DeckEntity) =
-            db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
-            |> Task.map (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        let! ((deck: DeckEntity), (hasCards: bool)) =
+            db.Deck
+                .Where(fun x -> x.Id = deckId && x.UserId = userId)
+                .Select(fun deck ->
+                    deck,
+                    deck.AcquiredCards.Any()
+                ).SingleOrDefaultAsync()
+            |> Task.map (Core.toOption >> Result.requireSome (sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId))
+        do! hasCards |> Result.requireFalse (sprintf "Deck #%i can't be deleted because it has cards." deckId)
         let! defaultDeckId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultDeckId).SingleAsync()
         do! deck.Id <> defaultDeckId |> Result.requireTrue "You can't delete your default deck. Make another deck default first."
         db.Deck.RemoveI deck
+        return! db.SaveChangesAsyncI()
+    }
+    let setDefault (db: CardOverflowDb) userId deckId = taskResult {
+        do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
+            |> Task.map (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        let! (user: UserEntity) = db.User.SingleAsync(fun x -> x.Id = userId)
+        user.DefaultDeckId <- deckId
         return! db.SaveChangesAsyncI()
     }
     let switch (db: CardOverflowDb) userId deckId acquiredCardId = taskResult {

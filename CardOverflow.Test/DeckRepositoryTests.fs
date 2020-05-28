@@ -32,6 +32,11 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
     
     Assert.areEquivalent [defaultDeck] actualDecks
+    
+    // can't delete default deck
+    let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId defaultDeckId
+    
+    Assert.equal "You can't delete your default deck. Make another deck default first." x.error
 
     // adding a new deck
     let newDeckName = Guid.NewGuid().ToString()
@@ -100,11 +105,6 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     
     Assert.areEquivalent [{ defaultDeck with Count = 1 }] actualDecks 
     do! assertDeckId defaultDeckId
-    
-    // can't delete default deck
-    let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId defaultDeckId
-    
-    Assert.equal "You can't delete your default deck. Make another deck default first." x.error
 
     // can add new deck with same name
     let! actualDeckId = SanitizeDeckRepository.create c.Db userId newDeckName
@@ -120,6 +120,19 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 
     Assert.areEquivalent [ newDeck; { defaultDeck with Count = 1} ] actualDecks
 
+    // set newDeck as default
+    do! SanitizeDeckRepository.setDefault c.Db userId newDeckId
+
+    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    Assert.areEquivalent [
+        { newDeck with IsDefault = true}
+        { defaultDeck with IsDefault = false; Count = 1} ] actualDecks
+
+    // can't delete deck with cards
+    let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId defaultDeckId
+    
+    Assert.equal (sprintf "Deck #%i can't be deleted because it has cards." defaultDeckId) x.error
+
     // errors
     let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName
     Assert.Equal(sprintf "User #%i already has a Deck named '%s'" userId newDeckName, x.error)
@@ -134,6 +147,9 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId invalidDeckId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
+
+    let! (x: Result<_,_>) = SanitizeDeckRepository.setDefault c.Db userId invalidDeckId
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
     
     let invalidAcquiredCardId = 1337
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId invalidAcquiredCardId
@@ -143,6 +159,9 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId acquiredCardId
     Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId, x.error)
     
-    let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db nonauthor actualDeckId
+    let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db nonauthor newDeckId
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)
+
+    let! (x: Result<_,_>) = SanitizeDeckRepository.setDefault c.Db nonauthor newDeckId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)
     } |> TaskResult.getOk)
