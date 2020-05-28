@@ -170,6 +170,9 @@ module SanitizeTagRepository =
     }
 
 module SanitizeDeckRepository =
+    let private deckBelongsTo (db: CardOverflowDb) userId deckId =
+        db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
+        |> Task.map (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
     let create (db: CardOverflowDb) userId (newDeck: string) = taskResult {
         do! if newDeck.Length > 250 then Error <| sprintf "Deck name '%s' is too long. It must be less than 250 characters." newDeck else Ok ()
         do! db.Deck.AnyAsync(fun x -> x.Name = newDeck && x.UserId = userId)
@@ -195,8 +198,7 @@ module SanitizeDeckRepository =
         return! db.SaveChangesAsyncI()
     }
     let setDefault (db: CardOverflowDb) userId deckId = taskResult {
-        do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-            |> Task.map (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        do! deckBelongsTo db userId deckId
         let! (user: UserEntity) = db.User.SingleAsync(fun x -> x.Id = userId)
         user.DefaultDeckId <- deckId
         return! db.SaveChangesAsyncI()
@@ -205,8 +207,7 @@ module SanitizeDeckRepository =
         let! (ac: AcquiredCardEntity) =
             db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             |> Task.map (Result.requireNotNull <| sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
-        do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-            |> Task.map (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        do! deckBelongsTo db userId deckId
         ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
