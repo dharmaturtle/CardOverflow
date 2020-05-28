@@ -909,30 +909,3 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let! stack = ExploreStackRepository.get c.Db otherUser og_s
     Assert.Equal(NotAcquired, stack.AcquiredStatus)
     } |> TaskResult.getOk)
-    
-// fuck merge
-//[<Fact>]
-//let ``StackRepository's SaveCards updates a Card``() =
-//    use c = new TestContainer()
-//    let facet = 
-//        StackEntity(
-//            Title = "",
-//            Description = "",
-//            Fields = "",
-//            CollateId = 1,
-//            Modified = DateTime.UtcNow)
-    
-//    StackRepository.AddCard c.Db facet
-
-//    let updatedCard = StackRepository.GetCards c.Db |> Seq.head
-//    let updatedTitle = Guid.NewGuid().ToString()
-//    updatedCard.Title <- updatedTitle
-
-//    updatedCard 
-//    |> Seq.singleton 
-//    |> ResizeArray<StackEntity>
-//    |> StackRepository.SaveCards c.Db
-
-//    StackRepository.GetCards c.Db
-//    |> Seq.filter(fun x -> x.Title = updatedTitle)
-//    |> Assert.Single
