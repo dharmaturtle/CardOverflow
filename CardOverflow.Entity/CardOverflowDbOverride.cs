@@ -88,6 +88,16 @@ namespace CardOverflow.Entity {
         && (x.State == EntityState.Added || x.State == EntityState.Modified)
       ).Select(x => x.Entity).Cast<T>();
 
+    public void Remove<TEntity>(int id) where TEntity : class, IId, new() { // https://stackoverflow.com/a/55853315
+      var dbSet = Set<TEntity>();
+      var entity = dbSet.Local.FirstOrDefault(c => c.Id == id);
+      if (entity == null) {
+        entity = new TEntity { Id = id };
+        dbSet.Attach(entity);
+      }
+      dbSet.Remove(entity);
+    }
+
     private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();

@@ -6,7 +6,7 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class DeckEntity
+    public partial class DeckEntity : IId
     {
         public DeckEntity()
         {
