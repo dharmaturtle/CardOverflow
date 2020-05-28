@@ -161,7 +161,12 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     
     let nonauthor = 1
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId acquiredCardId
-    Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId, x.error)
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)
+
+    let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor []
+    let nonauthorAcquiredCardId = 2
+    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId nonauthorAcquiredCardId
+    Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" nonauthorAcquiredCardId, x.error)
     
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db nonauthor newDeckId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)

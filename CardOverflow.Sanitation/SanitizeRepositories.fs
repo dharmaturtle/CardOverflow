@@ -199,10 +199,10 @@ module SanitizeDeckRepository =
         return! db.SaveChangesAsyncI()
     }
     let switch (db: CardOverflowDb) userId deckId acquiredCardId = taskResult {
+        do! deckBelongsTo db userId deckId
         let! (ac: AcquiredCardEntity) =
             db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             |> Task.map (Result.requireNotNull <| sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
-        do! deckBelongsTo db userId deckId
         ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
