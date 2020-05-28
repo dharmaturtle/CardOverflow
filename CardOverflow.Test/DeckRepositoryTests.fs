@@ -58,6 +58,15 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 
     Assert.areEquivalent [ newDeck; defaultDeck] actualDecks
 
+    // can rename default deck
+    let newDefaultDeckName = Guid.NewGuid().ToString()
+    let defaultDeck = { defaultDeck with Name = newDefaultDeckName }
+
+    do! SanitizeDeckRepository.rename c.Db userId defaultDeckId newDefaultDeckName
+
+    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    Assert.areEquivalent [ newDeck; defaultDeck] actualDecks
+
     // new cards are in the "Default" deck
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let stackId = 1
@@ -140,9 +149,15 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     // errors
     let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName
     Assert.Equal(sprintf "User #%i already has a Deck named '%s'" userId newDeckName, x.error)
+    
+    let! (x: Result<_,_>) = SanitizeDeckRepository.rename c.Db userId newDeckId newDeckName
+    Assert.Equal(sprintf "User #%i already has a Deck named '%s'" userId newDeckName, x.error)
 
     let invalidDeckName = Random.cryptographicString 251
     let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId invalidDeckName
+    Assert.Equal(sprintf "Deck name '%s' is too long. It must be less than 250 characters." invalidDeckName, x.error)
+
+    let! (x: Result<_,_>) = SanitizeDeckRepository.rename c.Db userId newDeckId invalidDeckName
     Assert.Equal(sprintf "Deck name '%s' is too long. It must be less than 250 characters." invalidDeckName, x.error)
     
     let invalidDeckId = 1337
@@ -161,7 +176,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     
     let nonauthor = 1
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId acquiredCardId
-    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
     let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor []
     let nonauthorAcquiredCardId = 2
@@ -169,8 +184,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" nonauthorAcquiredCardId, x.error)
     
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db nonauthor newDeckId
-    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
     let! (x: Result<_,_>) = SanitizeDeckRepository.setDefault c.Db nonauthor newDeckId
-    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" actualDeckId, x.error)
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
     } |> TaskResult.getOk)
