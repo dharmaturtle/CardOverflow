@@ -98,6 +98,12 @@ namespace CardOverflow.Entity {
       dbSet.Remove(entity);
     }
 
+    public void Remove<TEntity>(IList<int> ids) where TEntity : class, IId, new() {
+      foreach (var id in ids) {
+        Remove<TEntity>(id);
+      }
+    }
+
     private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();

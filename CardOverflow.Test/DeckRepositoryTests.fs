@@ -128,10 +128,14 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
         { newDeck with IsDefault = true}
         { defaultDeck with IsDefault = false; Count = 1} ] actualDecks
 
-    // can't delete deck with cards
-    let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId defaultDeckId
+    // deleting deck with cards moves them to new default
+    do! SanitizeDeckRepository.delete c.Db userId defaultDeckId
     
-    Assert.equal (sprintf "Deck #%i can't be deleted because it has cards." defaultDeckId) x.error
+    let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+    let card = card.Single()
+    Assert.equal newDeckId card.DeckId
+    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    Assert.areEquivalent [{ newDeck with IsDefault = true; Count = 1} ] actualDecks
 
     // errors
     let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName
