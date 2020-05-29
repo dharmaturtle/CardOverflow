@@ -92,24 +92,8 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
           
           var result2 = await _userManager.AddClaimAsync(user, new Claim("display_name", Input.DisplayName));
           if (result.Succeeded) {
-            var defaultSetting = CardSettingsRepository.defaultCardSettingsEntity.Invoke(0);
-            var cardOverflowUser = new UserEntity {
-              Id = user.Id,
-              DisplayName = Input.DisplayName,
-              CardSettings = new List<CardSettingEntity> { defaultSetting },
-              Filters = new List<FilterEntity> { new FilterEntity { Name = "All", Query = "" } },
-              User_CollateInstances = _db.CollateInstance
-                .Where(x => x.Collate.AuthorId == 2)
-                .Select(x => x.Id)
-                .ToList()
-                .Select(id => new User_CollateInstanceEntity { CollateInstanceId = id, DefaultCardSetting = defaultSetting })
-                .ToList(),
-            };
             key.IsUsed = true;
-            _db.User.Add(cardOverflowUser);
-            await _db.SaveChangesAsync();
-            cardOverflowUser.DefaultCardSetting = defaultSetting;
-            await _db.SaveChangesAsync();
+            await UserRepository.create(_db, user.Id, Input.DisplayName);
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             var callbackUrl = Url.Page(

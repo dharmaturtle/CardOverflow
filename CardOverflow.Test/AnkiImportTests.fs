@@ -93,7 +93,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
         cloze.Templates.[0].Back)
 
     let cards, _ =
-        let option = CardSettingsRepository.defaultCardSettingsEntity userId
+        let option = CardSettingsRepository.defaultCardSettings.CopyToNew userId
         AnkiImporter.load
             AnkiImportTestData.relationships
             userId

@@ -559,8 +559,6 @@ module CardSettingsRepository =
           ShowAnswerTimer = false
           AutomaticallyPlayAudio = false
           ReplayQuestionAudioOnAnswer = false }
-    let defaultCardSettingsEntity =
-        defaultCardSettings.CopyToNew
     //let defaultAnkiCardSettings =
     //    { Id = 0
     //      Name = "Default Anki Options"
@@ -590,17 +588,32 @@ module CardSettingsRepository =
         }
 
 module UserRepository =
-    let add (db: CardOverflowDb) id name = task {
-        let cardSetting = CardSettingsRepository.defaultCardSettings.CopyToNew 0
-        let user =
-            UserEntity(
-                Id = id,
-                DisplayName = name,
-                CardSettings = [cardSetting].ToList()
-            )
-        db.User.AddI user
-        do! db.SaveChangesAsyncI ()
-        user.DefaultCardSetting <- cardSetting
+    let theCollectiveId = 2
+    let defaultCloze = "Cloze"
+    let create (db: CardOverflowDb) id displayName = task {
+        let defaultSetting = CardSettingsRepository.defaultCardSettings.CopyToNew 0
+        defaultSetting |> db.CardSetting.AddI
+        DeckEntity(Name = "Default Deck") |> db.Deck.AddI
+        
+        let! (nonClozeIds: int list) =
+            db.LatestCollateInstance
+                .Where(fun x -> x.Name <> defaultCloze && x.Collate.AuthorId = theCollectiveId)
+                .Select(fun x -> x.Id)
+                .ToListAsync() |> Task.map List.ofSeq
+        let! oldestClozeId =
+            db.CollateInstance
+                .Where(fun x -> x.Name = defaultCloze && x.Collate.AuthorId = theCollectiveId)
+                .OrderBy(fun x -> x.Created)
+                .Select(fun x -> x.Id)
+                .FirstAsync()
+        UserEntity(
+            Id = id,
+            DisplayName = displayName,
+            //Filters = [ FilterEntity ( Name = "All", Query = "" )].ToList(),
+            User_CollateInstances =
+                (oldestClozeId :: nonClozeIds)
+                .Select(fun id -> User_CollateInstanceEntity (CollateInstanceId = id, DefaultCardSetting = defaultSetting ))
+                .ToList()) |> db.User.AddI
         return! db.SaveChangesAsyncI () }
     let Get (db: CardOverflowDb) id =
         db.User.SingleAsync(fun x -> x.Id = id)
