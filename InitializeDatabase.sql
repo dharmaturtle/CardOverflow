@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -209,6 +209,37 @@ $$;
 
 
 ALTER FUNCTION public.fn_tag_beforeinsertupdate() OWNER TO postgres;
+
+CREATE FUNCTION public.fn_user_afterinsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        default_card_setting_id integer NOT NULL := 0;
+        default_deck_id         integer NOT NULL := 0;
+    BEGIN
+        default_card_setting_id := (SELECT "Id" FROM "CardSetting" cs WHERE cs."UserId" = 0 LIMIT 1);
+        default_deck_id         := (SELECT "Id" FROM "Deck"         d WHERE  d."UserId" = 0 LIMIT 1);
+
+        UPDATE "CardSetting" cs
+        SET    "UserId" = NEW."Id"
+        WHERE (cs."Id" = default_card_setting_id);
+        UPDATE "User" u
+        SET    "DefaultCardSettingId" = default_card_setting_id
+        WHERE (u."Id" = NEW."Id");
+
+        UPDATE "Deck" d
+        SET    "UserId" = NEW."Id"
+        WHERE (d."Id" = default_deck_id);
+        UPDATE "User" u
+        SET    "DefaultDeckId" = default_deck_id
+        WHERE (u."Id" = NEW."Id");
+
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_user_afterinsert() OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -1491,6 +1522,9 @@ CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON pub
 CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag" FOR EACH ROW EXECUTE FUNCTION public.fn_tag_beforeinsertupdate();
 
 
+CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_user_afterinsert();
+
+
 ALTER TABLE ONLY public."AcquiredCard"
     ADD CONSTRAINT "FK_AcquiredCard_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
 
@@ -1548,7 +1582,7 @@ ALTER TABLE ONLY public."Branch"
 
 
 ALTER TABLE ONLY public."CardSetting"
-    ADD CONSTRAINT "FK_CardSetting_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+    ADD CONSTRAINT "FK_CardSetting_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."CollateInstance"
@@ -1600,7 +1634,7 @@ ALTER TABLE ONLY public."CommunalField"
 
 
 ALTER TABLE ONLY public."Deck"
-    ADD CONSTRAINT "FK_Deck_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+    ADD CONSTRAINT "FK_Deck_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."Feedback"

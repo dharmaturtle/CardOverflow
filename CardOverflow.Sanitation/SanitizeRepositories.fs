@@ -226,13 +226,13 @@ module SanitizeDeckRepository =
                     x.AcquiredCards.Count)
             ).SingleAsync()
         |> Task.map (fun (defaultDeckId, deckCounts) ->
-            (deckCounts |> Seq.map(fun (deck, count) -> {
+            deckCounts |> Seq.map(fun (deck, count) -> {
                 Id = deck.Id
                 Name = deck.Name
                 IsPublic = deck.IsPublic
                 IsDefault = defaultDeckId = deck.Id
                 Count = count
-            })  |> List.ofSeq))
+            })  |> List.ofSeq)
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
