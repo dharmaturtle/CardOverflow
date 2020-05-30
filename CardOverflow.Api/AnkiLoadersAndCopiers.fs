@@ -221,11 +221,9 @@ module Anki =
                             DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
                     }
                     getHistory history
-                    |> function
-                    | Some x -> x
-                    | None -> history.CopyToNew
+                    |> Option.defaultWith (fun () -> history.CopyToNew)
                     |> Some
-                else None
+                else None // highTODO import
         }
 
     let ankiIntToBool =
