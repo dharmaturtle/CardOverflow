@@ -46,6 +46,7 @@
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
+    _user = await UserTask;
     if (_user.IsAuthenticated) {
       _collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, _user.Id));
       _selectedIndex = (_collates.SingleOrDefault(x => x.Id == CollateId) ?? _collates.First())

@@ -19,11 +19,17 @@ namespace ThoughtDesign.WebLibrary {
     public static IServiceCollection RegisterCommonStuff(this IServiceCollection services, IConfiguration configuration) {
       services.AddSingleton(configuration.UrlProvider());
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
-      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => optionsBuilder.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-      Serilog.Log.Logger = new LoggerConfiguration()
-        .ReadFrom
-        .Configuration(configuration)
-        .CreateLogger();
+      var serilogLogger = ContainerExtensions.Logger.get(configuration);
+      services.AddSingleton<Serilog.ILogger>(serilogLogger);
+      var loggerFactory = new LoggerFactory(); // lowTODO figure out if we need to dispose
+      services.AddDbContextPool<CardOverflowDb>(optionsBuilder => {
+        //loggerFactory.AddSerilog(serilogLogger);
+        optionsBuilder
+        //.UseLoggerFactory(loggerFactory)
+        //.EnableSensitiveDataLogging()
+        .UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+      });
+      Log.Logger = serilogLogger;
       services.AddLogging(x => x
         .AddFilter("Microsoft.AspNetCore", LogLevel.Warning)
         .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning));

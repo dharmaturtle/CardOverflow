@@ -75,7 +75,7 @@ type Container with
                 optionsBuilder
                     .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
                     //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
-                    //.EnableSensitiveDataLogging(true)
+                    //.EnableSensitiveDataLogging()
                     |> ignore)
             .AddSimpleInjector(container)
             .BuildServiceProvider(true)
