@@ -64,6 +64,23 @@ module Random =
 
 [<AutoOpen>]
 module Core =
+    let curry f a b = f (a,b)
+    let uncurry f (a,b) = f a b
+
+    [<Struct>]
+    type OptionalBuilder =
+        member _.Bind(ma, f) =
+            ma |> Option.bind f
+        member _.Return a =
+            Some a
+    let option = OptionalBuilder()
+
+    // monoidal plus
+    let (++) (x: 'a option) (y: 'a option) =
+        match x with
+        | Some -> x
+        | None -> y
+
     let nameofInstance (q: Expr<_>) = // https://stackoverflow.com/a/48311816 still being used cause F# 4.7's nameof doesn't work with instance members
         match q with
         | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
@@ -125,3 +142,39 @@ module List =
 
 module ResizeArray =
     let empty<'T> = [].ToList<'T>()
+
+[<RequireQualifiedAccess>]
+module Dispose =
+    type internal CompositeDisposable (disposables: IDisposable list) =
+        interface IDisposable with 
+            member _.Dispose () = 
+                disposables |> Seq.iter (fun d -> d.Dispose ())
+    let composite disposables = new CompositeDisposable (disposables) :> IDisposable
+    let nullObj = composite List.empty
+    type internal DelegatedDisposable (f) =
+        interface IDisposable with 
+            member _.Dispose () = f ()
+    let ofFunc f = new DelegatedDisposable (f) :> IDisposable
+
+module Seq =
+    let skipAtMost n (ma: 'a seq) =
+        seq {
+            use en = ma.GetEnumerator()
+            for _ in 1 .. n do en.MoveNext() |> ignore
+            while en.MoveNext () do
+                yield en.Current
+        }
+
+module SeqOption =
+    let somes mma = mma |> Seq.choose id
+    let sequence soa =
+        let f = fun osa oa ->
+            option {
+                let! sa = osa
+                let! a = oa
+                return seq { yield a; yield! sa }
+            }
+        soa |> Seq.fold f (Some Seq.empty)
+
+module ListOption =
+    let somes mma = mma |> List.choose id

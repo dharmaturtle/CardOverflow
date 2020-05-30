@@ -170,7 +170,7 @@ module AnkiImporter =
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByNoteId getHistory) |> Result.consolidate
             return
                 cardByNoteId |> Map.overValue id,
-                histories |> Seq.choose id
+                histories |> SeqOption.somes
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()

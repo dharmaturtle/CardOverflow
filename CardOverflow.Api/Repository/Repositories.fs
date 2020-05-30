@@ -350,7 +350,7 @@ module StackRepository =
                     old'.StackId <- branchInstance.StackId
                     Some old'
                 | (None, None) -> failwith "impossible"
-            ) |> List.choose id
+            ) |> ListOption.somes
     }
     let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
         let! (branchInstance: BranchInstanceEntity) =
