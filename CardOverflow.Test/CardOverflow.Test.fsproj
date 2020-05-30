@@ -19,12 +19,12 @@
     <Content Include="Config\environment.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="..\InitializeDatabase.sql" Link="Stuff\InitializeDatabase.sql">
+    <EmbeddedResource Include="..\InitializeDatabase.sql" Link="Stuff\InitializeDatabase.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\TweakDevelopment.sql" Link="Stuff\TweakDevelopment.sql">
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\TweakDevelopment.sql" Link="Stuff\TweakDevelopment.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </EmbeddedResource>
     <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
