@@ -19,6 +19,12 @@ open FsToolkit.ErrorHandling
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
+    let withCount count deck =
+        { deck with
+            DueCount = count
+            AllCount = count }
+    let getTomorrow () =
+        SanitizeDeckRepository.get c.Db userId <| DateTime.UtcNow + TimeSpan.FromDays 1.
 
     // get yields default deck
     let defaultDeckId = 3
@@ -27,9 +33,10 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
             IsPublic = false
             IsDefault = true
             Name = "Default Deck"
-            Count = 0 }
+            AllCount = 0
+            DueCount = 0 }
 
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     
     Assert.areEquivalent [defaultDeck] actualDecks
     
@@ -54,7 +61,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
                 IsDefault = false
                 Name = newDeckName }
 
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
 
     Assert.areEquivalent [ newDeck; defaultDeck] actualDecks
 
@@ -64,7 +71,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 
     do! SanitizeDeckRepository.rename c.Db userId defaultDeckId newDefaultDeckName
 
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     Assert.areEquivalent [ newDeck; defaultDeck] actualDecks
 
     // new cards are in the "Default" deck
@@ -78,41 +85,41 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
         Assert.equal acquiredCardId card.AcquiredCardId
     }
     
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
 
-    Assert.areEquivalent [ newDeck; { defaultDeck with Count = 1 }] actualDecks
+    Assert.areEquivalent [ newDeck; defaultDeck |> withCount 1 ] actualDecks
     do! assertDeckId defaultDeckId
 
     // switching to new deck works
     do! SanitizeDeckRepository.switch c.Db userId newDeckId acquiredCardId
     
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     
-    Assert.areEquivalent [ { newDeck with Count = 1 }; defaultDeck] actualDecks
+    Assert.areEquivalent [ newDeck |> withCount 1 ; defaultDeck] actualDecks
     do! assertDeckId newDeckId
     
     // switching is idempotent
     do! SanitizeDeckRepository.switch c.Db userId newDeckId acquiredCardId
     
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     
-    Assert.areEquivalent [ { newDeck with Count = 1 }; defaultDeck] actualDecks
+    Assert.areEquivalent [ newDeck |> withCount 1; defaultDeck] actualDecks
     do! assertDeckId newDeckId
     
     // can switch back to default deck
     do! SanitizeDeckRepository.switch c.Db userId defaultDeckId acquiredCardId
     
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     
-    Assert.areEquivalent [ newDeck; { defaultDeck with Count = 1 }] actualDecks 
+    Assert.areEquivalent [ newDeck; defaultDeck |> withCount 1 ] actualDecks 
     do! assertDeckId defaultDeckId
     
     // can delete new deck
     do! SanitizeDeckRepository.delete c.Db userId newDeckId
     
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     
-    Assert.areEquivalent [{ defaultDeck with Count = 1 }] actualDecks 
+    Assert.areEquivalent [ defaultDeck |> withCount 1 ] actualDecks 
     do! assertDeckId defaultDeckId
 
     // can add new deck with same name
@@ -125,17 +132,17 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     // get yields 2 decks
     let newDeck = { newDeck with Id = newDeckId }
 
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
 
-    Assert.areEquivalent [ newDeck; { defaultDeck with Count = 1} ] actualDecks
+    Assert.areEquivalent [ newDeck; defaultDeck |> withCount 1 ] actualDecks
 
     // set newDeck as default
     do! SanitizeDeckRepository.setDefault c.Db userId newDeckId
 
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
+    let! actualDecks = getTomorrow ()
     Assert.areEquivalent [
         { newDeck with IsDefault = true}
-        { defaultDeck with IsDefault = false; Count = 1} ] actualDecks
+        { (defaultDeck |> withCount 1) with IsDefault = false} ] actualDecks
 
     // deleting deck with cards moves them to new default
     do! SanitizeDeckRepository.delete c.Db userId defaultDeckId
@@ -143,8 +150,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
     let card = card.Single()
     Assert.equal newDeckId card.DeckId
-    let! (actualDecks: ViewDeck list) = SanitizeDeckRepository.get c.Db userId
-    Assert.areEquivalent [{ newDeck with IsDefault = true; Count = 1} ] actualDecks
+    let! actualDecks = getTomorrow ()
+    Assert.areEquivalent [{ (newDeck |> withCount 1) with IsDefault = true } ] actualDecks
 
     // errors
     let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName

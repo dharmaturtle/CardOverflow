@@ -216,22 +216,27 @@ module SanitizeDeckRepository =
         ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
-    let get (db: CardOverflowDb) userId =
+    let get (db: CardOverflowDb) userId currentTime =
         db.User
             .Where(fun x -> x.Id = userId)
             .Select(fun x ->
                 x.DefaultDeckId,
                 x.Decks.Select(fun x ->
                     x,
+                    x.AcquiredCards.Where(fun x ->
+                        x.UserId = userId &&
+                        x.Due < currentTime
+                    ).Count(),
                     x.AcquiredCards.Count)
             ).SingleAsync()
         |> Task.map (fun (defaultDeckId, deckCounts) ->
-            deckCounts |> Seq.map(fun (deck, count) -> {
+            deckCounts |> Seq.map(fun (deck, dueCount, allCount) -> {
                 Id = deck.Id
                 Name = deck.Name
                 IsPublic = deck.IsPublic
                 IsDefault = defaultDeckId = deck.Id
-                Count = count
+                AllCount = allCount
+                DueCount = dueCount
             })  |> List.ofSeq)
 
 module SanitizeHistoryRepository =

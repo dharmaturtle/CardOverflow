@@ -353,7 +353,8 @@ type ViewDeck = {
     IsPublic: bool
     IsDefault: bool
     Name: string
-    Count: int
+    DueCount: int
+    AllCount: int
 }
 
 [<CLIMutable>]
