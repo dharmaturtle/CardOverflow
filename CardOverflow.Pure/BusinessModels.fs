@@ -3,7 +3,6 @@ namespace CardOverflow.Pure
 open FsToolkit.ErrorHandling
 open System.Runtime.InteropServices
 open CardOverflow.Pure.Extensions
-open CardOverflow.Pure.Core
 open CardOverflow.Debug
 open System
 open System.Linq

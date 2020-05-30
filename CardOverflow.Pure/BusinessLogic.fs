@@ -2,7 +2,6 @@ namespace CardOverflow.Pure
 
 open CardOverflow.Debug
 open System.Linq
-open CardOverflow.Pure.Core
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations

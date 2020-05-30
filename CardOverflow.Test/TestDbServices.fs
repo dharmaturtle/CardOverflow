@@ -17,7 +17,6 @@ open LoadersAndCopiers
 open Microsoft.EntityFrameworkCore
 open CardOverflow.Sanitation
 open CardOverflow.Pure
-open CardOverflow.Pure.Core
 
 type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()

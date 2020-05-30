@@ -12,7 +12,6 @@ open System
 open System.Linq
 open Xunit
 open CardOverflow.Pure
-open CardOverflow.Pure.Core
 open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks

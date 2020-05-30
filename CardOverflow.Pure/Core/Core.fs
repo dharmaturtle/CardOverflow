@@ -62,8 +62,9 @@ module Random =
         data |> Array.iter(fun b -> sb.Append(chars.[int b % chars.Length]) |> ignore)
         sb.ToString()
 
+[<AutoOpen>]
 module Core =
-    let nameof (q: Expr<_>) = // https://stackoverflow.com/a/48311816
+    let nameofInstance (q: Expr<_>) = // https://stackoverflow.com/a/48311816 still being used cause F# 4.7's nameof doesn't work with instance members
         match q with
         | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
         | Patterns.PropertyGet(_, mi, _) -> mi.Name

@@ -13,7 +13,6 @@ open Helpers
 open System
 open CardOverflow.Debug
 open CardOverflow.Pure
-open CardOverflow.Pure.Core
 open CardOverflow.Api
 open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations

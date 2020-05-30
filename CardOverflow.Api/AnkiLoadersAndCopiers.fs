@@ -6,7 +6,6 @@ open CardOverflow.Entity.Anki
 open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
-open CardOverflow.Pure.Core
 open MappingTools
 open System
 open System.Linq

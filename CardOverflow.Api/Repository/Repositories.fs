@@ -2,7 +2,6 @@ namespace CardOverflow.Api
 
 open System.Threading.Tasks
 open FsToolkit.ErrorHandling
-open CardOverflow.Pure.Core
 open System.Security.Cryptography
 open System
 open LoadersAndCopiers
@@ -99,7 +98,7 @@ module CollateRepository =
             |> Seq.iter(fun ac ->
                 db.Entry(ac.BranchInstance).State <- EntityState.Added
                 ac.BranchInstance.Id <- ac.BranchInstance.GetHashCode()
-                db.Entry(ac.BranchInstance).Property(Core.nameof <@ any<BranchInstanceEntity>.Id @>).IsTemporary <- true
+                db.Entry(ac.BranchInstance).Property(nameofInstance <@ any<BranchInstanceEntity>.Id @>).IsTemporary <- true
                 ac.BranchInstance.Created <- DateTime.UtcNow
                 ac.BranchInstance.Modified <- Nullable()
                 ac.BranchInstance.CollateInstance <- newCollateInstance

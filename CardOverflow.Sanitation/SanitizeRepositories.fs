@@ -3,7 +3,6 @@ namespace CardOverflow.Sanitation
 open System
 open CardOverflow.Pure.Extensions
 open System.Threading.Tasks
-open CardOverflow.Pure.Core
 open LoadersAndCopiers
 open FSharp.Control.Tasks
 open System.Collections.Generic

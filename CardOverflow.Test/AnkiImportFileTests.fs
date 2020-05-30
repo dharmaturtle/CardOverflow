@@ -22,7 +22,6 @@ open FSharp.Control.Tasks
 open System.Security.Cryptography
 open System.Collections.Generic
 open FsToolkit.ErrorHandling
-open CardOverflow.Pure.Core
 
 [<Theory>]
 [<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]

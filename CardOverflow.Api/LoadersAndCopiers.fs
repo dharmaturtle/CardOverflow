@@ -1,6 +1,5 @@
 module LoadersAndCopiers
 
-open CardOverflow.Pure.Core
 open CardOverflow.Debug
 open MappingTools
 open CardOverflow.Entity

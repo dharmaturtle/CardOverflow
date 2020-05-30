@@ -5,7 +5,6 @@ open CardOverflow.Api
 open CardOverflow.Pure
 open CardOverflow.Debug
 open CardOverflow.Entity
-open CardOverflow.Pure.Core
 open CardOverflow.Entity.Anki
 open System
 open System.Linq

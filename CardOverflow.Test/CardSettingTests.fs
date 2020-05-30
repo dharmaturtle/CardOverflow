@@ -15,7 +15,6 @@ open System.Collections.Generic
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open CardOverflow.Pure
-open CardOverflow.Pure.Core
 open CardOverflow.Sanitation
 
 [<Fact>]
