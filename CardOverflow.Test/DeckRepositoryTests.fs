@@ -25,6 +25,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
             AllCount = count }
     let getTomorrow () =
         SanitizeDeckRepository.get c.Db userId <| DateTime.UtcNow + TimeSpan.FromDays 1.
+    let getYesterday () =
+        SanitizeDeckRepository.get c.Db userId <| DateTime.UtcNow - TimeSpan.FromDays 1.
 
     // get yields default deck
     let defaultDeckId = 3
@@ -152,6 +154,16 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.equal newDeckId card.DeckId
     let! actualDecks = getTomorrow ()
     Assert.areEquivalent [{ (newDeck |> withCount 1) with IsDefault = true } ] actualDecks
+
+    // getYesterday isn't due
+    let! actualDecks = getYesterday ()
+
+    Assert.areEquivalent
+        [ { newDeck with
+              IsDefault = true
+              AllCount = 1
+              DueCount = 0 } ]
+        actualDecks
 
     // errors
     let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName
