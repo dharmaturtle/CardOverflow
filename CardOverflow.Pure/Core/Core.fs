@@ -7,6 +7,9 @@ open System.Security.Cryptography
 open System.Text
 open Microsoft.FSharp.Quotations
 open System.Threading.Tasks
+open FsToolkit
+open FSharp.Control.Tasks
+open FsToolkit.ErrorHandling
 
 [<CustomEquality; NoComparison>]
 type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
@@ -20,6 +23,10 @@ type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
 module Map =
     let overValue f =
         Seq.map (fun (KeyValue(_, v)) -> f v)
+
+module TaskSeq =
+    let iter f =
+        Task.map (Seq.iter f)
 
 module Result =
     let isOk = function

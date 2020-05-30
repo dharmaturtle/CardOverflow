@@ -189,9 +189,8 @@ module SanitizeDeckRepository =
         do! deckBelongsTo db userId deckId
         let! defaultDeckId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultDeckId).SingleAsync()
         do! deckId <> defaultDeckId |> Result.requireTrue "You can't delete your default deck. Make another deck default first."
-        let! (acs: AcquiredCardEntity ResizeArray) = db.AcquiredCard.Where(fun x -> x.DeckId = deckId).ToListAsync()
-        for ac in acs do
-            ac.DeckId <- defaultDeckId
+        do! db.AcquiredCard.Where(fun x -> x.DeckId = deckId).ToListAsync()
+            |> TaskSeq.iter(fun ac -> ac.DeckId <- defaultDeckId)
         db.Remove<DeckEntity> deckId
         return! db.SaveChangesAsyncI()
     }
