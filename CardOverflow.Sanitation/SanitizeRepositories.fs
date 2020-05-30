@@ -243,7 +243,10 @@ module SanitizeHistoryRepository =
                 Timestamp = timestamp,
                 IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
                 EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
-                TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16)
+                TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16),
+                BranchInstanceId = card.BranchInstanceId,
+                UserId = card.UserId,
+                Index = card.Index
             )
         card.IntervalOrStepsIndex <- intervalOrSteps |> IntervalOrStepsIndex.intervalToDb
         card.Due <- DateTime.UtcNow + interval

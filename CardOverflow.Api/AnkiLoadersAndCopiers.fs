@@ -186,6 +186,9 @@ type AnkiHistory = {
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
+        entity.BranchInstance <- this.AcquiredCard.BranchInstance
+        entity.UserId <- this.AcquiredCard.UserId
+        entity.Index <- this.AcquiredCard.Index
     member this.CopyToNew =
         let history = HistoryEntity()
         this.CopyTo history

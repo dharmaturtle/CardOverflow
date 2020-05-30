@@ -73,6 +73,8 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<FilterEntity> Filters { get; set; }
         [InverseProperty("User")]
+        public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("User")]
         public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
