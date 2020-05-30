@@ -9,7 +9,6 @@ open FSharp.Control.Tasks
 open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 open FsToolkit.ErrorHandling
-open FSharp.Text.RegexProvider
 open Microsoft.FSharp.Core.Operators.Checked
 open System.Linq
 open Helpers
@@ -19,6 +18,7 @@ open CardOverflow.Pure
 open CardOverflow.Api
 open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
+open System.Text.RegularExpressions
 
 [<CLIMutable>]
 type ViewFilter = {
@@ -265,10 +265,12 @@ type AddRelationshipCommand = {
     [<Required>]
     TargetStackLink: string
 }
-type StackIdRegex = Regex< """(?<stackId>\d+)$""" >
 module SanitizeRelationshipRepository =
+    type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>\d+)$""" >
+    let stackIdRegex =
+        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> StackIdRegex
     let GetStackId input =
-        let x = StackIdRegex().TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
+        let x = stackIdRegex.TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
         if x.Success 
         then Ok <| int x.Value
         else Error <| sprintf "Couldn't find the Stack Id in '%s'" input

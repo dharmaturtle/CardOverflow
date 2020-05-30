@@ -3,17 +3,25 @@ namespace CardOverflow.Pure
 open CardOverflow.Debug
 open System.Linq
 open FsToolkit.ErrorHandling
-open FSharp.Text.RegexProvider
 open System
+open CardOverflow.Pure
 open Microsoft.FSharp.Core.Operators.Checked
+open System.Text.RegularExpressions
 
-type ClozeRegex = Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
-type ClozeTemplateRegex = Regex< """{{cloze:(?<fieldName>.*?)}}""" >
+module Cloze =
+    type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
+    type ClozeTemplateRegex = FSharp.Text.RegexProvider.Regex< """{{cloze:(?<fieldName>.*?)}}""" >
+    let regex =
+        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> ClozeRegex
+    let templateRegex =
+        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> ClozeTemplateRegex
+    let isCloze questionXemplate =
+        templateRegex.IsMatch questionXemplate
 
 module AnkiImportLogic =
     let maxClozeIndex errorMessage (valuesByFieldName: Map<string, string>) = // veryLowTodo option - no need to make this a Result
-        ClozeTemplateRegex().TypedMatches
-        >> Seq.map (fun m -> valuesByFieldName.[m.fieldName.Value] |> ClozeRegex().TypedMatches)
+        Cloze.templateRegex.TypedMatches
+        >> Seq.map (fun m -> valuesByFieldName.[m.fieldName.Value] |> Cloze.regex.TypedMatches)
         >> Seq.collect id
         >> List.ofSeq
         >> function
@@ -30,7 +38,7 @@ module AnkiImportLogic =
                 | true -> Ok max
                 | false -> Error errorMessage
     let clozeFields questionXemplate =
-        ClozeTemplateRegex().TypedMatches questionXemplate
+        Cloze.templateRegex.TypedMatches questionXemplate
         |> Seq.map(fun x -> x.fieldName.Value)
         |> List.ofSeq
 

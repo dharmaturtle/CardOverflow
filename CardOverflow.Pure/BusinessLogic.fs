@@ -6,28 +6,26 @@ open CardOverflow.Pure.Core
 open System
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
-open System.Text.RegularExpressions
 open CardOverflow.Debug
+open System.Text.RegularExpressions
 
 module Relationship =
     type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
-    let isDirectional = RelationshipRegex().IsMatch
+    let relationshipRegex =
+        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> RelationshipRegex
+    let isDirectional = relationshipRegex.IsMatch
     let split name =
-        let x = RelationshipRegex().TypedMatch name
+        let x = relationshipRegex.TypedMatch name
         if x.Success then
             x.source.Value, x.target.Value
         else
             name, ""
     let flipName name =
-        let x = RelationshipRegex().TypedMatch name
+        let x = relationshipRegex.TypedMatch name
         if x.Success then
             x.target.Value + "/" + x.source.Value
         else
             name
-
-module Cloze =
-    let isCloze questionXemplate =
-        ClozeTemplateRegex().IsMatch questionXemplate
 
 module CardHtml =
     type CardIndex =
@@ -40,16 +38,16 @@ module CardHtml =
                 fieldNameValueMap, questionXemplate, answerXemplate
             | Cloze i ->
                 let i = i + 1s |> string
-                let clozeFields = ClozeTemplateRegex().TypedMatches(questionXemplate).Select(fun x -> x.fieldName.Value) |> List.ofSeq
+                let clozeFields = Cloze.templateRegex.TypedMatches(questionXemplate).Select(fun x -> x.fieldName.Value) |> List.ofSeq
                 let fieldNameValueMap, unusedFields =
                     fieldNameValueMap |> List.partition (fun (fieldName, value) ->
-                        let indexMatch = ClozeRegex().TypedMatches(value).Select(fun x -> x.clozeIndex.Value).Contains i
+                        let indexMatch = Cloze.regex.TypedMatches(value).Select(fun x -> x.clozeIndex.Value).Contains i
                         (indexMatch || (not <| clozeFields.Contains fieldName))
                     )
                 let fieldNameValueMap =
                     fieldNameValueMap |> List.map(fun (fieldName, value) ->
                         let value =
-                            ClozeRegex()
+                            Cloze.regex
                                 .TypedMatches(value)
                                 .Where(fun x -> x.clozeIndex.Value <> i)
                                 .Select(fun x -> x.CompleteMatch.Value, x.answer.Value)
@@ -85,7 +83,7 @@ module CardHtml =
                     showIfEmpty.Replace("{{text:" + fieldName + "}}", MappingTools.stripHtmlTags value)
                 let cloze =
                     if isFront then
-                        let regexMatches = ClozeRegex().TypedMatches(value).Select(fun x -> x.hint, x.Value) |> List.ofSeq
+                        let regexMatches = Cloze.regex.TypedMatches(value).Select(fun x -> x.hint, x.Value) |> List.ofSeq
                         (value, regexMatches) ||> List.fold(fun current (hintGroup, rawCloze) ->
                             let hint =
                                 if hintGroup.Success then
@@ -106,7 +104,7 @@ module CardHtml =
         %s
         <span class="cloze-brackets-back">]</span>
         """
-                        let answer = ClozeRegex().TypedReplace(value, fun f -> html f.answer.Value)
+                        let answer = Cloze.regex.TypedReplace(value, fun f -> html f.answer.Value)
                         stripHtml.Replace("{{cloze:" + fieldName + "}}", answer)
                 cloze
             )

@@ -24,7 +24,7 @@ open FsToolkit.ErrorHandling
 
 let clozeFields =
     function
-    | Cloze t -> ClozeTemplateRegex().TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
+    | Cloze t -> Cloze.templateRegex.TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
     | _ -> failwith "impossible"
 
 let test text expected collateInstance =

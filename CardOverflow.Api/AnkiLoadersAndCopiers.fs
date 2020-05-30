@@ -1,7 +1,7 @@
 namespace CardOverflow.Api
 
 open NeoSmart.Utils
-open FSharp.Text.RegexProvider
+open System.Text.RegularExpressions
 open CardOverflow.Entity.Anki
 open CardOverflow.Debug
 open CardOverflow.Entity
@@ -268,7 +268,6 @@ module Anki =
              get.Optional.Field "conf" Decode.int))
         |> Decode.keyValuePairs
         |> Decode.fromString
-    type BraceRegex = Regex< """{{(?<fieldName>.*?)}}""" >
     let parseModels userId =
         Decode.object(fun get ->
             let collates =
@@ -306,10 +305,14 @@ module Anki =
             })
         |> Decode.keyValuePairs
         |> Decode.fromString
-    type ImgRegex = Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
-    type SoundRegex = Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
+    type ImgRegex = FSharp.Text.RegexProvider.Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
+    type SoundRegex = FSharp.Text.RegexProvider.Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
+    let imgRegex =
+        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> ImgRegex
+    let soundRegex =
+        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> SoundRegex
     let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
-        (([], field), ImgRegex().TypedMatches field)
+        (([], field), imgRegex.TypedMatches field)
         ||> Seq.fold (fun (files, field) m -> 
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName then
@@ -320,13 +323,13 @@ module Anki =
                 ( files,
                   field.Replace(ankiFileName, "/missingImage.jpg")) // medTODO needs a placeholder
         )
-        |> fun x -> (x, SoundRegex().TypedMatches field)
+        |> fun x -> (x, soundRegex.TypedMatches field)
         ||> Seq.fold (fun (files, field) m ->
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName
             then
                 let file = fileEntityByAnkiFileName.[ankiFileName]
-                let field = SoundRegex().Replace(field, """
+                let field = soundRegex.Replace(field, """
 <audio controls autoplay>
     <source src="${ankiFileName}" type="audio/mpeg">
     Your browser does not support the audio element.
