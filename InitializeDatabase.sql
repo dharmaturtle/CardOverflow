@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1341,11 +1341,35 @@ ALTER TABLE ONLY public."BranchInstance"
 
 
 ALTER TABLE ONLY public."BranchInstance"
+    ADD CONSTRAINT "UQ_BranchInstance_BranchInstanceId_BranchId" UNIQUE ("Id", "BranchId");
+
+
+ALTER TABLE ONLY public."BranchInstance"
     ADD CONSTRAINT "UQ_BranchInstance_StackId_Id" UNIQUE ("StackId", "Id");
 
 
 ALTER TABLE ONLY public."Branch"
+    ADD CONSTRAINT "UQ_Branch_BranchId_StackId" UNIQUE ("Id", "StackId");
+
+
+ALTER TABLE ONLY public."Branch"
     ADD CONSTRAINT "UQ_Branch_StackId_Id" UNIQUE ("StackId", "Id");
+
+
+ALTER TABLE ONLY public."CardSetting"
+    ADD CONSTRAINT "UQ_CardSetting_CardSettingId_UserId" UNIQUE ("Id", "UserId");
+
+
+ALTER TABLE ONLY public."CollateInstance"
+    ADD CONSTRAINT "UQ_CollateInstance_CollateInstanceId_CollateId" UNIQUE ("Id", "CollateId");
+
+
+ALTER TABLE ONLY public."CommunalFieldInstance"
+    ADD CONSTRAINT "UQ_CommunalFieldInstance_CommunalFieldInstanceId_UserId" UNIQUE ("Id", "CommunalFieldId");
+
+
+ALTER TABLE ONLY public."Deck"
+    ADD CONSTRAINT "UQ_Deck_DeckId_UserId" UNIQUE ("Id", "UserId");
 
 
 CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
@@ -1570,7 +1594,7 @@ ALTER TABLE ONLY public."BranchInstance"
 
 
 ALTER TABLE ONLY public."Branch"
-    ADD CONSTRAINT "FK_Branch_BranchInstance_LatestInstanceId" FOREIGN KEY ("LatestInstanceId") REFERENCES public."BranchInstance"("Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_Branch_BranchInstance_LatestInstanceId" FOREIGN KEY ("LatestInstanceId", "Id") REFERENCES public."BranchInstance"("Id", "BranchId") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."Branch"
@@ -1590,7 +1614,7 @@ ALTER TABLE ONLY public."CollateInstance"
 
 
 ALTER TABLE ONLY public."Collate"
-    ADD CONSTRAINT "FK_Collate_CollateInstance_LatestInstanceId" FOREIGN KEY ("LatestInstanceId") REFERENCES public."CollateInstance"("Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_Collate_CollateInstance_LatestInstanceId" FOREIGN KEY ("LatestInstanceId", "Id") REFERENCES public."CollateInstance"("Id", "CollateId") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."Collate"
@@ -1626,7 +1650,7 @@ ALTER TABLE ONLY public."CommunalFieldInstance"
 
 
 ALTER TABLE ONLY public."CommunalField"
-    ADD CONSTRAINT "FK_CommunalField_CommunalFieldInstance_LatestInstanceId" FOREIGN KEY ("LatestInstanceId") REFERENCES public."CommunalFieldInstance"("Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_CommunalField_CommunalFieldInstance_LatestInstanceId" FOREIGN KEY ("LatestInstanceId", "Id") REFERENCES public."CommunalFieldInstance"("Id", "CommunalFieldId") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."CommunalField"
@@ -1686,7 +1710,7 @@ ALTER TABLE ONLY public."Stack"
 
 
 ALTER TABLE ONLY public."Stack"
-    ADD CONSTRAINT "FK_Stack_Branch_DefaultBranchId" FOREIGN KEY ("DefaultBranchId") REFERENCES public."Branch"("Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_Stack_Branch_DefaultBranchId" FOREIGN KEY ("DefaultBranchId", "Id") REFERENCES public."Branch"("Id", "StackId") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."Stack"
@@ -1714,7 +1738,7 @@ ALTER TABLE ONLY public."Tag_User_CollateInstance"
 
 
 ALTER TABLE ONLY public."User"
-    ADD CONSTRAINT "FK_User_CardSetting_DefaultCardSettingId" FOREIGN KEY ("DefaultCardSettingId") REFERENCES public."CardSetting"("Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_User_CardSetting_DefaultCardSettingId" FOREIGN KEY ("DefaultCardSettingId", "Id") REFERENCES public."CardSetting"("Id", "UserId") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."User_CollateInstance"
@@ -1730,7 +1754,7 @@ ALTER TABLE ONLY public."User_CollateInstance"
 
 
 ALTER TABLE ONLY public."User"
-    ADD CONSTRAINT "FK_User_Deck_DefaultDeckId" FOREIGN KEY ("DefaultDeckId") REFERENCES public."Deck"("Id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "FK_User_Deck_DefaultDeckId" FOREIGN KEY ("DefaultDeckId", "Id") REFERENCES public."Deck"("Id", "UserId") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."Vote_CommentCollate"
