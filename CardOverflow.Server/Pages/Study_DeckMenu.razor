@@ -57,7 +57,7 @@
   </BSModalFooter>
 </BSModal>
 
-<BSModal @ref=_CreateOrRenameModal>
+<BSModal @ref=_CreateOrRenameModal ShowEvent=@(() => _CreateOrRenameIsSaved = false) HideEvent=_CreateOrRenameModalHide>
   <EditForm Model=Deck OnValidSubmit=_CreateOrRenameSave>
     <BSModalHeader OnClick=_CreateOrRenameModal.Hide>
       @if (Deck.Id == default) {
@@ -95,6 +95,7 @@
   private BSModal _DeleteDefaultModal;
   private BSModal _DeleteModal;
   private BSModal _CreateOrRenameModal;
+  private bool _CreateOrRenameIsSaved;
 
   protected override async Task OnAfterRenderAsync(bool firstRender) {
     if (Deck.Id == default && firstRender) {
@@ -115,6 +116,7 @@
     await Delete.InvokeAsync(_DeleteModal);
 
   private async Task _CreateOrRenameSave() {
+    _CreateOrRenameIsSaved = true;
     if (Deck.Id == default) {
       await Create.InvokeAsync((Deck.Name, _CreateOrRenameModal));
     } else {
@@ -126,7 +128,9 @@
     if (Deck.Id == default) {
       await CancelCreate.InvokeAsync(null);
     }
+    if (_CreateOrRenameModal.IsOpen == true) {
     _CreateOrRenameModal.Hide();
+    }
   }
 
   private async Task _Rename() {
@@ -137,6 +141,12 @@
       _CreateOrRenameModal.Hide();
     } else {
       ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  private async Task _CreateOrRenameModalHide() {
+    if (!_CreateOrRenameIsSaved) {
+      await _CreateOrRenameCancel();
     }
   }
 
