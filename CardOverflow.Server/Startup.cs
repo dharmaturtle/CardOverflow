@@ -21,6 +21,7 @@ using ThoughtDesign.WebLibrary;
 using System;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
+using BlazorStrap;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -60,6 +61,7 @@ namespace CardOverflow.Server {
       services.AddScoped<ISideBySideDiffBuilder, SideBySideDiffBuilder>();
       services.AddScoped<IDiffer, Differ>();
       services.AddBlazoredToast();
+      services.AddBootstrapCss();
       services.AddMvc();
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
