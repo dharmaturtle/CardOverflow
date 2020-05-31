@@ -36,6 +36,7 @@
       ToastService.ShowError(x.ErrorValue);
     }
     _collates = (await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, user.Id))).ToList();
+    StateHasChanged();
   }
 
 }

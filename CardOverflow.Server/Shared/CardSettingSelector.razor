@@ -31,6 +31,7 @@
     if (SelectedId == default) {
       SelectedId = _settings.Single(x => x.IsDefault).Id;
     }
+    StateHasChanged();
   }
 
   private async Task _SetSelected(int newId) {

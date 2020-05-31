@@ -42,18 +42,12 @@
 </span>
 
 @code {
-  [Parameter]
-  public EventCallback<SearchCommand> SearchClicked { get; set; }
-  [Parameter]
-  public string BackLink { get; set; }
-  [Parameter]
-  public Func<string, string> CreateLink { get; set; }
-  [Parameter]
-  public List<string> Ids { get; set; }
-  [Parameter]
-  public string SelectedId { get; set; }
-  [Parameter]
-  public string Query { get; set; }
+  [Parameter] public EventCallback<SearchCommand> SearchClicked { get; set; }
+  [Parameter] public string BackLink { get; set; }
+  [Parameter] public Func<string, string> CreateLink { get; set; }
+  [Parameter] public List<string> Ids { get; set; }
+  [Parameter] public string SelectedId { get; set; }
+  [Parameter] public string Query { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

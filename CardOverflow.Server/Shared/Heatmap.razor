@@ -224,6 +224,7 @@
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
     _heatmap = await DbExecutor.QueryAsync(x => HistoryRepository.getHeatmap(x, user.Id));
+    StateHasChanged();
   }
 
 }

@@ -134,6 +134,7 @@
       EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
     }
     UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
+    StateHasChanged();
   }
 
   private void _SetOption(int newId) {

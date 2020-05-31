@@ -65,8 +65,8 @@
     _user = await UserTask;
     if (SelectedStackId == null && _stacks == null) {
       await PageChanged(1);
-      StateHasChanged();
     }
+    StateHasChanged();
   }
 
   async Task PageChanged(int pageNumber) {
