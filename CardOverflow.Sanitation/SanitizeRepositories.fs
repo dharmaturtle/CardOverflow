@@ -214,6 +214,10 @@ module SanitizeDeckRepository =
         ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
+    let getQuizBatch (db: CardOverflowDb) userId deckId = taskResult {
+        do! deckBelongsTo db userId deckId
+        return! StackRepository.GetQuizBatchDeck db deckId
+    }
     let get (db: CardOverflowDb) userId currentTime =
         db.User
             .Where(fun x -> x.Id = userId)

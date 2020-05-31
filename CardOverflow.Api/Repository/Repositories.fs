@@ -411,6 +411,10 @@ module StackRepository =
                     x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.BranchInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
+    let private acquiredByDeck (db: CardOverflowDb) deckId =
+        db.AcquiredCard
+            .Include(fun x -> x.BranchInstance.CollateInstance)
+            .Where(fun x -> x.DeckId = deckId)
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
@@ -431,6 +435,19 @@ module StackRepository =
         task {
             let! cards =
                 (searchAcquired db userId query)
+                    .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
+                    .Include(fun x -> x.CardSetting)
+                    .OrderBy(fun x -> x.Due)
+                    .Take(5)
+                    .ToListAsync()
+            return
+                cards |> Seq.map QuizCard.load |> toResizeArray
+        }
+    let GetQuizBatchDeck (db: CardOverflowDb) deckId =
+        let tomorrow = DateTime.UtcNow.AddDays 1.
+        task {
+            let! cards =
+                (acquiredByDeck db deckId)
                     .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
                     .Include(fun x -> x.CardSetting)
                     .OrderBy(fun x -> x.Due)

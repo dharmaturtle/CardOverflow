@@ -1,6 +1,7 @@
 @page "/study"
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
@@ -15,7 +16,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 
-if (_selectedFilter == null) {
+@if (_selectedDeck == null) {
   <div class="container">
     <Heatmap />
     <table class="table">
@@ -23,37 +24,32 @@ if (_selectedFilter == null) {
         <th></th>
         <th>Due</th>
       </tr>
-      @foreach (var filter in _filters) {
+      @foreach (var deck in _decks) {
         <tr>
           <td>
-            <button @onclick=@(() => _selectedFilter = filter) class="btn btn-link">
-              @filter.Name
+            <button @onclick=@(() => _selectedDeck = deck) class="btn btn-link">
+              @deck.Name
             </button>
           </td>
           <td>
-            @filter.Due
+            @deck.DueCount
           </td>
         </tr>
       }
     </table>
   </div>
 } else {
-  <StudyDetail Query=@_selectedFilter.Query />
+  <StudyDetail DeckId=@_selectedDeck.Id />
 }
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private List<ViewFilterWithDue> _filters = new List<ViewFilterWithDue>();
-  private ViewFilterWithDue _selectedFilter;
-
-  public override async Task SetParametersAsync(ParameterView parameters) {
-    await base.SetParametersAsync(parameters);
-    _selectedFilter = null;
-  }
+  private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
+  private ViewDeck _selectedDeck;
 
   protected override async Task OnInitializedAsync() {
     var user = await UserTask;
-    _filters = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.GetWithDue(db, user.Id));
+    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.get(db, user.Id, TimeProvider.utcNow));
   }
 
 }

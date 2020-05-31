@@ -11,7 +11,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 
-if (batch == null) {
+@if (batch == null) {
   <p><em>Loading...</em></p>
 } else if (!batch.Any()) {
   <h1 class="text-center">No cards due!</h1>
@@ -76,8 +76,7 @@ if (batch == null) {
   bool isFront;
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter]
-  public string Query { get; set; }
+  [Parameter] public int DeckId { get; set; }
   List<FSharpResult<QuizCard, string>> batch;
   DateTime frontVisible;
   string transcript;
@@ -90,10 +89,20 @@ if (batch == null) {
   string GoodInterval;
   string EasyInterval;
 
+  private async Task loadCards() {
+    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getQuizBatch(db, _user.Id, DeckId));
+    if (x.IsOk) {
+      batch ??= new List<FSharpResult<QuizCard, string>>();
+      batch.AddRange(x.ResultValue);
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    batch = await DbExecutor.QueryAsync(db => StackRepository.GetQuizBatch(db, _user.Id, Query));
+    await loadCards();
     if (batch.Any()) {
       await ShowFront();
     }
@@ -133,7 +142,7 @@ if (batch == null) {
     }
     StateHasChanged();
     if (batch.Count() <= 1) {
-      batch.AddRange(await DbExecutor.QueryAsync(db => StackRepository.GetQuizBatch(db, _user.Id, Query)));
+      await loadCards();
     }
   }
 
