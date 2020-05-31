@@ -1,0 +1,42 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+
+<AuthorizeView>
+  <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
+    @foreach (var deck in _decks) {
+      <option value=@deck.Id selected=@(SelectedId == deck.Id)>@deck.Name</option>
+    }
+  </select>
+</AuthorizeView>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  [Parameter] public int SelectedId { get; set; }
+  [Parameter] public EventCallback<int> DeckSelected { get; set; }
+  private List<SimpleDeck> _decks = new List<SimpleDeck>();
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    var user = await UserTask;
+    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, user.Id));
+    if (SelectedId == default) {
+      SelectedId = _decks.Single(x => x.IsDefault).Id;
+    }
+    StateHasChanged();
+  }
+
+  private async Task _SetSelected(int newId) {
+    SelectedId = newId;
+    await DeckSelected.InvokeAsync(newId);
+  }
+
+}

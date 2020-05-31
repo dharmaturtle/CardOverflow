@@ -347,6 +347,13 @@ type CommunalFieldInstance = {
 }
 
 [<CLIMutable>]
+type SimpleDeck = {
+    Id: int
+    IsDefault: bool
+    Name: string
+}
+
+[<CLIMutable>]
 type ViewDeck = {
     Id: int
     IsPublic: bool

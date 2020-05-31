@@ -17,7 +17,13 @@
     <strong class="my-2">
       Setting:&nbsp;
     </strong>
-    <CardSettingSelector SettingSelected=_SetOption SelectedId=@AcquiredCard.CardSettingId />
+    <CardSettingSelector SettingSelected=_SetSetting SelectedId=@AcquiredCard.CardSettingId />
+  </div>
+  <div class="d-flex">
+    <strong class="my-2">
+      Deck:&nbsp;
+    </strong>
+    <DeckSelector DeckSelected=_SetDeck SelectedId=@AcquiredCard.DeckId />
   </div>
   <div class="d-flex justify-content-between">
     <div>
@@ -73,11 +79,21 @@
   [Parameter] public EventCallback<CardState> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
-  private async Task _SetOption(int newId) {
+  private async Task _SetSetting(int newId) {
     var user = await UserTask;
     var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, AcquiredCard.AcquiredCardId, newId));
     if (r.IsOk) {
       ToastService.ShowInfo("Card setting saved!");
+    } else {
+      ToastService.ShowError(r.ErrorValue);
+    }
+  }
+
+  private async Task _SetDeck(int newId) {
+    var user = await UserTask;
+    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, AcquiredCard.AcquiredCardId));
+    if (r.IsOk) {
+      ToastService.ShowInfo("Deck saved!");
     } else {
       ToastService.ShowError(r.ErrorValue);
     }
