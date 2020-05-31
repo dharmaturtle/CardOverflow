@@ -23,6 +23,11 @@
       <tr>
         <th></th>
         <th>Due</th>
+        <th>
+          <button class="btn btn-outline-success" @onclick=@_CreateDeck>
+            <i class="fas fa-plus"></i>
+          </button>
+        </th>
       </tr>
       @foreach (var deck in _decks) {
         <tr>
@@ -33,6 +38,13 @@
           </td>
           <td>
             @deck.DueCount
+          </td>
+          <td>
+            <Study_DeckMenu Deck=deck
+                            Delete=@(modal => _DeleteDeck(deck.Id, modal))
+                            Create=@(x => _Create(x.Item1, x.Item2))
+                            CancelCreate=_CancelCreateDeck
+                            Rename=@(newName => _Rename(deck.Id, newName))/>
           </td>
         </tr>
       }
@@ -51,5 +63,36 @@
     var user = await UserTask;
     _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.get(db, user.Id, TimeProvider.utcNow));
   }
+
+  private void _CreateDeck() =>
+    _decks = _decks.Append(new ViewDeck(0, false, false, "New Deck", 0, 0)).ToFList();
+
+  private void _CancelCreateDeck() =>
+    _decks = _decks.Where(x => x.Id != default).ToFList();
+
+  private async Task _DeleteDeck(int deckId, BSModal modal) {
+    var user = await UserTask;
+    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.delete(db, user.Id, deckId));
+    if (x.IsOk) {
+      _decks = _decks.Where(x => x.Id != deckId).ToFList();
+      modal.Hide();
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  private async Task _Create(string newName, BSModal modal) {
+    var user = await UserTask;
+    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.create(db, user.Id, newName));
+    if (x.IsOk) {
+      _decks.Single(x => x.Id == default).Id = x.ResultValue;
+      modal.Hide();
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  private void _Rename(int deckId, string newName) =>
+    _decks.Single(x => x.Id == deckId).Name = newName;
 
 }

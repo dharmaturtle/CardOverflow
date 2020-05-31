@@ -1,0 +1,143 @@
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Shared
+@inject DbExecutor DbExecutor
+@inject Scheduler Scheduler
+@inject TimeProvider TimeProvider
+@inject IJSRuntime Js
+@inject IToastService ToastService
+
+<BSDropdown>
+  <BSDropdownToggle Color="Color.Secondary"></BSDropdownToggle>
+  <BSDropdownMenu>
+    <BSDropdownItem OnClick=_DeleteClicked><span class="oi oi-trash"></span> Delete</BSDropdownItem>
+    <BSDropdownItem OnClick=_CreateOrRenameModal.Show><span class="oi oi-pencil"></span> Rename</BSDropdownItem>
+  </BSDropdownMenu>
+</BSDropdown>
+
+<BSModal @ref=_DeleteModal>
+  <BSModalHeader OnClick=_DeleteModal.Hide>
+    Delete Deck
+  </BSModalHeader>
+  <BSModalBody>
+    @if (Deck.AllCount >= 1) {
+      <span>Deleting a deck will move all its cards to the default deck. Are you sure you want to delete "@Deck.Name" which has @Deck.AllCount cards?</span>
+    } else {
+      <span>Are you sure you want to delete "@Deck.Name"?</span>
+    }
+  </BSModalBody>
+  <BSModalFooter>
+    <BSButton Color="Color.Secondary" OnClick=_DeleteModal.Hide>
+      Cancel
+    </BSButton>
+    <BSButton Color="Color.Danger" OnClick=_DeleteSave>
+      <span class="oi oi-trash"></span> Delete @Deck.Name
+    </BSButton>
+  </BSModalFooter>
+</BSModal>
+
+<BSModal @ref=_DeleteDefaultModal>
+  <BSModalHeader OnClick=_DeleteDefaultModal.Hide>
+    Delete Default Deck
+  </BSModalHeader>
+  <BSModalBody>
+    You can't delete your default deck. Make another deck default before deleting this deck.
+  </BSModalBody>
+  <BSModalFooter>
+    <BSButton Color="Color.Primary" OnClick=_DeleteDefaultModal.Hide>
+      Close
+    </BSButton>
+  </BSModalFooter>
+</BSModal>
+
+<BSModal @ref=_CreateOrRenameModal>
+  <EditForm Model=Deck OnValidSubmit=_CreateOrRenameSave>
+    <BSModalHeader OnClick=_CreateOrRenameModal.Hide>
+      @if (Deck.Id == default) {
+        <span>Create Deck</span>
+      } else {
+        <span>Rename Deck</span>
+      }
+    </BSModalHeader>
+    <BSModalBody>
+      <div class="form-group">
+        <label for="newDeckNameInput">Name</label>
+        <InputText @bind-Value=Deck.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <ValidationMessage For=@(() => Deck.Name) />
+      </div>
+      <DataAnnotationsValidator />
+    </BSModalBody>
+    <BSModalFooter>
+      <BSButton Color="Color.Secondary" OnClick=_CreateOrRenameCancel type="button">
+        Cancel
+      </BSButton>
+      <BSButton Color="Color.Primary" type="submit">
+        Save
+      </BSButton>
+    </BSModalFooter>
+  </EditForm>
+</BSModal>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  [Parameter] public ViewDeck Deck { get; set; }
+  [Parameter] public EventCallback<BSModal> Delete { get; set; }
+  [Parameter] public EventCallback<(string, BSModal)> Create { get; set; }
+  [Parameter] public EventCallback CancelCreate { get; set; }
+  [Parameter] public EventCallback<string> Rename { get; set; }
+  private BSModal _DeleteDefaultModal;
+  private BSModal _DeleteModal;
+  private BSModal _CreateOrRenameModal;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender) {
+    if (Deck.Id == default && firstRender) {
+      await Task.Delay(1); // necessary for some reason to get _CreateOrRenameModal to display when creating a deck
+      _CreateOrRenameModal.Show();
+    }
+  }
+
+  private void _DeleteClicked() {
+    if (Deck.IsDefault) {
+      _DeleteDefaultModal.Show();
+    } else {
+      _DeleteModal.Show();
+    }
+  }
+
+  private async Task _DeleteSave() =>
+    await Delete.InvokeAsync(_DeleteModal);
+
+  private async Task _CreateOrRenameSave() {
+    if (Deck.Id == default) {
+      await Create.InvokeAsync((Deck.Name, _CreateOrRenameModal));
+    } else {
+      await _Rename();
+    }
+  }
+
+  private async Task _CreateOrRenameCancel() {
+    if (Deck.Id == default) {
+      await CancelCreate.InvokeAsync(null);
+    }
+    _CreateOrRenameModal.Hide();
+  }
+
+  private async Task _Rename() {
+    var user = await UserTask;
+    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.rename(db, user.Id, Deck.Id, Deck.Name));
+    if (x.IsOk) {
+      await Rename.InvokeAsync(Deck.Name);
+      _CreateOrRenameModal.Hide();
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+}

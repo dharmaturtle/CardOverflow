@@ -351,6 +351,7 @@ type ViewDeck = {
     Id: int
     IsPublic: bool
     IsDefault: bool
+    [<StringLength(250, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 250 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string
     DueCount: int
     AllCount: int

@@ -87,6 +87,7 @@ INSERT INTO public."User_CollateInstance" ("UserId", "CollateInstanceId", "Defau
 SELECT pg_catalog.setval('public."CardSetting_Id_seq"', 40, false);
 SELECT pg_catalog.setval('public."User_Id_seq"', 40, false);
 SELECT pg_catalog.setval('public."Filter_Id_seq"', 40, false);
+SELECT pg_catalog.setval('public."Deck_Id_seq"', 40, false);
 
 SET session_replication_role = 'origin';
 
