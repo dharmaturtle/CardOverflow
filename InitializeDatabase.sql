@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -734,7 +734,7 @@ CREATE TABLE public."History" (
     "Id" bigint NOT NULL,
     "AcquiredCardId" integer,
     "UserId" integer NOT NULL,
-    "BranchInstanceId" integer NOT NULL,
+    "BranchInstanceId" integer,
     "Index" integer NOT NULL,
     "Score" smallint NOT NULL,
     "Timestamp" timestamp without time zone NOT NULL,

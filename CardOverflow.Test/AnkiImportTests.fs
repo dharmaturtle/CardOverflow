@@ -343,7 +343,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
 let assertHasHistory db ankiDb: Task<unit> = (taskResult {
     let userId = 3
     do! AnkiImporter.save db ankiDb userId Map.empty
-    Assert.Equal(110, db.History.Count(fun x -> x.AcquiredCard.UserId = userId))
+    Assert.Equal(110, db.History.Count(fun x -> x.UserId = userId))
     } |> TaskResult.getOk)
 
 type AllRandomReviews () =
@@ -370,6 +370,15 @@ let ``Importing AllRandomReviews reuses previous History`` randomReviews: Task<u
         do!
             c.AnkiDb()
             |> AnkiImporter.getSimpleAnkiDb
+            |> assertHasHistory c.Db
+    }
+
+[<Fact>]
+let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
+    use c = new TestContainer()
+    for _ in [1..5] do
+        do!
+            _110reviewsWithNoMatchingCards
             |> assertHasHistory c.Db
     }
 

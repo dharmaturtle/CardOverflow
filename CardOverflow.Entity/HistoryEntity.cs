@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
         public long Id { get; set; }
         public int? AcquiredCardId { get; set; }
         public int UserId { get; set; }
-        public int BranchInstanceId { get; set; }
+        public int? BranchInstanceId { get; set; }
         public short Index { get; set; }
         public short Score { get; set; }
         public DateTime Timestamp { get; set; }

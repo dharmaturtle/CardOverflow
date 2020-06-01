@@ -167,10 +167,10 @@ module AnkiImporter =
                     let _, tags = cardsAndTagsByNoteId.[nid]
                     card.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(Tag = x)).ToList()
             )
-            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory cardByNoteId getHistory) |> Result.consolidate
+            let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory userId cardByNoteId getHistory) |> Result.consolidate
             return
                 cardByNoteId |> Map.overValue id,
-                histories |> SeqOption.somes
+                histories
         }
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()

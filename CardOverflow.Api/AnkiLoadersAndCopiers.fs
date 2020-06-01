@@ -151,15 +151,15 @@ type AnkiAcquiredCard = {
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.AcquiredCard
             .Include(fun x -> x.Tag_AcquiredCards)
-            .FirstOrDefault(fun c -> 
+            .SingleOrDefault(fun c ->
                 this.UserId = c.UserId &&
                 this.Index = c.Index &&
-                this.BranchInstance.Id = c.BranchInstanceId &&
-                this.CollateInstance.Id = c.BranchInstance.CollateInstanceId
+                this.BranchInstance.Id = c.BranchInstanceId
             )
 
 type AnkiHistory = {
-    AcquiredCard: AcquiredCardEntity
+    UserId: int
+    AcquiredCard: AcquiredCardEntity option
     Score: int16
     Timestamp: DateTime
     IntervalWithUnusedStepsIndex: IntervalOrStepsIndex
@@ -168,26 +168,36 @@ type AnkiHistory = {
 } with
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
-        db.History.FirstOrDefault(fun h -> 
-            this.AcquiredCard.UserId = h.AcquiredCard.UserId &&
-            this.AcquiredCard.BranchInstanceId = h.AcquiredCard.BranchInstanceId &&
-            this.AcquiredCard.BranchInstance.CollateInstanceId = h.AcquiredCard.BranchInstance.CollateInstanceId &&
-            this.Score = h.Score &&
-            this.Timestamp = h.Timestamp &&
-            interval = h.IntervalWithUnusedStepsIndex &&
-            this.EaseFactorInPermille = h.EaseFactorInPermille &&
-            this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
-        )
+        match this.AcquiredCard with
+        | Some ac ->
+            db.History.FirstOrDefault(fun h -> 
+                this.UserId = h.UserId &&
+                Nullable ac.BranchInstanceId = h.BranchInstanceId &&
+                this.Score = h.Score &&
+                this.Timestamp = h.Timestamp &&
+                interval = h.IntervalWithUnusedStepsIndex &&
+                this.EaseFactorInPermille = h.EaseFactorInPermille &&
+                this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
+            )
+        | None ->
+            db.History.FirstOrDefault(fun h ->
+                this.UserId = h.UserId &&
+                this.Score = h.Score &&
+                this.Timestamp = h.Timestamp &&
+                interval = h.IntervalWithUnusedStepsIndex &&
+                this.EaseFactorInPermille = h.EaseFactorInPermille &&
+                this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
+            )
     member this.CopyTo (entity: HistoryEntity) =
-        entity.AcquiredCard <- this.AcquiredCard
+        entity.AcquiredCard <- this.AcquiredCard |> Option.toObj
         entity.Score <- this.Score
         entity.Timestamp <- this.Timestamp
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
-        entity.BranchInstance <- this.AcquiredCard.BranchInstance
-        entity.UserId <- this.AcquiredCard.UserId
-        entity.Index <- this.AcquiredCard.Index
+        entity.BranchInstance <- this.AcquiredCard |> Option.map (fun x -> x.BranchInstance) |> Option.toObj
+        entity.UserId <- this.UserId
+        entity.Index <- this.AcquiredCard |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
     member this.CopyToNew =
         let history = HistoryEntity()
         this.CopyTo history
@@ -196,7 +206,7 @@ type AnkiHistory = {
 type AnkiCardType = | New | Learning | Due // | Filtered
 
 module Anki =
-    let toHistory (cardByAnkiId: Map<int64, AcquiredCardEntity>) getHistory (revLog: RevlogEntity) =
+    let toHistory userId (cardByAnkiId: Map<int64, AcquiredCardEntity>) getHistory (revLog: RevlogEntity) =
         result {
             let! score =
                 match revLog.Ease with
@@ -205,27 +215,26 @@ module Anki =
                 | 3L -> Ok Good
                 | 4L -> Ok Easy
                 | _ -> Error <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
+            let history = {
+                UserId = userId
+                AcquiredCard =
+                    cardByAnkiId
+                    |> Map.tryFind revLog.Cid
+                EaseFactorInPermille = int16 revLog.Factor
+                IntervalWithUnusedStepsIndex =
+                    match revLog.Ivl with
+                    | p when p > 0L -> p |> float |> TimeSpan.FromDays    // In Anki, positive is days
+                    | n             -> n |> float |> TimeSpan.FromSeconds // In Anki, negative is seconds
+                    |> Interval
+                Score = score |> Score.toDb
+                TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
+                    revLog.Time / 1000L - 32768L |> int16
+                Timestamp =
+                    DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
+            }
             return
-                if cardByAnkiId.ContainsKey revLog.Cid // veryLowTODO report/log this, sometimes a user reviews a card then deletes it, but Anki keeps the orphaned revlog
-                then
-                    let history = {
-                        AcquiredCard = cardByAnkiId.[revLog.Cid]
-                        EaseFactorInPermille = int16 revLog.Factor
-                        IntervalWithUnusedStepsIndex =
-                            match revLog.Ivl with
-                            | p when p > 0L -> p |> float |> TimeSpan.FromDays    // In Anki, positive is days
-                            | n             -> n |> float |> TimeSpan.FromSeconds // In Anki, negative is seconds
-                            |> Interval
-                        Score = score |> Score.toDb
-                        TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
-                            revLog.Time / 1000L - 32768L |> int16
-                        Timestamp =
-                            DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
-                    }
-                    getHistory history
-                    |> Option.defaultWith (fun () -> history.CopyToNew)
-                    |> Some
-                else None // highTODO import
+                getHistory history
+                |> Option.defaultWith (fun () -> history.CopyToNew)
         }
 
     let ankiIntToBool =
