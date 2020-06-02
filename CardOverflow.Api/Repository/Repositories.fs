@@ -230,7 +230,7 @@ module StackViewRepository =
                 .SingleOrDefaultAsync(fun x -> x.Id = aId)
             |> Task.map (Result.requireNotNull (sprintf "Branch instance #%i not found" aId))
         let! (b: BranchInstanceEntity) = // verylowTODO optimization try to get this from `a` above
-            db.LatestBranchInstance
+            db.LatestDefaultBranchInstance
                 .Include(fun x -> x.CollateInstance)
                 .SingleAsync(fun x -> x.StackId = a.StackId)
         let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.Id

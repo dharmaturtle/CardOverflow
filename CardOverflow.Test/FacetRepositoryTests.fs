@@ -316,6 +316,7 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicStack c.Db userId []
+    let stackId = 1
     let branchId = 1
     let! collate =
         TestCollateRepo.Search c.Db "Basic"
@@ -333,12 +334,34 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
     
-    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db 1001 userId
+    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db oldInstanceId userId
     
     do! StackViewRepository.instance c.Db oldInstanceId
         |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
     Assert.False a_
     Assert.True b_
+    Assert.Empty b.FieldValues
+    Assert.Equal(updatedInstanceId, bId)
+
+    // works on a branch
+    let branchVersion = Guid.NewGuid().ToString()
+    let! _ =
+        {   EditStackCommand.EditSummary = branchVersion
+            FieldValues = [].ToList()
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = NewBranch_SourceStackId_Title (stackId, Guid.NewGuid().ToString())
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
+        } |> UpdateRepository.stack c.Db userId
+    let branchInstanceId = 1003
+    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = branchInstanceId)
+        |> Task.map (fun x -> Assert.Equal(branchVersion, x.EditSummary))
+    
+    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db branchInstanceId userId
+    
+    do! StackViewRepository.instance c.Db branchInstanceId
+        |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
+    Assert.True a_
+    Assert.False b_
     Assert.Empty b.FieldValues
     Assert.Equal(updatedInstanceId, bId)
     } |> TaskResult.getOk)
