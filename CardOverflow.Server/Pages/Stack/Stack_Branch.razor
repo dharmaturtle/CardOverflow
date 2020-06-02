@@ -45,6 +45,23 @@
           @branch.Name
         }
       </button>
+      <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
+        <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
+        <BSDropdownMenu>
+          <BSDropdownItem Href="@($"/user/{branch.AuthorId}")"><span class="oi oi-person"></span> By @branch.Author</BSDropdownItem>
+          @if (branch.AuthorId == _user.Id) {
+            <BSDropdownItem Href="@($"branch/{branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
+          }
+          <BSDropdownItem Href="@($"curate/stack/copy/{branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+          <BSDropdownItem Href="@($"/branch/{@branch.Id}/revision")"><i class="fas fa-history"></i> Revisions</BSDropdownItem>
+          @if (@branch.Name != null) {
+            <BSDropdownItem Href="@($"stackdiff/{branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+          }
+          @if (Status.BranchInstanceId != null && branch.Instance.Id != Status.BranchInstanceId.Value) {
+            <BSDropdownItem Href="@($"stackdiff/{branch.Instance.Id}/Selected Branch/{Status.BranchInstanceId.Value}/Your Collected Branch")">&Delta; Compare with your collected branch</BSDropdownItem>
+          }
+        </BSDropdownMenu>
+      </BSDropdown>
     </div>
   }
 </div>
