@@ -44,7 +44,7 @@
         </span>
       </span>
       <a href="branchinstance/@AId">
-        Old Card
+        Old Stack
       </a>
       @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
         <span>
@@ -55,8 +55,8 @@
         </a>
       }
       @if (_aIsAcquired && !_bIsAcquired && _user.IsAuthenticated) {
-        <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewCard>
-          Get New Card
+        <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewStack>
+          Get New Stack
         </button>
       }
     </div>
@@ -68,7 +68,7 @@
         </span>
       </span>
       <a href="branchinstance/@BId">
-        New Card
+        New Stack
       </a>
       @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
         <span>
@@ -105,12 +105,12 @@
       <BSTab>
         <BSTabLabel>
           Holistic detailed
-          @if (_cardZips().Any(x => x.AFront != x.BFront || x.ABack != x.BBack)) {
+          @if (_stackZips().Any(x => x.AFront != x.BFront || x.ABack != x.BBack)) {
             <i class="fas fa-asterisk"></i>
           }
         </BSTabLabel>
         <BSTabContent>
-          @foreach (var zip in _cardZips()) {
+          @foreach (var zip in _stackZips()) {
             <TextDiff OldText=@zip.AFront NewText=@zip.BFront CollapseContent=true MaxHeight="-1">
               <Header>
                 <h6 style="padding: 12px; margin: 0px;">
@@ -247,10 +247,10 @@
 }
 
 @code {
-  [Parameter] public int AId { get; set; }
-  [Parameter] public int BId { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
+  [Parameter] public int AId { get; set; }
+  [Parameter] public int BId { get; set; }
   private string _loadingMessage = "Loading...";
   private BranchInstanceView _a;
   private BranchInstanceView _b;
@@ -259,7 +259,7 @@
   private string _collateFields(BranchInstanceView view) => view.CollateInstance.Fields.Select(x => x.Name).Apply(x => String.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(BranchInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
-  private List<(string AFront, string ABack, string BFront, string BBack)> _cardZips() =>
+  private List<(string AFront, string ABack, string BFront, string BBack)> _stackZips() =>
     _a.FrontBackFrontSynthBackSynth.ZipLongest(_b.FrontBackFrontSynthBackSynth, (a, b) =>
       (AFront: a?.Item1 ?? "",
         ABack: a?.Item2 ?? "",
@@ -267,7 +267,7 @@
         BBack: b?.Item2 ?? ""
       )).ToList();
   private List<(string Front, string Back)> _holisticDiffs() =>
-    _cardZips().Select(x =>
+    _stackZips().Select(x =>
         (ViewLogic.diff(x.AFront, x.BFront),
         ViewLogic.diff(x.ABack, x.BBack))
       ).ToList();
@@ -324,7 +324,7 @@
     }
   }
 
-  private async Task _GetNewCard() {
+  private async Task _GetNewStack() {
     await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, BId));
     var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, _user.Id, new List<int> { AId, BId }));
     _aIsAcquired = acquiredIds.Contains(AId);
