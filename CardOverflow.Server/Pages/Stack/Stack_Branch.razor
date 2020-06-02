@@ -51,6 +51,7 @@
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
   [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
@@ -59,11 +60,16 @@
   [Parameter] public BranchInstanceMeta Root { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
   private async Task _Acquire(ExploreStackAcquiredStatus status) {
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, user.Id, status.BranchInstanceId.Value));
+    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, status.BranchInstanceId.Value));
     if (x.IsOk) {
-      var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, user.Id, Root.StackId));
+      var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Root.StackId));
       if (ac.IsOk) {
         await UpdateAcquiredCards.InvokeAsync(ac.ResultValue);
         _UpdateUsers(-1, Status.BranchInstanceId?.Value);
