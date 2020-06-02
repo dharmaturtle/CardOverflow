@@ -1,5 +1,5 @@
 @page "/stackdiff/{AId:int}"
-@page "/stackdiff/{AId:int}/{BId:int}"
+@page "/stackdiff/{AId:int}/{ATitle}/{BId:int}/{BTitle}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -44,7 +44,7 @@
         </span>
       </span>
       <a href="branchinstance/@AId">
-        Old Stack
+        @(ATitle ?? "Old Stack")
       </a>
       @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
         <span>
@@ -68,7 +68,7 @@
         </span>
       </span>
       <a href="branchinstance/@BId">
-        New Stack
+        @(BTitle ?? "New Stack")
       </a>
       @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
         <span>
@@ -90,7 +90,7 @@
         <BSTabLabel>
           Holistic
           @if (_HasDifferences(_holisticDiffs().SelectMany(x => new List<string> { x.Front, x.Back }).ToList())) {
-            <i class="fas fa-asterisk"></i>
+            <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
           }
         </BSTabLabel>
         <BSTabContent>
@@ -106,7 +106,7 @@
         <BSTabLabel>
           Holistic detailed
           @if (_stackZips().Any(x => x.AFront != x.BFront || x.ABack != x.BBack)) {
-            <i class="fas fa-asterisk"></i>
+            <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
           }
         </BSTabLabel>
         <BSTabContent>
@@ -138,7 +138,7 @@
         <BSTabLabel>
           Fields
           @if (_fieldNames.Any(name => _HasDifferences(_fieldDiff(name)))) {
-            <i class="fas fa-asterisk"></i>
+            <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
           }
         </BSTabLabel>
         <BSTabContent>
@@ -152,7 +152,7 @@
         <BSTabLabel>
           Fields detailed
           @if (_fieldNames.Any(name => _value(_a, name) != _value(_b, name))) {
-            <i class="fas fa-asterisk"></i>
+            <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
           }
         </BSTabLabel>
         <BSTabContent>
@@ -174,7 +174,7 @@
         <BSTabLabel>
           Templates
           @if (_HasDifferences(_XemplateHolistic().SelectMany(x => new List<string> { x.Front, x.Back }).ToList())) {
-            <i class="fas fa-asterisk"></i>
+            <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
           }
         </BSTabLabel>
         <BSTabContent>
@@ -190,11 +190,11 @@
         <BSTabLabel>
           Templates detailed
           @if (
-           _collateFields(_a) != _collateFields(_b) ||
-           _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-           _a.CollateInstance.Css != _b.CollateInstance.Css) {
-            <i class="fas fa-asterisk"></i>
-          }
+        _collateFields(_a) != _collateFields(_b) ||
+        _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
+        _a.CollateInstance.Css != _b.CollateInstance.Css) {
+        <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
+      }
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_collateFields(_a) NewText=@_collateFields(_b) CollapseContent=true MaxHeight="-1">
@@ -251,6 +251,8 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public int AId { get; set; }
   [Parameter] public int BId { get; set; }
+  [Parameter] public string ATitle { get; set; }
+  [Parameter] public string BTitle { get; set; }
   private string _loadingMessage = "Loading...";
   private BranchInstanceView _a;
   private BranchInstanceView _b;
