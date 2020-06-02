@@ -1,4 +1,4 @@
-@page "/stack/{Id:int}/revision"
+@page "/branch/{Id:int}/revision"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -9,14 +9,14 @@
 @using CardOverflow.Sanitation
 @inject DbExecutor DbExecutor
 
-@if (Revision == null) {
+@if (_revision == null) {
   <p><em>Loading...</em></p>
 } else {
   <div class="text-right">
-    By @Revision.Author
+    By <a href="user/@_revision.AuthorId">@_revision.Author</a>
   </div>
   <ol class="list-group" style="list-style: decimal inside;">
-    @foreach (var meta in Revision.SortedMeta) {
+    @foreach (var meta in _revision.SortedMeta) {
       <li class="list-group-item" style="display: list-item">
         <label>Created:</label> @meta.Created
         @if (meta.Modified != null) {
@@ -31,12 +31,13 @@
 @code {
   [Parameter] public int Id { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  CardOverflow.Pure.BranchRevision Revision;
+  private UserClaims _user = UserClaims.init;
+  private CardOverflow.Pure.BranchRevision _revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
-    Revision = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id));
+    _revision = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id));
     StateHasChanged();
   }
 
