@@ -367,6 +367,28 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
 
+[<Fact>]
+let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
+    let userId = 3
+    use c = new TestContainer()
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic (and reversed card)"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic (and reversed card)"))
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
+    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId)
+    let stackId = 1
+
+    let! _ =
+        {   EditStackCommand.EditSummary = ""
+            FieldValues = [].ToList()
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
+        } |> UpdateRepository.stack c.Db userId
+
+    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId)
+    } |> TaskResult.getOk)
+
 //[<Fact>] // medTODO uncomment when you bring back communals
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
     let userId = 3

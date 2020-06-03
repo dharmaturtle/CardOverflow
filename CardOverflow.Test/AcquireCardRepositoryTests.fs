@@ -122,8 +122,8 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let ac = ac.Value.Single()
     Assert.Equal(ac.CardState, CardState.Suspended) // still suspended after edit
 
-    let userId = 2 // other users can't edit card state
-    let! x = StackRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
+    let otherUserId = 2 // other users can't edit card state
+    let! x = StackRepository.editState c.Db otherUserId ac.AcquiredCardId CardState.Suspended
     Assert.Equal("You don't own that card.", x.error)
     }
 
