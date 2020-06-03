@@ -223,17 +223,17 @@ module StackViewRepository =
                 .Where(fun x -> x.BranchInstanceId = aId || x.BranchInstanceId = bId)
                 .Select(fun x -> x.BranchInstanceId)
                 .ToListAsync()
-    let instanceWithLatest (db: CardOverflowDb) aId userId = taskResult {
+    let instanceWithLatest (db: CardOverflowDb) a_branchInstanceId userId = taskResult {
         let! (a: BranchInstanceEntity) =
             db.BranchInstance
                 .Include(fun x -> x.CollateInstance)
-                .SingleOrDefaultAsync(fun x -> x.Id = aId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch instance #%i not found" aId))
+                .SingleOrDefaultAsync(fun x -> x.Id = a_branchInstanceId)
+            |> Task.map (Result.requireNotNull (sprintf "Branch instance #%i not found" a_branchInstanceId))
         let! (b: BranchInstanceEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestDefaultBranchInstance
                 .Include(fun x -> x.CollateInstance)
                 .SingleAsync(fun x -> x.StackId = a.StackId)
-        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId b.Id
+        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId a_branchInstanceId b.Id
         return
             BranchInstanceView.load a,
             acquiredInstanceIds.Contains a.Id,
@@ -241,15 +241,15 @@ module StackViewRepository =
             acquiredInstanceIds.Contains b.Id,
             b.Id
     }
-    let instancePair (db: CardOverflowDb) aId bId userId = taskResult {
+    let instancePair (db: CardOverflowDb) a_branchInstanceId b_branchInstanceId userId = taskResult {
         let! (instances: BranchInstanceEntity ResizeArray) =
             db.BranchInstance
                 .Include(fun x -> x.CollateInstance)
-                .Where(fun x -> x.Id = aId || x.Id = bId)
+                .Where(fun x -> x.Id = a_branchInstanceId || x.Id = b_branchInstanceId)
                 .ToListAsync()
-        let! a = Result.requireNotNull (sprintf "Branch instance #%i not found" aId) <| instances.SingleOrDefault(fun x -> x.Id = aId)
-        let! b = Result.requireNotNull (sprintf "Branch instance #%i not found" bId) <| instances.SingleOrDefault(fun x -> x.Id = bId)
-        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId aId bId
+        let! a = Result.requireNotNull (sprintf "Branch instance #%i not found" a_branchInstanceId) <| instances.SingleOrDefault(fun x -> x.Id = a_branchInstanceId)
+        let! b = Result.requireNotNull (sprintf "Branch instance #%i not found" b_branchInstanceId) <| instances.SingleOrDefault(fun x -> x.Id = b_branchInstanceId)
+        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId a_branchInstanceId b_branchInstanceId
         return
             BranchInstanceView.load a,
             acquiredInstanceIds.Contains a.Id,

@@ -1,5 +1,5 @@
-@page "/stackdiff/{AId:int}"
-@page "/stackdiff/{AId:int}/{ATitle}/{BId:int}/{BTitle}"
+@page "/stackdiff/{A_BranchInstanceId:int}"
+@page "/stackdiff/{A_BranchInstanceId:int}/{ATitle}/{B_BranchInstanceId:int}/{BTitle}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -40,10 +40,10 @@
       <span class="curate-tooltip-target">
         <span class="oi oi-eye@(_aIsAcquired ? " text-success" : "")" aria-hidden="true" />
         <span class="curate-tooltip-content">
-          <ResizingIframeBranch BranchInstanceId=@AId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
+          <ResizingIframeBranch BranchInstanceId=@A_BranchInstanceId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
         </span>
       </span>
-      <a href="branchinstance/@AId">
+      <a href="branchinstance/@A_BranchInstanceId">
         @(ATitle ?? "Old Stack")
       </a>
       @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
@@ -64,10 +64,10 @@
       <span class="curate-tooltip-target">
         <span class="oi oi-eye@(_bIsAcquired ? " text-success" : "")" aria-hidden="true" />
         <span class="curate-tooltip-content">
-          <ResizingIframeBranch BranchInstanceId=@BId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
+          <ResizingIframeBranch BranchInstanceId=@B_BranchInstanceId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
         </span>
       </span>
-      <a href="branchinstance/@BId">
+      <a href="branchinstance/@B_BranchInstanceId">
         @(BTitle ?? "New Stack")
       </a>
       @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
@@ -249,8 +249,8 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int AId { get; set; }
-  [Parameter] public int BId { get; set; }
+  [Parameter] public int A_BranchInstanceId { get; set; }
+  [Parameter] public int B_BranchInstanceId { get; set; }
   [Parameter] public string ATitle { get; set; }
   [Parameter] public string BTitle { get; set; }
   private string _loadingMessage = "Loading...";
@@ -307,16 +307,16 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    if (BId == 0) {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, AId, _user.Id));
+    if (B_BranchInstanceId == 0) {
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, A_BranchInstanceId, _user.Id));
       if (x.IsOk) {
-        (_a, _aIsAcquired, _b, _bIsAcquired, BId) = x.ResultValue;
+        (_a, _aIsAcquired, _b, _bIsAcquired, B_BranchInstanceId) = x.ResultValue;
         _OnOk();
       } else {
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, AId, BId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, A_BranchInstanceId, B_BranchInstanceId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsAcquired, _b, _bIsAcquired) = x.ResultValue;
         _OnOk();
@@ -327,10 +327,10 @@
   }
 
   private async Task _GetNewStack() {
-    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, BId));
-    var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, _user.Id, new List<int> { AId, BId }));
-    _aIsAcquired = acquiredIds.Contains(AId);
-    _bIsAcquired = acquiredIds.Contains(BId);
+    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, B_BranchInstanceId));
+    var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
+    _aIsAcquired = acquiredIds.Contains(A_BranchInstanceId);
+    _bIsAcquired = acquiredIds.Contains(B_BranchInstanceId);
   }
 
 }
