@@ -459,6 +459,7 @@ type BranchRevision with
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
+        Name = e.Name
         SortedMeta =
             e.BranchInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)

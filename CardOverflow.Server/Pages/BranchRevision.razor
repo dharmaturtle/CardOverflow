@@ -12,8 +12,20 @@
 @if (_revision == null) {
   <p><em>Loading...</em></p>
 } else {
-  <div class="text-right">
-    By <a href="user/@_revision.AuthorId">@_revision.Author</a>
+  <div class="d-flex justify-content-between">
+    <a href="stack/@_revision.SortedMeta.First().StackId">
+      Return to Stack
+    </a>
+    <h3>
+      @if (_revision.Name == null) {
+        <span>&laquo; Default &raquo;</span>
+      } else {
+        <span>@_revision.Name</span>
+      }
+    </h3>
+    <div>
+      By <a href="user/@_revision.AuthorId">@_revision.Author</a>
+    </div>
   </div>
   <ol class="list-group" style="list-style: decimal inside;">
     @foreach (var meta in _revision.SortedMeta) {

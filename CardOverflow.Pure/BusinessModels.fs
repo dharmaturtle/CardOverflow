@@ -496,6 +496,7 @@ type BranchRevision = {
     Id: int
     Author: string
     AuthorId: int
+    Name: string
     SortedMeta: BranchInstanceMeta list
 }
 
