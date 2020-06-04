@@ -50,12 +50,8 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id));
-    if (x.IsOk) {
-      _revision = x.ResultValue;
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
+    await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id)).Match(ToastService, 
+      x => _revision = x);
     StateHasChanged();
   }
 
