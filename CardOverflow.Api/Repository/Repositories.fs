@@ -299,13 +299,14 @@ module StackRepository =
         ac.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
     }
-    let Revisions (db: CardOverflowDb) userId branchId = task {
+    let Revisions (db: CardOverflowDb) userId branchId = taskResult {
         let! r =
             db.Branch
                 .Include(fun x -> x.Author)
                 .Include(fun x -> x.BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchInstanceEntity) -> x.CollateInstance)
-                .SingleAsync(fun x -> x.Id = branchId)
+                .SingleOrDefaultAsync(fun x -> x.Id = branchId)
+            |> Task.map (Result.requireNotNull <| sprintf "BranchId #%i not found" branchId)
         let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         return BranchRevision.load isAcquired r
     }

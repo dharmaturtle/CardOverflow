@@ -468,7 +468,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         )
         let createds = c.Db.BranchInstance.Select(fun x -> x.Created) |> Seq.toList
         Assert.NotEqual(createds.[0], createds.[1])
-        let! revisions = StackRepository.Revisions c.Db userId branchId
+        let! revisions = StackRepository.Revisions c.Db userId branchId |> TaskResult.getOk
         Assert.Equal(revisionCount, revisions.SortedMeta.Count())
         let! instance = StackViewRepository.instance c.Db revisions.SortedMeta.[0].Id
         let revision, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
@@ -482,7 +482,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
               { Name = "B"
                 Count = 1
                 IsAcquired = true }]
-    let! revisions = StackRepository.Revisions c.Db user1 og_b
+    let! revisions = StackRepository.Revisions c.Db user1 og_b  |> TaskResult.getOk
     let! instance = StackViewRepository.instance c.Db revisions.SortedMeta.[1].Id
     let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
     Assert.Contains("Front", original)

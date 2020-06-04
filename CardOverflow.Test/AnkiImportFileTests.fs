@@ -375,8 +375,11 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
         TestCollateRepo.Search c.Db "Basic (and reversed card)"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic (and reversed card)"))
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
-    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId)
     let stackId = 1
+    let branchId_og = 1
+    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    let! revisions = StackRepository.Revisions c.Db userId branchId_og
+    Assert.equal 1 revisions.SortedMeta.Length
 
     let! _ =
         {   EditStackCommand.EditSummary = ""
@@ -386,7 +389,30 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
             EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
 
-    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId)
+    let branchId_alt = 2
+    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+
+    // updating
+    let! _ =
+        {   EditStackCommand.EditSummary = ""
+            FieldValues = [].ToList()
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = Update_BranchId_Title(branchId_og, "update Branch")
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
+        } |> UpdateRepository.stack c.Db userId
+
+    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+
+    // switching to testing StackRepository.Revisions
+    let! revisions = StackRepository.Revisions c.Db userId branchId_og
+
+    Assert.equal 2 revisions.SortedMeta.Length
+
+    // invalid branchId
+    let invalidBranchId = 1337
+    let! (revisions: Result<_, _>) = StackRepository.Revisions c.Db userId invalidBranchId
+
+    Assert.equal (sprintf "BranchId #%i not found" invalidBranchId) revisions.error
     } |> TaskResult.getOk)
 
 //[<Fact>] // medTODO uncomment when you bring back communals

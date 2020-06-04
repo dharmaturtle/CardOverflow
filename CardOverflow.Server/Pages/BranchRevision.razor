@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @inject DbExecutor DbExecutor
+@inject IToastService ToastService
 
 @if (_revision == null) {
   <p><em>Loading...</em></p>
@@ -49,7 +50,12 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
-    _revision = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id));
+    var x = await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id));
+    if (x.IsOk) {
+      _revision = x.ResultValue;
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
     StateHasChanged();
   }
 
