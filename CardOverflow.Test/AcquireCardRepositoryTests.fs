@@ -177,10 +177,10 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             UserId = userId,
             CardSettingId = userId,
             DeckId = userId)
-    let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
+    let ex = Assert.Throws<Npgsql.PostgresException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "P0001: UserId #3 with AcquiredCard #3 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
-        ex.InnerException.Message)
+        "P0001: UserId #3 with AcquiredCard #3 and Stack #1 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
+        ex.Message)
     }
 
 [<Fact>]

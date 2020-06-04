@@ -11,15 +11,49 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+CREATE FUNCTION public.cfn_acquiredcard_insertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."StackId" = NEW."StackId") _)) THEN
+            RAISE EXCEPTION 'UserId #% with AcquiredCard #% and Stack #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%',
+            (NEW."UserId"), (NEW."Id"), (NEW."StackId"), (NEW."BranchInstanceId"), (SELECT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."StackId" = NEW."StackId" LIMIT 1);
+        END IF;
+		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."Index" <> NEW."Index"))) THEN
+		IF ((SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId") < NEW."Index") THEN
+			RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
+		END IF;
+		END IF;
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.cfn_acquiredcard_insertupdate() OWNER TO postgres;
+
+CREATE FUNCTION public.cfn_branch_insertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        default_branch_id integer NOT NULL := 0;
+    BEGIN
+        default_branch_id := (SELECT "DefaultBranchId" FROM "Stack" s WHERE NEW."StackId" = s."Id");
+        IF ((NEW."Name" IS NOT NULL) AND (default_branch_id = NEW."Id")) THEN
+            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+        ELSIF ((NEW."Name" IS NULL) AND (default_branch_id <> NEW."Id")) THEN
+            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+        END IF;
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.cfn_branch_insertupdate() OWNER TO postgres;
+
 CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-            IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."StackId" = NEW."StackId") _)) THEN
-                RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."BranchInstanceId"), (SELECT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = 3 AND ac."StackId" = NEW."StackId" LIMIT 1);
-            END IF;
-        END IF;
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ( SELECT  COUNT(*) FROM
@@ -73,11 +107,6 @@ CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."Index" <> NEW."Index"))) THEN
-		IF ((SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId") < NEW."Index") THEN
-			RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
-		END IF;
-		END IF;
         IF (NEW."TsVectorHelper" IS NOT NULL) THEN
             NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
             NEW."TsVectorHelper" = NULL;
@@ -99,14 +128,6 @@ CREATE FUNCTION public.fn_branch_afterinsertupdate() RETURNS trigger
             UPDATE "Stack" s
             SET    "DefaultBranchId" = (NEW."Id")
             WHERE (s."Id" = NEW."StackId" AND s."DefaultBranchId" = 0);
-        END IF;
-        
-        default_branch_id := (SELECT "DefaultBranchId" FROM "Stack" s WHERE NEW."StackId" = s."Id");
-        
-        IF ((NEW."Name" IS NOT NULL) AND (default_branch_id = NEW."Id")) THEN
-            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
-        ELSIF ((NEW."Name" IS NULL) AND (default_branch_id <> NEW."Id")) THEN
-            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
         END IF;
         RETURN NULL;
     END;
@@ -1520,6 +1541,12 @@ CREATE INDEX idx_fts_relationship_tsvector ON public."Relationship" USING gin ("
 
 
 CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
+
+
+CREATE CONSTRAINT TRIGGER ctr_acquiredcard_insertupdate AFTER INSERT OR UPDATE ON public."AcquiredCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.cfn_acquiredcard_insertupdate();
+
+
+CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public."Branch" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.cfn_branch_insertupdate();
 
 
 CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
