@@ -11,7 +11,7 @@
 <div class="d-flex justify-content-between align-items-center">
   <SearchBar SearchClicked="@SearchClicked" BackLink="/stack/" CreateLink=@(x => $"/stack/{x}") Ids=@_stacks?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
 </div>
-@if (SelectedStackId == null) {
+@if (SelectedStackId == default && BranchId == default && BranchInstanceId == default) {
   @if (_stacks == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -63,7 +63,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (SelectedStackId == null && _stacks == null) {
+    if (SelectedStackId == default && BranchId == default && BranchInstanceId == default && _stacks == default) {
       await PageChanged(1);
     }
     StateHasChanged();

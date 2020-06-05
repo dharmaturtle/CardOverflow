@@ -98,13 +98,14 @@
           <div class="row float-right">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <span>
-              Saved! Link to
-              @*highTODO fix, there's no /branch*@
-              <a href="branch/@_resultingBranchId">
-                card.
-              </a>
-            </span>
+            @if (_savedBranchId != default) {
+              <span>
+                Saved! Link to
+                <a href="stack?branch=@_savedBranchId">
+                  card.
+                </a>
+              </span>
+            }
           </div>
         </div>
       </div>
@@ -122,7 +123,7 @@
   private int _selectedCollateId;
   private int _selectedCollateInstanceId;
   private bool _isDisabled;
-  private int _resultingBranchId;
+  private int _savedBranchId;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -146,7 +147,7 @@
     var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, EditStack));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
-      _resultingBranchId = result.ResultValue;
+      _savedBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
         var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
         EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
