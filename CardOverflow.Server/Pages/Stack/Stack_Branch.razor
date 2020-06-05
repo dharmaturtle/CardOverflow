@@ -84,21 +84,15 @@
   }
 
   private async Task _Acquire(ExploreStackAcquiredStatus status) {
-    var x = await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, status.BranchInstanceId.Value));
-    if (x.IsOk) {
-      var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Root.StackId));
-      if (ac.IsOk) {
-        await UpdateAcquiredCards.InvokeAsync(ac.ResultValue);
+    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, status.BranchInstanceId.Value)).Match(ToastService, async x => {
+      await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Root.StackId)).Match(ToastService, async cards => {
+        await UpdateAcquiredCards.InvokeAsync(cards);
         _UpdateUsers(-1, Status.BranchInstanceId?.Value);
         Status = status;
         await UpdateStatus.InvokeAsync(Status);
         _UpdateUsers(1, Status.BranchInstanceId?.Value);
-      } else {
-        ToastService.ShowError(ac.ErrorValue);
-      }
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
+      });
+    });
   }
 
   private void _UpdateUsers(int i, int? instanceId) {
