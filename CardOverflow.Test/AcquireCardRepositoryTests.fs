@@ -23,10 +23,8 @@ open FsToolkit.ErrorHandling
 let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! actualStackId, actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let stackId = 1
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
-    Assert.Equal(stackId, actualStackId)
     Assert.Equal(branchId, actualBranchId)
     let! collate =
         TestCollateRepo.Search c.Db "Basic"
@@ -50,8 +48,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
             Kind = Update_BranchId_Title (branchId, null)
             EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
-    let actualStackId, actualBranchId = x.Value
-    Assert.Equal(stackId, actualStackId)
+    let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
     do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
@@ -63,10 +60,8 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
     let! batch = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.StackId |> TaskResult.getOk
-    let! actualStackId, actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let newCardStackId = 2
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let newCardBranchId = 2
-    Assert.Equal(newCardStackId, actualStackId)
     Assert.Equal(newCardBranchId, actualBranchId)
     let! stack2 = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> ac.StackId)
     let stack2 = stack2.Id
@@ -99,10 +94,8 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
 let ``StackRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! actualStackId, actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let stackId = 1
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
-    Assert.Equal(stackId, actualStackId)
     Assert.Equal(branchId, actualBranchId)
     let! collate =
         TestCollateRepo.Search c.Db "Basic"
@@ -123,8 +116,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
             Kind = Update_BranchId_Title (branchId, null)
             EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
-    let actualStackId, actualBranchId = x.Value
-    Assert.Equal(stackId, actualStackId)
+    let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
     let! ac = StackRepository.GetAcquired c.Db userId ac.StackId
     let ac = ac.Value.Single()
@@ -139,24 +131,22 @@ let ``StackRepository.editState works``(): Task<unit> = task {
 let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! actualStackId, actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let stackId = 1
     let branchId = 1
-    Assert.Equal(stackId, actualStackId)
     Assert.Equal(branchId, actualBranchId)
     let! collate =
         TestCollateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
-    let! actualStackId, actualBranchId = 
+    let! actualBranchId = 
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
             EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
-        } |> UpdateRepository.stack c.Db userId |> TaskResult.getOk
+        } |> UpdateRepository.stack c.Db userId
     let i2 = 1002
-    Assert.Equal(stackId, actualStackId)
-    Assert.Equal(branchId, actualBranchId)
+    Assert.Equal(branchId, actualBranchId.Value)
     do! StackRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.AcquiredCard.Single().BranchInstanceId)
     Assert.Equal(branchId, c.Db.AcquiredCard.Single().BranchId)
@@ -236,9 +226,8 @@ let ``AcquireCards works``(): Task<unit> = task {
             FieldValues = [].ToList()
             Kind = Update_BranchId_Title (b1, null)
         }
-    let! stackId, branchId = SanitizeStackRepository.Update c.Db authorId command |> TaskResult.getOk
+    let! branchId = SanitizeStackRepository.Update c.Db authorId command |> TaskResult.getOk
     let ci1_2 = 1003
-    Assert.Equal(s1, stackId)
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
