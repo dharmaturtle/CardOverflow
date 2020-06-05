@@ -44,7 +44,7 @@ let ``Getting 10 pages of GetAcquiredPages takes less than 1 minute``(): Task<un
     }
 
 [<Fact>]
-let ``GetAcquiredPages gets the acquired card if there's been an update``(): Task<unit> = (taskResult {
+let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
@@ -81,6 +81,60 @@ let ``GetAcquiredPages gets the acquired card if there's been an update``(): Tas
     let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId updatedInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
+
+    // getAcquiredInstanceFromInstance fails gracefully on invalid instanceId
+    let invalidInstanceId = 1337
+
+    let! (actual: Result<_,_>) = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId invalidInstanceId
+
+    Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
+    } |> TaskResult.getOk)
+
+[<Fact>]
+let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
+    let branchId = 1
+    let! collate =
+        TestCollateRepo.Search c.Db "Basic (and reversed card)"
+        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic (and reversed card)"))
+    let secondVersion = Guid.NewGuid().ToString()
+    let! _ =
+        {   EditStackCommand.EditSummary = secondVersion
+            FieldValues = [].ToList()
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = Update_BranchId_Title (branchId, null)
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
+        } |> UpdateRepository.stack c.Db userId
+    let oldInstanceId = 1001
+    let updatedInstanceId = 1002
+    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
+        |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
+    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+        |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
+
+    let! (cards: PagedList<Result<AcquiredCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
+    let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
+
+    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
+
+    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
+    let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId oldInstanceId
+
+    Assert.Equal(updatedInstanceId, actual)
+
+    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
+    let! actual = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId updatedInstanceId
+
+    Assert.Equal(updatedInstanceId, actual)
+
+    // getAcquiredInstanceFromInstance fails gracefully on invalid instanceId
+    let invalidInstanceId = 1337
+
+    let! (actual: Result<_,_>) = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId invalidInstanceId
+
+    Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
     } |> TaskResult.getOk)
 
 [<Fact>]

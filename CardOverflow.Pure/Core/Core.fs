@@ -28,7 +28,21 @@ module TaskSeq =
     let iter f =
         Task.map (Seq.iter f)
 
+module ResizeArray =
+    let empty<'T> = [].ToList<'T>()
+    let map (f: _ -> _) (xs: _ ResizeArray) =
+        xs.Select(f).ToList()
+
+module TaskResizeArray =
+    let map f =
+        Task.map (ResizeArray.map f)
+
 module Result =
+    let requireNotEqualTo other err this =
+        if this = other then
+            Error err
+        else
+            Ok this
     let isOk = function
         | Ok _ -> true
         | Error _ -> false
@@ -139,9 +153,6 @@ module List =
             let x = xs |> List.filter (equals y) |> List.tryExactlyOne
             (x, Some y) :: zipOn (xs |> List.filter (not << equals y)) ys equals
         | [], [] -> []
-
-module ResizeArray =
-    let empty<'T> = [].ToList<'T>()
 
 [<RequireQualifiedAccess>]
 module Dispose =

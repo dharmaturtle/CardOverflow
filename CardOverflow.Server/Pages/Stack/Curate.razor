@@ -8,6 +8,7 @@
 @using CardOverflow.Sanitation
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
 
 <AuthorizeView>
   <div class="row">
@@ -85,7 +86,11 @@
         if (cards == null || (cards != null && !cards.Any(card => card.BranchInstanceMeta.Id == SelectedInstanceId.Value))) {
           var x = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquiredInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
           if (x.IsOk) {
-            SelectedInstanceId = x.ResultValue;
+            if (SelectedInstanceId != x.ResultValue) {
+              NavigationManager.NavigateTo($"my/stack?branchinstance={x.ResultValue}");
+            } else {
+              SelectedInstanceId = x.ResultValue;
+            }
           } else {
             SelectedInstanceId = null;
             ToastService.ShowError(x.ErrorValue);
