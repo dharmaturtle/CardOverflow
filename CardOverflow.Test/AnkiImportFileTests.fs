@@ -246,7 +246,7 @@ let ``Create card works with ViewEditAcquiredCardCommand`` (): Task<unit> = (tas
     let latestSettingId = ids.Last()
 
     // insert new stack with default settingsId
-    let! branchId =
+    let! _, branchId =
         ViewEditAcquiredCardCommand.init
         |> getCommand
         |> SanitizeStackRepository.Update c.Db userId
@@ -254,7 +254,7 @@ let ``Create card works with ViewEditAcquiredCardCommand`` (): Task<unit> = (tas
     Assert.Equal(defaultSettingId, card.CardSettingId)
     
     // insert new stack with latest settingsId
-    let! branchId =
+    let! _, branchId =
         {   ViewEditAcquiredCardCommand.init with
                 CardSettingId = Some latestSettingId }
         |> getCommand
@@ -321,6 +321,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
 
     // go from 1 cloze to 2 clozes
+    let stackId = 1
     let branchId = 1
     let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
@@ -332,7 +333,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    let! actualStackId, actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    Assert.Equal(stackId, actualStackId)
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 5
     
@@ -347,7 +349,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    let! actualStackId, actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    Assert.Equal(stackId, actualStackId)
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 4
     
@@ -362,7 +365,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    let! actualStackId, actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    Assert.Equal(stackId, actualStackId)
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)

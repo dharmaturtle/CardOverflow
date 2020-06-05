@@ -67,9 +67,10 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
 
     // Insert new card
     let! collates = TestCollateRepo.Search c.Db "Basic"
+    let stackId = 1
     let branchId = 1
     let collate = collates.Single(fun x -> x.Name = "Basic")
-    let! r =
+    let! actualStackId, actualBranchId =
         SanitizeStackRepository.Update c.Db userId
             {   EditSummary = "Initial creation"
                 FieldValues =
@@ -81,8 +82,9 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                 Kind = NewOriginal_TagIds []
                 Title = null
                 EditAcquiredCard = ViewEditAcquiredCardCommand.init
-            }
-    Assert.Equal(branchId, r.Value)
+            } |> TaskResult.getOk
+    Assert.Equal(stackId, actualStackId)
+    Assert.Equal(branchId, actualBranchId)
 
     // new card has default option
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.UserId = userId)

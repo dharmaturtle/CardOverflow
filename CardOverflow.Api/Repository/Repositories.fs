@@ -549,7 +549,7 @@ module UpdateRepository =
                 for tagId in tagIds do
                     acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
             do! db.SaveChangesAsyncI()
-            return branchInstance.BranchId
+            return branchInstance.StackId, branchInstance.BranchId
         }
 
 module CardSettingsRepository =
