@@ -27,8 +27,7 @@
                   Status=@Status
                   UpdateStatus=@UpdateStatus
                   Selected=@Selected
-                  UpdateAcquiredCards=@UpdateAcquiredCards
-                  UpdateUsers=@UpdateUsers/>
+                  UpdateAcquiredCards=@UpdateAcquiredCards />
   }
 </div>
 
@@ -41,7 +40,6 @@
   [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
-  [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

@@ -18,7 +18,7 @@
   <button class="btn btn-unacquire-card">
     <div class="d-flex align-items-center flex-column align-middle">
       <i class="fas fa-bookmark"></i>
-      @Users
+      @(Users + 1)
     </div>
   </button>
 } else {
@@ -37,7 +37,6 @@
   [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
-  [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
   
   [Parameter] public int Users { get; set; }
   [Parameter] public ExploreStackAcquiredStatus NewStatus { get; set; }
@@ -52,9 +51,7 @@
     await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewStatus.BranchInstanceId.Value)).Match(ToastService, async x => {
       await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Instance.StackId)).Match(ToastService, async cards => {
         await UpdateAcquiredCards.InvokeAsync(cards);
-        await UpdateUsers.InvokeAsync((-1, Status.BranchInstanceId?.Value));
         await UpdateStatus.InvokeAsync(NewStatus);
-        await UpdateUsers.InvokeAsync((1, NewStatus.BranchInstanceId?.Value));
       });
     });
   }

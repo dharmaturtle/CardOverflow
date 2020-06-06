@@ -64,8 +64,7 @@
                       Status=@_stack.AcquiredStatus
                       UpdateStatus=@(x => _stack.AcquiredStatus = x)
                       Selected=@_selected
-                      UpdateAcquiredCards=@(x => _acquiredCards = x)
-                      UpdateUsers=@(x => _UpdateUsers(x.Item1, x.Item2))/>
+                      UpdateAcquiredCards=@(x => _acquiredCards = x) />
     </div>
   </div>
 }
@@ -83,6 +82,17 @@
   private string _loadingMessage = "Loading...";
   private bool _isAcquired() => _acquiredCards.Any(x => x.BranchInstanceMeta.Id == _selected.Id);
 
+  private void sub1() {
+    if (_selected.IsAcquired) {
+      _selected.Users--;
+    }
+    foreach (var branch in _stack.Branches) {
+      if (branch.Instance.Id == _stack.AcquiredStatus.BranchInstanceId?.Value) {
+        branch.Summary.Users--;
+      }
+    }
+  }
+
   public override async Task SetParametersAsync(ParameterView parameters) {
     var oldStackId = StackId;
     var oldBranchId = BranchId;
@@ -93,15 +103,18 @@
       await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, _user.Id, StackId.Value)).Match(_ShowError, x => {
         _stack = x;
         _selected = _stack.Instance;
+        sub1();
       });
     } else if (BranchId.HasValue && oldBranchId != BranchId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.branch(db, _user.Id, BranchId.Value)).Match(_ShowError, x =>
-        (_selected, _stack) = x
-      );
+      await DbExecutor.QueryAsync(db => ExploreStackRepository.branch(db, _user.Id, BranchId.Value)).Match(_ShowError, x => {
+        (_selected, _stack) = x;
+        sub1();
+      });
     } else if (BranchInstanceId.HasValue && oldBranchInstanceId != BranchInstanceId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, _user.Id, BranchInstanceId.Value)).Match(_ShowError, x =>
-        (_selected, _stack) = x
-      );
+      await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, _user.Id, BranchInstanceId.Value)).Match(_ShowError, x => {
+        (_selected, _stack) = x;
+        sub1();
+      });
     }
     if (_user.IsAuthenticated && _stack != null) {
       var r = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, _stack.Id));
@@ -122,16 +135,6 @@
       _stack.Summary.Users--;
     } else if (!state.IsSuspended && _acquiredCards.All(x => !x.CardState.IsSuspended)) {
       _stack.Summary.Users++;
-    }
-  }
-
-  private void _UpdateUsers(int i, int? instanceId) {
-    var branch = @_stack.Branches.SingleOrDefault(x => x.Instance.Id == instanceId);
-    if (branch != null) {
-      branch.Summary.Users = branch.Summary.Users + i;
-    }
-    if (instanceId == _stack.Instance.Id) {
-      _stack.Instance.Users = _stack.Instance.Users + i;
     }
   }
 

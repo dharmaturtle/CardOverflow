@@ -19,7 +19,6 @@
                   Status=@Status
                   NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(Branch.Instance.Id)
                   Users=@Branch.Users
-                  UpdateUsers=@UpdateUsers
                   UpdateAcquiredCards=@UpdateAcquiredCards
                   UpdateStatus=@UpdateStatus />
   <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
@@ -61,7 +60,6 @@
                       Status=@Status
                       NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(revision.Id)
                       Users=@revision.Users
-                      UpdateUsers=@UpdateUsers
                       UpdateAcquiredCards=@UpdateAcquiredCards
                       UpdateStatus=@UpdateStatus />
       <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
@@ -80,7 +78,6 @@
   [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
-  [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
   private bool _displayAllRevisions;
   private BranchRevision _revisions;
 
@@ -95,17 +92,6 @@
     if (_revisions == null) {
       await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => _revisions = x);
     }
-  }
-
-  private async Task _Acquire(ExploreStackAcquiredStatus status) {
-    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, status.BranchInstanceId.Value)).Match(ToastService, async x => {
-      await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Selected.StackId)).Match(ToastService, async cards => {
-        await UpdateAcquiredCards.InvokeAsync(cards);
-        await UpdateUsers.InvokeAsync((-1, Status.BranchInstanceId?.Value));
-        await UpdateStatus.InvokeAsync(status);
-        await UpdateUsers.InvokeAsync((1, status.BranchInstanceId?.Value));
-      });
-    });
   }
 
 }
