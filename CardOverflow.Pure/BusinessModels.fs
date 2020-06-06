@@ -399,6 +399,7 @@ type BranchInstanceMeta = {
     StrippedBack: string
     CommunalFields: CommunalFieldInstance ResizeArray
     Users: int
+    EditSummary: string
 } with
     member this.Indexes = [0s .. this.MaxIndexInclusive]
 

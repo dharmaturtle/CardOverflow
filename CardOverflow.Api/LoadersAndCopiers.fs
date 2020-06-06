@@ -300,6 +300,7 @@ type BranchInstanceMeta with
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
             CommunalFields = entity.CommunalFieldInstance_BranchInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Users = entity.Users
+            EditSummary = entity.EditSummary
         }
     static member load = BranchInstanceMeta.loadIndex 0s
     static member loadAll isAcquired isLatest (entity: BranchInstanceEntity) =
@@ -319,6 +320,7 @@ type BranchInstanceMeta with
             StrippedBack = ""
             CommunalFields = [].ToList()
             Users = 0
+            EditSummary = ""
         }
     member this.copyTo (entity: BranchInstanceEntity) =
         entity.Created <- this.Created
