@@ -455,7 +455,7 @@ type ExploreStack with
     }
 
 type BranchRevision with
-    static member load isAcquired (e: BranchEntity) = {
+    static member load acquiredInstanceId (e: BranchEntity) = {
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
@@ -463,6 +463,6 @@ type BranchRevision with
         SortedMeta =
             e.BranchInstances
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.mapi (fun i e -> BranchInstanceMeta.load isAcquired (i = 0) e)
+            |> Seq.mapi (fun i e -> BranchInstanceMeta.load (e.Id = acquiredInstanceId) (i = 0) e)
             |> Seq.toList
     }

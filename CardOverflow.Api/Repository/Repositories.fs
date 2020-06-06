@@ -308,8 +308,13 @@ module StackRepository =
                     .ThenInclude(fun (x: BranchInstanceEntity) -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull <| sprintf "BranchId #%i not found" branchId)
-        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
-        return BranchRevision.load isAcquired r
+        let! acquiredInstanceId =
+            db.AcquiredCard
+                .Where(fun x -> x.UserId = userId && x.BranchId = branchId)
+                .Select(fun x -> x.BranchInstanceId)
+                .Distinct()
+                .SingleOrDefaultAsync()
+        return BranchRevision.load acquiredInstanceId r
     }
     let acquireCardNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) = taskResult {
         let! ((defaultCardSettingId, deckId): int * int) =

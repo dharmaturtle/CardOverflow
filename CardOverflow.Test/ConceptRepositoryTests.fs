@@ -88,6 +88,20 @@ let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
     let! (actual: Result<_,_>) = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId invalidInstanceId
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
+
+    // StackRepository.Revisions says we acquired the most recent branchInstance
+    let! revision = StackRepository.Revisions c.Db userId branchId
+
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
+
+    // acquire oldest instance, then StackRepository.Revisions says we acquired the oldest branchInstance
+    do! StackRepository.AcquireCardAsync c.Db userId oldInstanceId
+    
+    let! revision = StackRepository.Revisions c.Db userId branchId
+
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    |> Assert.equal [(oldInstanceId, true); (updatedInstanceId, false)]
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -135,6 +149,20 @@ let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult 
     let! (actual: Result<_,_>) = AcquiredCardRepository.getAcquiredInstanceFromInstance c.Db userId invalidInstanceId
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
+
+    // StackRepository.Revisions says we acquired the most recent branchInstance
+    let! revision = StackRepository.Revisions c.Db userId branchId
+
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
+
+    // acquire oldest instance, then StackRepository.Revisions says we acquired the oldest branchInstance
+    do! StackRepository.AcquireCardAsync c.Db userId oldInstanceId
+    
+    let! revision = StackRepository.Revisions c.Db userId branchId
+
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    |> Assert.equal [(oldInstanceId, true); (updatedInstanceId, false)]
     } |> TaskResult.getOk)
 
 [<Fact>]
