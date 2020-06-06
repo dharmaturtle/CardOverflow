@@ -1,0 +1,62 @@
+@using System.Linq
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
+
+@if (Status.BranchInstanceId?.Value == Instance.Id) {
+  <button class="btn btn-unacquire-card">
+    <div class="d-flex align-items-center flex-column align-middle">
+      <i class="fas fa-bookmark"></i>
+      @Users
+    </div>
+  </button>
+} else {
+  <button class="btn btn-acquire-card" @onclick=@_Acquire>
+    <div class="d-flex align-items-center flex-column align-middle">
+      <i class="fas fa-bookmark"></i>
+      @Users
+    </div>
+  </button>
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
+  [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public BranchInstanceMeta Instance { get; set; }
+  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
+  
+  [Parameter] public int Users { get; set; }
+  [Parameter] public ExploreStackAcquiredStatus NewStatus { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+  private async Task _Acquire() {
+    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewStatus.BranchInstanceId.Value)).Match(ToastService, async x => {
+      await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Instance.StackId)).Match(ToastService, async cards => {
+        await UpdateAcquiredCards.InvokeAsync(cards);
+        await UpdateUsers.InvokeAsync((-1, Status.BranchInstanceId?.Value));
+        await UpdateStatus.InvokeAsync(NewStatus);
+        await UpdateUsers.InvokeAsync((1, NewStatus.BranchInstanceId?.Value));
+      });
+    });
+  }
+
+}

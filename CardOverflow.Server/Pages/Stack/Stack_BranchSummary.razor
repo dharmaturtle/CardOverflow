@@ -1,0 +1,41 @@
+@using System.Linq
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
+
+<span class="font-italic">
+  @if (String.IsNullOrWhiteSpace(Instance.EditSummary)) {
+    <span>
+      &laquo; No Edit Summary &raquo;
+    </span>
+  } else {
+    @Instance.EditSummary
+  }
+  <span class="font-italic float-right">
+    - @ViewLogic.timestampToPretty(Instance.Created, TimeProvider.utcNow)
+  </span>
+</span>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public BranchInstanceMeta Instance { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+}

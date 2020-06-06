@@ -15,26 +15,23 @@
 @inject TimeProvider TimeProvider
 
 <div class="d-flex h-100">
-  @if (Status.BranchInstanceId?.Value == Branch.Instance.Id) {
-    <button class="btn btn-unacquire-card">
-      <div class="d-flex align-items-center flex-column align-middle">
-        <i class="fas fa-bookmark"></i>
-        @Branch.Users
-      </div>
-    </button>
-  } else {
-    <button class="btn btn-acquire-card" @onclick=@(() => _Acquire(ExploreStackAcquiredStatus.NewLatestBranchAcquired(Branch.Instance.Id)))>
-      <div class="d-flex align-items-center flex-column align-middle">
-        <i class="fas fa-bookmark"></i>
-        @Branch.Users
-      </div>
-    </button>
-  }
+  <AcquireToggles Instance=@Branch.Instance
+                  Status=@Status
+                  NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(Branch.Instance.Id)
+                  Users=@Branch.Users
+                  UpdateUsers=@UpdateUsers
+                  UpdateAcquiredCards=@UpdateAcquiredCards
+                  UpdateStatus=@UpdateStatus />
   <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
     @if (Branch.Name == null) {
       <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
     } else {
       @Branch.Name
+    }
+    @if (_revisions != null && _displayAllRevisions) {
+      <div>
+        <Stack_BranchSummary Instance=@_revisions.SortedMeta.First() />
+      </div>
     }
   </button>
   <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
@@ -45,7 +42,8 @@
         <BSDropdownItem Href="@($"branch/{Branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
       }
       <BSDropdownItem Href="@($"curate/stack/copy/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
-      <BSDropdownItem Href="@($"/branch/{Branch.Id}/revision")"><i class="fas fa-history"></i> Revisions</BSDropdownItem>
+      <BSDropdownItem Href="@($"/branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
+      <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
       @if (Branch.Name != null) {
         <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
       }
@@ -55,6 +53,23 @@
     </BSDropdownMenu>
   </BSDropdown>
 </div>
+@if (_revisions != null && _displayAllRevisions) {
+  foreach (var revision in _revisions.SortedMeta.Skip(1)) {
+    <div class="d-flex h-100 pl-5">
+      @* lowTODO is `NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(revision.Id)` a source of error???*@
+      <AcquireToggles Instance=@revision
+                      Status=@Status
+                      NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(revision.Id)
+                      Users=@revision.Users
+                      UpdateUsers=@UpdateUsers
+                      UpdateAcquiredCards=@UpdateAcquiredCards
+                      UpdateStatus=@UpdateStatus />
+      <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
+        <Stack_BranchSummary Instance=@revision />
+      </button>
+    </div>
+  }
+}
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
@@ -66,11 +81,20 @@
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
   [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
+  private bool _displayAllRevisions;
+  private BranchRevision _revisions;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     StateHasChanged();
+  }
+
+  private async Task toggleRevisions() {
+    _displayAllRevisions = !_displayAllRevisions;
+    if (_revisions == null) {
+      await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => _revisions = x);
+    }
   }
 
   private async Task _Acquire(ExploreStackAcquiredStatus status) {
