@@ -59,13 +59,13 @@
       <Stack_Comments Stack=@_stack />
     </div>
     <div class="col-xl">
-      <Stack_Branch Branches=@_stack.Branches
-                    InstanceSelected=@(x => Selected = x)
-                    Status=@_stack.AcquiredStatus
-                    UpdateStatus=@(x => _stack.AcquiredStatus = x)
-                    Selected=@Selected
-                    Root=@_stack.Instance
-                    UpdateAcquiredCards=@(x => AcquiredCards = x) />
+      <Stack_Branches Branches=@_stack.Branches
+                      InstanceSelected=@(x => Selected = x)
+                      Status=@_stack.AcquiredStatus
+                      UpdateStatus=@(x => _stack.AcquiredStatus = x)
+                      Selected=@Selected
+                      Root=@_stack.Instance
+                      UpdateAcquiredCards=@(x => AcquiredCards = x) />
     </div>
   </div>
 }

@@ -14,68 +14,59 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-<div class="d-flex justify-content-between">
-  <h4>Branches</h4>
-  <a class="btn btn-outline-success" href="curate/stack/branch/@Root.StackId" title="Add a Branch">
-    <i class="fas fa-plus"></i>
-  </a>
-</div>
-<div class="list-group">
-  @foreach (var branch in Branches) {
-    <div class="d-flex h-100">
-      @if (Status.BranchInstanceId?.Value == branch.Instance.Id) {
-        <button class="btn btn-unacquire-card">
-          <div class="d-flex align-items-center flex-column align-middle">
-            <i class="fas fa-bookmark"></i>
-            @branch.Users
-          </div>
-        </button>
-      } else {
-        <button class="btn btn-acquire-card" @onclick=@(() => _Acquire(ExploreStackAcquiredStatus.NewLatestBranchAcquired(branch.Instance.Id)))>
-          <div class="d-flex align-items-center flex-column align-middle">
-            <i class="fas fa-bookmark"></i>
-            @branch.Users
-          </div>
-        </button>
-      }
-      <button class="list-group-item list-group-item-action @(Selected.Id == branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(branch.Instance))">
-        @if (@branch.Name == null) {
-          <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
-        } else {
-          @branch.Name
-        }
-      </button>
-      <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
-        <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
-        <BSDropdownMenu>
-          <BSDropdownItem Href="@($"/user/{branch.AuthorId}")"><span class="oi oi-person"></span> By @branch.Author</BSDropdownItem>
-          @if (branch.AuthorId == _user.Id) {
-            <BSDropdownItem Href="@($"branch/{branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
-          }
-          <BSDropdownItem Href="@($"curate/stack/copy/{branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
-          <BSDropdownItem Href="@($"/branch/{@branch.Id}/revision")"><i class="fas fa-history"></i> Revisions</BSDropdownItem>
-          @if (@branch.Name != null) {
-            <BSDropdownItem Href="@($"stackdiff/{branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
-          }
-          @if (Status.BranchInstanceId != null && branch.Instance.Id != Status.BranchInstanceId.Value) {
-            <BSDropdownItem Href="@($"stackdiff/{branch.Instance.Id}/Selected Branch/{Status.BranchInstanceId.Value}/Your Collected Branch")">&Delta; Compare with your collected branch</BSDropdownItem>
-          }
-        </BSDropdownMenu>
-      </BSDropdown>
-    </div>
+<div class="d-flex h-100">
+  @if (Status.BranchInstanceId?.Value == Branch.Instance.Id) {
+    <button class="btn btn-unacquire-card">
+      <div class="d-flex align-items-center flex-column align-middle">
+        <i class="fas fa-bookmark"></i>
+        @Branch.Users
+      </div>
+    </button>
+  } else {
+    <button class="btn btn-acquire-card" @onclick=@(() => _Acquire(ExploreStackAcquiredStatus.NewLatestBranchAcquired(Branch.Instance.Id)))>
+      <div class="d-flex align-items-center flex-column align-middle">
+        <i class="fas fa-bookmark"></i>
+        @Branch.Users
+      </div>
+    </button>
   }
+  <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
+    @if (Branch.Name == null) {
+      <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
+    } else {
+      @Branch.Name
+    }
+  </button>
+  <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
+    <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
+    <BSDropdownMenu>
+      <BSDropdownItem Href="@($"/user/{Branch.AuthorId}")"><span class="oi oi-person"></span> By @Branch.Author</BSDropdownItem>
+      @if (Branch.AuthorId == _user.Id) {
+        <BSDropdownItem Href="@($"branch/{Branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
+      }
+      <BSDropdownItem Href="@($"curate/stack/copy/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+      <BSDropdownItem Href="@($"/branch/{Branch.Id}/revision")"><i class="fas fa-history"></i> Revisions</BSDropdownItem>
+      @if (Branch.Name != null) {
+        <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+      }
+      @if (Status.BranchInstanceId != null && Branch.Instance.Id != Status.BranchInstanceId.Value) {
+        <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}/Selected Branch/{Status.BranchInstanceId.Value}/Your Collected Branch")">&Delta; Compare with your collected branch</BSDropdownItem>
+      }
+    </BSDropdownMenu>
+  </BSDropdown>
 </div>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public List<Branch> Branches { get; set; }
+  [Parameter] public Branch Branch { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
   [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
   [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public BranchInstanceMeta Root { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -87,22 +78,12 @@
     await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, status.BranchInstanceId.Value)).Match(ToastService, async x => {
       await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Root.StackId)).Match(ToastService, async cards => {
         await UpdateAcquiredCards.InvokeAsync(cards);
-        _UpdateUsers(-1, Status.BranchInstanceId?.Value);
+        await UpdateUsers.InvokeAsync((-1, Status.BranchInstanceId?.Value));
         Status = status;
         await UpdateStatus.InvokeAsync(Status);
-        _UpdateUsers(1, Status.BranchInstanceId?.Value);
+        await UpdateUsers.InvokeAsync((1, Status.BranchInstanceId?.Value));
       });
     });
-  }
-
-  private void _UpdateUsers(int i, int? instanceId) {
-    var branch = Branches.SingleOrDefault(x => x.Instance.Id == instanceId);
-    if (branch != null) {
-      branch.Summary.Users = branch.Summary.Users + i;
-    }
-    if (instanceId == Root.Id) {
-      Root.Users = Root.Users + i;
-    }
   }
 
 }

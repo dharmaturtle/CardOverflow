@@ -1,0 +1,63 @@
+@using System.Linq
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
+
+<div class="d-flex justify-content-between">
+  <h4>Branches</h4>
+  <a class="btn btn-outline-success" href="curate/stack/branch/@Root.StackId" title="Add a Branch">
+    <i class="fas fa-plus"></i>
+  </a>
+</div>
+<div class="list-group">
+  @foreach (var branch in Branches) {
+    <Stack_Branch Branch=@branch
+                  InstanceSelected=@InstanceSelected
+                  Status=@Status
+                  UpdateStatus=@UpdateStatus
+                  Selected=@Selected
+                  Root=@Root
+                  UpdateAcquiredCards=@UpdateAcquiredCards
+                  UpdateUsers=@(x => _UpdateUsers(x.Item1, x.Item2))/>
+  }
+</div>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public List<Branch> Branches { get; set; }
+  [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
+  [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
+  [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public BranchInstanceMeta Selected { get; set; }
+  [Parameter] public BranchInstanceMeta Root { get; set; }
+  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+  private void _UpdateUsers(int i, int? instanceId) {
+    var branch = Branches.SingleOrDefault(x => x.Instance.Id == instanceId);
+    if (branch != null) {
+      branch.Summary.Users = branch.Summary.Users + i;
+    }
+    if (instanceId == Root.Id) {
+      Root.Users = Root.Users + i;
+    }
+  }
+
+}
