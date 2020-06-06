@@ -64,7 +64,6 @@
   [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
   [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
-  [Parameter] public BranchInstanceMeta Root { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
   [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
 
@@ -76,12 +75,11 @@
 
   private async Task _Acquire(ExploreStackAcquiredStatus status) {
     await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, status.BranchInstanceId.Value)).Match(ToastService, async x => {
-      await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Root.StackId)).Match(ToastService, async cards => {
+      await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Selected.StackId)).Match(ToastService, async cards => {
         await UpdateAcquiredCards.InvokeAsync(cards);
         await UpdateUsers.InvokeAsync((-1, Status.BranchInstanceId?.Value));
-        Status = status;
-        await UpdateStatus.InvokeAsync(Status);
-        await UpdateUsers.InvokeAsync((1, Status.BranchInstanceId?.Value));
+        await UpdateStatus.InvokeAsync(status);
+        await UpdateUsers.InvokeAsync((1, status.BranchInstanceId?.Value));
       });
     });
   }

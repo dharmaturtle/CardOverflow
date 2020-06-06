@@ -16,7 +16,7 @@
 
 <div class="d-flex justify-content-between">
   <h4>Branches</h4>
-  <a class="btn btn-outline-success" href="curate/stack/branch/@Root.StackId" title="Add a Branch">
+  <a class="btn btn-outline-success" href="curate/stack/branch/@Selected.StackId" title="Add a Branch">
     <i class="fas fa-plus"></i>
   </a>
 </div>
@@ -27,9 +27,8 @@
                   Status=@Status
                   UpdateStatus=@UpdateStatus
                   Selected=@Selected
-                  Root=@Root
                   UpdateAcquiredCards=@UpdateAcquiredCards
-                  UpdateUsers=@(x => _UpdateUsers(x.Item1, x.Item2))/>
+                  UpdateUsers=@UpdateUsers/>
   }
 </div>
 
@@ -41,23 +40,13 @@
   [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
   [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
-  [Parameter] public BranchInstanceMeta Root { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public EventCallback<(int, int?)> UpdateUsers { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     StateHasChanged();
-  }
-
-  private void _UpdateUsers(int i, int? instanceId) {
-    var branch = Branches.SingleOrDefault(x => x.Instance.Id == instanceId);
-    if (branch != null) {
-      branch.Summary.Users = branch.Summary.Users + i;
-    }
-    if (instanceId == Root.Id) {
-      Root.Users = Root.Users + i;
-    }
   }
 
 }

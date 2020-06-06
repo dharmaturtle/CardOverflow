@@ -64,8 +64,8 @@
                       Status=@_stack.AcquiredStatus
                       UpdateStatus=@(x => _stack.AcquiredStatus = x)
                       Selected=@Selected
-                      Root=@_stack.Instance
-                      UpdateAcquiredCards=@(x => AcquiredCards = x) />
+                      UpdateAcquiredCards=@(x => AcquiredCards = x)
+                      UpdateUsers=@(x => _UpdateUsers(x.Item1, x.Item2))/>
     </div>
   </div>
 }
@@ -141,6 +141,16 @@
       _stack.Summary.Users--;
     } else if (!state.IsSuspended && AcquiredCards.All(x => !x.CardState.IsSuspended)) {
       _stack.Summary.Users++;
+    }
+  }
+
+  private void _UpdateUsers(int i, int? instanceId) {
+    var branch = @_stack.Branches.SingleOrDefault(x => x.Instance.Id == instanceId);
+    if (branch != null) {
+      branch.Summary.Users = branch.Summary.Users + i;
+    }
+    if (instanceId == _stack.Instance.Id) {
+      _stack.Instance.Users = _stack.Instance.Users + i;
     }
   }
 
