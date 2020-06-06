@@ -25,5 +25,14 @@ namespace CardOverflow.Server {
       }
     }
 
+    public static async Task Match<TOk>(this Task<FSharpResult<TOk, string>> tr, Action<string> onError, Action<TOk> onOk) {
+      var r = await tr;
+      if (r.IsOk) {
+        onOk(r.ResultValue);
+      } else {
+        onError(r.ErrorValue);
+      }
+    }
+
   }
 }
