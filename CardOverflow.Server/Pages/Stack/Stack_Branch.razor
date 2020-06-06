@@ -87,10 +87,19 @@
     StateHasChanged();
   }
 
+  private void sub1() {
+    foreach (var revision in _revisions.SortedMeta.Where(x => x.IsAcquired)) {
+      revision.Users--;
+    }
+  }
+
   private async Task toggleRevisions() {
     _displayAllRevisions = !_displayAllRevisions;
     if (_revisions == null) {
-      await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => _revisions = x);
+      await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => {
+        _revisions = x;
+        sub1();
+      });
     }
   }
 
