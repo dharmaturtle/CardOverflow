@@ -14,18 +14,16 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-<span class="font-italic">
-  @if (String.IsNullOrWhiteSpace(Instance.EditSummary)) {
-    <span>
-      &laquo; No Edit Summary &raquo;
-    </span>
-  } else {
-    @Instance.EditSummary
-  }
-  <span class="font-italic float-right">
-    - @ViewLogic.timestampToPretty(Instance.Created, TimeProvider.utcNow)
+@if (String.IsNullOrWhiteSpace(Instance.EditSummary)) {
+  <span>
+    &laquo; No Edit Summary &raquo;
   </span>
-</span>
+} else {
+  @Instance.EditSummary
+}
+<a style="color:unset" class="font-italic float-right" title=@(Instance.Created + " UTC") href=@($"stack?branchinstance={Instance.Id}")>
+  - @ViewLogic.timestampToPretty(Instance.Created, TimeProvider.utcNow)
+</a>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }

@@ -24,11 +24,16 @@
                   UpdateAcquiredCards=@UpdateAcquiredCards
                   UpdateAcquiredIds=@UpdateAcquiredIds />
   <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
-    @if (Branch.Name == null) {
-      <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
-    } else {
-      @Branch.Name
-    }
+    <span class="font-weight-bolder">
+      @if (Branch.Name == null) {
+        <span>&laquo; Default &raquo;</span>
+      } else {
+        @Branch.Name
+      }
+    </span>
+    <span class="font-italic float-right">
+      by <a href="@($"/user/{Branch.AuthorId}")" style="color:unset">@Branch.Author</a>
+    </span>
     @if (_revisions != null && _displayAllRevisions) {
       <div>
         <Stack_BranchSummary Instance=@_revisions.SortedMeta.First() />
@@ -38,7 +43,6 @@
   <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
     <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
     <BSDropdownMenu>
-      <BSDropdownItem Href="@($"/user/{Branch.AuthorId}")"><span class="oi oi-person"></span> By @Branch.Author</BSDropdownItem>
       @if (Branch.AuthorId == _user.Id) {
         <BSDropdownItem Href="@($"branch/{Branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
       }
