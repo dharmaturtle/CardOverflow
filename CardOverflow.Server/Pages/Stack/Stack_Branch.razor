@@ -16,9 +16,11 @@
 
 <div class="d-flex h-100">
   <AcquireToggles Instance=@Branch.Instance
+                  IsBranch=true
                   AcquiredIds=@AcquiredIds
                   NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id)))
                   Users=@Branch.Users
+                  Subusers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                   UpdateAcquiredCards=@UpdateAcquiredCards
                   UpdateAcquiredIds=@UpdateAcquiredIds />
   <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">

@@ -87,7 +87,7 @@
       _selected.Users--;
     }
     foreach (var branch in _stack.Branches) {
-      if (branch.Instance.Id == _stack.AcquiredIds?.Value?.BranchInstanceId) {
+      if (branch.Instance.Id == _stack.AcquiredIds?.Value?.BranchInstanceId || branch.Id == _stack.AcquiredIds?.Value?.BranchId) {
         branch.Summary.Users--;
       }
     }

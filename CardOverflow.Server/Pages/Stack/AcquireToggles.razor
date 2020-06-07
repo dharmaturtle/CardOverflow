@@ -14,20 +14,56 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
+<style>
+  .btn-striped {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, .35) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .35) 50%, rgba(255, 255, 255, .35) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem
+  }
+</style>
 @if (AcquiredIds?.Value?.BranchInstanceId == Instance.Id) {
   <button class="btn btn-unacquire-card">
     <div class="d-flex align-items-center flex-column align-middle">
       <i class="fas fa-bookmark"></i>
-      @(Users + 1)
+      <div>
+        @(Users + 1)
+      </div>
+      @if (Subusers != default) {
+        <div>
+          (@(Subusers + 1))
+        </div>
+      }
     </div>
   </button>
 } else {
-  <button class="btn btn-acquire-card" @onclick=@_Acquire>
-    <div class="d-flex align-items-center flex-column align-middle">
-      <i class="fas fa-bookmark"></i>
-      @Users
-    </div>
-  </button>
+  @if (AcquiredIds?.Value?.BranchId == Instance.BranchId && IsBranch) {
+    <button class="btn btn-acquire-card btn-success btn-striped" @onclick=@_Acquire>
+      <div class="d-flex align-items-center flex-column align-middle">
+        <i class="fas fa-bookmark"></i>
+        <div>
+          @(Users + 1)
+        </div>
+        @if (Subusers != default) {
+          <div>
+            (@Subusers)
+          </div>
+        }
+      </div>
+    </button>
+  } else {
+    <button class="btn btn-acquire-card" @onclick=@_Acquire>
+      <div class="d-flex align-items-center flex-column align-middle">
+        <i class="fas fa-bookmark"></i>
+        <div>
+          @Users
+        </div>
+        @if (Subusers != default) {
+          <div>
+            (@Subusers)
+          </div>
+        }
+      </div>
+    </button>
+  }
 }
 
 @code {
@@ -39,7 +75,9 @@
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
   [Parameter] public int Users { get; set; }
+  [Parameter] public int? Subusers { get; set; }
   [Parameter] public FSharpOption<Ids> NewAcquiredIds { get; set; }
+  [Parameter] public bool IsBranch { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
