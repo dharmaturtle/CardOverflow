@@ -1,0 +1,43 @@
+@using System.Linq
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
+
+<style>
+  .btn-striped {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, .35) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .35) 50%, rgba(255, 255, 255, .35) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem
+  }
+</style>
+<button class="btn @Css" @onclick=@OnClick>
+  <div class="d-flex align-items-center flex-column align-middle">
+    <i class="fas fa-bookmark"></i>
+    <div>
+      @Users
+    </div>
+    @if (Subusers != default) {
+      <div>
+        (@Subusers)
+      </div>
+    }
+  </div>
+</button>
+
+@code {
+  [Parameter] public string Css { get; set; }
+  [Parameter] public EventCallback OnClick { get; set; }
+  [Parameter] public int Users { get; set; }
+  [Parameter] public int? Subusers { get; set; }
+
+}
