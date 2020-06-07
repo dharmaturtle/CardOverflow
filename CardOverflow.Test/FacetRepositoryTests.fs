@@ -820,7 +820,7 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
 
     // tests ExactInstanceAcquired
     do! ExploreStackRepository.get c.Db userId og_s
-        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired og_i, card.AcquiredStatus))
+        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = og_i }, card.AcquiredIds.Value))
     do! testGetAcquired og_s og_i
     
     // update card
@@ -831,7 +831,7 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
 
     // tests ExactInstanceAcquired
     do! ExploreStackRepository.get c.Db userId og_s
-        |> TaskResult.map (fun card -> Assert.Equal(ExactInstanceAcquired update_i, card.AcquiredStatus))
+        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = update_i }, card.AcquiredIds.Value))
     do! testGetAcquired og_s update_i
 
     // acquiring old instance doesn't change LatestInstanceId
@@ -841,8 +841,8 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
 
     // tests OtherInstanceAcquired
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.AcquiredStatus with
-    | OtherInstanceAcquired x -> Assert.Equal(og_i, x)
+    match stack.AcquiredIds with
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = og_i }, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s og_i
 
@@ -855,8 +855,8 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     
     // tests LatestBranchAcquired
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.AcquiredStatus with
-    | LatestBranchAcquired x -> Assert.Equal(branch_i, x)
+    match stack.AcquiredIds with
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = branch_i }, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i
 
@@ -868,8 +868,8 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
 
     // tests LatestBranchAcquired
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.AcquiredStatus with
-    | LatestBranchAcquired x -> Assert.Equal(updateBranch_i, x)
+    match stack.AcquiredIds with
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = updateBranch_i }, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s updateBranch_i
 
@@ -882,8 +882,8 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
 
     // tests OtherBranchAcquired
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.AcquiredStatus with
-    | OtherBranchAcquired x -> Assert.Equal(branch_i, x)
+    match stack.AcquiredIds with
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = branch_i }, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i
 
@@ -902,15 +902,15 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
 
     // tests LatestBranchAcquired
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.AcquiredStatus with
-    | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
+    match stack.AcquiredIds with
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; BranchInstanceId = branch_i2 }, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i2
 
     // tests LatestBranchAcquired with og_s
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.AcquiredStatus with
-    | LatestBranchAcquired x -> Assert.Equal(branch_i2, x)
+    match stack.AcquiredIds with
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; BranchInstanceId = branch_i2 }, x)
     | _ -> failwith "impossible"
     do! testGetAcquired og_s branch_i2
 
@@ -929,5 +929,5 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     // tests NotAcquired
     let otherUser = 1
     let! stack = ExploreStackRepository.get c.Db otherUser og_s
-    Assert.Equal(NotAcquired, stack.AcquiredStatus)
+    Assert.Equal(None, stack.AcquiredIds)
     } |> TaskResult.getOk)

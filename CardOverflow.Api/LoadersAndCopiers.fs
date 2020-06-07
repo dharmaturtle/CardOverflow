@@ -425,16 +425,16 @@ type ExploreBranchSummary with
     }
 
 type Branch with
-    static member load (status: ExploreStackAcquiredStatus) (branch: BranchEntity) = {
+    static member load (ids: AcquiredIds) (branch: BranchEntity) = {
         Name = branch.Name
         Summary =
             ExploreBranchSummary.load
-                <| BranchInstanceMeta.load (branch.LatestInstanceId |> Some = status.BranchInstanceId) true branch.LatestInstance
+                <| BranchInstanceMeta.load (branch.LatestInstanceId = AcquiredIds.branchInstanceId ids) true branch.LatestInstance
                 <| branch
     }
 
 type ExploreStack with
-    static member load (entity: StackEntity) acquiredStatus (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) instance = {
+    static member load (entity: StackEntity) acquiredIds (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) instance = {
         Id = entity.Id
         Summary = ExploreBranchSummary.load instance <| entity.Branches.Single(fun x -> x.Id = entity.DefaultBranchId)
         Comments = entity.CommentStacks |> Seq.map Comment.load |> toResizeArray
@@ -452,8 +452,8 @@ type ExploreStack with
                     IsAcquired = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray
-        Branches = entity.Branches |> Seq.map (Branch.load acquiredStatus) |> toResizeArray
-        AcquiredStatus = acquiredStatus
+        Branches = entity.Branches |> Seq.map (Branch.load acquiredIds) |> toResizeArray
+        AcquiredIds = acquiredIds
     }
 
 type BranchRevision with

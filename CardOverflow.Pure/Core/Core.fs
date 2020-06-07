@@ -37,6 +37,10 @@ module TaskResizeArray =
     let map f =
         Task.map (ResizeArray.map f)
 
+module TaskOption =
+    let map f =
+        Task.map (Option.map f)
+
 module Result =
     let requireNotEqualTo other err this =
         if this = other then

@@ -449,21 +449,6 @@ type ExploreBranchSummary = {
 } with
     member this.IsAcquired = this.Instance.IsAcquired
 
-type ExploreStackAcquiredStatus =
-    | ExactInstanceAcquired of int
-    | OtherInstanceAcquired of int
-    | LatestBranchAcquired of int
-    | OtherBranchAcquired of int
-    | NotAcquired
-    with
-        member this.BranchInstanceId =
-            match this with
-            | ExactInstanceAcquired x -> Some x
-            | OtherInstanceAcquired x -> Some x
-            | LatestBranchAcquired x -> Some x
-            | OtherBranchAcquired x -> Some x
-            | NotAcquired -> None
-
 type Branch = {
     Name: string
     Summary: ExploreBranchSummary
@@ -474,6 +459,28 @@ type Branch = {
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
 
+type Ids = {
+    StackId: int
+    BranchId: int
+    BranchInstanceId: int
+}
+
+type AcquiredIds = Ids Option
+
+module AcquiredIds =
+    let branchInstanceId =
+        function
+        | Some x -> x.BranchInstanceId
+        | None -> 0
+    let branchId =
+        function
+        | Some x -> x.BranchId
+        | None -> 0
+    let stackId =
+        function
+        | Some x -> x.StackId
+        | None -> 0
+
 [<CLIMutable>]
 type ExploreStack = {
     Id: int
@@ -481,7 +488,7 @@ type ExploreStack = {
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
-    AcquiredStatus: ExploreStackAcquiredStatus
+    AcquiredIds: AcquiredIds
     Branches: Branch ResizeArray
 } with
     //don't add users - the UI needs it to be mutable
@@ -489,9 +496,7 @@ type ExploreStack = {
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
     member this.IsAnyAcquired =
-        match this.AcquiredStatus with
-        | NotAcquired -> false
-        | _ -> true
+        this.AcquiredIds |> Option.isSome
 
 type BranchRevision = {
     Id: int
