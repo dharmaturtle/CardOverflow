@@ -22,7 +22,7 @@
 </style>
 @if (AcquiredIds?.Value?.BranchInstanceId == Instance.Id) {
   <AcquireToggles_Button Css="btn-unacquire-card"
-                         OnClick=@_Unacquire
+                         OnClick=@(() => _modal.Show())
                          Users=@(Users + 1)
                          Subusers=@(Subusers + 1) />
 } else {
@@ -40,6 +40,30 @@
   }
 }
 
+<BSModal @ref=_modal>
+  <BSModalHeader>
+    Are you sure you want to discard?
+  </BSModalHeader>
+  <BSModalBody>
+    <div>
+      Discarding a card will delete all all of it's associated Tags, Relationships, and History. Are you sure you want to discard?
+    </div>
+    <div class="small">
+      <em>Suspending will preserve the above data and prevent the card from appearing when you Study.</em>
+    </div>
+  </BSModalBody>
+  <BSModalFooter>
+    <div>
+      <BSButton Color="Color.Secondary" OnClick=_modal.Hide type="button">
+        Cancel
+      </BSButton>
+      <BSButton Color="Color.Danger" @onclick=@_Discard>
+        Discard
+      </BSButton>
+    </div>
+  </BSModalFooter>
+</BSModal>
+
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
@@ -52,6 +76,7 @@
   [Parameter] public int? Subusers { get; set; }
   [Parameter] public FSharpOption<Ids> NewAcquiredIds { get; set; }
   [Parameter] public bool IsBranch { get; set; }
+  private BSModal _modal;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -60,16 +85,25 @@
   }
 
   private async Task _Acquire() {
-    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewAcquiredIds.Value.BranchInstanceId)).Match(ToastService, async x => {
-      await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Instance.StackId)).Match(ToastService, async cards => {
-        await UpdateAcquiredCards.InvokeAsync(cards);
-        await UpdateAcquiredIds.InvokeAsync(NewAcquiredIds);
+    if (_user.Id == 0) {
+      ToastService.ShowError("You need to log in to collect this card.");
+    } else {
+      await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewAcquiredIds.Value.BranchInstanceId)).Match(ToastService, async x => {
+        await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Instance.StackId)).Match(ToastService, async cards => {
+          await UpdateAcquiredCards.InvokeAsync(cards);
+          await UpdateAcquiredIds.InvokeAsync(NewAcquiredIds);
+        });
       });
-    });
+    }
   }
 
-  private async Task _Unacquire() {
-
+  private async Task _Discard() {
+    var user = await UserTask;
+    await DbExecutor.QueryAsync(db => StackRepository.unacquireStack(db, user.Id, Instance.StackId)).Match(ToastService, async _ => {
+      await UpdateAcquiredCards.InvokeAsync(ResizeArray.empty<AcquiredCard>());
+      await UpdateAcquiredIds.InvokeAsync(FSharpOption<Ids>.None);
+      _modal.Hide();
+    });
   }
 
 }
