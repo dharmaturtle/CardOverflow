@@ -19,22 +19,6 @@
 } else {
   <div class="row">
     <div class="col-xl">
-      @if (!_selected.IsLatest) {
-        <div class="alert alert-warning" role="alert">
-          This is an old revision created
-          <span title=@_selected.Created>
-            @(ViewLogic.timestampToPretty(_selected.Created, TimeProvider.utcNow)).
-          </span>
-          The present URL is a permanent link to this revision, which may differ significantly from the
-          <a href="stack/@_selected.StackId">
-            current revision.
-          </a>
-          <a href="stackdiff/@_selected.Id">
-            Here's the difference
-          </a>
-          between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
-        </div>
-      }
       <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
       @foreach (var i in _selected.Indexes) {
         <div class="row">
