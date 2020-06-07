@@ -63,26 +63,23 @@
 
   private async Task _acquire() {
     var user = await UserTask;
-    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, user.Id, Stack.Instance.Id));
-    var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, user.Id, Stack.Id));
-    if (ac.IsOk) {
+    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, user.Id, Stack.Instance.Id)).Match(ToastService, async _ => {
       Stack.AcquiredIds = FSharpOption<Ids>.Some(new Ids(Stack.Id, Stack.Instance.BranchId, Stack.Instance.Id));
       Stack.Instance.IsAcquired = true;
       Stack.Summary.Users++;
       await UpdateStack.InvokeAsync(Stack);
-    } else {
-      ToastService.ShowError(ac.ErrorValue);
-    }
+    });
   }
 
   private async Task _discard() {
     var user = await UserTask;
-    await DbExecutor.CommandAsync(db => StackRepository.unacquireStack(db, user.Id, Stack.Id));
-    Stack.AcquiredIds = FSharpOption<Ids>.None;
-    Stack.Instance.IsAcquired = false;
-    Stack.Summary.Users--;
-    _modal.Hide();
-    await UpdateStack.InvokeAsync(Stack);
+    await DbExecutor.QueryAsync(db => StackRepository.unacquireStack(db, user.Id, Stack.Id)).Match(ToastService, async _ => {
+      Stack.AcquiredIds = FSharpOption<Ids>.None;
+      Stack.Instance.IsAcquired = false;
+      Stack.Summary.Users--;
+      _modal.Hide();
+      await UpdateStack.InvokeAsync(Stack);
+    });
   }
 
 }
