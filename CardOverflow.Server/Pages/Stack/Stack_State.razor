@@ -66,7 +66,7 @@
     await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, user.Id, Stack.Instance.Id));
     var ac = await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, user.Id, Stack.Id));
     if (ac.IsOk) {
-      Stack.AcquiredStatus = ExploreStackAcquiredStatus.NewExactInstanceAcquired(Stack.Instance.Id);
+      Stack.AcquiredIds = FSharpOption<Ids>.Some(new Ids(Stack.Id, Stack.Instance.BranchId, Stack.Instance.Id));
       Stack.Instance.IsAcquired = true;
       Stack.Summary.Users++;
       await UpdateStack.InvokeAsync(Stack);
@@ -78,7 +78,7 @@
   private async Task _discard() {
     var user = await UserTask;
     await DbExecutor.CommandAsync(db => StackRepository.deleteAcquiredCard(db, user.Id, Stack.Id));
-    Stack.AcquiredStatus = ExploreStackAcquiredStatus.NotAcquired;
+    Stack.AcquiredIds = FSharpOption<Ids>.None;
     Stack.Instance.IsAcquired = false;
     Stack.Summary.Users--;
     _modal.Hide();

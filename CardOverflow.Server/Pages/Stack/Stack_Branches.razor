@@ -24,8 +24,8 @@
   @foreach (var branch in Branches) {
     <Stack_Branch Branch=@branch
                   InstanceSelected=@InstanceSelected
-                  Status=@Status
-                  UpdateStatus=@UpdateStatus
+                  AcquiredIds=@AcquiredIds
+                  UpdateAcquiredIds=@UpdateAcquiredIds
                   Selected=@Selected
                   UpdateAcquiredCards=@UpdateAcquiredCards />
   }
@@ -36,8 +36,8 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
-  [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 

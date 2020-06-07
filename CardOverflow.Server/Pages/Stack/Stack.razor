@@ -61,8 +61,8 @@
     <div class="col-xl">
       <Stack_Branches Branches=@_stack.Branches
                       InstanceSelected=@(x => _selected = x)
-                      Status=@_stack.AcquiredStatus
-                      UpdateStatus=@(x => _stack.AcquiredStatus = x)
+                      AcquiredIds=@_stack.AcquiredIds
+                      UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
                       Selected=@_selected
                       UpdateAcquiredCards=@(x => _acquiredCards = x) />
     </div>
@@ -87,7 +87,7 @@
       _selected.Users--;
     }
     foreach (var branch in _stack.Branches) {
-      if (branch.Instance.Id == _stack.AcquiredStatus.BranchInstanceId?.Value) {
+      if (branch.Instance.Id == _stack.AcquiredIds?.Value?.BranchInstanceId) {
         branch.Summary.Users--;
       }
     }

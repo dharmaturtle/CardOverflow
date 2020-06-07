@@ -14,7 +14,7 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-@if (Status.BranchInstanceId?.Value == Instance.Id) {
+@if (AcquiredIds?.Value?.BranchInstanceId == Instance.Id) {
   <button class="btn btn-unacquire-card">
     <div class="d-flex align-items-center flex-column align-middle">
       <i class="fas fa-bookmark"></i>
@@ -33,13 +33,13 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
-  [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
-  
+
   [Parameter] public int Users { get; set; }
-  [Parameter] public ExploreStackAcquiredStatus NewStatus { get; set; }
+  [Parameter] public FSharpOption<Ids> NewAcquiredIds { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -48,10 +48,10 @@
   }
 
   private async Task _Acquire() {
-    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewStatus.BranchInstanceId.Value)).Match(ToastService, async x => {
+    await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewAcquiredIds.Value.BranchInstanceId)).Match(ToastService, async x => {
       await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Instance.StackId)).Match(ToastService, async cards => {
         await UpdateAcquiredCards.InvokeAsync(cards);
-        await UpdateStatus.InvokeAsync(NewStatus);
+        await UpdateAcquiredIds.InvokeAsync(NewAcquiredIds);
       });
     });
   }

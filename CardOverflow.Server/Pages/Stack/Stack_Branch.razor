@@ -16,11 +16,11 @@
 
 <div class="d-flex h-100">
   <AcquireToggles Instance=@Branch.Instance
-                  Status=@Status
-                  NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(Branch.Instance.Id)
+                  AcquiredIds=@AcquiredIds
+                  NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id)))
                   Users=@Branch.Users
                   UpdateAcquiredCards=@UpdateAcquiredCards
-                  UpdateStatus=@UpdateStatus />
+                  UpdateAcquiredIds=@UpdateAcquiredIds />
   <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
     @if (Branch.Name == null) {
       <span class="font-weight-bolder text-center d-block">&laquo; Default &raquo;</span>
@@ -46,8 +46,8 @@
       @if (Branch.Name != null) {
         <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
       }
-      @if (Status.BranchInstanceId != null && Branch.Instance.Id != Status.BranchInstanceId.Value) {
-        <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}/Selected Branch/{Status.BranchInstanceId.Value}/Your Collected Branch")">&Delta; Compare with your collected branch</BSDropdownItem>
+      @if (AcquiredIds?.Value?.BranchInstanceId != null && Branch.Instance.Id != AcquiredIds.Value.BranchInstanceId) {
+        <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}/Selected Branch/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch")">&Delta; Compare with your collected branch</BSDropdownItem>
       }
     </BSDropdownMenu>
   </BSDropdown>
@@ -55,13 +55,12 @@
 @if (_revisions != null && _displayAllRevisions) {
   foreach (var revision in _revisions.SortedMeta.Skip(1)) {
     <div class="d-flex h-100 pl-5">
-      @* lowTODO is `NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(revision.Id)` a source of error???*@
       <AcquireToggles Instance=@revision
-                      Status=@Status
-                      NewStatus=@ExploreStackAcquiredStatus.NewLatestBranchAcquired(revision.Id)
+                      AcquiredIds=@AcquiredIds
+                      NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(revision.StackId, revision.BranchId, revision.Id)))
                       Users=@revision.Users
                       UpdateAcquiredCards=@UpdateAcquiredCards
-                      UpdateStatus=@UpdateStatus />
+                      UpdateAcquiredIds=@UpdateAcquiredIds />
       <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
         <Stack_BranchSummary Instance=@revision />
       </button>
@@ -74,8 +73,8 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Branch Branch { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public ExploreStackAcquiredStatus Status { get; set; }
-  [Parameter] public EventCallback<ExploreStackAcquiredStatus> UpdateStatus { get; set; }
+  [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
   private bool _displayAllRevisions;
