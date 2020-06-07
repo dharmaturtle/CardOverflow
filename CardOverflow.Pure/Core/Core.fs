@@ -47,6 +47,11 @@ module Result =
             Error err
         else
             Ok this
+    let requireNotEmptyX err xs =
+        xs |> Seq.tryHead
+        |> function
+        | Some -> Ok xs
+        | None -> Error err
     let isOk = function
         | Ok _ -> true
         | Error _ -> false

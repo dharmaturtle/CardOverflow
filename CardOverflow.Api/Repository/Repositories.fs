@@ -275,9 +275,10 @@ module AcquiredCardRepository =
         |> Task.map (Result.requireNotEqualTo 0 <| sprintf "You don't have any cards with Branch Instance #%i" branchInstanceId)
 
 module StackRepository =
-    let deleteAcquiredCard (db: CardOverflowDb) userId stackId = task {
+    let deleteAcquiredCard (db: CardOverflowDb) userId stackId = taskResult {
         do! db.AcquiredCard.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
-            |> Task.map db.AcquiredCard.RemoveRange
+            |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Stack #%i" stackId)
+            |> TaskResult.map db.AcquiredCard.RemoveRange
         return! db.SaveChangesAsyncI()
     }
     let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
@@ -355,10 +356,6 @@ module StackRepository =
         do! acquireCardNoSave db userId branchInstance
         return! db.SaveChangesAsyncI ()
         }
-    let UnacquireCardAsync (db: CardOverflowDb) acquiredCardId = // medTODO needs userId for validation
-        db.AcquiredCard.Single(fun x -> x.Id = acquiredCardId)
-        |> db.AcquiredCard.RemoveI
-        db.SaveChangesAsyncI ()
     let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
         let! (e: _ ResizeArray) =
             db.AcquiredCardIsLatest

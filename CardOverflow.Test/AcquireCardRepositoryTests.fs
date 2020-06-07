@@ -20,7 +20,7 @@ open FsToolkit
 open FsToolkit.ErrorHandling
 
 [<Fact>]
-let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
+let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
@@ -30,8 +30,8 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
         TestCollateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let getAcquired () = StackRepository.GetAcquired c.Db userId 1
-    let! ac = getAcquired ()
-    let ac = ac.Value.Single()
+    let! (ac: AcquiredCard ResizeArray) = getAcquired ()
+    let ac = ac.Single()
 
     do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId
     Assert.Empty c.Db.AcquiredCard
@@ -39,56 +39,53 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = task {
     let reacquire () = task { do! StackRepository.AcquireCardAsync c.Db userId ac.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
-    let! ac = getAcquired ()
-    let ac = ac.Value.Single()
-    let! x =
+    let! (ac: AcquiredCard ResizeArray) = getAcquired ()
+    let ac = ac.Single()
+    let! actualBranchId =
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
             EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
-    let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
     do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
 
     let userId = 3
     do! reacquire ()
-    let! ac = getAcquired ()
-    let ac = ac.Value.Single()
-    let! batch = StackRepository.GetQuizBatch c.Db userId ""
+    let! (ac: AcquiredCard ResizeArray) = getAcquired ()
+    let ac = ac.Single()
+    let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.StackId |> TaskResult.getOk
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let newCardBranchId = 2
     Assert.Equal(newCardBranchId, actualBranchId)
-    let! stack2 = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> ac.StackId)
+    let! (stack2: StackEntity) = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> ac.StackId)
     let stack2 = stack2.Id
     let addRelationshipCommand =
         {   Name = "my relationship"
             SourceStackId = 1
             TargetStackLink = string stack2
         }
-    let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
-    Assert.Null x.Value
+    do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
     Assert.NotEmpty c.Db.AcquiredCard
     Assert.NotEmpty c.Db.Relationship_AcquiredCard
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty c.Db.Tag_AcquiredCard
     do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId // can delete after adding a history, tag, and relationship
-    Assert.Null x.Value
     Assert.Equal(stack2, c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_AcquiredCard
     Assert.Empty c.Db.History
     Assert.Empty c.Db.Tag_AcquiredCard
     
-    // uncomment if behavior changes
-    //do! reacquire ()
-    //let otherUserId = 2
-    //do! StackRepository.deleteAcquiredCard c.Db otherUserId ac.StackId
-    //Assert.Equal("You don't own that card.", x.error) // other users can't delete your card
-    }
+    // Error when deleting something you don't own
+    do! reacquire ()
+    let otherUserId = 2
+    let! (x: Result<_, _>) = StackRepository.deleteAcquiredCard c.Db otherUserId ac.StackId
+    Assert.Equal("You don't have any cards with Stack #1", x.error)
+    } |> TaskResult.getOk)
 
 [<Fact>]
 let ``StackRepository.editState works``(): Task<unit> = task {
@@ -245,7 +242,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
-    do! StackRepository.UnacquireCardAsync c.Db ac.Id
+    do! StackRepository.deleteAcquiredCard c.Db authorId ac.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
