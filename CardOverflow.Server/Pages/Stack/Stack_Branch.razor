@@ -85,6 +85,9 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
+    if (Selected.BranchId == Branch.Id && Selected.Id != Branch.Instance.Id && !_displayAllRevisions) {
+      await toggleRevisions();
+    }
     StateHasChanged();
   }
 
@@ -101,6 +104,9 @@
         _revisions = x;
         sub1();
       });
+    }
+    if (!_displayAllRevisions && _revisions.SortedMeta.Skip(1).Select(x => x.Id).Contains(Selected.Id)) {
+      await InstanceSelected.InvokeAsync(Branch.Instance);
     }
   }
 
