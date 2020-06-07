@@ -77,8 +77,10 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     do! StackRepository.unacquireStack c.Db userId ac.StackId // can delete after adding a history, tag, and relationship
     Assert.Equal(stack2, c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_AcquiredCard
-    Assert.Empty c.Db.History
     Assert.Empty c.Db.Tag_AcquiredCard
+
+    // but history remains
+    Assert.NotEmpty c.Db.History
     
     // Error when deleting something you don't own
     do! reacquire ()

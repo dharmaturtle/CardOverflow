@@ -1712,7 +1712,7 @@ ALTER TABLE ONLY public."Filter"
 
 
 ALTER TABLE ONLY public."History"
-    ADD CONSTRAINT "FK_History_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_History_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public."History"
