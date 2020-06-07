@@ -88,7 +88,7 @@
     if (_user.Id == 0) {
       ToastService.ShowError("You need to log in to collect this card.");
     } else {
-      await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewAcquiredIds.Value.BranchInstanceId)).Match(ToastService, async x => {
+      await DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, NewAcquiredIds.Value.BranchInstanceId)).Match(ToastService, async _ => {
         await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Instance.StackId)).Match(ToastService, async cards => {
           await UpdateAcquiredCards.InvokeAsync(cards);
           await UpdateAcquiredIds.InvokeAsync(NewAcquiredIds);

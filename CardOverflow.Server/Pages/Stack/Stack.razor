@@ -35,7 +35,7 @@
           between this old revision and the current revision. Only the card is old - other information like Tags, Comments, and Branches are current.
         </div>
       }
-      <Stack_IFrameHeader Stack=@_stack Instance=@_selected UpdateStack=@(x => _stack = x) />
+      <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
       @foreach (var i in _selected.Indexes) {
         <div class="row">
           <div class=@(_isAcquired() ? "col-10" : "col")>

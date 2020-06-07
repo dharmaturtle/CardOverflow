@@ -12,29 +12,26 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-<div class="d-flex justify-content-between align-items-center">
-  <Stack_State Stack=@Stack UpdateStack=@UpdateStack />
-  <div>
-    By @(_branch.Author)
-    @if (_branch.AuthorId == _user.Id) {
-      <a href="branch/@_branch.Id/edit" title="Edit">
-        <span class="oi oi-pencil" />
-      </a>
-    }
-    <a href="curate/stack/copy/@Instance.Id" title="Edit a Copy">
-      <span class="fas fa-copy" />
+<div class="d-flex justify-content-end">
+  By @(_branch.Author)
+  @if (_branch.AuthorId == _user.Id) {
+    <a href="branch/@_branch.Id/edit" title="Edit">
+      <span class="oi oi-pencil" />
     </a>
-    <a href="/branch/@_branch.Id/revision" title="Revisions">
-      <i class="fas fa-history"></i>
+  }
+  <a href="curate/stack/copy/@Instance.Id" title="Edit a Copy">
+    <span class="fas fa-copy" />
+  </a>
+  <a href="/branch/@_branch.Id/revision" title="Revisions">
+    <i class="fas fa-history"></i>
+  </a>
+  @if (Instance.IsLatest) {
+    <span class="fas fa-sync text-success" title="Up to date" />
+  } else {
+    <a href="stackdiff/@Instance.Id">
+      <span class="fas fa-sync text-danger" title="Out of date" />
     </a>
-    @if (Instance.IsLatest) {
-      <span class="fas fa-sync text-success" title="Up to date" />
-    } else {
-      <a href="stackdiff/@Instance.Id">
-        <span class="fas fa-sync text-danger" title="Out of date" />
-      </a>
-    }
-  </div>
+  }
 </div>
 
 @code {
@@ -42,7 +39,6 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
-  [Parameter] public EventCallback<CardOverflow.Pure.ExploreStack> UpdateStack { get; set; }
   private Branch _branch => Stack.Branches.Single(b => b.Id == Instance.BranchId);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
