@@ -77,7 +77,7 @@
 
   private async Task _discard() {
     var user = await UserTask;
-    await DbExecutor.CommandAsync(db => StackRepository.deleteAcquiredCard(db, user.Id, Stack.Id));
+    await DbExecutor.CommandAsync(db => StackRepository.unacquireStack(db, user.Id, Stack.Id));
     Stack.AcquiredIds = FSharpOption<Ids>.None;
     Stack.Instance.IsAcquired = false;
     Stack.Summary.Users--;

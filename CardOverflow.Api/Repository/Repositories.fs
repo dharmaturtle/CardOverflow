@@ -275,7 +275,7 @@ module AcquiredCardRepository =
         |> Task.map (Result.requireNotEqualTo 0 <| sprintf "You don't have any cards with Branch Instance #%i" branchInstanceId)
 
 module StackRepository =
-    let deleteAcquiredCard (db: CardOverflowDb) userId stackId = taskResult {
+    let unacquireStack (db: CardOverflowDb) userId stackId = taskResult {
         do! db.AcquiredCard.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
             |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Stack #%i" stackId)
             |> TaskResult.map db.AcquiredCard.RemoveRange

@@ -33,7 +33,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     let! (ac: AcquiredCard ResizeArray) = getAcquired ()
     let ac = ac.Single()
 
-    do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId
+    do! StackRepository.unacquireStack c.Db userId ac.StackId
     Assert.Empty c.Db.AcquiredCard
 
     let reacquire () = task { do! StackRepository.AcquireCardAsync c.Db userId ac.BranchInstanceMeta.Id |> TaskResult.getOk }
@@ -49,7 +49,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
             EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     Assert.Equal(branchId, actualBranchId)
-    do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId
+    do! StackRepository.unacquireStack c.Db userId ac.StackId
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
 
     let userId = 3
@@ -74,7 +74,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     Assert.NotEmpty c.Db.Relationship_AcquiredCard
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty c.Db.Tag_AcquiredCard
-    do! StackRepository.deleteAcquiredCard c.Db userId ac.StackId // can delete after adding a history, tag, and relationship
+    do! StackRepository.unacquireStack c.Db userId ac.StackId // can delete after adding a history, tag, and relationship
     Assert.Equal(stack2, c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_AcquiredCard
     Assert.Empty c.Db.History
@@ -83,7 +83,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     // Error when deleting something you don't own
     do! reacquire ()
     let otherUserId = 2
-    let! (x: Result<_, _>) = StackRepository.deleteAcquiredCard c.Db otherUserId ac.StackId
+    let! (x: Result<_, _>) = StackRepository.unacquireStack c.Db otherUserId ac.StackId
     Assert.Equal("You don't have any cards with Stack #1", x.error)
     } |> TaskResult.getOk)
 
@@ -242,7 +242,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
-    do! StackRepository.deleteAcquiredCard c.Db authorId ac.StackId |> TaskResult.getOk
+    do! StackRepository.unacquireStack c.Db authorId ac.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
