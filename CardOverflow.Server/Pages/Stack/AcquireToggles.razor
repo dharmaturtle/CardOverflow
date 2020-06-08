@@ -17,20 +17,20 @@
 @if (AcquiredIds?.Value?.BranchInstanceId == Instance.Id) {
   <AcquireToggles_Button Css="btn-unacquire-card"
                          OnClick=@(() => _modal.Show())
-                         Users=@(Users + 1)
-                         Subusers=@(Subusers + 1) />
+                         BranchUsers=@(BranchUsers + 1)
+                         InstanceUsers=@(InstanceUsers + 1) />
 } else {
   @if (AcquiredIds?.Value?.BranchId == Instance.BranchId && IsBranch) {
     <AcquireToggles_Button Css="btn-acquire-card btn-success btn-striped"
                            OnClick=@_Acquire
-                           Users=@(Users + 1)
-                           Subusers=@Subusers />
+                           BranchUsers=@(BranchUsers + 1)
+                           InstanceUsers=@InstanceUsers />
 
   } else {
     <AcquireToggles_Button Css="btn-acquire-card"
                            OnClick=@_Acquire
-                           Users=@Users
-                           Subusers=@Subusers />
+                           BranchUsers=@BranchUsers
+                           InstanceUsers=@InstanceUsers />
   }
 }
 
@@ -66,8 +66,8 @@
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
-  [Parameter] public int Users { get; set; }
-  [Parameter] public int? Subusers { get; set; }
+  [Parameter] public int? BranchUsers { get; set; }
+  [Parameter] public int? InstanceUsers { get; set; }
   [Parameter] public FSharpOption<Ids> NewAcquiredIds { get; set; }
   [Parameter] public bool IsBranch { get; set; }
   private BSModal _modal;

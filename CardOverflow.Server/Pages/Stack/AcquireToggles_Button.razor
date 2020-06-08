@@ -32,11 +32,15 @@
   <div class="d-flex align-items-center flex-column align-middle">
     <i class="fas fa-bookmark" style="position:absolute; transform: scaleY(1.5) scaleX(1.5);"></i>
     <div class="users">
-      @Users
+      @if (BranchUsers != default) {
+        @BranchUsers
+      } else {
+        <span>&nbsp;</span>
+      }
     </div>
-    @if (Subusers != default) {
+    @if (InstanceUsers != default) {
       <div>
-        (@Subusers)
+        @InstanceUsers
       </div>
     }
   </div>
@@ -45,7 +49,7 @@
 @code {
   [Parameter] public string Css { get; set; }
   [Parameter] public EventCallback OnClick { get; set; }
-  [Parameter] public int Users { get; set; }
-  [Parameter] public int? Subusers { get; set; }
+  [Parameter] public int? BranchUsers { get; set; }
+  [Parameter] public int? InstanceUsers { get; set; }
 
 }

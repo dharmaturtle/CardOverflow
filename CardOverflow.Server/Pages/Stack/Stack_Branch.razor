@@ -19,8 +19,8 @@
                   IsBranch=true
                   AcquiredIds=@AcquiredIds
                   NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id)))
-                  Users=@Branch.Users
-                  Subusers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
+                  BranchUsers=@Branch.Users
+                  InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                   UpdateAcquiredCards=@UpdateAcquiredCards
                   UpdateAcquiredIds=@UpdateAcquiredIds />
   <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
@@ -64,7 +64,7 @@
       <AcquireToggles Instance=@revision
                       AcquiredIds=@AcquiredIds
                       NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(revision.StackId, revision.BranchId, revision.Id)))
-                      Users=@revision.Users
+                      InstanceUsers=@revision.Users
                       UpdateAcquiredCards=@UpdateAcquiredCards
                       UpdateAcquiredIds=@UpdateAcquiredIds />
       <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
