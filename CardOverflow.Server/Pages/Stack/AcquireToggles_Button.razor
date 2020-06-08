@@ -17,13 +17,21 @@
 <style>
   .btn-striped {
     background-image: linear-gradient(45deg, rgba(255, 255, 255, .35) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .35) 50%, rgba(255, 255, 255, .35) 75%, transparent 75%, transparent);
-    background-size: 1rem 1rem
+    background-size: 1rem 1rem;
   }
+
+    .btn-striped:hover:enabled {
+      background-image: none;
+    }
+
+    .btn-striped .users {
+      color: black;
+    }
 </style>
 <button class="btn @Css" @onclick=@OnClick>
   <div class="d-flex align-items-center flex-column align-middle">
-    <i class="fas fa-bookmark"></i>
-    <div>
+    <i class="fas fa-bookmark" style="position:absolute; transform: scaleY(1.5) scaleX(1.5);"></i>
+    <div class="users">
       @Users
     </div>
     @if (Subusers != default) {

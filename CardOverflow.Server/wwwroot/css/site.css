@@ -252,6 +252,12 @@ app {
   border-color: #28a745
 }
 
+  .btn-unacquire-card .users {
+    color: black;
+    z-index: 1;
+    transform: translate(0rem, -.4rem);
+    margin-bottom: -.4rem;
+  }
   .btn-unacquire-card:hover:enabled {
     color: #fff;
     background-color: #c82333;
@@ -288,6 +294,17 @@ app {
 
 .btn-acquire-card {
 }
+
+  .btn-acquire-card .users {
+    color: white;
+    z-index: 1;
+    transform: translate(0rem, -.4rem);
+    margin-bottom: -.4rem;
+  }
+
+  .btn-acquire-card:hover:enabled .users {
+    color: black;
+  }
 
   .btn-acquire-card:hover:enabled {
     color: #fff;
