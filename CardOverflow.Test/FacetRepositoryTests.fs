@@ -75,6 +75,12 @@ let addBasicCustomStack fieldValues =
 let addCloze fieldValues =
     add "Cloze" <| clozeCommand fieldValues
 
+let reversedBasicCollate db =
+    TestCollateRepo.SearchEarliest db "Basic (and reversed card)"
+
+let basicCollate db =
+    TestCollateRepo.SearchEarliest db "Basic"
+
 [<Fact>]
 let ``StackRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()

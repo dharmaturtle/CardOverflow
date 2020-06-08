@@ -231,22 +231,23 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal(0, stack.Value.Summary.Users) // suspended cards don't count to User count
     }
 
-let testGetAcquired (acCount: int) addCards name = task {
+let testGetAcquired (acCount: int) addCard getCollate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = 1 // this user creates the card
-    for (addCard: CardOverflowDb -> int -> string list -> Task<int>) in addCards do
-        let! _ = addCard c.Db authorId ["A"]
-        ()
+    let! (_: int) = addCard c.Db authorId ["A"]
+    let stackId = 1
+    let branchId = 1
+    let branchInstanceId = 1001
     let! acquiredCards = StackRepository.GetAcquiredPages c.Db authorId 1 ""
     Assert.Equal(acCount, acquiredCards.Results.Count())
-    let! ac = StackRepository.GetAcquired c.Db authorId 1
+    let! ac = StackRepository.GetAcquired c.Db authorId stackId
     let ac = ac.Value
     Assert.Equal(authorId, ac.Select(fun x -> x.UserId).Distinct().Single())
 
     let acquirerId = 2 // this user acquires the card
-    do! StackRepository.AcquireCardAsync c.Db acquirerId 1001 |> TaskResult.getOk
-    let! stack = ExploreStackRepository.get c.Db acquirerId 1 |> TaskResult.getOk
+    do! StackRepository.AcquireCardAsync c.Db acquirerId branchInstanceId |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db acquirerId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
@@ -254,7 +255,7 @@ let testGetAcquired (acCount: int) addCards name = task {
         stack.Tags
     )
     do! SanitizeTagRepository.AddTo c.Db acquirerId "a" stack.Id |> TaskResult.getOk
-    let! stack = ExploreStackRepository.get c.Db acquirerId 1 |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db acquirerId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
@@ -263,6 +264,25 @@ let testGetAcquired (acCount: int) addCards name = task {
     )
     let! stacks = StackRepository.SearchAsync c.Db acquirerId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
+
+    // author branching keeps tags
+    let! collate = getCollate c.Db
+    let! _ =
+        {   EditStackCommand.EditSummary = ""
+            FieldValues = [].ToList()
+            CollateInstance = collate |> ViewCollateInstance.copyTo
+            Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
+            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain authorId authorId
+        } |> UpdateRepository.stack c.Db authorId
+
+    let! stack = ExploreStackRepository.get c.Db authorId stackId |> TaskResult.getOk
+    
+    Assert.Equal<ViewTag seq>(
+        [{  Name = "A"
+            Count = 2
+            IsAcquired = true }],
+        stack.Tags
+    )
 
     let nonacquirerId = 3 // this user never acquires the card
     let! stack = ExploreStackRepository.get c.Db nonacquirerId 1 |> TaskResult.getOk
@@ -277,14 +297,16 @@ let testGetAcquired (acCount: int) addCards name = task {
 let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
     testGetAcquired
         1
-        [ FacetRepositoryTests.addBasicStack ]
+        FacetRepositoryTests.addBasicStack
+        FacetRepositoryTests.basicCollate
         <| nameof ``GetAcquired works when acquiring 1 basic card``
 
 [<Fact>]
 let rec ``GetAcquired works when acquiring a pair``(): Task<unit> = 
     testGetAcquired
         2
-        [ FacetRepositoryTests.addReversedBasicStack ]
+        FacetRepositoryTests.addReversedBasicStack
+        FacetRepositoryTests.reversedBasicCollate
         <| nameof ``GetAcquired works when acquiring a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
