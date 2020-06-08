@@ -40,7 +40,7 @@
       </div>
     }
   </div>
-  <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
+  <BSDropdown Class="align-self-center">
     <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
     <BSDropdownMenu>
       @if (Branch.AuthorId == _user.Id) {
@@ -70,7 +70,7 @@
       <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
         <Stack_BranchSummary Instance=@revision />
       </button>
-      <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
+      <BSDropdown Class="align-self-center">
         <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
         <BSDropdownMenu>
           <BSDropdownItem Href="@($"curate/stack/copy/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>

@@ -18,37 +18,32 @@
   <p><em>@_loadingMessage</em></p>
 } else {
   <div class="row">
-    <div class="col-xl">
-      <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
-      @foreach (var i in _selected.Indexes) {
-        <div class="row">
-          <div class=@(_isAcquired() ? "col-10" : "col")>
-            <ResizingIframe BranchInstance=@((_selected.Id, i)) Back />
-          </div>
-          @if (_isAcquired()) {
-            <div class="col-2">
-              <Stack_Acquired AcquiredCard=@(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
-            </div>
-          }
-        </div>
-      }
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-xl">
-      <Stack_Tag Stack=@_stack />
-      <Stack_Relationship Stack=@_stack />
-    </div>
-    <div class="col-xl">
-      <Stack_Comments Stack=@_stack />
-    </div>
-    <div class="col-xl">
+    <div class="col-4">
       <Stack_Branches Branches=@_stack.Branches
                       InstanceSelected=@(x => _selected = x)
                       AcquiredIds=@_stack.AcquiredIds
                       UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
                       Selected=@_selected
                       UpdateAcquiredCards=@(x => _acquiredCards = x) />
+    </div>
+    <div class="col-8">
+      <div class="row">
+        <div class="col-xl">
+          <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
+          @foreach (var i in _selected.Indexes) {
+            <ResizingIframe BranchInstance=@((_selected.Id, i)) Back />
+          }
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xl">
+          <Stack_Tag Stack=@_stack />
+          <Stack_Relationship Stack=@_stack />
+        </div>
+        <div class="col-xl">
+          <Stack_Comments Stack=@_stack />
+        </div>
+      </div>
     </div>
   </div>
 }
