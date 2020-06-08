@@ -185,7 +185,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = view.Value.FrontBackFrontSynthBackSynth.[0]
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| stack.Comments
-    Assert.True stack.Instance.IsAcquired
+    Assert.True stack.Default.Instance.IsAcquired
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
@@ -213,7 +213,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     
     let! stack = ExploreStackRepository.get c.Db userId 1
     let stack = stack.Value
-    Assert.Equal(1, stack.Summary.Users)
+    Assert.Equal(1, stack.Default.Summary.Users)
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
@@ -228,7 +228,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     let! x = StackRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
     Assert.Null x.Value
     let! stack = ExploreStackRepository.get c.Db userId 1
-    Assert.Equal(0, stack.Value.Summary.Users) // suspended cards don't count to User count
+    Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count
     }
 
 let testGetAcquired (acCount: int) addCard getCollate name = task {

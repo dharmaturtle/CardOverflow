@@ -238,7 +238,7 @@ let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId updated
     Assert.Equal(branchId, actualBranchId)
 
-    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Instance)
+    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Default.Instance)
     let! (branch2: BranchInstanceMeta), _ = ExploreStackRepository.instance c.Db userId newBranchInstanceId
     Assert.Equal(branch1.InC(), branch2.InC())
     Assert.Equal(newValue                 , branch2.StrippedFront)
@@ -277,7 +277,7 @@ let ``ExploreStackRepository.branch works``() : Task<unit> = (taskResult {
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId updated
     Assert.Equal(branchId, actualBranchId)
 
-    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Instance)
+    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Default.Instance)
     let! (branch2: BranchInstanceMeta), _ = ExploreStackRepository.branch   c.Db userId branchId
     Assert.Equal(branch1.InC(), branch2.InC())
     Assert.Equal(newValue                 , branch2.StrippedFront)

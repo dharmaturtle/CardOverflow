@@ -434,9 +434,9 @@ type Branch with
     }
 
 type ExploreStack with
-    static member load (entity: StackEntity) acquiredIds (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) instance = {
+    static member load (entity: StackEntity) acquiredIds (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) = {
         Id = entity.Id
-        Summary = ExploreBranchSummary.load instance <| entity.Branches.Single(fun x -> x.Id = entity.DefaultBranchId)
+        Users = entity.Users
         Comments = entity.CommentStacks |> Seq.map Comment.load |> toResizeArray
         Tags =
             tagCounts.Select(fun x ->

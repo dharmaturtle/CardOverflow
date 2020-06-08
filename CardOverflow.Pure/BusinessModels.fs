@@ -484,7 +484,7 @@ module AcquiredIds =
 [<CLIMutable>]
 type ExploreStack = {
     Id: int
-    Summary: ExploreBranchSummary
+    Users: int
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
@@ -492,9 +492,9 @@ type ExploreStack = {
     Branches: Branch ResizeArray
 } with
     //don't add users - the UI needs it to be mutable
-    member this.Author = this.Summary.Author
-    member this.AuthorId = this.Summary.AuthorId
-    member this.Instance = this.Summary.Instance
+    member this.Default = this.Branches.Single(fun x -> x.Name = null)
+    member this.Author = this.Default.Author
+    member this.AuthorId = this.Default.AuthorId
     member this.IsAnyAcquired =
         this.AcquiredIds |> Option.isSome
 

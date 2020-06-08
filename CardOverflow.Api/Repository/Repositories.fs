@@ -123,11 +123,11 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module ExploreStackRepository =
-    let getAcquiredIds (db: CardOverflowDb) userId (rootInstance: BranchInstanceEntity) =
+    let getAcquiredIds (db: CardOverflowDb) userId stackId =
         db.AcquiredCard
             .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
                 .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance)
-            .Where(fun x -> x.UserId = userId && x.StackId = rootInstance.StackId)
+            .Where(fun x -> x.UserId = userId && x.StackId = stackId)
             .Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId)
             .Distinct()
             .SingleOrDefaultAsync()
@@ -135,7 +135,7 @@ module ExploreStackRepository =
         |> TaskOption.map (fun (stackId, branchId, branchInstanceId) ->
             { StackId = stackId; BranchId = branchId; BranchInstanceId = branchInstanceId})
     let get (db: CardOverflowDb) userId stackId = taskResult {
-        let! (r: BranchInstanceEntity * List<string> * List<string> * List<string>) =
+        let! (r: StackEntity * List<string> * List<string> * List<string>) =
             db.LatestDefaultBranchInstance
                 .Include(fun x -> x.Stack.Author)
                 .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
@@ -149,18 +149,16 @@ module ExploreStackRepository =
                 .Include(fun x -> x.CollateInstance)
                 .Where(fun x -> x.StackId = stackId)
                 .Select(fun x ->
-                    x,
+                    x.Stack,
                     x.Stack.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
                     x.Stack.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name).ToList(),
                     x.Stack.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
-        let! rootInstance, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%i not found" stackId)
+        let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%i not found" stackId)
         let! (tc: List<StackTagCountEntity>) = db.StackTagCount.Where(fun x -> x.StackId = stackId).ToListAsync()
         let! (rc: List<StackRelationshipCountEntity>) = db.StackRelationshipCount.Where(fun x -> x.StackId = stackId).ToListAsync()
-        let! acquiredIds = getAcquiredIds db userId rootInstance
-        return
-            BranchInstanceMeta.load (AcquiredIds.branchInstanceId acquiredIds = rootInstance.Id) true rootInstance
-            |> ExploreStack.load rootInstance.Stack acquiredIds (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+        let! acquiredIds = getAcquiredIds db userId stackId
+        return ExploreStack.load stack acquiredIds (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
         let! (e: BranchInstanceEntity) =

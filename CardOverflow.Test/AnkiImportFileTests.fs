@@ -175,7 +175,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let stack = stack.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        stack.Instance.StrippedFront)
+        stack.Default.Instance.StrippedFront)
     let! stack = ExploreStackRepository.get c.Db userId 1
     Assert.Empty stack.Value.Relationships
     Assert.Empty c.Db.Relationship
