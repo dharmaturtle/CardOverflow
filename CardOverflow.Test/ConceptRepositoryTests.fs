@@ -234,38 +234,38 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 let testGetAcquired (acCount: int) addCards name = task {
     use c = new TestContainer(false, name)
     
-    let userId = 1 // this user creates the card
+    let authorId = 1 // this user creates the card
     for (addCard: CardOverflowDb -> int -> string list -> Task<int>) in addCards do
-        let! _ = addCard c.Db userId ["A"]
+        let! _ = addCard c.Db authorId ["A"]
         ()
-    let! acquiredCards = StackRepository.GetAcquiredPages c.Db userId 1 ""
+    let! acquiredCards = StackRepository.GetAcquiredPages c.Db authorId 1 ""
     Assert.Equal(acCount, acquiredCards.Results.Count())
-    let! ac = StackRepository.GetAcquired c.Db userId 1
+    let! ac = StackRepository.GetAcquired c.Db authorId 1
     let ac = ac.Value
-    Assert.Equal(userId, ac.Select(fun x -> x.UserId).Distinct().Single())
-    
-    let userId = 2 // this user acquires the card
-    do! StackRepository.AcquireCardAsync c.Db userId 1001 |> TaskResult.getOk
-    let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+    Assert.Equal(authorId, ac.Select(fun x -> x.UserId).Distinct().Single())
+
+    let acquirerId = 2 // this user acquires the card
+    do! StackRepository.AcquireCardAsync c.Db acquirerId 1001 |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db acquirerId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
             IsAcquired = false }],
         stack.Tags
     )
-    do! SanitizeTagRepository.AddTo c.Db userId "a" stack.Id |> TaskResult.getOk
-    let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+    do! SanitizeTagRepository.AddTo c.Db acquirerId "a" stack.Id |> TaskResult.getOk
+    let! stack = ExploreStackRepository.get c.Db acquirerId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
             IsAcquired = true }],
         stack.Tags
     )
-    let! stacks = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity ""
+    let! stacks = StackRepository.SearchAsync c.Db acquirerId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
 
-    let userId = 3 // this user never acquires the card
-    let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+    let nonacquirerId = 3 // this user never acquires the card
+    let! stack = ExploreStackRepository.get c.Db nonacquirerId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
