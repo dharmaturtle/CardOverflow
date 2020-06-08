@@ -53,7 +53,7 @@
         <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
       }
       @if (AcquiredIds?.Value?.BranchInstanceId != null && Branch.Instance.Id != AcquiredIds.Value.BranchInstanceId) {
-        <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}/Selected Branch/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch")">&Delta; Compare with your collected branch</BSDropdownItem>
+        <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{Branch.Instance.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
       }
     </BSDropdownMenu>
   </BSDropdown>
@@ -70,6 +70,19 @@
       <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
         <Stack_BranchSummary Instance=@revision />
       </button>
+      <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
+        <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
+        <BSDropdownMenu>
+          <BSDropdownItem Href="@($"curate/stack/copy/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+          @if (Branch.Name != null) {
+            <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+          }
+          <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Instance/{Branch.Instance.Id}/Latest Branch Instance")">&Delta; Compare with latest Branch Instance</BSDropdownItem>
+          @if (AcquiredIds?.Value?.BranchInstanceId != null && revision.Id != AcquiredIds.Value.BranchInstanceId) {
+            <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+          }
+        </BSDropdownMenu>
+      </BSDropdown>
     </div>
   }
 }
