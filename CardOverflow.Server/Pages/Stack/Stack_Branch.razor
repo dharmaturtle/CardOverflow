@@ -14,117 +14,123 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-<div class="d-flex h-100">
-  <AcquireToggles Instance=@Branch.Instance
-                  IsBranch=true
-                  AcquiredIds=@AcquiredIds
-                  NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id)))
-                  BranchUsers=@Branch.Users
-                  InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
-                  UpdateAcquiredCards=@UpdateAcquiredCards
-                  UpdateAcquiredIds=@UpdateAcquiredIds />
-  <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
-    <span class="font-weight-bolder">
-      @if (Branch.Name == null) {
-        <span>&laquo; Default &raquo;</span>
-      } else {
-        @Branch.Name
-      }
-    </span>
-    <span class="font-italic float-right">
-      by <a href="@($"/user/{Branch.AuthorId}")" style="color:unset">@Branch.Author</a>
-    </span>
-    @if (_revisions != null && _displayAllRevisions) {
-      <div>
-        <Stack_BranchSummary Instance=@_revisions.SortedMeta.First() />
-      </div>
-    }
-  </div>
-  <BSDropdown Class="align-self-center">
-    <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
-    <BSDropdownMenu>
-      @if (Branch.AuthorId == _user.Id) {
-        <BSDropdownItem Href="@($"branch/{Branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
-      }
-      <BSDropdownItem Href="@($"curate/stack/copy/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
-      <BSDropdownItem Href="@($"/branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
-      <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
-      @if (Branch.Name != null) {
-        <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
-      }
-      @if (AcquiredIds?.Value?.BranchInstanceId != null && Branch.Instance.Id != AcquiredIds.Value.BranchInstanceId) {
-        <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{Branch.Instance.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
-      }
-    </BSDropdownMenu>
-  </BSDropdown>
-</div>
-@if (_revisions != null && _displayAllRevisions) {
-  foreach (var revision in _revisions.SortedMeta.Skip(1)) {
-    <div class="d-flex h-100 pl-5">
-      <AcquireToggles Instance=@revision
+  <tr>
+    <th scope="row" style="text-align: center">
+      <AcquireToggles Instance=@Branch.Instance
+                      IsBranch=true
                       AcquiredIds=@AcquiredIds
-                      NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(revision.StackId, revision.BranchId, revision.Id)))
-                      InstanceUsers=@revision.Users
+                      NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id)))
+                      BranchUsers=@Branch.Users
+                      InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                       UpdateAcquiredCards=@UpdateAcquiredCards
                       UpdateAcquiredIds=@UpdateAcquiredIds />
-      <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
-        <Stack_BranchSummary Instance=@revision />
-      </button>
-      <BSDropdown Class="align-self-center">
-        <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
-        <BSDropdownMenu>
-          <BSDropdownItem Href="@($"curate/stack/copy/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
-          @if (Branch.Name != null) {
-            <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+    </th>
+    <td>
+      <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
+        <span class="font-weight-bolder">
+          @if (Branch.Name == null) {
+            <span>&laquo; Default &raquo;</span>
+          } else {
+            @Branch.Name
           }
-          <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Instance/{Branch.Instance.Id}/Latest Branch Instance")">&Delta; Compare with latest Branch Instance</BSDropdownItem>
-          @if (AcquiredIds?.Value?.BranchInstanceId != null && revision.Id != AcquiredIds.Value.BranchInstanceId) {
-            <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+        </span>
+        <span class="font-italic float-right">
+          by <a href="@($"/user/{Branch.AuthorId}")" style="color:unset">@Branch.Author</a>
+        </span>
+        @if (_revisions != null && _displayAllRevisions) {
+          <div>
+            <Stack_BranchSummary Instance=@_revisions.SortedMeta.First() />
+          </div>
+        }
+      </div>
+    </td>
+    <td>
+      <BSDropdown Class="align-self-center">
+        <BSDropdownToggle Class="bg-transparent"></BSDropdownToggle>
+        <BSDropdownMenu>
+          @if (Branch.AuthorId == _user.Id) {
+            <BSDropdownItem Href="@($"branch/{Branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
+          }
+          <BSDropdownItem Href="@($"curate/stack/copy/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+          <BSDropdownItem Href="@($"/branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
+          <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
+          @if (Branch.Name != null) {
+            <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+          }
+          @if (AcquiredIds?.Value?.BranchInstanceId != null && Branch.Instance.Id != AcquiredIds.Value.BranchInstanceId) {
+            <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{Branch.Instance.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
           }
         </BSDropdownMenu>
       </BSDropdown>
-    </div>
-  }
-}
-
-@code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
-  [Parameter] public Branch Branch { get; set; }
-  [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
-  [Parameter] public BranchInstanceMeta Selected { get; set; }
-  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
-  private bool _displayAllRevisions;
-  private BranchRevision _revisions;
-
-  public override async Task SetParametersAsync(ParameterView parameters) {
-    await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    if (Selected.BranchId == Branch.Id && Selected.Id != Branch.Instance.Id && !_displayAllRevisions) {
-      await toggleRevisions();
-    }
-    StateHasChanged();
-  }
-
-  private void sub1() {
-    foreach (var revision in _revisions.SortedMeta.Where(x => x.IsAcquired)) {
-      revision.Users--;
-    }
-  }
-
-  private async Task toggleRevisions() {
-    _displayAllRevisions = !_displayAllRevisions;
-    if (_revisions == null) {
-      await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => {
-        _revisions = x;
-        sub1();
-      });
-    }
-    if (!_displayAllRevisions && _revisions.SortedMeta.Skip(1).Select(x => x.Id).Contains(Selected.Id)) {
-      await InstanceSelected.InvokeAsync(Branch.Instance);
+    </td>
+  </tr>
+  @if (_revisions != null && _displayAllRevisions) {
+    foreach (var revision in _revisions.SortedMeta.Skip(1)) {
+      <div class="d-flex h-100 pl-5">
+        <AcquireToggles Instance=@revision
+                        AcquiredIds=@AcquiredIds
+                        NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(revision.StackId, revision.BranchId, revision.Id)))
+                        InstanceUsers=@revision.Users
+                        UpdateAcquiredCards=@UpdateAcquiredCards
+                        UpdateAcquiredIds=@UpdateAcquiredIds />
+        <button class="list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
+          <Stack_BranchSummary Instance=@revision />
+        </button>
+        <BSDropdown Class="align-self-center">
+          <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
+          <BSDropdownMenu>
+            <BSDropdownItem Href="@($"curate/stack/copy/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+            @if (Branch.Name != null) {
+              <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+            }
+            <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Instance/{Branch.Instance.Id}/Latest Branch Instance")">&Delta; Compare with latest Branch Instance</BSDropdownItem>
+            @if (AcquiredIds?.Value?.BranchInstanceId != null && revision.Id != AcquiredIds.Value.BranchInstanceId) {
+              <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+            }
+          </BSDropdownMenu>
+        </BSDropdown>
+      </div>
     }
   }
 
-}
+  @code {
+    [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+    private UserClaims _user = UserClaims.init;
+    [Parameter] public Branch Branch { get; set; }
+    [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
+    [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
+    [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
+    [Parameter] public BranchInstanceMeta Selected { get; set; }
+    [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+    private bool _displayAllRevisions;
+    private BranchRevision _revisions;
+
+    public override async Task SetParametersAsync(ParameterView parameters) {
+      await base.SetParametersAsync(parameters);
+      _user = await UserTask;
+      if (Selected.BranchId == Branch.Id && Selected.Id != Branch.Instance.Id && !_displayAllRevisions) {
+        await toggleRevisions();
+      }
+      StateHasChanged();
+    }
+
+    private void sub1() {
+      foreach (var revision in _revisions.SortedMeta.Where(x => x.IsAcquired)) {
+        revision.Users--;
+      }
+    }
+
+    private async Task toggleRevisions() {
+      _displayAllRevisions = !_displayAllRevisions;
+      if (_revisions == null) {
+        await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => {
+          _revisions = x;
+          sub1();
+        });
+      }
+      if (!_displayAllRevisions && _revisions.SortedMeta.Skip(1).Select(x => x.Id).Contains(Selected.Id)) {
+        await InstanceSelected.InvokeAsync(Branch.Instance);
+      }
+    }
+
+  }

@@ -14,31 +14,39 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-<div class="d-flex justify-content-between">
-  <h4>
-    @if (Stack.IsAnyAcquired) {
-      <i class="ml-2 fas fa-bookmark text-success"></i>
-      @(Stack.Users + 1)
-    } else {
-      <i class="ml-2 fas fa-bookmark"></i>
-      @Stack.Users
+<table style="width:100%">
+  <thead>
+    <tr>
+      <th scope="col" style="text-align:center;">
+        <AcquireToggles Instance=@Stack.Default.Instance
+                        IsStack=true
+                        AcquiredIds=@AcquiredIds
+                        NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id)))
+                        BranchUsers=@Stack.Users
+                        UpdateAcquiredCards=@UpdateAcquiredCards
+                        UpdateAcquiredIds=@UpdateAcquiredIds />
+      </th>
+      <th scope="col" style="width:100%; text-align:center;">
+        <h4>Branches</h4>
+      </th>
+      <th scope="col">
+        <a class="btn btn-outline-success" href="curate/stack/branch/@Selected.StackId" title="Add a Branch">
+          <i class="fas fa-plus"></i>
+        </a>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var branch in Branches) {
+      <Stack_Branch Branch=@branch
+                    InstanceSelected=@InstanceSelected
+                    AcquiredIds=@AcquiredIds
+                    UpdateAcquiredIds=@UpdateAcquiredIds
+                    Selected=@Selected
+                    UpdateAcquiredCards=@UpdateAcquiredCards />
     }
-  </h4>
-  <h4>Branches</h4>
-  <a class="btn btn-outline-success" href="curate/stack/branch/@Selected.StackId" title="Add a Branch">
-    <i class="fas fa-plus"></i>
-  </a>
-</div>
-<div class="list-group">
-  @foreach (var branch in Branches) {
-    <Stack_Branch Branch=@branch
-                  InstanceSelected=@InstanceSelected
-                  AcquiredIds=@AcquiredIds
-                  UpdateAcquiredIds=@UpdateAcquiredIds
-                  Selected=@Selected
-                  UpdateAcquiredCards=@UpdateAcquiredCards />
-  }
-</div>
+  </tbody>
+</table>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }

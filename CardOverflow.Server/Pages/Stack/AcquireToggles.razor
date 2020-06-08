@@ -14,23 +14,36 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-@if (AcquiredIds?.Value?.BranchInstanceId == Instance.Id) {
-  <AcquireToggles_Button Css="btn-unacquire-card"
-                         OnClick=@(() => _modal.Show())
-                         BranchUsers=@(BranchUsers + 1)
-                         InstanceUsers=@(InstanceUsers + 1) />
-} else {
-  @if (AcquiredIds?.Value?.BranchId == Instance.BranchId && IsBranch) {
-    <AcquireToggles_Button Css="btn-acquire-card btn-success btn-striped"
-                           OnClick=@_Acquire
-                           BranchUsers=@(BranchUsers + 1)
-                           InstanceUsers=@InstanceUsers />
-
-  } else {
+@if (IsStack) {
+  @if (AcquiredIds == null) {
     <AcquireToggles_Button Css="btn-acquire-card"
                            OnClick=@_Acquire
-                           BranchUsers=@BranchUsers
-                           InstanceUsers=@InstanceUsers />
+                           BranchUsers=@BranchUsers />
+
+  } else {
+    <AcquireToggles_Button Css="btn-unacquire-card"
+                           OnClick=@(() => _modal.Show())
+                           BranchUsers=@(BranchUsers + 1) />
+  }
+} else {
+  @if (AcquiredIds?.Value?.BranchInstanceId == Instance.Id) {
+    <AcquireToggles_Button Css="btn-unacquire-card"
+                           OnClick=@(() => _modal.Show())
+                           BranchUsers=@(BranchUsers + 1)
+                           InstanceUsers=@(InstanceUsers + 1) />
+  } else {
+    @if (AcquiredIds?.Value?.BranchId == Instance.BranchId && IsBranch) {
+      <AcquireToggles_Button Css="btn-acquire-card btn-success btn-striped"
+                             OnClick=@_Acquire
+                             BranchUsers=@(BranchUsers + 1)
+                             InstanceUsers=@InstanceUsers />
+
+    } else {
+      <AcquireToggles_Button Css="btn-acquire-card"
+                             OnClick=@_Acquire
+                             BranchUsers=@BranchUsers
+                             InstanceUsers=@InstanceUsers />
+    }
   }
 }
 
@@ -70,6 +83,7 @@
   [Parameter] public int? InstanceUsers { get; set; }
   [Parameter] public FSharpOption<Ids> NewAcquiredIds { get; set; }
   [Parameter] public bool IsBranch { get; set; }
+  [Parameter] public bool IsStack { get; set; }
   private BSModal _modal;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
