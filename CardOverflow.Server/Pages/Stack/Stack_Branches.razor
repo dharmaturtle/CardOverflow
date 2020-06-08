@@ -15,6 +15,15 @@
 @inject TimeProvider TimeProvider
 
 <div class="d-flex justify-content-between">
+  <h4>
+    @if (Stack.IsAnyAcquired) {
+      <i class="ml-2 fas fa-bookmark text-success"></i>
+      @(Stack.Users + 1)
+    } else {
+      <i class="ml-2 fas fa-bookmark"></i>
+      @Stack.Users
+    }
+  </h4>
   <h4>Branches</h4>
   <a class="btn btn-outline-success" href="curate/stack/branch/@Selected.StackId" title="Add a Branch">
     <i class="fas fa-plus"></i>
@@ -34,6 +43,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
+  [Parameter] public ExploreStack Stack { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
   [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }

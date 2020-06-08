@@ -19,7 +19,8 @@
 } else {
   <div class="row">
     <div class="col-4">
-      <Stack_Branches Branches=@_stack.Branches
+      <Stack_Branches Stack=@_stack
+                      Branches=@_stack.Branches
                       InstanceSelected=@(x => _selected = x)
                       AcquiredIds=@_stack.AcquiredIds
                       UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
@@ -62,6 +63,9 @@
   private bool _isAcquired() => _acquiredCards.Any(x => x.BranchInstanceMeta.Id == _selected.Id);
 
   private void sub1() {
+    if (_stack.IsAnyAcquired) {
+      _stack.Users--;
+    }
     if (_selected.IsAcquired) {
       _selected.Users--;
     }
