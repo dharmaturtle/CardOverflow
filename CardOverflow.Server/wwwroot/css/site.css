@@ -9,6 +9,10 @@ html, body {
   font-family: monospace;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
 /* based on https://codepen.io/anthonyLukes/pen/DLBeE if trying something different maybe https://jsfiddle.net/przemcio/xLhLuzf9/3/ will work*/
 .study-content {
   flex: 1 1 auto;

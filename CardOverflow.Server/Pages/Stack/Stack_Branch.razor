@@ -23,7 +23,7 @@
                   InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                   UpdateAcquiredCards=@UpdateAcquiredCards
                   UpdateAcquiredIds=@UpdateAcquiredIds />
-  <button class="list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
+  <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
     <span class="font-weight-bolder">
       @if (Branch.Name == null) {
         <span>&laquo; Default &raquo;</span>
@@ -39,7 +39,7 @@
         <Stack_BranchSummary Instance=@_revisions.SortedMeta.First() />
       </div>
     }
-  </button>
+  </div>
   <BSDropdown Class="align-self-center" DropdownDirection="DropdownDirection.Left">
     <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
     <BSDropdownMenu>
