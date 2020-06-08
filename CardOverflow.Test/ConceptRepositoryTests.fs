@@ -284,6 +284,10 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
         stack.Tags
     )
 
+    // search returns Default branches (not the new one created)
+    let! stacks = StackRepository.SearchAsync c.Db acquirerId 1 SearchOrder.Popularity ""
+    Assert.Equal(1, stacks.Results.Count())
+
     let nonacquirerId = 3 // this user never acquires the card
     let! stack = ExploreStackRepository.get c.Db nonacquirerId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(

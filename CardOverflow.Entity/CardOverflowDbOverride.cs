@@ -47,7 +47,7 @@ namespace CardOverflow.Entity {
     }
 
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public IOrderedQueryable<BranchInstanceEntity> SearchLatestBranchInstance(
+    public IOrderedQueryable<BranchInstanceEntity> SearchLatestDefaultBranchInstance(
       string searchTerm,
       string plain,
       string wildcard,
@@ -77,7 +77,7 @@ namespace CardOverflow.Entity {
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
             )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
 
-      return LatestBranchInstance
+      return LatestDefaultBranchInstance
         .Apply(where)
         .Apply(order);
     }
