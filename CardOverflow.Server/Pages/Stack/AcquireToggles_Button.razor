@@ -30,7 +30,7 @@
 </style>
 <button class="btn @Css" @onclick=@OnClick>
   <div class="d-flex align-items-center flex-column align-middle">
-    <i class="fas fa-bookmark" style="position:absolute; transform: scaleY(1.5) scaleX(1.5);"></i>
+    <i class="fas fa-bookmark" style="position:absolute; transform: scaleY(1.5) scaleX(@(_scaleX()));"></i>
     <div class="users">
       @if (BranchUsers != default) {
         @BranchUsers
@@ -51,5 +51,6 @@
   [Parameter] public EventCallback OnClick { get; set; }
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? InstanceUsers { get; set; }
+  private double _scaleX() => Math.Max(1.5, (BranchUsers?.ToString() ?? "").Length);
 
 }
