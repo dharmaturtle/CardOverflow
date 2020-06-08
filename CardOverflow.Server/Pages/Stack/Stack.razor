@@ -81,7 +81,7 @@
     if (StackId.HasValue && oldStackId != StackId) {
       await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, _user.Id, StackId.Value)).Match(_ShowError, x => {
         _stack = x;
-        _selected = _stack.Instance;
+        _selected = _stack.Default.Instance;
         sub1();
       });
     } else if (BranchId.HasValue && oldBranchId != BranchId) {
@@ -107,14 +107,6 @@
   private void _ShowError(string error) {
     ToastService.ShowError(error);
     _loadingMessage = error;
-  }
-
-  private void _CardStateUpdated(CardState state) {
-    if (state.IsSuspended && _acquiredCards.All(x => x.CardState.IsSuspended)) {
-      _stack.Summary.Users--;
-    } else if (!state.IsSuspended && _acquiredCards.All(x => !x.CardState.IsSuspended)) {
-      _stack.Summary.Users++;
-    }
   }
 
 }
