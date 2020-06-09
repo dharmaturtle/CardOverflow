@@ -76,7 +76,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public AcquiredCard AcquiredCard { get; set; }
-  [Parameter] public EventCallback<CardState> CardStateUpdated { get; set; }
+  [Parameter] public EventCallback<(int, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
   private async Task _SetSetting(int newId) {
@@ -101,13 +101,9 @@
 
   private async Task _editState(CardState state) {
     var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => StackRepository.editState(db, user.Id, AcquiredCard.AcquiredCardId, state));
-    if (x.IsOk) {
-      AcquiredCard.CardState = state;
-      await CardStateUpdated.InvokeAsync(state);
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
+    await DbExecutor.QueryAsync(db => StackRepository.editState(db, user.Id, AcquiredCard.AcquiredCardId, state)).Match(ToastService, async _ =>
+      await CardStateUpdated.InvokeAsync((AcquiredCard.Index, state)
+    ));
   }
 
 }

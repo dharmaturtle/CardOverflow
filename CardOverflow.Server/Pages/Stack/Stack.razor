@@ -37,7 +37,7 @@
             <div class="row">
               @if (IsCurate) {
                 <div class="col-4">
-                  <Stack_Acquired AcquiredCard=@(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
+                  <Stack_Acquired AcquiredCard=@(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
                 </div>
               }
               <div class="col">
@@ -123,12 +123,14 @@
     _loadingMessage = error;
   }
 
-  private void _CardStateUpdated(CardState state) {
-    if (state.IsSuspended && _acquiredCards.All(x => x.CardState.IsSuspended)) {
+  private void _CardStateUpdated(int index, CardState newState) {
+    var oldState = _acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState;
+    if (!oldState.IsSuspended && newState.IsSuspended && _acquiredCards.All(x => x.CardState.IsSuspended)) {
       _stack.Users--;
-    } else if (!state.IsSuspended && _acquiredCards.All(x => !x.CardState.IsSuspended)) {
+    } else if (oldState.IsSuspended && !newState.IsSuspended && _acquiredCards.All(x => !x.CardState.IsSuspended)) {
       _stack.Users++;
     }
+    _acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState = newState;
   }
 
 }
