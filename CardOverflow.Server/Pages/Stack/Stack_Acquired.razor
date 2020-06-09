@@ -61,7 +61,7 @@
     </div>
     <div>
       @if (AcquiredCard.CardState.IsSuspended) {
-        <button class="btn btn-outline-primary" @onclick=@(() => _editState(CardState.Normal))>
+        <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Normal))>
           Unsuspend
         </button>
       } else {

@@ -34,7 +34,7 @@
         <div class="col-xl">
           <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
           @foreach (var i in _selected.Indexes) {
-            <div class="row">
+            <div class="row @(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
               @if (IsCurate) {
                 <div class="col-4">
                   <Stack_Acquired AcquiredCard=@(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
