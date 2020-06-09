@@ -18,21 +18,32 @@
   <p><em>@_loadingMessage</em></p>
 } else {
   <div class="row">
-    <div class="col-4">
-      <Stack_Branches Stack=@_stack
-                      Branches=@_stack.Branches
-                      InstanceSelected=@(x => _selected = x)
-                      AcquiredIds=@_stack.AcquiredIds
-                      UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
-                      Selected=@_selected
-                      UpdateAcquiredCards=@(x => _acquiredCards = x) />
-    </div>
-    <div class="col-8">
+    @if (!IsCurate) {
+      <div class="col-4">
+        <Stack_Branches Stack=@_stack
+                        Branches=@_stack.Branches
+                        InstanceSelected=@(x => _selected = x)
+                        AcquiredIds=@_stack.AcquiredIds
+                        UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
+                        Selected=@_selected
+                        UpdateAcquiredCards=@(x => _acquiredCards = x) />
+      </div>
+    }
+    <div class="col">
       <div class="row">
         <div class="col-xl">
           <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
           @foreach (var i in _selected.Indexes) {
-            <ResizingIframe BranchInstance=@((_selected.Id, i)) Back />
+            <div class="row">
+              @if (IsCurate) {
+                <div class="col-4">
+                  <Stack_Acquired AcquiredCard=@(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@_CardStateUpdated />
+                </div>
+              }
+              <div class="col">
+                <ResizingIframe BranchInstance=@((_selected.Id, i)) Back />
+              </div>
+            </div>
           }
         </div>
       </div>
@@ -60,7 +71,6 @@
   private BranchInstanceMeta _selected;
   private List<AcquiredCard> _acquiredCards = new List<AcquiredCard>();
   private string _loadingMessage = "Loading...";
-  private bool _isAcquired() => _acquiredCards.Any(x => x.BranchInstanceMeta.Id == _selected.Id);
 
   private void sub1() {
     if (_stack.IsAnyAcquired) {
@@ -111,6 +121,14 @@
   private void _ShowError(string error) {
     ToastService.ShowError(error);
     _loadingMessage = error;
+  }
+
+  private void _CardStateUpdated(CardState state) {
+    if (state.IsSuspended && _acquiredCards.All(x => x.CardState.IsSuspended)) {
+      _stack.Users--;
+    } else if (!state.IsSuspended && _acquiredCards.All(x => !x.CardState.IsSuspended)) {
+      _stack.Users++;
+    }
   }
 
 }
