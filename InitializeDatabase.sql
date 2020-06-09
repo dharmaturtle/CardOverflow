@@ -280,7 +280,8 @@ CREATE TABLE public."AcquiredCard" (
     "CardSettingId" integer NOT NULL,
     "DeckId" integer NOT NULL,
     "IsLapsed" boolean NOT NULL,
-    "PersonalField" text NOT NULL,
+    "FrontPersonalField" text NOT NULL,
+    "BackPersonalField" text NOT NULL,
     "TsVectorHelper" text,
     "TsVector" tsvector,
     CONSTRAINT "AcquiredCard_TsVectorHelper_IsNull" CHECK (("TsVectorHelper" IS NULL))
@@ -315,7 +316,8 @@ CREATE VIEW public."AcquiredCardIsLatest" AS
     a."Due",
     a."CardSettingId",
     a."IsLapsed",
-    a."PersonalField",
+    a."FrontPersonalField",
+    a."BackPersonalField",
     a."DeckId",
     (b."LatestInstanceId" IS NULL) AS "IsLatest"
    FROM (public."AcquiredCard" a

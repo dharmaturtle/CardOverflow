@@ -127,7 +127,7 @@ namespace CardOverflow.Entity {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
       foreach (var acquiredCard in _filter<AcquiredCardEntity>(entries)) {
-        acquiredCard.TsVectorHelper = MappingTools.stripHtmlTags(acquiredCard.PersonalField);
+        acquiredCard.TsVectorHelper = MappingTools.stripHtmlTags(acquiredCard.FrontPersonalField) + " " + MappingTools.stripHtmlTags(acquiredCard.BackPersonalField);
       }
       foreach (var tag in _filter<TagEntity>(entries)) {
         tag.Name = MappingTools.toTitleCase.Invoke(tag.Name);

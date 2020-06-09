@@ -525,7 +525,8 @@ type EditAcquiredCardCommand = {
     CardState: CardState
     CardSettingId: int
     DeckId: int
-    PersonalField: string
+    FrontPersonalField: string
+    BackPersonalField: string
 }
 
 type EditStackCommand = {

@@ -25,7 +25,8 @@ namespace CardOverflow.Entity
         public int CardSettingId { get; set; }
         public int DeckId { get; set; }
         public bool IsLapsed { get; set; }
-        public string PersonalField { get; set; } = "";
+        public string FrontPersonalField { get; set; }
+        public string BackPersonalField { get; set; }
         public bool IsLatest { get; set; }
         public virtual BranchInstanceEntity BranchInstance { get; set; }
         public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }

@@ -31,7 +31,9 @@ namespace CardOverflow.Entity
         public int DeckId { get; set; }
         public bool IsLapsed { get; set; }
         [Required]
-        public string PersonalField { get; set; } = "";
+        public string FrontPersonalField { get; set; } = "";
+        [Required]
+        public string BackPersonalField { get; set; } = "";
         public string TsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 

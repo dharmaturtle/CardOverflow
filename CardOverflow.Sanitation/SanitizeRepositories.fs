@@ -338,20 +338,24 @@ type ViewEditAcquiredCardCommand = {
     CardState: CardState
     CardSettingId: int Option
     DeckId: int Option
-    [<StringLength(2000, ErrorMessage = "The Personal Field must be less than 2000 characters")>]
-    PersonalField: string
+    [<StringLength(2000, ErrorMessage = "The Front Personal Field must be less than 2000 characters")>]
+    FrontPersonalField: string
+    [<StringLength(2000, ErrorMessage = "The Back Personal Field must be less than 2000 characters")>]
+    BackPersonalField: string
 } with
     static member init = {
         CardState = Normal
         CardSettingId = None
         DeckId = None
-        PersonalField = ""
+        FrontPersonalField = ""
+        BackPersonalField = ""
     }
     member this.toDomain deckId cardSettingId = {
         EditAcquiredCardCommand.CardState = this.CardState
         CardSettingId = cardSettingId
         DeckId = deckId
-        PersonalField = this.PersonalField
+        FrontPersonalField = this.FrontPersonalField
+        BackPersonalField = this.BackPersonalField
     }
 
 [<CLIMutable>]
