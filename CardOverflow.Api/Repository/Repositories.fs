@@ -655,13 +655,15 @@ module TagRepository =
                 ((rawTag, hasChildren), (parent, true))
                 |> Some
           )
-    let parse =
-        List.map unfold
-        >> List.collect id
-        >> List.groupBy fst
-        >> List.map(fun (tag, pairs) -> (tag, pairs |> List.exists snd))
-        >> List.sortBy fst
-        >> List.map(fun (rawTag, hasChildren) ->
+    let parse rawTags =
+        rawTags
+        |> Seq.toList
+        |> List.map unfold
+        |> List.collect id
+        |> List.groupBy fst
+        |> List.map(fun (tag, pairs) -> (tag, pairs |> List.exists snd))
+        |> List.sortBy fst
+        |> List.map(fun (rawTag, hasChildren) ->
             let parent, name = splitRawtag rawTag
             {   Id = rawTag
                 ParentId = parent
@@ -669,6 +671,13 @@ module TagRepository =
                 IsExpanded = false
                 HasChildren = hasChildren
             })
+    let getAll (db: CardOverflowDb) userId =
+        db.Tag_AcquiredCard
+            .Where(fun x -> x.UserId = userId)
+            .Select(fun x -> x.Tag.Name)
+            .Distinct()
+            .ToListAsync()
+        |> Task.map parse
     let searchMany (db: CardOverflowDb) (input: string list) =
         let input = input |> List.map (fun x -> x.ToLower())
         db.Tag.Where(fun t -> input.Contains(t.Name.ToLower()))

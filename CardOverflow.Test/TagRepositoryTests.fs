@@ -187,3 +187,30 @@ let ``Tag "a/b/c" parses``(): unit =
             Name = "c"
             IsExpanded = false
             HasChildren = false }]
+
+[<Fact>]
+let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["ax" +/+ "by" +/+ "cz"]
+    
+    let! actual = TagRepository.getAll c.Db userId
+
+    Assert.equal
+        [{  Id = "Ax"
+            ParentId = ""
+            Name = "Ax"
+            IsExpanded = false
+            HasChildren = true }
+         {  Id = "Ax/By"
+            ParentId = "Ax"
+            Name = "By"
+            IsExpanded = false
+            HasChildren = true }
+         {  Id = "Ax/By/Cz"
+            ParentId = "Ax/By"
+            Name = "Cz"
+            IsExpanded = false
+            HasChildren = false }]
+        actual
+    } |> TaskResult.getOk)
