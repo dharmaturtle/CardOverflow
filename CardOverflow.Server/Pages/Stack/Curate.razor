@@ -15,7 +15,7 @@
     <div class="col-sm-2">
       <CurateStackFilters Query=@search.Query DeckClicked=@SearchClicked />
     </div>
-    <div class="col-sm-10">
+    <div class="col">
       <div class="d-flex justify-content-between align-items-center">
         <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?branchinstance={x}") Ids=@cards?.Select(x => x.BranchInstanceMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
       </div>
