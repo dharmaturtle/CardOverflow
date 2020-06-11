@@ -75,9 +75,10 @@
           </div>
           <CollateEditor_Templates Instance=@Instance IsDisabled=@IsDisabled UpdateCollateType=@(x => Instance.Templates = x) />
         </fieldset>
-        <div class="float-right mt-3 mr-3">
+        <div class="mt-3">
           <div class="row">
-            <div class="btn-group">
+            <div class="col"></div>
+            <div class="col btn-group">
               @if (IsDisabled && Collate != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
                 <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Instance = Collate.Instances.Single(x => x.Id == id)))>
@@ -91,7 +92,7 @@
                   Edit
                 </button>
               } else {
-                <InputText @bind-Value=@Instance.EditSummary class="form-control" placeholder="Edit Summary" style="width: 500px;" disabled=@IsDisabled />
+                <InputText @bind-Value=@Instance.EditSummary class="form-control" placeholder="Edit Summary" disabled=@IsDisabled />
                 <button type="submit" class="btn btn-primary" disabled=@IsDisabled>Save</button>
               }
             </div>
