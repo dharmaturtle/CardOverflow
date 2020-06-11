@@ -15,11 +15,11 @@
 <div class="d-flex justify-content-end">
   by&nbsp;<a href="@($"/user/{_branch.AuthorId}")" style="color:unset">@_branch.Author</a>
   @if (_branch.AuthorId == _user.Id) {
-    <a href="branch/@_branch.Id/edit" title="Edit">
+    <a href="stack/editbranch/@_branch.Id" title="Edit">
       <span class="oi oi-pencil ml-2" />
     </a>
   }
-  <a href="curate/stack/copy/@Instance.Id" title="Edit a Copy">
+  <a href="stack/copyinstance/@Instance.Id" title="Edit a Copy">
     <span class="fas fa-copy ml-2" />
   </a>
   <a href="/branch/@_branch.Id/revision" title="Revisions">

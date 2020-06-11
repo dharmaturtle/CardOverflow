@@ -66,4 +66,4 @@ type GetCardIdIsOkData () =
 let ``GetStackId works`` expected raw : unit =
     SanitizeRelationshipRepository.GetStackId raw
     |> Result.getOk
-    |> fun x -> Assert.Equal(expected, x)
+    |> Assert.equal expected

@@ -49,10 +49,10 @@
       <BSDropdownToggle Class="bg-transparent"></BSDropdownToggle>
       <BSDropdownMenu>
         @if (Branch.AuthorId == _user.Id) {
-          <BSDropdownItem Href="@($"branch/{Branch.Id}/edit")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
+          <BSDropdownItem Href="@($"stack/editbranch/{Branch.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
         }
-        <BSDropdownItem Href="@($"curate/stack/copy/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
-        <BSDropdownItem Href="@($"/branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
+        <BSDropdownItem Href="@($"stack/copyinstance/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+        <BSDropdownItem Href="@($"branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
         <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
         @if (Branch.Name != null) {
           <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
@@ -85,7 +85,7 @@
         <BSDropdown Class="align-self-center">
           <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
           <BSDropdownMenu>
-            <BSDropdownItem Href="@($"curate/stack/copy/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+            <BSDropdownItem Href="@($"stack/copyinstance/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
             @if (Branch.Name != null) {
               <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
             }
