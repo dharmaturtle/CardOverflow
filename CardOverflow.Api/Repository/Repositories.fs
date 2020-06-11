@@ -623,7 +623,52 @@ module UserRepository =
     let Get (db: CardOverflowDb) id =
         db.User.SingleAsync(fun x -> x.Id = id)
 
+type TreeTag = {
+    Id: string
+    ParentId: string
+    Name: string
+    IsExpanded: bool
+    HasChildren: bool
+}
+
 module TagRepository =
+    let delimiter = "/"
+    let (+/+) a b =
+        match String.IsNullOrWhiteSpace a, String.IsNullOrWhiteSpace b with
+        | true, true -> ""
+        | false, true -> a
+        | true, false -> b
+        | false, false -> sprintf "%s%s%s" a delimiter b
+    let splitRawtag (rawTag: string) = // returns parent, name
+        let i = rawTag.LastIndexOf delimiter
+        if i = -1 then
+            "", rawTag
+        else
+            rawTag.Substring(0, i),
+            rawTag.Substring(i + 1)
+    let unfold rawTag =
+        (rawTag, false) |> List.unfold (fun (rawTag, hasChildren) ->
+            let parent, name = splitRawtag rawTag
+            match name with
+            | "" -> None
+            | _ ->
+                ((rawTag, hasChildren), (parent, true))
+                |> Some
+          )
+    let parse =
+        List.map unfold
+        >> List.collect id
+        >> List.groupBy fst
+        >> List.map(fun (tag, pairs) -> (tag, pairs |> List.exists snd))
+        >> List.sortBy fst
+        >> List.map(fun (rawTag, hasChildren) ->
+            let parent, name = splitRawtag rawTag
+            {   Id = rawTag
+                ParentId = parent
+                Name = name
+                IsExpanded = false
+                HasChildren = hasChildren
+            })
     let searchMany (db: CardOverflowDb) (input: string list) =
         let input = input |> List.map (fun x -> x.ToLower())
         db.Tag.Where(fun t -> input.Contains(t.Name.ToLower()))

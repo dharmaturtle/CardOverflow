@@ -110,3 +110,80 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     do! StackRepository.unacquireStack c.Db author ac.StackId
     Assert.Empty <| c.Db.StackTagCount.ToList()
     } |> TaskResult.getOk)
+
+open TagRepository
+[<Fact>]
+let ``Tag "a" parses ``(): unit =
+    ["a"]
+
+    |> TagRepository.parse
+
+    |> Assert.equal
+        [{  Id = "a"
+            ParentId = ""
+            Name = "a"
+            IsExpanded = false
+            HasChildren = false }]
+
+[<Fact>]
+let ``Tags "a" and "a/b" parse``(): unit =
+    let a = "a"
+    let a_b = a +/+ "b"
+    [a; a_b]
+
+    |> TagRepository.parse
+
+    |> Assert.equal
+        [{  Id = "a"
+            ParentId = ""
+            Name = "a"
+            IsExpanded = false
+            HasChildren = true }
+         {  Id = "a/b"
+            ParentId = "a"
+            Name = "b"
+            IsExpanded = false
+            HasChildren = false }]
+
+[<Fact>]
+let ``Tag "a/b" parses``(): unit =
+    "a" +/+ "b"
+    |> List.singleton
+
+    |> TagRepository.parse
+
+    |> Assert.equal
+        [{  Id = "a"
+            ParentId = ""
+            Name = "a"
+            IsExpanded = false
+            HasChildren = true }
+         {  Id = "a/b"
+            ParentId = "a"
+            Name = "b"
+            IsExpanded = false
+            HasChildren = false }]
+
+[<Fact>]
+let ``Tag "a/b/c" parses``(): unit =
+    "a" +/+ "b" +/+ "c"
+    |> List.singleton
+
+    |> TagRepository.parse
+
+    |> Assert.equal
+        [{  Id = "a"
+            ParentId = ""
+            Name = "a"
+            IsExpanded = false
+            HasChildren = true }
+         {  Id = "a/b"
+            ParentId = "a"
+            Name = "b"
+            IsExpanded = false
+            HasChildren = true }
+         {  Id = "a/b/c"
+            ParentId = "a/b"
+            Name = "c"
+            IsExpanded = false
+            HasChildren = false }]
