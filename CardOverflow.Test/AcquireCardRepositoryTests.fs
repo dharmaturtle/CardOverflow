@@ -255,19 +255,26 @@ let ``AcquireCards works``(): Task<unit> = task {
     let count = StackRepository.GetDueCount c.Db acquirerId ""
     Assert.Equal(3, count)
     let count = StackRepository.GetDueCount c.Db authorId ""
-    Assert.Equal(2, count)
+    Assert.Equal(2, count)}
 
-    let! a = StackRepository.GetQuizBatch c.Db acquirerId ""
+[<Fact>]
+let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
+    use c = new TestContainer()
+    let userId = 3
+
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
+
+    let! a = StackRepository.GetQuizBatch c.Db userId ""
     let getId (x: Result<QuizCard, string> seq) = x.First().Value.AcquiredCardId
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
-    let! b = StackRepository.GetQuizBatch c.Db acquirerId ""
+    let! b = StackRepository.GetQuizBatch c.Db userId ""
     Assert.NotEqual(getId a, getId b)
 
-    let count = StackRepository.GetDueCount c.Db acquirerId ""
-    Assert.Equal(2, count)
+    let count = StackRepository.GetDueCount c.Db userId ""
+    Assert.Equal(1, count)
 
     // getHeatmap returns one for today
-    let! actual = HistoryRepository.getHeatmap c.Db acquirerId
+    let! actual = HistoryRepository.getHeatmap c.Db userId
     Assert.Equal(0, actual.DateCountLevels.Length % 7) // returns full weeks; not partial weeks
     Assert.Equal(
         {   Date = DateTime.UtcNow.Date
