@@ -88,7 +88,7 @@
                     </option>
                   }
                 </select>
-                <button class="btn btn-primary" type="button" @onclick=@(() => { IsDisabled = false; Instance.EditSummary = ""; })>
+                <button class="btn btn-primary" type="button" disabled=@IsDisabled @onclick=@(() => { IsDisabled = false; Instance.EditSummary = ""; })>
                   Edit
                 </button>
               } else {
