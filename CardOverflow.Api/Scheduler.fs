@@ -4,12 +4,12 @@ open CardOverflow.Pure
 open System
 open Serilog
 
-type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
+module Scheduler =
     let max a b = if a > b then a else b
     let min a b = if a < b then a else b
     let equals a b threshold = abs(a-b) < threshold
 
-    let rawInterval (card: QuizCard) score =
+    let rawInterval utcNow (card: QuizCard) score =
         let calculateStepsInterval toStep stepTimespans graduatingInterval easyInterval stepIndex =
             match score with
             | Again -> stepTimespans |> List.head, toStep 0uy
@@ -26,11 +26,11 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
                 | None -> graduatingInterval, Interval graduatingInterval
             | Easy -> easyInterval, Interval easyInterval
         let calculateInterval previousInterval =
-            let interval(previousInterval: TimeSpan) (rawInterval: TimeSpan) =
+            let interval (previousInterval: TimeSpan) (rawInterval: TimeSpan) =
                 max (rawInterval * card.Settings.MatureCardsIntervalFactor)
                     (TimeSpan.FromDays 1. |> previousInterval.Add)
                 |> min (TimeSpanInt16.value card.Settings.MatureCardsMaximumInterval)
-            let delta = time.utcNow - card.Due |> max TimeSpan.Zero
+            let delta = utcNow - card.Due |> max TimeSpan.Zero
             let hard = interval previousInterval <| previousInterval * card.Settings.MatureCardsHardIntervalFactor
             let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
             let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Settings.MatureCardsEaseFactorEasyBonusFactor)
@@ -60,6 +60,8 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             let interval, ease = calculateInterval i
             (interval, Interval interval), ease
 
+open Scheduler
+type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
     let fuzz(interval: TimeSpan) =
         let fuzzRangeInDaysInclusive =
             let days = interval.TotalDays
@@ -73,12 +75,12 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
         // lowTODO find an implementation that is max inclusive
         randomProvider.float fuzzRangeInDaysInclusive |> TimeSpan.FromDays
 
-    member __.Calculate (card: QuizCard) score =
-        rawInterval card score
+    member _.Calculate (card: QuizCard) score =
+        rawInterval time.utcNow card score
         |> fun ((interval, intervalOrSteps), easeFactor) -> fuzz interval, intervalOrSteps, easeFactor
 
-    member __.Intervals (card: QuizCard) =
-        rawInterval card Again |> fst |> fst |> ViewLogic.toString,
-        rawInterval card Hard |> fst |> fst |> ViewLogic.toString,
-        rawInterval card Good |> fst |> fst |> ViewLogic.toString,
-        rawInterval card Easy |> fst |> fst |> ViewLogic.toString
+    member _.Intervals (card: QuizCard) =
+        rawInterval time.utcNow card Again |> fst |> fst |> ViewLogic.toString,
+        rawInterval time.utcNow card Hard  |> fst |> fst |> ViewLogic.toString,
+        rawInterval time.utcNow card Good  |> fst |> fst |> ViewLogic.toString,
+        rawInterval time.utcNow card Easy  |> fst |> fst |> ViewLogic.toString
