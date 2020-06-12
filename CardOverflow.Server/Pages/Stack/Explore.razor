@@ -24,14 +24,9 @@
       @foreach (var stack in _stacks) {
         <tr>
           <td>
-            <div class="curate-tooltip-target">
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="oi oi-eye@(stack.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <div class="curate-tooltip-content">
-                <ResizingIframeBranch BranchInstanceId=@stack.Instance.Id Front />
-              </div>
-            </div>
+            <HoverPreview IsAcquired=@stack.IsAcquired>
+              <ResizingIframeBranch BranchInstanceId=@stack.Instance.Id Front />
+            </HoverPreview>
           </td>
           <td>
             @stack.Users

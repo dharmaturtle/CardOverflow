@@ -26,14 +26,9 @@
       @foreach (var instance in _instances) {
         <tr>
           <td>
-            <div class="curate-tooltip-target">
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="oi oi-eye@(instance.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              <div class="curate-tooltip-content">
-                <ResizingIframe CollateInstanceId=@instance.Id Back />
-              </div>
-            </div>
+            <HoverPreview IsAcquired=@instance.IsAcquired>
+              <ResizingIframe CollateInstanceId=@instance.Id Back />
+            </HoverPreview>
           </td>
           <td>
             @instance.CollateUsers

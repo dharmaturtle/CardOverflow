@@ -37,12 +37,9 @@
 } else {
   <div class="row">
     <div class="col-sm">
-      <span class="curate-tooltip-target">
-        <span class="oi oi-eye@(_aIsAcquired ? " text-success" : "")" aria-hidden="true" />
-        <span class="curate-tooltip-content">
-          <ResizingIframeBranch BranchInstanceId=@A_BranchInstanceId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
-        </span>
-      </span>
+      <HoverPreview IsAcquired=@_aIsAcquired Padding="0">
+        <ResizingIframeBranch BranchInstanceId=@A_BranchInstanceId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
+      </HoverPreview>
       <a href="branchinstance/@A_BranchInstanceId">
         @(ATitle ?? "Old Stack")
       </a>
@@ -61,12 +58,9 @@
       }
     </div>
     <div class="col-sm">
-      <span class="curate-tooltip-target">
-        <span class="oi oi-eye@(_bIsAcquired ? " text-success" : "")" aria-hidden="true" />
-        <span class="curate-tooltip-content">
-          <ResizingIframeBranch BranchInstanceId=@B_BranchInstanceId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
-        </span>
-      </span>
+      <HoverPreview IsAcquired=@_bIsAcquired Padding="0">
+        <ResizingIframeBranch BranchInstanceId=@B_BranchInstanceId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
+      </HoverPreview>
       <a href="branchinstance/@B_BranchInstanceId">
         @(BTitle ?? "New Stack")
       </a>
@@ -190,11 +184,11 @@
         <BSTabLabel>
           Templates detailed
           @if (
-        _collateFields(_a) != _collateFields(_b) ||
-        _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-        _a.CollateInstance.Css != _b.CollateInstance.Css) {
-        <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
-      }
+       _collateFields(_a) != _collateFields(_b) ||
+       _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
+       _a.CollateInstance.Css != _b.CollateInstance.Css) {
+      <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
+    }
         </BSTabLabel>
         <BSTabContent>
           <TextDiff OldText=@_collateFields(_a) NewText=@_collateFields(_b) CollapseContent=true MaxHeight="-1">

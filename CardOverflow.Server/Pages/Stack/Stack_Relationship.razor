@@ -35,13 +35,14 @@
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
       <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
-        <span class="curate-tooltip-target">
-          <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
-          <span class="badge badge-success">@relationship.Users</span>
-          <span class="curate-tooltip-content">
+        <HoverPreview IsAcquired=@relationship.IsAcquired Padding="0">
+          <ChildContent>
             <ResizingIframe StackId=@stackId Front />
-          </span>
-        </span>
+          </ChildContent>
+          <AdditionalHoverTarget>
+            <span class="badge badge-success">@relationship.Users</span>
+          </AdditionalHoverTarget>
+        </HoverPreview>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
       <a href="/stack/@stackId">@getHtml(stackId)</a>
@@ -50,13 +51,14 @@
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
       <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
-        <span class="curate-tooltip-target">
-          <span class="oi oi-eye@(relationship.IsAcquired ? " text-success" : "")" aria-hidden="true"></span>
-          <span class="badge badge-success">@relationship.Users</span>
-          <span class="curate-tooltip-content">
+        <HoverPreview IsAcquired=@relationship.IsAcquired Padding="0">
+          <ChildContent>
             <ResizingIframe StackId=@stackId Front />
-          </span>
-        </span>
+          </ChildContent>
+          <AdditionalHoverTarget>
+            <span class="badge badge-success">@relationship.Users</span>
+          </AdditionalHoverTarget>
+        </HoverPreview>
         @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
       </button>
       <a href="/stack/@stackId">@htmlByCardId[stackId]</a>

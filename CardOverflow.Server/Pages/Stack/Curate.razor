@@ -34,14 +34,9 @@
               @foreach (var card in cards) {
                 <tr>
                   <td>
-                    <div class="curate-tooltip-target">
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                      <span class="oi oi-eye@(card.BranchInstanceMeta.IsAcquired ? " text-success" : "")" aria-hidden="true" />
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                      <div class="curate-tooltip-content">
-                        <ResizingIframeBranch BranchInstanceId=@card.BranchInstanceMeta.Id MaxIndexInclusive=@card.BranchInstanceMeta.MaxIndexInclusive Front />
-                      </div>
-                    </div>
+                    <HoverPreview IsAcquired=@card.BranchInstanceMeta.IsAcquired>
+                      <ResizingIframeBranch BranchInstanceId=@card.BranchInstanceMeta.Id MaxIndexInclusive=@card.BranchInstanceMeta.MaxIndexInclusive Front />
+                    </HoverPreview>
                   </td>
                   <td>
                     <a href="/my/stack?branchinstance=@card.BranchInstanceMeta.Id">
