@@ -658,10 +658,9 @@ module TagRepository =
     let parse rawTags =
         rawTags
         |> Seq.toList
-        |> List.map unfold
-        |> List.collect id
+        |> List.collect unfold
         |> List.groupBy fst
-        |> List.map(fun (tag, pairs) -> (tag, pairs |> List.exists snd))
+        |> ListPair.map2 (List.exists snd)
         |> List.sortBy fst
         |> List.map(fun (rawTag, hasChildren) ->
             let parent, name = splitRawtag rawTag

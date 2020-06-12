@@ -20,6 +20,14 @@ type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
         | _ -> false
     override __.GetHashCode() = 0
 
+module Pair =
+    let map2 f (a, b) =
+        (a, f b)
+
+module ListPair =
+    let map2 f =
+        List.map (Pair.map2 f)
+
 module Map =
     let overValue f =
         Seq.map (fun (KeyValue(_, v)) -> f v)
