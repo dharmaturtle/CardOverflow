@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="dataannotationsvalidator" Version="2.2.0" />
+    <PackageReference Include="FsCheck.Xunit" Version="2.14.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="NCrunch.Framework" Version="4.0.0.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.0" />
