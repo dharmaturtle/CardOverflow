@@ -317,12 +317,12 @@ module Anki =
     type ImgRegex = FSharp.Text.RegexProvider.Regex< """<img src="(?<ankiFileName>[^"]+)".*?>""" >
     type SoundRegex = FSharp.Text.RegexProvider.Regex< """\[sound:(?<ankiFileName>.+?)\]""" >
     let imgRegex =
-        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> ImgRegex
+        Regex.compiledIgnoreCase |> ImgRegex
     let soundRegex =
-        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> SoundRegex
+        Regex.compiledIgnoreCase |> SoundRegex
     let replaceAnkiFilenames field (fileEntityByAnkiFileName: Map<string, FileEntity>) =
         (([], field), imgRegex.TypedMatches field)
-        ||> Seq.fold (fun (files, field) m -> 
+        ||> Seq.fold (fun (files, field) m ->
             let ankiFileName = m.ankiFileName.Value
             if fileEntityByAnkiFileName |> Map.containsKey ankiFileName then
                 let file = fileEntityByAnkiFileName.[ankiFileName]

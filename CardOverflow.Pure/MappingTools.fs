@@ -6,6 +6,7 @@ open HtmlAgilityPack
 open System.Globalization
 open System.Web
 open System.Text.RegularExpressions
+open CardOverflow.Pure
 
 let delimiter = ' '
 
@@ -78,7 +79,7 @@ let round (dt: DateTime) (d: TimeSpan) = // https://stackoverflow.com/a/20046261
     DateTime(dt.Ticks + offset - delta, dt.Kind)
 
 let standardizeWhitespace x =
-    Regex.Replace(x, @"\s+", " ", RegexOptions.Compiled).Trim()
+    Regex.Replace(x, @"\s+", " ", Regex.compiled).Trim()
 
 let stripHtmlTags html =
     let doc = HtmlDocument()

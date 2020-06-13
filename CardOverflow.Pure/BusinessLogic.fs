@@ -11,7 +11,7 @@ open System.Text.RegularExpressions
 module Relationship =
     type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
     let relationshipRegex =
-        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> RelationshipRegex
+        Regex.compiledIgnoreCase |> RelationshipRegex
     let isDirectional = relationshipRegex.IsMatch
     let split name =
         let x = relationshipRegex.TypedMatch name

@@ -10,6 +10,7 @@ open System.Threading.Tasks
 open FsToolkit
 open FSharp.Control.Tasks
 open FsToolkit.ErrorHandling
+open System.Text.RegularExpressions
 
 [<CustomEquality; NoComparison>]
 type StructurallyNull<'T> = // https://stackoverflow.com/a/20946801
@@ -221,3 +222,13 @@ module String =
         s.Trim()
     let split (separator: char) (s: string) =
         s.Split separator
+
+module Regex =
+    let compiled =
+        #if DEBUG
+            RegexOptions.None
+        #else
+            RegexOptions.Compiled
+        #endif
+    let compiledIgnoreCase =
+        compiled &&& RegexOptions.IgnoreCase

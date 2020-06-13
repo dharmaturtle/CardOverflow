@@ -12,9 +12,9 @@ module Cloze =
     type ClozeRegex = FSharp.Text.RegexProvider.Regex< """{{c(?<clozeIndex>\d+)::(?<answer>.*?)(?:::(?<hint>.*?))?}}""" >
     type ClozeTemplateRegex = FSharp.Text.RegexProvider.Regex< """{{cloze:(?<fieldName>.*?)}}""" >
     let regex =
-        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> ClozeRegex
+        Regex.compiledIgnoreCase |> ClozeRegex
     let templateRegex =
-        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> ClozeTemplateRegex
+        Regex.compiledIgnoreCase |> ClozeTemplateRegex
     let isCloze questionXemplate =
         templateRegex.IsMatch questionXemplate
 

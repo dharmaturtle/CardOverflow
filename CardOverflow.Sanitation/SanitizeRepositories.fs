@@ -301,7 +301,7 @@ type AddRelationshipCommand = {
 module SanitizeRelationshipRepository =
     type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>\d+)$""" >
     let stackIdRegex =
-        RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> StackIdRegex
+        Regex.compiledIgnoreCase |> StackIdRegex
     let GetStackId input =
         let x = stackIdRegex.TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
         if x.Success 

@@ -11,7 +11,7 @@ open FSharp.Text.RegexProvider
 
 module FullTextSearch =
     type PostgresColonRegex = FSharp.Text.RegexProvider.Regex< """(?<WildcardWord>[A-Za-z]+\*)(?:\s|$)""" >
-    let postgresColonRegex = RegexOptions.Compiled &&& RegexOptions.IgnoreCase |> PostgresColonRegex
+    let postgresColonRegex = Regex.compiledIgnoreCase |> PostgresColonRegex
     let parse (input: string) =
         let wildcards = postgresColonRegex.TypedMatches(input).Select(fun x -> x.WildcardWord.Value)
         let plain = (input, wildcards) ||> Seq.fold (fun prior x -> prior.Replace(x, ""))
