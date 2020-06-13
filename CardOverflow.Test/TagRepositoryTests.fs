@@ -214,3 +214,15 @@ let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
             HasChildren = false }]
         actual
     } |> TaskResult.getOk)
+
+[<Theory>]
+[<InlineData("a/b/c", "A/B/C")>]
+[<InlineData(" a / b / c ", "A/B/C")>]
+[<InlineData(" ax / by / cz ", "Ax/By/Cz")>]
+[<InlineData(" aX / bY / cZ ", "Ax/By/Cz")>]
+let ``SanitizeTagRepository.sanitize works`` input expected: unit =
+    input
+
+    |> SanitizeTagRepository.sanitize
+
+    |> Assert.equal expected

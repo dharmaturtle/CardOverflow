@@ -1,5 +1,6 @@
 module ContainerExtensions
 
+open CardOverflow.Sanitation
 open Microsoft.Extensions.Configuration;
 open Microsoft.Extensions.DependencyInjection;
 open CardOverflow.Api;
@@ -58,6 +59,7 @@ type EntityHasher () =
         member _.GetMaxIndexInclusive =
             fun (e: BranchInstanceEntity) ->
                 (e |> BranchInstanceView.load).MaxIndexInclusive
+        member _.SanitizeTag = SanitizeTagRepository.sanitize
 
 type Container with
     member container.RegisterStuffTestOnly =

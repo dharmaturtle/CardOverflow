@@ -124,6 +124,11 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
+    let sanitize (tag: string) =
+        tag.Split TagRepository.delimiter
+        |> Array.map (fun x -> x.Trim())
+        |> Array.map MappingTools.toTitleCase
+        |> String.concat TagRepository.delimiter
     let upsertNoSave (db: CardOverflowDb) (newTag: string) = taskResult {
         let newTag = MappingTools.toTitleCase newTag
         do! if newTag.Length > 250 then Error "Tag length exceeds 250" else Ok ()

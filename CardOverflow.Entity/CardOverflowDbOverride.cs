@@ -21,6 +21,7 @@ namespace CardOverflow.Entity {
     FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
     FSharpFunc<(CollateInstanceEntity, SHA512), BitArray> CollateInstanceHasher { get; }
     FSharpFunc<BranchInstanceEntity, short> GetMaxIndexInclusive { get; }
+    FSharpFunc<string, string> SanitizeTag { get; }
   }
 
   public enum SearchOrder {
@@ -130,7 +131,7 @@ namespace CardOverflow.Entity {
         acquiredCard.TsVectorHelper = MappingTools.stripHtmlTags(acquiredCard.FrontPersonalField) + " " + MappingTools.stripHtmlTags(acquiredCard.BackPersonalField);
       }
       foreach (var tag in _filter<TagEntity>(entries)) {
-        tag.Name = MappingTools.toTitleCase.Invoke(tag.Name);
+        tag.Name = _entityHasher.SanitizeTag.Invoke(tag.Name);
       }
       foreach (var j in _filter<Tag_AcquiredCardEntity>(entries)) {
         if (j.AcquiredCard.StackId == 0) {

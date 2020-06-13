@@ -9,6 +9,7 @@
     <Compile Include="SanitizeCollate.fs" />
     <Compile Include="SanitizeRepositories.fs" />
     <Compile Include="Anki.fs" />
+    <Compile Include="ContainerExtensions.fs" />
   </ItemGroup>
 
   <ItemGroup>
