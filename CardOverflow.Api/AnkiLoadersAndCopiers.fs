@@ -362,7 +362,11 @@ module Anki =
         let rec parseNotesRec tags cardsAndTagsByNoteId =
             function
             | (note: NoteEntity) :: tail ->
-                let notesTags = note.Tags.Split(' ') |> Array.map (fun x -> x.Trim()) |> Array.filter (not << String.IsNullOrWhiteSpace) |> Set.ofArray
+                let notesTags =
+                    note.Tags.Split ' '
+                    |> Array.map String.trim
+                    |> Array.filter String.hasContent
+                    |> Set.ofArray
                 let allTags =
                     Set.difference
                         notesTags

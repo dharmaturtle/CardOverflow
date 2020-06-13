@@ -106,7 +106,7 @@ type CommentText = {
 
 module SanitizeCommentRepository =
     let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: string) stackId userId = taskResult { // lowTODO add idempotency key
-        let text = comment.Trim()
+        let text = comment |> MappingTools.standardizeWhitespace
         do! if text.Length >= 15 then Ok () else Error "Comment must be 15 or more characters."
         return!
             CommentStackEntity(
