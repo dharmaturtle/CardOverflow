@@ -46,6 +46,7 @@
     <Compile Include="TestHelpers.fs" />
     <Compile Include="HeatmapTests.fs" />
     <Compile Include="CoreTests.fs" />
+    <Compile Include="ValidationTests.fs" />
     <Compile Include="RelationshipTests.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
     <Compile Include="EditStackCommandTests.fs" />
@@ -73,6 +74,7 @@
     <Compile Include="ContainerExtensionsTests.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="dataannotationsvalidator" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="NCrunch.Framework" Version="4.0.0.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.0" />

@@ -78,7 +78,7 @@ let round (dt: DateTime) (d: TimeSpan) = // https://stackoverflow.com/a/20046261
     let offset = if roundUp then d.Ticks else 0L
     DateTime(dt.Ticks + offset - delta, dt.Kind)
 
-let standardizeWhitespace x =
+let standardizeWhitespace x = // lowTODO use StringBuilder like https://stackoverflow.com/a/58849324
     Regex.Replace(x, @"\s+", " ", Regex.compiled).Trim()
 
 let stripHtmlTags html =
