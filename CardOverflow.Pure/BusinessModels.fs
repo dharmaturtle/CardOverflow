@@ -150,10 +150,6 @@ type CollateInstance = {
     Templates: CollateType
     EditSummary: string
 } with
-    member this.FirstTemplate =
-        match this.Templates with
-        | Cloze t -> t
-        | Standard ts -> ts.[0]
     member this.JustTemplates =
         match this.Templates with
         | Cloze t -> [t]

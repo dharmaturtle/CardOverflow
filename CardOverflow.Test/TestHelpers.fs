@@ -29,8 +29,8 @@ module Assert =
 
 type XunitClassDataBase(generator : obj [] seq) = // https://stackoverflow.com/questions/35026735/
     interface seq<obj []> with
-        member __.GetEnumerator() = generator.GetEnumerator()
-        member __.GetEnumerator() = 
+        member _.GetEnumerator() = generator.GetEnumerator()
+        member _.GetEnumerator() = 
             generator.GetEnumerator() :> System.Collections.IEnumerator
 
 [<AutoOpen>]

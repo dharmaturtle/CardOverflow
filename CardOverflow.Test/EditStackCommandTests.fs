@@ -103,7 +103,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                 CollateInstance =
                     {   CollateInstance.initialize with
                             Templates =
-                                {   CollateInstance.initialize.FirstTemplate with
+                                {   CollateInstance.initialize.JustTemplates.[0] with
                                         Front = "{{cloze:Front}}{{cloze:Back}}"
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
