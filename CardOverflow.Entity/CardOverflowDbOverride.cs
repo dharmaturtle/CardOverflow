@@ -59,7 +59,7 @@ namespace CardOverflow.Entity {
         | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
 
       IQueryable<BranchInstanceEntity> where(IQueryable<BranchInstanceEntity> query) =>
-        String.IsNullOrWhiteSpace(searchTerm)
+        string.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x =>
           x.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x => x.Tag.TsVector.Matches(

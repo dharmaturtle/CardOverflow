@@ -124,14 +124,20 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
+    let max = 250
     let sanitize (tag: string) =
-        tag.Split TagRepository.delimiter
-        |> Array.map (fun x -> x.Trim())
+        Array.FindAll(tag.ToCharArray(), fun c ->
+            Char.IsLetterOrDigit c
+            || Char.IsWhiteSpace c
+            || Char.IsPunctuation c
+        ) |> String
+        |> String.split TagRepository.delimiter
+        |> Array.map String.trim
         |> Array.map MappingTools.toTitleCase
-        |> String.concat TagRepository.delimiter
+        |> String.concat (string TagRepository.delimiter)
+        |> String.truncate max
     let upsertNoSave (db: CardOverflowDb) (newTag: string) = taskResult {
-        let newTag = MappingTools.toTitleCase newTag
-        do! if newTag.Length > 250 then Error "Tag length exceeds 250" else Ok ()
+        let newTag = sanitize newTag
         let! (tag: TagEntity option) =
             db.Tag.SingleOrDefaultAsync(fun x -> EF.Functions.ILike(x.Name, newTag))
             |> Task.map Option.ofObj
@@ -151,8 +157,7 @@ module SanitizeTagRepository =
         db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
         |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
     let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
-        do! newTag.Length <= 250 |> Result.requireTrue "Tag name must be less than 250 characters"
-        let newTag = MappingTools.toTitleCase newTag
+        let newTag = sanitize newTag
         let! (ac: AcquiredCardEntity) = getFirstAcquired db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
         do! db.Tag_AcquiredCard

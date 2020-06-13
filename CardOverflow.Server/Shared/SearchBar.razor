@@ -8,7 +8,7 @@
 @using CardOverflow.Sanitation
 @inject DbExecutor DbExecutor
 @* lowTODO this doesn't appear if there's only 1 search result *@
-@if (!String.IsNullOrWhiteSpace(BeforeId) || !String.IsNullOrWhiteSpace(AfterId)) {
+@if (!string.IsNullOrWhiteSpace(BeforeId) || !string.IsNullOrWhiteSpace(AfterId)) {
   <span style="min-width: fit-content;">
     <a href=@BackLink>
       <span class="oi oi-arrow-circle-left" />
@@ -32,11 +32,11 @@
 </EditForm>
 <span style="min-width: fit-content;">
   &nbsp;
-  <a href=@CreateLink(BeforeId) style=@(String.IsNullOrWhiteSpace(BeforeId) ? "visibility: hidden" : "")>
+  <a href=@CreateLink(BeforeId) style=@(string.IsNullOrWhiteSpace(BeforeId) ? "visibility: hidden" : "")>
     <span class="oi oi-chevron-left" />
   </a>
   &nbsp;
-  <a href=@CreateLink(AfterId) style=@(String.IsNullOrWhiteSpace(AfterId) ? "visibility: hidden" : "")>
+  <a href=@CreateLink(AfterId) style=@(string.IsNullOrWhiteSpace(AfterId) ? "visibility: hidden" : "")>
     <span class="oi oi-chevron-right" />
   </a>
 </span>

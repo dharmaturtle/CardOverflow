@@ -85,8 +85,8 @@ let basicCollate db =
 let ``StackRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let aTag = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
-    let bTag = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
+    let aTag = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
+    let bTag = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
     
     let! _ = addBasicStack c.Db userId [aTag; bTag]
 

@@ -21,7 +21,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let stackId = 1
-    let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
+    let tagName = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
 
     do! SanitizeTagRepository.AddTo c.Db userId tagName stackId
 
@@ -220,6 +220,8 @@ let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
 [<InlineData(" a / b / c ", "A/B/C")>]
 [<InlineData(" ax / by / cz ", "Ax/By/Cz")>]
 [<InlineData(" aX / bY / cZ ", "Ax/By/Cz")>]
+[<InlineData("! aX @/ #bY &/% cZ & ",
+             "! Ax @/#By &/% Cz &")>]
 let ``SanitizeTagRepository.sanitize works`` input expected: unit =
     input
 

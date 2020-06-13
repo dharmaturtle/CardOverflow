@@ -632,13 +632,13 @@ type TreeTag = {
 }
 
 module TagRepository =
-    let delimiter = "/"
+    let delimiter = '/'
     let (+/+) a b =
         match String.IsNullOrWhiteSpace a, String.IsNullOrWhiteSpace b with
         | true, true -> ""
         | false, true -> a
         | true, false -> b
-        | false, false -> sprintf "%s%s%s" a delimiter b
+        | false, false -> sprintf "%s%c%s" a delimiter b
     let splitRawtag (rawTag: string) = // returns parent, name
         let i = rawTag.LastIndexOf delimiter
         if i = -1 then

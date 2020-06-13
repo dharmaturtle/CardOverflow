@@ -60,6 +60,11 @@ module Result =
         |> function
         | Some -> Ok xs
         | None -> Error err
+    let require f err x =
+        if f x then
+            Ok x
+        else
+            Error err
     let isOk = function
         | Ok _ -> true
         | Error _ -> false
@@ -206,3 +211,13 @@ module SeqOption =
 
 module ListOption =
     let somes mma = mma |> List.choose id
+
+module String =
+    let truncate max (s: string) =
+        s.Substring(0, min s.Length max)
+    let hasContent =
+        String.IsNullOrWhiteSpace >> not
+    let trim (s: string) =
+        s.Trim()
+    let split (separator: char) (s: string) =
+        s.Split separator
