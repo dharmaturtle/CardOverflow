@@ -220,7 +220,7 @@ let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
 [<InlineData(" a / b / c ", "A/B/C")>]
 [<InlineData(" ax / by / cz ", "Ax/By/Cz")>]
 [<InlineData(" aX / bY / cZ ", "Ax/By/Cz")>]
-[<InlineData("! aX @/ #bY &/% cZ & ",
+[<InlineData("! aX @/ #bY &/% cZ        & ",
              "! Ax @/#By &/% Cz &")>]
 let ``SanitizeTagRepository.sanitize works`` input expected: unit =
     input

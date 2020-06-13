@@ -132,8 +132,7 @@ module SanitizeTagRepository =
             || Char.IsPunctuation c
         ) |> String
         |> String.split TagRepository.delimiter
-        |> Array.map String.trim
-        |> Array.map MappingTools.toTitleCase
+        |> Array.map (MappingTools.standardizeWhitespace >> MappingTools.toTitleCase)
         |> String.concat (string TagRepository.delimiter)
         |> String.truncate max
     let upsertNoSave (db: CardOverflowDb) (newTag: string) = taskResult {
