@@ -269,7 +269,7 @@
       ).ToList();
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
   private List<(string Front, string Back)> _XemplateHolistic() =>
-    _a.CollateInstance.FrontBackFrontSynthBackSynth.ZipLongest(_b.CollateInstance.FrontBackFrontSynthBackSynth, (a, b) =>
+    _a.CollateInstance.FrontBackFrontSynthBackSynth().ZipLongest(_b.CollateInstance.FrontBackFrontSynthBackSynth(), (a, b) =>
      (AFront: a?.Item1 ?? "",
        ABack: a?.Item2 ?? "",
        BFront: b?.Item1 ?? "",

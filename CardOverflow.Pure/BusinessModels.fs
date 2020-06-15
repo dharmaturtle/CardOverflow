@@ -158,11 +158,7 @@ type CollateInstance = {
         match this.Templates with
         | Cloze -> true
         | _ -> false
-    member this.ClozeFields =
-        match this.Templates with
-        | Cloze x -> AnkiImportLogic.clozeFields x.Front
-        | _ -> failwith "Not a cloze"
-    member this.FrontBackFrontSynthBackSynth = // medTODO split this up
+    member this.FrontBackFrontSynthBackSynth () = // medTODO split this up
         match this.Templates with
         | Standard ts -> 
             ts.Select(fun t ->
@@ -172,7 +168,7 @@ type CollateInstance = {
             CardHtml.generate [] t.Front t.Back this.Css (CardHtml.Cloze 0s)
             |> List.singleton |> toResizeArray
     member this.FrontBackFrontSynthBackSynthIndexed i =
-        this.FrontBackFrontSynthBackSynth
+        this.FrontBackFrontSynthBackSynth ()
         |> Seq.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
