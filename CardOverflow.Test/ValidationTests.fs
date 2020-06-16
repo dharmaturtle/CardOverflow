@@ -20,6 +20,8 @@ module Gen =
     let genMap<'a> f: Gen<'a> =
         gen<'a>
         |> Gen.map f
+    let sample1 =
+        Gen.elements >> Gen.sample 0 1 >> List.head
 
 module Generators =
     let alphanumericChar = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] |> Gen.elements
@@ -168,4 +170,21 @@ type ValidationTests () =
         Assert.False isValid
         Assert.equal
             <| "The field Value must be a string with a maximum length of 10000."
+            <| validationResults.Select(fun x -> x.ErrorMessage).Distinct().Single()
+
+    [<Generators>]
+    let ``EditStackCommand - text with random separator is invalid`` (editStackCommand: EditStackCommand) (Generators.ClozeText clozeText): unit =
+        let validationResults = ResizeArray.empty
+        let randomSeparator = ['\x1c'; '\x1d'; '\x1e'; '\x1f'] |> Gen.sample1 |> string
+        let editStackCommand =
+            {   editStackCommand with
+                    FieldValues =
+                        editStackCommand.FieldValues.Select(fun x -> { x with Value = clozeText + randomSeparator }).ToList()
+            }
+        
+        let isValid = validator.TryValidateObjectRecursive(editStackCommand, validationResults)
+
+        Assert.False isValid
+        Assert.equal
+            <| "Unit, record, group, and file separators are not permitted."
             <| validationResults.Select(fun x -> x.ErrorMessage).Distinct().Single()

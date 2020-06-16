@@ -284,7 +284,8 @@ type CommunalFieldValue = {
 [<CLIMutable>]
 type EditFieldAndValue = {
     EditField: Field
-    [<StringLength(10000)>]
+    [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
+    [<StringLength(10_000)>]
     Value: string
 }
 
