@@ -42,6 +42,24 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     
     Assert.areEquivalent [defaultDeck] actualDecks
     
+    // set default deck to public
+    do! SanitizeDeckRepository.setIsPublic c.Db userId defaultDeckId true
+
+    let! actualDecks = getTomorrow ()
+    Assert.areEquivalent [ { defaultDeck with IsPublic = true } ] actualDecks
+    
+    // set default deck to not public
+    do! SanitizeDeckRepository.setIsPublic c.Db userId defaultDeckId false
+
+    let! actualDecks = getTomorrow ()
+    Assert.areEquivalent [ defaultDeck ] actualDecks
+    
+    // setIsPublic is idempotent
+    do! SanitizeDeckRepository.setIsPublic c.Db userId defaultDeckId false
+
+    let! actualDecks = getTomorrow ()
+    Assert.areEquivalent [ defaultDeck ] actualDecks
+    
     // can't delete default deck
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId defaultDeckId
     
@@ -189,6 +207,9 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.setDefault c.Db userId invalidDeckId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
     
+    let! (x: Result<_,_>) = SanitizeDeckRepository.setIsPublic c.Db userId invalidDeckId true
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
+    
     let invalidAcquiredCardId = 1337
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId invalidAcquiredCardId
     Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" invalidAcquiredCardId, x.error)
@@ -206,5 +227,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
     let! (x: Result<_,_>) = SanitizeDeckRepository.setDefault c.Db nonauthor newDeckId
+    Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
+
+    let! (x: Result<_,_>) = SanitizeDeckRepository.setIsPublic c.Db nonauthor newDeckId true
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
     } |> TaskResult.getOk)

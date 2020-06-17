@@ -24,6 +24,7 @@
         <th></th>
         <th>Due</th>
         <th></th>
+        <th></th>
         <th>
           <button class="btn btn-outline-success" @onclick=@_CreateDeck>
             <i class="fas fa-plus"></i>
@@ -41,13 +42,24 @@
             @deck.DueCount
           </td>
           <td>
-            @if (@deck.IsDefault) {
+            @if (deck.IsDefault) {
               <button type="button" class="btn bg-transparent" @onclick=@(() => ToastService.ShowInfo("This is the default deck."))>
                 <i class="text-warning fas fa-star" title="The default deck"></i>
               </button>
             } else {
               <button type="button" class="btn bg-transparent" @onclick=@(() =>_SetDefault(deck.Id))>
                 <i class="text-muted far fa-star"></i>
+              </button>
+            }
+          </td>
+          <td>
+            @if (deck.IsPublic) {
+              <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, false))>
+                <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
+              </button>
+            } else {
+              <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, true))>
+                <i class="text-muted fas fa-eye-slash" title="Is not displayed on your user profile."></i>
               </button>
             }
           </td>
@@ -117,6 +129,13 @@
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
+  }
+
+  private async Task _setPublic(int deckId, bool isPublic) {
+    var user = await UserTask;
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setIsPublic(db, user.Id, deckId, isPublic)).Match(ToastService, _ =>
+      _decks.Single(x => x.Id == deckId).IsPublic = isPublic
+    );
   }
 
 }
