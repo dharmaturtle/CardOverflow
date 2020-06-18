@@ -44,15 +44,15 @@ namespace CardOverflow.Entity
         [InverseProperty("AcquiredCards")]
         public virtual BranchInstanceEntity BranchInstance { get; set; }
         public virtual BranchEntity BranchNavigation { get; set; }
-        [ForeignKey("StackId")]
-        [InverseProperty("AcquiredCards")]
-        public virtual StackEntity Stack { get; set; }
         [ForeignKey("CardSettingId")]
         [InverseProperty("AcquiredCards")]
         public virtual CardSettingEntity CardSetting { get; set; }
         [ForeignKey("DeckId")]
         [InverseProperty("AcquiredCards")]
         public virtual DeckEntity Deck { get; set; }
+        [ForeignKey("StackId")]
+        [InverseProperty("AcquiredCards")]
+        public virtual StackEntity Stack { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("AcquiredCards")]
         public virtual UserEntity User { get; set; }

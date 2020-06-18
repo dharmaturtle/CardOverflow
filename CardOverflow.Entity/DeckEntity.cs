@@ -11,6 +11,7 @@ namespace CardOverflow.Entity
         public DeckEntity()
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
+            DeckFollowers = new HashSet<DeckFollowersEntity>();
         }
 
         [Key]
@@ -34,5 +35,7 @@ namespace CardOverflow.Entity
         public virtual UserEntity User { get; set; }
         [InverseProperty("Deck")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        [InverseProperty("Deck")]
+        public virtual ICollection<DeckFollowersEntity> DeckFollowers { get; set; }
     }
 }

@@ -13,18 +13,16 @@ namespace CardOverflow.Entity
         public virtual DbSet<BranchInstanceEntity> BranchInstance { get; set; }
         private DbSet<BranchInstanceRelationshipCountEntity> _BranchInstanceRelationshipCountTracked { get; set; }
         private DbSet<BranchInstanceTagCountEntity> _BranchInstanceTagCountTracked { get; set; }
-        public virtual DbSet<StackEntity> Stack { get; set; }
-        private DbSet<StackRelationshipCountEntity> _StackRelationshipCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
-        private DbSet<StackTagCountEntity> _StackTagCountTracked { get; set; }
         public virtual DbSet<CollateEntity> Collate { get; set; }
         public virtual DbSet<CollateInstanceEntity> CollateInstance { get; set; }
-        public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
         public virtual DbSet<CommentCollateEntity> CommentCollate { get; set; }
+        public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
         public virtual DbSet<CommunalFieldInstanceEntity> CommunalFieldInstance { get; set; }
         public virtual DbSet<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstance { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
+        public virtual DbSet<DeckFollowersEntity> DeckFollowers { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_BranchInstanceEntity> File_BranchInstance { get; set; }
@@ -33,13 +31,16 @@ namespace CardOverflow.Entity
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
         public virtual DbSet<Relationship_AcquiredCardEntity> Relationship_AcquiredCard { get; set; }
+        public virtual DbSet<StackEntity> Stack { get; set; }
+        private DbSet<StackRelationshipCountEntity> _StackRelationshipCountTracked { get; set; }
+        private DbSet<StackTagCountEntity> _StackTagCountTracked { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_AcquiredCardEntity> Tag_AcquiredCard { get; set; }
         public virtual DbSet<Tag_User_CollateInstanceEntity> Tag_User_CollateInstance { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
         public virtual DbSet<User_CollateInstanceEntity> User_CollateInstance { get; set; }
-        public virtual DbSet<Vote_CommentStackEntity> Vote_CommentStack { get; set; }
         public virtual DbSet<Vote_CommentCollateEntity> Vote_CommentCollate { get; set; }
+        public virtual DbSet<Vote_CommentStackEntity> Vote_CommentStack { get; set; }
         public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -84,14 +85,19 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.BranchInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.Stack)
-                    .WithMany(p => p.AcquiredCards)
-                    .HasForeignKey(d => d.StackId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
                 entity.HasOne(d => d.CardSetting)
                     .WithMany(p => p.AcquiredCards)
                     .HasForeignKey(d => d.CardSettingId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.Deck)
+                    .WithMany(p => p.AcquiredCards)
+                    .HasForeignKey(d => d.DeckId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.Stack)
+                    .WithMany(p => p.AcquiredCards)
+                    .HasForeignKey(d => d.StackId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
@@ -129,8 +135,13 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<BranchEntity>(entity =>
             {
+                entity.HasIndex(e => new { e.Id, e.StackId })
+                    .IsUnique();
+
                 entity.HasIndex(e => new { e.StackId, e.Id })
                     .IsUnique();
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
                     .WithMany(p => p.Branches)
@@ -160,6 +171,9 @@ namespace CardOverflow.Entity
                     .HasMethod("gin");
 
                 entity.HasIndex(e => new { e.BranchId, e.Id })
+                    .IsUnique();
+
+                entity.HasIndex(e => new { e.Id, e.BranchId })
                     .IsUnique();
 
                 entity.HasIndex(e => new { e.StackId, e.Id })
@@ -206,31 +220,12 @@ namespace CardOverflow.Entity
                 entity.ToView("BranchInstanceTagCount");
             });
 
-            modelBuilder.Entity<StackEntity>(entity =>
-            {
-                entity.HasIndex(e => e.AuthorId);
-
-                entity.HasOne(d => d.Author)
-                    .WithMany(p => p.Stacks)
-                    .HasForeignKey(d => d.AuthorId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.DefaultBranch)
-                    .WithMany()
-                    .HasForeignKey(d => d.DefaultBranchId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<StackRelationshipCountEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.SourceStackId,  e.TargetStackId, e.Name });
-                
-                entity.ToView("StackRelationshipCount");
-            });
-
             modelBuilder.Entity<CardSettingEntity>(entity =>
             {
                 entity.HasIndex(e => e.UserId);
+
+                entity.HasIndex(e => new { e.Id, e.UserId })
+                    .IsUnique();
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.CardSettings)
@@ -238,16 +233,11 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<StackTagCountEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.StackId, e.Name });
-                
-                entity.ToView("StackTagCount");
-            });
-
             modelBuilder.Entity<CollateEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
                     .WithMany(p => p.Collates)
@@ -269,26 +259,12 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.TsVector)
                     .HasMethod("gin");
 
+                entity.HasIndex(e => new { e.Id, e.CollateId })
+                    .IsUnique();
+
                 entity.HasOne(d => d.Collate)
                     .WithMany(p => p.CollateInstances)
                     .HasForeignKey(d => d.CollateId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<CommentStackEntity>(entity =>
-            {
-                entity.HasIndex(e => e.StackId);
-
-                entity.HasIndex(e => e.UserId);
-
-                entity.HasOne(d => d.Stack)
-                    .WithMany(p => p.CommentStacks)
-                    .HasForeignKey(d => d.StackId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.CommentStacks)
-                    .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -309,9 +285,28 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
+            modelBuilder.Entity<CommentStackEntity>(entity =>
+            {
+                entity.HasIndex(e => e.StackId);
+
+                entity.HasIndex(e => e.UserId);
+
+                entity.HasOne(d => d.Stack)
+                    .WithMany(p => p.CommentStacks)
+                    .HasForeignKey(d => d.StackId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.CommentStacks)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
             modelBuilder.Entity<CommunalFieldEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
                     .WithMany(p => p.CommunalFields)
@@ -331,6 +326,9 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.TsVector)
                     .HasMethod("gin");
 
+                entity.HasIndex(e => new { e.Id, e.CommunalFieldId })
+                    .IsUnique();
+
                 entity.HasOne(d => d.CommunalField)
                     .WithMany(p => p.CommunalFieldInstances)
                     .HasForeignKey(d => d.CommunalFieldId)
@@ -347,20 +345,38 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.CommunalFieldInstance_BranchInstances)
                     .HasForeignKey(d => d.BranchInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommunalFieldInst_CardInst_CardInst_CardInstId");
+                    .HasConstraintName("FK_CommunalFieldInstance_BranchInstance_BranchInstanceId");
 
                 entity.HasOne(d => d.CommunalFieldInstance)
                     .WithMany(p => p.CommunalFieldInstance_BranchInstances)
                     .HasForeignKey(d => d.CommunalFieldInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommFieldInst_CardInst_CommFieldInst_CommFieldInstId");
+                    .HasConstraintName("FK_CommunalFieldInstance_BranchInstance_CommunalFieldInstanceId");
             });
 
             modelBuilder.Entity<DeckEntity>(entity =>
             {
+                entity.HasIndex(e => new { e.Id, e.UserId })
+                    .IsUnique();
+
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Decks)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<DeckFollowersEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.DeckId, e.FollowerId });
+
+              entity.HasOne(d => d.Deck)
+                  .WithMany(p => p.DeckFollowers)
+                  .HasForeignKey(d => d.DeckId)
+                  .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.Follower)
+                    .WithMany(p => p.DeckFollowers)
+                    .HasForeignKey(d => d.FollowerId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -412,6 +428,11 @@ namespace CardOverflow.Entity
             modelBuilder.Entity<HistoryEntity>(entity =>
             {
                 entity.HasIndex(e => e.AcquiredCardId);
+
+                entity.HasOne(d => d.AcquiredCard)
+                    .WithMany(p => p.Histories)
+                    .HasForeignKey(d => d.AcquiredCardId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
@@ -426,12 +447,45 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.RelationshipId);
 
+                entity.HasIndex(e => e.SourceAcquiredCardId);
+
                 entity.HasIndex(e => e.TargetAcquiredCardId);
 
                 entity.HasOne(d => d.Relationship)
                     .WithMany(p => p.Relationship_AcquiredCards)
                     .HasForeignKey(d => d.RelationshipId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<StackEntity>(entity =>
+            {
+                entity.HasIndex(e => e.AuthorId);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.HasOne(d => d.Author)
+                    .WithMany(p => p.Stacks)
+                    .HasForeignKey(d => d.AuthorId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.DefaultBranch)
+                    .WithMany()
+                    .HasForeignKey(d => d.DefaultBranchId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<StackRelationshipCountEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.SourceStackId,  e.TargetStackId, e.Name });
+                
+                entity.ToView("StackRelationshipCount");
+            });
+
+            modelBuilder.Entity<StackTagCountEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.StackId, e.Name });
+                
+                entity.ToView("StackTagCount");
             });
 
             modelBuilder.Entity<TagEntity>(entity =>
@@ -445,6 +499,9 @@ namespace CardOverflow.Entity
                 entity.HasKey(e => new { e.TagId, e.UserId, e.StackId });
 
                 entity.HasIndex(e => e.AcquiredCardId);
+
+                entity.HasIndex(e => new { e.TagId, e.StackId, e.UserId })
+                    .IsUnique();
 
                 entity.HasOne(d => d.Tag)
                     .WithMany(p => p.Tag_AcquiredCards)
@@ -472,9 +529,11 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<UserEntity>(entity =>
             {
-                entity.ToTable("User");
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.DefaultCardSetting);
+                
+                entity.HasOne(d => d.DefaultDeck);
             });
 
             modelBuilder.Entity<User_CollateInstanceEntity>(entity =>
@@ -501,23 +560,6 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Vote_CommentStackEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.CommentStackId, e.UserId });
-
-                entity.HasIndex(e => e.UserId);
-
-                entity.HasOne(d => d.CommentStack)
-                    .WithMany(p => p.Vote_CommentStacks)
-                    .HasForeignKey(d => d.CommentStackId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Vote_CommentStacks)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
             modelBuilder.Entity<Vote_CommentCollateEntity>(entity =>
             {
                 entity.HasKey(e => new { e.CommentCollateId, e.UserId });
@@ -531,6 +573,23 @@ namespace CardOverflow.Entity
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Vote_CommentCollates)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<Vote_CommentStackEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.CommentStackId, e.UserId });
+
+                entity.HasIndex(e => e.UserId);
+
+                entity.HasOne(d => d.CommentStack)
+                    .WithMany(p => p.Vote_CommentStacks)
+                    .HasForeignKey(d => d.CommentStackId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Vote_CommentStacks)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });

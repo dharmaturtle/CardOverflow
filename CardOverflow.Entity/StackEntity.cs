@@ -25,11 +25,11 @@ namespace CardOverflow.Entity
         [ForeignKey("AuthorId")]
         [InverseProperty("Stacks")]
         public virtual UserEntity Author { get; set; }
+        [ForeignKey("DefaultBranchId")]
+        public virtual BranchEntity DefaultBranch { get; set; }
         [ForeignKey("CopySourceId")]
         [InverseProperty("StackCopySources")]
         public virtual BranchInstanceEntity CopySource { get; set; }
-        [ForeignKey("DefaultBranchId")]
-        public virtual BranchEntity DefaultBranch { get; set; }
         [InverseProperty("Stack")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("Stack")]

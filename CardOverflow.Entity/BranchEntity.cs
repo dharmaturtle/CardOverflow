@@ -34,11 +34,11 @@ namespace CardOverflow.Entity
         [ForeignKey("AuthorId")]
         [InverseProperty("Branches")]
         public virtual UserEntity Author { get; set; }
+        [ForeignKey("LatestInstanceId")]
+        public virtual BranchInstanceEntity LatestInstance { get; set; }
         [ForeignKey("StackId")]
         [InverseProperty("Branches")]
         public virtual StackEntity Stack { get; set; }
-        [ForeignKey("LatestInstanceId")]
-        public virtual BranchInstanceEntity LatestInstance { get; set; }
         public virtual ICollection<AcquiredCardEntity> AcquiredCardBranchNavigations { get; set; }
         [InverseProperty("Branch")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCardBranches { get; set; }

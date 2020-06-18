@@ -18,14 +18,15 @@ namespace CardOverflow.Entity
         public short IntervalWithUnusedStepsIndex { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short TimeFromSeeingQuestionToScoreInSecondsPlus32768 { get; set; }
-    
+
         [ForeignKey("AcquiredCardId")]
         [InverseProperty("Histories")]
         public virtual AcquiredCardEntity AcquiredCard { get; set; }
+        [ForeignKey("BranchInstanceId")]
+        [InverseProperty("Histories")]
+        public virtual BranchInstanceEntity BranchInstance { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("Histories")]
         public virtual UserEntity User { get; set; }
-        [ForeignKey("BranchInstanceId")]
-        public virtual BranchInstanceEntity BranchInstance { get; set; }
     }
 }

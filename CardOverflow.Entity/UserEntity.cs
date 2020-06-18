@@ -12,17 +12,19 @@ namespace CardOverflow.Entity
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             Branches = new HashSet<BranchEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
-            Stacks = new HashSet<StackEntity>();
             Collates = new HashSet<CollateEntity>();
-            CommentStacks = new HashSet<CommentStackEntity>();
             CommentCollates = new HashSet<CommentCollateEntity>();
+            CommentStacks = new HashSet<CommentStackEntity>();
             CommunalFields = new HashSet<CommunalFieldEntity>();
+            DeckFollowers = new HashSet<DeckFollowersEntity>();
             Decks = new HashSet<DeckEntity>();
             Feedbacks = new HashSet<FeedbackEntity>();
             Filters = new HashSet<FilterEntity>();
+            Histories = new HashSet<HistoryEntity>();
+            Stacks = new HashSet<StackEntity>();
             User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
-            Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
             Vote_CommentCollates = new HashSet<Vote_CommentCollateEntity>();
+            Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
@@ -50,6 +52,8 @@ namespace CardOverflow.Entity
 
         [ForeignKey("DefaultCardSettingId")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }
+        [ForeignKey("DefaultDeckId")]
+        public virtual DeckEntity DefaultDeck { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("Author")]
@@ -57,15 +61,15 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<StackEntity> Stacks { get; set; }
-        [InverseProperty("Author")]
         public virtual ICollection<CollateEntity> Collates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
-        [InverseProperty("User")]
         public virtual ICollection<CommentCollateEntity> CommentCollates { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<CommunalFieldEntity> CommunalFields { get; set; }
+        [InverseProperty("Follower")]
+        public virtual ICollection<DeckFollowersEntity> DeckFollowers { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<DeckEntity> Decks { get; set; }
         [InverseProperty("User")]
@@ -74,14 +78,15 @@ namespace CardOverflow.Entity
         public virtual ICollection<FilterEntity> Filters { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("Author")]
+        public virtual ICollection<StackEntity> Stacks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
-        [InverseProperty("User")]
         public virtual ICollection<Vote_CommentCollateEntity> Vote_CommentCollates { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_FeedbackEntity> Vote_Feedbacks { get; set; }
     }
 }
-

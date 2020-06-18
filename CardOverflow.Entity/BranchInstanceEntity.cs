@@ -14,6 +14,8 @@ namespace CardOverflow.Entity
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             CommunalFieldInstance_BranchInstances = new HashSet<CommunalFieldInstance_BranchInstanceEntity>();
             File_BranchInstances = new HashSet<File_BranchInstanceEntity>();
+            Histories = new HashSet<HistoryEntity>();
+            StackCopySources = new HashSet<StackEntity>();
         }
 
         [Key]
@@ -56,16 +58,17 @@ namespace CardOverflow.Entity
         public virtual CollateInstanceEntity CollateInstance { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
-
-        [InverseProperty("CopySource")]
-        public virtual ICollection<StackEntity> StackCopySources { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<File_BranchInstanceEntity> File_BranchInstances { get; set; }
+        [InverseProperty("BranchInstance")]
+        public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("CopySource")]
+        public virtual ICollection<StackEntity> StackCopySources { get; set; }
         public virtual ICollection<StackTagCountEntity> StackTagCounts { get; set; }
         public virtual ICollection<StackRelationshipCountEntity> StackRelationshipCounts { get; set; }
         public virtual ICollection<BranchInstanceTagCountEntity> BranchInstanceTagCounts { get; set; }
         public virtual ICollection<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCounts { get; set; }
-    }
+  }
 }

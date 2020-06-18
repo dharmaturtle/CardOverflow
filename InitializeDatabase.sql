@@ -766,7 +766,7 @@ CREATE TABLE public."History" (
     "AcquiredCardId" integer,
     "UserId" integer NOT NULL,
     "BranchInstanceId" integer,
-    "Index" integer NOT NULL,
+    "Index" smallint NOT NULL,
     "Score" smallint NOT NULL,
     "Timestamp" timestamp without time zone NOT NULL,
     "IntervalWithUnusedStepsIndex" smallint NOT NULL,
