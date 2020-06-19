@@ -280,6 +280,14 @@ module SanitizeDeckRepository =
         DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
         do! db.SaveChangesAsyncI()
     }
+    let unfollow (db: CardOverflowDb) userId deckId = taskResult {
+        do! db.DeckFollowers.AnyAsync(fun df ->
+                df.DeckId = deckId
+                && df.FollowerId = userId)
+            |>% Result.requireTrue (sprintf "Either the deck doesn't exist or you are not following it.")
+        DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.RemoveI
+        do! db.SaveChangesAsyncI()
+    }
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
