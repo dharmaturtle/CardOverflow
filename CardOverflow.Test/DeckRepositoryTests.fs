@@ -232,3 +232,46 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.setIsPublic c.Db nonauthor newDeckId true
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
     } |> TaskResult.getOk)
+
+[<Fact>]
+let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 3
+    let followerId = 1
+    let publicDeck =
+        {   Id = 4
+            Name = Guid.NewGuid().ToString()
+            IsFollowed = false
+            FollowCount = 0
+        }
+    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |> TaskResult.map (Assert.equal publicDeck.Id)
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeck.Id true
+
+    // getPublic yields expected deck
+    do! DeckRepository.getPublic c.Db authorId   authorId |> Task.map (Assert.Single >> Assert.equal publicDeck)
+    do! DeckRepository.getPublic c.Db followerId authorId |> Task.map (Assert.Single >> Assert.equal publicDeck)
+
+    // follow works
+    do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
+    
+    do! DeckRepository.getPublic c.Db followerId authorId |> Task.map (Assert.Single >> Assert.equal { publicDeck with IsFollowed = true; FollowCount = 1 })
+
+    // second follow fails
+    do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
+        |> TaskResult.getError
+        |> Task.map (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
+
+    // author follow fails
+    do! SanitizeDeckRepository.follow c.Db authorId publicDeck.Id
+        |> TaskResult.getError
+        |> Task.map (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
+
+    // nonexistant deck fails
+    do! SanitizeDeckRepository.follow c.Db followerId 1337
+        |> TaskResult.getError
+        |> Task.map (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
+
+    // can delete followed deck
+    do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id
+    do! DeckRepository.getPublic c.Db followerId authorId |> Task.map Assert.Empty
+    } |> TaskResult.getOk)

@@ -683,10 +683,34 @@ module TagRepository =
     let search (db: CardOverflowDb) (input: string) =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
 
+type PublicDeck = {
+    Id: int
+    Name: string
+    IsFollowed: bool
+    FollowCount: int
+}
 module DeckRepository =
     let searchMany (db: CardOverflowDb) userId (input: string list) =
         let input = input |> List.map (fun x -> x.ToLower())
         db.Deck.Where(fun t -> input.Contains(t.Name.ToLower()) && t.UserId = userId)
+    let getPublic (db: CardOverflowDb) userId authorId = task {
+        let! r =
+            db.Deck
+                .Where(fun x -> x.IsPublic && x.UserId = authorId)
+                .Select(fun x ->
+                    x,
+                    x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
+                    x.DeckFollowers.Count
+                )
+                .ToListAsync()
+        return
+            r.Select(fun (deck, isFollowed, count) -> {
+                Id = deck.Id
+                Name = deck.Name
+                IsFollowed = isFollowed
+                FollowCount = count
+            }).ToList()
+    }
 
 module FilterRepository =
     let Create (db: CardOverflowDb) userId name query =

@@ -269,6 +269,17 @@ module SanitizeDeckRepository =
                 IsDefault = defaultDeckId = deck.Id
                 Name = deck.Name
             })  |> toResizeArray)
+    let follow (db: CardOverflowDb) userId deckId = taskResult {
+        let! isValid =
+            db.Deck.AnyAsync(fun d ->
+                d.Id = deckId
+                && d.UserId <> userId
+                && not (d.DeckFollowers.Any(fun df -> df.FollowerId = userId))
+            )
+        do! isValid |> Result.requireTrue (sprintf "Either the deck doesn't exist, or you are its author, or you are already following it.")
+        DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
+        do! db.SaveChangesAsyncI()
+    }
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {

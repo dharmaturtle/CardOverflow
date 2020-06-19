@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1704,7 +1704,7 @@ ALTER TABLE ONLY public."CommunalField"
 
 
 ALTER TABLE ONLY public."DeckFollowers"
-    ADD CONSTRAINT "FK_DeckFollowers_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
+    ADD CONSTRAINT "FK_DeckFollowers_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."DeckFollowers"
