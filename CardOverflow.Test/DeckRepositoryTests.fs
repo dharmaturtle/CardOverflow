@@ -14,6 +14,7 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
+open FsToolkit.ErrorHandling.Operator.Task
 
 [<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
@@ -244,34 +245,36 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
             IsFollowed = false
             FollowCount = 0
         }
-    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |> TaskResult.map (Assert.equal publicDeck.Id)
+    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |>%% Assert.equal publicDeck.Id
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeck.Id true
 
     // getPublic yields expected deck
-    do! DeckRepository.getPublic c.Db authorId   authorId |> Task.map (Assert.Single >> Assert.equal publicDeck)
-    do! DeckRepository.getPublic c.Db followerId authorId |> Task.map (Assert.Single >> Assert.equal publicDeck)
+    do! Assert.Single >> Assert.equal publicDeck <!> DeckRepository.getPublic c.Db authorId   authorId
+    do! Assert.Single >> Assert.equal publicDeck <!> DeckRepository.getPublic c.Db followerId authorId
 
     // follow works
     do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
     
-    do! DeckRepository.getPublic c.Db followerId authorId |> Task.map (Assert.Single >> Assert.equal { publicDeck with IsFollowed = true; FollowCount = 1 })
+    do! Assert.Single 
+        >> Assert.equal { publicDeck with IsFollowed = true; FollowCount = 1 }
+        <%> DeckRepository.getPublic c.Db followerId authorId
 
     // second follow fails
     do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
         |> TaskResult.getError
-        |> Task.map (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
+        |>% (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
 
     // author follow fails
     do! SanitizeDeckRepository.follow c.Db authorId publicDeck.Id
         |> TaskResult.getError
-        |> Task.map (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
+        |>% (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
 
     // nonexistant deck fails
     do! SanitizeDeckRepository.follow c.Db followerId 1337
         |> TaskResult.getError
-        |> Task.map (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
+        |>% (Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it.")
 
     // can delete followed deck
     do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id
-    do! DeckRepository.getPublic c.Db followerId authorId |> Task.map Assert.Empty
+    do! DeckRepository.getPublic c.Db followerId authorId |>% Assert.Empty
     } |> TaskResult.getOk)

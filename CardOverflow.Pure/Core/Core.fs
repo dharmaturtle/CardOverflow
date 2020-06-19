@@ -50,7 +50,36 @@ module TaskOption =
     let map f =
         Task.map (Option.map f)
 
+[<AutoOpen>]
+module TaskOp =
+    let inline (<%>) f x = Task.map f x
+    let inline (<*>) f x = Task.apply f x
+    let inline (<!>) x f = Task.bind f x // Inconsistent with common conventions, but ! is bind in computational expressions, so here we are
+    let inline (|>%) x f = Task.map f x
+    let inline (|>*) x f = Task.apply f x
+    let inline (|>!) f x = Task.bind f x
+
+[<AutoOpen>]
+module TaskResultOp = 
+    let inline (<%%>) f x = TaskResult.map f x
+    let inline (<**>) f x = TaskResult.apply f x
+    let inline (<!!>) x f = TaskResult.bind f x
+    let inline (|>%%) x f = TaskResult.map f x
+    let inline (|>**) x f = TaskResult.apply f x
+    let inline (|>!!) f x = TaskResult.bind f x
+    let inline (<>=>) (fa: 'a -> Result<'b,'c> Task) (fb: 'b -> Result<'d,'c> Task) (a: 'a) : Result<'d,'c> Task = taskResult {
+        let! b = fa a
+        return!
+            match b with
+            | Ok b -> fb b
+            | Error c -> Error c |> Task.FromResult
+    }
+
 module Result =
+    let (>=>) fa fb a =
+        match fa a with
+        | Ok b -> fb b
+        | Error e -> Error e 
     let requireNotEqualTo other err this =
         if this = other then
             Error err

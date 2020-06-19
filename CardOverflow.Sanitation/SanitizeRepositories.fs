@@ -139,7 +139,7 @@ module SanitizeTagRepository =
         let newTag = sanitize newTag
         let! (tag: TagEntity option) =
             db.Tag.SingleOrDefaultAsync(fun x -> EF.Functions.ILike(x.Name, newTag))
-            |> Task.map Option.ofObj
+            |>% Option.ofObj
         return
             tag |> Option.defaultWith(fun () ->
                 let tag = TagEntity(Name = newTag)
@@ -154,14 +154,14 @@ module SanitizeTagRepository =
         }
     let private getFirstAcquired (db: CardOverflowDb) userId stackId =
         db.AcquiredCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
-        |> Task.map (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
+        |>% (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
     let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
         let newTag = sanitize newTag
         let! (ac: AcquiredCardEntity) = getFirstAcquired db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
         do! db.Tag_AcquiredCard
                 .AnyAsync(fun x -> x.StackId = stackId && x.UserId = userId && x.TagId = tag.Id)
-            |> Task.map (Result.requireFalse <| sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId newTag)
+            |>% (Result.requireFalse <| sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId newTag)
         Tag_AcquiredCardEntity(AcquiredCard = ac, Tag = tag)
         |> db.Tag_AcquiredCard.AddI
         return! db.SaveChangesAsyncI ()
@@ -172,7 +172,7 @@ module SanitizeTagRepository =
         let! join =
             db.Tag_AcquiredCard
                 .SingleOrDefaultAsync(fun x -> x.AcquiredCardId = ac.Id && x.Tag.Name = tag)
-            |> Task.map (Result.requireNotNull <| sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tag)
+            |>% (Result.requireNotNull <| sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tag)
         db.Tag_AcquiredCard.RemoveI join
         return! db.SaveChangesAsyncI()
     }
@@ -180,14 +180,14 @@ module SanitizeTagRepository =
 module SanitizeDeckRepository =
     let private deckBelongsTo (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-        |> Task.map (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        |>% (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
     let private tryGet (db: CardOverflowDb) userId deckId =
         db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
-        |> Task.map (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        |>% (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
     let private validateName (db: CardOverflowDb) userId (deckName: string) = taskResult {
         do! if deckName.Length > 250 then Error <| sprintf "Deck name '%s' is too long. It must be less than 250 characters." deckName else Ok ()
         do! db.Deck.AnyAsync(fun x -> x.Name = deckName && x.UserId = userId)
-            |> Task.map (Result.requireFalse <| sprintf "User #%i already has a Deck named '%s'" userId deckName)
+            |>% (Result.requireFalse <| sprintf "User #%i already has a Deck named '%s'" userId deckName)
     }
     let create (db: CardOverflowDb) userId (newDeck: string) = taskResult {
         do! validateName db userId newDeck
@@ -226,7 +226,7 @@ module SanitizeDeckRepository =
         do! deckBelongsTo db userId deckId
         let! (ac: AcquiredCardEntity) =
             db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
-            |> Task.map (Result.requireNotNull <| sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
+            |>% (Result.requireNotNull <| sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
         ac.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
@@ -247,7 +247,7 @@ module SanitizeDeckRepository =
                     ).Count(),
                     x.AcquiredCards.Count)
             ).SingleAsync()
-        |> Task.map (fun (defaultDeckId, deckCounts) ->
+        |>% (fun (defaultDeckId, deckCounts) ->
             deckCounts |> Seq.map(fun (deck, dueCount, allCount) -> {
                 Id = deck.Id
                 Name = deck.Name
@@ -263,7 +263,7 @@ module SanitizeDeckRepository =
                 x.DefaultDeckId,
                 x.Decks
             ).SingleAsync()
-        |> Task.map (fun (defaultDeckId, decks) ->
+        |>% (fun (defaultDeckId, decks) ->
             decks |> Seq.map(fun deck -> {
                 Id = deck.Id
                 IsDefault = defaultDeckId = deck.Id
@@ -467,8 +467,8 @@ module SanitizeStackRepository =
         match source with
         | VNewOriginalUserId userId ->
             db.User_CollateInstance.Include(fun x -> x.CollateInstance).FirstOrDefaultAsync(fun x -> x.UserId = userId)
-            |> Task.map (Result.requireNotNull (sprintf "User #%i doesn't have any templates" userId))
-            |> TaskResult.map (fun j ->
+            |>% (Result.requireNotNull (sprintf "User #%i doesn't have any templates" userId))
+            |>%% (fun j ->
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
@@ -482,29 +482,29 @@ module SanitizeStackRepository =
             )
         | VNewBranchSourceStackId stackId ->
             db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
-            |> Task.map (Result.requireNotNull (sprintf "Stack #%i not found." stackId))
-            |> TaskResult.map(fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance)
+            |>% Result.requireNotNull (sprintf "Stack #%i not found." stackId)
+            |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance
         | VNewCopySourceInstanceId branchInstanceId ->
             db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId))
-            |> TaskResult.map(toCommand (NewCopy_SourceInstanceId_TagIds (branchInstanceId, [])))
+            |>% Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId)
+            |>%% toCommand (NewCopy_SourceInstanceId_TagIds (branchInstanceId, []))
         | VUpdateBranchId branchId ->
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found." branchId))
-            |> TaskResult.map(fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance)
+            |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
+            |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
     let Update (db: CardOverflowDb) userId (command: ViewEditStackCommand) = taskResult {// medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
         let! cardSettingId =
             match command.EditAcquiredCard.CardSettingId with 
             | Some id ->
                 db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |> Task.map (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |> TaskResult.map (fun () -> id)
+                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+                |>%% fun () -> id
             | None ->
                 db.User
                     .Where(fun x -> x.Id = userId)
                     .Select(fun x -> x.DefaultCardSettingId)
                     .SingleAsync()
-                    |> Task.map Ok
+                |>% Ok
         let! deckId =
             match command.EditAcquiredCard.DeckId with
             | None ->
@@ -512,11 +512,11 @@ module SanitizeStackRepository =
                     .Where(fun x -> x.Id = userId)
                     .Select(fun x -> x.DefaultDeckId)
                     .SingleAsync()
-                    |> Task.map Ok
+                |>% Ok
             | Some id ->
                 db.Deck.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |> Task.map (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |> TaskResult.map(fun () -> id)
+                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+                |>%% fun () -> id
         //let command =
         //    {   command with
         //            EditAcquiredCard = {
