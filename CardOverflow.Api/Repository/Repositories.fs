@@ -487,6 +487,13 @@ module StackRepository =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.LatestDefaultBranchInstance.Search(searchTerm, plain, wildcard, order)
         |> searchExplore userId pageNumber
+    let searchDeck (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) deckId =
+        let plain, wildcard = FullTextSearch.parse searchTerm
+        db.Deck
+            .Where(fun x -> x.Id = deckId && x.IsPublic)
+            .SelectMany(fun x -> x.AcquiredCards.Select(fun x -> x.BranchInstance))
+            .Search(searchTerm, plain, wildcard, order)
+        |> searchExplore userId pageNumber
 
 module UpdateRepository =
     let stack (db: CardOverflowDb) userId (command: EditStackCommand) =
