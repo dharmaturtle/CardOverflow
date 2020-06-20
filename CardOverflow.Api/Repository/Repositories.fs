@@ -706,6 +706,8 @@ module TagRepository =
 type PublicDeck = {
     Id: int
     Name: string
+    AuthorId: int
+    AuthorName: string
     IsFollowed: bool
     FollowCount: int
 }
@@ -720,13 +722,17 @@ module DeckRepository =
                 .Select(fun x ->
                     x,
                     x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
-                    x.DeckFollowers.Count
+                    x.DeckFollowers.Count,
+                    x.UserId,
+                    x.User.DisplayName
                 )
                 .ToListAsync()
         return
-            r.Select(fun (deck, isFollowed, count) -> {
+            r.Select(fun (deck, isFollowed, count, authorId, authorName) -> {
                 Id = deck.Id
                 Name = deck.Name
+                AuthorId = authorId
+                AuthorName = authorName
                 IsFollowed = isFollowed
                 FollowCount = count
             }).ToList()

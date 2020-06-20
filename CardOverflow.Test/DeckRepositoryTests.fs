@@ -242,6 +242,8 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     let publicDeck =
         {   Id = 4
             Name = Guid.NewGuid().ToString()
+            AuthorId = authorId
+            AuthorName = "RoboTurtle"
             IsFollowed = false
             FollowCount = 0
         }

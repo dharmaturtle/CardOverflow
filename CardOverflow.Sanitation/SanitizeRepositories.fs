@@ -269,6 +269,26 @@ module SanitizeDeckRepository =
                 IsDefault = defaultDeckId = deck.Id
                 Name = deck.Name
             })  |> toResizeArray)
+    let getPublic (db: CardOverflowDb) userId deckId =
+        db.Deck
+            .Where(fun x -> x.IsPublic && x.Id = deckId)
+            .Select(fun x ->
+                x,
+                x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
+                x.DeckFollowers.Count,
+                x.UserId,
+                x.User.DisplayName
+            )
+            .SingleOrDefaultAsync()
+        |>% Result.ofNullable (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId)
+        |>%% fun (deck, isFollowed, count, authorId, authorName) -> {
+                Id = deck.Id
+                Name = deck.Name
+                AuthorId = authorId
+                AuthorName = authorName
+                IsFollowed = isFollowed
+                FollowCount = count
+            }
     let follow (db: CardOverflowDb) userId deckId = taskResult {
         let! isValid =
             db.Deck.AnyAsync(fun d ->
