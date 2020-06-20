@@ -450,11 +450,10 @@ module StackRepository =
         (searchAcquired db userId query)
             .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
             .Count()
-    let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) =
-        let plain, wildcard = FullTextSearch.parse searchTerm
+    let private searchExplore userId (pageNumber: int) (filteredInstances: BranchInstanceEntity IOrderedQueryable)=
         task {
             let! r =
-                db.LatestDefaultBranchInstance.Search(searchTerm, plain, wildcard, order).Select(fun x ->
+                filteredInstances.Select(fun x ->
                     x,
                     x.AcquiredCards.Any(fun x -> x.UserId = userId),
                     x.CollateInstance, // .Include fails for some reason, so we have to manually select
@@ -484,6 +483,10 @@ module StackRepository =
                 }
             }
         }
+    let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) =
+        let plain, wildcard = FullTextSearch.parse searchTerm
+        db.LatestDefaultBranchInstance.Search(searchTerm, plain, wildcard, order)
+        |> searchExplore userId pageNumber
 
 module UpdateRepository =
     let stack (db: CardOverflowDb) userId (command: EditStackCommand) =
