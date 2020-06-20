@@ -1,0 +1,87 @@
+@page "/deck/{DeckId:int}"
+
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inherits QueryStringBase
+
+<div class="d-flex justify-content-between align-items-center">
+  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?branchinstance={x}") Ids=@_stacks?.Select(x => x.Instance.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedInstanceId.ToString() />
+</div>
+@if (_selectedInstanceId == default) {
+  @if (_stacks == null) {
+    <p><em>Loading...</em></p>
+  } else {
+    <table class="table">
+      <tr>
+        <th></th>
+        <th>Users</th>
+        <th>Name</th>
+      </tr>
+      @foreach (var stack in _stacks) {
+        <tr>
+          <td>
+            <HoverPreview IsAcquired=@stack.IsAcquired>
+              <ResizingIframeBranch BranchInstanceId=@stack.Instance.Id Front />
+            </HoverPreview>
+          </td>
+          <td>
+            @stack.Users
+          </td>
+          <td>
+            <a href="/deck/@DeckId?branchinstance=@stack.Instance.Id">
+              @stack.Instance.StrippedFront
+            </a>
+          </td>
+        </tr>
+      }
+    </table>
+  }
+  <Pager Details=@_details PageChanged=@PageChanged />
+} else {
+  <Stack BranchInstanceId=@_selectedInstanceId.Value />
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public int DeckId { get; set; }
+  private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
+  private PagedListDetails _details;
+  private SearchCommand _search = new SearchCommand { Query = "" };
+  private int? _selectedInstanceId;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    if (_selectedInstanceId == default) {
+      await PageChanged(1);
+    }
+    StateHasChanged();
+  }
+
+  async Task PageChanged(int pageNumber) {
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.searchDeck(db, _user.Id, pageNumber, _search, DeckId));
+    _details = pagedList.Details;
+    _stacks = pagedList.Results.ToList();
+  }
+
+  Task SearchClicked(SearchCommand newSearch) {
+    _selectedInstanceId = null;
+    _search = newSearch;
+    return PageChanged(1);
+  }
+
+  protected override void GetQueryStringValues() =>
+    NavigationManager.TryGetQueryString<int?>("branchinstance", out _selectedInstanceId);
+
+}

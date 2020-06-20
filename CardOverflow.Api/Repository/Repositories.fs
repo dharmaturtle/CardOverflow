@@ -454,7 +454,7 @@ module StackRepository =
         let plain, wildcard = FullTextSearch.parse searchTerm
         task {
             let! r =
-                db.SearchLatestDefaultBranchInstance(searchTerm, plain, wildcard, order).Select(fun x ->
+                db.LatestDefaultBranchInstance.Search(searchTerm, plain, wildcard, order).Select(fun x ->
                     x,
                     x.AcquiredCards.Any(fun x -> x.UserId = userId),
                     x.CollateInstance, // .Include fails for some reason, so we have to manually select

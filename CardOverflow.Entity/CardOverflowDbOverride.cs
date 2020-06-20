@@ -29,26 +29,10 @@ namespace CardOverflow.Entity {
     Relevance
   }
 
-  // This class should not store custom state due to usage of `AddDbContextPool`
-  public partial class CardOverflowDb : DbContext {
-    private readonly IEntityHasher _entityHasher;
-
-    public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
-      _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable
-    }
-
-    public override int SaveChanges(bool acceptAllChangesOnSuccess) {
-      _OnBeforeSaving().GetAwaiter().GetResult();
-      return base.SaveChanges(acceptAllChangesOnSuccess);
-    }
-
-    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default) {
-      await _OnBeforeSaving();
-      return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-    }
-
+  public static class IQueryableExtensions {
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public IOrderedQueryable<BranchInstanceEntity> SearchLatestDefaultBranchInstance(
+    public static IOrderedQueryable<BranchInstanceEntity> Search(
+      this IQueryable<BranchInstanceEntity> instances,
       string searchTerm,
       string plain,
       string wildcard,
@@ -78,9 +62,28 @@ namespace CardOverflow.Entity {
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
             )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
 
-      return LatestDefaultBranchInstance
+      return instances
         .Apply(where)
         .Apply(order);
+    }
+  }
+
+  // This class should not store custom state due to usage of `AddDbContextPool`
+  public partial class CardOverflowDb : DbContext {
+    private readonly IEntityHasher _entityHasher;
+
+    public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
+      _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess) {
+      _OnBeforeSaving().GetAwaiter().GetResult();
+      return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default) {
+      await _OnBeforeSaving();
+      return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     private IEnumerable<T> _filter<T>(List<EntityEntry> entityEntries) =>
