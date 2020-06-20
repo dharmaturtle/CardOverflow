@@ -65,7 +65,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.SearchAsync(db, _user.Id, pageNumber, _search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.search(db, _user.Id, pageNumber, _search));
     _details = pagedList.Details;
     _stacks = pagedList.Results.ToList();
   }

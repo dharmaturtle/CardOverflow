@@ -483,7 +483,7 @@ module StackRepository =
                 }
             }
         }
-    let SearchAsync (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) =
+    let search (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.LatestDefaultBranchInstance.Search(searchTerm, plain, wildcard, order)
         |> searchExplore userId pageNumber

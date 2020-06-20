@@ -535,8 +535,8 @@ module SanitizeStackRepository =
         //    }
         return! UpdateRepository.stack db userId <| command.load deckId cardSettingId
         }
-    let SearchAsync (db: CardOverflowDb) userId pageNumber searchCommand =
-        StackRepository.SearchAsync db userId pageNumber searchCommand.Order searchCommand.Query
+    let search (db: CardOverflowDb) userId pageNumber searchCommand =
+        StackRepository.search db userId pageNumber searchCommand.Order searchCommand.Query
     let searchDeck (db: CardOverflowDb) userId pageNumber searchCommand deckId =
         StackRepository.searchDeck db userId pageNumber searchCommand.Order searchCommand.Query deckId
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =

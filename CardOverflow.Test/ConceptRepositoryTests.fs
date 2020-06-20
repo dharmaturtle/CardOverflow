@@ -207,7 +207,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
-        let! _ = StackRepository.SearchAsync c.Db userId i SearchOrder.Popularity ""
+        let! _ = StackRepository.search c.Db userId i SearchOrder.Popularity ""
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
@@ -262,7 +262,7 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
             IsAcquired = true }],
         stack.Tags
     )
-    let! stacks = StackRepository.SearchAsync c.Db acquirerId 1 SearchOrder.Popularity ""
+    let! stacks = StackRepository.search c.Db acquirerId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
 
     // author branching keeps tags
@@ -285,7 +285,7 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     )
 
     // search returns Default branches (not the new one created)
-    let! stacks = StackRepository.SearchAsync c.Db acquirerId 1 SearchOrder.Popularity ""
+    let! stacks = StackRepository.search c.Db acquirerId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
 
     let nonacquirerId = 3 // this user never acquires the card
@@ -561,8 +561,9 @@ let ``Card search works`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicCustomStack [front; back] c.Db userId ["custom"]
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
-    let search = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Popularity
     
+    // testing search
+    let search = StackRepository.search c.Db userId 1 SearchOrder.Popularity
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
@@ -582,7 +583,29 @@ let ``Card search works`` (): Task<unit> = task {
     let! cards = search clozeText
     Assert.Equal(3, cards.Results.Single().Id)
 
-    let search = StackRepository.SearchAsync c.Db userId 1 SearchOrder.Relevance
+    // testing deckSearch
+    do! SanitizeDeckRepository.setIsPublic c.Db userId userId true |> TaskResult.getOk
+    let search searchTerm = StackRepository.searchDeck c.Db userId 1 SearchOrder.Popularity searchTerm userId
+    let! cards = search ""
+    Assert.Equal(3, cards.Results.Count())
+    let! cards = search basicTag
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "Front"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "\"Front"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "Fro*"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search <| Guid.NewGuid().ToString()
+    Assert.Empty(cards.Results)
+    let! cards = search front
+    Assert.Equal(2, cards.Results.Single().Id)
+    let! cards = search back
+    Assert.Equal(2, cards.Results.Single().Id)
+    let! cards = search clozeText
+    Assert.Equal(3, cards.Results.Single().Id)
+
+    let search = StackRepository.search c.Db userId 1 SearchOrder.Relevance
     // testing relevance
     let term = "relevant "
     let less = String.replicate 1 term
