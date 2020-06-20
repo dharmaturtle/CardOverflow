@@ -1,6 +1,6 @@
 @page "/stack"
 @page "/stack/{StackId:int}"
-@page "/{My}/stack"
+@page "/my/stack"
 
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -23,10 +23,10 @@
 
 @code {
   [Parameter] public int? StackId { get; set; }
-  [Parameter] public string My { get; set; }
   private int? _branchInstanceId { get; set; }
   private int? _branchId;
-  private bool _isCurate => My?.ToLower() == "my";
+  private bool _isCurate => _path.StartsWith("my/", StringComparison.OrdinalIgnoreCase);
+  private string _path = "";
 
   protected override void OnInitialized() {
     GetQueryStringValues();
@@ -39,6 +39,7 @@
   }
 
   void GetQueryStringValues() {
+    _path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
     if (StackId == null) {
       NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
       NavigationManager.TryGetQueryString<int?>("branchinstance", out var branchInstanceId);
@@ -46,8 +47,7 @@
     }
   }
 
-  public void Dispose() {
+  public void Dispose() =>
     NavigationManager.LocationChanged -= HandleLocationChanged;
-  }
 
 }
