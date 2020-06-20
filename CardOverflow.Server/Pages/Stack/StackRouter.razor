@@ -13,7 +13,7 @@
 @using ThoughtDesign.WebLibrary
 @inject DbExecutor DbExecutor
 @inject NavigationManager NavigationManager
-@implements IDisposable
+@inherits QueryStringBase
 
 @if (_isCurate) {
   <Curate SelectedInstanceId=@_branchInstanceId />
@@ -28,17 +28,7 @@
   private bool _isCurate => _path.StartsWith("my/", StringComparison.OrdinalIgnoreCase);
   private string _path = "";
 
-  protected override void OnInitialized() {
-    GetQueryStringValues();
-    NavigationManager.LocationChanged += HandleLocationChanged; // https://chrissainty.com/working-with-query-strings-in-blazor/
-  }
-
-  void HandleLocationChanged(object sender, LocationChangedEventArgs e) {
-    GetQueryStringValues();
-    StateHasChanged();
-  }
-
-  void GetQueryStringValues() {
+  protected override void GetQueryStringValues() {
     _path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
     if (StackId == null) {
       NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
@@ -46,8 +36,5 @@
       _branchInstanceId = branchInstanceId;
     }
   }
-
-  public void Dispose() =>
-    NavigationManager.LocationChanged -= HandleLocationChanged;
 
 }
