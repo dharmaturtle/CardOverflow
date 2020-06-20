@@ -592,6 +592,10 @@ module CardSettingsRepository =
             return r |> Seq.map (fun o -> CardSetting.load (o.Id = user.DefaultCardSettingId) o)
         }
 
+type Profile = {
+    DisplayName: string
+}
+
 module UserRepository =
     let theCollectiveId = 2
     let defaultCloze = "Cloze"
@@ -620,8 +624,13 @@ module UserRepository =
                 .Select(fun id -> User_CollateInstanceEntity (CollateInstanceId = id, DefaultCardSetting = defaultSetting ))
                 .ToList()) |> db.User.AddI
         return! db.SaveChangesAsyncI () }
-    let Get (db: CardOverflowDb) id =
-        db.User.SingleAsync(fun x -> x.Id = id)
+    let profile (db: CardOverflowDb) userId =
+        db.User
+            .Where(fun x -> x.Id = userId)
+            .Select(fun x -> x.DisplayName)
+            .SingleOrDefaultAsync()
+        |>% Result.requireNotNull (sprintf "User %i doesn't exist" userId)
+        |>%% fun x -> { DisplayName = x }
 
 type TreeTag = {
     Id: string
@@ -683,6 +692,7 @@ module TagRepository =
     let search (db: CardOverflowDb) (input: string) =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
 
+[<CLIMutable>]
 type PublicDeck = {
     Id: int
     Name: string

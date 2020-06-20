@@ -1,0 +1,92 @@
+@page "/user/{UserId:int}"
+
+@using System.Linq
+@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+@inject TimeProvider TimeProvider
+
+@if (_profile == null || _decks == null) {
+  <span>@_loadingMessage</span>
+} else {
+  <h1>
+    @_profile.DisplayName
+  </h1>
+  @if (_decks.Any()) {
+    <h5>
+      Public Decks
+    </h5>
+    <table class="table">
+      @foreach (var deck in _decks) {
+        <tr>
+          <td>
+            <a href="deck/@deck.Id">
+              @deck.Name
+            </a>
+          </td>
+          <td>
+            <span title="Follower count">
+              @deck.FollowCount
+            </span>
+          </td>
+          <td>
+            @if (UserId != _user.Id) {
+              @if (deck.IsFollowed) {
+                <button type="button" class="btn bg-transparent" @onclick=@(() => _unfollow(deck.Id)) title="Click to unfollow.">
+                  <i class="text-warning fas fa-bell"></i>
+                </button>
+              } else {
+                <button type="button" class="btn bg-transparent" @onclick=@(() => _follow(deck.Id)) title="Click to follow this deck.">
+                  <i class="text-muted far fa-bell"></i>
+                </button>
+              }
+            }
+          </td>
+        </tr>
+      }
+    </table>
+  }
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public int UserId { get; set; }
+  private List<PublicDeck> _decks;
+  private Profile _profile;
+  private string _loadingMessage = "Loading...";
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    _decks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, _user.Id, UserId));
+    await DbExecutor.QueryAsync(db => UserRepository.profile(db, UserId)).Match(_OnError, x => _profile = x);
+    StateHasChanged();
+  }
+
+  private Task _follow(int deckId) =>
+    DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, _user.Id, deckId)).Match(ToastService, _ =>
+      _decks.Single(x => x.Id == deckId).IsFollowed = true
+    );
+
+  private Task _unfollow(int deckId) =>
+    DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, _user.Id, deckId)).Match(ToastService, _ =>
+      _decks.Single(x => x.Id == deckId).IsFollowed = false
+    );
+
+  private void _OnError(string error) {
+    ToastService.ShowError(error);
+    _loadingMessage = error;
+  }
+
+}
