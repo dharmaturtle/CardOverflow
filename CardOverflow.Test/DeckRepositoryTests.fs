@@ -282,17 +282,12 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
     do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
         |> TaskResult.getError
-        |>% Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it."
-
-    // author follow fails
-    do! SanitizeDeckRepository.follow c.Db authorId publicDeck.Id
-        |> TaskResult.getError
-        |>% Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it."
+        |>% Assert.equal "Either the deck doesn't exist or you are already following it."
 
     // nonexistant deck fails
     do! SanitizeDeckRepository.follow c.Db followerId 1337
         |> TaskResult.getError
-        |>% Assert.equal "Either the deck doesn't exist, or you are its author, or you are already following it."
+        |>% Assert.equal "Either the deck doesn't exist or you are already following it."
 
     // can delete followed deck
     do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id

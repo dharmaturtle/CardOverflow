@@ -293,10 +293,9 @@ module SanitizeDeckRepository =
         let! isValid =
             db.Deck.AnyAsync(fun d ->
                 d.Id = deckId
-                && d.UserId <> userId
                 && not (d.DeckFollowers.Any(fun df -> df.FollowerId = userId))
             )
-        do! isValid |> Result.requireTrue (sprintf "Either the deck doesn't exist, or you are its author, or you are already following it.")
+        do! isValid |> Result.requireTrue (sprintf "Either the deck doesn't exist or you are already following it.")
         DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
         do! db.SaveChangesAsyncI()
     }
