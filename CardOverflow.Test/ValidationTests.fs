@@ -104,6 +104,8 @@ module Generators =
                             CollateInstance = collateInstance
                     })
         }
+    let genString15 = // unused; here as an example
+        Gen.sized (fun s -> Gen.resize (min s 15) Arb.generate<NonNull<string>>) |> Gen.map (fun (NonNull str) -> str)
 
 type Generators =
     static member editStackCommand =
