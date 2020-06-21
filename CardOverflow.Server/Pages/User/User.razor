@@ -11,6 +11,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@using CardOverflow.Server.Pages.Deck
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
@@ -35,22 +36,7 @@
             </a>
           </td>
           <td>
-            <span title="Follower count">
-              @deck.FollowCount
-            </span>
-          </td>
-          <td>
-            @if (UserId != _user.Id) {
-              @if (deck.IsFollowed) {
-                <button type="button" class="btn bg-transparent" @onclick=@(() => _unfollow(deck.Id)) title="Click to unfollow.">
-                  <i class="text-warning fas fa-bell"></i>
-                </button>
-              } else {
-                <button type="button" class="btn bg-transparent" @onclick=@(() => _follow(deck.Id)) title="Click to follow this deck.">
-                  <i class="text-muted far fa-bell"></i>
-                </button>
-              }
-            }
+            <FollowButtons Deck=@deck/>
           </td>
         </tr>
       }
@@ -73,16 +59,6 @@
     await DbExecutor.QueryAsync(db => UserRepository.profile(db, UserId)).Match(_OnError, x => _profile = x);
     StateHasChanged();
   }
-
-  private Task _follow(int deckId) =>
-    DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, _user.Id, deckId)).Match(ToastService, _ =>
-      _decks.Single(x => x.Id == deckId).IsFollowed = true
-    );
-
-  private Task _unfollow(int deckId) =>
-    DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, _user.Id, deckId)).Match(ToastService, _ =>
-      _decks.Single(x => x.Id == deckId).IsFollowed = false
-    );
 
   private void _OnError(string error) {
     ToastService.ShowError(error);

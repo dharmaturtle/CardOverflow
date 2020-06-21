@@ -1,0 +1,51 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+
+<div class="btn-group btn-group-sm">
+  @if (Deck.IsFollowed) {
+    <button type="button" class="btn btn-outline-secondary" @onclick=@_unfollow>
+      <i class="text-warning fas fa-bell"></i> Unfollow
+    </button>
+  } else {
+    <button type="button" class="btn btn-outline-secondary" @onclick=@_follow>
+      <i class="far fa-bell"></i> Follow
+    </button>
+  }
+  <button type="button" class="btn btn-outline-secondary">
+    @Deck.FollowCount
+  </button>
+</div>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public PublicDeck Deck { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+  private Task _follow() =>
+    DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, _user.Id, Deck.Id)).Match(ToastService, _ =>
+      Deck.IsFollowed = true
+    );
+
+  private Task _unfollow() =>
+    DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, _user.Id, Deck.Id)).Match(ToastService, _ =>
+      Deck.IsFollowed = false
+    );
+
+}
