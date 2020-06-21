@@ -16,6 +16,7 @@ namespace CardOverflow.Entity
             File_BranchInstances = new HashSet<File_BranchInstanceEntity>();
             Histories = new HashSet<HistoryEntity>();
             StackCopySources = new HashSet<StackEntity>();
+            NotificationBranchInstances = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -64,6 +65,8 @@ namespace CardOverflow.Entity
         public virtual ICollection<File_BranchInstanceEntity> File_BranchInstances { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("BranchInstance")]
+        public virtual ICollection<NotificationEntity> NotificationBranchInstances { get; set; }
         [InverseProperty("CopySource")]
         public virtual ICollection<StackEntity> StackCopySources { get; set; }
         public virtual ICollection<StackTagCountEntity> StackTagCounts { get; set; }

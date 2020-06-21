@@ -13,6 +13,7 @@ namespace CardOverflow.Entity
         {
             BranchInstances = new HashSet<BranchInstanceEntity>();
             Collates = new HashSet<CollateEntity>();
+            Notifications = new HashSet<NotificationEntity>();
             User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
         }
 
@@ -99,6 +100,8 @@ namespace CardOverflow.Entity
         public virtual ICollection<BranchInstanceEntity> BranchInstances { get; set; }
         [InverseProperty("LatestInstance")]
         public virtual ICollection<CollateEntity> Collates { get; set; }
+        [InverseProperty("CollateInstance")]
+        public virtual ICollection<NotificationEntity> Notifications { get; set; }
         [InverseProperty("CollateInstance")]
         public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
     }

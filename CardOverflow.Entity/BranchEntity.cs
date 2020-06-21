@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
             AcquiredCardBranchNavigations = new HashSet<AcquiredCardEntity>();
             AcquiredCardBranches = new HashSet<AcquiredCardEntity>();
             BranchInstances = new HashSet<BranchInstanceEntity>();
+            NotificationBranches = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -44,5 +45,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<AcquiredCardEntity> AcquiredCardBranches { get; set; }
         [InverseProperty("Branch")]
         public virtual ICollection<BranchInstanceEntity> BranchInstances { get; set; }
+        [InverseProperty("Branch")]
+        public virtual ICollection<NotificationEntity> NotificationBranches { get; set; }
     }
 }

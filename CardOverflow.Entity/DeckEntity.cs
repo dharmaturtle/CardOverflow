@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             DeckFollowers = new HashSet<DeckFollowersEntity>();
+            Notifications = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -37,5 +38,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("Deck")]
         public virtual ICollection<DeckFollowersEntity> DeckFollowers { get; set; }
+        [InverseProperty("Deck")]
+        public virtual ICollection<NotificationEntity> Notifications { get; set; }
     }
 }

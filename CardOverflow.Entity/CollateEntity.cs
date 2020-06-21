@@ -11,6 +11,7 @@ namespace CardOverflow.Entity
         {
             CollateInstances = new HashSet<CollateInstanceEntity>();
             CommentCollates = new HashSet<CommentCollateEntity>();
+            Notifications = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -29,5 +30,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<CollateInstanceEntity> CollateInstances { get; set; }
         [InverseProperty("Collate")]
         public virtual ICollection<CommentCollateEntity> CommentCollates { get; set; }
+        [InverseProperty("Collate")]
+        public virtual ICollection<NotificationEntity> Notifications { get; set; }
     }
 }

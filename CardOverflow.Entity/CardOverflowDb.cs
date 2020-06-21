@@ -28,7 +28,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<File_BranchInstanceEntity> File_BranchInstance { get; set; }
         public virtual DbSet<FilterEntity> Filter { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
+        public virtual DbSet<NotificationEntity> Notification { get; set; }
         public virtual DbSet<PotentialSignupsEntity> PotentialSignups { get; set; }
+        public virtual DbSet<ReceivedNotificationEntity> ReceivedNotification { get; set; }
         public virtual DbSet<RelationshipEntity> Relationship { get; set; }
         public virtual DbSet<Relationship_AcquiredCardEntity> Relationship_AcquiredCard { get; set; }
         public virtual DbSet<StackEntity> Stack { get; set; }
@@ -69,7 +71,7 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => new { e.UserId, e.StackId });
 
-                entity.HasIndex(e => new { e.Id, e.UserId, e.StackId })
+                entity.HasIndex(e => new { e.Id, e.StackId, e.UserId })
                     .IsUnique();
 
                 entity.HasIndex(e => new { e.UserId, e.BranchInstanceId, e.Index })
@@ -138,9 +140,6 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => new { e.Id, e.StackId })
                     .IsUnique();
 
-                entity.HasIndex(e => new { e.StackId, e.Id })
-                    .IsUnique();
-
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
@@ -170,13 +169,10 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => e.TsVector)
                     .HasMethod("gin");
 
-                entity.HasIndex(e => new { e.BranchId, e.Id })
-                    .IsUnique();
-
                 entity.HasIndex(e => new { e.Id, e.BranchId })
                     .IsUnique();
 
-                entity.HasIndex(e => new { e.StackId, e.Id })
+                entity.HasIndex(e => new { e.Id, e.StackId })
                     .IsUnique();
 
                 entity.HasOne(d => d.Branch)
@@ -369,10 +365,10 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.DeckId, e.FollowerId });
 
-              entity.HasOne(d => d.Deck)
-                  .WithMany(p => p.DeckFollowers)
-                  .HasForeignKey(d => d.DeckId)
-                  .OnDelete(DeleteBehavior.ClientSetNull);
+                entity.HasOne(d => d.Deck)
+                    .WithMany(p => p.DeckFollowers)
+                    .HasForeignKey(d => d.DeckId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Follower)
                     .WithMany(p => p.DeckFollowers)
@@ -433,6 +429,29 @@ namespace CardOverflow.Entity
                     .WithMany(p => p.Histories)
                     .HasForeignKey(d => d.AcquiredCardId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<NotificationEntity>(entity =>
+            {
+                entity.HasOne(d => d.Sender)
+                    .WithMany(p => p.SentNotifications)
+                    .HasForeignKey(d => d.SenderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<ReceivedNotificationEntity>(entity =>
+            {
+                entity.HasKey(e => new { e.NotificationId, e.ReceiverId });
+
+                entity.HasOne(d => d.Notification)
+                    .WithMany(p => p.ReceivedNotifications)
+                    .HasForeignKey(d => d.NotificationId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasOne(d => d.Receiver)
+                    .WithMany(p => p.ReceivedNotifications)
+                    .HasForeignKey(d => d.ReceiverId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
@@ -538,7 +557,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<User_CollateInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.UserId, e.CollateInstanceId });
+                entity.HasKey(e => new { e.CollateInstanceId, e.UserId });
 
                 entity.HasIndex(e => e.CollateInstanceId);
 

@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             Branches = new HashSet<BranchEntity>();
             CommentStacks = new HashSet<CommentStackEntity>();
+            Notifications = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -36,5 +37,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<BranchEntity> Branches { get; set; }
         [InverseProperty("Stack")]
         public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
+        [InverseProperty("Stack")]
+        public virtual ICollection<NotificationEntity> Notifications { get; set; }
     }
 }

@@ -21,6 +21,8 @@ namespace CardOverflow.Entity
             Feedbacks = new HashSet<FeedbackEntity>();
             Filters = new HashSet<FilterEntity>();
             Histories = new HashSet<HistoryEntity>();
+            SentNotifications = new HashSet<NotificationEntity>();
+            ReceivedNotifications = new HashSet<ReceivedNotificationEntity>();
             Stacks = new HashSet<StackEntity>();
             User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
             Vote_CommentCollates = new HashSet<Vote_CommentCollateEntity>();
@@ -78,6 +80,10 @@ namespace CardOverflow.Entity
         public virtual ICollection<FilterEntity> Filters { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
+        [InverseProperty("Sender")]
+        public virtual ICollection<NotificationEntity> SentNotifications { get; set; }
+        [InverseProperty("Receiver")]
+        public virtual ICollection<ReceivedNotificationEntity> ReceivedNotifications { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<StackEntity> Stacks { get; set; }
         [InverseProperty("User")]
