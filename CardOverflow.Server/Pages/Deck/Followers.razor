@@ -1,0 +1,61 @@
+@page "/deck/{DeckId:int}/followers"
+
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+
+@if (_followers == null || _deck == null) {
+  <span>Loading...</span>
+} else {
+  <h3>
+    <div class="row">
+      <div class="col">
+        Deck:
+        <a href="deck/@_deck.Id">
+          @_deck.Name
+        </a>
+        <small> - by <a href="user/@_deck.AuthorId">@_deck.AuthorName</a></small>
+      </div>
+      <div class="float-right">
+        <FollowButtons Deck=@_deck />
+      </div>
+    </div>
+  </h3>
+  <h5>
+    @_deck.FollowCount Followers:
+  </h5>
+  @foreach (var follower in _followers) {
+    <div>
+      <a href="user/@follower.Id">
+        @follower.DisplayName
+      </a>
+    </div>
+  }
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public int DeckId { get; set; }
+  private PublicDeck _deck;
+  private List<Follower> _followers;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, DeckId)).Match(ToastService, x => _deck = x);
+    _followers = await DbExecutor.QueryAsync(db => DeckRepository.getFollowers(db, DeckId));
+    StateHasChanged();
+  }
+
+}
