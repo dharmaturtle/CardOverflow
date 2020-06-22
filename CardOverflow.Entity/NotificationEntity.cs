@@ -16,6 +16,7 @@ namespace CardOverflow.Entity
         public int Id { get; set; }
         public int SenderId { get; set; }
         public DateTime TimeStamp { get; set; }
+        public NotificationType Type { get; set; }
         [StringLength(4000)]
         public string Message {
             get => _Message;

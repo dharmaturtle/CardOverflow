@@ -55,6 +55,8 @@ namespace CardOverflow.Entity
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasPostgresEnum<NotificationType>("public", "NotificationType");
+
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<AcquiredCardEntity>(entity =>
