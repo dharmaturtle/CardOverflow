@@ -12,6 +12,7 @@ open System.ComponentModel.DataAnnotations
 open DataAnnotationsValidator
 open FsCheck
 open FsCheck.Xunit
+open CardOverflow.Entity
 
 module Gen =
     let gen<'a> = // uses the reflection based default generator instead of the registered generator
@@ -20,8 +21,8 @@ module Gen =
     let genMap<'a> f: Gen<'a> =
         gen<'a>
         |> Gen.map f
-    let sample1 =
-        Gen.elements >> Gen.sample 0 1 >> List.head
+    let sample1 x =
+        x |> Gen.elements |> Gen.sample 0 1 |> List.head
 
 module Generators =
     let alphanumericChar = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] |> Gen.elements
@@ -104,6 +105,19 @@ module Generators =
                             CollateInstance = collateInstance
                     })
         }
+    let notificationEntity = gen {
+        let! id = Arb.generate<int>
+        let! timestamp = Arb.generate<DateTime>
+        let! message = Arb.generate<string>
+        let! notificationType = Gen.gen<NotificationType>
+        return
+            NotificationEntity(
+                Id = id,
+                SenderId = Gen.sample1 [1; 2; 3],
+                TimeStamp = DateTime.SpecifyKind(timestamp, DateTimeKind.Unspecified),
+                Type = notificationType,
+                Message = message
+            )}
     let genString15 = // unused; here as an example
         Gen.sized (fun s -> Gen.resize (min s 15) Arb.generate<NonNull<string>>) |> Gen.map (fun (NonNull str) -> str)
 
@@ -114,6 +128,8 @@ type Generators =
         Generators.clozeText
         |> Gen.map Generators.ClozeText
         |> Arb.fromGen
+    static member notificationEntity =
+        Generators.notificationEntity |> Arb.fromGen
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])

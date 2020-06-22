@@ -14,6 +14,8 @@ using CardOverflow.Pure;
 using static Microsoft.EntityFrameworkCore.EF;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using CardOverflow.Debug;
+using Npgsql;
+using Npgsql.NameTranslation;
 
 namespace CardOverflow.Entity {
 
@@ -77,6 +79,8 @@ namespace CardOverflow.Entity {
   // This class should not store custom state due to usage of `AddDbContextPool`
   public partial class CardOverflowDb : DbContext {
     private readonly IEntityHasher _entityHasher;
+
+    static CardOverflowDb() =>  NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("NotificationType", new NpgsqlNullNameTranslator());
 
     public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
       _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable

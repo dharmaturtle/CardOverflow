@@ -62,6 +62,7 @@
     <Compile Include="FacetRepositoryTests.fs" />
     <Compile Include="AcquireCardRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
+    <Compile Include="NotificationRepositoryTests.fs" />
     <Compile Include="CollateRepositoryTests.fs" />
     <Compile Include="CardSettingTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />

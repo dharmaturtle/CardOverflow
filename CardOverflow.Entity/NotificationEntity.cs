@@ -21,8 +21,8 @@ namespace CardOverflow.Entity
         public string Message {
             get => _Message;
             set {
-                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Message has a maximum length of 4000. Attempted value: {value}");
-                _Message = value;
+                if (value?.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Message has a maximum length of 4000. Attempted value: {value}");
+                _Message = value?.Replace("\0", string.Empty);
             }
         }
         private string _Message;
