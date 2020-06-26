@@ -266,6 +266,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     //adding a card notifies
     let! _ = addBasicStack c.Db authorId []
     let notificationId = 1
+    let stackId = 1
     let branchId = 1
     let authorAcquiredId = 1
     
@@ -275,11 +276,11 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         {   Id = notificationId
-            SenderId = 3
+            SenderId = authorId
             SenderDisplayName = "RoboTurtle"
             TimeStamp = n.TimeStamp // cheating, but whatever
             Message = DeckAddedBranchInstance { DeckId = publicDeck.Id
-                                                NewStackId = 1
+                                                NewStackId = stackId
                                                 NewBranchId = branchId
                                                 NewBranchInstanceId = 1001 } }
 
@@ -314,11 +315,11 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         { Id = 2
-          SenderId = 3
+          SenderId = authorId
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
           Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
-                                                NewStackId = 1
+                                                NewStackId = stackId
                                                 NewBranchId = branchId
                                                 NewBranchInstanceId = instance2
                                                 AcquiredStackId = None
@@ -355,16 +356,34 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         { Id = notificationId
-          SenderId = 3
+          SenderId = authorId
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
           Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
-                                                NewStackId = 1
+                                                NewStackId = stackId
                                                 NewBranchId = branchId
                                                 NewBranchInstanceId = instance3
                                                 AcquiredStackId = Some 1
                                                 AcquiredBranchId = Some 1
                                                 AcquiredBranchInstanceId = Some instance2 } }
+    
+    do! NotificationRepository.remove c.Db followerId notificationId
+    // deleting acquiredCard from deck has notification
+    do! StackRepository.unacquireStack c.Db authorId stackId
+
+    let! ns = NotificationRepository.get c.Db followerId
+    let n = ns |> Assert.Single
+    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+    n |> Assert.equal
+        { Id = 4
+          SenderId = authorId
+          SenderDisplayName = "RoboTurtle"
+          TimeStamp = n.TimeStamp  // cheating, but whatever
+          Message = DeckDeletedBranchInstance { DeckId = publicDeck.Id
+                                                DeletedStackId = stackId
+                                                DeletedBranchId = branchId
+                                                DeletedBranchInstanceId = instance3 } }
+
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
     
