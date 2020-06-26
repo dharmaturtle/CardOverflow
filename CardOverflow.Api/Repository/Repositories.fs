@@ -19,6 +19,7 @@ open Microsoft.FSharp.Core
 open NeoSmart.Utils
 open System.IO
 open System
+open System.Runtime.ExceptionServices
 
 module CommunalFieldRepository =
     let get (db: CardOverflowDb) fieldId = task {
@@ -560,6 +561,20 @@ module NotificationRepository =
                 x.Notification.Stack.AcquiredCards.FirstOrDefault(fun x -> x.UserId = userId)
             ).ToListAsync()
         |>% (Seq.map Notification.load)
+    let remove (db: CardOverflowDb) userId notificationId = task {
+        ReceivedNotificationEntity(
+            ReceiverId = userId,
+            NotificationId = notificationId)
+        |> db.Remove
+        |> ignore
+        try
+            return! db.SaveChangesAsyncI()
+        with
+            | :? Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException as e ->
+                if e.Message = "Database operation expected to affect 1 row(s) but actually affected 0 row(s). Data may have been modified or deleted since entities were loaded. See http://go.microsoft.com/fwlink/?LinkId=527962 for information on understanding and handling optimistic concurrency exceptions."
+                then return! Task.FromResult()
+                else ExceptionDispatchInfo.Capture(e).Throw() // https://stackoverflow.com/q/41193629
+    }
 
 module CardSettingsRepository =
     let defaultCardSettings =

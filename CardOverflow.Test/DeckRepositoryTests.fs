@@ -265,13 +265,14 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
 
     //adding a card notifies
     let! _ = addBasicStack c.Db authorId []
+    let notificationId = 1
     
     let! ns = NotificationRepository.get c.Db followerId
     
     let n = ns |> Assert.Single
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
-        {   Id = 1
+        {   Id = notificationId
             SenderId = 3
             SenderDisplayName = "RoboTurtle"
             TimeStamp = n.TimeStamp // cheating, but whatever
@@ -279,6 +280,16 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
                                                 NewStackId = 1
                                                 NewBranchId = 1
                                                 NewBranchInstanceId = 1001 } }
+
+    // can remove notification
+    do! NotificationRepository.remove c.Db followerId notificationId
+
+    Assert.Empty c.Db.ReceivedNotification
+    
+    // can remove notification, idempotent
+    do! NotificationRepository.remove c.Db followerId notificationId
+
+    Assert.Empty c.Db.ReceivedNotification
 
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
