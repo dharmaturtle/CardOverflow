@@ -15,6 +15,7 @@ open FSharp.Control.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Task
+open FacetRepositoryTests
 
 [<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
@@ -249,6 +250,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
         }
     do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |>%% Assert.equal publicDeck.Id
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeck.Id true
+    do! SanitizeDeckRepository.setDefault c.Db authorId publicDeck.Id
 
     // getPublic yields expected deck
     do! Assert.Single >> Assert.equal publicDeck <!> DeckRepository.getPublic c.Db authorId   authorId
@@ -260,6 +262,23 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     do! Assert.Single 
         >> Assert.equal { publicDeck with IsFollowed = true; FollowCount = 1 }
         <%> DeckRepository.getPublic c.Db followerId authorId
+
+    //adding a card notifies
+    let! _ = addBasicStack c.Db authorId []
+    
+    let! ns = NotificationRepository.get c.Db followerId
+    
+    let n = ns |> Assert.Single
+    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+    n |> Assert.equal
+        {   Id = 1
+            SenderId = 3
+            SenderDisplayName = "RoboTurtle"
+            TimeStamp = n.TimeStamp // cheating, but whatever
+            Message = DeckAddedBranchInstance { DeckId = publicDeck.Id
+                                                NewStackId = 1
+                                                NewBranchId = 1
+                                                NewBranchInstanceId = 1001 } }
 
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
@@ -290,6 +309,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
         |>% Assert.equal "Either the deck doesn't exist or you are already following it."
 
     // can delete followed deck
+    do! SanitizeDeckRepository.setDefault c.Db authorId authorId
     do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id
     do! DeckRepository.getPublic c.Db followerId authorId |>% Assert.Empty
     } |> TaskResult.getOk)

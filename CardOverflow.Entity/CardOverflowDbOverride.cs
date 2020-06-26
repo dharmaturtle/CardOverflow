@@ -19,12 +19,6 @@ using Npgsql.NameTranslation;
 
 namespace CardOverflow.Entity {
 
-  public enum NotificationType {
-    DeckAddedBranchInstance,
-    DeckUpdatedBranchInstance,
-    DeckDeletedBranchInstance
-  }
-
   public interface IEntityHasher {
     FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
     FSharpFunc<(CollateInstanceEntity, SHA512), BitArray> CollateInstanceHasher { get; }

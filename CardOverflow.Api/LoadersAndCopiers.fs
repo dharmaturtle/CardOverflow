@@ -30,6 +30,39 @@ module CollateInstanceEntity =
     let hash h e = byteArrayHash h e |> BitArray
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
+module Notification =
+    let load ((n: NotificationEntity), senderName, (ac: AcquiredCardEntity)) =
+        let message =
+            match n.Type with
+            | NotificationType.DeckAddedBranchInstance ->
+                {   DeckId = n.DeckId.Value
+                    NewStackId = n.StackId.Value
+                    NewBranchId = n.BranchId.Value
+                    NewBranchInstanceId = n.BranchInstanceId.Value
+                } |> DeckAddedBranchInstance
+            | NotificationType.DeckUpdatedBranchInstance ->
+                {   DeckId = n.DeckId.Value
+                    NewStackId = n.StackId.Value
+                    NewBranchId = n.BranchId.Value
+                    NewBranchInstanceId = n.BranchInstanceId.Value
+                    AcquiredStackId = ac.StackId
+                    AcquiredBranchId = ac.BranchId
+                    AcquiredBranchInstanceId = ac.BranchInstanceId
+                } |> DeckUpdatedBranchInstance
+            | NotificationType.DeckDeletedBranchInstance ->
+                {   DeckId = n.DeckId.Value
+                    DeletedStackId = n.StackId.Value
+                    DeletedBranchId = n.BranchId.Value
+                    DeletedBranchInstanceId = n.BranchInstanceId.Value
+                } |> DeckDeletedBranchInstance
+            | x -> failwith <| sprintf "Invalid enum value: %A" x
+        {   Id = n.Id
+            SenderId = n.SenderId
+            SenderDisplayName = senderName
+            TimeStamp = n.TimeStamp
+            Message = message
+        }
+
 module BranchInstanceEntity =
     let bitArrayToByteArray (bitArray: BitArray) = // https://stackoverflow.com/a/45760138
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)

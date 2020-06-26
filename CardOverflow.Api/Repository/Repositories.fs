@@ -550,6 +550,17 @@ module UpdateRepository =
             return branchInstance.BranchId
         }
 
+module NotificationRepository =
+    let get (db: CardOverflowDb) userId =
+        db.ReceivedNotification
+            .Where(fun x -> x.ReceiverId = userId)
+            .Select(fun x ->
+                x.Notification,
+                x.Notification.Sender.DisplayName,
+                x.Notification.Stack.AcquiredCards.FirstOrDefault(fun x -> x.UserId = userId)
+            ).ToListAsync()
+        |>% (Seq.map Notification.load)
+
 module CardSettingsRepository =
     let defaultCardSettings =
         { Id = 0

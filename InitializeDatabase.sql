@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -104,6 +104,19 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                     JOIN    "AcquiredCard" ac on ac."StackId" = s."Id"
                                     WHERE   ac."CardState" <> 3 AND ac."StackId" = NEW."StackId")_)
             WHERE stack."Id" = NEW."StackId";
+        END IF;
+        IF (SELECT "IsPublic" FROM public."Deck" WHERE "Id" = NEW."DeckId") THEN
+            IF (TG_OP = 'INSERT') THEN
+                WITH notification_id AS (
+                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
+                                            VALUES (NEW."UserId", (timezone('utc', now())), 'DeckAddedBranchInstance', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
+                    RETURNING "Id"
+                ) INSERT INTO public."ReceivedNotification"("ReceiverId", "NotificationId")
+                                                 (SELECT df."FollowerId", (SELECT "Id" FROM notification_id)
+                                                  FROM public."DeckFollowers" df
+                                                  WHERE df."DeckId" = NEW."DeckId"
+                                                 );
+            END IF;
         END IF;
         RETURN NULL;
     END;
@@ -1827,7 +1840,7 @@ ALTER TABLE ONLY public."Notification"
 
 
 ALTER TABLE ONLY public."Notification"
-    ADD CONSTRAINT "FK_Notification_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
+    ADD CONSTRAINT "FK_Notification_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."Notification"
@@ -1839,7 +1852,7 @@ ALTER TABLE ONLY public."Notification"
 
 
 ALTER TABLE ONLY public."ReceivedNotification"
-    ADD CONSTRAINT "FK_ReceivedNotification_User_NotificationId" FOREIGN KEY ("NotificationId") REFERENCES public."Notification"("Id");
+    ADD CONSTRAINT "FK_ReceivedNotification_User_NotificationId" FOREIGN KEY ("NotificationId") REFERENCES public."Notification"("Id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."ReceivedNotification"

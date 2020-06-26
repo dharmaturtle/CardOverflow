@@ -1,6 +1,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using CardOverflow.Pure;
 
 namespace CardOverflow.Entity
 {

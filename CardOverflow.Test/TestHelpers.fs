@@ -26,6 +26,9 @@ module Assert =
             ,y |> Seq.sort |> List.ofSeq)
     let equal (x: 'T) (y: 'T) =
         Assert.Equal<'T>(x, y)
+    let dateTimeEqual delta (x: DateTime) (y: DateTime) =
+        Math.Abs((x - y).TotalSeconds) < delta
+        |> Assert.True
 
 type XunitClassDataBase(generator : obj [] seq) = // https://stackoverflow.com/questions/35026735/
     interface seq<obj []> with
