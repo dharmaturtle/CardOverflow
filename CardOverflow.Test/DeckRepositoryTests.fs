@@ -294,6 +294,8 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     Assert.Empty c.Db.ReceivedNotification
 
     // edit card notifies follower
+    let instance2 = 1002
+    let notificationId = 2
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -318,30 +320,51 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
                                                 NewStackId = 1
                                                 NewBranchId = branchId
-                                                NewBranchInstanceId = 1002
+                                                NewBranchInstanceId = instance2
                                                 AcquiredStackId = None
                                                 AcquiredBranchId = None
                                                 AcquiredBranchInstanceId = None } }
 
+    do! NotificationRepository.remove c.Db followerId notificationId
     // editing card's state doesn't notify follower
     do! StackRepository.editState c.Db authorId authorAcquiredId Suspended
     
     let! ns = NotificationRepository.get c.Db followerId
 
+    ns |> Assert.Empty
+    
+    // Update notifies with follower's acquired card
+    do! StackRepository.AcquireCardAsync c.Db followerId instance2
+    let instance3 = 1003
+    let notificationId = 3
+    let newValue = Guid.NewGuid().ToString()
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
+    let updated = {
+        old with
+            ViewEditStackCommand.FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
+    Assert.Equal(branchId, actualBranchId)
+    let! ns = NotificationRepository.get c.Db followerId
+
     let n = ns |> Assert.Single
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
-        { Id = 2
+        { Id = notificationId
           SenderId = 3
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
           Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
                                                 NewStackId = 1
                                                 NewBranchId = branchId
-                                                NewBranchInstanceId = 1002
-                                                AcquiredStackId = None
-                                                AcquiredBranchId = None
-                                                AcquiredBranchInstanceId = None } }
+                                                NewBranchInstanceId = instance3
+                                                AcquiredStackId = Some 1
+                                                AcquiredBranchId = Some 1
+                                                AcquiredBranchInstanceId = Some instance2 } }
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
     
