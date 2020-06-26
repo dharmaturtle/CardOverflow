@@ -267,6 +267,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     let! _ = addBasicStack c.Db authorId []
     let notificationId = 1
     let branchId = 1
+    let authorAcquiredId = 1
     
     let! ns = NotificationRepository.get c.Db followerId
     
@@ -305,6 +306,26 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
     Assert.Equal(branchId, actualBranchId)
+    let! ns = NotificationRepository.get c.Db followerId
+
+    let n = ns |> Assert.Single
+    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+    n |> Assert.equal
+        { Id = 2
+          SenderId = 3
+          SenderDisplayName = "RoboTurtle"
+          TimeStamp = n.TimeStamp  // cheating, but whatever
+          Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
+                                                NewStackId = 1
+                                                NewBranchId = branchId
+                                                NewBranchInstanceId = 1002
+                                                AcquiredStackId = None
+                                                AcquiredBranchId = None
+                                                AcquiredBranchInstanceId = None } }
+
+    // editing card's state doesn't notify follower
+    do! StackRepository.editState c.Db authorId authorAcquiredId Suspended
+    
     let! ns = NotificationRepository.get c.Db followerId
 
     let n = ns |> Assert.Single

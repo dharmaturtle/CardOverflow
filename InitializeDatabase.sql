@@ -116,7 +116,7 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                                   FROM public."DeckFollowers" df
                                                   WHERE df."DeckId" = NEW."DeckId"
                                                  );
-            ELSIF (TG_OP = 'UPDATE') THEN
+            ELSIF (TG_OP = 'UPDATE' AND OLD."BranchInstanceId" <> NEW."BranchInstanceId") THEN
                 WITH notification_id AS (
                     INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
                                             VALUES (NEW."UserId", (timezone('utc', now())), 'DeckUpdatedBranchInstance', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
