@@ -77,9 +77,13 @@ let fullReset databaseName serverConnectionString =
             CREATE DATABASE "CardOverflow";
             """.Replace("CardOverflow", databaseName)
         <|  serverConnectionString
+    let testDbConnectionString = sprintf "%s;Database=%s;" serverConnectionString databaseName
     executeNonQuery
         <| readResource "InitializeDatabase.sql"
-        <| sprintf "%s;Database=%s;" serverConnectionString databaseName
+        <| testDbConnectionString
+    use connection = new NpgsqlConnection(testDbConnectionString)
+    connection.Open()
+    connection.ReloadTypes()
 
 let tweak databaseName serverConnectionString =
     let serverConnectionString = ConnectionString.value serverConnectionString
@@ -97,7 +101,7 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): 
 
 let fastResetScript =
     let insertMasterData =
-        Regex("""INSERT INTO.*SELECT pg_catalog\.setval\('public\.".*?;""", RegexOptions.Singleline + RegexOptions.Multiline)
+        Regex("""^INSERT INTO.*SELECT pg_catalog\.setval\('public\.".*?;""", RegexOptions.Singleline + RegexOptions.Multiline)
             .Match(File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql")
             .Value
     sprintf // https://stackoverflow.com/a/12082038
