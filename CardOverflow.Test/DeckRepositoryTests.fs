@@ -266,6 +266,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     //adding a card notifies
     let! _ = addBasicStack c.Db authorId []
     let notificationId = 1
+    let branchId = 1
     
     let! ns = NotificationRepository.get c.Db followerId
     
@@ -278,7 +279,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
             TimeStamp = n.TimeStamp // cheating, but whatever
             Message = DeckAddedBranchInstance { DeckId = publicDeck.Id
                                                 NewStackId = 1
-                                                NewBranchId = 1
+                                                NewBranchId = branchId
                                                 NewBranchInstanceId = 1001 } }
 
     // can remove notification
@@ -291,6 +292,35 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
 
     Assert.Empty c.Db.ReceivedNotification
 
+    // edit card notifies follower
+    let newValue = Guid.NewGuid().ToString()
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
+    let updated = {
+        old with
+            ViewEditStackCommand.FieldValues =
+                old.FieldValues.Select(fun x ->
+                    { x with Value = newValue }
+                ).ToList()
+    }
+    
+    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
+    Assert.Equal(branchId, actualBranchId)
+    let! ns = NotificationRepository.get c.Db followerId
+
+    let n = ns |> Assert.Single
+    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+    n |> Assert.equal
+        { Id = 2
+          SenderId = 3
+          SenderDisplayName = "RoboTurtle"
+          TimeStamp = n.TimeStamp  // cheating, but whatever
+          Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
+                                                NewStackId = 1
+                                                NewBranchId = branchId
+                                                NewBranchInstanceId = 1002
+                                                AcquiredStackId = None
+                                                AcquiredBranchId = None
+                                                AcquiredBranchInstanceId = None } }
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
     

@@ -31,9 +31,9 @@ type DeckUpdatedBranchInstance = {
     NewStackId: int
     NewBranchId: int
     NewBranchInstanceId: int
-    AcquiredStackId: int
-    AcquiredBranchId: int
-    AcquiredBranchInstanceId: int
+    AcquiredStackId: int Option
+    AcquiredBranchId: int Option
+    AcquiredBranchInstanceId: int Option
 }
 
 type DeckDeletedBranchInstance = {

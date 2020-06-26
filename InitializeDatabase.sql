@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -110,6 +110,16 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                 WITH notification_id AS (
                     INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
                                             VALUES (NEW."UserId", (timezone('utc', now())), 'DeckAddedBranchInstance', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
+                    RETURNING "Id"
+                ) INSERT INTO public."ReceivedNotification"("ReceiverId", "NotificationId")
+                                                 (SELECT df."FollowerId", (SELECT "Id" FROM notification_id)
+                                                  FROM public."DeckFollowers" df
+                                                  WHERE df."DeckId" = NEW."DeckId"
+                                                 );
+            ELSIF (TG_OP = 'UPDATE') THEN
+                WITH notification_id AS (
+                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
+                                            VALUES (NEW."UserId", (timezone('utc', now())), 'DeckUpdatedBranchInstance', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
                     RETURNING "Id"
                 ) INSERT INTO public."ReceivedNotification"("ReceiverId", "NotificationId")
                                                  (SELECT df."FollowerId", (SELECT "Id" FROM notification_id)

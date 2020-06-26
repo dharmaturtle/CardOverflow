@@ -45,9 +45,9 @@ module Notification =
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
                     NewBranchInstanceId = n.BranchInstanceId.Value
-                    AcquiredStackId = ac.StackId
-                    AcquiredBranchId = ac.BranchId
-                    AcquiredBranchInstanceId = ac.BranchInstanceId
+                    AcquiredStackId = ac |> Option.ofObj |> Option.map (fun x -> x.StackId)
+                    AcquiredBranchId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchId)
+                    AcquiredBranchInstanceId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchInstanceId)
                 } |> DeckUpdatedBranchInstance
             | NotificationType.DeckDeletedBranchInstance ->
                 {   DeckId = n.DeckId.Value
