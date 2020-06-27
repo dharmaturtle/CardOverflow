@@ -552,15 +552,23 @@ module UpdateRepository =
         }
 
 module NotificationRepository =
-    let get (db: CardOverflowDb) userId =
-        db.ReceivedNotification
-            .Where(fun x -> x.ReceiverId = userId)
-            .Select(fun x ->
-                x.Notification,
-                x.Notification.Sender.DisplayName,
-                x.Notification.Stack.AcquiredCards.FirstOrDefault(fun x -> x.UserId = userId)
-            ).ToListAsync()
-        |>% (Seq.map Notification.load)
+    let get (db: CardOverflowDb) userId (pageNumber: int) = task {
+        let! ns =
+            db.ReceivedNotification
+                .Where(fun x -> x.ReceiverId = userId)
+                .Select(fun x ->
+                    x.Notification,
+                    x.Notification.Sender.DisplayName,
+                    x.Notification.Stack.AcquiredCards.FirstOrDefault(fun x -> x.UserId = userId)
+                ).ToPagedListAsync(pageNumber, 30)
+        return {
+            Results = ns |> Seq.map Notification.load
+            Details = {
+                CurrentPage = ns.PageNumber
+                PageCount = ns.PageCount
+            }
+        }
+    }
     let remove (db: CardOverflowDb) userId notificationId = task {
         ReceivedNotificationEntity(
             ReceiverId = userId,

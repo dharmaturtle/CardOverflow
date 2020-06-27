@@ -270,9 +270,9 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     let branchId = 1
     let authorAcquiredId = 1
     
-    let! ns = NotificationRepository.get c.Db followerId
+    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
     
-    let n = ns |> Assert.Single
+    let n = ns.Results |> Assert.Single
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         {   Id = notificationId
@@ -309,9 +309,9 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
     Assert.Equal(branchId, actualBranchId)
-    let! ns = NotificationRepository.get c.Db followerId
-
-    let n = ns |> Assert.Single
+    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
+    
+    let n = ns.Results |> Assert.Single
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         { Id = 2
@@ -330,10 +330,10 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     // editing card's state doesn't notify follower
     do! StackRepository.editState c.Db authorId authorAcquiredId Suspended
     
-    let! ns = NotificationRepository.get c.Db followerId
-
-    ns |> Assert.Empty
+    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
     
+    ns.Results |> Assert.Empty
+
     // Update notifies with follower's acquired card
     do! StackRepository.AcquireCardAsync c.Db followerId instance2
     let instance3 = 1003
@@ -350,9 +350,9 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
     Assert.Equal(branchId, actualBranchId)
-    let! ns = NotificationRepository.get c.Db followerId
-
-    let n = ns |> Assert.Single
+    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
+    
+    let n = ns.Results |> Assert.Single
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         { Id = notificationId
@@ -371,8 +371,8 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     // deleting acquiredCard from deck has notification
     do! StackRepository.unacquireStack c.Db authorId stackId
 
-    let! ns = NotificationRepository.get c.Db followerId
-    let n = ns |> Assert.Single
+    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
+    let n = ns.Results |> Assert.Single
     n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
     n |> Assert.equal
         { Id = 4
