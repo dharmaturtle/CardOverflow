@@ -307,6 +307,19 @@ module SanitizeDeckRepository =
         DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.RemoveI
         do! db.SaveChangesAsyncI()
     }
+    let diff (db: CardOverflowDb) userId theirDeckId myDeckId = task {
+        let theirs = db.Deck.Where(fun x -> x.Id = theirDeckId && x.IsPublic)
+        let mine   = db.Deck.Where(fun x -> x.Id = myDeckId    && x.UserId = userId)
+        let parse (x: DeckEntity IQueryable) =
+            x.Select(fun x -> x.AcquiredCards.Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId))
+                .ToListAsync()
+            |>% Seq.collect id
+            |>% Seq.map StackBranchInstanceIds.fromTuple
+            |>% List.ofSeq
+        let! theirs = parse theirs
+        let! mine   = parse mine
+        return Diff.ids theirs mine
+    }
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {

@@ -21,7 +21,7 @@
         <AcquireToggles Instance=@Stack.Default.Instance
                         IsStack=true
                         AcquiredIds=@AcquiredIds
-                        NewAcquiredIds=@(FSharpOption<Ids>.Some(new Ids(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id)))
+                        NewAcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id)))
                         BranchUsers=@Stack.Users
                         UpdateAcquiredCards=@UpdateAcquiredCards
                         UpdateAcquiredIds=@UpdateAcquiredIds />
@@ -54,8 +54,8 @@
   [Parameter] public ExploreStack Stack { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
+  [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 

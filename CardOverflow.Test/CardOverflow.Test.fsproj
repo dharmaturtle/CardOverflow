@@ -47,6 +47,7 @@
     <Compile Include="HeatmapTests.fs" />
     <Compile Include="CoreTests.fs" />
     <Compile Include="ValidationTests.fs" />
+    <Compile Include="DiffTests.fs" />
     <Compile Include="RelationshipTests.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
     <Compile Include="EditStackCommandTests.fs" />

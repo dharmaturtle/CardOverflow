@@ -207,3 +207,40 @@ module Heatmap =
             LongestStreakDays = counts |> maxConseuctive
             CurrentStreakDays = counts |> Seq.rev |> Seq.takeWhile (fun x -> x <> 0) |> Seq.length
         }
+
+type StackBranchInstanceIds = {
+    StackId: int
+    BranchId: int
+    BranchInstanceId: int
+}
+
+module StackBranchInstanceIds =
+    let fromTuple (stackId, branchId, branchInstanceId) =
+        {   StackId = stackId
+            BranchId = branchId
+            BranchInstanceId = branchInstanceId
+        }
+
+type DiffState =
+    | Unchanged of StackBranchInstanceIds
+    | BranchInstanceChanged of StackBranchInstanceIds * StackBranchInstanceIds // theirs, mine
+    | BranchChanged of StackBranchInstanceIds * StackBranchInstanceIds
+    | AddedStack of StackBranchInstanceIds
+    | RemovedStack of StackBranchInstanceIds
+
+module Diff =
+    let ids aIds bIds =
+        List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId)
+        |> List.map (
+            function
+            | Some a, Some b ->
+                if a.BranchInstanceId = b.BranchInstanceId then
+                    Unchanged a
+                elif a.BranchId = b.BranchId then
+                    BranchInstanceChanged (a, b)
+                else
+                    BranchChanged (a, b)
+            | Some a, None   -> AddedStack a
+            | None  , Some b -> RemovedStack b
+            | None  , None   -> failwith "wut"
+        )

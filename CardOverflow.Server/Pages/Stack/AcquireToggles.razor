@@ -74,14 +74,14 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public FSharpOption<Ids> AcquiredIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<Ids>> UpdateAcquiredIds { get; set; }
+  [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Instance { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? InstanceUsers { get; set; }
-  [Parameter] public FSharpOption<Ids> NewAcquiredIds { get; set; }
+  [Parameter] public FSharpOption<StackBranchInstanceIds> NewAcquiredIds { get; set; }
   [Parameter] public bool IsBranch { get; set; }
   [Parameter] public bool IsStack { get; set; }
   private BSModal _modal;
@@ -109,7 +109,7 @@
     var user = await UserTask;
     await DbExecutor.QueryAsync(db => StackRepository.unacquireStack(db, user.Id, Instance.StackId)).Match(ToastService, async _ => {
       await UpdateAcquiredCards.InvokeAsync(ResizeArray.empty<AcquiredCard>());
-      await UpdateAcquiredIds.InvokeAsync(FSharpOption<Ids>.None);
+      await UpdateAcquiredIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.None);
       _modal.Hide();
     });
   }

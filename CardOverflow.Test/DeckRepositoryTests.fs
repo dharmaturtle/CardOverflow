@@ -384,6 +384,15 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
                                                 DeletedBranchId = branchId
                                                 DeletedBranchInstanceId = instance3 } }
 
+    // diff says a stack was removed
+    let! diffs = SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
+
+    Assert.equal
+        [ RemovedStack { StackId = stackId
+                         BranchId = branchId
+                         BranchInstanceId = instance2 } ]
+        diffs
+
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
     

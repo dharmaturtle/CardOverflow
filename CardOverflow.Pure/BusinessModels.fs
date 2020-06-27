@@ -456,18 +456,12 @@ type Branch = {
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
 
-type Ids = {
-    StackId: int
-    BranchId: int
-    BranchInstanceId: int
-}
-
-type AcquiredIds = Ids Option
+type AcquiredIds = StackBranchInstanceIds Option
 
 module AcquiredIds =
     let branchInstanceId =
         function
-        | Some x -> x.BranchInstanceId
+        | Some (x: StackBranchInstanceIds) -> x.BranchInstanceId
         | None -> 0
     let branchId =
         function

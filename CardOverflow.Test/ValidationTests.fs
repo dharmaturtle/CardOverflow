@@ -122,6 +122,25 @@ module Generators =
             )}
     let genString15 = // unused; here as an example
         Gen.sized (fun s -> Gen.resize (min s 15) Arb.generate<NonNull<string>>) |> Gen.map (fun (NonNull str) -> str)
+    let uniqueInts length = gen {
+        let initialValue = Int32.MinValue
+        let array = Array.create length initialValue
+        while array.Contains initialValue do
+            let! id = Arb.generate<int>
+            if not <| array.Contains id then
+                array.[Array.IndexOf(array, initialValue)] <- id
+        return array }
+    let StackBranchInstanceIds length = gen {
+        let! stacks = uniqueInts length
+        let! branches = uniqueInts length
+        let! branchInstances = uniqueInts length
+        return
+            Seq.zip3 stacks branches branchInstances
+            |> Seq.map StackBranchInstanceIds.fromTuple
+            |> List.ofSeq
+        }
+    let StackBranchInstanceIds3 =
+        StackBranchInstanceIds 3
 
 type Generators =
     static member editStackCommand =
@@ -132,6 +151,8 @@ type Generators =
         |> Arb.fromGen
     static member notificationEntity =
         Generators.notificationEntity |> Arb.fromGen
+    static member StackBranchInstanceIds3 =
+        Generators.StackBranchInstanceIds3 |> Arb.fromGen
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])
