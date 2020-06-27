@@ -251,6 +251,16 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |>%% Assert.equal publicDeck.Id
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeck.Id true
     do! SanitizeDeckRepository.setDefault c.Db authorId publicDeck.Id
+    let assertNotificationThenDelete expected = task {
+        let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
+        let n = ns.Results |> Assert.Single
+        n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+        n |> Assert.equal
+            {   expected with
+                    TimeStamp = n.TimeStamp // cheating, but whatever
+            }
+        do! NotificationRepository.remove c.Db followerId n.Id
+    }
 
     // getPublic yields expected deck
     do! Assert.Single >> Assert.equal publicDeck <!> DeckRepository.getPublic c.Db authorId   authorId
@@ -270,24 +280,18 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     let branchId = 1
     let authorAcquiredId = 1
     
-    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
-    
-    let n = ns.Results |> Assert.Single
-    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
-    n |> Assert.equal
-        {   Id = notificationId
-            SenderId = authorId
-            SenderDisplayName = "RoboTurtle"
-            TimeStamp = n.TimeStamp // cheating, but whatever
-            Message = DeckAddedStack { DeckId = publicDeck.Id
-                                       DeckName = publicDeck.Name
-                                       NewStackId = stackId
-                                       NewBranchId = branchId
-                                       NewBranchInstanceId = 1001 } }
+    do! assertNotificationThenDelete
+            {   Id = notificationId
+                SenderId = authorId
+                SenderDisplayName = "RoboTurtle"
+                TimeStamp = DateTime.MinValue
+                Message = DeckAddedStack { DeckId = publicDeck.Id
+                                           DeckName = publicDeck.Name
+                                           NewStackId = stackId
+                                           NewBranchId = branchId
+                                           NewBranchInstanceId = 1001 } }
 
-    // can remove notification
-    do! NotificationRepository.remove c.Db followerId notificationId
-
+    // notification deleted
     Assert.Empty c.Db.ReceivedNotification
     
     // can remove notification, idempotent
@@ -297,7 +301,6 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
 
     // edit card notifies follower
     let instance2 = 1002
-    let notificationId = 2
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -310,25 +313,20 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
     Assert.Equal(branchId, actualBranchId)
-    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
-    
-    let n = ns.Results |> Assert.Single
-    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
-    n |> Assert.equal
-        { Id = 2
-          SenderId = authorId
-          SenderDisplayName = "RoboTurtle"
-          TimeStamp = n.TimeStamp  // cheating, but whatever
-          Message = DeckUpdatedStack { DeckId = publicDeck.Id
-                                       DeckName = publicDeck.Name
-                                       NewStackId = stackId
-                                       NewBranchId = branchId
-                                       NewBranchInstanceId = instance2
-                                       AcquiredStackId = None
-                                       AcquiredBranchId = None
-                                       AcquiredBranchInstanceId = None } }
+    do! assertNotificationThenDelete
+            { Id = 2
+              SenderId = authorId
+              SenderDisplayName = "RoboTurtle"
+              TimeStamp = DateTime.MinValue
+              Message = DeckUpdatedStack { DeckId = publicDeck.Id
+                                           DeckName = publicDeck.Name
+                                           NewStackId = stackId
+                                           NewBranchId = branchId
+                                           NewBranchInstanceId = instance2
+                                           AcquiredStackId = None
+                                           AcquiredBranchId = None
+                                           AcquiredBranchInstanceId = None } }
 
-    do! NotificationRepository.remove c.Db followerId notificationId
     // editing card's state doesn't notify follower
     do! StackRepository.editState c.Db authorId authorAcquiredId Suspended
     
@@ -352,41 +350,33 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
     Assert.Equal(branchId, actualBranchId)
-    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
+    do! assertNotificationThenDelete
+            { Id = notificationId
+              SenderId = authorId
+              SenderDisplayName = "RoboTurtle"
+              TimeStamp = DateTime.MinValue
+              Message = DeckUpdatedStack { DeckId = publicDeck.Id
+                                           DeckName = publicDeck.Name
+                                           NewStackId = stackId
+                                           NewBranchId = branchId
+                                           NewBranchInstanceId = instance3
+                                           AcquiredStackId = Some 1
+                                           AcquiredBranchId = Some 1
+                                           AcquiredBranchInstanceId = Some instance2 } }
     
-    let n = ns.Results |> Assert.Single
-    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
-    n |> Assert.equal
-        { Id = notificationId
-          SenderId = authorId
-          SenderDisplayName = "RoboTurtle"
-          TimeStamp = n.TimeStamp  // cheating, but whatever
-          Message = DeckUpdatedStack { DeckId = publicDeck.Id
-                                       DeckName = publicDeck.Name
-                                       NewStackId = stackId
-                                       NewBranchId = branchId
-                                       NewBranchInstanceId = instance3
-                                       AcquiredStackId = Some 1
-                                       AcquiredBranchId = Some 1
-                                       AcquiredBranchInstanceId = Some instance2 } }
-    
-    do! NotificationRepository.remove c.Db followerId notificationId
     // deleting acquiredCard from deck has notification
     do! StackRepository.unacquireStack c.Db authorId stackId
 
-    let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
-    let n = ns.Results |> Assert.Single
-    n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
-    n |> Assert.equal
-        { Id = 4
-          SenderId = authorId
-          SenderDisplayName = "RoboTurtle"
-          TimeStamp = n.TimeStamp  // cheating, but whatever
-          Message = DeckDeletedStack { DeckId = publicDeck.Id
-                                       DeckName = publicDeck.Name
-                                       DeletedStackId = stackId
-                                       DeletedBranchId = branchId
-                                       DeletedBranchInstanceId = instance3 } }
+    do! assertNotificationThenDelete
+            { Id = 4
+              SenderId = authorId
+              SenderDisplayName = "RoboTurtle"
+              TimeStamp = DateTime.MinValue
+              Message = DeckDeletedStack { DeckId = publicDeck.Id
+                                           DeckName = publicDeck.Name
+                                           DeletedStackId = stackId
+                                           DeletedBranchId = branchId
+                                           DeletedBranchInstanceId = instance3 } }
 
     // diff says a stack was removed
     let! diffs = SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
