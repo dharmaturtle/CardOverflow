@@ -34,13 +34,13 @@ module Notification =
     let load ((n: NotificationEntity), senderName, (ac: AcquiredCardEntity)) =
         let message =
             match n.Type with
-            | NotificationType.DeckAddedBranchInstance ->
+            | NotificationType.DeckAddedStack ->
                 {   DeckId = n.DeckId.Value
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
                     NewBranchInstanceId = n.BranchInstanceId.Value
-                } |> DeckAddedBranchInstance
-            | NotificationType.DeckUpdatedBranchInstance ->
+                } |> DeckAddedStack
+            | NotificationType.DeckUpdatedStack ->
                 {   DeckId = n.DeckId.Value
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
@@ -48,13 +48,13 @@ module Notification =
                     AcquiredStackId = ac |> Option.ofObj |> Option.map (fun x -> x.StackId)
                     AcquiredBranchId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchId)
                     AcquiredBranchInstanceId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchInstanceId)
-                } |> DeckUpdatedBranchInstance
-            | NotificationType.DeckDeletedBranchInstance ->
+                } |> DeckUpdatedStack
+            | NotificationType.DeckDeletedStack ->
                 {   DeckId = n.DeckId.Value
                     DeletedStackId = n.StackId.Value
                     DeletedBranchId = n.BranchId.Value
                     DeletedBranchInstanceId = n.BranchInstanceId.Value
-                } |> DeckDeletedBranchInstance
+                } |> DeckDeletedStack
             | x -> failwith <| sprintf "Invalid enum value: %A" x
         {   Id = n.Id
             SenderId = n.SenderId

@@ -12,9 +12,9 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 CREATE TYPE public."NotificationType" AS ENUM (
-    'DeckAddedBranchInstance',
-    'DeckUpdatedBranchInstance',
-    'DeckDeletedBranchInstance'
+    'DeckAddedStack',
+    'DeckUpdatedStack',
+    'DeckDeletedStack'
 );
 
 
@@ -108,8 +108,8 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
         IF (SELECT "IsPublic" FROM public."Deck" WHERE "Id" = (COALESCE(NEW."DeckId", OLD."DeckId"))) THEN
             IF (TG_OP = 'INSERT') THEN
                 WITH notification_id AS (
-                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
-                                            VALUES (NEW."UserId", (timezone('utc', now())), 'DeckAddedBranchInstance', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
+                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
+                                            VALUES (NEW."UserId", (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
                     RETURNING "Id"
                 ) INSERT INTO public."ReceivedNotification"("ReceiverId", "NotificationId")
                                                  (SELECT df."FollowerId", (SELECT "Id" FROM notification_id)
@@ -118,8 +118,8 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                                  );
             ELSIF (TG_OP = 'UPDATE' AND OLD."BranchInstanceId" <> NEW."BranchInstanceId") THEN
                 WITH notification_id AS (
-                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
-                                            VALUES (NEW."UserId", (timezone('utc', now())), 'DeckUpdatedBranchInstance', NULL,   NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
+                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
+                                            VALUES (NEW."UserId", (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
                     RETURNING "Id"
                 ) INSERT INTO public."ReceivedNotification"("ReceiverId", "NotificationId")
                                                  (SELECT df."FollowerId", (SELECT "Id" FROM notification_id)
@@ -128,8 +128,8 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                                  );
             ELSIF (TG_OP = 'DELETE') THEN
                 WITH notification_id AS (
-                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",                   "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
-                                            VALUES (OLD."UserId", (timezone('utc', now())), 'DeckDeletedBranchInstance', NULL,   OLD."StackId", OLD."BranchId", OLD."BranchInstanceId", OLD."DeckId",  NULL,       NULL)
+                    INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
+                                            VALUES (OLD."UserId", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."StackId", OLD."BranchId", OLD."BranchInstanceId", OLD."DeckId",  NULL,       NULL)
                     RETURNING "Id"
                 ) INSERT INTO public."ReceivedNotification"("ReceiverId", "NotificationId")
                                                  (SELECT df."FollowerId", (SELECT "Id" FROM notification_id)

@@ -15,18 +15,18 @@ open Thoth.Json.Net
     You should probably write a test covering legacy types. *)
 
 type NotificationType = // the indexes currently have no semantic meaning - they're here because F# requires them
-    | DeckAddedBranchInstance = 0
-    | DeckUpdatedBranchInstance = 1
-    | DeckDeletedBranchInstance = 2
+    | DeckAddedStack = 0
+    | DeckUpdatedStack = 1
+    | DeckDeletedStack = 2
 
-type DeckAddedBranchInstance = {
+type DeckAddedStack = {
     DeckId: int
     NewStackId: int
     NewBranchId: int
     NewBranchInstanceId: int
 }
 
-type DeckUpdatedBranchInstance = {
+type DeckUpdatedStack = {
     DeckId: int
     NewStackId: int
     NewBranchId: int
@@ -36,7 +36,7 @@ type DeckUpdatedBranchInstance = {
     AcquiredBranchInstanceId: int Option
 }
 
-type DeckDeletedBranchInstance = {
+type DeckDeletedStack = {
     DeckId: int
     DeletedStackId: int
     DeletedBranchId: int
@@ -44,9 +44,9 @@ type DeckDeletedBranchInstance = {
 }
 
 type Message =
-    | DeckAddedBranchInstance of DeckAddedBranchInstance
-    | DeckUpdatedBranchInstance of DeckUpdatedBranchInstance
-    | DeckDeletedBranchInstance of DeckDeletedBranchInstance
+    | DeckAddedStack of DeckAddedStack
+    | DeckUpdatedStack of DeckUpdatedStack
+    | DeckDeletedStack of DeckDeletedStack
 
 type Notification = {
     Id: int

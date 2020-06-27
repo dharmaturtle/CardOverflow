@@ -279,10 +279,10 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
             SenderId = authorId
             SenderDisplayName = "RoboTurtle"
             TimeStamp = n.TimeStamp // cheating, but whatever
-            Message = DeckAddedBranchInstance { DeckId = publicDeck.Id
-                                                NewStackId = stackId
-                                                NewBranchId = branchId
-                                                NewBranchInstanceId = 1001 } }
+            Message = DeckAddedStack { DeckId = publicDeck.Id
+                                       NewStackId = stackId
+                                       NewBranchId = branchId
+                                       NewBranchInstanceId = 1001 } }
 
     // can remove notification
     do! NotificationRepository.remove c.Db followerId notificationId
@@ -318,13 +318,13 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           SenderId = authorId
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
-          Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
-                                                NewStackId = stackId
-                                                NewBranchId = branchId
-                                                NewBranchInstanceId = instance2
-                                                AcquiredStackId = None
-                                                AcquiredBranchId = None
-                                                AcquiredBranchInstanceId = None } }
+          Message = DeckUpdatedStack { DeckId = publicDeck.Id
+                                       NewStackId = stackId
+                                       NewBranchId = branchId
+                                       NewBranchInstanceId = instance2
+                                       AcquiredStackId = None
+                                       AcquiredBranchId = None
+                                       AcquiredBranchInstanceId = None } }
 
     do! NotificationRepository.remove c.Db followerId notificationId
     // editing card's state doesn't notify follower
@@ -359,13 +359,13 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           SenderId = authorId
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
-          Message = DeckUpdatedBranchInstance { DeckId = publicDeck.Id
-                                                NewStackId = stackId
-                                                NewBranchId = branchId
-                                                NewBranchInstanceId = instance3
-                                                AcquiredStackId = Some 1
-                                                AcquiredBranchId = Some 1
-                                                AcquiredBranchInstanceId = Some instance2 } }
+          Message = DeckUpdatedStack { DeckId = publicDeck.Id
+                                       NewStackId = stackId
+                                       NewBranchId = branchId
+                                       NewBranchInstanceId = instance3
+                                       AcquiredStackId = Some 1
+                                       AcquiredBranchId = Some 1
+                                       AcquiredBranchInstanceId = Some instance2 } }
     
     do! NotificationRepository.remove c.Db followerId notificationId
     // deleting acquiredCard from deck has notification
@@ -379,10 +379,10 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           SenderId = authorId
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
-          Message = DeckDeletedBranchInstance { DeckId = publicDeck.Id
-                                                DeletedStackId = stackId
-                                                DeletedBranchId = branchId
-                                                DeletedBranchInstanceId = instance3 } }
+          Message = DeckDeletedStack { DeckId = publicDeck.Id
+                                       DeletedStackId = stackId
+                                       DeletedBranchId = branchId
+                                       DeletedBranchInstanceId = instance3 } }
 
     // diff says a stack was removed
     let! diffs = SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
