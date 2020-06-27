@@ -280,6 +280,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
             SenderDisplayName = "RoboTurtle"
             TimeStamp = n.TimeStamp // cheating, but whatever
             Message = DeckAddedStack { DeckId = publicDeck.Id
+                                       DeckName = publicDeck.Name
                                        NewStackId = stackId
                                        NewBranchId = branchId
                                        NewBranchInstanceId = 1001 } }
@@ -319,6 +320,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
           Message = DeckUpdatedStack { DeckId = publicDeck.Id
+                                       DeckName = publicDeck.Name
                                        NewStackId = stackId
                                        NewBranchId = branchId
                                        NewBranchInstanceId = instance2
@@ -360,6 +362,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
           Message = DeckUpdatedStack { DeckId = publicDeck.Id
+                                       DeckName = publicDeck.Name
                                        NewStackId = stackId
                                        NewBranchId = branchId
                                        NewBranchInstanceId = instance3
@@ -380,6 +383,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
           SenderDisplayName = "RoboTurtle"
           TimeStamp = n.TimeStamp  // cheating, but whatever
           Message = DeckDeletedStack { DeckId = publicDeck.Id
+                                       DeckName = publicDeck.Name
                                        DeletedStackId = stackId
                                        DeletedBranchId = branchId
                                        DeletedBranchInstanceId = instance3 } }

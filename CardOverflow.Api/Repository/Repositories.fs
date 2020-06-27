@@ -559,7 +559,8 @@ module NotificationRepository =
                 .Select(fun x ->
                     x.Notification,
                     x.Notification.Sender.DisplayName,
-                    x.Notification.Stack.AcquiredCards.FirstOrDefault(fun x -> x.UserId = userId)
+                    x.Notification.Stack.AcquiredCards.FirstOrDefault(fun x -> x.UserId = userId),
+                    x.Notification.Deck.Name
                 ).ToPagedListAsync(pageNumber, 30)
         return {
             Results = ns |> Seq.map Notification.load

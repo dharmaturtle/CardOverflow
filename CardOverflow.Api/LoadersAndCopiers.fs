@@ -31,17 +31,19 @@ module CollateInstanceEntity =
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module Notification =
-    let load ((n: NotificationEntity), senderName, (ac: AcquiredCardEntity)) =
+    let load ((n: NotificationEntity), senderName, (ac: AcquiredCardEntity), deckName) =
         let message =
             match n.Type with
             | NotificationType.DeckAddedStack ->
                 {   DeckId = n.DeckId.Value
+                    DeckName = deckName
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
                     NewBranchInstanceId = n.BranchInstanceId.Value
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
                 {   DeckId = n.DeckId.Value
+                    DeckName = deckName
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
                     NewBranchInstanceId = n.BranchInstanceId.Value
@@ -51,6 +53,7 @@ module Notification =
                 } |> DeckUpdatedStack
             | NotificationType.DeckDeletedStack ->
                 {   DeckId = n.DeckId.Value
+                    DeckName = deckName
                     DeletedStackId = n.StackId.Value
                     DeletedBranchId = n.BranchId.Value
                     DeletedBranchInstanceId = n.BranchInstanceId.Value
