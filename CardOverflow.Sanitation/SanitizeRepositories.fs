@@ -469,8 +469,8 @@ type ViewEditStackCommand = {
             | null -> this.Kind
             | title ->
                 match this.Kind with
-                | NewOriginal_TagIds
-                | NewCopy_SourceInstanceId_TagIds -> this.Kind
+                | NewOriginal_TagIds _
+                | NewCopy_SourceInstanceId_TagIds _ -> this.Kind
                 | NewBranch_SourceStackId_Title (id, _) -> NewBranch_SourceStackId_Title (id, title)
                 | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
         {   EditStackCommand.EditSummary = this.EditSummary
@@ -498,8 +498,8 @@ module SanitizeStackRepository =
                 Kind = kind
                 Title =
                     match kind with
-                    | NewOriginal_TagIds
-                    | NewCopy_SourceInstanceId_TagIds -> null
+                    | NewOriginal_TagIds _
+                    | NewCopy_SourceInstanceId_TagIds _ -> null
                     | NewBranch_SourceStackId_Title (_, title)
                     | Update_BranchId_Title (_, title) -> title
                 EditAcquiredCard = ViewEditAcquiredCardCommand.init

@@ -88,7 +88,7 @@ module Result =
     let requireNotEmptyX err xs =
         xs |> Seq.tryHead
         |> function
-        | Some -> Ok xs
+        | Some _ -> Ok xs
         | None -> Error err
     let require f err x =
         if f x then
@@ -144,7 +144,7 @@ module Core =
     // monoidal plus
     let (++) (x: 'a option) (y: 'a option) =
         match x with
-        | Some -> x
+        | Some _ -> x
         | None -> y
 
     let nameofInstance (q: Expr<_>) = // https://stackoverflow.com/a/48311816 still being used cause F# 4.7's nameof doesn't work with instance members

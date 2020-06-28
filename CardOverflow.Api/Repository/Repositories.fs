@@ -528,7 +528,7 @@ module UpdateRepository =
                                 AuthorId = userId,
                                 Name = name,
                                 StackId = stackId))
-                    | NewOriginal_TagIds ->
+                    | NewOriginal_TagIds _ ->
                         BranchEntity(
                             AuthorId = userId,
                             Stack =
@@ -541,8 +541,8 @@ module UpdateRepository =
                 ac.CardSettingId <- command.EditAcquiredCard.CardSettingId
                 ac.DeckId <- command.EditAcquiredCard.DeckId
             match command.Kind with
-            | Update_BranchId_Title
-            | NewBranch_SourceStackId_Title -> ()
+            | Update_BranchId_Title _
+            | NewBranch_SourceStackId_Title _ -> ()
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceInstanceId_TagIds (_, tagIds) ->
                 for tagId in tagIds do

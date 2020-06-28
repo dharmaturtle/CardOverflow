@@ -93,8 +93,8 @@ module Generators =
             let! collateInstance = collateInstance collateType fieldNames
             let values =
                 match collateType with
-                | Standard -> alphanumericString
-                | Cloze -> clozeText
+                | Standard _ -> alphanumericString
+                | Cloze _ -> clozeText
             let! fields = fields fieldNames
             let! fields =
                 fields

@@ -131,8 +131,8 @@ type CollateType =
   with
     member this.toDb =
         match this with
-        | Standard -> 0s
-        | Cloze -> 1s
+        | Standard _ -> 0s
+        | Cloze _ -> 1s
     static member fromDb templates =
         function
         | 0s -> Standard templates
@@ -160,7 +160,7 @@ type CollateInstance = {
         | Standard ts -> ts
     member this.IsCloze =
         match this.Templates with
-        | Cloze -> true
+        | Cloze _ -> true
         | _ -> false
     member this.FrontBackFrontSynthBackSynth () = // medTODO split this up
         match this.Templates with

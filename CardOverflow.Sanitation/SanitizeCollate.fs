@@ -70,7 +70,7 @@ type ViewCollateInstance = {
 } with
     member this.IsCloze =
         match this.Templates with
-        | Cloze -> true
+        | Cloze _ -> true
         | _ -> false
     member this.FirstTemplate =
         match this.Templates with

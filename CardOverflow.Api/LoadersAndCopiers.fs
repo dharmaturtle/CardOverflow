@@ -258,8 +258,8 @@ type CollateInstance with
         entity.EditSummary <- this.EditSummary
         entity.Type <-
             match this.Templates with
-            | Standard -> 0s
-            | Cloze -> 1s
+            | Standard _ -> 0s
+            | Cloze _ -> 1s
     member this.CopyToNewInstance collate =
         let e = CollateInstanceEntity()
         this.CopyTo e
