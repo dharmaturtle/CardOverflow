@@ -366,6 +366,8 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     let! revisions = StackRepository.Revisions c.Db userId branchId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
+    // branching a stack acquires it
+    let branchId_alt = 2
     let! _ =
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
@@ -373,10 +375,10 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
             Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
         } |> UpdateRepository.stack c.Db userId
 
-    let branchId_alt = 2
+    Assert.equal 0 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
-    // updating
+    // updating an unacquired branch doesn't change the AcquiredCards
     let! _ =
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
@@ -384,7 +386,8 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
             Kind = Update_BranchId_Title(branchId_og, "update Branch")
         } |> UpdateRepository.stack c.Db userId
 
-    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 0 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // switching to testing StackRepository.Revisions
     let! revisions = StackRepository.Revisions c.Db userId branchId_og

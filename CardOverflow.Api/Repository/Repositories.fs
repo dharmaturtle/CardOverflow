@@ -303,7 +303,7 @@ module StackRepository =
                 .SingleOrDefaultAsync()
         return BranchRevision.load acquiredInstanceId r
     }
-    let acquireCardNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) = taskResult {
+    let acquireCardNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) mayUpdate = taskResult {
         let! ((defaultCardSettingId, deckId): int * int) =
             db.User.Where(fun x -> x.Id = userId).Select(fun x ->
                 x.DefaultCardSettingId,
@@ -319,31 +319,30 @@ module StackRepository =
         let new' =
             [0s .. branchInstance.MaxIndexInclusive]
             |> List.map cardSansIndex
-        let! (old': AcquiredCardEntity list) = db.AcquiredCard.Where(fun x -> x.UserId = userId && x.StackId = branchInstance.StackId).ToListAsync() |> Task.map Seq.toList
+        let! (old': AcquiredCardEntity list) = db.AcquiredCard.Where(fun x -> x.UserId = userId && x.StackId = branchInstance.StackId).ToListAsync() |>% Seq.toList
         return
-            List.zipOn
-                new'
-                old'
-                (fun new' old' -> new'.Index = old'.Index)
+            List.zipOn new' old' (fun new' old' -> new'.Index = old'.Index)
             |> List.map(
                 function
-                | (None, Some old') ->
+                | None, Some old' ->
                     db.AcquiredCard.RemoveI old' // highTODO add a warning on the UI that data will be lost
                     None
-                | (Some new', None) ->
+                | Some new', None ->
                     new'.BranchInstance <- branchInstance
                     new'.Branch <- branchInstance.Branch
                     new'.Stack <- branchInstance.Stack
                     new'.StackId <- branchInstance.StackId
                     db.AcquiredCard.AddI new'
                     Some new'
-                | (Some _, Some old') ->
-                    old'.BranchInstance <- branchInstance
-                    old'.Branch <- branchInstance.Branch
-                    old'.Stack <- branchInstance.Stack
-                    old'.StackId <- branchInstance.StackId
-                    Some old'
-                | (None, None) -> failwith "impossible"
+                | Some _, Some old' ->
+                    if branchInstance.BranchId = old'.BranchId || mayUpdate then
+                        old'.BranchInstance <- branchInstance
+                        old'.Branch <- branchInstance.Branch
+                        old'.Stack <- branchInstance.Stack
+                        old'.StackId <- branchInstance.StackId
+                        Some old'
+                    else None
+                | None, None -> failwith "impossible"
             ) |> ListOption.somes
     }
     let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
@@ -352,7 +351,7 @@ module StackRepository =
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        do! acquireCardNoSave db userId branchInstance
+        do! acquireCardNoSave db userId branchInstance true
         return! db.SaveChangesAsyncI ()
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
@@ -536,14 +535,20 @@ module UpdateRepository =
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
             let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
-            let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance
-            match command.Kind with
-            | Update_BranchId_Title _
-            | NewBranch_SourceStackId_Title _ -> ()
-            | NewOriginal_TagIds tagIds
-            | NewCopy_SourceInstanceId_TagIds (_, tagIds) ->
-                for tagId in tagIds do
-                    acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
+            do! match command.Kind with
+                | Update_BranchId_Title _ ->
+                    db.BranchInstance.AddI branchInstance
+                    StackRepository.acquireCardNoSave db userId branchInstance false
+                    |>%% ignore
+                | NewBranch_SourceStackId_Title _ ->
+                    StackRepository.acquireCardNoSave db userId branchInstance true
+                    |>%% ignore
+                | NewOriginal_TagIds tagIds
+                | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
+                    let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance true
+                    for tagId in tagIds do
+                        acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
+                    }
             do! db.SaveChangesAsyncI()
             return branchInstance.BranchId
         }
