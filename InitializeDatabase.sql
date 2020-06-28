@@ -62,6 +62,9 @@ ALTER FUNCTION public.cfn_branch_insertupdate() OWNER TO postgres;
 CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
+    DECLARE
+        new_is_public boolean NOT NULL := 'f';
+        old_is_public boolean NOT NULL := 'f';
     BEGIN
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
@@ -105,8 +108,10 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                     WHERE   ac."CardState" <> 3 AND ac."StackId" = NEW."StackId")_)
             WHERE stack."Id" = NEW."StackId";
         END IF;
-        IF (SELECT "IsPublic" FROM public."Deck" WHERE "Id" = (COALESCE(NEW."DeckId", OLD."DeckId"))) THEN
-            IF (TG_OP = 'INSERT') THEN
+        new_is_public := COALESCE((SELECT "IsPublic" FROM public."Deck" WHERE "Id" = NEW."DeckId"), 'f');
+        old_is_public := COALESCE((SELECT "IsPublic" FROM public."Deck" WHERE "Id" = OLD."DeckId"), 'f');
+        IF (new_is_public OR old_is_public) THEN
+            IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD."DeckId" <> NEW."DeckId" AND new_is_public)) THEN
                 WITH notification_id AS (
                     INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
                                             VALUES (NEW."UserId", (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
@@ -126,7 +131,7 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                                   FROM public."DeckFollowers" df
                                                   WHERE df."DeckId" = NEW."DeckId"
                                                  );
-            ELSIF (TG_OP = 'DELETE') THEN
+            ELSIF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD."DeckId" <> NEW."DeckId" AND old_is_public)) THEN
                 WITH notification_id AS (
                     INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
                                             VALUES (OLD."UserId", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."StackId", OLD."BranchId", OLD."BranchInstanceId", OLD."DeckId",  NULL,       NULL)

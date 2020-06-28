@@ -239,6 +239,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = 3
+    let authorDefaultDeckId = 3
     let followerId = 1
     let publicDeck =
         {   Id = 4
@@ -337,7 +338,6 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     // Update notifies with follower's acquired card
     do! StackRepository.AcquireCardAsync c.Db followerId instance2
     let instance3 = 1003
-    let notificationId = 3
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -351,7 +351,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
     Assert.Equal(branchId, actualBranchId)
     do! assertNotificationThenDelete
-            { Id = notificationId
+            { Id = 3
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
@@ -363,12 +363,40 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
                                            AcquiredStackId = Some 1
                                            AcquiredBranchId = Some 1
                                            AcquiredBranchInstanceId = Some instance2 } }
+
+    // changing to private deck has notification
+    do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorAcquiredId
+
+    do! assertNotificationThenDelete
+            { Id = 4
+              SenderId = authorId
+              SenderDisplayName = "RoboTurtle"
+              TimeStamp = DateTime.MinValue
+              Message = DeckDeletedStack { DeckId = publicDeck.Id
+                                           DeckName = publicDeck.Name
+                                           DeletedStackId = stackId
+                                           DeletedBranchId = branchId
+                                           DeletedBranchInstanceId = instance3 } }
+
+    // changing back to public deck has notification
+    do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorAcquiredId
+
+    do! assertNotificationThenDelete
+            { Id = 5
+              SenderId = authorId
+              SenderDisplayName = "RoboTurtle"
+              TimeStamp = DateTime.MinValue
+              Message = DeckAddedStack { DeckId = publicDeck.Id
+                                         DeckName = publicDeck.Name
+                                         NewStackId = stackId
+                                         NewBranchId = branchId
+                                         NewBranchInstanceId = instance3 } }
     
     // deleting acquiredCard from deck has notification
     do! StackRepository.unacquireStack c.Db authorId stackId
 
     do! assertNotificationThenDelete
-            { Id = 4
+            { Id = 6
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
