@@ -121,7 +121,8 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                                   FROM public."DeckFollowers" df
                                                   WHERE df."DeckId" = NEW."DeckId"
                                                  );
-            ELSIF (TG_OP = 'UPDATE' AND OLD."BranchInstanceId" <> NEW."BranchInstanceId") THEN
+            END IF;
+            IF (TG_OP = 'UPDATE' AND OLD."BranchInstanceId" <> NEW."BranchInstanceId") THEN
                 WITH notification_id AS (
                     INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
                                             VALUES (NEW."UserId", (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW."StackId", NEW."BranchId", NEW."BranchInstanceId", NEW."DeckId",  NULL,       NULL)
@@ -131,7 +132,8 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
                                                   FROM public."DeckFollowers" df
                                                   WHERE df."DeckId" = NEW."DeckId"
                                                  );
-            ELSIF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD."DeckId" <> NEW."DeckId" AND old_is_public)) THEN
+            END IF;
+            IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD."DeckId" <> NEW."DeckId" AND old_is_public)) THEN
                 WITH notification_id AS (
                     INSERT INTO public."Notification"("SenderId", "TimeStamp",              "Type",          "Message",     "StackId",     "BranchId",     "BranchInstanceId",     "DeckId", "CollateId", "CollateInstanceId")
                                             VALUES (OLD."UserId", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."StackId", OLD."BranchId", OLD."BranchInstanceId", OLD."DeckId",  NULL,       NULL)
