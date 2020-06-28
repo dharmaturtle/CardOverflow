@@ -80,7 +80,6 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                 CollateInstance = collate
                 Kind = NewOriginal_TagIds []
                 Title = null
-                EditAcquiredCard = ViewEditAcquiredCardCommand.init
             }
     Assert.Equal(branchId, r.Value)
 

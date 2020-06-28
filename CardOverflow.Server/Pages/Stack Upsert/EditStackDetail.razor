@@ -33,14 +33,14 @@
             }
           </div>
           <div class="col-sm">
-            <div class="row">
+            @*<div class="row">
               <a href="cardsetting" class="col-sm-2 mt-2">
                 Card Setting
               </a>
               <div class="col-sm-10 px-0">
                 <CardSettingSelector SettingSelected=_SetOption />
               </div>
-            </div>
+            </div>*@
             <div class="row">
               <a href="Collate/@_selectedCollateId" class="col-sm-2 mt-2">
                 Card Template
@@ -132,15 +132,15 @@
       Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, _user.Id, EditStack.CollateInstance.CollateId));
     }
     if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
     }
     UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
     StateHasChanged();
   }
 
-  private void _SetOption(int newId) {
-    EditStack.EditAcquiredCard.CardSettingId = newId;
-  }
+  //private void _SetOption(int newId) {
+  //  EditStack.EditAcquiredCard.CardSettingId = newId;
+  //}
 
   async Task UpdateCard() {
     _isDisabled = true;
@@ -150,7 +150,7 @@
       _savedBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
         var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null, ViewEditAcquiredCardCommand.init);
+        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
         UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
         _isDisabled = false;
       }

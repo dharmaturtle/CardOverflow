@@ -46,7 +46,6 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     Assert.Equal(branchId, actualBranchId)
     do! StackRepository.unacquireStack c.Db userId ac.StackId
@@ -113,7 +112,6 @@ let ``StackRepository.editState works``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let actualBranchId = x.Value
     Assert.Equal(branchId, actualBranchId)
@@ -142,7 +140,6 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let i2 = 1002
     Assert.Equal(branchId, actualBranchId.Value)

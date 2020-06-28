@@ -537,9 +537,6 @@ module UpdateRepository =
                                 )) |> Ok |> Task.FromResult
             let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
             let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance
-            for ac in acs do
-                ac.CardSettingId <- command.EditAcquiredCard.CardSettingId
-                ac.DeckId <- command.EditAcquiredCard.DeckId
             match command.Kind with
             | Update_BranchId_Title _
             | NewBranch_SourceStackId_Title _ -> ()

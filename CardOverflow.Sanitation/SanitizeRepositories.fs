@@ -401,7 +401,7 @@ type SearchCommand = {
 }
 
 [<CLIMutable>]
-type ViewEditAcquiredCardCommand = {
+type EditAcquiredCardCommand = {
     CardState: CardState
     CardSettingId: int Option
     DeckId: int Option
@@ -417,13 +417,6 @@ type ViewEditAcquiredCardCommand = {
         FrontPersonalField = ""
         BackPersonalField = ""
     }
-    member this.toDomain deckId cardSettingId = {
-        EditAcquiredCardCommand.CardState = this.CardState
-        CardSettingId = cardSettingId
-        DeckId = deckId
-        FrontPersonalField = this.FrontPersonalField
-        BackPersonalField = this.BackPersonalField
-    }
 
 [<CLIMutable>]
 type ViewEditStackCommand = {
@@ -434,7 +427,6 @@ type ViewEditStackCommand = {
     CollateInstance: ViewCollateInstance
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
-    EditAcquiredCard: ViewEditAcquiredCardCommand
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -463,7 +455,7 @@ type ViewEditStackCommand = {
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
             |> Ok
-    member this.load deckId cardSettingId =
+    member this.load =
         let kind =
             match this.Title with
             | null -> this.Kind
@@ -477,7 +469,6 @@ type ViewEditStackCommand = {
             FieldValues = this.FieldValues
             CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
             Kind = kind
-            EditAcquiredCard = this.EditAcquiredCard.toDomain deckId cardSettingId
         }
 
 type UpsertCardSource =
@@ -485,6 +476,40 @@ type UpsertCardSource =
     | VNewCopySourceInstanceId of int
     | VNewBranchSourceStackId of int
     | VUpdateBranchId of int
+
+module SanitizeAcquiredCardRepository =
+    let update (db: CardOverflowDb) userId acquiredCardId (command: EditAcquiredCardCommand) = taskResult {
+        let! cardSettingId =
+            match command.CardSettingId with 
+            | Some id ->
+                db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
+                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+                |>%% fun () -> id
+            | None ->
+                db.User
+                    .Where(fun x -> x.Id = userId)
+                    .Select(fun x -> x.DefaultCardSettingId)
+                    .SingleAsync()
+                |>% Ok
+        let! deckId =
+            match command.DeckId with
+            | None ->
+                db.User
+                    .Where(fun x -> x.Id = userId)
+                    .Select(fun x -> x.DefaultDeckId)
+                    .SingleAsync()
+                |>% Ok
+            | Some id ->
+                db.Deck.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
+                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+                |>%% fun () -> id
+        let! (ac: AcquiredCardEntity) =
+            db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+            |>% Result.requireNotNull (sprintf "AcquiredCard #%i doesn't belong to you." acquiredCardId)
+        ac.DeckId <- deckId
+        ac.CardSettingId <- cardSettingId
+        return! db.SaveChangesAsyncI()
+    }
 
 module SanitizeStackRepository =
     let getUpsert (db: CardOverflowDb) source =
@@ -502,7 +527,6 @@ module SanitizeStackRepository =
                     | NewCopy_SourceInstanceId_TagIds _ -> null
                     | NewBranch_SourceStackId_Title (_, title)
                     | Update_BranchId_Title (_, title) -> title
-                EditAcquiredCard = ViewEditAcquiredCardCommand.init
             }
         match source with
         | VNewOriginalUserId userId ->
@@ -517,7 +541,6 @@ module SanitizeStackRepository =
                     CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
                     Kind = NewOriginal_TagIds []
                     Title = null
-                    EditAcquiredCard = ViewEditAcquiredCardCommand.init
                 }
             )
         | VNewBranchSourceStackId stackId ->
@@ -532,40 +555,8 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
-    let Update (db: CardOverflowDb) userId (command: ViewEditStackCommand) = taskResult {// medTODO how do we know that the card id hasn't been tampered with? It could be out of sync with card instance id
-        let! cardSettingId =
-            match command.EditAcquiredCard.CardSettingId with 
-            | Some id ->
-                db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |>%% fun () -> id
-            | None ->
-                db.User
-                    .Where(fun x -> x.Id = userId)
-                    .Select(fun x -> x.DefaultCardSettingId)
-                    .SingleAsync()
-                |>% Ok
-        let! deckId =
-            match command.EditAcquiredCard.DeckId with
-            | None ->
-                db.User
-                    .Where(fun x -> x.Id = userId)
-                    .Select(fun x -> x.DefaultDeckId)
-                    .SingleAsync()
-                |>% Ok
-            | Some id ->
-                db.Deck.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |>%% fun () -> id
-        //let command =
-        //    {   command with
-        //            EditAcquiredCard = {
-        //                command.EditAcquiredCard with
-        //                    DeckId = Some deckId
-        //                    CardSettingId = Some cardSettingId
-        //            }
-        //    }
-        return! UpdateRepository.stack db userId <| command.load deckId cardSettingId
+    let Update (db: CardOverflowDb) userId (command: ViewEditStackCommand) = taskResult {
+        return! UpdateRepository.stack db userId command.load
         }
     let search (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.search db userId pageNumber searchCommand.Order searchCommand.Query

@@ -58,7 +58,6 @@ let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
@@ -119,7 +118,6 @@ let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult 
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = Update_BranchId_Title (branchId, null)
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain userId userId
         } |> UpdateRepository.stack c.Db userId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
@@ -272,7 +270,6 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
             FieldValues = [].ToList()
             CollateInstance = collate |> ViewCollateInstance.copyTo
             Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
-            EditAcquiredCard = ViewEditAcquiredCardCommand.init.toDomain authorId authorId
         } |> UpdateRepository.stack c.Db authorId
 
     let! stack = ExploreStackRepository.get c.Db authorId stackId |> TaskResult.getOk
