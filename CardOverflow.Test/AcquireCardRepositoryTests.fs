@@ -222,7 +222,7 @@ let ``AcquireCards works``(): Task<unit> = task {
             FieldValues = [].ToList()
             Kind = Update_BranchId_Title (b1, null)
         }
-    let! branchId = SanitizeStackRepository.Update c.Db authorId command |> TaskResult.getOk
+    let! branchId = SanitizeStackRepository.Update c.Db authorId [] command |> TaskResult.getOk
     let ci1_2 = 1003
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)

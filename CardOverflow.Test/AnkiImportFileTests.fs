@@ -317,7 +317,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 5
     
@@ -332,7 +332,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 4
     
@@ -347,7 +347,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branchId, actualBranchId)
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
@@ -418,6 +418,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
             SanitizeStackRepository.Update
                 c.Db
                 userId
+                []
                 {   EditSummary = editSummary
                     FieldValues =
                         collate

@@ -555,8 +555,8 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
-    let Update (db: CardOverflowDb) userId (command: ViewEditStackCommand) = taskResult {
-        return! UpdateRepository.stack db userId command.load
+    let Update (db: CardOverflowDb) userId (acCommands: EditAcquiredCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
+        return! UpdateRepository.stack db userId stackCommand.load
         }
     let search (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.search db userId pageNumber searchCommand.Order searchCommand.Query

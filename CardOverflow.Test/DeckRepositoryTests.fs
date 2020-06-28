@@ -312,7 +312,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
+    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
     do! assertNotificationThenDelete
             { Id = 2
@@ -348,7 +348,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
                 ).ToList()
     }
     
-    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId updated
+    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
     do! assertNotificationThenDelete
             { Id = 3

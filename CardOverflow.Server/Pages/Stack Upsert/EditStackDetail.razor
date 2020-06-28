@@ -144,7 +144,7 @@
 
   async Task UpdateCard() {
     _isDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, EditStack));
+    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, FSharpList<EditAcquiredCardCommand>.Empty, EditStack));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       _savedBranchId = result.ResultValue;
