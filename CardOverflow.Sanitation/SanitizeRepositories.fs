@@ -403,8 +403,8 @@ type SearchCommand = {
 [<CLIMutable>]
 type EditAcquiredCardCommand = {
     CardState: CardState
-    CardSettingId: int Option
-    DeckId: int Option
+    CardSettingId: int
+    DeckId: int
     [<StringLength(2000, ErrorMessage = "The Front Personal Field must be less than 2000 characters")>]
     FrontPersonalField: string
     [<StringLength(2000, ErrorMessage = "The Back Personal Field must be less than 2000 characters")>]
@@ -412,8 +412,8 @@ type EditAcquiredCardCommand = {
 } with
     static member init = {
         CardState = Normal
-        CardSettingId = None
-        DeckId = None
+        CardSettingId = 0
+        DeckId = 0
         FrontPersonalField = ""
         BackPersonalField = ""
     }
@@ -481,25 +481,25 @@ module SanitizeAcquiredCardRepository =
     let update (db: CardOverflowDb) userId acquiredCardId (command: EditAcquiredCardCommand) = taskResult {
         let! cardSettingId =
             match command.CardSettingId with 
-            | Some id ->
-                db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |>%% fun () -> id
-            | None ->
+            | 0 ->
                 db.User
                     .Where(fun x -> x.Id = userId)
                     .Select(fun x -> x.DefaultCardSettingId)
                     .SingleAsync()
                 |>% Ok
+            | id ->
+                db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
+                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
+                |>%% fun () -> id
         let! deckId =
             match command.DeckId with
-            | None ->
+            | 0 ->
                 db.User
                     .Where(fun x -> x.Id = userId)
                     .Select(fun x -> x.DefaultDeckId)
                     .SingleAsync()
                 |>% Ok
-            | Some id ->
+            | id ->
                 db.Deck.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
                 |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
                 |>%% fun () -> id
@@ -556,7 +556,23 @@ module SanitizeStackRepository =
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
     let Update (db: CardOverflowDb) userId (acCommands: EditAcquiredCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
-        return! UpdateRepository.stack db userId stackCommand.load
+        let! branchInstance = UpdateRepository.stack db userId stackCommand.load
+        let! (acs: AcquiredCardEntity list) =
+            match stackCommand.Kind with
+            | Update_BranchId_Title _ ->
+                db.BranchInstance.AddI branchInstance
+                StackRepository.acquireCardNoSave db userId branchInstance false
+            | NewBranch_SourceStackId_Title _ ->
+                StackRepository.acquireCardNoSave db userId branchInstance true
+            | NewOriginal_TagIds tagIds
+            | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
+                let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance true
+                for tagId in tagIds do
+                    acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
+                return acs
+                }
+        do! db.SaveChangesAsyncI()
+        return branchInstance.BranchId
         }
     let search (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.search db userId pageNumber searchCommand.Order searchCommand.Query

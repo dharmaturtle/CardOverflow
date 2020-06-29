@@ -534,23 +534,7 @@ module UpdateRepository =
                                 StackEntity(
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            let branchInstance = command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
-            do! match command.Kind with
-                | Update_BranchId_Title _ ->
-                    db.BranchInstance.AddI branchInstance
-                    StackRepository.acquireCardNoSave db userId branchInstance false
-                    |>%% ignore
-                | NewBranch_SourceStackId_Title _ ->
-                    StackRepository.acquireCardNoSave db userId branchInstance true
-                    |>%% ignore
-                | NewOriginal_TagIds tagIds
-                | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
-                    let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance true
-                    for tagId in tagIds do
-                        acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
-                    }
-            do! db.SaveChangesAsyncI()
-            return branchInstance.BranchId
+            return command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
         }
 
 module NotificationRepository =

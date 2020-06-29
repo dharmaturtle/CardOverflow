@@ -41,13 +41,8 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     do! reacquire ()
     let! (ac: AcquiredCard ResizeArray) = getAcquired ()
     let ac = ac.Single()
-    let! actualBranchId =
-        {   EditStackCommand.EditSummary = ""
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.stack c.Db userId
-    Assert.Equal(branchId, actualBranchId)
+    do! FacetRepositoryTests.update c userId
+            (VUpdateBranchId branchId) id branchId
     do! StackRepository.unacquireStack c.Db userId ac.StackId
     Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
 
@@ -95,9 +90,6 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let! ac = StackRepository.GetAcquired c.Db userId 1
     let ac = ac.Value.Single()
     
@@ -107,14 +99,9 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let ac = ac.Value.Single()
     Assert.Equal(ac.CardState, CardState.Suspended)
 
-    let! x =
-        {   EditStackCommand.EditSummary = ""
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.stack c.Db userId
-    let actualBranchId = x.Value
-    Assert.Equal(branchId, actualBranchId)
+    do! FacetRepositoryTests.update c userId
+            (VUpdateBranchId branchId) id branchId
+        |> TaskResult.getOk
     let! ac = StackRepository.GetAcquired c.Db userId ac.StackId
     let ac = ac.Value.Single()
     Assert.Equal(ac.CardState, CardState.Suspended) // still suspended after edit
@@ -132,17 +119,10 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     let stackId = 1
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
-    let! actualBranchId = 
-        {   EditStackCommand.EditSummary = ""
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.stack c.Db userId
+    do! FacetRepositoryTests.update c userId
+            (VUpdateBranchId branchId) id branchId
+        |> TaskResult.getOk
     let i2 = 1002
-    Assert.Equal(branchId, actualBranchId.Value)
     do! StackRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.AcquiredCard.Single().BranchInstanceId)
     Assert.Equal(branchId, c.Db.AcquiredCard.Single().BranchId)

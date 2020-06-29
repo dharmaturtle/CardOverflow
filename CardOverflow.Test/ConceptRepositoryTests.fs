@@ -49,16 +49,9 @@ let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let secondVersion = Guid.NewGuid().ToString()
-    let! _ =
-        {   EditStackCommand.EditSummary = secondVersion
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.stack c.Db userId
+    do! FacetRepositoryTests.update c userId
+            (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
@@ -109,16 +102,9 @@ let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult 
     let userId = 3
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
     let branchId = 1
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic (and reversed card)"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic (and reversed card)"))
     let secondVersion = Guid.NewGuid().ToString()
-    let! _ =
-        {   EditStackCommand.EditSummary = secondVersion
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.stack c.Db userId
+    do! FacetRepositoryTests.update c userId
+            (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)

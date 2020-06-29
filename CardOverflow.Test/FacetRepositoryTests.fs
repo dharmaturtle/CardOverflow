@@ -79,6 +79,15 @@ let reversedBasicCollate db =
 let basicCollate db =
     TestCollateRepo.SearchEarliest db "Basic"
 
+let update (c: TestContainer) authorId kind commandTransformer expectedBranchId = taskResult {
+    let! (upsert: ViewEditStackCommand) = kind |> SanitizeStackRepository.getUpsert c.Db // using |>!! is *extremely* inconsistent and unstable for some reason
+    return!
+        upsert
+        |> commandTransformer
+        |> SanitizeStackRepository.Update c.Db authorId []
+        |>%% Assert.equal expectedBranchId
+}
+
 [<Fact>]
 let ``StackRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
@@ -322,16 +331,9 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
     let! _ = addBasicStack c.Db userId []
     let stackId = 1
     let branchId = 1
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let secondVersion = Guid.NewGuid().ToString()
-    let! _ =
-        {   EditStackCommand.EditSummary = secondVersion
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title (branchId, null)
-        } |> UpdateRepository.stack c.Db userId
+    do! update c userId
+            (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion; FieldValues = [].ToList() }) branchId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
@@ -346,14 +348,11 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
     Assert.Empty b.FieldValues
     Assert.Equal(updatedInstanceId, bId)
 
-    // works on a branch
+    // works on a new branch
+    let newBranchId = 2
     let branchVersion = Guid.NewGuid().ToString()
-    let! _ =
-        {   EditStackCommand.EditSummary = branchVersion
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = NewBranch_SourceStackId_Title (stackId, Guid.NewGuid().ToString())
-        } |> UpdateRepository.stack c.Db userId
+    do! update c userId
+            (VNewBranchSourceStackId stackId) (fun x -> { x with EditSummary = branchVersion }) newBranchId
     let branchInstanceId = 1003
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = branchInstanceId)
         |> Task.map (fun x -> Assert.Equal(branchVersion, x.EditSummary))

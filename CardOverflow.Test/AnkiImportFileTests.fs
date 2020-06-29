@@ -219,7 +219,7 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     let invalidCardId = 1337
     let! (error: Result<_,_>) =
         {   EditAcquiredCardCommand.init with
-                CardSettingId = Some invalidCardId }
+                CardSettingId = invalidCardId }
         |>  SanitizeAcquiredCardRepository.update c.Db userId acId
     Assert.Equal(sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" invalidCardId userId, error.error)
 
@@ -242,7 +242,7 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     
     // insert new stack with latest settingsId
     do! {   EditAcquiredCardCommand.init with
-                CardSettingId = Some latestSettingId }
+                CardSettingId = latestSettingId }
         |> SanitizeAcquiredCardRepository.update c.Db userId acId
     let! (card: AcquiredCard) = getAcquiredCard branchId
     Assert.Equal(latestSettingId, card.CardSettingId)
@@ -356,9 +356,6 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer()
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic (and reversed card)"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic (and reversed card)"))
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
     let stackId = 1
     let branchId_og = 1
@@ -368,23 +365,15 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
 
     // branching a stack acquires it
     let branchId_alt = 2
-    let! _ =
-        {   EditStackCommand.EditSummary = ""
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
-        } |> UpdateRepository.stack c.Db userId
+    do! FacetRepositoryTests.update c userId
+            (VNewBranchSourceStackId stackId) id branchId_alt
 
     Assert.equal 0 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // updating an unacquired branch doesn't change the AcquiredCards
-    let! _ =
-        {   EditStackCommand.EditSummary = ""
-            FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
-            Kind = Update_BranchId_Title(branchId_og, "update Branch")
-        } |> UpdateRepository.stack c.Db userId
+    do! FacetRepositoryTests.update c userId
+            (VUpdateBranchId branchId_og) id branchId_og
 
     Assert.equal 0 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)

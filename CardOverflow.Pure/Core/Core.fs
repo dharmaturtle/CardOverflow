@@ -66,7 +66,7 @@ module TaskResultOp =
     let inline (<!!>) x f = TaskResult.bind f x
     let inline (|>%%) x f = TaskResult.map f x
     let inline (|>**) x f = TaskResult.apply f x
-    let inline (|>!!) f x = TaskResult.bind f x
+    let inline (|>!!) x f = TaskResult.bind f x
     let inline (<>=>) (fa: 'a -> Result<'b,'c> Task) (fb: 'b -> Result<'d,'c> Task) (a: 'a) : Result<'d,'c> Task = taskResult {
         let! b = fa a
         return!
