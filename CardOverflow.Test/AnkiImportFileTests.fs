@@ -209,7 +209,6 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
         c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
         |> Task.map (fun x -> x.StackId)
         |> Task.bind (fun stackId -> StackRepository.GetAcquired c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
-    let! collateInstance = TestCollateRepo.SearchEarliest c.Db "Basic"
     let branchId = 1
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     Assert.equal branchId actualBranchId

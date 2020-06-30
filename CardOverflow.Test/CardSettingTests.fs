@@ -66,9 +66,8 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     do! canUpdateIsDefault newId
 
     // Insert new card
-    let! collates = TestCollateRepo.Search c.Db "Basic"
     let branchId = 1
-    let collate = collates.Single(fun x -> x.Name = "Basic")
+    let! collate = FacetRepositoryTests.basicCollate c.Db
     let! r =
         SanitizeStackRepository.Update c.Db userId []
             {   EditSummary = "Initial creation"

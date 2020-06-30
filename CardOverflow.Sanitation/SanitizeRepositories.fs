@@ -571,6 +571,15 @@ module SanitizeStackRepository =
                     acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
                 return acs
                 }
+            |>%% List.sortBy (fun x -> x.Index)
+        acCommands |> List.iteri (fun i command ->
+            let ac = acs.[i]
+            ac.CardState <- command.CardState |> CardState.toDb
+            ac.CardSettingId <- command.CardSettingId
+            ac.DeckId <- command.DeckId
+            ac.FrontPersonalField <- command.FrontPersonalField
+            ac.BackPersonalField <- command.BackPersonalField
+        )
         do! db.SaveChangesAsyncI()
         return branchInstance.BranchId
         }

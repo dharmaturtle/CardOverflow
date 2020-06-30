@@ -66,6 +66,7 @@
     <Compile Include="NotificationRepositoryTests.fs" />
     <Compile Include="CollateRepositoryTests.fs" />
     <Compile Include="CardSettingTests.fs" />
+    <Compile Include="SanitizeStackRepositoryTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
     <Compile Include="DeckRepositoryTests.fs" />
     <Compile Include="UserRepositoryTests.fs" />
