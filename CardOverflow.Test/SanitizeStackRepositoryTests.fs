@@ -40,7 +40,7 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
             |> SanitizeDeckRepository.create c.Db userId
             |>%% fun newDeckId -> [ userId; newDeckId ]
             |>%% Gen.elements
-        let basicCommand, aRevCommand, bRevCommand =
+        let basicCommand, aRevCommand, bRevCommand, failDeckCommand, failCardSettingCommand =
             gen {
                 let! cardSettingId = optionIdGen
                 let! deckId = deckIdGen
@@ -54,9 +54,16 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
                         FrontPersonalField = front
                         BackPersonalField = back
                     }
-            } |> Gen.listOfLength 3
+            } |> Gen.listOfLength 5
             |> Gen.eval 100 stdGen
-            |> fun x -> x.[0], x.[1], x.[2]
+            |> fun x -> x.[0], x.[1], x.[2], x.[3], x.[4]
+        let stackCommand collate =
+            {   EditSummary = Guid.NewGuid().ToString()
+                FieldValues = [].ToList()
+                CollateInstance = collate
+                Kind = NewOriginal_TagIds []
+                Title = null
+            }
 
         let! collate = FacetRepositoryTests.basicCollate c.Db
         let stackId = 1
@@ -64,12 +71,7 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ basicCommand ]
-                {   EditSummary = Guid.NewGuid().ToString()
-                    FieldValues = [].ToList()
-                    CollateInstance = collate
-                    Kind = NewOriginal_TagIds []
-                    Title = null
-                }
+                (stackCommand collate)
             |>%% Assert.equal branchId
 
         let! ac =
@@ -100,12 +102,7 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
-                {   EditSummary = Guid.NewGuid().ToString()
-                    FieldValues = [].ToList()
-                    CollateInstance = collate
-                    Kind = NewOriginal_TagIds []
-                    Title = null
-                }
+                (stackCommand collate)
             |>%% Assert.equal branchId
 
         let! (acs: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
@@ -143,4 +140,36 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
                 DeckId = bRevCommand.DeckId
             }
             acs.[1]
+    
+        // doesn't work with someone else's deckId
+        let failDeckCommand = { failDeckCommand with DeckId = 1 }
+        let! (error: Result<_, _>) =
+            SanitizeStackRepository.Update c.Db userId
+                [ failDeckCommand ]
+                (stackCommand collate)
+        Assert.equal "You provided an invalid or unauthorized deck id." error.error
+    
+        // doesn't work with someone else's cardSettingId
+        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = 1 }
+        let! (error: Result<_, _>) =
+            SanitizeStackRepository.Update c.Db userId
+                [ failCardSettingCommand ]
+                (stackCommand collate)
+        Assert.equal "You provided an invalid or unauthorized card setting id." error.error
+    
+        // doesn't work with invalid deckId
+        let failDeckCommand = { failDeckCommand with DeckId = 1337 }
+        let! (error: Result<_, _>) =
+            SanitizeStackRepository.Update c.Db userId
+                [ failDeckCommand ]
+                (stackCommand collate)
+        Assert.equal "You provided an invalid or unauthorized deck id." error.error
+    
+        // doesn't work with invalid cardSettingId
+        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = 1337 }
+        let! (error: Result<_, _>) =
+            SanitizeStackRepository.Update c.Db userId
+                [ failCardSettingCommand ]
+                (stackCommand collate)
+        Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     } |> TaskResult.getOk).GetAwaiter().GetResult()

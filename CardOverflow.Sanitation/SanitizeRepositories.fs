@@ -478,7 +478,7 @@ type UpsertCardSource =
     | VUpdateBranchId of int
 
 module SanitizeAcquiredCardRepository =
-    let private validateCommands (db: CardOverflowDb) userId (commands: EditAcquiredCardCommand ResizeArray) = taskResult {
+    let validateCommands (db: CardOverflowDb) userId (commands: EditAcquiredCardCommand ResizeArray) = taskResult {
         let! defaultDeckId, defaultCardSettingId, areValidDeckIds, areValidCardSettingIds =
             let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> 0).ToList()
             let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> 0).ToList()
@@ -577,14 +577,16 @@ module SanitizeStackRepository =
                 return acs
                 }
             |>%% List.sortBy (fun x -> x.Index)
-        acCommands |> List.iteri (fun i command ->
-            let ac = acs.[i]
-            ac.CardState <- command.CardState |> CardState.toDb
-            ac.CardSettingId <- command.CardSettingId
-            ac.DeckId <- command.DeckId
-            ac.FrontPersonalField <- command.FrontPersonalField
-            ac.BackPersonalField <- command.BackPersonalField
-        )
+        do! acCommands.ToList()
+            |> SanitizeAcquiredCardRepository.validateCommands db userId
+            |>%% Seq.iteri (fun i command ->
+                let ac = acs.[i]
+                ac.CardState <- command.CardState |> CardState.toDb
+                ac.CardSettingId <- command.CardSettingId
+                ac.DeckId <- command.DeckId
+                ac.FrontPersonalField <- command.FrontPersonalField
+                ac.BackPersonalField <- command.BackPersonalField
+            )
         do! db.SaveChangesAsyncI()
         return branchInstance.BranchId
         }
