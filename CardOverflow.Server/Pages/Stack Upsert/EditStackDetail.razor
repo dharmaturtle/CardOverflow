@@ -29,7 +29,7 @@
               </div>
             }
             @foreach (var field in EditStack.FieldValues) {
-              <EditStackField Field=@field ValueUpdated=@(x => field.Value = x) IsDisabled=@_isDisabled />
+              <EditStackField Field=@field ValueUpdated=@(x => { field.Value = x; trySetIndexCount(); }) IsDisabled=@_isDisabled />
             }
           </div>
           <div class="col-sm">
@@ -55,7 +55,7 @@
             </div>
             @if (EditStack.Backs.IsOk) {
               @foreach (var (back, i) in EditStack.Backs.ResultValue.Select((x, i) => (x, i))) {
-                <iframe sandbox="allow-scripts" srcdoc=@back style="height: 80vh; width: 100%; resize: vertical;"></iframe>
+                <iframe sandbox="allow-scripts" srcdoc=@back style="height: @(80/_indexCount)vh; width: 100%; resize: vertical;"></iframe>
                 <EditStackDetail_AcquiredCard Command=@_acCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateAcquiredCardCommand(i, command)) />
               }
             } else {
@@ -188,5 +188,13 @@
     eventArgs.CtrlKey && eventArgs.Key == "Enter"
       ? UpdateCard()
       : Task.CompletedTask;
+
+  private int _indexCount = 1;
+  private void trySetIndexCount() {
+    var newIndexCount = EditStack.Backs.ResultValue.Count();
+    if (_indexCount != newIndexCount) {
+      _indexCount = newIndexCount;
+    }
+  }
 
 }
