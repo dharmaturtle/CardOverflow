@@ -220,7 +220,31 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
         {   EditAcquiredCardCommand.init with
                 CardSettingId = invalidCardId }
         |>  SanitizeAcquiredCardRepository.update c.Db userId acId
-    Assert.Equal(sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" invalidCardId userId, error.error)
+    Assert.equal "You provided an invalid or unauthorized card setting id." error.error
+    
+    // insert new stack with someone else's settingId
+    let someoneElse'sSettingId = userId - 1
+    let! (error: Result<_,_>) =
+        {   EditAcquiredCardCommand.init with
+                CardSettingId = someoneElse'sSettingId }
+        |>  SanitizeAcquiredCardRepository.update c.Db userId acId
+    Assert.equal "You provided an invalid or unauthorized card setting id." error.error
+    
+    // insert new stack with invalid deckId
+    let invalidDeckId = 1337
+    let! (error: Result<_,_>) =
+        {   EditAcquiredCardCommand.init with
+                DeckId = invalidDeckId }
+        |>  SanitizeAcquiredCardRepository.update c.Db userId acId
+    Assert.equal "You provided an invalid or unauthorized deck id." error.error
+    
+    // insert new stack with someone else's deckId
+    let someoneElse'sDeckId = userId - 1
+    let! (error: Result<_,_>) =
+        {   EditAcquiredCardCommand.init with
+                DeckId = someoneElse'sDeckId }
+        |>  SanitizeAcquiredCardRepository.update c.Db userId acId
+    Assert.equal "You provided an invalid or unauthorized deck id." error.error
 
     // insert new setting
     let! (options: ViewCardSetting ResizeArray) = SanitizeCardSettingRepository.getAll c.Db userId
@@ -232,12 +256,6 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     let! (ids: _ list) = SanitizeCardSettingRepository.upsertMany c.Db userId options
     let defaultSettingId = ids.First()
     let latestSettingId = ids.Last()
-
-    // insert new stack with default settingsId
-    do! EditAcquiredCardCommand.init
-        |> SanitizeAcquiredCardRepository.update c.Db userId acId
-    let! (card: AcquiredCard) = getAcquiredCard branchId
-    Assert.Equal(defaultSettingId, card.CardSettingId)
     
     // insert new stack with latest settingsId
     do! {   EditAcquiredCardCommand.init with
@@ -245,6 +263,27 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
         |> SanitizeAcquiredCardRepository.update c.Db userId acId
     let! (card: AcquiredCard) = getAcquiredCard branchId
     Assert.Equal(latestSettingId, card.CardSettingId)
+
+    // insert new stack with default settingsId
+    do! EditAcquiredCardCommand.init
+        |> SanitizeAcquiredCardRepository.update c.Db userId acId
+    let! (card: AcquiredCard) = getAcquiredCard branchId
+    Assert.Equal(defaultSettingId, card.CardSettingId)
+
+    let! latestDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
+    // insert new stack with latest deckId
+    do! {   EditAcquiredCardCommand.init with
+                DeckId = latestDeckId }
+        |> SanitizeAcquiredCardRepository.update c.Db userId acId
+    let! (card: AcquiredCard) = getAcquiredCard branchId
+    Assert.Equal(latestDeckId, card.DeckId)
+
+    // insert new stack with default deckId
+    let defaultDeckId = userId
+    do! EditAcquiredCardCommand.init
+        |> SanitizeAcquiredCardRepository.update c.Db userId acId
+    let! (card: AcquiredCard) = getAcquiredCard branchId
+    Assert.Equal(defaultDeckId, card.DeckId)
     } |> TaskResult.getOk)
 
 [<Fact>]

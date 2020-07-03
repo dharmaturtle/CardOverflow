@@ -478,36 +478,41 @@ type UpsertCardSource =
     | VUpdateBranchId of int
 
 module SanitizeAcquiredCardRepository =
+    let private validateCommands (db: CardOverflowDb) userId (commands: EditAcquiredCardCommand ResizeArray) = taskResult {
+        let! defaultDeckId, defaultCardSettingId, areValidDeckIds, areValidCardSettingIds =
+            let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> 0).ToList()
+            let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> 0).ToList()
+            db.User
+                .Where(fun x -> x.Id = userId)
+                .Select(fun x ->
+                    x.DefaultDeckId,
+                    x.DefaultCardSettingId,
+                    x.Decks.Where(fun x -> deckIds.Contains(x.Id)).Count() = deckIds.Count,
+                    x.CardSettings.Where(fun x -> settingIds.Contains(x.Id)).Count() = settingIds.Count
+                ).SingleAsync()
+        do! areValidDeckIds        |> Result.requireTrue "You provided an invalid or unauthorized deck id."         |> Task.FromResult
+        do! areValidCardSettingIds |> Result.requireTrue "You provided an invalid or unauthorized card setting id." |> Task.FromResult
+        return
+            commands.Select(fun c ->
+                {   c with
+                        DeckId =
+                            match c.DeckId with
+                            | 0 -> defaultDeckId
+                            | x -> x
+                        CardSettingId =
+                            match c.CardSettingId with
+                            | 0 -> defaultCardSettingId
+                            | x -> x
+                }
+            ).ToList()
+    }
     let update (db: CardOverflowDb) userId acquiredCardId (command: EditAcquiredCardCommand) = taskResult {
-        let! cardSettingId =
-            match command.CardSettingId with 
-            | 0 ->
-                db.User
-                    .Where(fun x -> x.Id = userId)
-                    .Select(fun x -> x.DefaultCardSettingId)
-                    .SingleAsync()
-                |>% Ok
-            | id ->
-                db.CardSetting.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |>%% fun () -> id
-        let! deckId =
-            match command.DeckId with
-            | 0 ->
-                db.User
-                    .Where(fun x -> x.Id = userId)
-                    .Select(fun x -> x.DefaultDeckId)
-                    .SingleAsync()
-                |>% Ok
-            | id ->
-                db.Deck.AnyAsync(fun x -> x.Id = id && x.UserId = userId)
-                |>% (Result.requireTrue <| sprintf "Card Setting #%i doesn't exist or doesn't belong to User #%i" id userId)
-                |>%% fun () -> id
+        let! command = command |> ResizeArray.singleton |> validateCommands db userId |>%% Seq.exactlyOne
         let! (ac: AcquiredCardEntity) =
             db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             |>% Result.requireNotNull (sprintf "AcquiredCard #%i doesn't belong to you." acquiredCardId)
-        ac.DeckId <- deckId
-        ac.CardSettingId <- cardSettingId
+        ac.DeckId <- command.DeckId
+        ac.CardSettingId <- command.CardSettingId
         return! db.SaveChangesAsyncI()
     }
 

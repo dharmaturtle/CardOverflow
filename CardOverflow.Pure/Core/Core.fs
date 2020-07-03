@@ -39,6 +39,7 @@ module TaskSeq =
 
 module ResizeArray =
     let empty<'T> = [].ToList<'T>()
+    let singleton<'T> x = [x].ToList<'T>()
     let map (f: _ -> _) (xs: _ ResizeArray) =
         xs.Select(f).ToList()
 
@@ -117,6 +118,10 @@ module Result =
         match obj.ReferenceEquals(x, null) with
         | true -> Error error
         | false -> Ok x
+    
+    let cata f g = function
+        | Ok x -> f x
+        | Error e -> g e
 
 module Random =
     let cryptographicString length = // https://stackoverflow.com/a/1344255/625919 and https://gist.github.com/diegojancic/9f78750f05550fa6039d2f6092e461e5
