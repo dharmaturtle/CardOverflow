@@ -1,0 +1,40 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using Microsoft.FSharp.Collections
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using Syncfusion.EJ2.Blazor
+@using Syncfusion.EJ2.Blazor.RichTextEditor
+@inject IToastService ToastService
+@inject DbExecutor DbExecutor
+
+<button class="btn float-right" type="button" @onclick=@(() => _isExpanded = !_isExpanded)>
+  <i class="fas fa-user-cog"></i>
+</button>
+@if (_isExpanded) {
+  <div class="row">
+    <a href="cardsetting" class="col-sm-2 mt-2">
+      Card Setting
+    </a>
+    <div class="col-sm-10 px-0">
+      <CardSettingSelector SettingSelected=_SetOption />
+    </div>
+  </div>
+}
+
+@code {
+  [Parameter] public EditAcquiredCardCommand Command { get; set; }
+  [Parameter] public EventCallback<EditAcquiredCardCommand> UpdateCommand { get; set; }
+  private bool _isExpanded;
+
+  private Task _SetOption(int newId) {
+    Command ??= EditAcquiredCardCommand.init;
+    Command.CardSettingId = newId;
+    return UpdateCommand.InvokeAsync(Command);
+  }
+
+}
