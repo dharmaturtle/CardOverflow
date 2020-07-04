@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -715,6 +715,7 @@ CREATE TABLE public."Deck" (
     "UserId" integer NOT NULL,
     "Name" character varying(250) NOT NULL,
     "IsPublic" boolean NOT NULL,
+    "SourceId" integer,
     "TsVector" tsvector
 );
 
@@ -1800,6 +1801,10 @@ ALTER TABLE ONLY public."DeckFollowers"
 
 ALTER TABLE ONLY public."DeckFollowers"
     ADD CONSTRAINT "FK_DeckFollowers_FollowerId" FOREIGN KEY ("FollowerId") REFERENCES public."User"("Id");
+
+
+ALTER TABLE ONLY public."Deck"
+    ADD CONSTRAINT "FK_Deck_Deck_SourceId" FOREIGN KEY ("SourceId") REFERENCES public."Deck"("Id") ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public."Deck"

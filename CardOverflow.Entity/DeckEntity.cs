@@ -12,6 +12,7 @@ namespace CardOverflow.Entity
         {
             AcquiredCards = new HashSet<AcquiredCardEntity>();
             DeckFollowers = new HashSet<DeckFollowersEntity>();
+            DerivedDecks = new HashSet<DeckEntity>();
             Notifications = new HashSet<NotificationEntity>();
         }
 
@@ -30,7 +31,11 @@ namespace CardOverflow.Entity
         private string _Name;
         public bool IsPublic { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
+        public int? SourceId { get; set; }
 
+        [ForeignKey("SourceId")]
+        [InverseProperty("DerivedDecks")]
+        public virtual DeckEntity Source { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("Decks")]
         public virtual UserEntity User { get; set; }
@@ -38,6 +43,8 @@ namespace CardOverflow.Entity
         public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
         [InverseProperty("Deck")]
         public virtual ICollection<DeckFollowersEntity> DeckFollowers { get; set; }
+        [InverseProperty("Source")]
+        public virtual ICollection<DeckEntity> DerivedDecks { get; set; }
         [InverseProperty("Deck")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
     }

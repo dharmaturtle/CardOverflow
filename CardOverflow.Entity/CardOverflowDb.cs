@@ -358,6 +358,11 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => new { e.Id, e.UserId })
                     .IsUnique();
 
+                entity.HasOne(d => d.Source)
+                    .WithMany(p => p.DerivedDecks)
+                    .HasForeignKey(d => d.SourceId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Decks)
                     .HasForeignKey(d => d.UserId)
@@ -465,7 +470,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<Relationship_AcquiredCardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.RelationshipId, e.UserId, e.SourceStackId, e.TargetStackId });
+                entity.HasKey(e => new { e.SourceStackId, e.TargetStackId, e.RelationshipId, e.UserId });
 
                 entity.HasIndex(e => e.RelationshipId);
 
@@ -518,7 +523,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<Tag_AcquiredCardEntity>(entity =>
             {
-                entity.HasKey(e => new { e.TagId, e.UserId, e.StackId });
+                entity.HasKey(e => new { e.StackId, e.TagId, e.UserId });
 
                 entity.HasIndex(e => e.AcquiredCardId);
 
@@ -533,7 +538,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<Tag_User_CollateInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.UserId, e.CollateInstanceId, e.DefaultTagId });
+                entity.HasKey(e => new { e.DefaultTagId, e.CollateInstanceId, e.UserId });
 
                 entity.HasIndex(e => e.DefaultTagId);
 
