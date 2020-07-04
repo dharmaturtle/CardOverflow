@@ -15,38 +15,32 @@
 
 <tr>
   <td>
-    <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>
+    @Sender()
   </td>
   <td>
     @if (Notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
       <span>
-        <a href="stack?branchinstance=@deckAddedStack.NewBranchInstanceId">
-          Stack
-        </a>
+        @Stack(deckAddedStack.NewBranchInstanceId)
         added to
-        <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>&apos;s
+        @Sender()&apos;s
         deck
-        &quot;<a href="deck/@deckAddedStack.DeckId">@deckAddedStack.DeckName</a>&quot;.
+        @Deck(@deckAddedStack.DeckId, deckAddedStack.DeckName).
       </span>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
       <span>
-        <a href="stack?branchinstance=@deckUpdatedStack.NewBranchInstanceId">
-          Stack
-        </a>
+        @Stack(deckUpdatedStack.NewBranchInstanceId)
         updated in
-        <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>&apos;s
+        @Sender()&apos;s
         deck
-        &quot;<a href="deck/@deckUpdatedStack.DeckId">@deckUpdatedStack.DeckName</a>&quot;.
+        @Deck(@deckUpdatedStack.DeckId, deckUpdatedStack.DeckName).
       </span>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
-        <a href="stack?branchinstance=@deckDeletedStack.DeletedBranchInstanceId">
-          Stack
-        </a>
+        @Stack(deckDeletedStack.DeletedBranchInstanceId)
         deleted from
-        <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>&apos;s
+        @Sender()&apos;s
         deck
-        &quot;<a href="deck/@deckDeletedStack.DeckId">@deckDeletedStack.DeckName</a>&quot;.
+        @Deck(deckDeletedStack.DeckId, deckDeletedStack.DeckName).
       </span>
     }
   </td>
@@ -78,5 +72,16 @@
     await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, _user.Id, Notification.Id));
     await Remove.InvokeAsync(null);
   }
+
+  private RenderFragment Sender() =>
+    @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
+
+  private RenderFragment Stack(int instanceId) =>
+    @<a href="stack?branchinstance=@instanceId">
+      Stack
+    </a>;
+
+  private RenderFragment Deck(int deckId, string deckName) =>
+    @<span>&quot;<a href="deck/@deckId">@deckName</a>&quot;</span>;
 
 }
