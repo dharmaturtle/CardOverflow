@@ -1,0 +1,82 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject TimeProvider TimeProvider
+
+<tr>
+  <td>
+    <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>
+  </td>
+  <td>
+    @if (Notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
+      <span>
+        <a href="stack?branchinstance=@deckAddedStack.NewBranchInstanceId">
+          Stack
+        </a>
+        added to
+        <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>&apos;s
+        deck
+        &quot;<a href="deck/@deckAddedStack.DeckId">@deckAddedStack.DeckName</a>&quot;.
+      </span>
+    } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
+      <span>
+        <a href="stack?branchinstance=@deckUpdatedStack.NewBranchInstanceId">
+          Stack
+        </a>
+        updated in
+        <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>&apos;s
+        deck
+        &quot;<a href="deck/@deckUpdatedStack.DeckId">@deckUpdatedStack.DeckName</a>&quot;.
+      </span>
+    } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
+      <span>
+        <a href="stack?branchinstance=@deckDeletedStack.DeletedBranchInstanceId">
+          Stack
+        </a>
+        deleted from
+        <a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>&apos;s
+        deck
+        &quot;<a href="deck/@deckDeletedStack.DeckId">@deckDeletedStack.DeckName</a>&quot;.
+      </span>
+    }
+  </td>
+  <td>
+    <button type="button" class="btn btn-outline-danger" @onclick=@_remove>
+      <span class="oi oi-trash"></span>
+    </button>
+  </td>
+  <td>
+    <span title=@(Notification.TimeStamp + " UTC")>
+      @ViewLogic.timestampToPretty(Notification.TimeStamp, TimeProvider.utcNow)
+    </span>
+  </td>
+</tr>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public Pure.Notification Notification { get; set; }
+  [Parameter] public EventCallback Remove { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+  private async Task _remove() {
+    await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, _user.Id, Notification.Id));
+    await Remove.InvokeAsync(null);
+  }
+
+}

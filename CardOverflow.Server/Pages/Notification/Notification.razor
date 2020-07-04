@@ -26,54 +26,7 @@
       <th></th>
     </tr>
     @foreach (var notification in _notifications) {
-      <tr>
-        <td>
-          <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>
-        </td>
-        <td>
-          @if (notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
-            <span>
-              <a href="stack?branchinstance=@deckAddedStack.NewBranchInstanceId">
-                Stack
-              </a>
-              added to
-              <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>&apos;s
-              deck
-              &quot;<a href="deck/@deckAddedStack.DeckId">@deckAddedStack.DeckName</a>&quot;.
-            </span>
-          } else if (notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
-            <span>
-              <a href="stack?branchinstance=@deckUpdatedStack.NewBranchInstanceId">
-                Stack
-              </a>
-              updated in
-              <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>&apos;s
-              deck
-              &quot;<a href="deck/@deckUpdatedStack.DeckId">@deckUpdatedStack.DeckName</a>&quot;.
-            </span>
-          } else if (notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
-            <span>
-              <a href="stack?branchinstance=@deckDeletedStack.DeletedBranchInstanceId">
-                Stack
-              </a>
-              deleted from
-              <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>&apos;s
-              deck
-              &quot;<a href="deck/@deckDeletedStack.DeckId">@deckDeletedStack.DeckName</a>&quot;.
-            </span>
-          }
-        </td>
-        <td>
-          <button type="button" class="btn btn-outline-danger" @onclick=@(() => _remove(notification))>
-            <span class="oi oi-trash"></span>
-          </button>
-        </td>
-        <td>
-          <span title=@(notification.TimeStamp + " UTC")>
-            @ViewLogic.timestampToPretty(notification.TimeStamp, TimeProvider.utcNow)
-          </span>
-        </td>
-      </tr>
+      <NotificationRow Notification=@notification Remove=@(() => _remove(notification))/>
     }
   </table>
 }
