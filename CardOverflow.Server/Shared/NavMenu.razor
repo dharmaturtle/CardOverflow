@@ -60,6 +60,11 @@
           </NavLink>
         </li>
         <li class="nav-item sidebarnav-item px-3">
+          <NavLink class="nav-link" Match="NavLinkMatch.All" href="notifications">
+            <span class="oi oi-bell"></span> Notifications
+          </NavLink>
+        </li>
+        <li class="nav-item sidebarnav-item px-3">
           <NavLink class="nav-link" Match="NavLinkMatch.All" href=@(UrlProvider.IdentityProvider + "identity/account/manage")>
             <span class="oi oi-person" aria-hidden="true"></span> Hi @_user.DisplayName!
           </NavLink>
@@ -98,6 +103,6 @@
   }
 
   private void _ToggleNavMenu() =>
-  _collapseNavMenu = !_collapseNavMenu;
+    _collapseNavMenu = !_collapseNavMenu;
 
 }
