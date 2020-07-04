@@ -50,6 +50,19 @@ type Message =
     | DeckAddedStack of DeckAddedStack
     | DeckUpdatedStack of DeckUpdatedStack
     | DeckDeletedStack of DeckDeletedStack
+with
+    member this.TryDeckAddedStack([<Out>] out: _ byref) =
+        match this with
+        | DeckAddedStack x -> out <- x; true
+        | _ -> false
+    member this.TryDeckUpdatedStack([<Out>] out: _ byref) =
+        match this with
+        | DeckUpdatedStack x -> out <- x; true
+        | _ -> false
+    member this.TryDeckDeletedStack([<Out>] out: _ byref) =
+        match this with
+        | DeckDeletedStack x -> out <- x; true
+        | _ -> false
 
 type Notification = {
     Id: int

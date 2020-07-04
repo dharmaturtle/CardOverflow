@@ -1,0 +1,106 @@
+@page "/notifications"
+
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject TimeProvider TimeProvider
+
+@if (_notifications == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <table class="table">
+    <tr>
+      <th>Sender</th>
+      <th>Message</th>
+      <th></th>
+      <th></th>
+    </tr>
+    @foreach (var notification in _notifications) {
+      <tr>
+        <td>
+          <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>
+        </td>
+        <td>
+          @if (notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
+            <span>
+              <a href="stack?branchinstance=@deckAddedStack.NewBranchInstanceId">
+                Stack
+              </a>
+              added to
+              <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>&apos;s
+              deck
+              &quot;<a href="deck/@deckAddedStack.DeckId">@deckAddedStack.DeckName</a>&quot;.
+            </span>
+          } else if (notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
+            <span>
+              <a href="stack?branchinstance=@deckUpdatedStack.NewBranchInstanceId">
+                Stack
+              </a>
+              updated in
+              <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>&apos;s
+              deck
+              &quot;<a href="deck/@deckUpdatedStack.DeckId">@deckUpdatedStack.DeckName</a>&quot;.
+            </span>
+          } else if (notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
+            <span>
+              <a href="stack?branchinstance=@deckDeletedStack.DeletedBranchInstanceId">
+                Stack
+              </a>
+              deleted from
+              <a href="user/@notification.SenderId">@notification.SenderDisplayName</a>&apos;s
+              deck
+              &quot;<a href="deck/@deckDeletedStack.DeckId">@deckDeletedStack.DeckName</a>&quot;.
+            </span>
+          }
+        </td>
+        <td>
+          <button type="button" class="btn btn-outline-danger" @onclick=@(() => _remove(notification))>
+            <span class="oi oi-trash"></span>
+          </button>
+        </td>
+        <td>
+          <span title=@(notification.TimeStamp + " UTC")>
+            @ViewLogic.timestampToPretty(notification.TimeStamp, TimeProvider.utcNow)
+          </span>
+        </td>
+      </tr>
+    }
+  </table>
+}
+<Pager Details=@_details PageChanged=@PageChanged />
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  private IList<Pure.Notification> _notifications;
+  private PagedListDetails _details;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    await PageChanged(1);
+    StateHasChanged();
+  }
+
+  private async Task PageChanged(int pageNumber) {
+    var pagedList = await DbExecutor.QueryAsync(db => NotificationRepository.get(db, _user.Id, pageNumber));
+    _details = pagedList.Details;
+    _notifications = pagedList.Results.ToList();
+  }
+
+  private async Task _remove(Pure.Notification notification) {
+    await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, _user.Id, notification.Id));
+    _notifications.Remove(notification);
+  }
+
+}
