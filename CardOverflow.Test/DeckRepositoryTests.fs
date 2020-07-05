@@ -560,3 +560,65 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
           DeckId = followerDeckId }
         ac
     } |> TaskResult.getOk)
+
+[<Fact>]
+let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 3
+    let publicDeckId = 3
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
+    do! FacetRepositoryTests.addReversedBasicStack c.Db authorId []
+    let acId1 = 1
+    let stackId = 1
+    let followerId = 1
+    let followerDeckId = 1
+    let follow oldDeckId = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false None // mind the test name
+
+    // follow with "OldDeck false None" and both of a pair works
+    do! follow followerDeckId |> TaskResult.getOk
+    
+    let! (acs: AcquiredCard ResizeArray) =
+        StackRepository.GetAcquired c.Db followerId stackId
+    Assert.equal 2 acs.Count
+    let a, b = acs.[0], acs.[1]
+    Assert.equal
+        { AcquiredCardId = 3
+          UserId = followerId
+          StackId = stackId
+          BranchId = 1
+          BranchInstanceMeta = a.BranchInstanceMeta // untested
+          Index = 0s
+          CardState = Normal
+          IsLapsed = false
+          EaseFactorInPermille = 0s
+          IntervalOrStepsIndex = NewStepsIndex 0uy
+          Due = a.Due // untested
+          CardSettingId = followerId
+          Tags = []
+          DeckId = followerDeckId }
+        a
+    Assert.equal
+        { a with
+            AcquiredCardId = 4
+            BranchInstanceMeta = b.BranchInstanceMeta // untested
+            Due = b.Due // untested
+            Index = 1s }
+        b
+    
+    // follow with "OldDeck false None" and one of a pair works
+    do! StackRepository.unacquireStack c.Db followerId stackId
+    let! newDeckId = SanitizeDeckRepository.create c.Db authorId <| Guid.NewGuid().ToString()
+    do! SanitizeDeckRepository.switch c.Db authorId newDeckId acId1
+    
+    do! follow followerDeckId |> TaskResult.getOk
+    
+    let! (ac: AcquiredCard) =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { b with
+            BranchInstanceMeta = ac.BranchInstanceMeta // untested
+            Due = ac.Due // untested
+            AcquiredCardId = 5 }
+        ac
+    } |> TaskResult.getOk)
