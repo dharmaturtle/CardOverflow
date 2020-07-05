@@ -303,8 +303,8 @@ module StackRepository =
                 .SingleOrDefaultAsync()
         return BranchRevision.load acquiredInstanceId r
     }
-    let acquireCardNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) mayUpdate = taskResult {
-        let! ((defaultCardSettingId, deckId): int * int) =
+    let acquireStackNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) mayUpdate = task {
+        let! ((defaultCardSettingId, defaultDeckId): int * int) =
             db.User.Where(fun x -> x.Id = userId).Select(fun x ->
                 x.DefaultCardSettingId,
                 x.DefaultDeckId
@@ -313,7 +313,7 @@ module StackRepository =
             AcquiredCard.initialize
                 userId
                 defaultCardSettingId
-                deckId
+                defaultDeckId
                 []
             |> fun x -> x.copyToNew [] // medTODO get tags from collate
         let new' =
@@ -332,6 +332,7 @@ module StackRepository =
                     new'.Branch <- branchInstance.Branch
                     new'.Stack <- branchInstance.Stack
                     new'.StackId <- branchInstance.StackId
+                    new'.BranchInstanceId <- branchInstance.Id
                     db.AcquiredCard.AddI new'
                     Some new'
                 | Some _, Some old' ->
@@ -340,6 +341,7 @@ module StackRepository =
                         old'.Branch <- branchInstance.Branch
                         old'.Stack <- branchInstance.Stack
                         old'.StackId <- branchInstance.StackId
+                        old'.BranchInstanceId <- branchInstance.Id
                         Some old'
                     else None
                 | None, None -> failwith "impossible"
@@ -351,7 +353,7 @@ module StackRepository =
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        do! acquireCardNoSave db userId branchInstance true
+        do! acquireStackNoSave db userId branchInstance true
         return! db.SaveChangesAsyncI ()
         }
     let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {

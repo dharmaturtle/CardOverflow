@@ -289,14 +289,99 @@ module SanitizeDeckRepository =
                 IsFollowed = isFollowed
                 FollowCount = count
             }
-    let follow (db: CardOverflowDb) userId deckId = taskResult {
-        let! isValid =
-            db.Deck.AnyAsync(fun d ->
+    type FollowDeckType =
+        | NewDeck of string
+        | OldDeck of int
+        | NoDeck
+    type FollowError =
+        | RealError of string
+        | EditExistingIsNull_BranchInstanceIds of int ResizeArray
+    type StackBranchInstanceIndex = {
+        StackId: int
+        BranchId: int
+        BranchInstanceId: int
+        Index: int16
+    }
+    let follow (db: CardOverflowDb) userId deckId followType notifyOfAnyNewChanges editExisting = taskResult {
+        do! db.Deck.AnyAsync(fun d ->
                 d.Id = deckId
-                && not (d.DeckFollowers.Any(fun df -> df.FollowerId = userId))
-            )
-        do! isValid |> Result.requireTrue (sprintf "Either the deck doesn't exist or you are already following it.")
-        DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
+                && d.IsPublic
+            ) |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId |> RealError)
+        if notifyOfAnyNewChanges then
+            do! db.DeckFollowers.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
+                |>% Result.requireFalse (sprintf "You're already following Deck #%i" deckId |> RealError)
+            DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
+        let! newDeckId =
+            match followType with
+            | NewDeck name ->
+                create db userId name |>% Result.mapError RealError |>%% Some
+            | OldDeck id -> taskResult {
+                do! db.Deck.AnyAsync(fun d -> d.Id = id && d.UserId = userId)
+                    |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." id |> RealError)
+                return id |> Some
+                }
+            | NoDeck -> 
+                None |> Ok |> Task.FromResult
+        match newDeckId with
+            | None -> ()
+            | Some newDeckId ->
+                let! (theirs: ResizeArray<StackBranchInstanceIndex>) =
+                    db.AcquiredCard
+                        .Where(fun ac -> ac.DeckId = deckId)
+                        .Select(fun x -> {
+                            StackId = x.StackId
+                            BranchId = x.BranchId
+                            BranchInstanceId = x.BranchInstanceId
+                            Index = x.Index
+                        })
+                        .ToListAsync()
+                let theirStackIds = theirs.Select(fun x -> x.StackId).Distinct().ToList()
+                let! (mine: AcquiredCardEntity ResizeArray) =
+                    db.AcquiredCard
+                        .Where(fun ac -> ac.UserId = userId && theirStackIds.Contains ac.StackId)
+                        .ToListAsync()
+                let! theirs =
+                    match mine.Any(), editExisting with
+                    | false, _
+                    | true, Some true -> Ok theirs
+                    | true, None ->
+                        mine.Select(fun x -> x.BranchInstanceId)
+                            .Distinct()
+                            .ToList()
+                        |> EditExistingIsNull_BranchInstanceIds
+                        |> Error
+                    | true, Some false ->
+                        theirs
+                            .Where(fun t -> not <| mine.Any(fun mine -> mine.BranchInstanceId = t.BranchInstanceId && mine.Index = t.Index))
+                            .ToList()
+                        |> Ok
+                let! defaultCardSettingId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
+                let cardSansIndex =
+                    AcquiredCard.initialize
+                        userId
+                        defaultCardSettingId
+                        newDeckId
+                        []
+                    |> fun x -> x.copyToNew []
+                List.zipOn
+                    (theirs |> Seq.toList)
+                    (mine |> Seq.toList)
+                    (fun theirs mine -> mine.Index = theirs.Index && mine.BranchInstanceId = theirs.BranchInstanceId)
+                |> List.iter
+                    (function
+                    | Some theirs, Some mine ->
+                        mine.StackId <- theirs.StackId
+                        mine.BranchId <- theirs.BranchId
+                        mine.BranchInstanceId <- theirs.BranchInstanceId
+                        mine.Index <- theirs.Index
+                    | Some theirs, None ->
+                        let mine = cardSansIndex theirs.Index
+                        mine.StackId <- theirs.StackId
+                        mine.BranchId <- theirs.BranchId
+                        mine.BranchInstanceId <- theirs.BranchInstanceId
+                        mine.Index <- theirs.Index
+                        db.AcquiredCard.AddI mine
+                    | _ -> failwith "Should be impossible.")
         do! db.SaveChangesAsyncI()
     }
     let unfollow (db: CardOverflowDb) userId deckId = taskResult {
@@ -566,12 +651,12 @@ module SanitizeStackRepository =
             match stackCommand.Kind with
             | Update_BranchId_Title _ ->
                 db.BranchInstance.AddI branchInstance
-                StackRepository.acquireCardNoSave db userId branchInstance false
+                StackRepository.acquireStackNoSave db userId branchInstance false |>% Ok
             | NewBranch_SourceStackId_Title _ ->
-                StackRepository.acquireCardNoSave db userId branchInstance true
+                StackRepository.acquireStackNoSave db userId branchInstance true |>% Ok
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
-                let! (acs: AcquiredCardEntity list) = StackRepository.acquireCardNoSave db userId branchInstance true
+                let! (acs: AcquiredCardEntity list) = StackRepository.acquireStackNoSave db userId branchInstance true
                 for tagId in tagIds do
                     acs.First().Tag_AcquiredCards.Add(Tag_AcquiredCardEntity(TagId = tagId))
                 return acs

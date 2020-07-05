@@ -16,6 +16,7 @@ open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Task
 open FacetRepositoryTests
+open CardOverflow.Sanitation.SanitizeDeckRepository
 
 [<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
@@ -236,7 +237,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
+let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = 3
     let authorDefaultDeckId = 3
@@ -262,13 +263,14 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
             }
         do! NotificationRepository.remove c.Db followerId n.Id
     }
+    let follow deckId = SanitizeDeckRepository.follow c.Db followerId deckId NoDeck true None // mind the test name
 
     // getPublic yields expected deck
     do! Assert.Single >> Assert.equal publicDeck <!> DeckRepository.getPublic c.Db authorId   authorId
     do! Assert.Single >> Assert.equal publicDeck <!> DeckRepository.getPublic c.Db followerId authorId
 
     // follow works
-    do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
+    do! follow publicDeck.Id
     
     do! Assert.Single 
         >> Assert.equal { publicDeck with IsFollowed = true; FollowCount = 1 }
@@ -394,7 +396,7 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
 
     // changing to another public deck that's also followed generates 2 notifications
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId true
-    do! SanitizeDeckRepository.follow c.Db followerId authorDefaultDeckId
+    do! follow authorDefaultDeckId
 
     do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorAcquiredId
 
@@ -473,19 +475,55 @@ let ``SanitizeDeckRepository follow works``(): Task<unit> = (taskResult {
         |> TaskResult.getError
         |>% Assert.equal "Either the deck doesn't exist or you are not following it."
 
+    let getRealError = function
+        | RealError e -> e
+        | _ -> failwith "dude"
     // second follow fails
-    do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
-    do! SanitizeDeckRepository.follow c.Db followerId publicDeck.Id
+    do! follow publicDeck.Id
+    do! follow publicDeck.Id
         |> TaskResult.getError
-        |>% Assert.equal "Either the deck doesn't exist or you are already following it."
+        |>% getRealError
+        |>% Assert.equal (sprintf "You're already following Deck #%i" publicDeck.Id)
 
     // nonexistant deck fails
-    do! SanitizeDeckRepository.follow c.Db followerId 1337
+    do! follow 1337
         |> TaskResult.getError
-        |>% Assert.equal "Either the deck doesn't exist or you are already following it."
+        |>% getRealError
+        |>% Assert.equal "Either Deck #1337 doesn't exist or it isn't public."
+
+    // private deck fails
+    do! follow authorDefaultDeckId
+        |> TaskResult.getError
+        |>% getRealError
+        |>% Assert.equal "Either Deck #3 doesn't exist or it isn't public."
 
     // can delete followed deck
     do! SanitizeDeckRepository.setDefault c.Db authorId authorId
     do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id
     do! DeckRepository.getPublic c.Db followerId authorId |>% Assert.Empty
+    } |> TaskResult.getOk)
+
+[<Fact>]
+let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 3
+    let publicDeckId = 3
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
+    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let branchInstanceId = 1001
+    let followerId = 1
+    let followerDeckId = 1
+    let follow () = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck followerDeckId) false None // mind the test name
+    let getEditExistingIsNull_BranchInstanceIds = function
+        | EditExistingIsNull_BranchInstanceIds e -> e
+        | _ -> failwith "dude"
+
+    // follow with extant card fails
+    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+
+    do! follow ()
+        |> TaskResult.getError
+        |>% getEditExistingIsNull_BranchInstanceIds
+        |>% Assert.Single
+        |>% Assert.equal branchInstanceId
     } |> TaskResult.getOk)
