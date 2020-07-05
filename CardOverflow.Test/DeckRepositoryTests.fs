@@ -236,6 +236,13 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
     } |> TaskResult.getOk)
 
+let getRealError = function
+    | RealError e -> e
+    | _ -> failwith "dude"
+let getEditExistingIsNull_BranchInstanceIds = function
+    | EditExistingIsNull_BranchInstanceIds e -> e
+    | _ -> failwith "dude"
+
 [<Fact>]
 let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
@@ -475,9 +482,6 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
         |> TaskResult.getError
         |>% Assert.equal "Either the deck doesn't exist or you are not following it."
 
-    let getRealError = function
-        | RealError e -> e
-        | _ -> failwith "dude"
     // second follow fails
     do! follow publicDeck.Id
     do! follow publicDeck.Id
@@ -513,17 +517,20 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
     let branchInstanceId = 1001
     let followerId = 1
     let followerDeckId = 1
-    let follow () = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck followerDeckId) false None // mind the test name
-    let getEditExistingIsNull_BranchInstanceIds = function
-        | EditExistingIsNull_BranchInstanceIds e -> e
-        | _ -> failwith "dude"
+    let follow oldDeckId = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false None // mind the test name
 
     // follow with extant card fails
     do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
 
-    do! follow ()
+    do! follow followerDeckId
         |> TaskResult.getError
         |>% getEditExistingIsNull_BranchInstanceIds
         |>% Assert.Single
         |>% Assert.equal branchInstanceId
+    
+    // follow with someone else's deckId fails
+    do! follow 2
+        |> TaskResult.getError
+        |>% getRealError
+        |>% Assert.equal "Either Deck #2 doesn't exist or it doesn't belong to you."
     } |> TaskResult.getOk)
