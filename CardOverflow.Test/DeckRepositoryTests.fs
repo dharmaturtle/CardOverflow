@@ -514,6 +514,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
     let publicDeckId = 3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
     do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let stackId = 1
     let branchInstanceId = 1001
     let followerId = 1
     let followerDeckId = 1
@@ -533,4 +534,29 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
         |> TaskResult.getError
         |>% getRealError
         |>% Assert.equal "Either Deck #2 doesn't exist or it doesn't belong to you."
+    
+    // follow with "OldDeck false None" works
+    do! StackRepository.unacquireStack c.Db followerId stackId
+    
+    do! follow followerDeckId |> TaskResult.getOk
+    
+    let! ac =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { AcquiredCardId = 3
+          UserId = followerId
+          StackId = stackId
+          BranchId = 1
+          BranchInstanceMeta = ac.BranchInstanceMeta // untested
+          Index = 0s
+          CardState = Normal
+          IsLapsed = false
+          EaseFactorInPermille = 0s
+          IntervalOrStepsIndex = NewStepsIndex 0uy
+          Due = ac.Due // untested
+          CardSettingId = followerId
+          Tags = []
+          DeckId = followerDeckId }
+        ac
     } |> TaskResult.getOk)
