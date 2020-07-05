@@ -352,7 +352,7 @@ module SanitizeDeckRepository =
                         |> Error
                     | true, Some false ->
                         theirs
-                            .Where(fun t -> not <| mine.Any(fun mine -> mine.BranchInstanceId = t.BranchInstanceId && mine.Index = t.Index))
+                            .Where(fun t -> not <| mine.Any(fun mine -> mine.StackId = t.StackId && mine.Index = t.Index))
                             .ToList()
                         |> Ok
                 let! defaultCardSettingId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
@@ -366,7 +366,7 @@ module SanitizeDeckRepository =
                 List.zipOn
                     (theirs |> Seq.toList)
                     (mine |> Seq.toList)
-                    (fun theirs mine -> mine.Index = theirs.Index && mine.BranchInstanceId = theirs.BranchInstanceId)
+                    (fun theirs mine -> mine.Index = theirs.Index && mine.StackId = theirs.StackId)
                 |> List.iter
                     (function
                     | Some theirs, Some mine ->
@@ -381,6 +381,7 @@ module SanitizeDeckRepository =
                         mine.BranchInstanceId <- theirs.BranchInstanceId
                         mine.Index <- theirs.Index
                         db.AcquiredCard.AddI mine
+                    | None, Some _ -> () // occurs when `editExisting = false`. `their` card has been filtered out, but `mine` still exists.
                     | _ -> failwith "Should be impossible.")
         do! db.SaveChangesAsyncI()
     }

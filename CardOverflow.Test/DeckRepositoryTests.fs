@@ -508,29 +508,30 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<unit> = (taskResult {
+let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = 3
     let publicDeckId = 3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
     do! FacetRepositoryTests.addBasicStack c.Db authorId []
     let stackId = 1
+    let branchId = 1
     let branchInstanceId = 1001
     let followerId = 1
     let followerDeckId = 1
-    let follow oldDeckId = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false None // mind the test name
+    let follow oldDeckId editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false editExisting // mind the test name
 
     // follow with extant card fails
     do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
 
-    do! follow followerDeckId
+    do! follow followerDeckId None
         |> TaskResult.getError
         |>% getEditExistingIsNull_BranchInstanceIds
         |>% Assert.Single
         |>% Assert.equal branchInstanceId
     
     // follow with someone else's deckId fails
-    do! follow 2
+    do! follow 2 None
         |> TaskResult.getError
         |>% getRealError
         |>% Assert.equal "Either Deck #2 doesn't exist or it doesn't belong to you."
@@ -538,7 +539,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
     // follow with "OldDeck false None" works
     do! StackRepository.unacquireStack c.Db followerId stackId
     
-    do! follow followerDeckId |> TaskResult.getOk
+    do! follow followerDeckId None |> TaskResult.getOk
     
     let! ac =
         StackRepository.GetAcquired c.Db followerId stackId
@@ -547,7 +548,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
         { AcquiredCardId = 3
           UserId = followerId
           StackId = stackId
-          BranchId = 1
+          BranchId = branchId
           BranchInstanceMeta = ac.BranchInstanceMeta // untested
           Index = 0s
           CardState = Normal
@@ -559,6 +560,40 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None"``(): Task<un
           Tags = []
           DeckId = followerDeckId }
         ac
+    
+    // follow with "editExisting false" after update, doesn't update
+    do! FacetRepositoryTests.update c authorId
+            (VUpdateBranchId branchId) id branchId
+    let newBranchInstanceId = branchInstanceId + 1
+    
+    do! follow followerDeckId (Some false) |> TaskResult.getOk
+
+    let! ac2 =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { ac with
+            BranchInstanceMeta = ac2.BranchInstanceMeta // untested
+        }   // unchanged
+        ac2
+    Assert.equal
+        branchInstanceId
+        ac2.BranchInstanceMeta.Id
+    
+    // follow with "editExisting true" after update, updates
+    do! follow followerDeckId (Some true) |> TaskResult.getOk
+
+    let! ac3 =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { ac with
+            BranchInstanceMeta = ac3.BranchInstanceMeta // untested
+        }   // unchanged
+        ac3
+    Assert.equal
+        newBranchInstanceId
+        ac3.BranchInstanceMeta.Id
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -570,15 +605,17 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     do! FacetRepositoryTests.addReversedBasicStack c.Db authorId []
     let acId1 = 1
     let stackId = 1
+    let branchId = 1
     let followerId = 1
     let followerDeckId = 1
-    let follow oldDeckId = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false None // mind the test name
+    let follow oldDeckId editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false editExisting // mind the test name
 
     // follow with "OldDeck false None" and both of a pair works
-    do! follow followerDeckId |> TaskResult.getOk
+    do! follow followerDeckId None |> TaskResult.getOk
     
     let! (acs: AcquiredCard ResizeArray) =
         StackRepository.GetAcquired c.Db followerId stackId
+        |>%% (Seq.sortBy (fun x -> x.Index) >> ResizeArray)
     Assert.equal 2 acs.Count
     let a, b = acs.[0], acs.[1]
     Assert.equal
@@ -601,7 +638,6 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         { a with
             AcquiredCardId = 4
             BranchInstanceMeta = b.BranchInstanceMeta // untested
-            Due = b.Due // untested
             Index = 1s }
         b
     
@@ -610,7 +646,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     let! newDeckId = SanitizeDeckRepository.create c.Db authorId <| Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.switch c.Db authorId newDeckId acId1
     
-    do! follow followerDeckId |> TaskResult.getOk
+    do! follow followerDeckId None |> TaskResult.getOk
     
     let! (ac: AcquiredCard) =
         StackRepository.GetAcquired c.Db followerId stackId
@@ -621,4 +657,54 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
             Due = ac.Due // untested
             AcquiredCardId = 5 }
         ac
+    
+    // follow with "editExisting false" after update, doesn't update
+    do! FacetRepositoryTests.update c authorId
+            (VUpdateBranchId branchId) id branchId
+    
+    do! follow followerDeckId (Some false) |> TaskResult.getOk
+    
+    let! (ac: AcquiredCard) =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { b with
+            BranchInstanceMeta = ac.BranchInstanceMeta // untested
+            Due = ac.Due // untested
+            AcquiredCardId = 5 }
+        ac
+    
+    // follow with "editExisting true" after update, updates
+    do! StackRepository.unacquireStack c.Db followerId stackId
+    do! SanitizeDeckRepository.switch c.Db authorId publicDeckId acId1
+
+    do! follow followerDeckId (Some true) |> TaskResult.getOk
+
+    let! (acs: AcquiredCard ResizeArray) =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% (Seq.sortBy (fun x -> x.Index) >> ResizeArray)
+    Assert.equal 2 acs.Count
+    let a, b = acs.[0], acs.[1]
+    Assert.equal
+        { AcquiredCardId = 7
+          UserId = followerId
+          StackId = stackId
+          BranchId = 1
+          BranchInstanceMeta = a.BranchInstanceMeta // untested
+          Index = 0s
+          CardState = Normal
+          IsLapsed = false
+          EaseFactorInPermille = 0s
+          IntervalOrStepsIndex = NewStepsIndex 0uy
+          Due = a.Due // untested
+          CardSettingId = followerId
+          Tags = []
+          DeckId = followerDeckId }
+        a
+    Assert.equal
+        { a with
+            AcquiredCardId = 6
+            BranchInstanceMeta = b.BranchInstanceMeta // untested
+            Index = 1s }
+        b
     } |> TaskResult.getOk)
