@@ -708,3 +708,93 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
             Index = 1s }
         b
     } |> TaskResult.getOk)
+
+[<Fact>]
+let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 3
+    let publicDeckId = 3
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
+    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let stackId = 1
+    let branchId = 1
+    let branchInstanceId = 1001
+    let followerId = 1
+    let follow deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck deckName) false editExisting // mind the test name
+
+    // follow with extant card fails
+    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+
+    do! follow (Guid.NewGuid().ToString()) None
+        |> TaskResult.getError
+        |>% getEditExistingIsNull_BranchInstanceIds
+        |>% Assert.Single
+        |>% Assert.equal branchInstanceId
+    
+    // follow with huge name fails
+    let longDeckName = Random.cryptographicString 251
+    do! follow longDeckName None
+        |> TaskResult.getError
+        |>% getRealError
+        |>% Assert.equal (sprintf "Deck name '%s' is too long. It must be less than 250 characters." longDeckName)
+    
+    // follow with "OldDeck false None" works
+    do! StackRepository.unacquireStack c.Db followerId stackId
+    let newDeckId = 5
+    
+    do! follow (Guid.NewGuid().ToString()) None |> TaskResult.getOk
+    
+    let! ac =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { AcquiredCardId = 3
+          UserId = followerId
+          StackId = stackId
+          BranchId = branchId
+          BranchInstanceMeta = ac.BranchInstanceMeta // untested
+          Index = 0s
+          CardState = Normal
+          IsLapsed = false
+          EaseFactorInPermille = 0s
+          IntervalOrStepsIndex = NewStepsIndex 0uy
+          Due = ac.Due // untested
+          CardSettingId = followerId
+          Tags = []
+          DeckId = newDeckId }
+        ac
+    
+    // follow with "editExisting false" after update, doesn't update
+    do! FacetRepositoryTests.update c authorId
+            (VUpdateBranchId branchId) id branchId
+    let newBranchInstanceId = branchInstanceId + 1
+    
+    do! follow (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
+
+    let! ac2 =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { ac with
+            BranchInstanceMeta = ac2.BranchInstanceMeta // untested
+        }   // unchanged
+        ac2
+    Assert.equal
+        branchInstanceId
+        ac2.BranchInstanceMeta.Id
+    
+    // follow with "editExisting true" after update, updates
+    do! follow (Guid.NewGuid().ToString()) (Some true) |> TaskResult.getOk
+
+    let! ac3 =
+        StackRepository.GetAcquired c.Db followerId stackId
+        |>%% Assert.Single
+    Assert.equal
+        { ac with
+            BranchInstanceMeta = ac3.BranchInstanceMeta // untested
+        }   // unchanged
+        ac3
+    Assert.equal
+        newBranchInstanceId
+        ac3.BranchInstanceMeta.Id
+    } |> TaskResult.getOk)
