@@ -374,6 +374,7 @@ module SanitizeDeckRepository =
                         mine.BranchId <- theirs.BranchId
                         mine.BranchInstanceId <- theirs.BranchInstanceId
                         mine.Index <- theirs.Index
+                        mine.DeckId <- newDeckId
                     | Some theirs, None ->
                         let mine = cardSansIndex theirs.Index
                         mine.StackId <- theirs.StackId
@@ -383,7 +384,7 @@ module SanitizeDeckRepository =
                         db.AcquiredCard.AddI mine
                     | None, Some _ -> () // occurs when `editExisting = false`. `their` card has been filtered out, but `mine` still exists.
                     | _ -> failwith "Should be impossible.")
-        do! db.SaveChangesAsyncI()
+        return! db.SaveChangesAsyncI()
     }
     let unfollow (db: CardOverflowDb) userId deckId = taskResult {
         do! db.DeckFollowers.AnyAsync(fun df ->

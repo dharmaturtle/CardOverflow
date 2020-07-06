@@ -785,12 +785,14 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     
     // follow with "editExisting true" after update, updates
     do! follow (Guid.NewGuid().ToString()) (Some true) |> TaskResult.getOk
+    let newestDeckId = newDeckId + 2
 
     let! ac3 =
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { ac with
+            DeckId = newestDeckId
             BranchInstanceMeta = ac3.BranchInstanceMeta // untested
         }   // unchanged
         ac3
