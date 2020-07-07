@@ -16,6 +16,7 @@ open System.Linq
 open SimpleInjector.Lifestyles
 open FsToolkit.ErrorHandling
 open FSharp.Control.Tasks
+open CardOverflow.Debug
 
 module Assert =
     let SingleI x =
@@ -25,7 +26,13 @@ module Assert =
             (x |> Seq.sort |> List.ofSeq
             ,y |> Seq.sort |> List.ofSeq)
     let equal (x: 'T) (y: 'T) =
-        Assert.Equal<'T>(x, y)
+        try
+            Assert.Equal<'T>(x, y)
+        with
+            | _ ->
+                Diff.ToConsole(sprintf "%A" x,
+                               sprintf "%A" y)
+                reraise()
     let dateTimeEqual delta (x: DateTime) (y: DateTime) =
         Math.Abs((x - y).TotalSeconds) < delta
         |> Assert.True
