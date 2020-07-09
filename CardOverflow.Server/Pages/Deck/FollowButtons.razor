@@ -18,7 +18,7 @@
       <i class="text-warning fas fa-bell"></i> Unfollow
     </button>
   } else {
-    <button type="button" class="btn btn-outline-secondary" @onclick=@_follow>
+    <button type="button" class="btn btn-outline-secondary" @onclick=@_followClicked>
       <i class="far fa-bell"></i> Follow
     </button>
   }
@@ -27,25 +27,150 @@
   </a>
 </div>
 
+<BSModal @ref=_modal>
+  <EditForm Model=_followCommandViewModel OnValidSubmit=_follow>
+    <BSModalHeader OnClick=_modal.Hide>
+      Follow <a href="user/@Deck.AuthorId">@Deck.AuthorName</a>'s <a href="deck/@Deck.Id">@Deck.Name</a> Deck
+    </BSModalHeader>
+    <BSModalBody>
+      <div class="form-check mb-3">
+        <label class="form-check-label">
+          <InputCheckbox @bind-Value=@_followCommandViewModel.NotifyOfAnyNewChanges class="form-check-input" />
+          Notify me of any new changes.
+        </label>
+      </div>
+      <div class="btn-group mb-3" role="group">
+        <button type="button" @onclick=@(() =>  _SetFollowType(FollowType.NewDeck)) class="btn btn-@(_IsSelected(FollowType.NewDeck))primary">Add Cards To New Deck</button>
+        <button type="button" @onclick=@(() =>  _SetFollowType(FollowType.OldDeck)) class="btn btn-@(_IsSelected(FollowType.OldDeck))primary">Add Cards To Existing Deck</button>
+        <button type="button" @onclick=@(() =>  _SetFollowType(FollowType.NoDeck)) class="btn btn-@(_IsSelected(FollowType.NoDeck))primary">Don't Add Cards</button>
+      </div>
+      @if (_followCommandViewModel.FollowType == FollowType.NewDeck) {
+        <div class="input-group">
+          <label for="@($"nameInput-{Deck.Id}")" class="col-form-label mr-2">
+            New Deck Name:
+          </label>
+          <InputText id="@($"nameInput-{Deck.Id}")" @bind-Value=@_followCommandViewModel.NewDeckName class="form-control" />
+          <ValidationMessage For=@(() => _followCommandViewModel.NewDeckName) style="margin-top: .25rem !important;" />@*simulates mt-1*@
+        </div>
+      } else if (_followCommandViewModel.FollowType == FollowType.OldDeck) {
+        <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => _followCommandViewModel.OldDeckId = id))>
+          @foreach (var deck in _decks) {
+            <option value=@deck.Id selected=@(_followCommandViewModel.OldDeckId == deck.Id)>
+              @deck.Name
+            </option>
+      }
+        </select>
+          }
+      @if (_conflictingBranchInstanceIds.Any()) {
+        <div class="mt-3 p-3 border border-warning rounded">
+          <div class="mb-3">
+            You already have some of <a href="deck/@Deck.Id">@Deck.Name</a>'s cards in your own decks:
+          </div>
+          <div>
+            @foreach (var conflictingBranchInstanceId in _conflictingBranchInstanceIds) {
+              <a href="my/stack?branchinstance=@conflictingBranchInstanceId">
+                @conflictingBranchInstanceId
+              </a>
+            }
+          </div>
+          <div class="my-3">
+            Cards may only be in one deck. Do you wish to migrate these cards to the
+            <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : _decks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
+            deck, or do you wish to leave them in their current decks?
+          </div>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-@_IsSelected(true)primary" @onclick=@(() => _SetEditExisting(true))>
+              Migrate
+            </button>
+            <button type="button" class="btn btn-@_IsSelected(false)primary" @onclick=@(() => _SetEditExisting(false))>
+              Leave in Current Decks
+            </button>
+          </div>
+        </div>
+      }
+      <DataAnnotationsValidator />
+    </BSModalBody>
+    <BSModalFooter>
+      <BSButton Color="Color.Secondary" OnClick=_modal.Hide type="button">
+        Cancel
+      </BSButton>
+      <BSButton Color="Color.Primary" type="submit">
+        @if (_followCommandViewModel.NotifyOfAnyNewChanges) {
+          @if (_followCommandViewModel.FollowType == FollowType.NoDeck) {
+            <span>Follow</span>
+          } else {
+            <span>Follow and add to deck</span>
+          }
+        } else {
+          @if (_followCommandViewModel.FollowType == FollowType.NoDeck) {
+            <span>Close</span>
+          } else {
+            <span>Add to deck</span>
+          }
+        }
+      </BSButton>
+    </BSModalFooter>
+  </EditForm>
+</BSModal>
+
 @code {
+  private BSModal _modal;
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public PublicDeck Deck { get; set; }
+  private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
+  private List<SimpleDeck> _decks = new List<SimpleDeck>();
+  private List<int> _conflictingBranchInstanceIds = new List<int>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
+    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
     StateHasChanged();
   }
 
-  private Task _follow() =>
-    DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, _user.Id, Deck.Id)).Match(ToastService, _ =>
-      Deck.IsFollowed = true
-    );
+  private void _followClicked() {
+    _conflictingBranchInstanceIds = new List<int>();
+    _followCommandViewModel = new FollowCommandViewModel {
+      OldDeckId = _decks.Single(x => x.IsDefault).Id
+    };
+    _modal.Show();
+  }
+
+  private async Task _follow() {
+    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.follow(db, _user.Id, Deck.Id, _followCommandViewModel.FollowTypeDU(), _followCommandViewModel.NotifyOfAnyNewChanges, _followCommandViewModel.EditExisting));
+    r.Match(
+      unit => {
+        Deck.IsFollowed = true;
+        _modal.Hide();
+      },
+      error => {
+        if (error.TryEditExistingIsNull_BranchInstanceIds(out _conflictingBranchInstanceIds)) {
+        } else {
+          ToastService.ShowError(error.GetRealError);
+        }
+      });
+  }
 
   private Task _unfollow() =>
     DbExecutor.QueryAsync(db => SanitizeDeckRepository.unfollow(db, _user.Id, Deck.Id)).Match(ToastService, _ =>
       Deck.IsFollowed = false
     );
+
+  private void _SetFollowType(FollowType followType) =>
+    _followCommandViewModel.FollowType = followType;
+
+  private void _SetEditExisting(bool editExisting) =>
+    _followCommandViewModel.EditExisting = FSharpOption<bool>.Some(editExisting);
+
+  private string _IsSelected(FollowType followType) =>
+    followType == _followCommandViewModel.FollowType
+      ? ""
+      : "outline-";
+
+    private string _IsSelected(bool editExisting) =>
+    editExisting == _followCommandViewModel.EditExisting?.Value
+      ? ""
+      : "outline-";
 
 }

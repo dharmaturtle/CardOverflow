@@ -4,6 +4,7 @@ open System.Collections.Generic
 open System.Linq
 open System.Runtime.CompilerServices
 open System
+open System.Runtime.InteropServices
 
 [<Extension>]
 module Extensions =
@@ -47,3 +48,27 @@ module Extensions =
     [<Extension>]
     let Do(input, (action: Action<'TInput>)) = 
         action.Invoke input
+
+    [<Extension>]
+    let TryOk(this, [<Out>] out: _ byref) =
+        match this with
+        | Ok x -> out <- x; true
+        | _ -> false
+    
+    [<Extension>]
+    let TryError(this, [<Out>] out: _ byref) =
+        match this with
+        | Error x -> out <- x; true
+        | _ -> false
+    
+    [<Extension>]
+    let Cata(this, (fok: Func<'ok, 'unified>), (ferror: Func<'error, 'unified>)) =
+        match this with
+        | Ok ok -> fok.Invoke ok
+        | Error error -> ferror.Invoke error
+    
+    [<Extension>]
+    let Match(this, (fok: 'ok Action), (ferror: 'error Action)) =
+        match this with
+        | Ok ok -> fok.Invoke ok
+        | Error error -> ferror.Invoke error

@@ -18,6 +18,7 @@ open CardOverflow.Api
 open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
+open System.Runtime.InteropServices
 
 [<CLIMutable>]
 type ViewFilter = {
@@ -185,7 +186,10 @@ module SanitizeDeckRepository =
         db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
         |>% (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
     let private validateName (db: CardOverflowDb) userId (deckName: string) = taskResult {
+        let! deckName = deckName |> Result.requireNotNull "Deck name can't be empty"
+        let deckName = deckName.Trim()
         do! if deckName.Length > 250 then Error <| sprintf "Deck name '%s' is too long. It must be less than 250 characters." deckName else Ok ()
+        do! if deckName.Length < 1 then Error <| sprintf "Deck name '%s' is too short. It must be at least 1 character long." deckName else Ok ()
         do! db.Deck.AnyAsync(fun x -> x.Name = deckName && x.UserId = userId)
             |>% (Result.requireFalse <| sprintf "User #%i already has a Deck named '%s'" userId deckName)
     }
@@ -296,6 +300,19 @@ module SanitizeDeckRepository =
     type FollowError =
         | RealError of string
         | EditExistingIsNull_BranchInstanceIds of int ResizeArray
+        with
+            member this.TryRealError([<Out>] out: _ byref) =
+                match this with
+                | RealError x -> out <- x; true
+                | _ -> false
+            member this.GetRealError =
+                match this with
+                | RealError x -> x
+                | _ -> failwith "Not a RealError"
+            member this.TryEditExistingIsNull_BranchInstanceIds([<Out>] out: _ byref) =
+                match this with
+                | EditExistingIsNull_BranchInstanceIds x -> out <- x; true
+                | _ -> false
     type StackBranchInstanceIndex = {
         StackId: int
         BranchId: int
