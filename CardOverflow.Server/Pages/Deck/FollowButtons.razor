@@ -54,13 +54,13 @@
         </div>
       } else if (_followCommandViewModel.FollowType == FollowType.OldDeck) {
         <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => _followCommandViewModel.OldDeckId = id))>
-          @foreach (var deck in _decks) {
+          @foreach (var deck in CallersDecks) {
             <option value=@deck.Id selected=@(_followCommandViewModel.OldDeckId == deck.Id)>
               @deck.Name
             </option>
-      }
-        </select>
           }
+        </select>
+      }
       @if (_conflictingBranchInstanceIds.Any()) {
         <div class="mt-3 p-3 border border-warning rounded">
           <div class="mb-3">
@@ -75,7 +75,7 @@
           </div>
           <div class="my-3">
             Cards may only be in one deck. Do you wish to migrate these cards to the
-            <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : _decks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
+            <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : CallersDecks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
             deck, or do you wish to leave them in their current decks?
           </div>
           <div class="btn-group" role="group">
@@ -118,21 +118,21 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public PublicDeck Deck { get; set; }
+  [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
-  private List<SimpleDeck> _decks = new List<SimpleDeck>();
   private List<int> _conflictingBranchInstanceIds = new List<int>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
+    CallersDecks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
     StateHasChanged();
   }
 
   private void _followClicked() {
     _conflictingBranchInstanceIds = new List<int>();
     _followCommandViewModel = new FollowCommandViewModel {
-      OldDeckId = _decks.Single(x => x.IsDefault).Id
+      OldDeckId = CallersDecks.Single(x => x.IsDefault).Id
     };
     _modal.Show();
   }
@@ -165,12 +165,12 @@
 
   private string _IsSelected(FollowType followType) =>
     followType == _followCommandViewModel.FollowType
-      ? ""
-      : "outline-";
+    ? ""
+    : "outline-";
 
-    private string _IsSelected(bool editExisting) =>
+  private string _IsSelected(bool editExisting) =>
     editExisting == _followCommandViewModel.EditExisting?.Value
-      ? ""
-      : "outline-";
+    ? ""
+    : "outline-";
 
 }

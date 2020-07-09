@@ -17,18 +17,18 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-@if (_profile == null || _decks == null) {
+@if (_profile == null || _othersDecks == null || _callersDecks == null) {
   <span>@_loadingMessage</span>
 } else {
   <h1>
     @_profile.DisplayName
   </h1>
-  @if (_decks.Any()) {
+  @if (_othersDecks.Any()) {
     <h5>
       Public Decks
     </h5>
     <table class="table">
-      @foreach (var deck in _decks) {
+      @foreach (var deck in _othersDecks) {
         <tr>
           <td>
             <a href="deck/@deck.Id">
@@ -36,7 +36,7 @@
             </a>
           </td>
           <td>
-            <FollowButtons Deck=@deck/>
+            <FollowButtons Deck=@deck CallersDecks=@_callersDecks />
           </td>
         </tr>
       }
@@ -48,15 +48,17 @@
   [CascadingParameter] Task<UserClaims> CallerUserTask { get; set; }
   private UserClaims _callerUser = UserClaims.init;
   [Parameter] public int OtherUserId { get; set; }
-  private List<PublicDeck> _decks;
+  private List<PublicDeck> _othersDecks;
+  private List<SimpleDeck> _callersDecks;
   private Profile _profile;
   private string _loadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _callerUser = await CallerUserTask;
-    _decks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, _callerUser.Id, OtherUserId));
+    _othersDecks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, _callerUser.Id, OtherUserId));
     await DbExecutor.QueryAsync(db => UserRepository.profile(db, OtherUserId)).Match(_OnError, x => _profile = x);
+    _callersDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _callerUser.Id));
     StateHasChanged();
   }
 
