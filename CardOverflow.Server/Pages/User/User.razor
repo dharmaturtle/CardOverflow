@@ -1,4 +1,4 @@
-@page "/user/{UserId:int}"
+@page "/user/{OtherUserId:int}"
 
 @using System.Linq
 @using Microsoft.FSharp.Core
@@ -45,18 +45,18 @@
 }
 
 @code {
-  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private UserClaims _user = UserClaims.init;
-  [Parameter] public int UserId { get; set; }
+  [CascadingParameter] Task<UserClaims> CallerUserTask { get; set; }
+  private UserClaims _callerUser = UserClaims.init;
+  [Parameter] public int OtherUserId { get; set; }
   private List<PublicDeck> _decks;
   private Profile _profile;
   private string _loadingMessage = "Loading...";
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    _user = await UserTask;
-    _decks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, _user.Id, UserId));
-    await DbExecutor.QueryAsync(db => UserRepository.profile(db, UserId)).Match(_OnError, x => _profile = x);
+    _callerUser = await CallerUserTask;
+    _decks = await DbExecutor.QueryAsync(db => DeckRepository.getPublic(db, _callerUser.Id, OtherUserId));
+    await DbExecutor.QueryAsync(db => UserRepository.profile(db, OtherUserId)).Match(_OnError, x => _profile = x);
     StateHasChanged();
   }
 
