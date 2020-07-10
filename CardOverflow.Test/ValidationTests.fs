@@ -29,6 +29,16 @@ module Gen =
 module Generators =
     let alphanumericChar = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] |> Gen.elements
     let alphanumericString = alphanumericChar |> Gen.nonEmptyListOf |> Gen.map (List.toArray >> String)
+    let seqOfLength lengthInterval generator =
+        gen {
+            let! length = Gen.choose lengthInterval
+            let! items = generator |> Gen.arrayOfLength length
+            return items |> Seq.ofArray
+        }
+    let stringOfLength lengthInterval =
+        Arb.generate<char>
+        |> seqOfLength lengthInterval
+        |> Gen.map String.Concat
     let standardTemplate fields =
         gen {
             let templateGen =

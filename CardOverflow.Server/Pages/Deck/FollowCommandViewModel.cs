@@ -1,5 +1,6 @@
 using CardOverflow.Pure;
 using CardOverflow.Sanitation;
+using FluentValidation;
 using Microsoft.FSharp.Core;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,6 @@ namespace CardOverflow.Server.Pages.Deck {
   public class FollowCommandViewModel {
     public FollowType FollowType { get; set; } = FollowType.NewDeck;
     public bool NotifyOfAnyNewChanges { get; set; } = true;
-    [StringLength(250, MinimumLength = 1, ErrorMessage = "Deck names must be 1 - 250 characters long.")] // medTODO 250 needs to be tied to the DB max somehow
     public string NewDeckName { get; set; }
     public FSharpOption<bool> EditExisting { get; set; } = FSharpOption<bool>.None;
     public int OldDeckId { get; set; }
@@ -29,6 +29,13 @@ namespace CardOverflow.Server.Pages.Deck {
       FollowType.NoDeck => SanitizeDeckRepository.FollowDeckType.NoDeck,
       var x => throw new Exception($"Unsupported FollowType: {x}")
     };
+  }
+
+  public class FollowCommandViewModelValidator : AbstractValidator<FollowCommandViewModel> {
+    public FollowCommandViewModelValidator() {
+      When(x => x.FollowType == FollowType.NewDeck, () =>
+        RuleFor(x => x.NewDeckName).Length(1, 250).NotNull()); // medTODO 250 needs to be tied to the DB max somehow
+    }
   }
 
 }

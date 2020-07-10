@@ -18,7 +18,7 @@ open FsToolkit.ErrorHandling
 open FSharp.Control.Tasks
 open CardOverflow.Debug
 
-module Assert =
+module internal Assert =
     let SingleI x =
         Assert.Single x |> ignore
     let areEquivalent (x: 'T seq) (y: 'T seq) =
