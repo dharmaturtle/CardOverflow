@@ -14,7 +14,7 @@ open FsCheck
 open FsCheck.Xunit
 open CardOverflow.Entity
 
-module Gen =
+module internal Gen =
     let gen<'a> = // uses the reflection based default generator instead of the registered generator
         Arb.Default.Derive<'a>()
         |> Arb.toGen

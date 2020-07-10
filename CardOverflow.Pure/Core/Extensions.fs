@@ -46,6 +46,10 @@ module Extensions =
         func.Invoke input
 
     [<Extension>]
+    let Pipe(input, (func: Func<'TInput, 'TOutput>)) = 
+        func.Invoke input
+
+    [<Extension>]
     let Do(input, (action: Action<'TInput>)) = 
         action.Invoke input
 
