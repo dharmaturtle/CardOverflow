@@ -4,6 +4,7 @@ using CardOverflow.Server.Pages.Deck;
 using CardOverflow.Test;
 using FsCheck;
 using FsCheck.Xunit;
+using System;
 using System.Linq;
 using Xunit;
 using static CardOverflow.FrontEndTest.TestHelper;
@@ -22,13 +23,13 @@ namespace CardOverflow.FrontEndTest {
     [Fact]
     public void ValidNewDeck_IsValid() {
       var arb = GeneratorsModule.stringOfLength(1, 250).Pipe(_NewDeckGen).Pipe(Arb.From);
-      Prop.ForAll(arb, validNewDeckCommand => {
-        var validator = new FollowCommandViewModelValidator();
+      Prop.ForAll(arb, validNewDeckCommand =>
+        new FollowCommandViewModelValidator()
 
-        var result = validator.Validate(validNewDeckCommand);
+        .Validate(validNewDeckCommand)
 
-        Assert.True(result.IsValid);
-      }).QuickCheckThrowOnFailure();
+        .IsValid
+      ).QuickCheckThrowOnFailure();
     }
 
     [Fact]
@@ -39,13 +40,25 @@ namespace CardOverflow.FrontEndTest {
           GeneratorsModule.stringOfLength(251, 500),
           Gen.Constant<string>(null)
         ).Pipe(_NewDeckGen).Pipe(Arb.From);
-      Prop.ForAll(arb, validNewDeckCommand => {
-        var validator = new FollowCommandViewModelValidator();
+      Prop.ForAll(arb, validNewDeckCommand =>
+        new FollowCommandViewModelValidator()
 
-        var result = validator.Validate(validNewDeckCommand);
+        .Validate(validNewDeckCommand)
 
-        Assert.False(result.IsValid);
-      }).QuickCheckThrowOnFailure();
+        .IsValid.Pipe(Not)
+      ).QuickCheckThrowOnFailure();
+    }
+
+    [Fact]
+    public void AllNonNewDecks_AreValid() {
+      var arb = Arb.Generate<FollowCommandViewModel>().Where(x => x.FollowType != FollowType.NewDeck).Pipe(Arb.From);
+      Prop.ForAll(arb, validNewDeckCommand =>
+        new FollowCommandViewModelValidator()
+
+        .Validate(validNewDeckCommand)
+
+        .IsValid
+      ).QuickCheckThrowOnFailure();
     }
 
   }
