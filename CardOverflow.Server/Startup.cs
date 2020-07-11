@@ -22,6 +22,8 @@ using System;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using BlazorStrap;
+using FluentValidation;
+using CardOverflow.Server.Pages.Deck;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -63,6 +65,7 @@ namespace CardOverflow.Server {
       services.AddBlazoredToast();
       services.AddBootstrapCss();
       services.AddMvc();
+      services.AddTransient<IValidator<FollowCommandViewModel>, FollowCommandViewModelValidator>();
       services.AddSingleton<RandomProvider>();
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
