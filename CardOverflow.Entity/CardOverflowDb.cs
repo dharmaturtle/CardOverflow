@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using CardOverflow.Pure;
@@ -54,6 +54,18 @@ namespace CardOverflow.Entity
             }
         }
 
+        protected void IfNpg(Action t, Action f)
+        {
+            if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+            {
+                t.Invoke();
+            }
+            else
+            {
+                f.Invoke();
+            }
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasPostgresEnum<NotificationType>("public", "NotificationType");
@@ -62,6 +74,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<AcquiredCardEntity>(entity =>
             {
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
+
                 entity.HasIndex(e => e.BranchInstanceId);
 
                 entity.HasIndex(e => e.CardSettingId);
@@ -167,10 +182,11 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.CollateInstanceId);
 
-                entity.HasIndex(e => e.Hash);
+                IfNpg(() => entity.HasIndex(e => e.Hash),
+                    () => entity.Ignore(e => e.Hash));
 
-                entity.HasIndex(e => e.TsVector)
-                    .HasMethod("gin");
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
 
                 entity.HasIndex(e => new { e.Id, e.BranchId })
                     .IsUnique();
@@ -253,10 +269,11 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.CollateId);
 
-                entity.HasIndex(e => e.Hash);
+                IfNpg(() => entity.HasIndex(e => e.Hash),
+                    () => entity.Ignore(e => e.Hash));
 
-                entity.HasIndex(e => e.TsVector)
-                    .HasMethod("gin");
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
 
                 entity.HasIndex(e => new { e.Id, e.CollateId })
                     .IsUnique();
@@ -322,8 +339,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.CommunalFieldId);
 
-                entity.HasIndex(e => e.TsVector)
-                    .HasMethod("gin");
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
 
                 entity.HasIndex(e => new { e.Id, e.CommunalFieldId })
                     .IsUnique();
@@ -355,6 +372,9 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<DeckEntity>(entity =>
             {
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
+
                 entity.HasIndex(e => new { e.Id, e.UserId })
                     .IsUnique();
 
@@ -464,8 +484,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
             {
-                entity.HasIndex(e => e.TsVector)
-                    .HasMethod("gin");
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
             });
 
             modelBuilder.Entity<Relationship_AcquiredCardEntity>(entity =>
@@ -517,8 +537,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<TagEntity>(entity =>
             {
-                entity.HasIndex(e => e.TsVector)
-                    .HasMethod("gin");
+                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
+                    () => entity.Ignore(e => e.TsVector));
             });
 
             modelBuilder.Entity<Tag_AcquiredCardEntity>(entity =>
