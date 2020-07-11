@@ -531,13 +531,13 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         |>% Assert.equal branchInstanceId
     
     // follow with someone else's deckId fails
+    do! StackRepository.unacquireStack c.Db followerId stackId
     do! follow 2 None
         |> TaskResult.getError
         |>% getRealError
         |>% Assert.equal "Either Deck #2 doesn't exist or it doesn't belong to you."
     
     // follow with "OldDeck false None" works
-    do! StackRepository.unacquireStack c.Db followerId stackId
     
     do! follow followerDeckId None |> TaskResult.getOk
     
@@ -722,16 +722,20 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let followerId = 1
     let follow deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck deckName) false editExisting // mind the test name
 
-    // follow with extant card fails
+    // follow with extant card fails and doesn't add a deck
+    Assert.equal 3 <| c.Db.Deck.Count()
     do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
 
     do! follow (Guid.NewGuid().ToString()) None
+        
         |> TaskResult.getError
         |>% getEditExistingIsNull_BranchInstanceIds
         |>% Assert.Single
         |>% Assert.equal branchInstanceId
-    
+    Assert.equal 3 <| c.Db.Deck.Count()
+
     // follow with huge name fails
+    do! StackRepository.unacquireStack c.Db followerId stackId
     let longDeckName = Random.cryptographicString 251
     do! follow longDeckName None
         |> TaskResult.getError
@@ -739,8 +743,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         |>% Assert.equal (sprintf "Deck name '%s' is too long. It must be less than 250 characters." longDeckName)
     
     // follow with "OldDeck false None" works
-    do! StackRepository.unacquireStack c.Db followerId stackId
-    let newDeckId = 5
+    let newDeckId = 4
     
     do! follow (Guid.NewGuid().ToString()) None |> TaskResult.getOk
     

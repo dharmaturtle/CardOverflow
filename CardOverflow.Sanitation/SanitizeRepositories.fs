@@ -328,20 +328,9 @@ module SanitizeDeckRepository =
             do! db.DeckFollowers.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
                 |>% Result.requireFalse (sprintf "You're already following Deck #%i" deckId |> RealError)
             DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
-        let! newDeckId =
-            match followType with
-            | NewDeck name ->
-                create db userId name |>% Result.mapError RealError |>%% Some
-            | OldDeck id -> taskResult {
-                do! db.Deck.AnyAsync(fun d -> d.Id = id && d.UserId = userId)
-                    |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." id |> RealError)
-                return id |> Some
-                }
-            | NoDeck -> 
-                None |> Ok |> Task.FromResult
-        match newDeckId with
-            | None -> ()
-            | Some newDeckId ->
+        match followType with
+            | NoDeck -> ()
+            | NewDeck | OldDeck  ->
                 let! (theirs: ResizeArray<StackBranchInstanceIndex>) =
                     db.AcquiredCard
                         .Where(fun ac -> ac.DeckId = deckId)
@@ -373,6 +362,16 @@ module SanitizeDeckRepository =
                             .ToList()
                         |> Ok
                 let! defaultCardSettingId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
+                let! newDeckId =
+                    match followType with
+                    | NewDeck name ->
+                        create db userId name |>% Result.mapError RealError
+                    | OldDeck id -> taskResult {
+                        do! db.Deck.AnyAsync(fun d -> d.Id = id && d.UserId = userId)
+                            |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." id |> RealError)
+                        return id
+                        }
+                    | _ -> failwith "impossible"
                 let cardSansIndex =
                     AcquiredCard.initialize
                         userId
