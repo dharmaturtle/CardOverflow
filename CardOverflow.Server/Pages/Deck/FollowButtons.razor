@@ -66,16 +66,25 @@
         default:
           break;
       }
-      @if (_conflictingBranchInstanceIds.Any()) {
+      @if (_conflictingBranchInstanceIdsByDeckId.Any()) {
         <div class="mt-3 p-3 border border-warning rounded">
           <div class="mb-3">
             You already have some of <a href="deck/@Deck.Id">@Deck.Name</a>'s cards in your own decks:
           </div>
           <div>
-            @foreach (var conflictingBranchInstanceId in _conflictingBranchInstanceIds) {
-              <a href="my/stack?branchinstance=@conflictingBranchInstanceId">
-                @conflictingBranchInstanceId
-              </a>
+            @foreach (var (deckId, conflictingBranchInstanceIds) in _conflictingBranchInstanceIdsByDeckId) {
+              <div class="card">
+                <div class="card-header ">
+                  <h5 class="mb-0">@CallersDecks.Single(x => x.Id == deckId).Name</h5>
+                </div>
+                <div class="card-body">
+                  @foreach (var conflictingBranchInstanceId in conflictingBranchInstanceIds) {
+                    <a href="my/stack?branchinstance=@conflictingBranchInstanceId">
+                      @conflictingBranchInstanceId
+                    </a>
+                  }
+                </div>
+              </div>
             }
           </div>
           <div class="my-3">
@@ -125,7 +134,7 @@
   [Parameter] public PublicDeck Deck { get; set; }
   [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
-  private List<int> _conflictingBranchInstanceIds = new List<int>();
+  private List<Tuple<int, List<int>>> _conflictingBranchInstanceIdsByDeckId = new List<Tuple<int, List<int>>>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -135,7 +144,7 @@
   }
 
   private void _followClicked() {
-    _conflictingBranchInstanceIds = new List<int>();
+    _conflictingBranchInstanceIdsByDeckId = new List<Tuple<int, List<int>>>();
     _followCommandViewModel = new FollowCommandViewModel {
       OldDeckId = CallersDecks.Single(x => x.IsDefault).Id
     };
@@ -150,7 +159,7 @@
         _modal.Hide();
       },
       error => {
-        if (error.TryEditExistingIsNull_BranchInstanceIds(out _conflictingBranchInstanceIds)) {
+        if (error.TryEditExistingIsNull_BranchInstanceIdsByDeckId(out _conflictingBranchInstanceIdsByDeckId)) {
         } else {
           ToastService.ShowError(error.GetRealError);
         }

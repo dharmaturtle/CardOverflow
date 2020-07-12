@@ -299,7 +299,7 @@ module SanitizeDeckRepository =
         | NoDeck
     type FollowError =
         | RealError of string
-        | EditExistingIsNull_BranchInstanceIds of int ResizeArray
+        | EditExistingIsNull_BranchInstanceIdsByDeckId of (int * ResizeArray<int>) ResizeArray
         with
             member this.TryRealError([<Out>] out: _ byref) =
                 match this with
@@ -309,9 +309,9 @@ module SanitizeDeckRepository =
                 match this with
                 | RealError x -> x
                 | _ -> failwith "Not a RealError"
-            member this.TryEditExistingIsNull_BranchInstanceIds([<Out>] out: _ byref) =
+            member this.TryEditExistingIsNull_BranchInstanceIdsByDeckId([<Out>] out: _ byref) =
                 match this with
-                | EditExistingIsNull_BranchInstanceIds x -> out <- x; true
+                | EditExistingIsNull_BranchInstanceIdsByDeckId x -> out <- x; true
                 | _ -> false
     type StackBranchInstanceIndex = {
         StackId: int
@@ -351,10 +351,11 @@ module SanitizeDeckRepository =
                     | false, _
                     | true, Some true -> Ok theirs
                     | true, None ->
-                        mine.Select(fun x -> x.BranchInstanceId)
-                            .Distinct()
+                        mine.Select(fun x -> x.DeckId, x.BranchInstanceId)
+                            .GroupBy(fun (deckId, _) -> deckId)
+                            .Select(fun x -> x.Key, x.Select(fun (_, branchInstanceId) -> branchInstanceId).Distinct().ToList())
                             .ToList()
-                        |> EditExistingIsNull_BranchInstanceIds
+                        |> EditExistingIsNull_BranchInstanceIdsByDeckId
                         |> Error
                     | true, Some false ->
                         theirs

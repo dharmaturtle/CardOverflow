@@ -239,8 +239,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 let getRealError = function
     | RealError e -> e
     | _ -> failwith "dude"
-let getEditExistingIsNull_BranchInstanceIds = function
-    | EditExistingIsNull_BranchInstanceIds e -> e
+let getEditExistingIsNull_BranchInstanceIdsByDeckId = function
+    | EditExistingIsNull_BranchInstanceIdsByDeckId e -> e
     | _ -> failwith "dude"
 
 [<Fact>]
@@ -526,9 +526,9 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
 
     do! follow followerDeckId None
         |> TaskResult.getError
-        |>% getEditExistingIsNull_BranchInstanceIds
+        |>% getEditExistingIsNull_BranchInstanceIdsByDeckId
         |>% Assert.Single
-        |>% Assert.equal branchInstanceId
+        |>% Assert.equal (followerDeckId, ResizeArray.singleton branchInstanceId)
     
     // follow with someone else's deckId fails
     do! StackRepository.unacquireStack c.Db followerId stackId
@@ -720,6 +720,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let branchId = 1
     let branchInstanceId = 1001
     let followerId = 1
+    let followerDeckId = 1
     let follow deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck deckName) false editExisting // mind the test name
 
     // follow with extant card fails and doesn't add a deck
@@ -729,9 +730,9 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     do! follow (Guid.NewGuid().ToString()) None
         
         |> TaskResult.getError
-        |>% getEditExistingIsNull_BranchInstanceIds
+        |>% getEditExistingIsNull_BranchInstanceIdsByDeckId
         |>% Assert.Single
-        |>% Assert.equal branchInstanceId
+        |>% Assert.equal (followerDeckId, ResizeArray.singleton branchInstanceId)
     Assert.equal 3 <| c.Db.Deck.Count()
 
     // follow with huge name fails
