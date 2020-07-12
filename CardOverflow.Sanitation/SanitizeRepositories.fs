@@ -185,6 +185,9 @@ module SanitizeDeckRepository =
     let private tryGet (db: CardOverflowDb) userId deckId =
         db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
         |>% (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+    let private requireIsPublic (db: CardOverflowDb) deckId =
+        db.Deck.AnyAsync(fun x -> x.Id = deckId && x.IsPublic)
+        |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId)
     let private validateName (db: CardOverflowDb) userId (deckName: string) = taskResult {
         let! deckName = deckName |> Result.requireNotNull "Deck name can't be empty"
         let deckName = deckName.Trim()
@@ -320,10 +323,7 @@ module SanitizeDeckRepository =
         Index: int16
     }
     let follow (db: CardOverflowDb) userId deckId followType notifyOfAnyNewChanges editExisting = taskResult {
-        do! db.Deck.AnyAsync(fun d ->
-                d.Id = deckId
-                && d.IsPublic
-            ) |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId |> RealError)
+        do! requireIsPublic db deckId |>% Result.mapError RealError
         if notifyOfAnyNewChanges then
             do! db.DeckFollowers.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
                 |>% Result.requireFalse (sprintf "You're already following Deck #%i" deckId |> RealError)
@@ -420,17 +420,18 @@ module SanitizeDeckRepository =
         DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.RemoveI
         do! db.SaveChangesAsyncI()
     }
-    let diff (db: CardOverflowDb) userId theirDeckId myDeckId = task {
-        let theirs = db.Deck.Where(fun x -> x.Id = theirDeckId && x.IsPublic)
-        let mine   = db.Deck.Where(fun x -> x.Id = myDeckId    && x.UserId = userId)
-        let parse (x: DeckEntity IQueryable) =
-            x.Select(fun x -> x.AcquiredCards.Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId))
+    let diff (db: CardOverflowDb) userId theirDeckId myDeckId = taskResult {
+        do! requireIsPublic db theirDeckId
+        do! deckBelongsTo db userId myDeckId
+        let get deckId =
+            db.AcquiredCard
+                .Where(fun x -> x.DeckId = deckId)
+                .Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId)
                 .ToListAsync()
-            |>% Seq.collect id
             |>% Seq.map StackBranchInstanceIds.fromTuple
             |>% List.ofSeq
-        let! theirs = parse theirs
-        let! mine   = parse mine
+        let! theirs = get theirDeckId
+        let! mine   = get myDeckId
         return Diff.ids theirs mine
     }
 

@@ -809,3 +809,28 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         newBranchInstanceId
         ac3.BranchInstanceMeta.Id
     } |> TaskResult.getOk)
+
+[<Fact>]
+let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
+    let authorId = 3
+    let publicDeckId = 3
+    use c = new TestContainer()
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
+    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let stackId = 1
+    let branchId = 1
+    let branchInstanceId = 1001
+    let followerId = 1
+    let followerDeckId = 1
+
+    // diffing two decks with the same card yields Unchanged
+    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+    
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.Single
+    |>%% Assert.equal
+        (Unchanged { StackId = stackId
+                     BranchId = branchId
+                     BranchInstanceId = branchInstanceId })
+    } |> TaskResult.getOk)
