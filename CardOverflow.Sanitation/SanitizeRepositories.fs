@@ -188,6 +188,9 @@ module SanitizeDeckRepository =
     let private requireIsPublic (db: CardOverflowDb) deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && x.IsPublic)
         |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId)
+    let private verifyVisible (db: CardOverflowDb) userId deckId =
+        db.Deck.AnyAsync(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
+        |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist, or it isn't public, or you don't own it." deckId)
     let private validateName (db: CardOverflowDb) userId (deckName: string) = taskResult {
         let! deckName = deckName |> Result.requireNotNull "Deck name can't be empty"
         let deckName = deckName.Trim()
@@ -421,8 +424,8 @@ module SanitizeDeckRepository =
         do! db.SaveChangesAsyncI()
     }
     let diff (db: CardOverflowDb) userId theirDeckId myDeckId = taskResult {
-        do! requireIsPublic db theirDeckId
-        do! deckBelongsTo db userId myDeckId
+        do! verifyVisible db userId theirDeckId
+        do! verifyVisible db userId myDeckId
         let get deckId =
             db.AcquiredCard
                 .Where(fun x -> x.DeckId = deckId)

@@ -833,4 +833,30 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
         (Unchanged { StackId = stackId
                      BranchId = branchId
                      BranchInstanceId = branchInstanceId })
+
+    // diffing with a deck that isn't public fails
+    let nonpublicDeckId = 2
+    do! SanitizeDeckRepository.diff c.Db followerId nonpublicDeckId followerDeckId
+    
+    |>% Result.getError
+    |>% Assert.equal "Either Deck #2 doesn't exist, or it isn't public, or you don't own it."
+
+    // diffing with a deck that doesn't exist fails
+    let nonexistantDeckId = 1337
+    do! SanitizeDeckRepository.diff c.Db followerId nonexistantDeckId followerDeckId
+    
+    |>% Result.getError
+    |>% Assert.equal "Either Deck #1337 doesn't exist, or it isn't public, or you don't own it."
+
+    // diffing with a deck that isn't public fails
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId nonpublicDeckId
+    
+    |>% Result.getError
+    |>% Assert.equal "Either Deck #2 doesn't exist, or it isn't public, or you don't own it."
+
+    // diffing with a deck that doesn't exist fails
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId nonexistantDeckId
+    
+    |>% Result.getError
+    |>% Assert.equal "Either Deck #1337 doesn't exist, or it isn't public, or you don't own it."
     } |> TaskResult.getOk)
