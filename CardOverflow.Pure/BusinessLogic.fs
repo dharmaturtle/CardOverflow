@@ -228,6 +228,14 @@ type DiffState =
     | AddedStack of StackBranchInstanceIds
     | RemovedStack of StackBranchInstanceIds
 
+type DiffStateSummary = {
+    Unchanged: StackBranchInstanceIds list
+    BranchInstanceChanged: (StackBranchInstanceIds * StackBranchInstanceIds) list // theirs, mine
+    BranchChanged: (StackBranchInstanceIds * StackBranchInstanceIds) list
+    AddedStack: StackBranchInstanceIds list
+    RemovedStack: StackBranchInstanceIds list
+}
+
 module Diff =
     let ids aIds bIds =
         List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId)
@@ -244,3 +252,27 @@ module Diff =
             | None  , Some b -> RemovedStack b
             | None  , None   -> failwith "wut"
         )
+    let toSummary diffStates =
+        let unchanged = ResizeArray.empty
+        let branchInstanceChanged = ResizeArray.empty
+        let branchChanged = ResizeArray.empty
+        let addedStack = ResizeArray.empty
+        let removedStack = ResizeArray.empty
+        diffStates |> List.iter
+            (function
+            | Unchanged x ->
+                unchanged.Add x
+            | BranchInstanceChanged (x, y) ->
+                branchInstanceChanged.Add (x, y)
+            | BranchChanged (x, y) ->
+                branchChanged.Add (x, y)
+            | AddedStack x ->
+                addedStack.Add x
+            | RemovedStack x ->
+                removedStack.Add x)
+        {   Unchanged = unchanged |> Seq.toList
+            BranchInstanceChanged = branchInstanceChanged |> Seq.toList
+            BranchChanged = branchChanged |> Seq.toList
+            AddedStack = addedStack |> Seq.toList
+            RemovedStack = removedStack |> Seq.toList
+        }

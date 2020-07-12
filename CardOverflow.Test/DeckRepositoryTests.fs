@@ -457,13 +457,18 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                            DeletedBranchInstanceId = instance3 } }
 
     // diff says a stack was removed
-    let! diffs = SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
 
-    Assert.equal
-        [ RemovedStack { StackId = stackId
-                         BranchId = branchId
-                         BranchInstanceId = instance2 } ]
-        diffs
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack =
+                [ { StackId = stackId
+                    BranchId = branchId
+                    BranchInstanceId = instance2 }]
+        }
 
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
@@ -828,11 +833,16 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
-    |>%% Assert.Single
     |>%% Assert.equal
-        (Unchanged { StackId = stackId
-                     BranchId = branchId
-                     BranchInstanceId = branchInstanceId })
+        {   Unchanged =
+                [{ StackId = stackId
+                   BranchId = branchId
+                   BranchInstanceId = branchInstanceId }]
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack = []
+        }
 
     // diffing with a deck that isn't public fails
     let nonpublicDeckId = 2
