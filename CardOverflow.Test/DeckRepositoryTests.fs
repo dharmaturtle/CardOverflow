@@ -519,16 +519,21 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     let branchInstanceId = 1001
     let followerId = 1
     let followerDeckId = 1
+    let! newFollowerDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
     let follow oldDeckId editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false editExisting // mind the test name
 
-    // follow with extant card fails
+    // follow targeting newFollowerDeckId with extant card in default deck fails
     do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
 
-    do! follow followerDeckId None
+    do! follow newFollowerDeckId None
         |> TaskResult.getError
         |>% getEditExistingIsNull_BranchInstanceIdsByDeckId
         |>% Assert.Single
         |>% Assert.equal (followerDeckId, ResizeArray.singleton branchInstanceId)
+
+    // follow targeting default deck with extant card in default deck works
+    do! follow followerDeckId None
+        |> TaskResult.getOk
     
     // follow with someone else's deckId fails
     do! StackRepository.unacquireStack c.Db followerId stackId

@@ -354,9 +354,18 @@ module SanitizeDeckRepository =
                         mine.Select(fun x -> x.DeckId, x.BranchInstanceId)
                             .GroupBy(fun (deckId, _) -> deckId)
                             .Select(fun x -> x.Key, x.Select(fun (_, branchInstanceId) -> branchInstanceId).Distinct().ToList())
-                            .ToList()
-                        |> EditExistingIsNull_BranchInstanceIdsByDeckId
-                        |> Error
+                            .Where(fun (deckId, _) ->
+                                match followType with
+                                | OldDeck oldDeckId -> oldDeckId <> deckId
+                                | _ -> true
+                            )
+                        |> Seq.toList
+                        |> function
+                        | [] -> Ok theirs
+                        | grps ->
+                            grps.ToList()
+                            |> EditExistingIsNull_BranchInstanceIdsByDeckId
+                            |> Error
                     | true, Some false ->
                         theirs
                             .Where(fun t -> not <| mine.Any(fun mine -> mine.StackId = t.StackId && mine.Index = t.Index))
