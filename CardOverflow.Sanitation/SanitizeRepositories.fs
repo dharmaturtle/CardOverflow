@@ -429,9 +429,9 @@ module SanitizeDeckRepository =
         let get deckId =
             db.AcquiredCard
                 .Where(fun x -> x.DeckId = deckId)
-                .Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId)
+                .Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId, x.Index)
                 .ToListAsync()
-            |>% Seq.map StackBranchInstanceIds.fromTuple
+            |>% Seq.map StackBranchInstanceIndex.fromTuple
             |>% List.ofSeq
         let! theirs = get theirDeckId
         let! mine   = get myDeckId

@@ -151,6 +151,18 @@ module Generators =
         }
     let StackBranchInstanceIds3 =
         StackBranchInstanceIds 3
+    let StackBranchInstanceIndex length = gen {
+        let! stacks = uniqueInts length
+        let! branches = uniqueInts length
+        let! branchInstances = uniqueInts length
+        let! indexes = Arb.generate<int16> |> Gen.listOfLength length
+        return
+            Seq.zip4 stacks branches branchInstances indexes
+            |> Seq.map StackBranchInstanceIndex.fromTuple
+            |> List.ofSeq
+        }
+    let StackBranchInstanceIndex3 =
+        StackBranchInstanceIndex 3
 
 type Generators =
     static member editStackCommand =
@@ -163,6 +175,8 @@ type Generators =
         Generators.notificationEntity |> Arb.fromGen
     static member StackBranchInstanceIds3 =
         Generators.StackBranchInstanceIds3 |> Arb.fromGen
+    static member StackBranchInstanceIndex3 =
+        Generators.StackBranchInstanceIndex3 |> Arb.fromGen
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])

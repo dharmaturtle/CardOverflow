@@ -214,6 +214,13 @@ type StackBranchInstanceIds = {
     BranchInstanceId: int
 }
 
+type StackBranchInstanceIndex = {
+    StackId: int
+    BranchId: int
+    BranchInstanceId: int
+    Index: int16
+}
+
 module StackBranchInstanceIds =
     let fromTuple (stackId, branchId, branchInstanceId) =
         {   StackId = stackId
@@ -221,29 +228,44 @@ module StackBranchInstanceIds =
             BranchInstanceId = branchInstanceId
         }
 
+module StackBranchInstanceIndex =
+    let fromTuple (stackId, branchId, branchInstanceId, index) =
+        {   StackId = stackId
+            BranchId = branchId
+            BranchInstanceId = branchInstanceId
+            Index = index
+        }
+
 type DiffState =
-    | Unchanged of StackBranchInstanceIds
-    | BranchInstanceChanged of StackBranchInstanceIds * StackBranchInstanceIds // theirs, mine
-    | BranchChanged of StackBranchInstanceIds * StackBranchInstanceIds
-    | AddedStack of StackBranchInstanceIds
-    | RemovedStack of StackBranchInstanceIds
+    | Unchanged of StackBranchInstanceIndex
+    | IndexChanged of StackBranchInstanceIndex * StackBranchInstanceIndex // theirs, mine
+    | BranchInstanceChanged of StackBranchInstanceIndex * StackBranchInstanceIndex
+    | BranchChanged of StackBranchInstanceIndex * StackBranchInstanceIndex
+    | AddedStack of StackBranchInstanceIndex
+    | RemovedStack of StackBranchInstanceIndex
 
 type DiffStateSummary = {
-    Unchanged: StackBranchInstanceIds list
-    BranchInstanceChanged: (StackBranchInstanceIds * StackBranchInstanceIds) list // theirs, mine
-    BranchChanged: (StackBranchInstanceIds * StackBranchInstanceIds) list
-    AddedStack: StackBranchInstanceIds list
-    RemovedStack: StackBranchInstanceIds list
+    Unchanged: StackBranchInstanceIndex list
+    IndexChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list // theirs, mine
+    BranchInstanceChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
+    BranchChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
+    AddedStack: StackBranchInstanceIndex list
+    RemovedStack: StackBranchInstanceIndex list
 }
 
 module Diff =
     let ids aIds bIds =
+        let sort = List.sortBy (fun x -> x.StackId, x.BranchId, x.BranchInstanceId, x.Index)
+        let aIds = aIds |> sort
+        let bIds = bIds |> sort
         List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId)
         |> List.map (
             function
             | Some a, Some b ->
-                if a.BranchInstanceId = b.BranchInstanceId then
+                if a.BranchInstanceId = b.BranchInstanceId && a.Index = b.Index then
                     Unchanged a
+                elif a.BranchInstanceId = b.BranchInstanceId then
+                    IndexChanged (a, b)
                 elif a.BranchId = b.BranchId then
                     BranchInstanceChanged (a, b)
                 else
@@ -254,6 +276,7 @@ module Diff =
         )
     let toSummary diffStates =
         let unchanged = ResizeArray.empty
+        let indexChanged = ResizeArray.empty
         let branchInstanceChanged = ResizeArray.empty
         let branchChanged = ResizeArray.empty
         let addedStack = ResizeArray.empty
@@ -262,6 +285,8 @@ module Diff =
             (function
             | Unchanged x ->
                 unchanged.Add x
+            | IndexChanged (x, y) ->
+                indexChanged.Add (x, y)
             | BranchInstanceChanged (x, y) ->
                 branchInstanceChanged.Add (x, y)
             | BranchChanged (x, y) ->
@@ -271,6 +296,7 @@ module Diff =
             | RemovedStack x ->
                 removedStack.Add x)
         {   Unchanged = unchanged |> Seq.toList
+            IndexChanged = indexChanged |> Seq.toList
             BranchInstanceChanged = branchInstanceChanged |> Seq.toList
             BranchChanged = branchChanged |> Seq.toList
             AddedStack = addedStack |> Seq.toList

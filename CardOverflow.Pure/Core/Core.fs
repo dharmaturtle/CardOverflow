@@ -233,6 +233,10 @@ module Seq =
             while en.MoveNext () do
                 yield en.Current
         }
+    let zip4 source1 source2 source3 source4 =
+        let x = Seq.zip source1 source2
+        let y = Seq.zip source3 source4
+        Seq.zip x y |> Seq.map (fun ((a, b), (c, d)) -> a, b, c, d)
 
 module SeqOption =
     let somes mma = mma |> Seq.choose id

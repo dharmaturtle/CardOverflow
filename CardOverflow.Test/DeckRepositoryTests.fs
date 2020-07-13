@@ -461,13 +461,15 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
 
     |>%% Assert.equal
         {   Unchanged = []
+            IndexChanged = []
             BranchInstanceChanged = []
             BranchChanged = []
             AddedStack = []
             RemovedStack =
                 [ { StackId = stackId
                     BranchId = branchId
-                    BranchInstanceId = instance2 }]
+                    BranchInstanceId = instance2
+                    Index = 0s }]
         }
 
     // unfollow works
@@ -837,7 +839,9 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
         {   Unchanged =
                 [{ StackId = stackId
                    BranchId = branchId
-                   BranchInstanceId = branchInstanceId }]
+                   BranchInstanceId = branchInstanceId
+                   Index = 0s }]
+            IndexChanged = []
             BranchInstanceChanged = []
             BranchChanged = []
             AddedStack = []
