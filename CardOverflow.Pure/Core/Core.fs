@@ -201,15 +201,20 @@ module List =
         match xs with
         | [] -> [x]
         | _  -> xs
+    let partition1 p xs =
+        let a, b = xs |> List.partition p
+        match a with
+        | [] -> None, b
+        | head :: tail -> Some head, tail @ b
     let rec zipOn xs ys equals =
-        let EQUALS b a = equals a b
+        let slauqe b a = equals a b
         match xs, ys with
         | x :: xs, _ ->
-            let y = ys |> List.filter (equals x) |> List.tryExactlyOne
-            (Some x, y) :: zipOn xs (ys |> List.filter (not << equals x)) equals
+            let y, tail = ys |> partition1 (equals x)
+            (Some x, y) :: zipOn xs tail equals
         | _, y :: ys ->
-            let x = xs |> List.filter (EQUALS y) |> List.tryExactlyOne
-            (x, Some y) :: zipOn (xs |> List.filter (not << EQUALS y)) ys equals
+            let x, tail = xs |> partition1 (slauqe y)
+            (x, Some y) :: zipOn tail ys equals
         | [], [] -> []
 
 [<RequireQualifiedAccess>]

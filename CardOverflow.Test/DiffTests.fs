@@ -2,6 +2,7 @@ module DiffTests
 
 open CardOverflow.Api
 open CardOverflow.Pure
+open CardOverflow.Debug
 open Xunit
 open System
 open System.Linq
@@ -95,3 +96,14 @@ let ``Diff IndexChanged`` (stackBranchInstanceIndexes: StackBranchInstanceIndex 
             | 0 -> IndexChanged (x, mine.[0])
             | _ -> AddedStack x
         ))
+        
+[<Generators>]
+let ``Diff of deck with itself is unchanged _ when it contains 2 of the same branch with differing indexes`` (stackBranchInstanceIndex: StackBranchInstanceIndex) : unit =
+    let a =
+        [ { stackBranchInstanceIndex with Index = 0s }
+          { stackBranchInstanceIndex with Index = 1s } ]
+    
+    Diff.ids a a
+    
+    |> Assert.areEquivalent
+        (a |> List.map Unchanged)
