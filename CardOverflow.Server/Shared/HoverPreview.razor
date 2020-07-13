@@ -1,8 +1,10 @@
-<span class="curate-tooltip-target">
+<span class="curate-tooltip-target" @onmouseover=@(() => _load = true)>
   <span class="px-@Padding oi oi-eye@(IsAcquired ? " text-success" : "")" aria-hidden="true">@AdditionalHoverTarget</span>
-  <span class="curate-tooltip-content">
-    @ChildContent
-  </span>
+  @if (_load) {
+    <span class="curate-tooltip-content">
+      @ChildContent
+    </span>
+  }
 </span>
 
 @code {
@@ -10,4 +12,5 @@
   [Parameter] public RenderFragment AdditionalHoverTarget { get; set; }
   [Parameter] public bool IsAcquired { get; set; }
   [Parameter] public int Padding { get; set; } = 3;
+  private bool _load;
 }
