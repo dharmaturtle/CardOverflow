@@ -1,0 +1,63 @@
+@page "/diff/deck/{TheirDeckId:int}/{MyDeckId:int}"
+
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@using Microsoft.FSharp.Collections
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+
+@if (_diffState == null || _theirDeck == null || _myDeck == null) {
+  <span>Loading...</span>
+} else {
+  <div class="row align-items-center text-center h3">
+    <div class="col">
+      <div>
+        <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+      </div>
+      <small>
+        by <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>
+      </small>
+    </div>
+    <div class="col-1">
+      vs.
+    </div>
+    <div class="col">
+      <div>
+        <a href="deck/@_myDeck.Id">@_myDeck.Name</a>
+      </div>
+      <small>
+        by <a href="user/@_myDeck.AuthorId">@_myDeck.AuthorName</a>
+      </small>
+    </div>
+  </div>
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public int TheirDeckId { get; set; }
+  private PublicDeck _theirDeck;
+  [Parameter] public int MyDeckId { get; set; }
+  private PublicDeck _myDeck;
+  private DiffStateSummary _diffState;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, _user.Id, TheirDeckId, MyDeckId)).Match(ToastService, x => _diffState = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, MyDeckId)).Match(ToastService, x => _myDeck = x);
+    StateHasChanged();
+  }
+
+
+}

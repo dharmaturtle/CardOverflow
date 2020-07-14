@@ -281,7 +281,7 @@ module SanitizeDeckRepository =
             })  |> toResizeArray)
     let getPublic (db: CardOverflowDb) userId deckId =
         db.Deck
-            .Where(fun x -> x.IsPublic && x.Id = deckId)
+            .Where(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
             .Select(fun x ->
                 x,
                 x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
