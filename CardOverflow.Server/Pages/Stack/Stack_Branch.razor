@@ -16,10 +16,9 @@
 
 <tr>
   <th scope="row" style="text-align: center">
-    <AcquireToggles Instance=@Branch.Instance
-                    IsBranch=true
+    <AcquireToggles IsBranch=true
                     AcquiredIds=@AcquiredIds
-                    NewAcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id)))
+                    Ids=@(new StackBranchInstanceIds(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id))
                     BranchUsers=@Branch.Users
                     InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                     UpdateAcquiredCards=@UpdateAcquiredCards
@@ -70,9 +69,8 @@
       <th></th>
       <td class="row pr-3">
         <div class="col-auto">
-          <AcquireToggles Instance=@revision
-                          AcquiredIds=@AcquiredIds
-                          NewAcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(revision.StackId, revision.BranchId, revision.Id)))
+          <AcquireToggles AcquiredIds=@AcquiredIds
+                          Ids=@(new StackBranchInstanceIds(revision.StackId, revision.BranchId, revision.Id))
                           InstanceUsers=@revision.Users
                           UpdateAcquiredCards=@UpdateAcquiredCards
                           UpdateAcquiredIds=@UpdateAcquiredIds />

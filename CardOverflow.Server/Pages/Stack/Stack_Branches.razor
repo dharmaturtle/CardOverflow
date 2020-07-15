@@ -18,10 +18,9 @@
   <thead>
     <tr>
       <th scope="col" style="text-align:center;">
-        <AcquireToggles Instance=@Stack.Default.Instance
-                        IsStack=true
+        <AcquireToggles IsStack=true
                         AcquiredIds=@AcquiredIds
-                        NewAcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id)))
+                        Ids=@(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
                         BranchUsers=@Stack.Users
                         UpdateAcquiredCards=@UpdateAcquiredCards
                         UpdateAcquiredIds=@UpdateAcquiredIds />
