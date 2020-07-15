@@ -464,12 +464,12 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             IndexChanged = []
             BranchInstanceChanged = []
             BranchChanged = []
-            AddedStack = []
-            RemovedStack =
+            AddedStack = 
                 [ { StackId = stackId
                     BranchId = branchId
                     BranchInstanceId = instance2
                     Index = 0s }]
+            RemovedStack = []
         }
 
     // unfollow works

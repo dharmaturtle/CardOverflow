@@ -435,7 +435,7 @@ module SanitizeDeckRepository =
             |>% List.ofSeq
         let! theirs = get theirDeckId
         let! mine   = get myDeckId
-        return Diff.ids theirs mine |> Diff.toSummary
+        return Diff.ids mine theirs |> Diff.toSummary
     }
 
 module SanitizeHistoryRepository =
