@@ -333,7 +333,7 @@ module SanitizeDeckRepository =
             DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
         match followType with
             | NoDeck -> ()
-            | NewDeck | OldDeck  ->
+            | NewDeck _ | OldDeck _ ->
                 let! (theirs: ResizeArray<StackBranchInstanceIndex>) =
                     db.AcquiredCard
                         .Where(fun ac -> ac.DeckId = deckId)
