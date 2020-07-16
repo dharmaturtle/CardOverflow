@@ -242,6 +242,10 @@ module Seq =
         let x = Seq.zip source1 source2
         let y = Seq.zip source3 source4
         Seq.zip x y |> Seq.map (fun ((a, b), (c, d)) -> a, b, c, d)
+    let zip5 source1 source2 source3 source4 source5 =
+        let x = Seq.zip source1 source2
+        let y = Seq.zip source3 source4
+        Seq.zip3 x y source5 |> Seq.map (fun ((a, b), (c, d), e) -> a, b, c, d, e)
 
 module SeqOption =
     let somes mma = mma |> Seq.choose id

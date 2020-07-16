@@ -469,7 +469,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 [ { StackId = stackId
                     BranchId = branchId
                     BranchInstanceId = instance2
-                    Index = 0s }]
+                    Index = 0s
+                    DeckId = followerId }]
         }
 
     // unfollow works
@@ -840,7 +841,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
                 [{ StackId = stackId
                    BranchId = branchId
                    BranchInstanceId = branchInstanceId
-                   Index = 0s }]
+                   Index = 0s
+                   DeckId = followerDeckId }]
             IndexChanged = []
             BranchInstanceChanged = []
             BranchChanged = []

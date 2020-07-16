@@ -219,6 +219,7 @@ type StackBranchInstanceIndex = {
     BranchId: int
     BranchInstanceId: int
     Index: int16
+    DeckId: int
 }
 
 module StackBranchInstanceIds =
@@ -229,11 +230,12 @@ module StackBranchInstanceIds =
         }
 
 module StackBranchInstanceIndex =
-    let fromTuple (stackId, branchId, branchInstanceId, index) =
+    let fromTuple (stackId, branchId, branchInstanceId, index, deckId) =
         {   StackId = stackId
             BranchId = branchId
             BranchInstanceId = branchInstanceId
             Index = index
+            DeckId = deckId
         }
 
 type DiffState =
@@ -263,7 +265,7 @@ module Diff =
             function
             | Some a, Some b ->
                 if a.BranchInstanceId = b.BranchInstanceId && a.Index = b.Index then
-                    Unchanged a
+                    Unchanged b
                 elif a.BranchInstanceId = b.BranchInstanceId then
                     IndexChanged (a, b)
                 elif a.BranchId = b.BranchId then

@@ -156,8 +156,9 @@ module Generators =
         let! branches = uniqueInts length
         let! branchInstances = uniqueInts length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
+        let! deckId = Arb.generate<int> |> Gen.listOfLength length
         return
-            Seq.zip4 stacks branches branchInstances indexes
+            Seq.zip5 stacks branches branchInstances indexes deckId
             |> Seq.map StackBranchInstanceIndex.fromTuple
             |> List.ofSeq
         }
