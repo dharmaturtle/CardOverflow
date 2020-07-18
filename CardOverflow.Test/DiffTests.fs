@@ -81,23 +81,6 @@ let ``Diff BranchChanged`` (stackBranchInstanceIndexes: StackBranchInstanceIndex
         ))
         
 [<Generators>]
-let ``Diff IndexChanged`` (stackBranchInstanceIndexes: StackBranchInstanceIndex list) : unit =
-    let theirs = stackBranchInstanceIndexes
-    let mine =
-        {   stackBranchInstanceIndexes.[0] with
-                Index = Int16.MinValue
-        }   |> List.singleton
-    
-    Diff.ids theirs mine
-    
-    |> Assert.areEquivalent
-        (stackBranchInstanceIndexes |> List.mapi (fun i x ->
-            match i with
-            | 0 -> IndexChanged (x, mine.[0])
-            | _ -> AddedStack x
-        ))
-        
-[<Generators>]
 let ``Diff of deck with itself is unchanged _ when it contains 2 of the same branch with differing indexes`` (stackBranchInstanceIndex: StackBranchInstanceIndex) : unit =
     let a =
         [ { stackBranchInstanceIndex with Index = 0s }

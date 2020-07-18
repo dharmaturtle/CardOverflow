@@ -240,16 +240,14 @@ module StackBranchInstanceIndex =
 
 type DiffState =
     | Unchanged of StackBranchInstanceIndex
-    | IndexChanged of StackBranchInstanceIndex * StackBranchInstanceIndex // theirs, mine
-    | BranchInstanceChanged of StackBranchInstanceIndex * StackBranchInstanceIndex
+    | BranchInstanceChanged of StackBranchInstanceIndex * StackBranchInstanceIndex // theirs, mine
     | BranchChanged of StackBranchInstanceIndex * StackBranchInstanceIndex
     | AddedStack of StackBranchInstanceIndex
     | RemovedStack of StackBranchInstanceIndex
 
 type DiffStateSummary = {
     Unchanged: StackBranchInstanceIndex list
-    IndexChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list // theirs, mine
-    BranchInstanceChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
+    BranchInstanceChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list // theirs, mine
     BranchChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
     AddedStack: StackBranchInstanceIndex list
     RemovedStack: StackBranchInstanceIndex list
@@ -260,14 +258,12 @@ module Diff =
         let sort = List.sortBy (fun x -> x.StackId, x.BranchId, x.BranchInstanceId, x.Index)
         let aIds = aIds |> sort
         let bIds = bIds |> sort
-        List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId)
+        List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId && a.Index = b.Index)
         |> List.map (
             function
             | Some a, Some b ->
                 if a.BranchInstanceId = b.BranchInstanceId && a.Index = b.Index then
                     Unchanged b
-                elif a.BranchInstanceId = b.BranchInstanceId then
-                    IndexChanged (a, b)
                 elif a.BranchId = b.BranchId then
                     BranchInstanceChanged (a, b)
                 else
@@ -278,7 +274,6 @@ module Diff =
         )
     let toSummary diffStates =
         let unchanged = ResizeArray.empty
-        let indexChanged = ResizeArray.empty
         let branchInstanceChanged = ResizeArray.empty
         let branchChanged = ResizeArray.empty
         let addedStack = ResizeArray.empty
@@ -287,8 +282,6 @@ module Diff =
             (function
             | Unchanged x ->
                 unchanged.Add x
-            | IndexChanged (x, y) ->
-                indexChanged.Add (x, y)
             | BranchInstanceChanged (x, y) ->
                 branchInstanceChanged.Add (x, y)
             | BranchChanged (x, y) ->
@@ -298,7 +291,6 @@ module Diff =
             | RemovedStack x ->
                 removedStack.Add x)
         {   Unchanged = unchanged |> Seq.toList
-            IndexChanged = indexChanged |> Seq.toList
             BranchInstanceChanged = branchInstanceChanged |> Seq.toList
             BranchChanged = branchChanged |> Seq.toList
             AddedStack = addedStack |> Seq.toList
