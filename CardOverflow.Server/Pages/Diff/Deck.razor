@@ -18,7 +18,7 @@
 @if (_diffState == null || _theirDeck == null || _myDeck == null) {
   <span>Loading...</span>
 } else {
-  <div class="row align-items-center text-center h3">
+  <div class="row align-items-center text-center h3 border-bottom mb-3 pb-3">
     <div class="col">
       <div>
         <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
@@ -39,6 +39,57 @@
       </small>
     </div>
   </div>
+  @if (_diffState.AddedStack.Any()) {
+    <div class="row">
+      <div class="col text-center">
+        <h4>
+          Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+        </h4>
+        @foreach (var ids in _diffState.AddedStack) {
+          <div>
+            <AcquireToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
+                            UpdateAcquiredCards=@(x => x.Single(x => x.Index == ids.Index).AcquiredCardId.Pipe(_switchToMyDeck)) />
+            @CardPreview(ids.BranchInstanceId, ids.Index)
+            @OtherDeckCheck(ids.DeckId)
+          </div>
+        }
+      </div>
+      <div class="col"></div>
+    </div>
+  }
+  @if (_diffState.RemovedStack.Any()) {
+    <div class="row">
+      <div class="col"></div>
+      <div class="col text-center">
+        <h4>
+          Discard to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+        </h4>
+        @foreach (var ids in _diffState.RemovedStack) {
+          var ids2 = new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId);
+          <div>
+            <AcquireToggles Ids=@ids2
+                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2)) />
+            @CardPreview(ids.BranchInstanceId, ids.Index)
+            @OtherDeckCheck(ids.DeckId)
+          </div>
+        }
+      </div>
+    </div>
+  }
+  @if (_diffState.Unchanged.Any()) {
+    <h4 class="text-center">
+      Synced
+    </h4>
+    <div class="row">
+      <div class="col-3"></div>
+      <div class="col-6 text-center">
+        @foreach (var unchanged in _diffState.Unchanged) {
+          @CardPreview(unchanged.BranchInstanceId, unchanged.Index)
+        }
+      </div>
+      <div class="col-3"></div>
+    </div>
+  }
 }
 
 @code {
@@ -59,5 +110,20 @@
     StateHasChanged();
   }
 
+  private async Task _switchToMyDeck(int acquiredCardId) =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acquiredCardId)).Match(ToastService);
+
+  private RenderFragment CardPreview(int branchInstanceId, short index) =>
+    @<a href="stack?branchinstance=@branchInstanceId">
+      <HoverPreview Padding="0">
+        <ResizingIframe BranchInstance=@((branchInstanceId, index)) Back />
+      </HoverPreview>
+      @branchInstanceId
+    </a>;
+
+  private RenderFragment OtherDeckCheck(int cardsDeckId) =>
+    cardsDeckId == MyDeckId
+    ? (RenderFragment)null
+    : @<span>Collect to move from @cardsDeckId to @MyDeckId.</span>;
 
 }

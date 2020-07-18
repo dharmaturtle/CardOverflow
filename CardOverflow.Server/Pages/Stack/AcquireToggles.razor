@@ -75,9 +75,9 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; } = new EventCallback<FSharpOption<StackBranchInstanceIds>>();
   [Parameter] public StackBranchInstanceIds Ids { get; set; }
-  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; } = new EventCallback<List<AcquiredCard>>();
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? InstanceUsers { get; set; }
