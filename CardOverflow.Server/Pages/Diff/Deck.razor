@@ -48,7 +48,12 @@
         @foreach (var ids in _diffState.AddedStack) {
           <div>
             <AcquireToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
-                            UpdateAcquiredCards=@(x => x.Single(x => x.Index == ids.Index).AcquiredCardId.Pipe(_switchToMyDeck)) />
+                            UpdateAcquiredCards=@(async acs => {
+                                                    var acId = acs.Single(ac => ac.Index == ids.Index).AcquiredCardId;
+                                                    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acId)).Match(ToastService);
+                                                    _diffState.AddedStack = _diffState.AddedStack.Where(x => x != ids).ToFList();
+                                                    _diffState.Unchanged = _diffState.Unchanged.ToList().Append(ids).ToFList();
+                                                  }) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
             @OtherDeckCheck(ids.DeckId)
           </div>
@@ -68,7 +73,8 @@
           var ids2 = new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId);
           <div>
             <AcquireToggles Ids=@ids2
-                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2)) />
+                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
+                            UpdateAcquiredCards=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x != ids).ToFList()) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
             @OtherDeckCheck(ids.DeckId)
           </div>
@@ -114,9 +120,6 @@
     StateHasChanged();
   }
 
-  private async Task _switchToMyDeck(int acquiredCardId) =>
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acquiredCardId)).Match(ToastService);
-
   private RenderFragment CardPreview(int branchInstanceId, short index) =>
     @<a href="stack?branchinstance=@branchInstanceId">
       <HoverPreview Padding="0">
@@ -129,10 +132,10 @@
     cardsDeckId == MyDeckId || cardsDeckId == TheirDeckId
     ? (RenderFragment)null
     : @<span>
-          Collect to move from
-          <a href="deck/@cardsDeckId">@(_decks.Single(x => x.Id == cardsDeckId).Name)</a>
-          to
-          <a href="deck/@MyDeckId">@(_myDeck.Name)</a>.
-        </span>;
+         Collect to move from
+         <a href="deck/@cardsDeckId">@(_decks.Single(x => x.Id == cardsDeckId).Name)</a>
+         to
+         <a href="deck/@MyDeckId">@(_myDeck.Name)</a>.
+       </span>;
 
 }

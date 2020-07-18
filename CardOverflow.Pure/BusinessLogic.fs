@@ -245,6 +245,7 @@ type DiffState =
     | AddedStack of StackBranchInstanceIndex
     | RemovedStack of StackBranchInstanceIndex
 
+[<CLIMutable>]
 type DiffStateSummary = {
     Unchanged: StackBranchInstanceIndex list
     BranchInstanceChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list // theirs, mine
