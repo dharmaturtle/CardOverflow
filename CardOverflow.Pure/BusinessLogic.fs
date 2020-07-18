@@ -270,7 +270,7 @@ module Diff =
                     BranchChanged (a, b)
             | Some a, None   -> AddedStack a
             | None  , Some b -> RemovedStack b
-            | None  , None   -> failwith "wut"
+            | None  , None   -> failwith "impossible"
         )
     let toSummary diffStates =
         let unchanged = ResizeArray.empty

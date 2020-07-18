@@ -30,6 +30,7 @@ module internal Assert =
             Assert.Equal<'T>(x, y)
         with
             | _ ->
+                printfn "\r\n   ===   Equality check failed!   ==="
                 Diff.ToConsole(sprintf "%A" x,
                                sprintf "%A" y)
                 reraise()

@@ -1,5 +1,6 @@
 module DeckRepositoryTests
 
+open Helpers
 open CardOverflow.Entity
 open CardOverflow.Debug
 open CardOverflow.Pure
@@ -17,6 +18,7 @@ open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Task
 open FacetRepositoryTests
 open CardOverflow.Sanitation.SanitizeDeckRepository
+open CardOverflow.Entity
 
 [<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
@@ -829,6 +831,12 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     let branchInstanceId = 1001
     let followerId = 1
     let followerDeckId = 1
+    let standardIds =
+        { StackId = stackId
+          BranchId = branchId
+          BranchInstanceId = branchInstanceId
+          Index = 0s
+          DeckId = followerDeckId }
 
     // diffing two decks with the same card yields Unchanged
     do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
@@ -836,12 +844,18 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged =
-                [{ StackId = stackId
-                   BranchId = branchId
-                   BranchInstanceId = branchInstanceId
-                   Index = 0s
-                   DeckId = followerDeckId }]
+        {   Unchanged = [ standardIds ]
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    // diffing two decks, reversed, with the same card yields Unchanged
+    do! SanitizeDeckRepository.diff c.Db followerId followerDeckId publicDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = [{ standardIds with DeckId = publicDeckId }]
             BranchInstanceChanged = []
             BranchChanged = []
             AddedStack = []
@@ -873,4 +887,90 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     
     |>% Result.getError
     |>% Assert.equal "Either Deck #1337 doesn't exist, or it isn't public, or you don't own it."
+
+    // moving card to newDeck _ is reflected in the diff
+    let! newDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
+    let! (acs: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db followerId stackId
+    let acId = acs.Single().AcquiredCardId
+    do! SanitizeDeckRepository.switch c.Db followerId newDeckId acId
+     
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = [{ standardIds with DeckId = newDeckId }]
+            RemovedStack = []
+        }
+
+    // Testing simple adding (by unacquiring a stack)
+    do! StackRepository.unacquireStack c.Db followerId stackId
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = [{ standardIds with DeckId = publicDeckId }]
+            RemovedStack = []
+        }
+
+    do! StackRepository.unacquireStack c.Db authorId stackId
+    // Unchanged with two clozes
+    let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId []
+    let! (acs: AcquiredCardEntity ResizeArray) = c.Db.AcquiredCard.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
+    do! StackRepository.AcquireCardAsync c.Db followerId <| acs.First().BranchInstanceId
+    let ids =
+        {   StackId = 2
+            BranchId = actualBranchId
+            BranchInstanceId = 1002
+            Index = 0s
+            DeckId = followerDeckId }
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged =
+                [ ids
+                  { ids with Index = 1s } ]
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    // two clozes, but different decks, index 1
+    let! (acs: AcquiredCardEntity list) =
+        c.Db.AcquiredCard
+            .Where(fun x -> x.BranchId = actualBranchId && x.UserId = followerId)
+            .ToListAsync()
+        |>% Seq.toList
+    Assert.equal 0s acs.[0].Index
+    do! SanitizeDeckRepository.switch c.Db followerId newDeckId acs.[0].Id
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = [ { ids with Index = 1s } ]
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = [ { ids with DeckId = newDeckId } ]
+            RemovedStack = []
+        }
+
+    // two clozes, but different decks, index 2
+    do! SanitizeDeckRepository.switch c.Db followerId followerDeckId acs.[0].Id
+    do! SanitizeDeckRepository.switch c.Db followerId newDeckId      acs.[1].Id
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = [ ids ]
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = [ { ids with Index = 1s; DeckId = newDeckId } ]
+            RemovedStack = []
+        }
     } |> TaskResult.getOk)

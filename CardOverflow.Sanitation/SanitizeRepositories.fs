@@ -435,7 +435,25 @@ module SanitizeDeckRepository =
             |>% List.ofSeq
         let! theirs = get theirDeckId
         let! mine   = get myDeckId
-        return Diff.ids theirs mine |> Diff.toSummary
+        let diffs = Diff.ids theirs mine |> Diff.toSummary
+        let addedStackIds = diffs.AddedStack.Select(fun x -> x.StackId).ToList()
+        let! (inOtherDeckIds: (int * int * int * int16 * int) ResizeArray) =
+            db.AcquiredCard
+                .Where(fun x -> x.UserId = userId && addedStackIds.Contains x.StackId)
+                .Select(fun x -> x.StackId, x.BranchId, x.BranchInstanceId, x.Index, x.DeckId)
+                .ToListAsync() // using Task.map over StackBranchInstanceIndex.fromTuple doesn't work here for some reason
+        let added =
+            List.zipOn
+                diffs.AddedStack
+                (inOtherDeckIds |> Seq.toList |> List.map StackBranchInstanceIndex.fromTuple)
+                (fun x y -> x.StackId = y.StackId && x.Index = y.Index)
+            |> List.map (
+                function
+                | Some _, Some y -> Some y
+                | Some x, _      -> Some x
+                | None  , _      -> None
+            ) |> List.choose id
+        return { diffs with AddedStack = added }
     }
 
 module SanitizeHistoryRepository =
