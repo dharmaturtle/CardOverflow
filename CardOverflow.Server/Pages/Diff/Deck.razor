@@ -51,8 +51,10 @@
                             UpdateAcquiredCards=@(async acs => {
                                                     var acId = acs.Single(ac => ac.Index == ids.Index).AcquiredCardId;
                                                     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acId)).Match(ToastService);
-                                                    _diffState.AddedStack = _diffState.AddedStack.Where(x => x != ids).ToFList();
-                                                    _diffState.Unchanged = _diffState.Unchanged.ToList().Append(ids).ToFList();
+                                                    _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
+                                                    _diffState.Unchanged = _diffState.Unchanged.ToList()
+                                                      .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
+                                                      .ToFList();
                                                   }) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
             @OtherDeckCheck(ids.DeckId)
@@ -74,7 +76,7 @@
           <div>
             <AcquireToggles Ids=@ids2
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
-                            UpdateAcquiredCards=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x != ids).ToFList()) />
+                            UpdateAcquiredCards=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
             @OtherDeckCheck(ids.DeckId)
           </div>
