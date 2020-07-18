@@ -251,7 +251,17 @@ type DiffStateSummary = {
     BranchChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
     AddedStack: StackBranchInstanceIndex list
     RemovedStack: StackBranchInstanceIndex list
-}
+} with
+    member this.DeckIds =
+        let tupleToList (a, b) = [a; b]
+        [   this.Unchanged
+            (this.BranchInstanceChanged |> List.collect tupleToList)
+            (this.BranchChanged |> List.collect tupleToList)
+            this.AddedStack
+            this.RemovedStack
+        ] |> List.concat
+        |> List.map (fun x -> x.DeckId)
+        |> List.distinct
 
 module Diff =
     let ids aIds bIds =

@@ -100,11 +100,15 @@
   [Parameter] public int MyDeckId { get; set; }
   private PublicDeck _myDeck;
   private DiffStateSummary _diffState;
+  private List<SimpleDeck> _decks = new List<SimpleDeck>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, _user.Id, TheirDeckId, MyDeckId)).Match(ToastService, x => _diffState = x);
+    if (_diffState.DeckIds.Any(x => x != MyDeckId && x != TheirDeckId)) {
+      _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
+    }
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, MyDeckId)).Match(ToastService, x => _myDeck = x);
     StateHasChanged();
@@ -122,8 +126,13 @@
     </a>;
 
   private RenderFragment OtherDeckCheck(int cardsDeckId) =>
-    cardsDeckId == MyDeckId
+    cardsDeckId == MyDeckId || cardsDeckId == TheirDeckId
     ? (RenderFragment)null
-    : @<span>Collect to move from @cardsDeckId to @MyDeckId.</span>;
+    : @<span>
+          Collect to move from
+          <a href="deck/@cardsDeckId">@(_decks.Single(x => x.Id == cardsDeckId).Name)</a>
+          to
+          <a href="deck/@MyDeckId">@(_myDeck.Name)</a>.
+        </span>;
 
 }
