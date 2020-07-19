@@ -453,7 +453,37 @@ module SanitizeDeckRepository =
                 | Some x, _      -> Some x
                 | None  , _      -> None
             ) |> List.choose id
-        return { diffs with AddedStack = added }
+        let added, branchInstanceChanged, branchChanged =
+            List.zipOn
+                (diffs.AddedStack) // theirs
+                added              // mine, sometimes
+                (fun x y -> x.StackId = y.StackId && x.Index = y.Index)
+            |> List.map(function
+                | Some x, Some y ->
+                    if x.BranchInstanceId = y.BranchInstanceId then
+                        Some y, None, None
+                    elif x.BranchId = y.BranchId then
+                        None, Some (x, y), None
+                    else
+                        None, None, Some (x, y)
+                | _      -> failwith "Impossible"
+            ) |> List.unzip3
+            |> (fun (a, bi, b) ->
+                a  |> List.choose id,
+                bi |> List.choose id,
+                b  |> List.choose id
+            )
+        let stackIds =
+            added
+                @ (branchInstanceChanged |> List.map snd)
+                @ (branchChanged         |> List.map snd)
+            |> List.map (fun x -> x.StackId)
+        return
+            { diffs with
+                AddedStack            = added                 @ (diffs.AddedStack            |> List.filterOut (fun  x     -> stackIds.Contains x.StackId))
+                BranchChanged         = branchChanged         @ (diffs.BranchChanged         |> List.filterOut (fun (x, _) -> stackIds.Contains x.StackId))
+                BranchInstanceChanged = branchInstanceChanged @ (diffs.BranchInstanceChanged |> List.filterOut (fun (x, _) -> stackIds.Contains x.StackId))
+            }
     }
 
 module SanitizeHistoryRepository =

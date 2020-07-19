@@ -197,6 +197,8 @@ module Core =
     let inline round x = x $ WriteAnyOverloads
 
 module List =
+    let filterOut p =
+        List.filter (p >> not)
     let ifEmptyThen x xs =
         match xs with
         | [] -> [x]

@@ -974,3 +974,128 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
             RemovedStack = []
         }
     } |> TaskResult.getOk)
+
+[<Fact>]
+let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchanges``(): Task<unit> = (taskResult {
+    let authorId = 3
+    let publicDeckId = 3
+    use c = new TestContainer()
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
+    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let stackId = 1
+    let branchId = 1
+    let branchInstanceId = 1001
+    let followerId = 1
+    let followerDeckId = 1
+    let standardIds =
+        { StackId = stackId
+          BranchId = branchId
+          BranchInstanceId = branchInstanceId
+          Index = 0s
+          DeckId = followerDeckId }
+
+    // diffing two decks with the same card yields Unchanged
+    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+    
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = [ standardIds ]
+            BranchInstanceChanged = []
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    // author switches to new branch
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranchSourceStackId standardIds.StackId)
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    let newBranchIds =
+        { standardIds with
+              BranchId = standardIds.BranchId + 1
+              BranchInstanceId = standardIds.BranchInstanceId + 1 }
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = [ ({ newBranchIds with DeckId = publicDeckId }, standardIds) ]
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    // author switches to new branch, and follower's old card is in different deck
+    let! newFollowerDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
+    let! (ac: AcquiredCardEntity) = c.Db.AcquiredCard.SingleAsync(fun x -> x.StackId = stackId && x.UserId = followerId)
+    do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId ac.Id
+    
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = [ ({ newBranchIds with DeckId = publicDeckId }, { standardIds with DeckId = newFollowerDeckId }) ]
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    do! SanitizeDeckRepository.switch c.Db followerId followerDeckId ac.Id
+    do! StackRepository.AcquireCardAsync c.Db followerId newBranchIds.BranchInstanceId
+    // author switches to new branchinstance
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId newBranchIds.BranchId)
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    let newBranchInstanceIds =
+        { newBranchIds with
+              BranchInstanceId = newBranchIds.BranchInstanceId + 1 }
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, newBranchIds) ]
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    // author switches to new branchinstance, and follower's old card is in different deck
+    do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId ac.Id
+    
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, { newBranchIds with DeckId = newFollowerDeckId }) ]
+            BranchChanged = []
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    do! SanitizeDeckRepository.switch c.Db followerId followerDeckId ac.Id
+    // author on new branch with new branchinstance, follower on old branch & instance
+    do! StackRepository.AcquireCardAsync c.Db followerId standardIds.BranchInstanceId
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, standardIds) ]
+            AddedStack = []
+            RemovedStack = []
+        }
+
+    // author on new branch with new branchinstance, follower on old branch & instance and different deck
+    do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId ac.Id
+
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
+    
+    |>%% Assert.equal
+        {   Unchanged = []
+            BranchInstanceChanged = []
+            BranchChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, { standardIds with DeckId = newFollowerDeckId }) ]
+            AddedStack = []
+            RemovedStack = []
+        }
+    } |> TaskResult.getOk)
