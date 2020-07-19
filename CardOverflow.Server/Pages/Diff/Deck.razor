@@ -50,11 +50,11 @@
             <AcquireToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
                             UpdateAcquiredCards=@(async acs => {
                                                     var acId = acs.Single(ac => ac.Index == ids.Index).AcquiredCardId;
-                                                    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acId)).Match(ToastService);
-                                                    _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
+                                                    await _switchToMyDeck(acId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
                                                       .ToFList();
+                                                    _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
                                                   }) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
             @OtherDeckCheck(ids.DeckId)
@@ -95,11 +95,13 @@
           <div>
             <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
-                            UpdateAcquiredCards=@(_ => {
-                                                    _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
+                            UpdateAcquiredCards=@(async acs => {
+                                                    var acId = acs.Single(ac => ac.Index == mine.Index).AcquiredCardId;
+                                                    await _switchToMyDeck(acId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
                                                       .ToFList();
+                                                    _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
             Collect to switch from
             @CardPreview(mine.BranchInstanceId, mine.Index)
@@ -152,6 +154,9 @@
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, MyDeckId)).Match(ToastService, x => _myDeck = x);
     StateHasChanged();
   }
+
+  private async Task _switchToMyDeck(int acquiredCardId) =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acquiredCardId)).Match(ToastService);
 
   private RenderFragment CardPreview(int branchInstanceId, short index) =>
     @<a href="stack?branchinstance=@branchInstanceId">
