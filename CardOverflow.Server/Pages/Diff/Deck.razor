@@ -105,9 +105,10 @@
             @CardPreview(mine.BranchInstanceId, mine.Index)
             to
             @CardPreview(theirs.BranchInstanceId, theirs.Index)
-            <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId">
+            <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
               &Delta;
             </a>
+            @OtherDeckCheck(mine.DeckId)
           </div>
         }
       </div>
@@ -164,7 +165,7 @@
     cardsDeckId == MyDeckId || cardsDeckId == TheirDeckId
     ? (RenderFragment)null
     : @<span>
-         Collect to move from
+         Collecting will move from
          <a href="deck/@cardsDeckId">@(_decks.Single(x => x.Id == cardsDeckId).Name)</a>
          to
          <a href="deck/@MyDeckId">@(_myDeck.Name)</a>.
