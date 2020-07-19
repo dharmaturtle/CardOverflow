@@ -84,6 +84,36 @@
       </div>
     </div>
   }
+  @if (_diffState.BranchChanged.Any()) {
+    <div class="row">
+      <div class="col-3"></div>
+      <div class="col-6 text-center">
+        <h4>
+          Switch branch to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+        </h4>
+        @foreach (var (theirs, mine) in _diffState.BranchChanged) {
+          <div>
+            <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
+                            UpdateAcquiredCards=@(_ => {
+                                                    _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
+                                                    _diffState.Unchanged = _diffState.Unchanged.ToList()
+                                                      .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
+                                                      .ToFList();
+                                                  }) />
+            Collect to switch from
+            @CardPreview(mine.BranchInstanceId, mine.Index)
+            to
+            @CardPreview(theirs.BranchInstanceId, theirs.Index)
+            <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId">
+              &Delta;
+            </a>
+          </div>
+        }
+      </div>
+      <div class="col-3"></div>
+    </div>
+  }
   @if (_diffState.Unchanged.Any()) {
     <h4 class="text-center">
       Synced
