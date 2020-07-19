@@ -117,6 +117,39 @@
       <div class="col-3"></div>
     </div>
   }
+  @if (_diffState.BranchInstanceChanged.Any()) {
+    <div class="row">
+      <div class="col-3"></div>
+      <div class="col-6 text-center">
+        <h4>
+          Update branch to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+        </h4>
+        @foreach (var (theirs, mine) in _diffState.BranchInstanceChanged) {
+          <div>
+            <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
+                            UpdateAcquiredCards=@(async acs => {
+                                                    var acId = acs.Single(ac => ac.Index == mine.Index).AcquiredCardId;
+                                                    await _switchToMyDeck(acId);
+                                                    _diffState.Unchanged = _diffState.Unchanged.ToList()
+                                                      .Concat(_diffState.BranchInstanceChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
+                                                      .ToFList();
+                                                    _diffState.BranchInstanceChanged = _diffState.BranchInstanceChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
+                                                  }) />
+            Update to switch from
+            @CardPreview(mine.BranchInstanceId, mine.Index)
+            to
+            @CardPreview(theirs.BranchInstanceId, theirs.Index)
+            <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
+              &Delta;
+            </a>
+            @OtherDeckCheck(mine.DeckId)
+          </div>
+        }
+      </div>
+      <div class="col-3"></div>
+    </div>
+  }
   @if (_diffState.Unchanged.Any()) {
     <h4 class="text-center">
       Synced
