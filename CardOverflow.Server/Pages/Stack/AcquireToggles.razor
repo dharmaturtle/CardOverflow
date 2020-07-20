@@ -83,6 +83,7 @@
   [Parameter] public int? InstanceUsers { get; set; }
   [Parameter] public bool IsBranch { get; set; }
   [Parameter] public bool IsStack { get; set; }
+  [Parameter] public FSharpOption<int> DeckId { get; set; } = FSharpOption<int>.None;
   private BSModal _modal;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -96,7 +97,7 @@
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
-      return DbExecutor.QueryAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, Ids.BranchInstanceId)).Match(ToastService, async _ => {
+      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.BranchInstanceId, DeckId)).Match(ToastService, async _ => {
         await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Ids.StackId)).Match(ToastService, async cards => {
           await UpdateAcquiredCards.InvokeAsync(cards);
           await UpdateAcquiredIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.Some(Ids));

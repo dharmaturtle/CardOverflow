@@ -48,6 +48,7 @@
         @foreach (var ids in _diffState.AddedStack) {
           <div>
             <AcquireToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
+                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             UpdateAcquiredCards=@(async acs => {
                                                     var acId = acs.Single(ac => ac.Index == ids.Index).AcquiredCardId;
                                                     await _switchToMyDeck(acId);
@@ -75,6 +76,7 @@
           var ids2 = new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId);
           <div>
             <AcquireToggles Ids=@ids2
+                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
                             UpdateAcquiredCards=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
@@ -94,6 +96,7 @@
         @foreach (var (theirs, mine) in _diffState.BranchChanged) {
           <div>
             <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
                             UpdateAcquiredCards=@(async acs => {
                                                     var acId = acs.Single(ac => ac.Index == mine.Index).AcquiredCardId;
@@ -127,6 +130,7 @@
         @foreach (var (theirs, mine) in _diffState.BranchInstanceChanged) {
           <div>
             <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
                             UpdateAcquiredCards=@(async acs => {
                                                     var acId = acs.Single(ac => ac.Index == mine.Index).AcquiredCardId;
