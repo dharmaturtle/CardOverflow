@@ -69,7 +69,7 @@
       @if (_conflictingBranchInstanceIdsByDeckId.Any()) {
         <div class="mt-3 p-3 border border-warning rounded">
           <div class="mb-3">
-            You already have some of <a href="deck/@Deck.Id">@Deck.Name</a>'s cards in your own decks:
+            You already have some cards from <a href="deck/@Deck.Id">@Deck.Name</a> in your own decks:
           </div>
           <div>
             @foreach (var (deckId, conflictingBranchInstanceIds) in _conflictingBranchInstanceIdsByDeckId) {
@@ -88,16 +88,14 @@
             }
           </div>
           <div class="my-3">
-            Cards may only be in one deck. Do you wish to migrate these cards to the
-            <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : CallersDecks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
-            deck, or do you wish to leave them in their current decks?
+            A card may only be in one deck. Select how to proceed:
           </div>
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-@_IsSelected(true)primary" @onclick=@(() => _SetEditExisting(true))>
-              Migrate
+              Migrate cards to <i>@(_followCommandViewModel.FollowType == FollowType.NewDeck ? _followCommandViewModel.NewDeckName : CallersDecks.Single(d => d.Id == _followCommandViewModel.OldDeckId).Name)</i>
             </button>
             <button type="button" class="btn btn-@_IsSelected(false)primary" @onclick=@(() => _SetEditExisting(false))>
-              Leave in Current Decks
+              Leave cards in their current decks
             </button>
           </div>
         </div>
