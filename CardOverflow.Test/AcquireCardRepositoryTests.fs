@@ -26,9 +26,6 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic"
-        |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let getAcquired () = StackRepository.GetAcquired c.Db userId 1
     let! (ac: AcquiredCard ResizeArray) = getAcquired ()
     let ac = ac.Single()

@@ -347,15 +347,23 @@ module StackRepository =
                 | None, None -> failwith "impossible"
             ) |> ListOption.somes
     }
-    let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId = taskResult {
+    let collect (db: CardOverflowDb) userId branchInstanceId deckId = taskResult {
         let! (branchInstance: BranchInstanceEntity) =
             db.BranchInstance
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        do! acquireStackNoSave db userId branchInstance true
+        let! (acs: AcquiredCardEntity list) = acquireStackNoSave db userId branchInstance true
+        match deckId with
+        | Some deckId ->
+            do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
+                |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." deckId)
+            acs |> List.iter (fun ac -> ac.DeckId <- deckId)
+        | None -> ()
         return! db.SaveChangesAsyncI ()
         }
+    let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId =
+        collect db userId branchInstanceId None
     let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
         let! (e: _ ResizeArray) =
             db.AcquiredCardIsLatest
