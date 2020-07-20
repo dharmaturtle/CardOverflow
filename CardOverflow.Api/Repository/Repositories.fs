@@ -734,7 +734,7 @@ module TagRepository =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
 
 [<CLIMutable>]
-type PublicDeck = {
+type DeckWithFollowMeta = {
     Id: int
     Name: string
     AuthorId: int

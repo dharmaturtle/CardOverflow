@@ -174,9 +174,9 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public int TheirDeckId { get; set; }
-  private PublicDeck _theirDeck;
+  private DeckWithFollowMeta _theirDeck;
   [Parameter] public int MyDeckId { get; set; }
-  private PublicDeck _myDeck;
+  private DeckWithFollowMeta _myDeck;
   private DiffStateSummary _diffState;
   private List<SimpleDeck> _decks = new List<SimpleDeck>();
 
@@ -187,8 +187,8 @@
     if (_diffState.DeckIds.Any(x => x != MyDeckId && x != TheirDeckId)) {
       _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
     }
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, MyDeckId)).Match(ToastService, x => _myDeck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, TheirDeckId)).Match(ToastService, x => _theirDeck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, MyDeckId)).Match(ToastService, x => _myDeck = x);
     StateHasChanged();
   }
 

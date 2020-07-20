@@ -78,7 +78,7 @@
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
   private int? _selectedInstanceId;
-  private PublicDeck _deck;
+  private DeckWithFollowMeta _deck;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -86,7 +86,7 @@
     if (_selectedInstanceId == default) {
       await PageChanged(1);
     }
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getPublic(db, _user.Id, DeckId)).Match(ToastService, x => _deck = x);
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, DeckId)).Match(ToastService, x => _deck = x);
     StateHasChanged();
   }
 

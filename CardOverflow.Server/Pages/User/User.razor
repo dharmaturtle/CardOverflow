@@ -48,7 +48,7 @@
   [CascadingParameter] Task<UserClaims> CallerUserTask { get; set; }
   private UserClaims _callerUser = UserClaims.init;
   [Parameter] public int OtherUserId { get; set; }
-  private List<PublicDeck> _othersDecks;
+  private List<DeckWithFollowMeta> _othersDecks;
   private List<SimpleDeck> _callersDecks;
   private Profile _profile;
   private string _loadingMessage = "Loading...";

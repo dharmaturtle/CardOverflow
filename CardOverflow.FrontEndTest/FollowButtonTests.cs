@@ -38,14 +38,14 @@ namespace CardOverflow.FrontEndTest {
     }
 
     [Property(DisplayName = "Submitting default FollowDeckCommand _ displays validation error", Arbitrary = new[] { typeof(FollowButtonTestsArb) })]
-    public bool _1(UserClaims userClaims, PublicDeck publicDeck, DeckEntity usersDefaultDeck) {
+    public bool _1(UserClaims userClaims, DeckWithFollowMeta deckWithFollowMeta, DeckEntity usersDefaultDeck) {
       Setup(Services, db => new UserEntity {
         Id = userClaims.Id,
         DefaultDeckId = usersDefaultDeck.Id,
         Decks = new List<DeckEntity> { usersDefaultDeck }
       }.Pipe(db.User.Add));
       var counter = RenderComponent<FollowButtons>(
-        (nameof(FollowButtons.Deck), publicDeck),
+        (nameof(FollowButtons.Deck), deckWithFollowMeta),
         CascadingValue(Task.FromResult(userClaims))
       );
 

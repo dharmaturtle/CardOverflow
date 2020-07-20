@@ -129,7 +129,7 @@
   private BSModal _modal;
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public PublicDeck Deck { get; set; }
+  [Parameter] public DeckWithFollowMeta Deck { get; set; }
   [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
   private List<Tuple<int, List<int>>> _conflictingBranchInstanceIdsByDeckId = new List<Tuple<int, List<int>>>();
