@@ -157,6 +157,46 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
     }
 
 [<Fact>]
+let ``collect works``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 3
+    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let instanceId = 1001
+    let stackId = 1
+    let collectorId = 1
+    let collectorDefaultDeckId = 1
+    let collect = StackRepository.collect c.Db collectorId instanceId
+    let assertDeck deckId =
+        StackRepository.GetAcquired c.Db collectorId stackId
+        |>%% Assert.Single
+        |>%% fun x -> x.DeckId
+        |>%% Assert.equal deckId
+
+    do! collect None
+    
+    do! assertDeck collectorDefaultDeckId
+
+    // fails for author's deck
+    do! StackRepository.unacquireStack c.Db collectorId stackId
+    
+    let! (error: Result<_,_>) = collect <| Some authorId
+    
+    Assert.equal "Either Deck #3 doesn't exist or it doesn't belong to you." error.error
+    
+    // fails for nonexisting deck
+    let! (error: Result<_,_>) = collect <| Some 1337
+    
+    Assert.equal "Either Deck #1337 doesn't exist or it doesn't belong to you." error.error
+    
+    // works for nondefault deck
+    let! newDeckId = SanitizeDeckRepository.create c.Db collectorId <| Guid.NewGuid().ToString()
+
+    do! collect <| Some newDeckId
+    
+    do! assertDeck newDeckId
+    } |> TaskResult.getOk)
+
+[<Fact>]
 let ``AcquireCards works``(): Task<unit> = task {
     use c = new TestContainer()
     
