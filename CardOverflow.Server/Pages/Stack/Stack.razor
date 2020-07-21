@@ -18,17 +18,16 @@
   <p><em>@_loadingMessage</em></p>
 } else {
   <div class="row">
-    @if (!IsCurate) {
-      <div class="col-4">
-        <Stack_Branches Stack=@_stack
-                        Branches=@_stack.Branches
-                        InstanceSelected=@(x => _selected = x)
-                        AcquiredIds=@_stack.AcquiredIds
-                        UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
-                        Selected=@_selected
-                        UpdateAcquiredCards=@(x => _acquiredCards = x) />
-      </div>
-    }
+    <div class="col-4">
+      <Stack_Branches Stack=@_stack
+                      Branches=@_stack.Branches
+                      InstanceSelected=@(x => _selected = x)
+                      AcquiredIds=@_stack.AcquiredIds
+                      UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
+                      Selected=@_selected
+                      IsExplore=@(!IsCurate)
+                      UpdateAcquiredCards=@(x => _acquiredCards = x) />
+    </div>
     <div class="col">
       <div class="row">
         <div class="col-xl">

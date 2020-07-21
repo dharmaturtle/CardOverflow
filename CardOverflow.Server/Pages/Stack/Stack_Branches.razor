@@ -26,7 +26,18 @@
                         UpdateAcquiredIds=@UpdateAcquiredIds />
       </th>
       <th scope="col" style="width:100%; text-align:center;">
-        <h4>Branches</h4>
+        @if (AcquiredIds == default) {
+          <h4>Branches</h4>
+        } else {
+          <div class="btn-group" role="group">
+            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="stack?branchinstance=@AcquiredIds.Value.BranchInstanceId">
+              All Branches
+            </a>
+            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/stack?branchinstance=@AcquiredIds.Value.BranchInstanceId">
+              My Branch
+            </a>
+          </div>
+        }
       </th>
       <th scope="col">
         <a class="btn btn-outline-success" href="stack/branchstack/@Selected.StackId" title="Add a Branch">
@@ -57,6 +68,7 @@
   [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
   [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public bool IsExplore { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

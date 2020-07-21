@@ -11,55 +11,48 @@
 @inject NavigationManager NavigationManager
 
 <AuthorizeView>
-  <div class="row">
-    <div class="col-sm-2">
-      <CurateStackFilters Query=@search.Query DeckClicked=@SearchClicked />
-    </div>
-    <div class="col">
-      <div class="d-flex justify-content-between align-items-center">
-        <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?branchinstance={x}") Ids=@cards?.Select(x => x.BranchInstanceMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
-      </div>
-      @if (SelectedInstanceId == null) {
-        <div>
-          @if (cards == null) {
-            <p><em>Loading...</em></p>
-          } else {
-            <table class="table">
-              <tr>
-                <th>Preview</th>
-                <th>Name</th>
-                <th style="min-width: 4rem;">Due</th>
-                <th>Tags</th>
-              </tr>
-              @foreach (var card in cards) {
-                <tr>
-                  <td>
-                    <HoverPreview IsAcquired=@card.BranchInstanceMeta.IsAcquired>
-                      <ResizingIframeBranch BranchInstanceId=@card.BranchInstanceMeta.Id MaxIndexInclusive=@card.BranchInstanceMeta.MaxIndexInclusive Front />
-                    </HoverPreview>
-                  </td>
-                  <td>
-                    <a href="/my/stack?branchinstance=@card.BranchInstanceMeta.Id">
-                      @card.BranchInstanceMeta.StrippedFront
-                    </a>
-                  </td>
-                  <td>
-                    <Due DueDate=@card.Due />
-                  </td>
-                  <td>
-                    @(string.Join(", ", card.Tags))
-                  </td>
-                </tr>
-              }
-            </table>
-          }
-          <Pager Details=@details PageChanged=@PageChanged />
-        </div>
-      } else {
-        <Stack BranchInstanceId=@SelectedInstanceId.Value IsCurate=true />
-      }
-    </div>
+  <div class="d-flex justify-content-between align-items-center">
+    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?branchinstance={x}") Ids=@cards?.Select(x => x.BranchInstanceMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
   </div>
+  @if (SelectedInstanceId == null) {
+    <div>
+      @if (cards == null) {
+        <p><em>Loading...</em></p>
+      } else {
+        <table class="table">
+          <tr>
+            <th>Preview</th>
+            <th>Name</th>
+            <th style="min-width: 4rem;">Due</th>
+            <th>Tags</th>
+          </tr>
+          @foreach (var card in cards) {
+            <tr>
+              <td>
+                <HoverPreview IsAcquired=@card.BranchInstanceMeta.IsAcquired>
+                  <ResizingIframeBranch BranchInstanceId=@card.BranchInstanceMeta.Id MaxIndexInclusive=@card.BranchInstanceMeta.MaxIndexInclusive Front />
+                </HoverPreview>
+              </td>
+              <td>
+                <a href="/my/stack?branchinstance=@card.BranchInstanceMeta.Id">
+                  @card.BranchInstanceMeta.StrippedFront
+                </a>
+              </td>
+              <td>
+                <Due DueDate=@card.Due />
+              </td>
+              <td>
+                @(string.Join(", ", card.Tags))
+              </td>
+            </tr>
+          }
+        </table>
+      }
+      <Pager Details=@details PageChanged=@PageChanged />
+    </div>
+  } else {
+    <Stack BranchInstanceId=@SelectedInstanceId.Value IsCurate=true />
+  }
 </AuthorizeView>
 
 @code {
