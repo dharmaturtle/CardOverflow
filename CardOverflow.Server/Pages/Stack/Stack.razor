@@ -17,7 +17,7 @@
 @if (_stack == null || _selected == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
-  <div class="row">
+  <div class="@(IsCurate ? "" : "row")">
     <div class="col-4">
       <Stack_Branches Stack=@_stack
                       Branches=@_stack.Branches

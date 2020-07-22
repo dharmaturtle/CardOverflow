@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.FSharp.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace ThoughtDesign.WebLibrary {
   public static class PureTools {
+
+    public static bool HasValue<T>(this FSharpOption<T> option) =>
+      option != default;
 
     public static bool TryGetQueryString<T>(this NavigationManager navManager, string key, out T value) { // https://chrissainty.com/working-with-query-strings-in-blazor/
       var uri = navManager.ToAbsoluteUri(navManager.Uri);

@@ -9,6 +9,7 @@
 @using Microsoft.AspNetCore.Identity
 @using CardOverflow.Sanitation
 @using CardOverflow.Server.Data
+@using ThoughtDesign.WebLibrary
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 @inject UserContentHttpClient UserContentHttpClient
@@ -17,14 +18,16 @@
 <table style="width:100%">
   <thead>
     <tr>
-      <th scope="col" style="text-align:center;">
-        <AcquireToggles IsStack=true
-                        AcquiredIds=@AcquiredIds
-                        Ids=@(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
-                        BranchUsers=@Stack.Users
-                        UpdateAcquiredCards=@UpdateAcquiredCards
-                        UpdateAcquiredIds=@UpdateAcquiredIds />
-      </th>
+      @if (IsExplore) {
+        <th scope="col" style="text-align:center;">
+          <AcquireToggles IsStack=true
+                          AcquiredIds=@AcquiredIds
+                          Ids=@(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
+                          BranchUsers=@Stack.Users
+                          UpdateAcquiredCards=@UpdateAcquiredCards
+                          UpdateAcquiredIds=@UpdateAcquiredIds />
+        </th>
+      }
       <th scope="col" style="width:100%; text-align:center;">
         @if (AcquiredIds == default) {
           <h4>Branches</h4>
@@ -39,23 +42,27 @@
           </div>
         }
       </th>
-      <th scope="col">
-        <a class="btn btn-outline-success" href="stack/branchstack/@Selected.StackId" title="Add a Branch">
-          <i class="fas fa-plus"></i>
-        </a>
-      </th>
+      @if (IsExplore) {
+        <th scope="col">
+          <a class="btn btn-outline-success" href="stack/branchstack/@Selected.StackId" title="Add a Branch">
+            <i class="fas fa-plus"></i>
+          </a>
+        </th>
+      }
     </tr>
   </thead>
-  <tbody>
-    @foreach (var branch in Branches) {
-      <Stack_Branch Branch=@branch
-                    InstanceSelected=@InstanceSelected
-                    AcquiredIds=@AcquiredIds
-                    UpdateAcquiredIds=@UpdateAcquiredIds
-                    Selected=@Selected
-                    UpdateAcquiredCards=@UpdateAcquiredCards />
-    }
-  </tbody>
+  @if (IsExplore) {
+    <tbody>
+      @foreach (var branch in Branches) {
+        <Stack_Branch Branch=@branch
+                      InstanceSelected=@InstanceSelected
+                      AcquiredIds=@AcquiredIds
+                      UpdateAcquiredIds=@UpdateAcquiredIds
+                      Selected=@Selected
+                      UpdateAcquiredCards=@UpdateAcquiredCards />
+      }
+    </tbody>
+  }
 </table>
 
 @code {
