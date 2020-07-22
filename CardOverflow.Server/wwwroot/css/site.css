@@ -262,6 +262,7 @@ app {
     transform: translate(0rem, -.4rem);
     margin-bottom: -.4rem;
   }
+
   .btn-unacquire-card:hover:enabled {
     color: #fff;
     background-color: #c82333;
@@ -341,3 +342,22 @@ app {
     .show > .btn-acquire-card.dropdown-toggle:focus {
       box-shadow: 0 0 0 .2rem rgba(72, 180, 97, .5)
     }
+
+#blazor-error-ui {
+  background: lightyellow;
+  bottom: 0;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+  display: none;
+  left: 0;
+  padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+  #blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+  }
