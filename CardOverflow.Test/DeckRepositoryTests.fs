@@ -251,6 +251,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let authorId = 3
     let authorDefaultDeckId = 3
     let followerId = 1
+    let followerDefaultDeckId = 1
     let publicDeck =
         {   Id = 4
             Name = Guid.NewGuid().ToString()
@@ -335,7 +336,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            New = instance2
-                                           Collected = None } }
+                                           Collected = [] } }
 
     // editing card's state doesn't notify follower
     do! StackRepository.editState c.Db authorId authorAcquiredId Suspended
@@ -366,7 +367,13 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            New = instance3
-                                           Collected = Some instance2 } }
+                                           Collected = {
+                                               StackId = instance2.StackId
+                                               BranchId = instance2.BranchId
+                                               BranchInstanceId = instance2.BranchInstanceId
+                                               DeckId = followerDefaultDeckId
+                                               Index = 0s
+                                           } |> List.singleton } }
 
     // changing to private deck has notification
     do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorAcquiredId
