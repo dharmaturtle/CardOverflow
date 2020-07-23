@@ -26,26 +26,18 @@ type IdName = {
 
 type DeckAddedStack = {
     TheirDeck: IdName
-    NewStackId: int
-    NewBranchId: int
-    NewBranchInstanceId: int
+    New: StackBranchInstanceIds
 }
 
 type DeckUpdatedStack = {
     TheirDeck: IdName
-    NewStackId: int
-    NewBranchId: int
-    NewBranchInstanceId: int
-    AcquiredStackId: int Option
-    AcquiredBranchId: int Option
-    AcquiredBranchInstanceId: int Option
+    New: StackBranchInstanceIds
+    Collected: StackBranchInstanceIds Option
 }
 
 type DeckDeletedStack = {
     TheirDeck: IdName
-    DeletedStackId: int
-    DeletedBranchId: int
-    DeletedBranchInstanceId: int
+    Deleted: StackBranchInstanceIds
 }
 
 type Message =

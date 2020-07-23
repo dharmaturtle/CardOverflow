@@ -20,7 +20,7 @@
   <td>
     @if (Notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
       <span>
-        @Stack(deckAddedStack.NewBranchInstanceId)
+        @Stack(deckAddedStack.New.BranchInstanceId)
         added to
         @Sender()&apos;s
         deck
@@ -28,7 +28,7 @@
       </span>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
       <span>
-        @Stack(deckUpdatedStack.NewBranchInstanceId)
+        @Stack(deckUpdatedStack.New.BranchInstanceId)
         updated in
         @Sender()&apos;s
         deck
@@ -36,7 +36,7 @@
       </span>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
-        @Stack(deckDeletedStack.DeletedBranchInstanceId)
+        @Stack(deckDeletedStack.Deleted.BranchInstanceId)
         deleted from
         @Sender()&apos;s
         deck

@@ -4,6 +4,7 @@ open CardOverflow.Debug
 open MappingTools
 open CardOverflow.Entity
 open CardOverflow.Pure
+open CardOverflow.Pure.Core
 open System
 open System.Linq
 open FsToolkit.ErrorHandling
@@ -31,32 +32,35 @@ module CollateInstanceEntity =
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module Notification =
-    let load ((n: NotificationEntity), senderName, (ac: AcquiredCardEntity), deckName) =
+    let load ((n: NotificationEntity), senderName, (cc: AcquiredCardEntity), deckName) =
         let theirDeck =
-            lazy  { Id = n.DeckId.Value
-                    Name = deckName }
+            lazy{ Id = n.DeckId.Value
+                  Name = deckName }
+        let stackBranchInstanceIds =
+            lazy{ StackId = n.StackId.Value
+                  BranchId = n.BranchId.Value
+                  BranchInstanceId = n.BranchInstanceId.Value
+                }
+        let collected =
+            lazy (cc |> Option.ofObj |> Option.map (fun card ->
+                {   StackId = card.StackId
+                    BranchId = card.BranchId
+                    BranchInstanceId = card.BranchInstanceId
+                }))
         let message =
             match n.Type with
             | NotificationType.DeckAddedStack ->
                 {   TheirDeck = theirDeck.Value
-                    NewStackId = n.StackId.Value
-                    NewBranchId = n.BranchId.Value
-                    NewBranchInstanceId = n.BranchInstanceId.Value
+                    New = stackBranchInstanceIds.Value
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
                 {   TheirDeck = theirDeck.Value
-                    NewStackId = n.StackId.Value
-                    NewBranchId = n.BranchId.Value
-                    NewBranchInstanceId = n.BranchInstanceId.Value
-                    AcquiredStackId = ac |> Option.ofObj |> Option.map (fun x -> x.StackId)
-                    AcquiredBranchId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchId)
-                    AcquiredBranchInstanceId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchInstanceId)
+                    New = stackBranchInstanceIds.Value
+                    Collected = collected.Value
                 } |> DeckUpdatedStack
             | NotificationType.DeckDeletedStack ->
                 {   TheirDeck = theirDeck.Value
-                    DeletedStackId = n.StackId.Value
-                    DeletedBranchId = n.BranchId.Value
-                    DeletedBranchInstanceId = n.BranchInstanceId.Value
+                    Deleted = stackBranchInstanceIds.Value
                 } |> DeckDeletedStack
             | x -> failwith <| sprintf "Invalid enum value: %A" x
         {   Id = n.Id
