@@ -32,18 +32,19 @@ module CollateInstanceEntity =
 
 module Notification =
     let load ((n: NotificationEntity), senderName, (ac: AcquiredCardEntity), deckName) =
+        let theirDeck =
+            lazy  { Id = n.DeckId.Value
+                    Name = deckName }
         let message =
             match n.Type with
             | NotificationType.DeckAddedStack ->
-                {   DeckId = n.DeckId.Value
-                    DeckName = deckName
+                {   TheirDeck = theirDeck.Value
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
                     NewBranchInstanceId = n.BranchInstanceId.Value
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
-                {   DeckId = n.DeckId.Value
-                    DeckName = deckName
+                {   TheirDeck = theirDeck.Value
                     NewStackId = n.StackId.Value
                     NewBranchId = n.BranchId.Value
                     NewBranchInstanceId = n.BranchInstanceId.Value
@@ -52,8 +53,7 @@ module Notification =
                     AcquiredBranchInstanceId = ac |> Option.ofObj |> Option.map (fun x -> x.BranchInstanceId)
                 } |> DeckUpdatedStack
             | NotificationType.DeckDeletedStack ->
-                {   DeckId = n.DeckId.Value
-                    DeckName = deckName
+                {   TheirDeck = theirDeck.Value
                     DeletedStackId = n.StackId.Value
                     DeletedBranchId = n.BranchId.Value
                     DeletedBranchInstanceId = n.BranchInstanceId.Value

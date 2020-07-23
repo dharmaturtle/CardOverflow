@@ -19,17 +19,20 @@ type NotificationType = // the indexes currently have no semantic meaning - they
     | DeckUpdatedStack = 1
     | DeckDeletedStack = 2
 
+type IdName = {
+    Id: int
+    Name: string
+}
+
 type DeckAddedStack = {
-    DeckId: int
-    DeckName: string
+    TheirDeck: IdName
     NewStackId: int
     NewBranchId: int
     NewBranchInstanceId: int
 }
 
 type DeckUpdatedStack = {
-    DeckId: int
-    DeckName: string
+    TheirDeck: IdName
     NewStackId: int
     NewBranchId: int
     NewBranchInstanceId: int
@@ -39,8 +42,7 @@ type DeckUpdatedStack = {
 }
 
 type DeckDeletedStack = {
-    DeckId: int
-    DeckName: string
+    TheirDeck: IdName
     DeletedStackId: int
     DeletedBranchId: int
     DeletedBranchInstanceId: int

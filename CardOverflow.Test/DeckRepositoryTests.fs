@@ -259,6 +259,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             IsFollowed = false
             FollowCount = 0
         }
+    let theirDeck = { Id = publicDeck.Id
+                      Name = publicDeck.Name }
     do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |>%% Assert.equal publicDeck.Id
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeck.Id true
     do! SanitizeDeckRepository.setDefault c.Db authorId publicDeck.Id
@@ -297,8 +299,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
                 TimeStamp = DateTime.MinValue
-                Message = DeckAddedStack { DeckId = publicDeck.Id
-                                           DeckName = publicDeck.Name
+                Message = DeckAddedStack { TheirDeck = theirDeck
                                            NewStackId = stackId
                                            NewBranchId = branchId
                                            NewBranchInstanceId = 1001 } }
@@ -330,8 +331,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
-              Message = DeckUpdatedStack { DeckId = publicDeck.Id
-                                           DeckName = publicDeck.Name
+              Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            NewStackId = stackId
                                            NewBranchId = branchId
                                            NewBranchInstanceId = instance2
@@ -366,8 +366,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
-              Message = DeckUpdatedStack { DeckId = publicDeck.Id
-                                           DeckName = publicDeck.Name
+              Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            NewStackId = stackId
                                            NewBranchId = branchId
                                            NewBranchInstanceId = instance3
@@ -383,8 +382,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
-              Message = DeckDeletedStack { DeckId = publicDeck.Id
-                                           DeckName = publicDeck.Name
+              Message = DeckDeletedStack { TheirDeck = theirDeck
                                            DeletedStackId = stackId
                                            DeletedBranchId = branchId
                                            DeletedBranchInstanceId = instance3 } }
@@ -397,8 +395,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
-              Message = DeckAddedStack { DeckId = publicDeck.Id
-                                         DeckName = publicDeck.Name
+              Message = DeckAddedStack { TheirDeck = theirDeck
                                          NewStackId = stackId
                                          NewBranchId = branchId
                                          NewBranchInstanceId = instance3 } }
@@ -419,8 +416,9 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
           SenderId = 3
           SenderDisplayName = "RoboTurtle"
           TimeStamp = a.TimeStamp
-          Message = DeckAddedStack { DeckId = authorDefaultDeckId
-                                     DeckName = "Default Deck"
+          Message = DeckAddedStack { TheirDeck =
+                                        { Id = authorDefaultDeckId
+                                          Name = "Default Deck" }
                                      NewStackId = stackId
                                      NewBranchId = branchId
                                      NewBranchInstanceId = instance3 } }
@@ -430,8 +428,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
           SenderDisplayName = "RoboTurtle"
           TimeStamp = b.TimeStamp
           Message = DeckDeletedStack
-                     { DeckId = publicDeck.Id
-                       DeckName = publicDeck.Name
+                     { TheirDeck = theirDeck
                        DeletedStackId = stackId
                        DeletedBranchId = branchId
                        DeletedBranchInstanceId = instance3 } }
@@ -452,8 +449,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
-              Message = DeckDeletedStack { DeckId = publicDeck.Id
-                                           DeckName = publicDeck.Name
+              Message = DeckDeletedStack { TheirDeck = theirDeck
                                            DeletedStackId = stackId
                                            DeletedBranchId = branchId
                                            DeletedBranchInstanceId = instance3 } }

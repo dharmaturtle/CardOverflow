@@ -24,7 +24,7 @@
         added to
         @Sender()&apos;s
         deck
-        @Deck(@deckAddedStack.DeckId, deckAddedStack.DeckName).
+        @Deck(@deckAddedStack.TheirDeck.Id, deckAddedStack.TheirDeck.Name).
       </span>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
       <span>
@@ -32,7 +32,7 @@
         updated in
         @Sender()&apos;s
         deck
-        @Deck(@deckUpdatedStack.DeckId, deckUpdatedStack.DeckName).
+        @Deck(@deckUpdatedStack.TheirDeck.Id, deckUpdatedStack.TheirDeck.Name).
       </span>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
@@ -40,7 +40,7 @@
         deleted from
         @Sender()&apos;s
         deck
-        @Deck(deckDeletedStack.DeckId, deckDeletedStack.DeckName).
+        @Deck(deckDeletedStack.TheirDeck.Id, deckDeletedStack.TheirDeck.Name).
       </span>
     }
   </td>
