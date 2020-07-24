@@ -206,6 +206,15 @@ module SanitizeDeckRepository =
         do! db.SaveChangesAsyncI()
         return deck.Id
     }
+    let setSource (db: CardOverflowDb) userId deckId sourceDeckId = taskResult {
+        match sourceDeckId with
+        | Some sourceDeckId ->
+            do! requireIsPublic db sourceDeckId
+        | None -> ()
+        let! (deck: DeckEntity) = tryGet db userId deckId
+        deck.SourceId <- sourceDeckId |> Option.toNullable
+        return! db.SaveChangesAsyncI()
+    }
     let delete (db: CardOverflowDb) userId deckId = taskResult {
         do! deckBelongsTo db userId deckId
         let! defaultDeckId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultDeckId).SingleAsync()
@@ -377,8 +386,11 @@ module SanitizeDeckRepository =
                 let! defaultCardSettingId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
                 let! newDeckId =
                     match followType with
-                    | NewDeck name ->
-                        create db userId name |>% Result.mapError RealError
+                    | NewDeck name -> (taskResult {
+                            let! newDeckId = create db userId name
+                            do! setSource db userId newDeckId (Some deckId)
+                            return newDeckId
+                        } |>% Result.mapError RealError)
                     | OldDeck id -> taskResult {
                         do! db.Deck.AnyAsync(fun d -> d.Id = id && d.UserId = userId)
                             |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." id |> RealError)

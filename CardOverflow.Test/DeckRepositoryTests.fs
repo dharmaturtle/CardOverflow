@@ -305,6 +305,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 SenderDisplayName = "RoboTurtle"
                 TimeStamp = DateTime.MinValue
                 Message = DeckAddedStack { TheirDeck = theirDeck
+                                           MyDeck = None
                                            New = instance1 } }
 
     // notification deleted
@@ -395,6 +396,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
               Message = DeckAddedStack { TheirDeck = theirDeck
+                                         MyDeck = None
                                          New = instance3 } }
 
     // changing to another public deck that's also followed generates 2 notifications
@@ -416,6 +418,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
           Message = DeckAddedStack { TheirDeck =
                                         { Id = authorDefaultDeckId
                                           Name = "Default Deck" }
+                                     MyDeck = None
                                      New = instance3 } }
     b |> Assert.equal
         { Id = 7
@@ -744,7 +747,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         |>% getRealError
         |>% Assert.equal (sprintf "Deck name '%s' is too long. It must be less than 250 characters." longDeckName)
     
-    // follow with "OldDeck false None" works
+    // follow with "NewDeck false None" works
     let newDeckId = 4
     
     do! follow (Guid.NewGuid().ToString()) None |> TaskResult.getOk

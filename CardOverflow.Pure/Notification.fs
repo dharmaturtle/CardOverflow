@@ -26,6 +26,7 @@ type IdName = {
 
 type DeckAddedStack = {
     TheirDeck: IdName
+    MyDeck: IdName Option
     New: StackBranchInstanceIds
 }
 

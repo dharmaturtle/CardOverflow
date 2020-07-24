@@ -28,6 +28,8 @@ open System.Security.Cryptography
 open FsToolkit.ErrorHandling
 open Thoth.Json.Net
 open FsCheck.Xunit
+open CardOverflow.Sanitation
+open CardOverflow.Sanitation.SanitizeDeckRepository
 
 type NotificationTests () =
     let c = new TestContainer(memberName = nameof NotificationTests)
@@ -53,3 +55,39 @@ type NotificationTests () =
     
     interface IDisposable with
         member _.Dispose() = (c :> IDisposable).Dispose()
+
+[<Fact>]
+let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 3
+    let publicDeckId = 3
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
+    let followerId = 1
+    let newDeckId = 4
+    let newDeckName = Guid.NewGuid().ToString()
+    do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck newDeckName) true None
+    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let assertNotificationThenDelete expected = task {
+        let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
+        let n = ns.Results |> Assert.Single
+        n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+        n |> Assert.equal
+            {   expected with
+                    TimeStamp = n.TimeStamp // cheating, but whatever
+            }
+        do! NotificationRepository.remove c.Db followerId n.Id
+    }
+    let ids =
+        {   StackId = 1
+            BranchId = 1
+            BranchInstanceId = 1001 }
+
+    do! assertNotificationThenDelete
+            {   Id = 1
+                SenderId = authorId
+                SenderDisplayName = "RoboTurtle"
+                TimeStamp = DateTime.MinValue
+                Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
+                                           MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                           New = ids } }
+    } |> TaskResult.getOk)
