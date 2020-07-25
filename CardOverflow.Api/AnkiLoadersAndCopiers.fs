@@ -131,7 +131,7 @@ type AnkiAcquiredCard = {
     Deck: DeckEntity
     CardSetting: CardSettingEntity
 } with
-    member this.CopyToX (entity: AcquiredCardEntity) i =
+    member this.CopyToX (entity: CollectedCardEntity) i =
         entity.Deck <- this.Deck
         entity.UserId <- this.UserId
         entity.Index <- i
@@ -141,7 +141,7 @@ type AnkiAcquiredCard = {
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
     member this.CopyToNew i =
-        let entity = AcquiredCardEntity()
+        let entity = CollectedCardEntity()
         this.CopyToX entity i
         entity.Stack <- this.BranchInstance.Branch.Stack
         entity.Branch <- this.BranchInstance.Branch
@@ -149,8 +149,8 @@ type AnkiAcquiredCard = {
         entity.CardSetting <- this.CardSetting
         entity
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.AcquiredCard
-            .Include(fun x -> x.Tag_AcquiredCards)
+        db.CollectedCard
+            .Include(fun x -> x.Tag_CollectedCards)
             .SingleOrDefault(fun c ->
                 this.UserId = c.UserId &&
                 this.Index = c.Index &&
@@ -159,7 +159,7 @@ type AnkiAcquiredCard = {
 
 type AnkiHistory = {
     UserId: int
-    AcquiredCard: AcquiredCardEntity option
+    CollectedCard: CollectedCardEntity option
     Score: int16
     Timestamp: DateTime
     IntervalWithUnusedStepsIndex: IntervalOrStepsIndex
@@ -168,7 +168,7 @@ type AnkiHistory = {
 } with
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
-        match this.AcquiredCard with
+        match this.CollectedCard with
         | Some ac ->
             db.History.FirstOrDefault(fun h -> 
                 this.UserId = h.UserId &&
@@ -189,15 +189,15 @@ type AnkiHistory = {
                 this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
             )
     member this.CopyTo (entity: HistoryEntity) =
-        entity.AcquiredCard <- this.AcquiredCard |> Option.toObj
+        entity.CollectedCard <- this.CollectedCard |> Option.toObj
         entity.Score <- this.Score
         entity.Timestamp <- this.Timestamp
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
-        entity.BranchInstance <- this.AcquiredCard |> Option.map (fun x -> x.BranchInstance) |> Option.toObj
+        entity.BranchInstance <- this.CollectedCard |> Option.map (fun x -> x.BranchInstance) |> Option.toObj
         entity.UserId <- this.UserId
-        entity.Index <- this.AcquiredCard |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
+        entity.Index <- this.CollectedCard |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
     member this.CopyToNew =
         let history = HistoryEntity()
         this.CopyTo history
@@ -206,7 +206,7 @@ type AnkiHistory = {
 type AnkiCardType = | New | Learning | Due // | Filtered
 
 module Anki =
-    let toHistory userId (cardByAnkiId: Map<int64, AcquiredCardEntity>) getHistory (revLog: RevlogEntity) =
+    let toHistory userId (cardByAnkiId: Map<int64, CollectedCardEntity>) getHistory (revLog: RevlogEntity) =
         result {
             let! score =
                 match revLog.Ease with
@@ -217,7 +217,7 @@ module Anki =
                 | _ -> Error <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
             let history = {
                 UserId = userId
-                AcquiredCard =
+                CollectedCard =
                     cardByAnkiId
                     |> Map.tryFind revLog.Cid
                 EaseFactorInPermille = int16 revLog.Factor

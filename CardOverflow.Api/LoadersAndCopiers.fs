@@ -32,7 +32,7 @@ module CollateInstanceEntity =
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module Notification =
-    let load ((n: NotificationEntity), senderName, (cc: AcquiredCardEntity ResizeArray), deckName, (myDeck: DeckEntity)) =
+    let load ((n: NotificationEntity), senderName, (cc: CollectedCardEntity ResizeArray), deckName, (myDeck: DeckEntity)) =
         let theirDeck =
             lazy{ Id = n.DeckId.Value
                   Name = deckName }
@@ -380,13 +380,13 @@ type BranchInstanceMeta with
         e
 
 type QuizCard with
-    static member load (entity: AcquiredCardEntity) =
+    static member load (entity: CollectedCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
             entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int entity.Index]
         result {
             let! cardState = CardState.create entity.CardState
             return {
-                AcquiredCardId = entity.Id
+                CollectedCardId = entity.Id
                 BranchInstanceId = entity.BranchInstanceId
                 Due = entity.Due
                 Front = front
@@ -400,8 +400,8 @@ type QuizCard with
                 Settings = CardSetting.load false entity.CardSetting } // lowTODO false exists to make the syntax work; it is semantically useless. Remove.
         }
 
-type AcquiredCard with
-    member this.copyTo (entity: AcquiredCardEntity) (tagIds: int seq) index =
+type CollectedCard with
+    member this.copyTo (entity: CollectedCardEntity) (tagIds: int seq) index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
         entity.StackId <- this.StackId
@@ -412,16 +412,16 @@ type AcquiredCard with
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.CardSettingId <- this.CardSettingId
         entity.Due <- this.Due
-        entity.Tag_AcquiredCards <- tagIds.Select(fun x -> Tag_AcquiredCardEntity(TagId = x)).ToList()
+        entity.Tag_CollectedCards <- tagIds.Select(fun x -> Tag_CollectedCardEntity(TagId = x)).ToList()
         entity.DeckId <- this.DeckId
     member this.copyToNew tagIds i =
-        let e = AcquiredCardEntity()
+        let e = CollectedCardEntity()
         this.copyTo e tagIds i
         e
     static member initialize userId cardSettingId deckId tags =
         {   StackId = 0
             BranchId = 0
-            AcquiredCardId = 0
+            CollectedCardId = 0
             BranchInstanceMeta = BranchInstanceMeta.initialize
             Index = 0s
             UserId = userId
@@ -434,12 +434,12 @@ type AcquiredCard with
             Tags = tags
             DeckId = deckId
         }
-    static member load (usersTags: string Set) (entity: AcquiredCardIsLatestEntity) isAcquired = result {
+    static member load (usersTags: string Set) (entity: CollectedCardIsLatestEntity) isAcquired = result {
         let! cardState = entity.CardState |> CardState.create
         return
             {   StackId = entity.StackId
                 BranchId = entity.BranchId
-                AcquiredCardId = entity.Id
+                CollectedCardId = entity.Id
                 BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isAcquired entity.IsLatest entity.BranchInstance
                 Index = entity.Index
                 UserId = entity.UserId

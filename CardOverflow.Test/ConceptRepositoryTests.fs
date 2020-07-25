@@ -59,7 +59,7 @@ let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
-    let! (cards: PagedList<Result<AcquiredCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (cards: PagedList<Result<CollectedCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
@@ -112,7 +112,7 @@ let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult 
     do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
-    let! (cards: PagedList<Result<AcquiredCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (cards: PagedList<Result<CollectedCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
@@ -209,7 +209,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     
     let! ac = StackRepository.GetAcquired c.Db userId stack.Id
     let ac = ac.Value.Single()
-    let! x = StackRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db userId ac.CollectedCardId CardState.Suspended
     Assert.Null x.Value
     let! stack = ExploreStackRepository.get c.Db userId 1
     Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count

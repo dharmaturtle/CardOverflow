@@ -60,7 +60,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedInstanceId { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
-  private List<AcquiredCard> cards;
+  private List<CollectedCard> cards;
   private PagedListDetails details;
 
   public override async Task SetParametersAsync(ParameterView parameters) {

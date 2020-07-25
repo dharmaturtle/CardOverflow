@@ -165,7 +165,7 @@ module AnkiImporter =
                 | None -> ()
                 | Some nid -> 
                     let _, tags = cardsAndTagsByNoteId.[nid]
-                    card.Tag_AcquiredCards <- tags.Select(fun x -> Tag_AcquiredCardEntity(Tag = x)).ToList()
+                    card.Tag_CollectedCards <- tags.Select(fun x -> Tag_CollectedCardEntity(Tag = x)).ToList()
             )
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory userId cardByNoteId getHistory) |> Result.consolidate
             return
@@ -214,7 +214,7 @@ module AnkiImporter =
                     <| getHistory
             acquiredCardEntities |> Seq.iter (fun x ->
                 if x.BranchInstance <> null && x.BranchInstanceId = 0
-                then db.AcquiredCard.AddI x
+                then db.CollectedCard.AddI x
             )
             histories |> Seq.iter (fun x ->
                 if x.Id = 0L

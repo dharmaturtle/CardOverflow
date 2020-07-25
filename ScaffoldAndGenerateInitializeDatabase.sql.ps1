@@ -31,7 +31,7 @@ foreach ($file in Get-ChildItem -Path "CardOverflow.Entity" *.cs) {
 
 foreach ($file in Get-ChildItem -Path "CardOverflow.Entity\CardOverflowDb.cs") {
     (Get-Content $file.PSPath -Raw) `
-    -replace [regex] "modelBuilder.Entity<AcquiredCardEntity>", "base.OnModelCreating(modelBuilder);`r`n`r`n            modelBuilder.Entity<AcquiredCardEntity>" `
+    -replace [regex] "modelBuilder.Entity<CollectedCardEntity>", "base.OnModelCreating(modelBuilder);`r`n`r`n            modelBuilder.Entity<CollectedCardEntity>" `
     -replace [regex] "entity.HasIndex\(e => e.DisplayName\)", "entity.ToTable(`"User`");`r`n`r`n                entity.HasIndex(e => e.DisplayName)" `
     -replace [regex] '\s+\.HasFilter\("\(\[DisplayName\] IS NOT NULL\)"\)', '' `
     -replace [regex] ".WithOne\(p => p.CardSetting\)", ".WithMany(p => p.CardSettings)" `

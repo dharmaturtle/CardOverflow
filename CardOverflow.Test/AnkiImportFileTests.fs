@@ -37,7 +37,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
 
     Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
+    Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
     Assert.Equal(7, c.Db.CollateInstance.Count())
     Assert.Equal(5, c.Db.LatestCollateInstance.Count())
     } |> TaskResult.getOk)
@@ -57,7 +57,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
 
     Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.AcquiredCard.Where(fun x -> x.Index = 1s))
+    Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -129,7 +129,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     use c = new TestContainer()
     let testCommunalFields = testCommunalFields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
-    Assert.Equal(7, c.Db.AcquiredCard.Count())
+    Assert.Equal(7, c.Db.CollectedCard.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
     Assert.Equal(3, c.Db.Branch.Count())
     Assert.Equal(3, c.Db.Stack.Count())
@@ -192,7 +192,7 @@ let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
 
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.UserId = userId))
+    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.UserId = userId))
     let! view = StackViewRepository.instance c.Db 1001
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
@@ -261,13 +261,13 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     do! {   EditAcquiredCardCommand.init with
                 CardSettingId = latestSettingId }
         |> SanitizeAcquiredCardRepository.update c.Db userId acId
-    let! (card: AcquiredCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getAcquiredCard branchId
     Assert.Equal(latestSettingId, card.CardSettingId)
 
     // insert new stack with default settingsId
     do! EditAcquiredCardCommand.init
         |> SanitizeAcquiredCardRepository.update c.Db userId acId
-    let! (card: AcquiredCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getAcquiredCard branchId
     Assert.Equal(defaultSettingId, card.CardSettingId)
 
     let! latestDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
@@ -275,14 +275,14 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     do! {   EditAcquiredCardCommand.init with
                 DeckId = latestDeckId }
         |> SanitizeAcquiredCardRepository.update c.Db userId acId
-    let! (card: AcquiredCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getAcquiredCard branchId
     Assert.Equal(latestDeckId, card.DeckId)
 
     // insert new stack with default deckId
     let defaultDeckId = userId
     do! EditAcquiredCardCommand.init
         |> SanitizeAcquiredCardRepository.update c.Db userId acId
-    let! (card: AcquiredCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getAcquiredCard branchId
     Assert.Equal(defaultDeckId, card.DeckId)
     } |> TaskResult.getOk)
 
@@ -309,7 +309,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 do! testCommunalFields id [clozeText]
         otherTest clozeText }
     let assertUserHasNormalCardCount expected =
-        c.Db.AcquiredCard.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
+        c.Db.CollectedCard.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
@@ -334,7 +334,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             assertCount 0 "{{c1::Portland::city}} was founded in 1845."
     do! assertUserHasNormalCardCount 4
 
-    let! (e: PagedList<Result<AcquiredCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (e: PagedList<Result<CollectedCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
     let expected =
         [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
@@ -397,7 +397,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
     let stackId = 1
     let branchId_og = 1
-    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     let! revisions = StackRepository.Revisions c.Db userId branchId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
@@ -406,15 +406,15 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     do! FacetRepositoryTests.update c userId
             (VNewBranchSourceStackId stackId) id branchId_alt
 
-    Assert.equal 0 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+    Assert.equal 0 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // updating an unacquired branch doesn't change the AcquiredCards
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId_og) id branchId_og
 
-    Assert.equal 0 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    Assert.equal 2 <| c.Db.AcquiredCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+    Assert.equal 0 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // switching to testing StackRepository.Revisions
     let! revisions = StackRepository.Revisions c.Db userId branchId_og

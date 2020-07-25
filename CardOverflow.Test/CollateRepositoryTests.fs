@@ -64,11 +64,11 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
         latestInstance.Fields.Select(fun x -> x.Name))
-    Assert.Equal(userId, c.Db.AcquiredCard.Single().UserId)
-    Assert.Equal(1002, c.Db.AcquiredCard.Single().BranchInstanceId)
+    Assert.Equal(userId, c.Db.CollectedCard.Single().UserId)
+    Assert.Equal(1002, c.Db.CollectedCard.Single().BranchInstanceId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.CollateInstanceId)
+        c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.CollateInstanceId)
     Assert.Equal(2, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
     Assert.Equal(2, c.Db.BranchInstance.Count())
     Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.Branch.StackId = 1))

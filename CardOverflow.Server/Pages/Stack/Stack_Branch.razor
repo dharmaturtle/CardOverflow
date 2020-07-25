@@ -106,7 +106,7 @@
   [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
-  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public EventCallback<List<CollectedCard>> UpdateAcquiredCards { get; set; }
   private bool _displayAllRevisions;
   private BranchRevision _revisions;
 

@@ -50,7 +50,7 @@
             <AcquireToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             UpdateAcquiredCards=@(async acs => {
-                                                    var acId = acs.Single(ac => ac.Index == ids.Index).AcquiredCardId;
+                                                    var acId = acs.Single(ac => ac.Index == ids.Index).CollectedCardId;
                                                     await _switchToMyDeck(acId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
@@ -99,7 +99,7 @@
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
                             UpdateAcquiredCards=@(async acs => {
-                                                    var acId = acs.Single(ac => ac.Index == mine.Index).AcquiredCardId;
+                                                    var acId = acs.Single(ac => ac.Index == mine.Index).CollectedCardId;
                                                     await _switchToMyDeck(acId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
@@ -133,7 +133,7 @@
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
                             UpdateAcquiredCards=@(async acs => {
-                                                    var acId = acs.Single(ac => ac.Index == mine.Index).AcquiredCardId;
+                                                    var acId = acs.Single(ac => ac.Index == mine.Index).CollectedCardId;
                                                     await _switchToMyDeck(acId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchInstanceChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))

@@ -77,7 +77,7 @@
   [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; } = new EventCallback<FSharpOption<StackBranchInstanceIds>>();
   [Parameter] public StackBranchInstanceIds Ids { get; set; }
-  [Parameter] public EventCallback<List<AcquiredCard>> UpdateAcquiredCards { get; set; } = new EventCallback<List<AcquiredCard>>();
+  [Parameter] public EventCallback<List<CollectedCard>> UpdateAcquiredCards { get; set; } = new EventCallback<List<CollectedCard>>();
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? InstanceUsers { get; set; }
@@ -108,7 +108,7 @@
 
   private Task _Discard() =>
     DbExecutor.QueryAsync(db => StackRepository.unacquireStack(db, _user.Id, Ids.StackId)).Match(ToastService, async _ => {
-      await UpdateAcquiredCards.InvokeAsync(ResizeArray.empty<AcquiredCard>());
+      await UpdateAcquiredCards.InvokeAsync(ResizeArray.empty<CollectedCard>());
       await UpdateAcquiredIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.None);
       _modal.Hide();
     });

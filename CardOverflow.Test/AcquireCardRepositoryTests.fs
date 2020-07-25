@@ -27,28 +27,28 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
     let getAcquired () = StackRepository.GetAcquired c.Db userId 1
-    let! (ac: AcquiredCard ResizeArray) = getAcquired ()
+    let! (ac: CollectedCard ResizeArray) = getAcquired ()
     let ac = ac.Single()
 
     do! StackRepository.unacquireStack c.Db userId ac.StackId
-    Assert.Empty c.Db.AcquiredCard
+    Assert.Empty c.Db.CollectedCard
 
     let reacquire () = task { do! StackRepository.AcquireCardAsync c.Db userId ac.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
-    let! (ac: AcquiredCard ResizeArray) = getAcquired ()
+    let! (ac: CollectedCard ResizeArray) = getAcquired ()
     let ac = ac.Single()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
     do! StackRepository.unacquireStack c.Db userId ac.StackId
-    Assert.Empty c.Db.AcquiredCard // still empty after editing then deleting
+    Assert.Empty c.Db.CollectedCard // still empty after editing then deleting
 
     let userId = 3
     do! reacquire ()
-    let! (ac: AcquiredCard ResizeArray) = getAcquired ()
+    let! (ac: CollectedCard ResizeArray) = getAcquired ()
     let ac = ac.Single()
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
-    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.AcquiredCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
+    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CollectedCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.StackId |> TaskResult.getOk
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let newCardBranchId = 2
@@ -61,14 +61,14 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
             TargetStackLink = string stack2
         }
     do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
-    Assert.NotEmpty c.Db.AcquiredCard
-    Assert.NotEmpty c.Db.Relationship_AcquiredCard
+    Assert.NotEmpty c.Db.CollectedCard
+    Assert.NotEmpty c.Db.Relationship_CollectedCard
     Assert.NotEmpty c.Db.History
-    Assert.NotEmpty c.Db.Tag_AcquiredCard
+    Assert.NotEmpty c.Db.Tag_CollectedCard
     do! StackRepository.unacquireStack c.Db userId ac.StackId // can delete after adding a history, tag, and relationship
-    Assert.Equal(stack2, c.Db.AcquiredCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
-    Assert.Empty c.Db.Relationship_AcquiredCard
-    Assert.Empty c.Db.Tag_AcquiredCard
+    Assert.Equal(stack2, c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
+    Assert.Empty c.Db.Relationship_CollectedCard
+    Assert.Empty c.Db.Tag_CollectedCard
 
     // but history remains
     Assert.NotEmpty c.Db.History
@@ -90,7 +90,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let! ac = StackRepository.GetAcquired c.Db userId 1
     let ac = ac.Value.Single()
     
-    let! x = StackRepository.editState c.Db userId ac.AcquiredCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db userId ac.CollectedCardId CardState.Suspended
     Assert.Null x.Value
     let! ac = StackRepository.GetAcquired c.Db userId ac.StackId
     let ac = ac.Value.Single()
@@ -104,7 +104,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     Assert.Equal(ac.CardState, CardState.Suspended) // still suspended after edit
 
     let otherUserId = 2 // other users can't edit card state
-    let! x = StackRepository.editState c.Db otherUserId ac.AcquiredCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db otherUserId ac.CollectedCardId CardState.Suspended
     Assert.Equal("You don't own that card.", x.error)
     }
 
@@ -120,14 +120,14 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = 1002
-    do! StackRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new AcquiredCard; it only swaps out the BranchInstanceId
-    Assert.Equal(i2, c.Db.AcquiredCard.Single().BranchInstanceId)
-    Assert.Equal(branchId, c.Db.AcquiredCard.Single().BranchId)
-    Assert.Equal(stackId, c.Db.AcquiredCard.Single().StackId)
+    do! StackRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
+    Assert.Equal(i2, c.Db.CollectedCard.Single().BranchInstanceId)
+    Assert.Equal(branchId, c.Db.CollectedCard.Single().BranchId)
+    Assert.Equal(stackId, c.Db.CollectedCard.Single().StackId)
     
     use db = c.Db
-    db.AcquiredCard.AddI <|
-        AcquiredCardEntity(
+    db.CollectedCard.AddI <|
+        CollectedCardEntity(
             StackId = stackId,
             BranchId = branchId,
             BranchInstanceId = i2,
@@ -141,8 +141,8 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
 
     let i1 = 1001
     use db = c.Db
-    db.AcquiredCard.AddI <|
-        AcquiredCardEntity(
+    db.CollectedCard.AddI <|
+        CollectedCardEntity(
             StackId = stackId,
             BranchId = branchId,
             BranchInstanceId = i1,
@@ -152,7 +152,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             DeckId = userId)
     let ex = Assert.Throws<Npgsql.PostgresException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "P0001: UserId #3 with AcquiredCard #3 and Stack #1 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
+        "P0001: UserId #3 with CollectedCard #3 and Stack #1 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
         ex.Message)
     }
 
@@ -210,27 +210,27 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.BranchInstance.Single().Users)
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
-    Assert.Equal(1, c.Db.AcquiredCard.Count())
+    Assert.Equal(1, c.Db.CollectedCard.Count())
     
     let s2 = 2
     let ci2_1 = 1002
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
-    Assert.Equal(3, c.Db.AcquiredCard.Count())
+    Assert.Equal(3, c.Db.CollectedCard.Count())
     
     let acquirerId = 1
     do! StackRepository.AcquireCardAsync c.Db acquirerId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
-    Assert.Equal(4, c.Db.AcquiredCard.Count())
+    Assert.Equal(4, c.Db.CollectedCard.Count())
     do! StackRepository.AcquireCardAsync c.Db acquirerId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     // misc
     Assert.Equal(2, c.Db.BranchInstance.Count())
-    Assert.Equal(6, c.Db.AcquiredCard.Count())
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_1));
+    Assert.Equal(6, c.Db.CollectedCard.Count())
+    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_1));
 
     // update branch
     let! r = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId b1
@@ -246,25 +246,25 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(6, c.Db.AcquiredCard.Count())
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2))
+    Assert.Equal(6, c.Db.CollectedCard.Count())
+    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2))
     
     do! StackRepository.AcquireCardAsync c.Db acquirerId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(6, c.Db.AcquiredCard.Count())
-    Assert.Equal(2, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
+    Assert.Equal(6, c.Db.CollectedCard.Count())
+    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
-    let! ac = c.Db.AcquiredCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
+    let! ac = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
     do! StackRepository.unacquireStack c.Db authorId ac.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(5, c.Db.AcquiredCard.Count())
-    Assert.Equal(1, c.Db.AcquiredCard.Count(fun x -> x.BranchInstanceId = ci1_2));
+    Assert.Equal(5, c.Db.CollectedCard.Count())
+    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let count = StackRepository.GetDueCount c.Db acquirerId ""
     Assert.Equal(3, count)
@@ -279,7 +279,7 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
 
     let! a = StackRepository.GetQuizBatch c.Db userId ""
-    let getId (x: Result<QuizCard, string> seq) = x.First().Value.AcquiredCardId
+    let getId (x: Result<QuizCard, string> seq) = x.First().Value.CollectedCardId
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     let! b = StackRepository.GetQuizBatch c.Db userId ""
     Assert.NotEqual(getId a, getId b)

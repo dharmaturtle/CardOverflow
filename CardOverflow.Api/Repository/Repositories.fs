@@ -51,21 +51,21 @@ module FeedbackRepository =
         db.SaveChangesAsyncI()
 
 module RelationshipRepository =
-    let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_AcquiredCardEntity) =
-        db.Relationship_AcquiredCard.AddI j
+    let addAndSaveAsync (db: CardOverflowDb) (j: Relationship_CollectedCardEntity) =
+        db.Relationship_CollectedCard.AddI j
         db.SaveChangesAsyncI ()
     let removeAndSaveAsync (db: CardOverflowDb) sourceStackId targetStackId userId name =
-        db.Relationship_AcquiredCard.SingleOrDefault(fun x ->
-            x.SourceAcquiredCard.StackId = sourceStackId &&
-            x.TargetAcquiredCard.StackId = targetStackId &&
-            x.SourceAcquiredCard.UserId = userId &&
-            x.TargetAcquiredCard.UserId = userId &&
+        db.Relationship_CollectedCard.SingleOrDefault(fun x ->
+            x.SourceCollectedCard.StackId = sourceStackId &&
+            x.TargetCollectedCard.StackId = targetStackId &&
+            x.SourceCollectedCard.UserId = userId &&
+            x.TargetCollectedCard.UserId = userId &&
             x.Relationship.Name = name
         ) |> function
         | null ->
             sprintf "Relationship not found between source Stack #%i and target Stack #%i with name \"%s\"." sourceStackId targetStackId name |> Error |> Task.FromResult
         | x ->
-            db.Relationship_AcquiredCard.RemoveI x
+            db.Relationship_CollectedCard.RemoveI x
             db.SaveChangesAsyncI ()
             |> Task.map(fun () -> Ok())
 
@@ -94,7 +94,7 @@ module CollateRepository =
         let newCollateInstance = instance.CopyToNewInstance collate
         db.CollateInstance.AddI newCollateInstance
         db  
-            .AcquiredCard
+            .CollectedCard
             .Include(fun x -> x.BranchInstance)
             .Where(fun x -> x.BranchInstance.CollateInstanceId = instance.Id)
             |> Seq.iter(fun ac ->
@@ -118,7 +118,7 @@ module HistoryRepository =
         let! dateCounts =
             (query {
                 for h in db.History do
-                where (h.Timestamp >= oneYearishAgo && h.AcquiredCard.UserId = userId)
+                where (h.Timestamp >= oneYearishAgo && h.CollectedCard.UserId = userId)
                 groupValBy h h.Timestamp.Date into g
                 select { Date = g.Key; Count = g.Count() }
             }).ToListAsync()
@@ -126,7 +126,7 @@ module HistoryRepository =
 
 module ExploreStackRepository =
     let getAcquiredIds (db: CardOverflowDb) userId stackId =
-        db.AcquiredCard
+        db.CollectedCard
             .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
                 .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance)
             .Where(fun x -> x.UserId = userId && x.StackId = stackId)
@@ -152,9 +152,9 @@ module ExploreStackRepository =
                 .Where(fun x -> x.StackId = stackId)
                 .Select(fun x ->
                     x.Stack,
-                    x.Stack.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList(),
-                    x.Stack.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardSourceAcquiredCards.Select(fun x -> x.Relationship.Name).ToList(),
-                    x.Stack.AcquiredCards.Single(fun x -> x.UserId = userId).Relationship_AcquiredCardTargetAcquiredCards.Select(fun x -> x.Relationship.Name).ToList()
+                    x.Stack.CollectedCards.Single(fun x -> x.UserId = userId).Tag_CollectedCards.Select(fun x -> x.Tag.Name).ToList(),
+                    x.Stack.CollectedCards.Single(fun x -> x.UserId = userId).Relationship_CollectedCardSourceCollectedCards.Select(fun x -> x.Relationship.Name).ToList(),
+                    x.Stack.CollectedCards.Single(fun x -> x.UserId = userId).Relationship_CollectedCardTargetCollectedCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
         let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%i not found" stackId)
         let! (tc: List<StackTagCountEntity>) = db.StackTagCount.Where(fun x -> x.StackId = stackId).ToListAsync()
@@ -173,7 +173,7 @@ module ExploreStackRepository =
                 .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found" instanceId))
-        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstanceId = instanceId)
+        let! isAcquired = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstanceId = instanceId)
         let! latest = get db userId e.StackId
         return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
@@ -188,7 +188,7 @@ module ExploreStackRepository =
                 .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.BranchId = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found" branchId))
-        let! isAcquired = db.AcquiredCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
+        let! isAcquired = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         let! latest = get db userId e.StackId
         return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
@@ -205,7 +205,7 @@ module StackViewRepository =
         if userId = 0 then
             [].ToListAsync()
         else 
-            db.AcquiredCard
+            db.CollectedCard
                 .Where(fun x -> x.UserId = userId)
                 .Where(fun x -> x.BranchInstanceId = aId || x.BranchInstanceId = bId)
                 .Select(fun x -> x.BranchInstanceId)
@@ -261,9 +261,9 @@ module StackViewRepository =
 
 module AcquiredCardRepository =
     let getAcquired (db: CardOverflowDb) userId (testBranchInstanceIds: int ResizeArray) =
-        db.AcquiredCard.Where(fun x -> testBranchInstanceIds.Contains(x.BranchInstanceId) && x.UserId = userId).Select(fun x -> x.BranchInstanceId).ToListAsync()
+        db.CollectedCard.Where(fun x -> testBranchInstanceIds.Contains(x.BranchInstanceId) && x.UserId = userId).Select(fun x -> x.BranchInstanceId).ToListAsync()
     let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) =
-        db.AcquiredCard
+        db.CollectedCard
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 x.BranchInstanceId = branchInstanceId ||
@@ -276,14 +276,14 @@ module AcquiredCardRepository =
 
 module StackRepository =
     let unacquireStack (db: CardOverflowDb) userId stackId = taskResult {
-        do! db.AcquiredCard.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
+        do! db.CollectedCard.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
             |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Stack #%i" stackId)
-            |> TaskResult.map db.AcquiredCard.RemoveRange
+            |> TaskResult.map db.CollectedCard.RemoveRange
         return! db.SaveChangesAsyncI()
     }
     let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
-        let! (ac: AcquiredCardEntity) =
-            db.AcquiredCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+        let! (ac: CollectedCardEntity) =
+            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             |> Task.map (Result.ofNullable "You don't own that card.")
         ac.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
@@ -297,7 +297,7 @@ module StackRepository =
                 .SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull <| sprintf "BranchId #%i not found" branchId)
         let! acquiredInstanceId =
-            db.AcquiredCard
+            db.CollectedCard
                 .Where(fun x -> x.UserId = userId && x.BranchId = branchId)
                 .Select(fun x -> x.BranchInstanceId)
                 .Distinct()
@@ -311,7 +311,7 @@ module StackRepository =
                 x.DefaultDeckId
             ).SingleAsync()
         let cardSansIndex =
-            AcquiredCard.initialize
+            CollectedCard.initialize
                 userId
                 defaultCardSettingId
                 defaultDeckId
@@ -320,13 +320,13 @@ module StackRepository =
         let new' =
             [0s .. branchInstance.MaxIndexInclusive]
             |> List.map cardSansIndex
-        let! (old': AcquiredCardEntity list) = db.AcquiredCard.Where(fun x -> x.UserId = userId && x.StackId = branchInstance.StackId).ToListAsync() |>% Seq.toList
+        let! (old': CollectedCardEntity list) = db.CollectedCard.Where(fun x -> x.UserId = userId && x.StackId = branchInstance.StackId).ToListAsync() |>% Seq.toList
         return
             List.zipOn new' old' (fun new' old' -> new'.Index = old'.Index)
             |> List.map(
                 function
                 | None, Some old' ->
-                    db.AcquiredCard.RemoveI old' // highTODO add a warning on the UI that data will be lost
+                    db.CollectedCard.RemoveI old' // highTODO add a warning on the UI that data will be lost
                     None
                 | Some new', None ->
                     new'.BranchInstance <- branchInstance
@@ -334,7 +334,7 @@ module StackRepository =
                     new'.Stack <- branchInstance.Stack
                     new'.StackId <- branchInstance.StackId
                     new'.BranchInstanceId <- branchInstance.Id
-                    db.AcquiredCard.AddI new'
+                    db.CollectedCard.AddI new'
                     Some new'
                 | Some _, Some old' ->
                     if branchInstance.BranchId = old'.BranchId || mayUpdate then
@@ -354,7 +354,7 @@ module StackRepository =
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        let! (acs: AcquiredCardEntity list) = acquireStackNoSave db userId branchInstance true
+        let! (acs: CollectedCardEntity list) = acquireStackNoSave db userId branchInstance true
         match deckId with
         | Some deckId ->
             do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
@@ -367,63 +367,63 @@ module StackRepository =
         collect db userId branchInstanceId None
     let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
         let! (e: _ ResizeArray) =
-            db.AcquiredCardIsLatest
+            db.CollectedCardIsLatest
                 .Include(fun x -> x.BranchInstance.CollateInstance)
                 .Include(fun x -> x.BranchInstance.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
-                .Include(fun x -> x.BranchInstance.AcquiredCards :> IEnumerable<_>)
-                    .ThenInclude(fun (x: AcquiredCardEntity) -> x.Tag_AcquiredCards :> IEnumerable<_>)
-                    .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
+                .Include(fun x -> x.BranchInstance.CollectedCards :> IEnumerable<_>)
+                    .ThenInclude(fun (x: CollectedCardEntity) -> x.Tag_CollectedCards :> IEnumerable<_>)
+                    .ThenInclude(fun (x: Tag_CollectedCardEntity) -> x.Tag)
                 .Where(fun x -> x.StackId = stackId && x.UserId = userId)
                 .Select(fun x ->
                     x,
-                    x.BranchInstance.AcquiredCards.Single(fun x -> x.UserId = userId).Tag_AcquiredCards.Select(fun x -> x.Tag.Name).ToList()
+                    x.BranchInstance.CollectedCards.Single(fun x -> x.UserId = userId).Tag_CollectedCards.Select(fun x -> x.Tag.Name).ToList()
                 ).ToListAsync()
         return!
             e.Select(fun (e, t) ->
-                AcquiredCard.load (Set.ofSeq t) e true
+                CollectedCard.load (Set.ofSeq t) e true
             ) |> Result.consolidate
             |> Result.map toResizeArray
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return AcquiredCard.initialize userId user.DefaultCardSettingId user.DefaultDeckId []
+        return CollectedCard.initialize userId user.DefaultCardSettingId user.DefaultDeckId []
         }
     let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
-        db.AcquiredCard
+        db.CollectedCard
             .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
-                x.Tag_AcquiredCards.Any(fun x ->
+                x.Tag_CollectedCards.Any(fun x ->
                     x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.BranchInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
-        db.AcquiredCardIsLatest
+        db.CollectedCardIsLatest
             .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
-                x.Tag_AcquiredCards.Any(fun x ->
+                x.Tag_CollectedCards.Any(fun x ->
                     x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.BranchInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private acquiredByDeck (db: CardOverflowDb) deckId =
-        db.AcquiredCard
+        db.CollectedCard
             .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.DeckId = deckId)
     let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
                 (searchAcquiredIsLatest db userId searchTerm)
-                    .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
+                    .Include(fun x -> x.Tag_CollectedCards :> IEnumerable<_>)
+                        .ThenInclude(fun (x: Tag_CollectedCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
             return {
-                Results = r |> Seq.map (fun x -> AcquiredCard.load (x.Tag_AcquiredCards.Select(fun x -> x.Tag.Name) |> Set.ofSeq) x true)
+                Results = r |> Seq.map (fun x -> CollectedCard.load (x.Tag_CollectedCards.Select(fun x -> x.Tag.Name) |> Set.ofSeq) x true)
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount
@@ -466,7 +466,7 @@ module StackRepository =
             let! r =
                 filteredInstances.Select(fun x ->
                     x,
-                    x.AcquiredCards.Any(fun x -> x.UserId = userId),
+                    x.CollectedCards.Any(fun x -> x.UserId = userId),
                     x.CollateInstance, // .Include fails for some reason, so we have to manually select
                     x.Stack,
                     x.Stack.Author
@@ -502,7 +502,7 @@ module StackRepository =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.Deck
             .Where(fun x -> x.Id = deckId && x.IsPublic)
-            .SelectMany(fun x -> x.AcquiredCards.Select(fun x -> x.BranchInstance))
+            .SelectMany(fun x -> x.CollectedCards.Select(fun x -> x.BranchInstance))
             .Search(searchTerm, plain, wildcard, order)
         |> searchExplore userId pageNumber
 
@@ -556,7 +556,7 @@ module NotificationRepository =
                 .Select(fun x ->
                     x.Notification,
                     x.Notification.Sender.DisplayName,
-                    x.Notification.Stack.AcquiredCards.Where(fun x -> x.UserId = userId).OrderBy(fun x -> x.Index).ToList(),
+                    x.Notification.Stack.CollectedCards.Where(fun x -> x.UserId = userId).OrderBy(fun x -> x.Index).ToList(),
                     x.Notification.Deck.Name,
                     x.Notification.Deck.DerivedDecks.SingleOrDefault(fun x -> x.UserId = userId)
                 ).ToPagedListAsync(pageNumber, 30)
@@ -713,7 +713,7 @@ module TagRepository =
                 HasChildren = hasChildren
             })
     let getAll (db: CardOverflowDb) userId =
-        db.Tag_AcquiredCard
+        db.Tag_CollectedCard
             .Where(fun x -> x.UserId = userId)
             .Select(fun x -> x.Tag.Name)
             .Distinct()

@@ -104,10 +104,10 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let stackId = 1
     let acquiredCardId = 1
     let assertDeckId expectedDeckId = taskResult {
-        let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+        let! (card: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
         let card = card.Single()
         Assert.equal expectedDeckId card.DeckId
-        Assert.equal acquiredCardId card.AcquiredCardId
+        Assert.equal acquiredCardId card.CollectedCardId
     }
     
     let! actualDecks = getTomorrow ()
@@ -172,7 +172,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     // deleting deck with cards moves them to new default
     do! SanitizeDeckRepository.delete c.Db userId defaultDeckId
     
-    let! (card: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+    let! (card: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
     let card = card.Single()
     Assert.equal newDeckId card.DeckId
     let! actualDecks = getTomorrow ()
@@ -217,7 +217,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     
     let invalidAcquiredCardId = 1337
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId invalidAcquiredCardId
-    Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" invalidAcquiredCardId, x.error)
+    Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" invalidAcquiredCardId, x.error)
     
     let nonauthor = 1
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId acquiredCardId
@@ -226,7 +226,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor []
     let nonauthorAcquiredCardId = 2
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId nonauthorAcquiredCardId
-    Assert.Equal(sprintf "Either AcquiredCard #%i doesn't belong to you or it doesn't exist" nonauthorAcquiredCardId, x.error)
+    Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" nonauthorAcquiredCardId, x.error)
     
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db nonauthor newDeckId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
@@ -551,7 +551,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
-        { AcquiredCardId = 3
+        { CollectedCardId = 3
           UserId = followerId
           StackId = stackId
           BranchId = branchId
@@ -619,13 +619,13 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     // follow with "OldDeck false None" and both of a pair works
     do! follow followerDeckId None |> TaskResult.getOk
     
-    let! (acs: AcquiredCard ResizeArray) =
+    let! (acs: CollectedCard ResizeArray) =
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% (Seq.sortBy (fun x -> x.Index) >> ResizeArray)
     Assert.equal 2 acs.Count
     let a, b = acs.[0], acs.[1]
     Assert.equal
-        { AcquiredCardId = 3
+        { CollectedCardId = 3
           UserId = followerId
           StackId = stackId
           BranchId = 1
@@ -642,7 +642,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         a
     Assert.equal
         { a with
-            AcquiredCardId = 4
+            CollectedCardId = 4
             BranchInstanceMeta = b.BranchInstanceMeta // untested
             Index = 1s }
         b
@@ -654,14 +654,14 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     do! follow followerDeckId None |> TaskResult.getOk
     
-    let! (ac: AcquiredCard) =
+    let! (ac: CollectedCard) =
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { b with
             BranchInstanceMeta = ac.BranchInstanceMeta // untested
             Due = ac.Due // untested
-            AcquiredCardId = 5 }
+            CollectedCardId = 5 }
         ac
     
     // follow with "editExisting false" after update, doesn't update
@@ -670,14 +670,14 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
-    let! (ac: AcquiredCard) =
+    let! (ac: CollectedCard) =
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { b with
             BranchInstanceMeta = ac.BranchInstanceMeta // untested
             Due = ac.Due // untested
-            AcquiredCardId = 5 }
+            CollectedCardId = 5 }
         ac
     
     // follow with "editExisting true" after update, updates
@@ -686,13 +686,13 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
 
     do! follow followerDeckId (Some true) |> TaskResult.getOk
 
-    let! (acs: AcquiredCard ResizeArray) =
+    let! (acs: CollectedCard ResizeArray) =
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% (Seq.sortBy (fun x -> x.Index) >> ResizeArray)
     Assert.equal 2 acs.Count
     let a, b = acs.[0], acs.[1]
     Assert.equal
-        { AcquiredCardId = 7
+        { CollectedCardId = 7
           UserId = followerId
           StackId = stackId
           BranchId = 1
@@ -709,7 +709,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         a
     Assert.equal
         { a with
-            AcquiredCardId = 6
+            CollectedCardId = 6
             BranchInstanceMeta = b.BranchInstanceMeta // untested
             Index = 1s }
         b
@@ -758,7 +758,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         StackRepository.GetAcquired c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
-        { AcquiredCardId = 3
+        { CollectedCardId = 3
           UserId = followerId
           StackId = stackId
           BranchId = branchId
@@ -882,8 +882,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
 
     // moving card to newDeck _ is reflected in the diff
     let! newDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
-    let! (acs: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db followerId stackId
-    let acId = acs.Single().AcquiredCardId
+    let! (acs: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db followerId stackId
+    let acId = acs.Single().CollectedCardId
     do! SanitizeDeckRepository.switch c.Db followerId newDeckId acId
      
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
@@ -912,7 +912,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! StackRepository.unacquireStack c.Db authorId stackId
     // Unchanged with two clozes
     let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId []
-    let! (acs: AcquiredCardEntity ResizeArray) = c.Db.AcquiredCard.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
+    let! (acs: CollectedCardEntity ResizeArray) = c.Db.CollectedCard.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
     do! StackRepository.AcquireCardAsync c.Db followerId <| acs.First().BranchInstanceId
     let ids =
         {   StackId = 2
@@ -934,8 +934,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
         }
 
     // two clozes, but different decks, index 1
-    let! (acs: AcquiredCardEntity list) =
-        c.Db.AcquiredCard
+    let! (acs: CollectedCardEntity list) =
+        c.Db.CollectedCard
             .Where(fun x -> x.BranchId = actualBranchId && x.UserId = followerId)
             .ToListAsync()
         |>% Seq.toList
@@ -1019,7 +1019,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
 
     // author switches to new branch, and follower's old card is in different deck
     let! newFollowerDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
-    let! (ac: AcquiredCardEntity) = c.Db.AcquiredCard.SingleAsync(fun x -> x.StackId = stackId && x.UserId = followerId)
+    let! (ac: CollectedCardEntity) = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = stackId && x.UserId = followerId)
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId ac.Id
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId

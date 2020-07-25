@@ -17,21 +17,21 @@
     <strong class="my-2">
       Setting:&nbsp;
     </strong>
-    <CardSettingSelector SettingSelected=_SetSetting SelectedId=@AcquiredCard.CardSettingId />
+    <CardSettingSelector SettingSelected=_SetSetting SelectedId=@CollectedCard.CardSettingId />
   </div>
   <div class="d-flex">
     <strong class="my-2">
       Deck:&nbsp;
     </strong>
-    <DeckSelector DeckSelected=_SetDeck SelectedId=@AcquiredCard.DeckId />
+    <DeckSelector DeckSelected=_SetDeck SelectedId=@CollectedCard.DeckId />
   </div>
   <div class="d-flex justify-content-between">
     <div>
       <strong>
         Due:
       </strong>
-      <span title=@(AcquiredCard.Due + "UTC")>
-        <Due DueDate=@AcquiredCard.Due />
+      <span title=@(CollectedCard.Due + "UTC")>
+        <Due DueDate=@CollectedCard.Due />
       </span>
     </div>
     @if (!_showAdvanced) {
@@ -45,22 +45,22 @@
       <strong>
         State:
       </strong>
-      @AcquiredCard.CardState
+      @CollectedCard.CardState
     </div>
     <div>
       <strong>
         Is Lapsed:
       </strong>
-      @AcquiredCard.IsLapsed
+      @CollectedCard.IsLapsed
     </div>
     <div>
       <strong>
         Ease Factor:
       </strong>
-      @(AcquiredCard.EaseFactorInPermille * 10)%
+      @(CollectedCard.EaseFactorInPermille * 10)%
     </div>
     <div>
-      @if (AcquiredCard.CardState.IsSuspended) {
+      @if (CollectedCard.CardState.IsSuspended) {
         <button class="btn btn-primary" @onclick=@(() => _editState(CardState.Normal))>
           Unsuspend
         </button>
@@ -75,13 +75,13 @@
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  [Parameter] public AcquiredCard AcquiredCard { get; set; }
+  [Parameter] public CollectedCard CollectedCard { get; set; }
   [Parameter] public EventCallback<(int, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
   private async Task _SetSetting(int newId) {
     var user = await UserTask;
-    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, AcquiredCard.AcquiredCardId, newId));
+    var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, CollectedCard.CollectedCardId, newId));
     if (r.IsOk) {
       ToastService.ShowInfo("Card setting saved!");
     } else {
@@ -91,7 +91,7 @@
 
   private async Task _SetDeck(int newId) {
     var user = await UserTask;
-    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, AcquiredCard.AcquiredCardId));
+    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, CollectedCard.CollectedCardId));
     if (r.IsOk) {
       ToastService.ShowInfo("Deck saved!");
     } else {
@@ -101,8 +101,8 @@
 
   private async Task _editState(CardState state) {
     var user = await UserTask;
-    await DbExecutor.QueryAsync(db => StackRepository.editState(db, user.Id, AcquiredCard.AcquiredCardId, state)).Match(ToastService, async _ =>
-      await CardStateUpdated.InvokeAsync((AcquiredCard.Index, state)
+    await DbExecutor.QueryAsync(db => StackRepository.editState(db, user.Id, CollectedCard.CollectedCardId, state)).Match(ToastService, async _ =>
+      await CardStateUpdated.InvokeAsync((CollectedCard.Index, state)
     ));
   }
 

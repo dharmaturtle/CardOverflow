@@ -27,11 +27,11 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
 
     Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
     let joinTable () =
-        c.Db.AcquiredCard
-            .Include(fun x -> x.Tag_AcquiredCards :> IEnumerable<_>)
-                .ThenInclude(fun (x: Tag_AcquiredCardEntity) -> x.Tag)
+        c.Db.CollectedCard
+            .Include(fun x -> x.Tag_CollectedCards :> IEnumerable<_>)
+                .ThenInclude(fun (x: Tag_CollectedCardEntity) -> x.Tag)
             .Single(fun x -> x.Id = 1)
-            .Tag_AcquiredCards
+            .Tag_CollectedCards
     Assert.Equal(
         tagName,
         joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
@@ -101,11 +101,11 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     // suspending a card decrements the tag count
     let! (ac: _ ResizeArray) = StackRepository.GetAcquired c.Db acquirer stackId
     let ac = ac.Single()
-    do! StackRepository.editState c.Db acquirer ac.AcquiredCardId Suspended
+    do! StackRepository.editState c.Db acquirer ac.CollectedCardId Suspended
     do! assertTagUserCount 1
 
     // deleting a card decrements the tag count
-    let! (ac: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db author stackId
+    let! (ac: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db author stackId
     let ac = ac.Single()
     do! StackRepository.unacquireStack c.Db author ac.StackId
     Assert.Empty <| c.Db.StackTagCount.ToList()

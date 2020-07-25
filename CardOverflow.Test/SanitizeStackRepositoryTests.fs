@@ -78,7 +78,7 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
             StackRepository.GetAcquired c.Db userId stackId
             |>%% Assert.Single
         Assert.equal
-            {   AcquiredCardId = 1
+            {   CollectedCardId = 1
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -105,9 +105,9 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
                 (stackCommand collate)
             |>%% Assert.equal branchId
 
-        let! (acs: AcquiredCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+        let! (acs: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
         Assert.equal
-            {   AcquiredCardId = 2
+            {   CollectedCardId = 2
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -124,7 +124,7 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
             }
             acs.[0]
         Assert.equal
-            {   AcquiredCardId = 3
+            {   CollectedCardId = 3
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
