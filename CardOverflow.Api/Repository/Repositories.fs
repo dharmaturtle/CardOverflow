@@ -97,13 +97,13 @@ module CollateRepository =
             .CollectedCard
             .Include(fun x -> x.BranchInstance)
             .Where(fun x -> x.BranchInstance.CollateInstanceId = instance.Id)
-            |> Seq.iter(fun ac ->
-                db.Entry(ac.BranchInstance).State <- EntityState.Added
-                ac.BranchInstance.Id <- ac.BranchInstance.GetHashCode()
-                db.Entry(ac.BranchInstance).Property(nameofInstance <@ any<BranchInstanceEntity>.Id @>).IsTemporary <- true
-                ac.BranchInstance.Created <- DateTime.UtcNow
-                ac.BranchInstance.Modified <- Nullable()
-                ac.BranchInstance.CollateInstance <- newCollateInstance
+            |> Seq.iter(fun cc ->
+                db.Entry(cc.BranchInstance).State <- EntityState.Added
+                cc.BranchInstance.Id <- cc.BranchInstance.GetHashCode()
+                db.Entry(cc.BranchInstance).Property(nameofInstance <@ any<BranchInstanceEntity>.Id @>).IsTemporary <- true
+                cc.BranchInstance.Created <- DateTime.UtcNow
+                cc.BranchInstance.Modified <- Nullable()
+                cc.BranchInstance.CollateInstance <- newCollateInstance
             )
         let! existing = db.User_CollateInstance.Where(fun x -> x.UserId = userId && x.CollateInstance.CollateId = newCollateInstance.CollateId).ToListAsync()
         db.User_CollateInstance.RemoveRange existing
@@ -282,10 +282,10 @@ module StackRepository =
         return! db.SaveChangesAsyncI()
     }
     let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
-        let! (ac: CollectedCardEntity) =
+        let! (cc: CollectedCardEntity) =
             db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
             |> Task.map (Result.ofNullable "You don't own that card.")
-        ac.CardState <- CardState.toDb state
+        cc.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
     }
     let Revisions (db: CardOverflowDb) userId branchId = taskResult {
@@ -354,12 +354,12 @@ module StackRepository =
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        let! (acs: CollectedCardEntity list) = acquireStackNoSave db userId branchInstance true
+        let! (ccs: CollectedCardEntity list) = acquireStackNoSave db userId branchInstance true
         match deckId with
         | Some deckId ->
             do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
                 |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." deckId)
-            acs |> List.iter (fun ac -> ac.DeckId <- deckId)
+            ccs |> List.iter (fun cc -> cc.DeckId <- deckId)
         | None -> ()
         return! db.SaveChangesAsyncI ()
         }

@@ -27,33 +27,33 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
     let getAcquired () = StackRepository.GetAcquired c.Db userId 1
-    let! (ac: CollectedCard ResizeArray) = getAcquired ()
-    let ac = ac.Single()
+    let! (cc: CollectedCard ResizeArray) = getAcquired ()
+    let cc = cc.Single()
 
-    do! StackRepository.unacquireStack c.Db userId ac.StackId
+    do! StackRepository.unacquireStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard
 
-    let reacquire () = task { do! StackRepository.AcquireCardAsync c.Db userId ac.BranchInstanceMeta.Id |> TaskResult.getOk }
+    let reacquire () = task { do! StackRepository.AcquireCardAsync c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
-    let! (ac: CollectedCard ResizeArray) = getAcquired ()
-    let ac = ac.Single()
+    let! (cc: CollectedCard ResizeArray) = getAcquired ()
+    let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
-    do! StackRepository.unacquireStack c.Db userId ac.StackId
+    do! StackRepository.unacquireStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard // still empty after editing then deleting
 
     let userId = 3
     do! reacquire ()
-    let! (ac: CollectedCard ResizeArray) = getAcquired ()
-    let ac = ac.Single()
+    let! (cc: CollectedCard ResizeArray) = getAcquired ()
+    let cc = cc.Single()
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CollectedCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
-    do! SanitizeTagRepository.AddTo c.Db userId "tag" ac.StackId |> TaskResult.getOk
+    do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.StackId |> TaskResult.getOk
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let newCardBranchId = 2
     Assert.Equal(newCardBranchId, actualBranchId)
-    let! (stack2: StackEntity) = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> ac.StackId)
+    let! (stack2: StackEntity) = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> cc.StackId)
     let stack2 = stack2.Id
     let addRelationshipCommand =
         {   Name = "my relationship"
@@ -65,7 +65,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     Assert.NotEmpty c.Db.Relationship_CollectedCard
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty c.Db.Tag_CollectedCard
-    do! StackRepository.unacquireStack c.Db userId ac.StackId // can delete after adding a history, tag, and relationship
+    do! StackRepository.unacquireStack c.Db userId cc.StackId // can delete after adding a history, tag, and relationship
     Assert.Equal(stack2, c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_CollectedCard
     Assert.Empty c.Db.Tag_CollectedCard
@@ -76,7 +76,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     // Error when deleting something you don't own
     do! reacquire ()
     let otherUserId = 2
-    let! (x: Result<_, _>) = StackRepository.unacquireStack c.Db otherUserId ac.StackId
+    let! (x: Result<_, _>) = StackRepository.unacquireStack c.Db otherUserId cc.StackId
     Assert.Equal("You don't have any cards with Stack #1", x.error)
     } |> TaskResult.getOk)
 
@@ -87,24 +87,24 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
-    let! ac = StackRepository.GetAcquired c.Db userId 1
-    let ac = ac.Value.Single()
+    let! cc = StackRepository.GetAcquired c.Db userId 1
+    let cc = cc.Value.Single()
     
-    let! x = StackRepository.editState c.Db userId ac.CollectedCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db userId cc.CollectedCardId CardState.Suspended
     Assert.Null x.Value
-    let! ac = StackRepository.GetAcquired c.Db userId ac.StackId
-    let ac = ac.Value.Single()
-    Assert.Equal(ac.CardState, CardState.Suspended)
+    let! cc = StackRepository.GetAcquired c.Db userId cc.StackId
+    let cc = cc.Value.Single()
+    Assert.Equal(cc.CardState, CardState.Suspended)
 
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
-    let! ac = StackRepository.GetAcquired c.Db userId ac.StackId
-    let ac = ac.Value.Single()
-    Assert.Equal(ac.CardState, CardState.Suspended) // still suspended after edit
+    let! cc = StackRepository.GetAcquired c.Db userId cc.StackId
+    let cc = cc.Value.Single()
+    Assert.Equal(cc.CardState, CardState.Suspended) // still suspended after edit
 
     let otherUserId = 2 // other users can't edit card state
-    let! x = StackRepository.editState c.Db otherUserId ac.CollectedCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db otherUserId cc.CollectedCardId CardState.Suspended
     Assert.Equal("You don't own that card.", x.error)
     }
 
@@ -257,8 +257,8 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(6, c.Db.CollectedCard.Count())
     Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
-    let! ac = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
-    do! StackRepository.unacquireStack c.Db authorId ac.StackId |> TaskResult.getOk
+    let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
+    do! StackRepository.unacquireStack c.Db authorId cc.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

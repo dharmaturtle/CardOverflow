@@ -169,10 +169,10 @@ type AnkiHistory = {
     member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         match this.CollectedCard with
-        | Some ac ->
+        | Some cc ->
             db.History.FirstOrDefault(fun h -> 
                 this.UserId = h.UserId &&
-                Nullable ac.BranchInstanceId = h.BranchInstanceId &&
+                Nullable cc.BranchInstanceId = h.BranchInstanceId &&
                 this.Score = h.Score &&
                 this.Timestamp = h.Timestamp &&
                 interval = h.IntervalWithUnusedStepsIndex &&

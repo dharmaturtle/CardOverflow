@@ -99,15 +99,15 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     do! assertTagUserCount 2
 
     // suspending a card decrements the tag count
-    let! (ac: _ ResizeArray) = StackRepository.GetAcquired c.Db acquirer stackId
-    let ac = ac.Single()
-    do! StackRepository.editState c.Db acquirer ac.CollectedCardId Suspended
+    let! (cc: _ ResizeArray) = StackRepository.GetAcquired c.Db acquirer stackId
+    let cc = cc.Single()
+    do! StackRepository.editState c.Db acquirer cc.CollectedCardId Suspended
     do! assertTagUserCount 1
 
     // deleting a card decrements the tag count
-    let! (ac: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db author stackId
-    let ac = ac.Single()
-    do! StackRepository.unacquireStack c.Db author ac.StackId
+    let! (cc: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db author stackId
+    let cc = cc.Single()
+    do! StackRepository.unacquireStack c.Db author cc.StackId
     Assert.Empty <| c.Db.StackTagCount.ToList()
     } |> TaskResult.getOk)
 

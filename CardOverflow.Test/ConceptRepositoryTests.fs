@@ -207,9 +207,9 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
             IsAcquired = true }],
         stack.Tags)
     
-    let! ac = StackRepository.GetAcquired c.Db userId stack.Id
-    let ac = ac.Value.Single()
-    let! x = StackRepository.editState c.Db userId ac.CollectedCardId CardState.Suspended
+    let! cc = StackRepository.GetAcquired c.Db userId stack.Id
+    let cc = cc.Value.Single()
+    let! x = StackRepository.editState c.Db userId cc.CollectedCardId CardState.Suspended
     Assert.Null x.Value
     let! stack = ExploreStackRepository.get c.Db userId 1
     Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count
@@ -225,9 +225,9 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     let branchInstanceId = 1001
     let! acquiredCards = StackRepository.GetAcquiredPages c.Db authorId 1 ""
     Assert.Equal(acCount, acquiredCards.Results.Count())
-    let! ac = StackRepository.GetAcquired c.Db authorId stackId
-    let ac = ac.Value
-    Assert.Equal(authorId, ac.Select(fun x -> x.UserId).Distinct().Single())
+    let! cc = StackRepository.GetAcquired c.Db authorId stackId
+    let cc = cc.Value
+    Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
     let acquirerId = 2 // this user acquires the card
     do! StackRepository.AcquireCardAsync c.Db acquirerId branchInstanceId |> TaskResult.getOk

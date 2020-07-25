@@ -74,7 +74,7 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
                 (stackCommand collate)
             |>%% Assert.equal branchId
 
-        let! ac =
+        let! cc =
             StackRepository.GetAcquired c.Db userId stackId
             |>%% Assert.Single
         Assert.equal
@@ -82,18 +82,18 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                BranchInstanceMeta = ac.BranchInstanceMeta // untested
+                BranchInstanceMeta = cc.BranchInstanceMeta // untested
                 Index = 0s
                 CardState = basicCommand.CardState
                 IsLapsed = false
                 EaseFactorInPermille = 0s
                 IntervalOrStepsIndex = NewStepsIndex 0uy
-                Due = ac.Due // untested
+                Due = cc.Due // untested
                 CardSettingId = basicCommand.CardSettingId
                 Tags = []
                 DeckId = basicCommand.DeckId
             }
-            ac
+            cc
     
         // works on multiple acquired cards, e.g. reversedBasicCollate
         let! collate = FacetRepositoryTests.reversedBasicCollate c.Db
@@ -105,41 +105,41 @@ let ``SanitizeStackRepository.Update with EditAcquiredCardCommands``(stdGen: Ran
                 (stackCommand collate)
             |>%% Assert.equal branchId
 
-        let! (acs: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+        let! (ccs: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
         Assert.equal
             {   CollectedCardId = 2
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                BranchInstanceMeta = acs.[0].BranchInstanceMeta // untested
+                BranchInstanceMeta = ccs.[0].BranchInstanceMeta // untested
                 Index = 0s
                 CardState = aRevCommand.CardState
                 IsLapsed = false
                 EaseFactorInPermille = 0s
                 IntervalOrStepsIndex = NewStepsIndex 0uy
-                Due = acs.[0].Due // untested
+                Due = ccs.[0].Due // untested
                 CardSettingId = aRevCommand.CardSettingId
                 Tags = []
                 DeckId = aRevCommand.DeckId
             }
-            acs.[0]
+            ccs.[0]
         Assert.equal
             {   CollectedCardId = 3
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                BranchInstanceMeta = acs.[1].BranchInstanceMeta // untested
+                BranchInstanceMeta = ccs.[1].BranchInstanceMeta // untested
                 Index = 1s
                 CardState = bRevCommand.CardState
                 IsLapsed = false
                 EaseFactorInPermille = 0s
                 IntervalOrStepsIndex = NewStepsIndex 0uy
-                Due = acs.[1].Due // untested
+                Due = ccs.[1].Due // untested
                 CardSettingId = bRevCommand.CardSettingId
                 Tags = []
                 DeckId = bRevCommand.DeckId
             }
-            acs.[1]
+            ccs.[1]
     
         // doesn't work with someone else's deckId
         let failDeckCommand = { failDeckCommand with DeckId = 1 }

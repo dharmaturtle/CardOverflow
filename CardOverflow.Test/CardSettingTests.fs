@@ -83,17 +83,17 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     Assert.Equal(branchId, r.Value)
 
     // new card has default option
-    let! ac = c.Db.CollectedCard.SingleAsync(fun x -> x.UserId = userId)
+    let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.UserId = userId)
     let! options = SanitizeCardSettingRepository.getAll c.Db userId
     let defaultId = options.Single(fun x -> x.IsDefault).Id
     let otherId = options.Single(fun x -> not x.IsDefault).Id
     
-    Assert.Equal(defaultId, ac.CardSettingId)
+    Assert.Equal(defaultId, cc.CardSettingId)
 
     // can set new option
-    let! r = SanitizeCardSettingRepository.setCard c.Db userId ac.Id otherId
+    let! r = SanitizeCardSettingRepository.setCard c.Db userId cc.Id otherId
     r |> Result.getOk
     
-    let! ac = c.Db.CollectedCard.SingleAsync(fun x -> x.UserId = userId)
-    Assert.Equal(otherId, ac.CardSettingId)
+    let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.UserId = userId)
+    Assert.Equal(otherId, cc.CardSettingId)
     }
