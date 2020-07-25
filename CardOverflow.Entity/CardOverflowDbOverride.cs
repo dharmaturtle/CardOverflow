@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Security.Cryptography;
@@ -48,7 +48,7 @@ namespace CardOverflow.Entity {
         string.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x =>
-          x.AcquiredCards.Any(x => x.Tag_AcquiredCards.Any(x => x.Tag.TsVector.Matches(
+          x.CollectedCards.Any(x => x.Tag_CollectedCards.Any(x => x.Tag.TsVector.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)))))
             || x.TsVector.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
@@ -59,7 +59,7 @@ namespace CardOverflow.Entity {
         : query.OrderByDescending(x =>
           x.TsVector.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
-          + (((float?)x.AcquiredCards.Sum(x => x.Tag_AcquiredCards.Sum(x =>
+          + (((float?)x.CollectedCards.Sum(x => x.Tag_CollectedCards.Sum(x =>
             x.Tag.TsVector.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
             )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
@@ -134,29 +134,29 @@ namespace CardOverflow.Entity {
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
       }
-      foreach (var acquiredCard in _filter<AcquiredCardEntity>(entries)) {
-        acquiredCard.TsVectorHelper = MappingTools.stripHtmlTags(acquiredCard.FrontPersonalField) + " " + MappingTools.stripHtmlTags(acquiredCard.BackPersonalField);
+      foreach (var collectedCard in _filter<CollectedCardEntity>(entries)) {
+        collectedCard.TsVectorHelper = MappingTools.stripHtmlTags(collectedCard.FrontPersonalField) + " " + MappingTools.stripHtmlTags(collectedCard.BackPersonalField);
       }
       foreach (var tag in _filter<TagEntity>(entries)) {
         tag.Name = _entityHasher.SanitizeTag.Invoke(tag.Name);
       }
-      foreach (var j in _filter<Tag_AcquiredCardEntity>(entries)) {
-        if (j.AcquiredCard.StackId == 0) {
-          if (j.AcquiredCard.Stack == null) {
-            throw new NullReferenceException("j.AcquiredCard.Stack is null and its j.AcquiredCard.StackId is 0. In other words, the Stack wasn't set.");
+      foreach (var j in _filter<Tag_CollectedCardEntity>(entries)) {
+        if (j.CollectedCard.StackId == 0) {
+          if (j.CollectedCard.Stack == null) {
+            throw new NullReferenceException("j.CollectedCard.Stack is null and its j.CollectedCard.StackId is 0. In other words, the Stack wasn't set.");
           }
-          j.Stack = j.AcquiredCard.Stack;
+          j.Stack = j.CollectedCard.Stack;
         } else {
-          j.StackId = j.AcquiredCard.StackId;
+          j.StackId = j.CollectedCard.StackId;
         }
-        j.UserId = j.AcquiredCard.UserId;
+        j.UserId = j.CollectedCard.UserId;
       }
       foreach (var relationship in _filter<RelationshipEntity>(entries)) {
         relationship.Name = MappingTools.toTitleCase.Invoke(relationship.Name);
       }
     }
 
-    public IQueryable<AcquiredCardIsLatestEntity> AcquiredCardIsLatest => _AcquiredCardIsLatestTracked.AsNoTracking();
+    public IQueryable<CollectedCardIsLatestEntity> CollectedCardIsLatest => _CollectedCardIsLatestTracked.AsNoTracking();
     public IQueryable<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCount => _BranchInstanceRelationshipCountTracked.AsNoTracking();
     public IQueryable<BranchInstanceTagCountEntity> BranchInstanceTagCount => _BranchInstanceTagCountTracked.AsNoTracking();
     public IQueryable<StackRelationshipCountEntity> StackRelationshipCount => _StackRelationshipCountTracked.AsNoTracking();

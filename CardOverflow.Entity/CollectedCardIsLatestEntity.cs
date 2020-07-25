@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class AcquiredCardIsLatestEntity
+    public partial class CollectedCardIsLatestEntity
     {
-        public AcquiredCardIsLatestEntity()
+        public CollectedCardIsLatestEntity()
         {
-            Tag_AcquiredCards = new HashSet<Tag_AcquiredCardEntity>();
+            Tag_CollectedCards = new HashSet<Tag_CollectedCardEntity>();
         }    
     
         public int Id { get; set; }
@@ -29,6 +29,6 @@ namespace CardOverflow.Entity
         public int DeckId { get; set; }
         public bool IsLatest { get; set; }
         public virtual BranchInstanceEntity BranchInstance { get; set; }
-        public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }
+        public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
     }
 }

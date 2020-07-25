@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
     {
         public BranchInstanceEntity()
         {
-            AcquiredCards = new HashSet<AcquiredCardEntity>();
+            CollectedCards = new HashSet<CollectedCardEntity>();
             CommunalFieldInstance_BranchInstances = new HashSet<CommunalFieldInstance_BranchInstanceEntity>();
             File_BranchInstances = new HashSet<File_BranchInstanceEntity>();
             Histories = new HashSet<HistoryEntity>();
@@ -58,7 +58,7 @@ namespace CardOverflow.Entity
         [InverseProperty("BranchInstances")]
         public virtual CollateInstanceEntity CollateInstance { get; set; }
         [InverseProperty("BranchInstance")]
-        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
         [InverseProperty("BranchInstance")]

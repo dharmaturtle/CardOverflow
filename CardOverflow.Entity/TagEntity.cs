@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public TagEntity()
         {
-            Tag_AcquiredCards = new HashSet<Tag_AcquiredCardEntity>();
+            Tag_CollectedCards = new HashSet<Tag_CollectedCardEntity>();
             Tag_User_CollateInstances = new HashSet<Tag_User_CollateInstanceEntity>();
         }
 
@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [InverseProperty("Tag")]
-        public virtual ICollection<Tag_AcquiredCardEntity> Tag_AcquiredCards { get; set; }
+        public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
         [InverseProperty("DefaultTag")]
         public virtual ICollection<Tag_User_CollateInstanceEntity> Tag_User_CollateInstances { get; set; }
     }

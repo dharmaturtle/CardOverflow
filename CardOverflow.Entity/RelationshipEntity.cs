@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public RelationshipEntity()
         {
-            Relationship_AcquiredCards = new HashSet<Relationship_AcquiredCardEntity>();
+            Relationship_CollectedCards = new HashSet<Relationship_CollectedCardEntity>();
         }
 
         [Key]
@@ -28,6 +28,6 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [InverseProperty("Relationship")]
-        public virtual ICollection<Relationship_AcquiredCardEntity> Relationship_AcquiredCards { get; set; }
+        public virtual ICollection<Relationship_CollectedCardEntity> Relationship_CollectedCards { get; set; }
     }
 }

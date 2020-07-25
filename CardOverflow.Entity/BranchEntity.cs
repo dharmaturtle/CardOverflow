@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,8 +9,8 @@ namespace CardOverflow.Entity
     {
         public BranchEntity()
         {
-            AcquiredCardBranchNavigations = new HashSet<AcquiredCardEntity>();
-            AcquiredCardBranches = new HashSet<AcquiredCardEntity>();
+            CollectedCardBranchNavigations = new HashSet<CollectedCardEntity>();
+            CollectedCardBranches = new HashSet<CollectedCardEntity>();
             BranchInstances = new HashSet<BranchInstanceEntity>();
             NotificationBranches = new HashSet<NotificationEntity>();
         }
@@ -40,9 +40,9 @@ namespace CardOverflow.Entity
         [ForeignKey("StackId")]
         [InverseProperty("Branches")]
         public virtual StackEntity Stack { get; set; }
-        public virtual ICollection<AcquiredCardEntity> AcquiredCardBranchNavigations { get; set; }
+        public virtual ICollection<CollectedCardEntity> CollectedCardBranchNavigations { get; set; }
         [InverseProperty("Branch")]
-        public virtual ICollection<AcquiredCardEntity> AcquiredCardBranches { get; set; }
+        public virtual ICollection<CollectedCardEntity> CollectedCardBranches { get; set; }
         [InverseProperty("Branch")]
         public virtual ICollection<BranchInstanceEntity> BranchInstances { get; set; }
         [InverseProperty("Branch")]

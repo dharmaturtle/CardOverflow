@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class Tag_AcquiredCardEntity
+    public partial class Tag_CollectedCardEntity
     {
         [Key]
         public int TagId { get; set; }
@@ -13,13 +13,13 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         [Key]
         public int StackId { get; set; }
-        public int AcquiredCardId { get; set; }
+        public int CollectedCardId { get; set; }
 
-        [ForeignKey("AcquiredCardId")]
-        [InverseProperty("Tag_AcquiredCards")]
-        public virtual AcquiredCardEntity AcquiredCard { get; set; }
+        [ForeignKey("CollectedCardId")]
+        [InverseProperty("Tag_CollectedCards")]
+        public virtual CollectedCardEntity CollectedCard { get; set; }
         [ForeignKey("TagId")]
-        [InverseProperty("Tag_AcquiredCards")]
+        [InverseProperty("Tag_CollectedCards")]
         public virtual TagEntity Tag { get; set; }
         [ForeignKey("StackId")]
         public virtual StackEntity Stack { get; set; }

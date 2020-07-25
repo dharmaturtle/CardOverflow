@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         [Key]
         public long Id { get; set; }
-        public int? AcquiredCardId { get; set; }
+        public int? CollectedCardId { get; set; }
         public int UserId { get; set; }
         public int? BranchInstanceId { get; set; }
         public short Index { get; set; }
@@ -19,9 +19,9 @@ namespace CardOverflow.Entity
         public short EaseFactorInPermille { get; set; }
         public short TimeFromSeeingQuestionToScoreInSecondsPlus32768 { get; set; }
 
-        [ForeignKey("AcquiredCardId")]
+        [ForeignKey("CollectedCardId")]
         [InverseProperty("Histories")]
-        public virtual AcquiredCardEntity AcquiredCard { get; set; }
+        public virtual CollectedCardEntity CollectedCard { get; set; }
         [ForeignKey("BranchInstanceId")]
         [InverseProperty("Histories")]
         public virtual BranchInstanceEntity BranchInstance { get; set; }

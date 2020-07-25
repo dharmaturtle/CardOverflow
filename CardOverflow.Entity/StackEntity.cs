@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public StackEntity()
         {
-            AcquiredCards = new HashSet<AcquiredCardEntity>();
+            CollectedCards = new HashSet<CollectedCardEntity>();
             Branches = new HashSet<BranchEntity>();
             CommentStacks = new HashSet<CommentStackEntity>();
             Notifications = new HashSet<NotificationEntity>();
@@ -32,7 +32,7 @@ namespace CardOverflow.Entity
         [InverseProperty("StackCopySources")]
         public virtual BranchInstanceEntity CopySource { get; set; }
         [InverseProperty("Stack")]
-        public virtual ICollection<AcquiredCardEntity> AcquiredCards { get; set; }
+        public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("Stack")]
         public virtual ICollection<BranchEntity> Branches { get; set; }
         [InverseProperty("Stack")]
