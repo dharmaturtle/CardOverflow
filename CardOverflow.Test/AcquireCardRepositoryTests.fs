@@ -136,7 +136,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"IX_AcquiredCard_UserId_BranchInstanceId_Index\"",
+        "23505: duplicate key value violates unique constraint \"IX_CollectedCard_UserId_BranchInstanceId_Index\"",
         ex.InnerException.Message)
 
     let i1 = 1001
