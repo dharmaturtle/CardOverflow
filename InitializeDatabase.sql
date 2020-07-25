@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
+-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,6 +20,25 @@ CREATE TYPE public."NotificationType" AS ENUM (
 
 ALTER TYPE public."NotificationType" OWNER TO postgres;
 
+CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        default_branch_id integer NOT NULL := 0;
+    BEGIN
+        default_branch_id := (SELECT "DefaultBranchId" FROM "Stack" s WHERE NEW."StackId" = s."Id");
+        IF ((NEW."Name" IS NOT NULL) AND (default_branch_id = NEW."Id")) THEN
+            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+        ELSIF ((NEW."Name" IS NULL) AND (default_branch_id <> NEW."Id")) THEN
+            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
+        END IF;
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_ctr_branch_insertupdate() OWNER TO postgres;
+
 CREATE FUNCTION public.fn_ctr_collectedcard_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -39,25 +58,6 @@ $$;
 
 
 ALTER FUNCTION public.fn_ctr_collectedcard_insertupdate() OWNER TO postgres;
-
-CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    DECLARE
-        default_branch_id integer NOT NULL := 0;
-    BEGIN
-        default_branch_id := (SELECT "DefaultBranchId" FROM "Stack" s WHERE NEW."StackId" = s."Id");
-        IF ((NEW."Name" IS NOT NULL) AND (default_branch_id = NEW."Id")) THEN
-            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
-        ELSIF ((NEW."Name" IS NULL) AND (default_branch_id <> NEW."Id")) THEN
-            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."StackId"), (NEW."Id"), (NEW."AuthorId"), (NEW."Name");
-        END IF;
-        RETURN NULL;
-    END;
-$$;
-
-
-ALTER FUNCTION public.fn_ctr_branch_insertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) RETURNS void
     LANGUAGE plpgsql
@@ -86,6 +86,63 @@ ALTER FUNCTION public.fn_delete_received_notification(notification_id integer, r
 
 COMMENT ON FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) IS 'https://stackoverflow.com/a/15810159';
 
+
+CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+        default_branch_id integer NOT NULL := 0;
+    BEGIN
+        IF (TG_OP = 'INSERT') THEN
+            UPDATE "Stack" s
+            SET    "DefaultBranchId" = (NEW."Id")
+            WHERE (s."Id" = NEW."StackId" AND s."DefaultBranchId" = 0);
+        END IF;
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_tr_branch_afterinsertupdate() OWNER TO postgres;
+
+CREATE FUNCTION public.fn_tr_branchinstance_beforeinsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$  
+begin
+  UPDATE "Branch" b
+  SET    "LatestInstanceId" = NEW."Id"
+  WHERE  b."Id" = NEW."BranchId";
+  IF (NEW."TsVectorHelper" IS NOT NULL) THEN
+    NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
+    NEW."TsVectorHelper" = NULL;
+  END IF;
+  return NEW;
+end  
+$$;
+
+
+ALTER FUNCTION public.fn_tr_branchinstance_beforeinsert() OWNER TO postgres;
+
+CREATE FUNCTION public.fn_tr_collateinstance_beforeinsert() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$  
+begin
+  UPDATE "Collate" t
+  SET    "LatestInstanceId" = NEW."Id"
+  WHERE  t."Id" = NEW."CollateId";
+  IF (NEW."CWeightTsVectorHelper" IS NOT NULL) THEN
+    NEW."TsVector" =
+        setweight(to_tsvector('pg_catalog.english', NEW."Name"), 'A') ||
+        setweight(to_tsvector('pg_catalog.english', NEW."CWeightTsVectorHelper"), 'C') ||
+        setweight(to_tsvector('pg_catalog.english', NEW."Css"), 'D');
+    NEW."CWeightTsVectorHelper" = NULL;
+  END IF;
+  return NEW;
+end  
+$$;
+
+
+ALTER FUNCTION public.fn_tr_collateinstance_beforeinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -195,63 +252,6 @@ $$;
 
 ALTER FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-    DECLARE
-        default_branch_id integer NOT NULL := 0;
-    BEGIN
-        IF (TG_OP = 'INSERT') THEN
-            UPDATE "Stack" s
-            SET    "DefaultBranchId" = (NEW."Id")
-            WHERE (s."Id" = NEW."StackId" AND s."DefaultBranchId" = 0);
-        END IF;
-        RETURN NULL;
-    END;
-$$;
-
-
-ALTER FUNCTION public.fn_tr_branch_afterinsertupdate() OWNER TO postgres;
-
-CREATE FUNCTION public.fn_tr_branchinstance_beforeinsert() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$  
-begin
-  UPDATE "Branch" b
-  SET    "LatestInstanceId" = NEW."Id"
-  WHERE  b."Id" = NEW."BranchId";
-  IF (NEW."TsVectorHelper" IS NOT NULL) THEN
-    NEW."TsVector" = to_tsvector('pg_catalog.english', NEW."TsVectorHelper");
-    NEW."TsVectorHelper" = NULL;
-  END IF;
-  return NEW;
-end  
-$$;
-
-
-ALTER FUNCTION public.fn_tr_branchinstance_beforeinsert() OWNER TO postgres;
-
-CREATE FUNCTION public.fn_tr_collateinstance_beforeinsert() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$  
-begin
-  UPDATE "Collate" t
-  SET    "LatestInstanceId" = NEW."Id"
-  WHERE  t."Id" = NEW."CollateId";
-  IF (NEW."CWeightTsVectorHelper" IS NOT NULL) THEN
-    NEW."TsVector" =
-        setweight(to_tsvector('pg_catalog.english', NEW."Name"), 'A') ||
-        setweight(to_tsvector('pg_catalog.english', NEW."CWeightTsVectorHelper"), 'C') ||
-        setweight(to_tsvector('pg_catalog.english', NEW."Css"), 'D');
-    NEW."CWeightTsVectorHelper" = NULL;
-  END IF;
-  return NEW;
-end  
-$$;
-
-
-ALTER FUNCTION public.fn_tr_collateinstance_beforeinsert() OWNER TO postgres;
-
 CREATE FUNCTION public.fn_tr_communalfieldinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
@@ -343,6 +343,60 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
+CREATE TABLE public."AlphaBetaKey" (
+    "Id" integer NOT NULL,
+    "Key" character varying(50) NOT NULL,
+    "IsUsed" boolean NOT NULL
+);
+
+
+ALTER TABLE public."AlphaBetaKey" OWNER TO postgres;
+
+ALTER TABLE public."AlphaBetaKey" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."AlphaBetaKey_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+CREATE TABLE public."Branch" (
+    "Id" integer NOT NULL,
+    "Name" character varying(64),
+    "AuthorId" integer NOT NULL,
+    "StackId" integer NOT NULL,
+    "LatestInstanceId" integer NOT NULL,
+    "Users" integer NOT NULL,
+    "IsListed" boolean NOT NULL
+);
+
+
+ALTER TABLE public."Branch" OWNER TO postgres;
+
+CREATE TABLE public."BranchInstance" (
+    "Id" integer NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Modified" timestamp without time zone,
+    "StackId" integer NOT NULL,
+    "BranchId" integer NOT NULL,
+    "IsDmca" boolean NOT NULL,
+    "FieldValues" text NOT NULL,
+    "CollateInstanceId" integer NOT NULL,
+    "Users" integer NOT NULL,
+    "EditSummary" character varying(200) NOT NULL,
+    "AnkiNoteId" bigint,
+    "Hash" bit(512) NOT NULL,
+    "TsVectorHelper" text,
+    "TsVector" tsvector,
+    "MaxIndexInclusive" smallint NOT NULL,
+    CONSTRAINT "BranchInstance_TsVectorHelper_IsNull" CHECK (("TsVectorHelper" IS NULL))
+);
+
+
+ALTER TABLE public."BranchInstance" OWNER TO postgres;
+
 CREATE TABLE public."CollectedCard" (
     "Id" integer NOT NULL,
     "UserId" integer NOT NULL,
@@ -366,93 +420,6 @@ CREATE TABLE public."CollectedCard" (
 
 
 ALTER TABLE public."CollectedCard" OWNER TO postgres;
-
-CREATE TABLE public."Branch" (
-    "Id" integer NOT NULL,
-    "Name" character varying(64),
-    "AuthorId" integer NOT NULL,
-    "StackId" integer NOT NULL,
-    "LatestInstanceId" integer NOT NULL,
-    "Users" integer NOT NULL,
-    "IsListed" boolean NOT NULL
-);
-
-
-ALTER TABLE public."Branch" OWNER TO postgres;
-
-CREATE VIEW public."CollectedCardIsLatest" AS
- SELECT a."Id",
-    a."UserId",
-    a."StackId",
-    a."BranchId",
-    a."BranchInstanceId",
-    a."Index",
-    a."CardState",
-    a."EaseFactorInPermille",
-    a."IntervalOrStepsIndex",
-    a."Due",
-    a."CardSettingId",
-    a."IsLapsed",
-    a."FrontPersonalField",
-    a."BackPersonalField",
-    a."DeckId",
-    (b."LatestInstanceId" IS NULL) AS "IsLatest"
-   FROM (public."CollectedCard" a
-     LEFT JOIN public."Branch" b ON ((b."LatestInstanceId" = a."BranchInstanceId")));
-
-
-ALTER TABLE public."CollectedCardIsLatest" OWNER TO postgres;
-
-ALTER TABLE public."CollectedCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public."CollectedCard_Id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
-CREATE TABLE public."AlphaBetaKey" (
-    "Id" integer NOT NULL,
-    "Key" character varying(50) NOT NULL,
-    "IsUsed" boolean NOT NULL
-);
-
-
-ALTER TABLE public."AlphaBetaKey" OWNER TO postgres;
-
-ALTER TABLE public."AlphaBetaKey" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public."AlphaBetaKey_Id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
-CREATE TABLE public."BranchInstance" (
-    "Id" integer NOT NULL,
-    "Created" timestamp without time zone NOT NULL,
-    "Modified" timestamp without time zone,
-    "StackId" integer NOT NULL,
-    "BranchId" integer NOT NULL,
-    "IsDmca" boolean NOT NULL,
-    "FieldValues" text NOT NULL,
-    "CollateInstanceId" integer NOT NULL,
-    "Users" integer NOT NULL,
-    "EditSummary" character varying(200) NOT NULL,
-    "AnkiNoteId" bigint,
-    "Hash" bit(512) NOT NULL,
-    "TsVectorHelper" text,
-    "TsVector" tsvector,
-    "MaxIndexInclusive" smallint NOT NULL,
-    CONSTRAINT "BranchInstance_TsVectorHelper_IsNull" CHECK (("TsVectorHelper" IS NULL))
-);
-
-
-ALTER TABLE public."BranchInstance" OWNER TO postgres;
 
 CREATE TABLE public."Relationship" (
     "Id" integer NOT NULL,
@@ -632,6 +599,39 @@ ALTER TABLE public."CollateInstance" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT 
 
 ALTER TABLE public."Collate" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public."Collate_Id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+CREATE VIEW public."CollectedCardIsLatest" AS
+ SELECT a."Id",
+    a."UserId",
+    a."StackId",
+    a."BranchId",
+    a."BranchInstanceId",
+    a."Index",
+    a."CardState",
+    a."EaseFactorInPermille",
+    a."IntervalOrStepsIndex",
+    a."Due",
+    a."CardSettingId",
+    a."IsLapsed",
+    a."FrontPersonalField",
+    a."BackPersonalField",
+    a."DeckId",
+    (b."LatestInstanceId" IS NULL) AS "IsLatest"
+   FROM (public."CollectedCard" a
+     LEFT JOIN public."Branch" b ON ((b."LatestInstanceId" = a."BranchInstanceId")));
+
+
+ALTER TABLE public."CollectedCardIsLatest" OWNER TO postgres;
+
+ALTER TABLE public."CollectedCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CollectedCard_Id_seq"
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1072,8 +1072,6 @@ ALTER TABLE public."Vote_Feedback" OWNER TO postgres;
 
 
 
-
-
 INSERT INTO public."CardSetting" ("Id", "UserId", "Name", "NewCardsStepsInMinutes", "NewCardsMaxPerDay", "NewCardsGraduatingIntervalInDays", "NewCardsEasyIntervalInDays", "NewCardsStartingEaseFactorInPermille", "NewCardsBuryRelated", "MatureCardsMaxPerDay", "MatureCardsEaseFactorEasyBonusFactorInPermille", "MatureCardsIntervalFactorInPermille", "MatureCardsMaximumIntervalInDays", "MatureCardsHardIntervalFactorInPermille", "MatureCardsBuryRelated", "LapsedCardsStepsInMinutes", "LapsedCardsNewIntervalFactorInPermille", "LapsedCardsMinimumIntervalInDays", "LapsedCardsLeechThreshold", "ShowAnswerTimer", "AutomaticallyPlayAudio", "ReplayQuestionAudioOnAnswer") VALUES (1, 1, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
 INSERT INTO public."CardSetting" ("Id", "UserId", "Name", "NewCardsStepsInMinutes", "NewCardsMaxPerDay", "NewCardsGraduatingIntervalInDays", "NewCardsEasyIntervalInDays", "NewCardsStartingEaseFactorInPermille", "NewCardsBuryRelated", "MatureCardsMaxPerDay", "MatureCardsEaseFactorEasyBonusFactorInPermille", "MatureCardsIntervalFactorInPermille", "MatureCardsMaximumIntervalInDays", "MatureCardsHardIntervalFactorInPermille", "MatureCardsBuryRelated", "LapsedCardsStepsInMinutes", "LapsedCardsNewIntervalFactorInPermille", "LapsedCardsMinimumIntervalInDays", "LapsedCardsLeechThreshold", "ShowAnswerTimer", "AutomaticallyPlayAudio", "ReplayQuestionAudioOnAnswer") VALUES (2, 2, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
 INSERT INTO public."CardSetting" ("Id", "UserId", "Name", "NewCardsStepsInMinutes", "NewCardsMaxPerDay", "NewCardsGraduatingIntervalInDays", "NewCardsEasyIntervalInDays", "NewCardsStartingEaseFactorInPermille", "NewCardsBuryRelated", "MatureCardsMaxPerDay", "MatureCardsEaseFactorEasyBonusFactorInPermille", "MatureCardsIntervalFactorInPermille", "MatureCardsMaximumIntervalInDays", "MatureCardsHardIntervalFactorInPermille", "MatureCardsBuryRelated", "LapsedCardsStepsInMinutes", "LapsedCardsNewIntervalFactorInPermille", "LapsedCardsMinimumIntervalInDays", "LapsedCardsLeechThreshold", "ShowAnswerTimer", "AutomaticallyPlayAudio", "ReplayQuestionAudioOnAnswer") VALUES (3, 3, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
@@ -1249,6 +1247,8 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 
 
+
+
 INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (1, 1, 'Default Deck', false, NULL, NULL);
 INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (2, 2, 'Default Deck', false, NULL, NULL);
 INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (3, 3, 'Default Deck', false, NULL, NULL);
@@ -1302,9 +1302,6 @@ INSERT INTO public."User_CollateInstance" ("UserId", "CollateInstanceId", "Defau
 
 
 
-SELECT pg_catalog.setval('public."CollectedCard_Id_seq"', 1, false);
-
-
 SELECT pg_catalog.setval('public."AlphaBetaKey_Id_seq"', 1, false);
 
 
@@ -1321,6 +1318,9 @@ SELECT pg_catalog.setval('public."CollateInstance_Id_seq"', 1008, false);
 
 
 SELECT pg_catalog.setval('public."Collate_Id_seq"', 6, false);
+
+
+SELECT pg_catalog.setval('public."CollectedCard_Id_seq"', 1, false);
 
 
 SELECT pg_catalog.setval('public."CommentCollate_Id_seq"', 1, false);
@@ -1368,10 +1368,6 @@ SELECT pg_catalog.setval('public."Tag_Id_seq"', 1, false);
 SELECT pg_catalog.setval('public."User_Id_seq"', 4, false);
 
 
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "PK_CollectedCard" PRIMARY KEY ("Id");
-
-
 ALTER TABLE ONLY public."AlphaBetaKey"
     ADD CONSTRAINT "PK_AlphaBetaKey" PRIMARY KEY ("Id");
 
@@ -1394,6 +1390,10 @@ ALTER TABLE ONLY public."Collate"
 
 ALTER TABLE ONLY public."CollateInstance"
     ADD CONSTRAINT "PK_CollateInstance" PRIMARY KEY ("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "PK_CollectedCard" PRIMARY KEY ("Id");
 
 
 ALTER TABLE ONLY public."CommentCollate"
@@ -1500,10 +1500,6 @@ ALTER TABLE ONLY public."Vote_Feedback"
     ADD CONSTRAINT "PK_Vote_Feedback" PRIMARY KEY ("FeedbackId", "UserId");
 
 
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "UQ_CollectedCard_CollectedCardId_UserId_StackId" UNIQUE ("Id", "StackId", "UserId");
-
-
 ALTER TABLE ONLY public."BranchInstance"
     ADD CONSTRAINT "UQ_BranchInstance_Id_BranchId" UNIQUE ("Id", "BranchId");
 
@@ -1524,33 +1520,16 @@ ALTER TABLE ONLY public."CollateInstance"
     ADD CONSTRAINT "UQ_CollateInstance_CollateInstanceId_CollateId" UNIQUE ("Id", "CollateId");
 
 
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "UQ_CollectedCard_CollectedCardId_UserId_StackId" UNIQUE ("Id", "StackId", "UserId");
+
+
 ALTER TABLE ONLY public."CommunalFieldInstance"
     ADD CONSTRAINT "UQ_CommunalFieldInstance_CommunalFieldInstanceId_UserId" UNIQUE ("Id", "CommunalFieldId");
 
 
 ALTER TABLE ONLY public."Deck"
     ADD CONSTRAINT "UQ_Deck_DeckId_UserId" UNIQUE ("Id", "UserId");
-
-
-CREATE INDEX "IX_CollectedCard_BranchInstanceId" ON public."CollectedCard" USING btree ("BranchInstanceId");
-
-
-CREATE INDEX "IX_CollectedCard_CardSettingId" ON public."CollectedCard" USING btree ("CardSettingId");
-
-
-CREATE INDEX "IX_CollectedCard_CardState" ON public."CollectedCard" USING btree ("CardState");
-
-
-CREATE INDEX "IX_CollectedCard_UserId" ON public."CollectedCard" USING btree ("UserId");
-
-
-CREATE INDEX "IX_CollectedCard_UserId_BranchId" ON public."CollectedCard" USING btree ("UserId", "BranchId");
-
-
-CREATE UNIQUE INDEX "IX_CollectedCard_UserId_BranchInstanceId_Index" ON public."CollectedCard" USING btree ("UserId", "BranchInstanceId", "Index");
-
-
-CREATE INDEX "IX_CollectedCard_UserId_StackId" ON public."CollectedCard" USING btree ("UserId", "StackId");
 
 
 CREATE UNIQUE INDEX "IX_AlphaBetaKey_Key" ON public."AlphaBetaKey" USING btree ("Key");
@@ -1575,6 +1554,27 @@ CREATE INDEX "IX_CollateInstance_Hash" ON public."CollateInstance" USING btree (
 
 
 CREATE INDEX "IX_Collate_AuthorId" ON public."Collate" USING btree ("AuthorId");
+
+
+CREATE INDEX "IX_CollectedCard_BranchInstanceId" ON public."CollectedCard" USING btree ("BranchInstanceId");
+
+
+CREATE INDEX "IX_CollectedCard_CardSettingId" ON public."CollectedCard" USING btree ("CardSettingId");
+
+
+CREATE INDEX "IX_CollectedCard_CardState" ON public."CollectedCard" USING btree ("CardState");
+
+
+CREATE INDEX "IX_CollectedCard_UserId" ON public."CollectedCard" USING btree ("UserId");
+
+
+CREATE INDEX "IX_CollectedCard_UserId_BranchId" ON public."CollectedCard" USING btree ("UserId", "BranchId");
+
+
+CREATE UNIQUE INDEX "IX_CollectedCard_UserId_BranchInstanceId_Index" ON public."CollectedCard" USING btree ("UserId", "BranchInstanceId", "Index");
+
+
+CREATE INDEX "IX_CollectedCard_UserId_StackId" ON public."CollectedCard" USING btree ("UserId", "StackId");
 
 
 CREATE INDEX "IX_CommentCollate_CollateId" ON public."CommentCollate" USING btree ("CollateId");
@@ -1679,16 +1679,10 @@ CREATE INDEX idx_fts_relationship_tsvector ON public."Relationship" USING gin ("
 CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 
 
-CREATE CONSTRAINT TRIGGER ctr_collectedcard_insertupdate AFTER INSERT OR UPDATE ON public."CollectedCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_collectedcard_insertupdate();
-
-
 CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public."Branch" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
 
 
-CREATE TRIGGER tr_collectedcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."CollectedCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate();
-
-
-CREATE TRIGGER tr_collectedcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."CollectedCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate();
+CREATE CONSTRAINT TRIGGER ctr_collectedcard_insertupdate AFTER INSERT OR UPDATE ON public."CollectedCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_collectedcard_insertupdate();
 
 
 CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branch_afterinsertupdate();
@@ -1698,6 +1692,12 @@ CREATE TRIGGER tr_branchinstance_beforeinsert BEFORE INSERT ON public."BranchIns
 
 
 CREATE TRIGGER tr_collateinstance_beforeinsert BEFORE INSERT ON public."CollateInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collateinstance_beforeinsert();
+
+
+CREATE TRIGGER tr_collectedcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."CollectedCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate();
+
+
+CREATE TRIGGER tr_collectedcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."CollectedCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate();
 
 
 CREATE TRIGGER tr_communalfieldinstance_beforeinsert BEFORE INSERT ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_communalfieldinstance_beforeinsert();
@@ -1713,38 +1713,6 @@ CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag"
 
 
 CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_afterinsert();
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_BranchInstance_BranchInstanceId_BranchId" FOREIGN KEY ("BranchId", "BranchInstanceId") REFERENCES public."BranchInstance"("BranchId", "Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_Branch_BranchId" FOREIGN KEY ("BranchId") REFERENCES public."Branch"("Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_Branch_BranchId_StackId" FOREIGN KEY ("StackId", "BranchId") REFERENCES public."Branch"("StackId", "Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_CardSetting_CardSettingId" FOREIGN KEY ("CardSettingId") REFERENCES public."CardSetting"("Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
-
-
-ALTER TABLE ONLY public."CollectedCard"
-    ADD CONSTRAINT "FK_CollectedCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
 
 
 ALTER TABLE ONLY public."BranchInstance"
@@ -1785,6 +1753,38 @@ ALTER TABLE ONLY public."Collate"
 
 ALTER TABLE ONLY public."Collate"
     ADD CONSTRAINT "FK_Collate_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_BranchInstance_BranchInstanceId_BranchId" FOREIGN KEY ("BranchId", "BranchInstanceId") REFERENCES public."BranchInstance"("BranchId", "Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Branch_BranchId" FOREIGN KEY ("BranchId") REFERENCES public."Branch"("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Branch_BranchId_StackId" FOREIGN KEY ("StackId", "BranchId") REFERENCES public."Branch"("StackId", "Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_CardSetting_CardSettingId" FOREIGN KEY ("CardSettingId") REFERENCES public."CardSetting"("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
+
+
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
 
 
 ALTER TABLE ONLY public."CommentCollate"
@@ -1860,11 +1860,11 @@ ALTER TABLE ONLY public."Filter"
 
 
 ALTER TABLE ONLY public."History"
-    ADD CONSTRAINT "FK_History_CollectedCard_CollectedCardId" FOREIGN KEY ("CollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE SET NULL;
+    ADD CONSTRAINT "FK_History_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
 
 
 ALTER TABLE ONLY public."History"
-    ADD CONSTRAINT "FK_History_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
+    ADD CONSTRAINT "FK_History_CollectedCard_CollectedCardId" FOREIGN KEY ("CollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public."History"
@@ -1920,11 +1920,11 @@ ALTER TABLE ONLY public."ReceivedNotification"
 
 
 ALTER TABLE ONLY public."Relationship_CollectedCard"
-    ADD CONSTRAINT "FK_Relationship_CollectedCard_CollectedCard_SourceCollectedCardId" FOREIGN KEY ("SourceCollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_CollectedCard_SourceCollectedCard" FOREIGN KEY ("SourceCollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."Relationship_CollectedCard"
-    ADD CONSTRAINT "FK_Relationship_CollectedCard_CollectedCard_TargetCollectedCardId" FOREIGN KEY ("TargetCollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_CollectedCard_TargetCollectedCard" FOREIGN KEY ("TargetCollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."Relationship_CollectedCard"
@@ -1932,11 +1932,11 @@ ALTER TABLE ONLY public."Relationship_CollectedCard"
 
 
 ALTER TABLE ONLY public."Relationship_CollectedCard"
-    ADD CONSTRAINT "FK_Relationship_CollectedCard_SourceCollectedCard_UserId_StackId" FOREIGN KEY ("SourceCollectedCardId", "UserId", "SourceStackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId");
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_SourceCollectedCard_UserId_StackI" FOREIGN KEY ("SourceCollectedCardId", "UserId", "SourceStackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId");
 
 
 ALTER TABLE ONLY public."Relationship_CollectedCard"
-    ADD CONSTRAINT "FK_Relationship_CollectedCard_TargetCollectedCard_UserId_StackId" FOREIGN KEY ("TargetCollectedCardId", "UserId", "TargetStackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId");
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_TargetCollectedCard_UserId_StackI" FOREIGN KEY ("TargetCollectedCardId", "UserId", "TargetStackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId");
 
 
 ALTER TABLE ONLY public."Stack"
