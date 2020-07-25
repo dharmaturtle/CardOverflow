@@ -256,6 +256,34 @@ $$;
 
 ALTER FUNCTION public.fn_deck_beforeinsertupdate() OWNER TO postgres;
 
+CREATE FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        WITH del_child AS (
+            DELETE FROM public."ReceivedNotification" rn
+            WHERE  rn."NotificationId" = notification_id
+            AND    rn."ReceiverId" = receiver_id
+            RETURNING rn."NotificationId", rn."ReceiverId"
+        )
+        DELETE FROM public."Notification" n
+        USING  del_child x
+        WHERE  n."Id" = x."NotificationId"
+        AND NOT EXISTS (
+            SELECT 1
+            FROM   public."ReceivedNotification" rn
+            WHERE  rn."NotificationId" = x."NotificationId"
+            AND    rn."ReceiverId" <> x."ReceiverId"
+        );
+    END
+$$;
+
+
+ALTER FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) OWNER TO postgres;
+
+COMMENT ON FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) IS 'https://stackoverflow.com/a/15810159';
+
+
 CREATE FUNCTION public.fn_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1221,9 +1249,9 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 
 
-INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "TsVector") VALUES (1, 1, 'Default Deck', false, NULL);
-INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "TsVector") VALUES (2, 2, 'Default Deck', false, NULL);
-INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "TsVector") VALUES (3, 3, 'Default Deck', false, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (1, 1, 'Default Deck', false, NULL, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (2, 2, 'Default Deck', false, NULL, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (3, 3, 'Default Deck', false, NULL, NULL);
 
 
 
