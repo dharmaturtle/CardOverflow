@@ -34,7 +34,7 @@
 <ul class="list-unstyled">
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
-      <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
+      <button type="button" class="btn btn-outline-collected btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
         <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />
@@ -50,7 +50,7 @@
   }
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => !x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
-      <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Collect(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
+      <button type="button" class="btn btn-outline-uncollected btn-sm" @onclick=@(() => Collect(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
         <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />

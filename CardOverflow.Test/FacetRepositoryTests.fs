@@ -228,7 +228,7 @@ let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = addBasicStack c.Db userId []
-    let acquiredCardId = 1
+    let collectedCardId = 1
     let stackId = 1
     let branchId = 1
     let oldBranchInstanceId = 1001
@@ -264,7 +264,7 @@ let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
 
     // update on branch that's in a nondefault deck with 0 editCollectedCardCommands doesn't change the deck
     let! newDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
-    do! SanitizeDeckRepository.switch c.Db userId newDeckId acquiredCardId
+    do! SanitizeDeckRepository.switch c.Db userId newDeckId collectedCardId
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     
     do! SanitizeStackRepository.Update c.Db userId [] stackCommand

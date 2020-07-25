@@ -95,7 +95,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
             }
             cc
     
-        // works on multiple acquired cards, e.g. reversedBasicCollate
+        // works on multiple collected cards, e.g. reversedBasicCollate
         let! collate = FacetRepositoryTests.reversedBasicCollate c.Db
         let stackId = 2
         let branchId = 2

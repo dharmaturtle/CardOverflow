@@ -102,12 +102,12 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     // new cards are in the "Default" deck
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let stackId = 1
-    let acquiredCardId = 1
+    let collectedCardId = 1
     let assertDeckId expectedDeckId = taskResult {
         let! (card: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db userId stackId
         let card = card.Single()
         Assert.equal expectedDeckId card.DeckId
-        Assert.equal acquiredCardId card.CollectedCardId
+        Assert.equal collectedCardId card.CollectedCardId
     }
     
     let! actualDecks = getTomorrow ()
@@ -116,7 +116,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! assertDeckId defaultDeckId
 
     // switching to new deck works
-    do! SanitizeDeckRepository.switch c.Db userId newDeckId acquiredCardId
+    do! SanitizeDeckRepository.switch c.Db userId newDeckId collectedCardId
     
     let! actualDecks = getTomorrow ()
     
@@ -124,7 +124,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! assertDeckId newDeckId
     
     // switching is idempotent
-    do! SanitizeDeckRepository.switch c.Db userId newDeckId acquiredCardId
+    do! SanitizeDeckRepository.switch c.Db userId newDeckId collectedCardId
     
     let! actualDecks = getTomorrow ()
     
@@ -132,7 +132,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! assertDeckId newDeckId
     
     // can switch back to default deck
-    do! SanitizeDeckRepository.switch c.Db userId defaultDeckId acquiredCardId
+    do! SanitizeDeckRepository.switch c.Db userId defaultDeckId collectedCardId
     
     let! actualDecks = getTomorrow ()
     
@@ -203,7 +203,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.Equal(sprintf "Deck name '%s' is too long. It must be less than 250 characters." invalidDeckName, x.error)
     
     let invalidDeckId = 1337
-    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId invalidDeckId acquiredCardId
+    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId invalidDeckId collectedCardId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
 
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db userId invalidDeckId
@@ -220,7 +220,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" invalidCollectedCardId, x.error)
     
     let nonauthor = 1
-    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId acquiredCardId
+    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId collectedCardId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
     let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor []
@@ -347,7 +347,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     
     ns.Results |> Assert.Empty
 
-    // Update notifies with follower's acquired card
+    // Update notifies with follower's collected card
     do! StackRepository.CollectCard c.Db followerId instance2.BranchInstanceId
     let instance3 = { instance2 with BranchInstanceId = 1003 }
     let newValue = Guid.NewGuid().ToString()
@@ -439,7 +439,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! NotificationRepository.remove c.Db followerId 9
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId false
 
-    // deleting acquiredCard from deck has notification
+    // deleting collectedCard from deck has notification
     do! StackRepository.unacquireStack c.Db authorId stackId
 
     do! assertNotificationThenDelete

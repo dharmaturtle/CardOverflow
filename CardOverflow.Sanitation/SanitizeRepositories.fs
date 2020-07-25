@@ -241,11 +241,11 @@ module SanitizeDeckRepository =
         deck.Name <- newName
         return! db.SaveChangesAsyncI()
     }
-    let switch (db: CardOverflowDb) userId deckId acquiredCardId = taskResult {
+    let switch (db: CardOverflowDb) userId deckId collectedCardId = taskResult {
         do! deckBelongsTo db userId deckId
         let! (cc: CollectedCardEntity) =
-            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
-            |>% (Result.requireNotNull <| sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" acquiredCardId)
+            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
+            |>% (Result.requireNotNull <| sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" collectedCardId)
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
@@ -499,8 +499,8 @@ module SanitizeDeckRepository =
     }
 
 module SanitizeHistoryRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) acquiredCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
-        let! card = db.CollectedCard.SingleAsync(fun x -> x.Id = acquiredCardId)
+    let AddAndSaveAsync (db: CardOverflowDb) collectedCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
+        let! card = db.CollectedCard.SingleAsync(fun x -> x.Id = collectedCardId)
         card.Histories.Add
         <|  HistoryEntity(
                 Score = Score.toDb score,
@@ -545,8 +545,8 @@ module SanitizeRelationshipRepository =
         let! targetStackId = GetStackId command.TargetStackLink
         do! if targetStackId = command.SourceStackId then Error "A stack can't be related to itself" else Ok ()
         let! (ccs: CollectedCardEntity ResizeArray) = db.CollectedCard.Include(fun x -> x.BranchInstance).Where(fun x -> x.UserId = userId && (x.StackId = targetStackId || x.StackId = command.SourceStackId)).ToListAsync()
-        let! t = ccs.FirstOrDefault(fun x -> x.StackId = targetStackId) |> Result.ofNullable (sprintf "You haven't acquired the linked stack (Stack #%i)." targetStackId)
-        let! s = ccs.FirstOrDefault(fun x -> x.StackId = command.SourceStackId) |> Result.ofNullable (sprintf "You haven't acquired the source stack (Stack #%i)." command.SourceStackId)
+        let! t = ccs.FirstOrDefault(fun x -> x.StackId = targetStackId) |> Result.ofNullable (sprintf "You haven't collected the linked stack (Stack #%i)." targetStackId)
+        let! s = ccs.FirstOrDefault(fun x -> x.StackId = command.SourceStackId) |> Result.ofNullable (sprintf "You haven't collected the source stack (Stack #%i)." command.SourceStackId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid, sStackId, tStackId =
@@ -683,11 +683,11 @@ module SanitizeCollectedCardRepository =
                 }
             ).ToList()
     }
-    let update (db: CardOverflowDb) userId acquiredCardId (command: EditCollectedCardCommand) = taskResult {
+    let update (db: CardOverflowDb) userId collectedCardId (command: EditCollectedCardCommand) = taskResult {
         let! command = command |> ResizeArray.singleton |> validateCommands db userId |>%% Seq.exactlyOne
         let! (cc: CollectedCardEntity) =
-            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
-            |>% Result.requireNotNull (sprintf "CollectedCard #%i doesn't belong to you." acquiredCardId)
+            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
+            |>% Result.requireNotNull (sprintf "CollectedCard #%i doesn't belong to you." collectedCardId)
         cc.DeckId <- command.DeckId
         cc.CardSettingId <- command.CardSettingId
         return! db.SaveChangesAsyncI()
@@ -903,9 +903,9 @@ type ViewCardSetting = {
     }
 
 module SanitizeCardSettingRepository =
-    let setCard (db: CardOverflowDb) userId acquiredCardId newCardSettingId = task {
+    let setCard (db: CardOverflowDb) userId collectedCardId newCardSettingId = task {
         let! option = db.CardSetting.SingleOrDefaultAsync(fun x -> x.Id = newCardSettingId && x.UserId = userId)
-        let! card = db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+        let! card = db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
         return!
             match option, card with
             | null, _

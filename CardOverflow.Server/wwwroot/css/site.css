@@ -222,30 +222,30 @@ app {
   }
 }
 
-.btn-outline-acquired {
+.btn-outline-collected {
   border-color: #28a745
 }
 
-  .btn-outline-acquired:hover:enabled {
+  .btn-outline-collected:hover:enabled {
     border-color: #dc3545
   }
 
-  .btn-outline-acquired.focus,
-  .btn-outline-acquired:focus {
+  .btn-outline-collected.focus,
+  .btn-outline-collected:focus {
     border-color: #dc3545;
     box-shadow: 0 0 0 .2rem rgba(225, 83, 97, .5)
   }
 
-.btn-outline-unacquired {
+.btn-outline-uncollected {
   border-color: #cccccc
 }
 
-  .btn-outline-unacquired:hover:enabled {
+  .btn-outline-uncollected:hover:enabled {
     border-color: #28a745
   }
 
-  .btn-outline-unacquired.focus,
-  .btn-outline-unacquired:focus {
+  .btn-outline-uncollected.focus,
+  .btn-outline-uncollected:focus {
     border-color: #28a745;
     box-shadow: 0 0 0 .2rem rgba(40, 167, 69, .5)
   }

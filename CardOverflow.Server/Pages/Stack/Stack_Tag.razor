@@ -27,14 +27,14 @@
   <ul class="d-flex flex-wrap list-unstyled">
     @foreach (var tag in Stack.Tags.Where(x => x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
       <li class="m-1">
-        <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
+        <button type="button" class="btn btn-outline-collected btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
           <span class="badge badge-success">@tag.Count</span> @tag.Name
         </button>
       </li>
     }
     @foreach (var tag in Stack.Tags.Where(x => !x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
       <li class="m-1">
-        <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => CollectTag(tag.Name, false)) disabled=@(!Stack.IsAnyCollected)>
+        <button type="button" class="btn btn-outline-uncollected btn-sm" @onclick=@(() => CollectTag(tag.Name, false)) disabled=@(!Stack.IsAnyCollected)>
           <span class="badge badge-success">@tag.Count</span> @tag.Name
         </button>
       </li>

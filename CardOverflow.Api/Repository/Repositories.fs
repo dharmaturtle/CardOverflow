@@ -159,8 +159,8 @@ module ExploreStackRepository =
         let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%i not found" stackId)
         let! (tc: List<StackTagCountEntity>) = db.StackTagCount.Where(fun x -> x.StackId = stackId).ToListAsync()
         let! (rc: List<StackRelationshipCountEntity>) = db.StackRelationshipCount.Where(fun x -> x.StackId = stackId).ToListAsync()
-        let! acquiredIds = getCollectedIds db userId stackId
-        return ExploreStack.load stack acquiredIds (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+        let! collectedIds = getCollectedIds db userId stackId
+        return ExploreStack.load stack collectedIds (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
         let! (e: BranchInstanceEntity) =
@@ -236,12 +236,12 @@ module StackViewRepository =
                 .ToListAsync()
         let! a = Result.requireNotNull (sprintf "Branch instance #%i not found" a_branchInstanceId) <| instances.SingleOrDefault(fun x -> x.Id = a_branchInstanceId)
         let! b = Result.requireNotNull (sprintf "Branch instance #%i not found" b_branchInstanceId) <| instances.SingleOrDefault(fun x -> x.Id = b_branchInstanceId)
-        let! (acquiredInstanceIds: int ResizeArray) = getCollectedInstanceIds db userId a_branchInstanceId b_branchInstanceId
+        let! (collectedInstanceIds: int ResizeArray) = getCollectedInstanceIds db userId a_branchInstanceId b_branchInstanceId
         return
             BranchInstanceView.load a,
-            acquiredInstanceIds.Contains a.Id,
+            collectedInstanceIds.Contains a.Id,
             BranchInstanceView.load b,
-            acquiredInstanceIds.Contains b.Id
+            collectedInstanceIds.Contains b.Id
     }
     let instance (db: CardOverflowDb) instanceId = task {
         match!
@@ -281,9 +281,9 @@ module StackRepository =
             |> TaskResult.map db.CollectedCard.RemoveRange
         return! db.SaveChangesAsyncI()
     }
-    let editState (db: CardOverflowDb) userId acquiredCardId (state: CardState) = taskResult {
+    let editState (db: CardOverflowDb) userId collectedCardId (state: CardState) = taskResult {
         let! (cc: CollectedCardEntity) =
-            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
+            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
             |> Task.map (Result.ofNullable "You don't own that card.")
         cc.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
@@ -296,13 +296,13 @@ module StackRepository =
                     .ThenInclude(fun (x: BranchInstanceEntity) -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull <| sprintf "BranchId #%i not found" branchId)
-        let! acquiredInstanceId =
+        let! collectedInstanceId =
             db.CollectedCard
                 .Where(fun x -> x.UserId = userId && x.BranchId = branchId)
                 .Select(fun x -> x.BranchInstanceId)
                 .Distinct()
                 .SingleOrDefaultAsync()
-        return BranchRevision.load acquiredInstanceId r
+        return BranchRevision.load collectedInstanceId r
     }
     let acquireStackNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) mayUpdate = task {
         let! ((defaultCardSettingId, defaultDeckId): int * int) =
@@ -411,7 +411,7 @@ module StackRepository =
                     x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.BranchInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
-    let private acquiredByDeck (db: CardOverflowDb) deckId =
+    let private collectedByDeck (db: CardOverflowDb) deckId =
         db.CollectedCard
             .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.DeckId = deckId)
@@ -447,7 +447,7 @@ module StackRepository =
         let tomorrow = DateTime.UtcNow.AddDays 1.
         task {
             let! cards =
-                (acquiredByDeck db deckId)
+                (collectedByDeck db deckId)
                     .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
                     .Include(fun x -> x.CardSetting)
                     .OrderBy(fun x -> x.Due)

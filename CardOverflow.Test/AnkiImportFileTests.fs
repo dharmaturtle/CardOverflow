@@ -117,11 +117,11 @@ let ``AnkiImporter import cards that have the same acquireHash as distinct cards
     } |> TaskResult.getOk)
 
 let testCommunalFields (c: TestContainer) userId stackId expected = task {
-    let! acquired = StackRepository.GetCollected c.Db userId stackId
-    let acquired = acquired.Value.Single()
+    let! collected = StackRepository.GetCollected c.Db userId stackId
+    let collected = collected.Value.Single()
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
-        acquired.BranchInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
+        collected.BranchInstanceMeta.CommunalFields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
@@ -409,7 +409,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     Assert.equal 0 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
-    // updating an unacquired branch doesn't change the CollectedCards
+    // updating an uncollected branch doesn't change the CollectedCards
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId_og) id branchId_og
 

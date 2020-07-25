@@ -81,13 +81,13 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
-    // StackRepository.Revisions says we acquired the most recent branchInstance
+    // StackRepository.Revisions says we collected the most recent branchInstance
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
-    // acquire oldest instance, then StackRepository.Revisions says we acquired the oldest branchInstance
+    // acquire oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
     do! StackRepository.CollectCard c.Db userId oldInstanceId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
@@ -134,13 +134,13 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
-    // StackRepository.Revisions says we acquired the most recent branchInstance
+    // StackRepository.Revisions says we collected the most recent branchInstance
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
-    // acquire oldest instance, then StackRepository.Revisions says we acquired the oldest branchInstance
+    // acquire oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
     do! StackRepository.CollectCard c.Db userId oldInstanceId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
@@ -223,8 +223,8 @@ let testGetCollected (acCount: int) addCard getCollate name = task {
     let stackId = 1
     let branchId = 1
     let branchInstanceId = 1001
-    let! acquiredCards = StackRepository.GetCollectedPages c.Db authorId 1 ""
-    Assert.Equal(acCount, acquiredCards.Results.Count())
+    let! collectedCards = StackRepository.GetCollectedPages c.Db authorId 1 ""
+    Assert.Equal(acCount, collectedCards.Results.Count())
     let! cc = StackRepository.GetCollected c.Db authorId stackId
     let cc = cc.Value
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
@@ -620,7 +620,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! collates = search "Cloze"
     Assert.Equal("Cloze", collates.Results.Single().Name)
     Assert.Equal(1, collates.Results.Single().CollateUsers)
-    Assert.False(collates.Results.Single().IsCollected) // most recent cloze is not acquired because it's missing Extra. Why Damien?
+    Assert.False(collates.Results.Single().IsCollected) // most recent cloze is not collected because it's missing Extra. Why Damien?
     let! collates = search "type"
     Assert.Equal("Basic (type in the answer)", collates.Results.Single().Name)
     Assert.Equal(1, collates.Results.Single().CollateUsers)

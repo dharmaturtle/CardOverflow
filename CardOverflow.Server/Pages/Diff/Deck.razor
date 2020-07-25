@@ -192,8 +192,8 @@
     StateHasChanged();
   }
 
-  private async Task _switchToMyDeck(int acquiredCardId) =>
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, acquiredCardId)).Match(ToastService);
+  private async Task _switchToMyDeck(int collectedCardId) =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, collectedCardId)).Match(ToastService);
 
   private RenderFragment CardPreview(int branchInstanceId, short index) =>
     @<a href="stack?branchinstance=@branchInstanceId">

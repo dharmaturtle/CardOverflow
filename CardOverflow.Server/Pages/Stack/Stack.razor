@@ -26,7 +26,7 @@
                       UpdateCollectedIds=@(x => _stack.CollectedIds = x)
                       Selected=@_selected
                       IsExplore=@(!IsCurate)
-                      UpdateCollectedCards=@(x => _acquiredCards = x) />
+                      UpdateCollectedCards=@(x => _collectedCards = x) />
     </div>
     <div class="col">
       <div class="row">
@@ -35,8 +35,8 @@
           @foreach (var i in _selected.Indexes) {
             <div class="row">
               @if (IsCurate) {
-                <div class="col-4 @(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
-                  <Stack_Collect CollectedCard=@(_acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
+                <div class="col-4 @(_collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
+                  <Stack_Collect CollectedCard=@(_collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
                 </div>
               }
               <div class="col">
@@ -68,7 +68,7 @@
   private UserClaims _user = UserClaims.init;
   private CardOverflow.Pure.ExploreStack _stack;
   private BranchInstanceMeta _selected;
-  private List<CollectedCard> _acquiredCards = new List<CollectedCard>();
+  private List<CollectedCard> _collectedCards = new List<CollectedCard>();
   private string _loadingMessage = "Loading...";
 
   private void sub1() {
@@ -111,7 +111,7 @@
     if (_user.IsAuthenticated && _stack != null) {
       var r = await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, _stack.Id));
       if (r.IsOk) {
-        _acquiredCards = r.ResultValue;
+        _collectedCards = r.ResultValue;
       } // the only error so far is due to not acquiring the card, so intentionally not showing it.
     }
     StateHasChanged();
@@ -123,13 +123,13 @@
   }
 
   private void _CardStateUpdated(int index, CardState newState) {
-    var oldState = _acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState;
-    if (!oldState.IsSuspended && newState.IsSuspended && _acquiredCards.All(x => x.CardState.IsSuspended)) {
+    var oldState = _collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState;
+    if (!oldState.IsSuspended && newState.IsSuspended && _collectedCards.All(x => x.CardState.IsSuspended)) {
       _stack.Users--;
-    } else if (oldState.IsSuspended && !newState.IsSuspended && _acquiredCards.All(x => !x.CardState.IsSuspended)) {
+    } else if (oldState.IsSuspended && !newState.IsSuspended && _collectedCards.All(x => !x.CardState.IsSuspended)) {
       _stack.Users++;
     }
-    _acquiredCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState = newState;
+    _collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState = newState;
   }
 
 }

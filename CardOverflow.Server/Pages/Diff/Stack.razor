@@ -323,9 +323,9 @@
 
   private async Task _GetNewStack() {
     await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_BranchInstanceId));
-    var acquiredIds = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollected(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
-    _aIsCollected = acquiredIds.Contains(A_BranchInstanceId);
-    _bIsCollected = acquiredIds.Contains(B_BranchInstanceId);
+    var collectedIds = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollected(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
+    _aIsCollected = collectedIds.Contains(A_BranchInstanceId);
+    _bIsCollected = collectedIds.Contains(B_BranchInstanceId);
   }
 
 }
