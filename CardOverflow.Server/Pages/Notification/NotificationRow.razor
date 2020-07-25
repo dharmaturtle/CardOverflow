@@ -1,4 +1,6 @@
 @using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Collections
+@using FSharpx
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
@@ -25,14 +27,26 @@
         @Sender()&apos;s
         deck
         @Deck(@deckAddedStack.TheirDeck.Id, deckAddedStack.TheirDeck.Name).
+        <CollectToggles Ids=@deckAddedStack.New
+                        DeckId=@deckAddedStack.MyDeck.Select(x => x.Id) />
       </span>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
+      var collectedIds =
+        deckUpdatedStack.Collected
+          .Pipe(ListModule.TryHead)
+          .Select(x => StackBranchInstanceIdsModule.fromTuple(x.StackId, x.BranchId, x.BranchInstanceId));
       <span>
         @Stack(deckUpdatedStack.New.BranchInstanceId)
         updated in
         @Sender()&apos;s
         deck
         @Deck(@deckUpdatedStack.TheirDeck.Id, deckUpdatedStack.TheirDeck.Name).
+        <CollectToggles Ids=@deckUpdatedStack.New
+                        DeckId=@(collectedIds.HasValue()
+                                 ? FSharpOption<int>.None
+                                 : deckUpdatedStack.MyDeck.Select(x => x.Id))
+                        IsBranch=@true
+                        CollectedIds=@collectedIds />
       </span>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
@@ -42,6 +56,10 @@
         deck
         @Deck(deckDeletedStack.TheirDeck.Id, deckDeletedStack.TheirDeck.Name).
       </span>
+      <CollectToggles Ids=@deckDeletedStack.Deleted
+                      CollectedIds=@(deckDeletedStack.Collected
+                                      .Pipe(ListModule.TryHead)
+                                      .Select(x => StackBranchInstanceIdsModule.fromTuple(x.StackId, x.BranchId, x.BranchInstanceId))) />
     }
   </td>
   <td>
@@ -62,13 +80,13 @@
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
 
-  public override async Task SetParametersAsync(ParameterView parameters) {
+  public override async System.Threading.Tasks.Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     StateHasChanged();
   }
 
-  private async Task _remove() {
+  private async System.Threading.Tasks.Task _remove() {
     await DbExecutor.QueryAsync(db => NotificationRepository.remove(db, _user.Id, Notification.Id));
     await Remove.InvokeAsync(null);
   }

@@ -19,6 +19,7 @@
     <PackageReference Include="Syncfusion.EJ2.Blazor" Version="17.3.0.29-beta" />
     <PackageReference Include="Tewr.Blazor.FileReader" Version="1.2.0.19363" />
     <PackageReference Include="BlazorTextDiff" Version="0.0.1" />
+    <PackageReference Include="FSharpx.Extras" Version="2.5.0" />
   </ItemGroup>
 
   <ItemGroup>

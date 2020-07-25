@@ -12,9 +12,6 @@ using System.Threading.Tasks;
 namespace ThoughtDesign.WebLibrary {
   public static class PureTools {
 
-    public static bool HasValue<T>(this FSharpOption<T> option) =>
-      option != default;
-
     public static bool TryGetQueryString<T>(this NavigationManager navManager, string key, out T value) { // https://chrissainty.com/working-with-query-strings-in-blazor/
       var uri = navManager.ToAbsoluteUri(navManager.Uri);
       if (QueryHelpers.ParseQuery(uri.Query).TryGetValue(key, out var valueFromQueryString)) {
