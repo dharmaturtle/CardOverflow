@@ -336,6 +336,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
+                                           MyDeck = None
                                            New = instance2
                                            Collected = [] } }
 
@@ -367,6 +368,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
+                                           MyDeck = None
                                            New = instance3
                                            Collected = {
                                                StackId = instance2.StackId

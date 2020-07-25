@@ -62,6 +62,7 @@ module Notification =
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
                 {   TheirDeck = theirDeck.Value
+                    MyDeck = myDeck.Value
                     New = stackBranchInstanceIds.Value
                     Collected = collected.Value
                 } |> DeckUpdatedStack

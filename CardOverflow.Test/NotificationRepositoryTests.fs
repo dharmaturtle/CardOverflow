@@ -63,6 +63,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let publicDeckId = 3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
     let followerId = 1
+    let followerDefaultDeckId = 1
     let newDeckId = 4
     let newDeckName = Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck newDeckName) true None
@@ -76,6 +77,8 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                     TimeStamp = n.TimeStamp // cheating, but whatever
             }
         do! NotificationRepository.remove c.Db followerId n.Id
+        Assert.Empty c.Db.Notification
+        Assert.Empty c.Db.ReceivedNotification
     }
     let ids =
         {   StackId = 1
@@ -90,4 +93,32 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                            MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                            New = ids } }
+    // works with DeckUpdatedStack, uncollected
+    let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    let expectedDeckUpdatedStackNotification nid newInstanceId collected =
+            {   Id = nid
+                SenderId = authorId
+                SenderDisplayName = "RoboTurtle"
+                TimeStamp = DateTime.MinValue
+                Message = DeckUpdatedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
+                                             MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                             Collected = collected
+                                             New = { ids with BranchInstanceId = newInstanceId } } }
+
+    do! expectedDeckUpdatedStackNotification 2 1002 [] |> assertNotificationThenDelete
+
+    // works with DeckUpdatedStack, collected
+    let collectedInstance = ids.BranchInstanceId
+    do! StackRepository.AcquireCardAsync c.Db followerId collectedInstance
+    let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    
+    do! expectedDeckUpdatedStackNotification 3 1003
+            [{  StackId = ids.StackId
+                BranchId = ids.BranchId
+                BranchInstanceId = collectedInstance
+                DeckId = followerDefaultDeckId
+                Index = 0s }]
+        |> assertNotificationThenDelete
     } |> TaskResult.getOk)

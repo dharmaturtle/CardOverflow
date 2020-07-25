@@ -32,6 +32,7 @@ type DeckAddedStack = {
 
 type DeckUpdatedStack = {
     TheirDeck: IdName
+    MyDeck: IdName Option
     New: StackBranchInstanceIds
     Collected: StackBranchInstanceIndex list
 }
