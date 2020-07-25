@@ -20,7 +20,7 @@ CREATE TYPE public."NotificationType" AS ENUM (
 
 ALTER TYPE public."NotificationType" OWNER TO postgres;
 
-CREATE FUNCTION public.cfn_acquiredcard_insertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_ctr_acquiredcard_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -38,9 +38,9 @@ CREATE FUNCTION public.cfn_acquiredcard_insertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.cfn_acquiredcard_insertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_ctr_acquiredcard_insertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.cfn_branch_insertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -57,9 +57,37 @@ CREATE FUNCTION public.cfn_branch_insertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.cfn_branch_insertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_ctr_branch_insertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
+CREATE FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        WITH del_child AS (
+            DELETE FROM public."ReceivedNotification" rn
+            WHERE  rn."NotificationId" = notification_id
+            AND    rn."ReceiverId" = receiver_id
+            RETURNING rn."NotificationId", rn."ReceiverId"
+        )
+        DELETE FROM public."Notification" n
+        USING  del_child x
+        WHERE  n."Id" = x."NotificationId"
+        AND NOT EXISTS (
+            SELECT 1
+            FROM   public."ReceivedNotification" rn
+            WHERE  rn."NotificationId" = x."NotificationId"
+            AND    rn."ReceiverId" <> x."ReceiverId"
+        );
+    END
+$$;
+
+
+ALTER FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) OWNER TO postgres;
+
+COMMENT ON FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) IS 'https://stackoverflow.com/a/15810159';
+
+
+CREATE FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -150,9 +178,9 @@ CREATE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -165,9 +193,9 @@ CREATE FUNCTION public.fn_acquiredcard_beforeinsertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_acquiredcard_beforeinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_branch_afterinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -183,9 +211,9 @@ CREATE FUNCTION public.fn_branch_afterinsertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_branch_afterinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_branch_afterinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_branchinstance_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_branchinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -201,9 +229,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_branchinstance_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_branchinstance_beforeinsert() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_collateinstance_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_collateinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -222,9 +250,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_collateinstance_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_collateinstance_beforeinsert() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_communalfieldinstance_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_communalfieldinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -242,9 +270,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_communalfieldinstance_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_communalfieldinstance_beforeinsert() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_deck_beforeinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_deck_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -254,37 +282,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_deck_beforeinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_deck_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-    BEGIN
-        WITH del_child AS (
-            DELETE FROM public."ReceivedNotification" rn
-            WHERE  rn."NotificationId" = notification_id
-            AND    rn."ReceiverId" = receiver_id
-            RETURNING rn."NotificationId", rn."ReceiverId"
-        )
-        DELETE FROM public."Notification" n
-        USING  del_child x
-        WHERE  n."Id" = x."NotificationId"
-        AND NOT EXISTS (
-            SELECT 1
-            FROM   public."ReceivedNotification" rn
-            WHERE  rn."NotificationId" = x."NotificationId"
-            AND    rn."ReceiverId" <> x."ReceiverId"
-        );
-    END
-$$;
-
-
-ALTER FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) OWNER TO postgres;
-
-COMMENT ON FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) IS 'https://stackoverflow.com/a/15810159';
-
-
-CREATE FUNCTION public.fn_relationship_beforeinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
@@ -294,9 +294,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_relationship_beforeinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_relationship_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tag_beforeinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_tag_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -306,9 +306,9 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_tag_beforeinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_tag_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_user_afterinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_user_afterinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -337,7 +337,7 @@ CREATE FUNCTION public.fn_user_afterinsert() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_user_afterinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_user_afterinsert() OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -1679,40 +1679,40 @@ CREATE INDEX idx_fts_relationship_tsvector ON public."Relationship" USING gin ("
 CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 
 
-CREATE CONSTRAINT TRIGGER ctr_acquiredcard_insertupdate AFTER INSERT OR UPDATE ON public."AcquiredCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.cfn_acquiredcard_insertupdate();
+CREATE CONSTRAINT TRIGGER ctr_acquiredcard_insertupdate AFTER INSERT OR UPDATE ON public."AcquiredCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_acquiredcard_insertupdate();
 
 
-CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public."Branch" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.cfn_branch_insertupdate();
+CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public."Branch" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
 
 
-CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_afterinsertdeleteupdate();
+CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate();
 
 
-CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_acquiredcard_beforeinsertupdate();
+CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate();
 
 
-CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_branch_afterinsertupdate();
+CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branch_afterinsertupdate();
 
 
-CREATE TRIGGER tr_branchinstance_beforeinsert BEFORE INSERT ON public."BranchInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_branchinstance_beforeinsert();
+CREATE TRIGGER tr_branchinstance_beforeinsert BEFORE INSERT ON public."BranchInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branchinstance_beforeinsert();
 
 
-CREATE TRIGGER tr_collateinstance_beforeinsert BEFORE INSERT ON public."CollateInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_collateinstance_beforeinsert();
+CREATE TRIGGER tr_collateinstance_beforeinsert BEFORE INSERT ON public."CollateInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collateinstance_beforeinsert();
 
 
-CREATE TRIGGER tr_communalfieldinstance_beforeinsert BEFORE INSERT ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_communalfieldinstance_beforeinsert();
+CREATE TRIGGER tr_communalfieldinstance_beforeinsert BEFORE INSERT ON public."CommunalFieldInstance" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_communalfieldinstance_beforeinsert();
 
 
-CREATE TRIGGER tr_deck_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Deck" FOR EACH ROW EXECUTE FUNCTION public.fn_deck_beforeinsertupdate();
+CREATE TRIGGER tr_deck_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Deck" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_deck_beforeinsertupdate();
 
 
-CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Relationship" FOR EACH ROW EXECUTE FUNCTION public.fn_relationship_beforeinsertupdate();
+CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Relationship" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_relationship_beforeinsertupdate();
 
 
-CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag" FOR EACH ROW EXECUTE FUNCTION public.fn_tag_beforeinsertupdate();
+CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_tag_beforeinsertupdate();
 
 
-CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_user_afterinsert();
+CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_afterinsert();
 
 
 ALTER TABLE ONLY public."AcquiredCard"
