@@ -440,7 +440,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId false
 
     // deleting collectedCard from deck has notification
-    do! StackRepository.unacquireStack c.Db authorId stackId
+    do! StackRepository.uncollectStack c.Db authorId stackId
 
     do! assertNotificationThenDelete
             { Id = 10
@@ -537,7 +537,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         |> TaskResult.getOk
     
     // follow with someone else's deckId fails
-    do! StackRepository.unacquireStack c.Db followerId stackId
+    do! StackRepository.uncollectStack c.Db followerId stackId
     do! follow 2 None
         |> TaskResult.getError
         |>% getRealError
@@ -648,7 +648,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         b
     
     // follow with "OldDeck false None" and one of a pair works
-    do! StackRepository.unacquireStack c.Db followerId stackId
+    do! StackRepository.uncollectStack c.Db followerId stackId
     let! newDeckId = SanitizeDeckRepository.create c.Db authorId <| Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.switch c.Db authorId newDeckId ccId1
     
@@ -681,7 +681,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         cc
     
     // follow with "editExisting true" after update, updates
-    do! StackRepository.unacquireStack c.Db followerId stackId
+    do! StackRepository.uncollectStack c.Db followerId stackId
     do! SanitizeDeckRepository.switch c.Db authorId publicDeckId ccId1
 
     do! follow followerDeckId (Some true) |> TaskResult.getOk
@@ -742,7 +742,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     Assert.equal 3 <| c.Db.Deck.Count()
 
     // follow with huge name fails
-    do! StackRepository.unacquireStack c.Db followerId stackId
+    do! StackRepository.uncollectStack c.Db followerId stackId
     let longDeckName = Random.cryptographicString 251
     do! follow longDeckName None
         |> TaskResult.getError
@@ -897,7 +897,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
         }
 
     // Testing simple adding (by unacquiring a stack)
-    do! StackRepository.unacquireStack c.Db followerId stackId
+    do! StackRepository.uncollectStack c.Db followerId stackId
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -909,7 +909,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
             RemovedStack = []
         }
 
-    do! StackRepository.unacquireStack c.Db authorId stackId
+    do! StackRepository.uncollectStack c.Db authorId stackId
     // Unchanged with two clozes
     let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId []
     let! (ccs: CollectedCardEntity ResizeArray) = c.Db.CollectedCard.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()

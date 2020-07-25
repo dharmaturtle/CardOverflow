@@ -34,7 +34,7 @@
 <ul class="list-unstyled">
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
-      <button type="button" class="btn btn-outline-collected btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
+      <button type="button" class="btn btn-outline-collected btn-sm" @onclick=@(() => Uncollect(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
         <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />
@@ -115,7 +115,7 @@
     }
   }
 
-  async Task Unacquire(string name, int sourceStackId, int targetStackId) {
+  async Task Uncollect(string name, int sourceStackId, int targetStackId) {
     await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceStackId, targetStackId, _user.Id, name));
     Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsCollected = false;
     Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users--;

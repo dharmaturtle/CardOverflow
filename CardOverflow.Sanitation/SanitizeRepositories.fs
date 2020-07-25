@@ -743,12 +743,12 @@ module SanitizeStackRepository =
             match stackCommand.Kind with
             | Update_BranchId_Title _ ->
                 db.BranchInstance.AddI branchInstance
-                StackRepository.acquireStackNoSave db userId branchInstance false |>% Ok
+                StackRepository.collectStackNoSave db userId branchInstance false |>% Ok
             | NewBranch_SourceStackId_Title _ ->
-                StackRepository.acquireStackNoSave db userId branchInstance true |>% Ok
+                StackRepository.collectStackNoSave db userId branchInstance true |>% Ok
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
-                let! (ccs: CollectedCardEntity list) = StackRepository.acquireStackNoSave db userId branchInstance true
+                let! (ccs: CollectedCardEntity list) = StackRepository.collectStackNoSave db userId branchInstance true
                 for tagId in tagIds do
                     ccs.First().Tag_CollectedCards.Add(Tag_CollectedCardEntity(TagId = tagId))
                 return ccs

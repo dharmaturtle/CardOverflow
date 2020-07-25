@@ -30,21 +30,21 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     let! (cc: CollectedCard ResizeArray) = getCollected ()
     let cc = cc.Single()
 
-    do! StackRepository.unacquireStack c.Db userId cc.StackId
+    do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard
 
-    let reacquire () = task { do! StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
+    let recollect () = task { do! StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
     
-    do! reacquire ()
+    do! recollect ()
     let! (cc: CollectedCard ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
-    do! StackRepository.unacquireStack c.Db userId cc.StackId
+    do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard // still empty after editing then deleting
 
     let userId = 3
-    do! reacquire ()
+    do! recollect ()
     let! (cc: CollectedCard ResizeArray) = getCollected ()
     let cc = cc.Single()
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
@@ -65,7 +65,7 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     Assert.NotEmpty c.Db.Relationship_CollectedCard
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty c.Db.Tag_CollectedCard
-    do! StackRepository.unacquireStack c.Db userId cc.StackId // can delete after adding a history, tag, and relationship
+    do! StackRepository.uncollectStack c.Db userId cc.StackId // can delete after adding a history, tag, and relationship
     Assert.Equal(stack2, c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_CollectedCard
     Assert.Empty c.Db.Tag_CollectedCard
@@ -74,9 +74,9 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     Assert.NotEmpty c.Db.History
     
     // Error when deleting something you don't own
-    do! reacquire ()
+    do! recollect ()
     let otherUserId = 2
-    let! (x: Result<_, _>) = StackRepository.unacquireStack c.Db otherUserId cc.StackId
+    let! (x: Result<_, _>) = StackRepository.uncollectStack c.Db otherUserId cc.StackId
     Assert.Equal("You don't have any cards with Stack #1", x.error)
     } |> TaskResult.getOk)
 
@@ -109,7 +109,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     }
 
 [<Fact>]
-let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
+let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
@@ -177,7 +177,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     do! assertDeck collectorDefaultDeckId
 
     // fails for author's deck
-    do! StackRepository.unacquireStack c.Db collectorId stackId
+    do! StackRepository.uncollectStack c.Db collectorId stackId
     
     let! (error: Result<_,_>) = collect <| Some authorId
     
@@ -258,7 +258,7 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
-    do! StackRepository.unacquireStack c.Db authorId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db authorId cc.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

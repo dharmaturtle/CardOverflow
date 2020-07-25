@@ -100,7 +100,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     Assert.Equal<string list> (expected, actual)
 
 [<Fact>]
-let ``AnkiImporter import cards that have the same acquireHash as distinct cards`` (): Task<unit> = (taskResult { // lowTODO, perhaps they should be the same card
+let ``AnkiImporter import cards that have the same collectHash as distinct cards`` (): Task<unit> = (taskResult { // lowTODO, perhaps they should be the same card
     let userId = 3
     use c = new TestContainer()
     
@@ -401,7 +401,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     let! revisions = StackRepository.Revisions c.Db userId branchId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
-    // branching a stack acquires it
+    // branching a stack collects it
     let branchId_alt = 2
     do! FacetRepositoryTests.update c userId
             (VNewBranchSourceStackId stackId) id branchId_alt

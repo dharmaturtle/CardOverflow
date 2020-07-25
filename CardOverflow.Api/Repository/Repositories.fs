@@ -275,7 +275,7 @@ module CollectedCardRepository =
         |> Task.map (Result.requireNotEqualTo 0 <| sprintf "You don't have any cards with Branch Instance #%i" branchInstanceId)
 
 module StackRepository =
-    let unacquireStack (db: CardOverflowDb) userId stackId = taskResult {
+    let uncollectStack (db: CardOverflowDb) userId stackId = taskResult {
         do! db.CollectedCard.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
             |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Stack #%i" stackId)
             |> TaskResult.map db.CollectedCard.RemoveRange
@@ -304,7 +304,7 @@ module StackRepository =
                 .SingleOrDefaultAsync()
         return BranchRevision.load collectedInstanceId r
     }
-    let acquireStackNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) mayUpdate = task {
+    let collectStackNoSave (db: CardOverflowDb) userId (branchInstance: BranchInstanceEntity) mayUpdate = task {
         let! ((defaultCardSettingId, defaultDeckId): int * int) =
             db.User.Where(fun x -> x.Id = userId).Select(fun x ->
                 x.DefaultCardSettingId,
@@ -354,7 +354,7 @@ module StackRepository =
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Instance #%i not found" branchInstanceId)
-        let! (ccs: CollectedCardEntity list) = acquireStackNoSave db userId branchInstance true
+        let! (ccs: CollectedCardEntity list) = collectStackNoSave db userId branchInstance true
         match deckId with
         | Some deckId ->
             do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)

@@ -89,7 +89,7 @@ let update (c: TestContainer) authorId kind commandTransformer expectedBranchId 
 }
 
 [<Fact>]
-let ``StackRepository.CreateCard on a basic facet acquires 1 card/facet``(): Task<unit> = task {
+let ``StackRepository.CreateCard on a basic facet collects 1 card/facet``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let aTag = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
@@ -710,7 +710,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     // adventures in implicit unacquiring
     let adventurerId = 1 // changing the adventurer!
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.BranchInstanceId = ogEdit_i && x.UserId = adventurerId)
-    do! StackRepository.unacquireStack c.Db adventurerId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     Assert.Equal(0, c.Db.CollectedCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
             [og_s,     2 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
@@ -754,7 +754,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    do! StackRepository.unacquireStack c.Db adventurerId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     do! assertCount
             [og_s,     2 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
             [og_b,     0 ;    copy_b, 0         ; copy2x_b, 2 ;    copyOfBranch_b, 2
@@ -763,7 +763,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 2 ]
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = copy_s && x.UserId = adventurerId)
-    do! StackRepository.unacquireStack c.Db adventurerId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     do! assertCount
             [og_s,     2 ;    copy_s, 1         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
             [og_b,     0 ;    copy_b, 0         ; copy2x_b, 2 ;    copyOfBranch_b, 2
@@ -780,7 +780,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 1 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 0 ;    branchOfCopy_i, 1
              branch_i, 2 ]
-    do! StackRepository.unacquireStack c.Db adventurerId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     do! assertCount
             [og_s,     2 ;    copy_s, 1         ; copy2x_s, 1 ;    copyOfBranch_s, 2 ]
             [og_b,     0 ;    copy_b, 0         ; copy2x_b, 1 ;    copyOfBranch_b, 2
@@ -798,7 +798,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 0 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 0 ;    branchOfCopy_i, 1
              branch_i, 2 ]
-    do! StackRepository.unacquireStack c.Db adventurerId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     do! assertCount
             [og_s,     2 ;    copy_s, 1         ; copy2x_s, 0 ;    copyOfBranch_s, 2 ]
             [og_b,     0 ;    copy_b, 0         ; copy2x_b, 0 ;    copyOfBranch_b, 2
@@ -807,7 +807,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 0 ;    branchOfCopy_i, 1
              branch_i, 2 ]
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = copyOfBranch_s && x.UserId = adventurerId)
-    do! StackRepository.unacquireStack c.Db adventurerId cc.StackId |> TaskResult.getOk
+    do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     do! assertCount
             [og_s,     2 ;    copy_s, 1         ; copy2x_s, 0 ;    copyOfBranch_s, 1 ]
             [og_b,     0 ;    copy_b, 0         ; copy2x_b, 0 ;    copyOfBranch_b, 1
@@ -926,14 +926,14 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i2
 
-    // acquiring old instance doesn't change LatestInstanceId; can also acquire old branch
+    // acquiring old instance doesn't change LatestInstanceId; can also collect old branch
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
     do! StackRepository.CollectCard c.Db userId branch_i
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
 
-    // can't acquire missing id
+    // can't collect missing id
     let missingId = 9001
     let! (error: Result<_,_>) = StackRepository.CollectCard c.Db userId missingId
     Assert.Equal(sprintf "Branch Instance #%i not found" missingId, error.error)

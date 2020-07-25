@@ -250,96 +250,96 @@ app {
     box-shadow: 0 0 0 .2rem rgba(40, 167, 69, .5)
   }
 
-.btn-unacquire-card {
+.btn-uncollect-card {
   color: #fff;
   background-color: #28a745;
   border-color: #28a745
 }
 
-  .btn-unacquire-card .users {
+  .btn-uncollect-card .users {
     color: black;
     z-index: 1;
     transform: translate(0rem, -.4rem);
     margin-bottom: -.4rem;
   }
 
-  .btn-unacquire-card:hover:enabled {
+  .btn-uncollect-card:hover:enabled {
     color: #fff;
     background-color: #c82333;
     border-color: #bd2130
   }
 
-  .btn-unacquire-card.focus,
-  .btn-unacquire-card:focus {
+  .btn-uncollect-card.focus,
+  .btn-uncollect-card:focus {
     box-shadow: 0 0 0 .2rem rgba(225, 83, 97, .5)
   }
 
-  .btn-unacquire-card.disabled,
-  .btn-unacquire-card:disabled {
+  .btn-uncollect-card.disabled,
+  .btn-uncollect-card:disabled {
     color: #fff;
     background-color: #dc3545;
     border-color: #dc3545
   }
 
-  .btn-unacquire-card:not(:disabled):not(.disabled).active,
-  .btn-unacquire-card:not(:disabled):not(.disabled):active,
-  .show > .btn-unacquire-card.dropdown-toggle {
+  .btn-uncollect-card:not(:disabled):not(.disabled).active,
+  .btn-uncollect-card:not(:disabled):not(.disabled):active,
+  .show > .btn-uncollect-card.dropdown-toggle {
     color: #fff;
     background-color: #bd2130;
     border-color: #b21f2d
   }
 
-    .btn-unacquire-card:not(:disabled):not(.disabled).active:focus,
-    .btn-unacquire-card:not(:disabled):not(.disabled):active:focus,
-    .show > .btn-unacquire-card.dropdown-toggle:focus {
+    .btn-uncollect-card:not(:disabled):not(.disabled).active:focus,
+    .btn-uncollect-card:not(:disabled):not(.disabled):active:focus,
+    .show > .btn-uncollect-card.dropdown-toggle:focus {
       box-shadow: 0 0 0 .2rem rgba(225, 83, 97, .5)
     }
 
 
 
-.btn-acquire-card {
+.btn-collect-card {
 }
 
-  .btn-acquire-card .users {
+  .btn-collect-card .users {
     color: white;
     z-index: 1;
     transform: translate(0rem, -.4rem);
     margin-bottom: -.4rem;
   }
 
-  .btn-acquire-card:hover:enabled .users {
+  .btn-collect-card:hover:enabled .users {
     color: black;
   }
 
-  .btn-acquire-card:hover:enabled {
+  .btn-collect-card:hover:enabled {
     color: #fff;
     background-color: #218838;
     border-color: #1e7e34
   }
 
-  .btn-acquire-card.focus,
-  .btn-acquire-card:focus {
+  .btn-collect-card.focus,
+  .btn-collect-card:focus {
     box-shadow: 0 0 0 .2rem rgba(72, 180, 97, .5)
   }
 
-  .btn-acquire-card.disabled,
-  .btn-acquire-card:disabled {
+  .btn-collect-card.disabled,
+  .btn-collect-card:disabled {
     color: #fff;
     background-color: #28a745;
     border-color: #28a745
   }
 
-  .btn-acquire-card:not(:disabled):not(.disabled).active,
-  .btn-acquire-card:not(:disabled):not(.disabled):active,
-  .show > .btn-acquire-card.dropdown-toggle {
+  .btn-collect-card:not(:disabled):not(.disabled).active,
+  .btn-collect-card:not(:disabled):not(.disabled):active,
+  .show > .btn-collect-card.dropdown-toggle {
     color: #fff;
     background-color: #1e7e34;
     border-color: #1c7430
   }
 
-    .btn-acquire-card:not(:disabled):not(.disabled).active:focus,
-    .btn-acquire-card:not(:disabled):not(.disabled):active:focus,
-    .show > .btn-acquire-card.dropdown-toggle:focus {
+    .btn-collect-card:not(:disabled):not(.disabled).active:focus,
+    .btn-collect-card:not(:disabled):not(.disabled):active:focus,
+    .show > .btn-collect-card.dropdown-toggle:focus {
       box-shadow: 0 0 0 .2rem rgba(72, 180, 97, .5)
     }
 

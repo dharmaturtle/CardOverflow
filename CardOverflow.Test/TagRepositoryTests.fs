@@ -107,7 +107,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     // deleting a card decrements the tag count
     let! (cc: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db author stackId
     let cc = cc.Single()
-    do! StackRepository.unacquireStack c.Db author cc.StackId
+    do! StackRepository.uncollectStack c.Db author cc.StackId
     Assert.Empty <| c.Db.StackTagCount.ToList()
     } |> TaskResult.getOk)
 

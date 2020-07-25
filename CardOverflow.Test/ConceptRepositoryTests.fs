@@ -87,7 +87,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
-    // acquire oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
+    // collect oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
     do! StackRepository.CollectCard c.Db userId oldInstanceId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
@@ -140,7 +140,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
-    // acquire oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
+    // collect oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
     do! StackRepository.CollectCard c.Db userId oldInstanceId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
@@ -271,7 +271,7 @@ let testGetCollected (acCount: int) addCard getCollate name = task {
     let! stacks = StackRepository.search c.Db collectorId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
 
-    let nonCollectorId = 3 // this user never acquires the card
+    let nonCollectorId = 3 // this user never collects the card
     let! stack = ExploreStackRepository.get c.Db nonCollectorId 1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -370,7 +370,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
     
     let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, collector) = task {
-        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
+        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also collects the relationship; .Single() below refers this this
         Assert.Null x.Value
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
@@ -414,7 +414,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
         let! r = SanitizeRelationshipRepository.Remove c.Db collector.SourceStackId (int collector.TargetStackLink) 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
         Assert.Null r.Value }
 
-    let userId = 2 // this user acquires the card
+    let userId = 2 // this user collects the card
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -422,7 +422,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
-    let userId = 3 // this user acquires card in opposite order from user2
+    let userId = 3 // this user collects card in opposite order from user2
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -439,7 +439,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
     
     let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, collector) = task {
-        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also acquires the relationship; .Single() below refers this this
+        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also collects the relationship; .Single() below refers this this
         Assert.Null x.Value
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
@@ -477,7 +477,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
         Assert.Null r.Value }
 
-    let userId = 2 // this user acquires the card
+    let userId = 2 // this user collects the card
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -485,7 +485,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
-    let userId = 3 // this user acquires card in opposite order from user2
+    let userId = 3 // this user collects card in opposite order from user2
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
