@@ -114,13 +114,14 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     do! StackRepository.CollectCard c.Db followerId collectedInstance
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    let collected =
+        [{  StackId = ids.StackId
+            BranchId = ids.BranchId
+            BranchInstanceId = collectedInstance
+            DeckId = followerDefaultDeckId
+            Index = 0s }]
     
-    do! expectedDeckUpdatedStackNotification 3 1003
-            [{  StackId = ids.StackId
-                BranchId = ids.BranchId
-                BranchInstanceId = collectedInstance
-                DeckId = followerDefaultDeckId
-                Index = 0s }]
+    do! expectedDeckUpdatedStackNotification 3 1003 collected
         |> assertNotificationThenDelete
     
     // works with DeckDeletedStack
@@ -133,5 +134,6 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 TimeStamp = DateTime.MinValue
                 Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                             Collected = collected
                                              Deleted = { ids with BranchInstanceId = 1003 } } }
     } |> TaskResult.getOk)

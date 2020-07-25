@@ -362,6 +362,12 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
+    let collected =
+        [{  StackId = instance2.StackId
+            BranchId = instance2.BranchId
+            BranchInstanceId = instance2.BranchInstanceId
+            DeckId = followerDefaultDeckId
+            Index = 0s }]
     do! assertNotificationThenDelete
             { Id = 3
               SenderId = authorId
@@ -370,13 +376,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = instance3
-                                           Collected = {
-                                               StackId = instance2.StackId
-                                               BranchId = instance2.BranchId
-                                               BranchInstanceId = instance2.BranchInstanceId
-                                               DeckId = followerDefaultDeckId
-                                               Index = 0s
-                                           } |> List.singleton } }
+                                           Collected = collected } }
 
     // changing to private deck has notification
     do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorCollectedId
@@ -388,6 +388,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
+                                           Collected = collected
                                            Deleted = instance3 } }
 
     // changing back to public deck has notification
@@ -431,6 +432,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
           Message = DeckDeletedStack
                      { TheirDeck = theirDeck
                        MyDeck = None
+                       Collected = collected
                        Deleted = instance3 } }
     
     // back to public deck and some cleanup
@@ -451,6 +453,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
+                                           Collected = collected
                                            Deleted = instance3 } }
 
     // diff says a stack was removed
