@@ -101,7 +101,7 @@ module BranchInstanceEntity =
         |> BitArray
 
 type CardSetting with
-    member this.AcquireEquality (that: CardSetting) =
+    member this.CollectedEquality (that: CardSetting) =
         this.Name = that.Name &&
         this.NewCardsSteps = that.NewCardsSteps &&
         this.NewCardsMaxPerDay = that.NewCardsMaxPerDay &&
@@ -282,7 +282,7 @@ type CollateInstance with
         | Entity entity -> e.Collate <- entity
         e
 
-type AcquiredCollateInstance with
+type CollectedCollateInstance with
     static member load(entity: CollateInstanceEntity) =
         { DefaultTags = entity.User_CollateInstances.Single().Tag_User_CollateInstances.Select(fun x -> x.DefaultTagId)
           DefaultCardSettingId = entity.User_CollateInstances.Single().DefaultCardSettingId
@@ -482,7 +482,7 @@ type Branch with
     }
 
 type ExploreStack with
-    static member load (entity: StackEntity) acquiredIds (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) = {
+    static member load (entity: StackEntity) collectedIds (usersTags: string Set) (tagCounts: StackTagCountEntity ResizeArray) (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) = {
         Id = entity.Id
         Users = entity.Users
         Comments = entity.CommentStacks |> Seq.map Comment.load |> toResizeArray
@@ -497,11 +497,11 @@ type ExploreStack with
                 {   Name = x.Name
                     SourceStackId = x.SourceStackId
                     TargetStackId = x.TargetStackId
-                    IsAcquired = usersRelationships.Contains x.Name
+                    IsCollected = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray
-        Branches = entity.Branches |> Seq.map (Branch.load acquiredIds) |> toResizeArray
-        AcquiredIds = acquiredIds
+        Branches = entity.Branches |> Seq.map (Branch.load collectedIds) |> toResizeArray
+        CollectedIds = collectedIds
     }
 
 type BranchRevision with

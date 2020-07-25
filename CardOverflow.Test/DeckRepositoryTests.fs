@@ -348,7 +348,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     ns.Results |> Assert.Empty
 
     // Update notifies with follower's acquired card
-    do! StackRepository.AcquireCardAsync c.Db followerId instance2.BranchInstanceId
+    do! StackRepository.CollectCard c.Db followerId instance2.BranchInstanceId
     let instance3 = { instance2 with BranchInstanceId = 1003 }
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
@@ -524,7 +524,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     let follow oldDeckId editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false editExisting // mind the test name
 
     // follow targeting newFollowerDeckId with extant card in default deck fails
-    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+    do! StackRepository.CollectCard c.Db followerId branchInstanceId
 
     do! follow newFollowerDeckId None
         |> TaskResult.getError
@@ -731,7 +731,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
 
     // follow with extant card fails and doesn't add a deck
     Assert.equal 3 <| c.Db.Deck.Count()
-    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+    do! StackRepository.CollectCard c.Db followerId branchInstanceId
 
     do! follow (Guid.NewGuid().ToString()) None
         
@@ -831,7 +831,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
           DeckId = followerDeckId }
 
     // diffing two decks with the same card yields Unchanged
-    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+    do! StackRepository.CollectCard c.Db followerId branchInstanceId
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -913,7 +913,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     // Unchanged with two clozes
     let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId []
     let! (ccs: CollectedCardEntity ResizeArray) = c.Db.CollectedCard.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
-    do! StackRepository.AcquireCardAsync c.Db followerId <| ccs.First().BranchInstanceId
+    do! StackRepository.CollectCard c.Db followerId <| ccs.First().BranchInstanceId
     let ids =
         {   StackId = 2
             BranchId = actualBranchId
@@ -987,7 +987,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
           DeckId = followerDeckId }
 
     // diffing two decks with the same card yields Unchanged
-    do! StackRepository.AcquireCardAsync c.Db followerId branchInstanceId
+    do! StackRepository.CollectCard c.Db followerId branchInstanceId
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -1033,7 +1033,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
         }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
-    do! StackRepository.AcquireCardAsync c.Db followerId newBranchIds.BranchInstanceId
+    do! StackRepository.CollectCard c.Db followerId newBranchIds.BranchInstanceId
     // author switches to new branchinstance
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId newBranchIds.BranchId)
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
@@ -1066,7 +1066,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     // author on new branch with new branchinstance, follower on old branch & instance
-    do! StackRepository.AcquireCardAsync c.Db followerId standardIds.BranchInstanceId
+    do! StackRepository.CollectCard c.Db followerId standardIds.BranchInstanceId
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     

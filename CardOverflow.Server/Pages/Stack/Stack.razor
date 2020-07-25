@@ -22,8 +22,8 @@
       <Stack_Branches Stack=@_stack
                       Branches=@_stack.Branches
                       InstanceSelected=@(x => _selected = x)
-                      AcquiredIds=@_stack.AcquiredIds
-                      UpdateAcquiredIds=@(x => _stack.AcquiredIds = x)
+                      AcquiredIds=@_stack.CollectedIds
+                      UpdateAcquiredIds=@(x => _stack.CollectedIds = x)
                       Selected=@_selected
                       IsExplore=@(!IsCurate)
                       UpdateAcquiredCards=@(x => _acquiredCards = x) />
@@ -79,7 +79,7 @@
       _selected.Users--;
     }
     foreach (var branch in _stack.Branches) {
-      if (branch.Instance.Id == _stack.AcquiredIds?.Value?.BranchInstanceId || branch.Id == _stack.AcquiredIds?.Value?.BranchId) {
+      if (branch.Instance.Id == _stack.CollectedIds?.Value?.BranchInstanceId || branch.Id == _stack.CollectedIds?.Value?.BranchId) {
         branch.Summary.Users--;
       }
     }

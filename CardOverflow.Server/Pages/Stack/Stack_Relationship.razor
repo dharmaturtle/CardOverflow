@@ -32,10 +32,10 @@
   }
 </div>
 <ul class="list-unstyled">
-  @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsAcquired).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
+  @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
       <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
-        <HoverPreview IsAcquired=@relationship.IsAcquired Padding="0">
+        <HoverPreview IsAcquired=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />
           </ChildContent>
@@ -48,10 +48,10 @@
       <a href="/stack/@stackId">@getHtml(stackId)</a>
     </li>
   }
-  @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => !x.IsAcquired).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
+  @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => !x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
-      <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Acquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
-        <HoverPreview IsAcquired=@relationship.IsAcquired Padding="0">
+      <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Collect(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
+        <HoverPreview IsAcquired=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />
           </ChildContent>
@@ -104,10 +104,10 @@
     }
   }
 
-  async Task Acquire(string name, int sourceStackId, int targetStackId) {
+  async Task Collect(string name, int sourceStackId, int targetStackId) {
     var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, _user.Id, new AddRelationshipCommand(name, sourceStackId, targetStackId.ToString())));
     if (x.IsOk) {
-      Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsAcquired = true;
+      Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsCollected = true;
       Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users++;
       StateHasChanged();
     } else {
@@ -117,7 +117,7 @@
 
   async Task Unacquire(string name, int sourceStackId, int targetStackId) {
     await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceStackId, targetStackId, _user.Id, name));
-    Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsAcquired = false;
+    Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).IsCollected = false;
     Stack.Relationships.Single(r => r.SourceStackId == sourceStackId && r.TargetStackId == targetStackId && r.Name == name).Users--;
     StateHasChanged();
   }

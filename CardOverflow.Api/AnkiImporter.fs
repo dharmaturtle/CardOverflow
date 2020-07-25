@@ -75,7 +75,7 @@ module AnkiImporter =
         defaultCardSetting
         getCollates
         getCard
-        getAcquiredCard
+        getCollectedCard
         getHistory =
         let col = ankiDb.Cols.Single()
         let usersTags =
@@ -91,7 +91,7 @@ module AnkiImporter =
                 let toEntity _ (cardSetting: CardSetting) =
                     cardSettings
                     |> Seq.map (CardSetting.load false)
-                    |> Seq.filter (fun x -> x.AcquireEquality cardSetting)
+                    |> Seq.filter (fun x -> x.CollectedEquality cardSetting)
                     |> Seq.tryHead
                     |> Option.defaultValue cardSetting
                     |> fun co -> co.CopyToNew userId
@@ -157,7 +157,7 @@ module AnkiImporter =
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getAcquiredCard)
+                |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getCollectedCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.BranchInstance) |> List.iter (fun (_, card) ->
@@ -191,13 +191,13 @@ module AnkiImporter =
                     .FirstOrDefault(fun x -> x.Hash = ti.Hash)
             |> Option.ofObj
         let getCard (card: AnkiCardWrite) =
-            card.AcquireEquality db hasher
-        let getAcquiredCard (card: AnkiAcquiredCard) =
-            card.AcquireEquality db |> Option.ofObj
+            card.CollectedEquality db hasher
+        let getCollectedCard (card: AnkiCollectedCard) =
+            card.CollectedEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =
-            history.AcquireEquality db |> Option.ofObj
+            history.CollectedEquality db |> Option.ofObj
         taskResult {
-            let! acquiredCardEntities, histories =
+            let! ccs, histories =
                 load
                     ankiDb
                     userId
@@ -210,9 +210,9 @@ module AnkiImporter =
                     <| defaultCardSetting
                     <| getCollateInstance
                     <| getCard
-                    <| getAcquiredCard
+                    <| getCollectedCard
                     <| getHistory
-            acquiredCardEntities |> Seq.iter (fun x ->
+            ccs |> Seq.iter (fun x ->
                 if x.BranchInstance <> null && x.BranchInstanceId = 0
                 then db.CollectedCard.AddI x
             )

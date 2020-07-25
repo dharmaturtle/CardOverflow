@@ -72,7 +72,7 @@
       }
       if (SelectedInstanceId != null) {
         if (cards == null || (cards != null && !cards.Any(card => card.BranchInstanceMeta.Id == SelectedInstanceId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquiredInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
+          var x = await DbExecutor.QueryAsync(db => CollectedCardRepository.getAcquiredInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
           if (x.IsOk) {
             if (SelectedInstanceId != x.ResultValue) {
               NavigationManager.NavigateTo($"my/stack?branchinstance={x.ResultValue}");

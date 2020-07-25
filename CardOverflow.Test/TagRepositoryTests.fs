@@ -84,7 +84,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     let assertTagUserCount expected =
         c.Db.StackTagCount.SingleAsync() |> Task.map (fun x -> Assert.Equal(expected, x.Count))
     let author = 1
-    let acquirer = 2
+    let collector = 2
     let stackId = 1
     let branchInstanceId = 1001
 
@@ -94,14 +94,14 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     do! assertTagUserCount 1
 
     // initial tag has 2 users after acquisition
-    do! StackRepository.AcquireCardAsync c.Db acquirer branchInstanceId
-    do! SanitizeTagRepository.AddTo c.Db acquirer tagName stackId
+    do! StackRepository.CollectCard c.Db collector branchInstanceId
+    do! SanitizeTagRepository.AddTo c.Db collector tagName stackId
     do! assertTagUserCount 2
 
     // suspending a card decrements the tag count
-    let! (cc: _ ResizeArray) = StackRepository.GetAcquired c.Db acquirer stackId
+    let! (cc: _ ResizeArray) = StackRepository.GetAcquired c.Db collector stackId
     let cc = cc.Single()
-    do! StackRepository.editState c.Db acquirer cc.CollectedCardId Suspended
+    do! StackRepository.editState c.Db collector cc.CollectedCardId Suspended
     do! assertTagUserCount 1
 
     // deleting a card decrements the tag count

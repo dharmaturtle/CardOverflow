@@ -772,7 +772,7 @@ module SanitizeStackRepository =
     let searchDeck (db: CardOverflowDb) userId pageNumber searchCommand deckId =
         StackRepository.searchDeck db userId pageNumber searchCommand.Order searchCommand.Query deckId
     let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =
-        StackRepository.GetAcquiredPages db userId pageNumber searchCommand.Query
+        StackRepository.GetCollectedPages db userId pageNumber searchCommand.Query
 
 [<CLIMutable>]
 type PotentialSignupCommand = {

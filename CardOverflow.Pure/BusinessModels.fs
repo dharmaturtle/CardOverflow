@@ -176,7 +176,7 @@ type CollateInstance = {
         |> Seq.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
-type AcquiredCollateInstance = {
+type CollectedCollateInstance = {
     DefaultTags: int seq
     DefaultCardSettingId: int
     CollateInstance: CollateInstance
@@ -373,7 +373,7 @@ type ViewRelationship = {
     Name: string
     SourceStackId: int
     TargetStackId: int
-    IsAcquired: bool
+    IsCollected: bool
     Users: int
 } with
     member this.PrimaryName =
@@ -479,7 +479,7 @@ type ExploreStack = {
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
-    AcquiredIds: AcquiredIds
+    CollectedIds: AcquiredIds
     Branches: Branch ResizeArray
 } with
     //don't add users - the UI needs it to be mutable
@@ -487,7 +487,7 @@ type ExploreStack = {
     member this.Author = this.Default.Author
     member this.AuthorId = this.Default.AuthorId
     member this.IsAnyAcquired =
-        this.AcquiredIds |> Option.isSome
+        this.CollectedIds |> Option.isSome
 
 type BranchRevision = {
     Id: int

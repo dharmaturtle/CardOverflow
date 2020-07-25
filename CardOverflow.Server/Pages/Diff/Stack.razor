@@ -322,8 +322,8 @@
   }
 
   private async Task _GetNewStack() {
-    await DbExecutor.CommandAsync(db => StackRepository.AcquireCardAsync(db, _user.Id, B_BranchInstanceId));
-    var acquiredIds = await DbExecutor.QueryAsync(db => AcquiredCardRepository.getAcquired(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
+    await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_BranchInstanceId));
+    var acquiredIds = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollected(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
     _aIsAcquired = acquiredIds.Contains(A_BranchInstanceId);
     _bIsAcquired = acquiredIds.Contains(B_BranchInstanceId);
   }

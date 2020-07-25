@@ -205,7 +205,7 @@ let ``BranchInstanceView.load works on cloze`` (): Task<unit> = task {
 let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer()
-    let getAcquiredCard branchId =
+    let getCollectedCard branchId =
         c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
         |> Task.map (fun x -> x.StackId)
         |> Task.bind (fun stackId -> StackRepository.GetAcquired c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
@@ -261,13 +261,13 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     do! {   EditAcquiredCardCommand.init with
                 CardSettingId = latestSettingId }
         |> SanitizeAcquiredCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getCollectedCard branchId
     Assert.Equal(latestSettingId, card.CardSettingId)
 
     // insert new stack with default settingsId
     do! EditAcquiredCardCommand.init
         |> SanitizeAcquiredCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getCollectedCard branchId
     Assert.Equal(defaultSettingId, card.CardSettingId)
 
     let! latestDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
@@ -275,14 +275,14 @@ let ``Create card works with EditAcquiredCardCommand`` (): Task<unit> = (taskRes
     do! {   EditAcquiredCardCommand.init with
                 DeckId = latestDeckId }
         |> SanitizeAcquiredCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getCollectedCard branchId
     Assert.Equal(latestDeckId, card.DeckId)
 
     // insert new stack with default deckId
     let defaultDeckId = userId
     do! EditAcquiredCardCommand.init
         |> SanitizeAcquiredCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getAcquiredCard branchId
+    let! (card: CollectedCard) = getCollectedCard branchId
     Assert.Equal(defaultDeckId, card.DeckId)
     } |> TaskResult.getOk)
 
@@ -334,7 +334,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             assertCount 0 "{{c1::Portland::city}} was founded in 1845."
     do! assertUserHasNormalCardCount 4
 
-    let! (e: PagedList<Result<CollectedCard, string>>) = StackRepository.GetAcquiredPages c.Db userId 1 ""
+    let! (e: PagedList<Result<CollectedCard, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let expected =
         [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"

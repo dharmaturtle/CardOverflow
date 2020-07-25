@@ -33,7 +33,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     do! StackRepository.unacquireStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard
 
-    let reacquire () = task { do! StackRepository.AcquireCardAsync c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
+    let reacquire () = task { do! StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
     let! (cc: CollectedCard ResizeArray) = getAcquired ()
@@ -120,7 +120,7 @@ let ``Users can't acquire multiple instances of a card``(): Task<unit> = task {
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = 1002
-    do! StackRepository.AcquireCardAsync c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
+    do! StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.CollectedCard.Single().BranchInstanceId)
     Assert.Equal(branchId, c.Db.CollectedCard.Single().BranchId)
     Assert.Equal(stackId, c.Db.CollectedCard.Single().StackId)
@@ -219,12 +219,12 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.CollectedCard.Count())
     
-    let acquirerId = 1
-    do! StackRepository.AcquireCardAsync c.Db acquirerId ci1_1 |> TaskResult.getOk
+    let collectorId = 1
+    do! StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.CollectedCard.Count())
-    do! StackRepository.AcquireCardAsync c.Db acquirerId ci2_1 |> TaskResult.getOk
+    do! StackRepository.CollectCard c.Db collectorId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     // misc
@@ -249,7 +249,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(6, c.Db.CollectedCard.Count())
     Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2))
     
-    do! StackRepository.AcquireCardAsync c.Db acquirerId ci1_2 |> TaskResult.getOk
+    do! StackRepository.CollectCard c.Db collectorId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc
@@ -266,7 +266,7 @@ let ``AcquireCards works``(): Task<unit> = task {
     Assert.Equal(5, c.Db.CollectedCard.Count())
     Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
 
-    let count = StackRepository.GetDueCount c.Db acquirerId ""
+    let count = StackRepository.GetDueCount c.Db collectorId ""
     Assert.Equal(3, count)
     let count = StackRepository.GetDueCount c.Db authorId ""
     Assert.Equal(2, count)}

@@ -107,7 +107,7 @@ type AnkiCardWrite = {
             ).ToList()
         this.CopyTo entity
         entity
-    member this.AcquireEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+    member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let collateHash = this.Collate |> CollateInstanceEntity.hash hasher
         let hash = this.CopyToNew [] |> BranchInstanceEntity.hash collateHash hasher
         db.BranchInstance
@@ -117,7 +117,7 @@ type AnkiCardWrite = {
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
 
-type AnkiAcquiredCard = {
+type AnkiCollectedCard = {
     UserId: int
     BranchInstance: BranchInstanceEntity
     CollateInstance: CollateInstanceEntity
@@ -148,7 +148,7 @@ type AnkiAcquiredCard = {
         entity.BranchInstance <- this.BranchInstance
         entity.CardSetting <- this.CardSetting
         entity
-    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+    member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.CollectedCard
             .Include(fun x -> x.Tag_CollectedCards)
             .SingleOrDefault(fun c ->
@@ -166,7 +166,7 @@ type AnkiHistory = {
     EaseFactorInPermille: int16
     TimeFromSeeingQuestionToScoreInSecondsMinus32768: int16
 } with
-    member this.AcquireEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
+    member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         match this.CollectedCard with
         | Some cc ->
@@ -428,7 +428,7 @@ module Anki =
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun cardType ->
             let entity =
-                let c: AnkiAcquiredCard =
+                let c: AnkiCollectedCard =
                     { UserId = userId
                       BranchInstance = card
                       CollateInstance = cti

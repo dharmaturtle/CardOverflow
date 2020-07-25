@@ -173,9 +173,9 @@ module ExploreStackRepository =
                 .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found" instanceId))
-        let! isAcquired = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstanceId = instanceId)
+        let! isCollected = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchInstanceId = instanceId)
         let! latest = get db userId e.StackId
-        return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
+        return BranchInstanceMeta.load isCollected (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
     let branch (db: CardOverflowDb) userId branchId = taskResult {
         let! (e: BranchInstanceEntity) =
@@ -201,7 +201,7 @@ module FileRepository =
         |> TaskResult.map (fun x -> x.Data)
 
 module StackViewRepository =
-    let private getAcquiredInstanceIds (db: CardOverflowDb) userId aId bId =
+    let private getCollectedInstanceIds (db: CardOverflowDb) userId aId bId =
         if userId = 0 then
             [].ToListAsync()
         else 
@@ -220,12 +220,12 @@ module StackViewRepository =
             db.LatestDefaultBranchInstance
                 .Include(fun x -> x.CollateInstance)
                 .SingleAsync(fun x -> x.StackId = a.StackId)
-        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId a_branchInstanceId b.Id
+        let! (collectedInstanceIds: int ResizeArray) = getCollectedInstanceIds db userId a_branchInstanceId b.Id
         return
             BranchInstanceView.load a,
-            acquiredInstanceIds.Contains a.Id,
+            collectedInstanceIds.Contains a.Id,
             BranchInstanceView.load b,
-            acquiredInstanceIds.Contains b.Id,
+            collectedInstanceIds.Contains b.Id,
             b.Id
     }
     let instancePair (db: CardOverflowDb) a_branchInstanceId b_branchInstanceId userId = taskResult {
@@ -236,7 +236,7 @@ module StackViewRepository =
                 .ToListAsync()
         let! a = Result.requireNotNull (sprintf "Branch instance #%i not found" a_branchInstanceId) <| instances.SingleOrDefault(fun x -> x.Id = a_branchInstanceId)
         let! b = Result.requireNotNull (sprintf "Branch instance #%i not found" b_branchInstanceId) <| instances.SingleOrDefault(fun x -> x.Id = b_branchInstanceId)
-        let! (acquiredInstanceIds: int ResizeArray) = getAcquiredInstanceIds db userId a_branchInstanceId b_branchInstanceId
+        let! (acquiredInstanceIds: int ResizeArray) = getCollectedInstanceIds db userId a_branchInstanceId b_branchInstanceId
         return
             BranchInstanceView.load a,
             acquiredInstanceIds.Contains a.Id,
@@ -259,8 +259,8 @@ module StackViewRepository =
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Stack #%i not found" stackId) x |> Task.FromResult)
         |> TaskResult.map BranchInstanceView.load
 
-module AcquiredCardRepository =
-    let getAcquired (db: CardOverflowDb) userId (testBranchInstanceIds: int ResizeArray) =
+module CollectedCardRepository =
+    let getCollected (db: CardOverflowDb) userId (testBranchInstanceIds: int ResizeArray) =
         db.CollectedCard.Where(fun x -> testBranchInstanceIds.Contains(x.BranchInstanceId) && x.UserId = userId).Select(fun x -> x.BranchInstanceId).ToListAsync()
     let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) =
         db.CollectedCard
@@ -363,7 +363,7 @@ module StackRepository =
         | None -> ()
         return! db.SaveChangesAsyncI ()
         }
-    let AcquireCardAsync (db: CardOverflowDb) userId branchInstanceId =
+    let CollectCard (db: CardOverflowDb) userId branchInstanceId =
         collect db userId branchInstanceId None
     let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
         let! (e: _ ResizeArray) =
@@ -389,7 +389,7 @@ module StackRepository =
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return CollectedCard.initialize userId user.DefaultCardSettingId user.DefaultDeckId []
         }
-    let private searchAcquired (db: CardOverflowDb) userId (searchTerm: string) =
+    let private searchCollected (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.CollectedCard
             .Include(fun x -> x.BranchInstance.CollateInstance)
@@ -400,7 +400,7 @@ module StackRepository =
                     x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.BranchInstance.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
-    let private searchAcquiredIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
+    let private searchCollectedIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.CollectedCardIsLatest
             .Include(fun x -> x.BranchInstance.CollateInstance)
@@ -415,10 +415,10 @@ module StackRepository =
         db.CollectedCard
             .Include(fun x -> x.BranchInstance.CollateInstance)
             .Where(fun x -> x.DeckId = deckId)
-    let GetAcquiredPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
+    let GetCollectedPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
-                (searchAcquiredIsLatest db userId searchTerm)
+                (searchCollectedIsLatest db userId searchTerm)
                     .Include(fun x -> x.Tag_CollectedCards :> IEnumerable<_>)
                         .ThenInclude(fun (x: Tag_CollectedCardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
@@ -434,7 +434,7 @@ module StackRepository =
         let tomorrow = DateTime.UtcNow.AddDays 1.
         task {
             let! cards =
-                (searchAcquired db userId query)
+                (searchCollected db userId query)
                     .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
                     .Include(fun x -> x.CardSetting)
                     .OrderBy(fun x -> x.Due)
@@ -458,7 +458,7 @@ module StackRepository =
         }
     let GetDueCount (db: CardOverflowDb) userId query =
         let tomorrow = DateTime.UtcNow.AddDays 1.
-        (searchAcquired db userId query)
+        (searchCollected db userId query)
             .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
             .Count()
     let private searchExplore userId (pageNumber: int) (filteredInstances: BranchInstanceEntity IOrderedQueryable)=
@@ -472,20 +472,20 @@ module StackRepository =
                     x.Stack.Author
                 ).ToPagedListAsync(pageNumber, 15)
             let squashed =
-                r |> List.ofSeq |> List.map (fun (c, isAcquired, collate, stack, author) ->
+                r |> List.ofSeq |> List.map (fun (c, isCollected, collate, stack, author) ->
                     c.Stack <- stack
                     c.Stack.Author <- author
                     c.CollateInstance <- collate
-                    c, isAcquired
+                    c, isCollected
                 )
             return {
                 Results =
-                    squashed |> List.map (fun (c, isAcquired) ->
+                    squashed |> List.map (fun (c, isCollected) ->
                         {   ExploreStackSummary.Id = c.StackId
                             Author = c.Stack.Author.DisplayName
                             AuthorId = c.Stack.AuthorId
                             Users = c.Stack.Users
-                            Instance = BranchInstanceMeta.load isAcquired true c
+                            Instance = BranchInstanceMeta.load isCollected true c
                         }
                     )
                 Details = {

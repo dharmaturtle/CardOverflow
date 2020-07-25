@@ -110,7 +110,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
 
     // works with DeckUpdatedStack, collected
     let collectedInstance = ids.BranchInstanceId
-    do! StackRepository.AcquireCardAsync c.Db followerId collectedInstance
+    do! StackRepository.CollectCard c.Db followerId collectedInstance
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     
