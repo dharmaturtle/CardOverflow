@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using AcquiredCard, and a Card can have multiple AcquiredCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,17 +20,17 @@ CREATE TYPE public."NotificationType" AS ENUM (
 
 ALTER TYPE public."NotificationType" OWNER TO postgres;
 
-CREATE FUNCTION public.fn_ctr_acquiredcard_insertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_ctr_collectedcard_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."StackId" = NEW."StackId") _)) THEN
-            RAISE EXCEPTION 'UserId #% with AcquiredCard #% and Stack #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%',
-            (NEW."UserId"), (NEW."Id"), (NEW."StackId"), (NEW."BranchInstanceId"), (SELECT ac."BranchInstanceId" FROM "AcquiredCard" ac WHERE ac."UserId" = NEW."UserId" AND ac."StackId" = NEW."StackId" LIMIT 1);
+        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc."BranchInstanceId" FROM "CollectedCard" cc WHERE cc."UserId" = NEW."UserId" AND cc."StackId" = NEW."StackId") _)) THEN
+            RAISE EXCEPTION 'UserId #% with CollectedCard #% and Stack #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%',
+            (NEW."UserId"), (NEW."Id"), (NEW."StackId"), (NEW."BranchInstanceId"), (SELECT cc."BranchInstanceId" FROM "CollectedCard" cc WHERE cc."UserId" = NEW."UserId" AND cc."StackId" = NEW."StackId" LIMIT 1);
         END IF;
 		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."Index" <> NEW."Index"))) THEN
 		IF ((SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId") < NEW."Index") THEN
-			RAISE EXCEPTION 'UserId #% with AcquiredCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
+			RAISE EXCEPTION 'UserId #% with CollectedCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."UserId"), (NEW."Id"), (NEW."Index"), (SELECT bi."MaxIndexInclusive" FROM public."BranchInstance" bi WHERE bi."Id" = NEW."BranchInstanceId"), (NEW."BranchInstanceId");
 		END IF;
 		END IF;
         RETURN NULL;
@@ -38,7 +38,7 @@ CREATE FUNCTION public.fn_ctr_acquiredcard_insertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_ctr_acquiredcard_insertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_ctr_collectedcard_insertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -87,7 +87,7 @@ ALTER FUNCTION public.fn_delete_received_notification(notification_id integer, r
 COMMENT ON FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) IS 'https://stackoverflow.com/a/15810159';
 
 
-CREATE FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -97,43 +97,43 @@ CREATE FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate() RETURNS trig
 		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
-                                    FROM    "AcquiredCard" ac
+                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
+                                    FROM    "CollectedCard" cc
                                     WHERE   "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )_)
             WHERE	ci."Id" = OLD."BranchInstanceId";
             UPDATE	"Branch" b
             SET		"Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
-                                    FROM    "AcquiredCard" ac
+                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
+                                    FROM    "CollectedCard" cc
                                     WHERE   "BranchId" = OLD."BranchId" AND "CardState" <> 3 )_)
             WHERE	b."Id" = OLD."BranchId";
             UPDATE  "Stack" stack
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT s."Id", ac."UserId"
+                                  ( SELECT DISTINCT s."Id", cc."UserId"
                                     FROM    "Stack" s
-                                    JOIN    "AcquiredCard" ac on ac."StackId" = s."Id"
-                                    WHERE   ac."CardState" <> 3 AND ac."StackId" = OLD."StackId")_)
+                                    JOIN    "CollectedCard" cc on cc."StackId" = s."Id"
+                                    WHERE   cc."CardState" <> 3 AND cc."StackId" = OLD."StackId")_)
             WHERE stack."Id" = OLD."StackId";
         END IF;
         IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
-                                    FROM    "AcquiredCard" ac
+                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
+                                    FROM    "CollectedCard" cc
                                     WHERE   "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )_)
             WHERE	ci."Id" = NEW."BranchInstanceId";
             UPDATE	"Branch" b
             SET		"Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT ac."StackId", ac."UserId"
-                                    FROM    "AcquiredCard" ac
+                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
+                                    FROM    "CollectedCard" cc
                                     WHERE   "BranchId" = NEW."BranchId" AND "CardState" <> 3 )_)
             WHERE	b."Id" = NEW."BranchId";
             UPDATE  "Stack" stack
             SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT s."Id", ac."UserId"
+                                  ( SELECT DISTINCT s."Id", cc."UserId"
                                     FROM    "Stack" s
-                                    JOIN    "AcquiredCard" ac on ac."StackId" = s."Id"
-                                    WHERE   ac."CardState" <> 3 AND ac."StackId" = NEW."StackId")_)
+                                    JOIN    "CollectedCard" cc on cc."StackId" = s."Id"
+                                    WHERE   cc."CardState" <> 3 AND cc."StackId" = NEW."StackId")_)
             WHERE stack."Id" = NEW."StackId";
         END IF;
         new_is_public := COALESCE((SELECT "IsPublic" FROM public."Deck" WHERE "Id" = NEW."DeckId"), 'f');
@@ -178,9 +178,9 @@ CREATE FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate() RETURNS trig
 $$;
 
 
-ALTER FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -193,7 +193,7 @@ CREATE FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -343,7 +343,7 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
-CREATE TABLE public."AcquiredCard" (
+CREATE TABLE public."CollectedCard" (
     "Id" integer NOT NULL,
     "UserId" integer NOT NULL,
     "StackId" integer NOT NULL,
@@ -361,11 +361,11 @@ CREATE TABLE public."AcquiredCard" (
     "BackPersonalField" text NOT NULL,
     "TsVectorHelper" text,
     "TsVector" tsvector,
-    CONSTRAINT "AcquiredCard_TsVectorHelper_IsNull" CHECK (("TsVectorHelper" IS NULL))
+    CONSTRAINT "CollectedCard_TsVectorHelper_IsNull" CHECK (("TsVectorHelper" IS NULL))
 );
 
 
-ALTER TABLE public."AcquiredCard" OWNER TO postgres;
+ALTER TABLE public."CollectedCard" OWNER TO postgres;
 
 CREATE TABLE public."Branch" (
     "Id" integer NOT NULL,
@@ -380,7 +380,7 @@ CREATE TABLE public."Branch" (
 
 ALTER TABLE public."Branch" OWNER TO postgres;
 
-CREATE VIEW public."AcquiredCardIsLatest" AS
+CREATE VIEW public."CollectedCardIsLatest" AS
  SELECT a."Id",
     a."UserId",
     a."StackId",
@@ -397,14 +397,14 @@ CREATE VIEW public."AcquiredCardIsLatest" AS
     a."BackPersonalField",
     a."DeckId",
     (b."LatestInstanceId" IS NULL) AS "IsLatest"
-   FROM (public."AcquiredCard" a
+   FROM (public."CollectedCard" a
      LEFT JOIN public."Branch" b ON ((b."LatestInstanceId" = a."BranchInstanceId")));
 
 
-ALTER TABLE public."AcquiredCardIsLatest" OWNER TO postgres;
+ALTER TABLE public."CollectedCardIsLatest" OWNER TO postgres;
 
-ALTER TABLE public."AcquiredCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public."AcquiredCard_Id_seq"
+ALTER TABLE public."CollectedCard" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."CollectedCard_Id_seq"
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -463,17 +463,17 @@ CREATE TABLE public."Relationship" (
 
 ALTER TABLE public."Relationship" OWNER TO postgres;
 
-CREATE TABLE public."Relationship_AcquiredCard" (
+CREATE TABLE public."Relationship_CollectedCard" (
     "RelationshipId" integer NOT NULL,
     "UserId" integer NOT NULL,
     "SourceStackId" integer NOT NULL,
     "TargetStackId" integer NOT NULL,
-    "SourceAcquiredCardId" integer NOT NULL,
-    "TargetAcquiredCardId" integer NOT NULL
+    "SourceCollectedCardId" integer NOT NULL,
+    "TargetCollectedCardId" integer NOT NULL
 );
 
 
-ALTER TABLE public."Relationship_AcquiredCard" OWNER TO postgres;
+ALTER TABLE public."Relationship_CollectedCard" OWNER TO postgres;
 
 CREATE VIEW public."BranchInstanceRelationshipCount" AS
  SELECT sac."BranchInstanceId" AS "SourceBranchInstanceId",
@@ -484,9 +484,9 @@ CREATE VIEW public."BranchInstanceRelationshipCount" AS
           WHERE (r."Id" = rac."RelationshipId")
          LIMIT 1) AS "Name",
     count(*) AS "Count"
-   FROM ((public."Relationship_AcquiredCard" rac
-     JOIN public."AcquiredCard" sac ON ((rac."SourceAcquiredCardId" = sac."Id")))
-     JOIN public."AcquiredCard" tac ON ((rac."TargetAcquiredCardId" = tac."Id")))
+   FROM ((public."Relationship_CollectedCard" rac
+     JOIN public."CollectedCard" sac ON ((rac."SourceCollectedCardId" = sac."Id")))
+     JOIN public."CollectedCard" tac ON ((rac."TargetCollectedCardId" = tac."Id")))
   WHERE ((sac."CardState" <> 3) AND (tac."CardState" <> 3))
   GROUP BY sac."BranchInstanceId", tac."BranchInstanceId", rac."RelationshipId";
 
@@ -502,15 +502,15 @@ CREATE TABLE public."Tag" (
 
 ALTER TABLE public."Tag" OWNER TO postgres;
 
-CREATE TABLE public."Tag_AcquiredCard" (
+CREATE TABLE public."Tag_CollectedCard" (
     "TagId" integer NOT NULL,
     "UserId" integer NOT NULL,
     "StackId" integer NOT NULL,
-    "AcquiredCardId" integer NOT NULL
+    "CollectedCardId" integer NOT NULL
 );
 
 
-ALTER TABLE public."Tag_AcquiredCard" OWNER TO postgres;
+ALTER TABLE public."Tag_CollectedCard" OWNER TO postgres;
 
 CREATE VIEW public."BranchInstanceTagCount" AS
  SELECT i."Id" AS "BranchInstanceId",
@@ -520,9 +520,9 @@ CREATE VIEW public."BranchInstanceTagCount" AS
          LIMIT 1) AS "Name",
     count(*) AS "Count"
    FROM ((public."BranchInstance" i
-     JOIN public."AcquiredCard" ac ON ((ac."BranchInstanceId" = i."Id")))
-     JOIN public."Tag_AcquiredCard" ta ON ((ta."AcquiredCardId" = ac."Id")))
-  WHERE (ac."CardState" <> 3)
+     JOIN public."CollectedCard" cc ON ((cc."BranchInstanceId" = i."Id")))
+     JOIN public."Tag_CollectedCard" ta ON ((ta."CollectedCardId" = cc."Id")))
+  WHERE (cc."CardState" <> 3)
   GROUP BY i."Id", ta."TagId";
 
 
@@ -841,7 +841,7 @@ ALTER TABLE public."Filter" ALTER COLUMN "Id" ADD GENERATED BY DEFAULT AS IDENTI
 
 CREATE TABLE public."History" (
     "Id" bigint NOT NULL,
-    "AcquiredCardId" integer,
+    "CollectedCardId" integer,
     "UserId" integer NOT NULL,
     "BranchInstanceId" integer,
     "Index" smallint NOT NULL,
@@ -952,9 +952,9 @@ CREATE VIEW public."StackRelationshipCount" AS
           WHERE (r."Id" = rac."RelationshipId")
          LIMIT 1) AS "Name",
     count(*) AS "Count"
-   FROM ((public."Relationship_AcquiredCard" rac
-     JOIN public."AcquiredCard" sac ON ((rac."SourceAcquiredCardId" = sac."Id")))
-     JOIN public."AcquiredCard" tac ON ((rac."TargetAcquiredCardId" = tac."Id")))
+   FROM ((public."Relationship_CollectedCard" rac
+     JOIN public."CollectedCard" sac ON ((rac."SourceCollectedCardId" = sac."Id")))
+     JOIN public."CollectedCard" tac ON ((rac."TargetCollectedCardId" = tac."Id")))
   WHERE ((sac."CardState" <> 3) AND (tac."CardState" <> 3))
   GROUP BY sac."StackId", tac."StackId", rac."RelationshipId";
 
@@ -969,9 +969,9 @@ CREATE VIEW public."StackTagCount" AS
          LIMIT 1) AS "Name",
     count(*) AS "Count"
    FROM ((public."Stack" s
-     JOIN public."AcquiredCard" ac ON ((ac."StackId" = s."Id")))
-     JOIN public."Tag_AcquiredCard" ta ON ((ta."AcquiredCardId" = ac."Id")))
-  WHERE (ac."CardState" <> 3)
+     JOIN public."CollectedCard" cc ON ((cc."StackId" = s."Id")))
+     JOIN public."Tag_CollectedCard" ta ON ((ta."CollectedCardId" = cc."Id")))
+  WHERE (cc."CardState" <> 3)
   GROUP BY s."Id", ta."TagId";
 
 
@@ -1302,7 +1302,7 @@ INSERT INTO public."User_CollateInstance" ("UserId", "CollateInstanceId", "Defau
 
 
 
-SELECT pg_catalog.setval('public."AcquiredCard_Id_seq"', 1, false);
+SELECT pg_catalog.setval('public."CollectedCard_Id_seq"', 1, false);
 
 
 SELECT pg_catalog.setval('public."AlphaBetaKey_Id_seq"', 1, false);
@@ -1368,8 +1368,8 @@ SELECT pg_catalog.setval('public."Tag_Id_seq"', 1, false);
 SELECT pg_catalog.setval('public."User_Id_seq"', 4, false);
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "PK_AcquiredCard" PRIMARY KEY ("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "PK_CollectedCard" PRIMARY KEY ("Id");
 
 
 ALTER TABLE ONLY public."AlphaBetaKey"
@@ -1460,8 +1460,8 @@ ALTER TABLE ONLY public."Relationship"
     ADD CONSTRAINT "PK_Relationship" PRIMARY KEY ("Id");
 
 
-ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "PK_Relationship_AcquiredCard" PRIMARY KEY ("SourceStackId", "TargetStackId", "RelationshipId", "UserId");
+ALTER TABLE ONLY public."Relationship_CollectedCard"
+    ADD CONSTRAINT "PK_Relationship_CollectedCard" PRIMARY KEY ("SourceStackId", "TargetStackId", "RelationshipId", "UserId");
 
 
 ALTER TABLE ONLY public."Stack"
@@ -1472,8 +1472,8 @@ ALTER TABLE ONLY public."Tag"
     ADD CONSTRAINT "PK_Tag" PRIMARY KEY ("Id");
 
 
-ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "PK_Tag_AcquiredCard" PRIMARY KEY ("StackId", "TagId", "UserId");
+ALTER TABLE ONLY public."Tag_CollectedCard"
+    ADD CONSTRAINT "PK_Tag_CollectedCard" PRIMARY KEY ("StackId", "TagId", "UserId");
 
 
 ALTER TABLE ONLY public."Tag_User_CollateInstance"
@@ -1500,8 +1500,8 @@ ALTER TABLE ONLY public."Vote_Feedback"
     ADD CONSTRAINT "PK_Vote_Feedback" PRIMARY KEY ("FeedbackId", "UserId");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "UQ_AcquiredCard_AcquiredCardId_UserId_StackId" UNIQUE ("Id", "StackId", "UserId");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "UQ_CollectedCard_CollectedCardId_UserId_StackId" UNIQUE ("Id", "StackId", "UserId");
 
 
 ALTER TABLE ONLY public."BranchInstance"
@@ -1532,25 +1532,25 @@ ALTER TABLE ONLY public."Deck"
     ADD CONSTRAINT "UQ_Deck_DeckId_UserId" UNIQUE ("Id", "UserId");
 
 
-CREATE INDEX "IX_AcquiredCard_BranchInstanceId" ON public."AcquiredCard" USING btree ("BranchInstanceId");
+CREATE INDEX "IX_CollectedCard_BranchInstanceId" ON public."CollectedCard" USING btree ("BranchInstanceId");
 
 
-CREATE INDEX "IX_AcquiredCard_CardSettingId" ON public."AcquiredCard" USING btree ("CardSettingId");
+CREATE INDEX "IX_CollectedCard_CardSettingId" ON public."CollectedCard" USING btree ("CardSettingId");
 
 
-CREATE INDEX "IX_AcquiredCard_CardState" ON public."AcquiredCard" USING btree ("CardState");
+CREATE INDEX "IX_CollectedCard_CardState" ON public."CollectedCard" USING btree ("CardState");
 
 
-CREATE INDEX "IX_AcquiredCard_UserId" ON public."AcquiredCard" USING btree ("UserId");
+CREATE INDEX "IX_CollectedCard_UserId" ON public."CollectedCard" USING btree ("UserId");
 
 
-CREATE INDEX "IX_AcquiredCard_UserId_BranchId" ON public."AcquiredCard" USING btree ("UserId", "BranchId");
+CREATE INDEX "IX_CollectedCard_UserId_BranchId" ON public."CollectedCard" USING btree ("UserId", "BranchId");
 
 
-CREATE UNIQUE INDEX "IX_AcquiredCard_UserId_BranchInstanceId_Index" ON public."AcquiredCard" USING btree ("UserId", "BranchInstanceId", "Index");
+CREATE UNIQUE INDEX "IX_CollectedCard_UserId_BranchInstanceId_Index" ON public."CollectedCard" USING btree ("UserId", "BranchInstanceId", "Index");
 
 
-CREATE INDEX "IX_AcquiredCard_UserId_StackId" ON public."AcquiredCard" USING btree ("UserId", "StackId");
+CREATE INDEX "IX_CollectedCard_UserId_StackId" ON public."CollectedCard" USING btree ("UserId", "StackId");
 
 
 CREATE UNIQUE INDEX "IX_AlphaBetaKey_Key" ON public."AlphaBetaKey" USING btree ("Key");
@@ -1613,16 +1613,16 @@ CREATE UNIQUE INDEX "IX_File_Sha256" ON public."File" USING btree ("Sha256");
 CREATE INDEX "IX_Filter_UserId" ON public."Filter" USING btree ("UserId");
 
 
-CREATE INDEX "IX_History_AcquiredCardId" ON public."History" USING btree ("AcquiredCardId");
+CREATE INDEX "IX_History_CollectedCardId" ON public."History" USING btree ("CollectedCardId");
 
 
-CREATE INDEX "IX_Relationship_AcquiredCard_RelationshipId" ON public."Relationship_AcquiredCard" USING btree ("RelationshipId");
+CREATE INDEX "IX_Relationship_CollectedCard_RelationshipId" ON public."Relationship_CollectedCard" USING btree ("RelationshipId");
 
 
-CREATE INDEX "IX_Relationship_AcquiredCard_SourceAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("SourceAcquiredCardId");
+CREATE INDEX "IX_Relationship_CollectedCard_SourceCollectedCardId" ON public."Relationship_CollectedCard" USING btree ("SourceCollectedCardId");
 
 
-CREATE INDEX "IX_Relationship_AcquiredCard_TargetAcquiredCardId" ON public."Relationship_AcquiredCard" USING btree ("TargetAcquiredCardId");
+CREATE INDEX "IX_Relationship_CollectedCard_TargetCollectedCardId" ON public."Relationship_CollectedCard" USING btree ("TargetCollectedCardId");
 
 
 CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree (upper(("Name")::text));
@@ -1631,10 +1631,10 @@ CREATE UNIQUE INDEX "IX_Relationship_Name" ON public."Relationship" USING btree 
 CREATE INDEX "IX_Stack_AuthorId" ON public."Stack" USING btree ("AuthorId");
 
 
-CREATE INDEX "IX_Tag_AcquiredCard_AcquiredCardId" ON public."Tag_AcquiredCard" USING btree ("AcquiredCardId");
+CREATE INDEX "IX_Tag_CollectedCard_CollectedCardId" ON public."Tag_CollectedCard" USING btree ("CollectedCardId");
 
 
-CREATE UNIQUE INDEX "IX_Tag_AcquiredCard_TagId_StackId_UserId" ON public."Tag_AcquiredCard" USING btree ("TagId", "StackId", "UserId");
+CREATE UNIQUE INDEX "IX_Tag_CollectedCard_TagId_StackId_UserId" ON public."Tag_CollectedCard" USING btree ("TagId", "StackId", "UserId");
 
 
 CREATE UNIQUE INDEX "IX_Tag_Name" ON public."Tag" USING btree (upper(("Name")::text));
@@ -1679,16 +1679,16 @@ CREATE INDEX idx_fts_relationship_tsvector ON public."Relationship" USING gin ("
 CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 
 
-CREATE CONSTRAINT TRIGGER ctr_acquiredcard_insertupdate AFTER INSERT OR UPDATE ON public."AcquiredCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_acquiredcard_insertupdate();
+CREATE CONSTRAINT TRIGGER ctr_collectedcard_insertupdate AFTER INSERT OR UPDATE ON public."CollectedCard" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_collectedcard_insertupdate();
 
 
 CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public."Branch" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
 
 
-CREATE TRIGGER tr_acquiredcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_acquiredcard_afterinsertdeleteupdate();
+CREATE TRIGGER tr_collectedcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."CollectedCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate();
 
 
-CREATE TRIGGER tr_acquiredcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."AcquiredCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_acquiredcard_beforeinsertupdate();
+CREATE TRIGGER tr_collectedcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."CollectedCard" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate();
 
 
 CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public."Branch" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branch_afterinsertupdate();
@@ -1715,36 +1715,36 @@ CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag"
 CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_afterinsert();
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_BranchInstance_BranchInstanceId" FOREIGN KEY ("BranchInstanceId") REFERENCES public."BranchInstance"("Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_BranchInstance_BranchInstanceId_BranchId" FOREIGN KEY ("BranchId", "BranchInstanceId") REFERENCES public."BranchInstance"("BranchId", "Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_BranchInstance_BranchInstanceId_BranchId" FOREIGN KEY ("BranchId", "BranchInstanceId") REFERENCES public."BranchInstance"("BranchId", "Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Branch_BranchId" FOREIGN KEY ("BranchId") REFERENCES public."Branch"("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Branch_BranchId" FOREIGN KEY ("BranchId") REFERENCES public."Branch"("Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Branch_BranchId_StackId" FOREIGN KEY ("StackId", "BranchId") REFERENCES public."Branch"("StackId", "Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Branch_BranchId_StackId" FOREIGN KEY ("StackId", "BranchId") REFERENCES public."Branch"("StackId", "Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_CardSetting_CardSettingId" FOREIGN KEY ("CardSettingId") REFERENCES public."CardSetting"("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_CardSetting_CardSettingId" FOREIGN KEY ("CardSettingId") REFERENCES public."CardSetting"("Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Deck_DeckId" FOREIGN KEY ("DeckId") REFERENCES public."Deck"("Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_Stack_StackId" FOREIGN KEY ("StackId") REFERENCES public."Stack"("Id");
 
 
-ALTER TABLE ONLY public."AcquiredCard"
-    ADD CONSTRAINT "FK_AcquiredCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
+ALTER TABLE ONLY public."CollectedCard"
+    ADD CONSTRAINT "FK_CollectedCard_User_UserId" FOREIGN KEY ("UserId") REFERENCES public."User"("Id");
 
 
 ALTER TABLE ONLY public."BranchInstance"
@@ -1860,7 +1860,7 @@ ALTER TABLE ONLY public."Filter"
 
 
 ALTER TABLE ONLY public."History"
-    ADD CONSTRAINT "FK_History_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE SET NULL;
+    ADD CONSTRAINT "FK_History_CollectedCard_CollectedCardId" FOREIGN KEY ("CollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public."History"
@@ -1919,24 +1919,24 @@ ALTER TABLE ONLY public."ReceivedNotification"
     ADD CONSTRAINT "FK_ReceivedNotification_User_ReceiverId" FOREIGN KEY ("ReceiverId") REFERENCES public."User"("Id");
 
 
-ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_AcquiredCard_SourceAcquiredCardId" FOREIGN KEY ("SourceAcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+ALTER TABLE ONLY public."Relationship_CollectedCard"
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_CollectedCard_SourceCollectedCardId" FOREIGN KEY ("SourceCollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_AcquiredCard_TargetAcquiredCardId" FOREIGN KEY ("TargetAcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+ALTER TABLE ONLY public."Relationship_CollectedCard"
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_CollectedCard_TargetCollectedCardId" FOREIGN KEY ("TargetCollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_Relationship_RelationshipId" FOREIGN KEY ("RelationshipId") REFERENCES public."Relationship"("Id");
+ALTER TABLE ONLY public."Relationship_CollectedCard"
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_Relationship_RelationshipId" FOREIGN KEY ("RelationshipId") REFERENCES public."Relationship"("Id");
 
 
-ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_SourceAcquiredCard_UserId_StackId" FOREIGN KEY ("SourceAcquiredCardId", "UserId", "SourceStackId") REFERENCES public."AcquiredCard"("Id", "UserId", "StackId");
+ALTER TABLE ONLY public."Relationship_CollectedCard"
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_SourceCollectedCard_UserId_StackId" FOREIGN KEY ("SourceCollectedCardId", "UserId", "SourceStackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId");
 
 
-ALTER TABLE ONLY public."Relationship_AcquiredCard"
-    ADD CONSTRAINT "FK_Relationship_AcquiredCard_TargetAcquiredCard_UserId_StackId" FOREIGN KEY ("TargetAcquiredCardId", "UserId", "TargetStackId") REFERENCES public."AcquiredCard"("Id", "UserId", "StackId");
+ALTER TABLE ONLY public."Relationship_CollectedCard"
+    ADD CONSTRAINT "FK_Relationship_CollectedCard_TargetCollectedCard_UserId_StackId" FOREIGN KEY ("TargetCollectedCardId", "UserId", "TargetStackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId");
 
 
 ALTER TABLE ONLY public."Stack"
@@ -1951,16 +1951,16 @@ ALTER TABLE ONLY public."Stack"
     ADD CONSTRAINT "FK_Stack_User_AuthorId" FOREIGN KEY ("AuthorId") REFERENCES public."User"("Id");
 
 
-ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCardId_UserId_StackId" FOREIGN KEY ("AcquiredCardId", "UserId", "StackId") REFERENCES public."AcquiredCard"("Id", "UserId", "StackId") ON DELETE CASCADE;
+ALTER TABLE ONLY public."Tag_CollectedCard"
+    ADD CONSTRAINT "FK_Tag_CollectedCard_CollectedCardId_UserId_StackId" FOREIGN KEY ("CollectedCardId", "UserId", "StackId") REFERENCES public."CollectedCard"("Id", "UserId", "StackId") ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "FK_Tag_AcquiredCard_AcquiredCard_AcquiredCardId" FOREIGN KEY ("AcquiredCardId") REFERENCES public."AcquiredCard"("Id") ON DELETE CASCADE;
+ALTER TABLE ONLY public."Tag_CollectedCard"
+    ADD CONSTRAINT "FK_Tag_CollectedCard_CollectedCard_CollectedCardId" FOREIGN KEY ("CollectedCardId") REFERENCES public."CollectedCard"("Id") ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."Tag_AcquiredCard"
-    ADD CONSTRAINT "FK_Tag_AcquiredCard_Tag_TagId" FOREIGN KEY ("TagId") REFERENCES public."Tag"("Id");
+ALTER TABLE ONLY public."Tag_CollectedCard"
+    ADD CONSTRAINT "FK_Tag_CollectedCard_Tag_TagId" FOREIGN KEY ("TagId") REFERENCES public."Tag"("Id");
 
 
 ALTER TABLE ONLY public."Tag_User_CollateInstance"
