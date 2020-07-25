@@ -125,7 +125,7 @@ module HistoryRepository =
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
 
 module ExploreStackRepository =
-    let getAcquiredIds (db: CardOverflowDb) userId stackId =
+    let getCollectedIds (db: CardOverflowDb) userId stackId =
         db.CollectedCard
             .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
                 .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance)
@@ -159,7 +159,7 @@ module ExploreStackRepository =
         let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%i not found" stackId)
         let! (tc: List<StackTagCountEntity>) = db.StackTagCount.Where(fun x -> x.StackId = stackId).ToListAsync()
         let! (rc: List<StackRelationshipCountEntity>) = db.StackRelationshipCount.Where(fun x -> x.StackId = stackId).ToListAsync()
-        let! acquiredIds = getAcquiredIds db userId stackId
+        let! acquiredIds = getCollectedIds db userId stackId
         return ExploreStack.load stack acquiredIds (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
         }
     let instance (db: CardOverflowDb) userId instanceId = taskResult {
@@ -188,9 +188,9 @@ module ExploreStackRepository =
                 .Include(fun x -> x.CollateInstance)
                 .SingleOrDefaultAsync(fun x -> x.BranchId = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found" branchId))
-        let! isAcquired = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
+        let! isCollected = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         let! latest = get db userId e.StackId
-        return BranchInstanceMeta.load isAcquired (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
+        return BranchInstanceMeta.load isCollected (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
 
 module FileRepository =
@@ -262,7 +262,7 @@ module StackViewRepository =
 module CollectedCardRepository =
     let getCollected (db: CardOverflowDb) userId (testBranchInstanceIds: int ResizeArray) =
         db.CollectedCard.Where(fun x -> testBranchInstanceIds.Contains(x.BranchInstanceId) && x.UserId = userId).Select(fun x -> x.BranchInstanceId).ToListAsync()
-    let getAcquiredInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) =
+    let getCollectedInstanceFromInstance (db: CardOverflowDb) userId (branchInstanceId: int) =
         db.CollectedCard
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
@@ -365,7 +365,7 @@ module StackRepository =
         }
     let CollectCard (db: CardOverflowDb) userId branchInstanceId =
         collect db userId branchInstanceId None
-    let GetAcquired (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
+    let GetCollected (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
         let! (e: _ ResizeArray) =
             db.CollectedCardIsLatest
                 .Include(fun x -> x.BranchInstance.CollateInstance)

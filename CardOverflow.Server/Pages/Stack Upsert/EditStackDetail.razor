@@ -56,7 +56,7 @@
             @if (EditStack.Backs.IsOk) {
               @foreach (var (back, i) in EditStack.Backs.ResultValue.Select((x, i) => (x, i))) {
                 <iframe sandbox="allow-scripts" srcdoc=@back style="height: @(80/_indexCount)vh; width: 100%; resize: vertical;"></iframe>
-                <EditStackDetail_AcquiredCard Command=@_acCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateAcquiredCardCommand(i, command)) />
+                <EditStackDetail_CollectedCard Command=@_ccCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateCollectedCardCommand(i, command)) />
               }
             } else {
               <span>
@@ -111,7 +111,7 @@
   [Parameter] public bool NewEditStackOnSave { get; set; }
   [Parameter] public List<ViewCollateWithAllInstances> Collates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private List<EditAcquiredCardCommand> _acCommands = new List<EditAcquiredCardCommand>();
+  private List<EditCollectedCardCommand> _ccCommands = new List<EditCollectedCardCommand>();
   private UserClaims _user = UserClaims.init;
   private List<ViewCollateInstance> _selectedCollateInstances;
   private int _selectedCollateId;
@@ -119,11 +119,11 @@
   private bool _isDisabled;
   private int _savedBranchId;
 
-  private void _updateAcquiredCardCommand(int i, EditAcquiredCardCommand command) {
-    while (_acCommands.ElementAtOrDefault(i) == default) {
-      _acCommands.Add(EditAcquiredCardCommand.init);
+  private void _updateCollectedCardCommand(int i, EditCollectedCardCommand command) {
+    while (_ccCommands.ElementAtOrDefault(i) == default) {
+      _ccCommands.Add(EditCollectedCardCommand.init);
     }
-    _acCommands[i] = command;
+    _ccCommands[i] = command;
   }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -140,12 +140,12 @@
   }
 
   //private void _SetOption(int newId) {
-  //  EditStack.EditAcquiredCard.CardSettingId = newId;
+  //  EditStack.EditCollectedCard.CardSettingId = newId;
   //}
 
   async Task UpdateCard() {
     _isDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, _acCommands.ToFList(), EditStack));
+    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditStack));
     if (result.IsOk) {
       ToastService.ShowInfo("Saved!");
       _savedBranchId = result.ResultValue;

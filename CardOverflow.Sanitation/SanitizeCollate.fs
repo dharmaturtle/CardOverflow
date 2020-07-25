@@ -122,11 +122,11 @@ type ViewSearchCollateInstance = {
     Templates: CollateType
     EditSummary: string
     CollateUsers: int
-    IsAcquired: bool
+    IsCollected: bool
 }
 
 module ViewSearchCollateInstance =
-    let load collateUsers isAcquired (bznz: CollateInstance) = {
+    let load collateUsers isCollected (bznz: CollateInstance) = {
         Id = bznz.Id
         Name = bznz.Name
         CollateId = bznz.CollateId
@@ -139,7 +139,7 @@ module ViewSearchCollateInstance =
         Templates = bznz.Templates
         EditSummary = bznz.EditSummary
         CollateUsers = collateUsers
-        IsAcquired = isAcquired
+        IsCollected = isCollected
     }
 
 [<CLIMutable>]
@@ -198,8 +198,8 @@ module SanitizeCollate =
                     x
                 ).ToPagedListAsync(pageNumber, 15)
         return {
-            Results = r |> Seq.map (fun (users, isAcquired, l) ->
-                l |> CollateInstance.load |> ViewSearchCollateInstance.load (users.Sum()) isAcquired) |> toResizeArray
+            Results = r |> Seq.map (fun (users, isCollected, l) ->
+                l |> CollateInstance.load |> ViewSearchCollateInstance.load (users.Sum()) isCollected) |> toResizeArray
             Details = {
                 CurrentPage = r.PageNumber
                 PageCount = r.PageCount

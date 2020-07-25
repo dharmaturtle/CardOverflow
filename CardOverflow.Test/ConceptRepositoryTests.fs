@@ -28,7 +28,7 @@ open System.Security.Cryptography
 open FsToolkit.ErrorHandling
 
 [<Fact>]
-let ``Getting 10 pages of GetAcquiredPages takes less than 1 minute``(): Task<unit> = task {
+let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<unit> = task {
     use c = new Container()
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
@@ -44,7 +44,7 @@ let ``Getting 10 pages of GetAcquiredPages takes less than 1 minute``(): Task<un
     }
 
 [<Fact>]
-let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
+let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
@@ -64,27 +64,27 @@ let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
 
-    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
-    let! actual = CollectedCardRepository.getAcquiredInstanceFromInstance c.Db userId oldInstanceId
+    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
+    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
-    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
-    let! actual = CollectedCardRepository.getAcquiredInstanceFromInstance c.Db userId updatedInstanceId
+    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
+    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
-    // getAcquiredInstanceFromInstance fails gracefully on invalid instanceId
+    // getCollectedInstanceFromInstance fails gracefully on invalid instanceId
     let invalidInstanceId = 1337
 
-    let! (actual: Result<_,_>) = CollectedCardRepository.getAcquiredInstanceFromInstance c.Db userId invalidInstanceId
+    let! (actual: Result<_,_>) = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
     // StackRepository.Revisions says we acquired the most recent branchInstance
     let! revision = StackRepository.Revisions c.Db userId branchId
 
-    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
     // acquire oldest instance, then StackRepository.Revisions says we acquired the oldest branchInstance
@@ -92,12 +92,12 @@ let ``GetAcquiredPages works if updated``(): Task<unit> = (taskResult {
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
-    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, true); (updatedInstanceId, false)]
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult {
+let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
@@ -117,27 +117,27 @@ let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult 
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
 
-    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
-    let! actual = CollectedCardRepository.getAcquiredInstanceFromInstance c.Db userId oldInstanceId
+    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
+    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
-    // getAcquiredInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
-    let! actual = CollectedCardRepository.getAcquiredInstanceFromInstance c.Db userId updatedInstanceId
+    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
+    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
-    // getAcquiredInstanceFromInstance fails gracefully on invalid instanceId
+    // getCollectedInstanceFromInstance fails gracefully on invalid instanceId
     let invalidInstanceId = 1337
 
-    let! (actual: Result<_,_>) = CollectedCardRepository.getAcquiredInstanceFromInstance c.Db userId invalidInstanceId
+    let! (actual: Result<_,_>) = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
     // StackRepository.Revisions says we acquired the most recent branchInstance
     let! revision = StackRepository.Revisions c.Db userId branchId
 
-    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
     // acquire oldest instance, then StackRepository.Revisions says we acquired the oldest branchInstance
@@ -145,7 +145,7 @@ let ``GetAcquiredPages works if updated, but pair``(): Task<unit> = (taskResult 
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
-    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsAcquired) |> List.ofSeq 
+    revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, true); (updatedInstanceId, false)]
     } |> TaskResult.getOk)
 
@@ -169,14 +169,14 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = view.Value.FrontBackFrontSynthBackSynth.[0]
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| stack.Comments
-    Assert.True stack.Default.Instance.IsAcquired
+    Assert.True stack.Default.Instance.IsCollected
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
-            IsAcquired = true }
+            IsCollected = true }
          {  Name = "B"
             Count = 1
-            IsAcquired = true }],
+            IsCollected = true }],
         stack.Tags
     )
     
@@ -201,13 +201,13 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
-            IsAcquired = true }
+            IsCollected = true }
          {  Name = "B"
             Count = 1
-            IsAcquired = true }],
+            IsCollected = true }],
         stack.Tags)
     
-    let! cc = StackRepository.GetAcquired c.Db userId stack.Id
+    let! cc = StackRepository.GetCollected c.Db userId stack.Id
     let cc = cc.Value.Single()
     let! x = StackRepository.editState c.Db userId cc.CollectedCardId CardState.Suspended
     Assert.Null x.Value
@@ -215,7 +215,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count
     }
 
-let testGetAcquired (acCount: int) addCard getCollate name = task {
+let testGetCollected (acCount: int) addCard getCollate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = 1 // this user creates the card
@@ -225,7 +225,7 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     let branchInstanceId = 1001
     let! acquiredCards = StackRepository.GetCollectedPages c.Db authorId 1 ""
     Assert.Equal(acCount, acquiredCards.Results.Count())
-    let! cc = StackRepository.GetAcquired c.Db authorId stackId
+    let! cc = StackRepository.GetCollected c.Db authorId stackId
     let cc = cc.Value
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
@@ -235,7 +235,7 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
-            IsAcquired = false }],
+            IsCollected = false }],
         stack.Tags
     )
     do! SanitizeTagRepository.AddTo c.Db collectorId "a" stack.Id |> TaskResult.getOk
@@ -243,7 +243,7 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
-            IsAcquired = true }],
+            IsCollected = true }],
         stack.Tags
     )
     let! stacks = StackRepository.search c.Db collectorId 1 SearchOrder.Popularity ""
@@ -263,7 +263,7 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
-            IsAcquired = true }],
+            IsCollected = true }],
         stack.Tags
     )
 
@@ -276,25 +276,25 @@ let testGetAcquired (acCount: int) addCard getCollate name = task {
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
-            IsAcquired = false }],
+            IsCollected = false }],
         stack.Tags
     )}
     
 [<Fact>]
-let rec ``GetAcquired works when acquiring 1 basic card``(): Task<unit> =
-    testGetAcquired
+let rec ``GetCollected works when acquiring 1 basic card``(): Task<unit> =
+    testGetCollected
         1
         FacetRepositoryTests.addBasicStack
         FacetRepositoryTests.basicCollate
-        <| nameof ``GetAcquired works when acquiring 1 basic card``
+        <| nameof ``GetCollected works when acquiring 1 basic card``
 
 [<Fact>]
-let rec ``GetAcquired works when acquiring a pair``(): Task<unit> = 
-    testGetAcquired
+let rec ``GetCollected works when acquiring a pair``(): Task<unit> = 
+    testGetCollected
         2
         FacetRepositoryTests.addReversedBasicStack
         FacetRepositoryTests.reversedBasicCollate
-        <| nameof ``GetAcquired works when acquiring a pair``
+        <| nameof ``GetCollected works when acquiring a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
@@ -620,15 +620,15 @@ let ``Card search works`` (): Task<unit> = task {
     let! collates = search "Cloze"
     Assert.Equal("Cloze", collates.Results.Single().Name)
     Assert.Equal(1, collates.Results.Single().CollateUsers)
-    Assert.False(collates.Results.Single().IsAcquired) // most recent cloze is not acquired because it's missing Extra. Why Damien?
+    Assert.False(collates.Results.Single().IsCollected) // most recent cloze is not acquired because it's missing Extra. Why Damien?
     let! collates = search "type"
     Assert.Equal("Basic (type in the answer)", collates.Results.Single().Name)
     Assert.Equal(1, collates.Results.Single().CollateUsers)
-    Assert.True(collates.Results.Single().IsAcquired)
+    Assert.True(collates.Results.Single().IsCollected)
     let! collates = search "Basic"
     Assert.Equal(4, collates.Results.Count())
     Assert.True(collates.Results.All(fun x -> x.CollateUsers = 1))
-    Assert.True(collates.Results.All(fun x -> x.IsAcquired))
+    Assert.True(collates.Results.All(fun x -> x.IsCollected))
     }
 
 [<Fact>]

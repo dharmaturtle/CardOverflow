@@ -153,12 +153,12 @@ module SanitizeTagRepository =
         do! db.SaveChangesAsyncI()
         return e.Id
         }
-    let private getFirstAcquired (db: CardOverflowDb) userId stackId =
+    let private getFirstCollected (db: CardOverflowDb) userId stackId =
         db.CollectedCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
         |>% (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
     let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
         let newTag = sanitize newTag
-        let! (cc: CollectedCardEntity) = getFirstAcquired db userId stackId
+        let! (cc: CollectedCardEntity) = getFirstCollected db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
         do! db.Tag_CollectedCard
                 .AnyAsync(fun x -> x.StackId = stackId && x.UserId = userId && x.TagId = tag.Id)
@@ -169,7 +169,7 @@ module SanitizeTagRepository =
     }
     let DeleteFrom db userId tag stackId = taskResult {
         let tag = MappingTools.toTitleCase tag
-        let! (cc: CollectedCardEntity) = getFirstAcquired db userId stackId
+        let! (cc: CollectedCardEntity) = getFirstCollected db userId stackId
         let! join =
             db.Tag_CollectedCard
                 .SingleOrDefaultAsync(fun x -> x.CollectedCardId = cc.Id && x.Tag.Name = tag)
@@ -578,7 +578,7 @@ type SearchCommand = {
 }
 
 [<CLIMutable>]
-type EditAcquiredCardCommand = {
+type EditCollectedCardCommand = {
     CardState: CardState
     CardSettingId: int
     DeckId: int
@@ -654,8 +654,8 @@ type UpsertCardSource =
     | VNewBranchSourceStackId of int
     | VUpdateBranchId of int
 
-module SanitizeAcquiredCardRepository =
-    let validateCommands (db: CardOverflowDb) userId (commands: EditAcquiredCardCommand ResizeArray) = taskResult {
+module SanitizeCollectedCardRepository =
+    let validateCommands (db: CardOverflowDb) userId (commands: EditCollectedCardCommand ResizeArray) = taskResult {
         let! defaultDeckId, defaultCardSettingId, areValidDeckIds, areValidCardSettingIds =
             let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> 0).ToList()
             let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> 0).ToList()
@@ -683,7 +683,7 @@ module SanitizeAcquiredCardRepository =
                 }
             ).ToList()
     }
-    let update (db: CardOverflowDb) userId acquiredCardId (command: EditAcquiredCardCommand) = taskResult {
+    let update (db: CardOverflowDb) userId acquiredCardId (command: EditCollectedCardCommand) = taskResult {
         let! command = command |> ResizeArray.singleton |> validateCommands db userId |>%% Seq.exactlyOne
         let! (cc: CollectedCardEntity) =
             db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = acquiredCardId && x.UserId = userId)
@@ -737,7 +737,7 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
-    let Update (db: CardOverflowDb) userId (acCommands: EditAcquiredCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
+    let Update (db: CardOverflowDb) userId (acCommands: EditCollectedCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! branchInstance = UpdateRepository.stack db userId stackCommand.load
         let! (ccs: CollectedCardEntity list) =
             match stackCommand.Kind with
@@ -755,7 +755,7 @@ module SanitizeStackRepository =
                 }
             |>%% List.sortBy (fun x -> x.Index)
         do! acCommands.ToList()
-            |> SanitizeAcquiredCardRepository.validateCommands db userId
+            |> SanitizeCollectedCardRepository.validateCommands db userId
             |>%% Seq.iteri (fun i command ->
                 let cc = ccs.[i]
                 cc.CardState <- command.CardState |> CardState.toDb
@@ -771,7 +771,7 @@ module SanitizeStackRepository =
         StackRepository.search db userId pageNumber searchCommand.Order searchCommand.Query
     let searchDeck (db: CardOverflowDb) userId pageNumber searchCommand deckId =
         StackRepository.searchDeck db userId pageNumber searchCommand.Order searchCommand.Query deckId
-    let GetAcquiredPages (db: CardOverflowDb) userId pageNumber searchCommand =
+    let GetCollectedPages (db: CardOverflowDb) userId pageNumber searchCommand =
         StackRepository.GetCollectedPages db userId pageNumber searchCommand.Query
 
 [<CLIMutable>]

@@ -1,4 +1,4 @@
-module AcquireCardRepositoryTests
+module CollectCardRepositoryTests
 
 open LoadersAndCopiers
 open Helpers
@@ -20,14 +20,14 @@ open FsToolkit
 open FsToolkit.ErrorHandling
 
 [<Fact>]
-let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
+let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
-    let getAcquired () = StackRepository.GetAcquired c.Db userId 1
-    let! (cc: CollectedCard ResizeArray) = getAcquired ()
+    let getCollected () = StackRepository.GetCollected c.Db userId 1
+    let! (cc: CollectedCard ResizeArray) = getCollected ()
     let cc = cc.Single()
 
     do! StackRepository.unacquireStack c.Db userId cc.StackId
@@ -36,7 +36,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
     let reacquire () = task { do! StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
     
     do! reacquire ()
-    let! (cc: CollectedCard ResizeArray) = getAcquired ()
+    let! (cc: CollectedCard ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
@@ -45,7 +45,7 @@ let ``StackRepository.deleteAcquiredCard works``(): Task<unit> = (taskResult {
 
     let userId = 3
     do! reacquire ()
-    let! (cc: CollectedCard ResizeArray) = getAcquired ()
+    let! (cc: CollectedCard ResizeArray) = getCollected ()
     let cc = cc.Single()
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CollectedCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
@@ -87,19 +87,19 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
-    let! cc = StackRepository.GetAcquired c.Db userId 1
+    let! cc = StackRepository.GetCollected c.Db userId 1
     let cc = cc.Value.Single()
     
     let! x = StackRepository.editState c.Db userId cc.CollectedCardId CardState.Suspended
     Assert.Null x.Value
-    let! cc = StackRepository.GetAcquired c.Db userId cc.StackId
+    let! cc = StackRepository.GetCollected c.Db userId cc.StackId
     let cc = cc.Value.Single()
     Assert.Equal(cc.CardState, CardState.Suspended)
 
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
-    let! cc = StackRepository.GetAcquired c.Db userId cc.StackId
+    let! cc = StackRepository.GetCollected c.Db userId cc.StackId
     let cc = cc.Value.Single()
     Assert.Equal(cc.CardState, CardState.Suspended) // still suspended after edit
 
@@ -167,7 +167,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     let collectorDefaultDeckId = 1
     let collect = StackRepository.collect c.Db collectorId instanceId
     let assertDeck deckId =
-        StackRepository.GetAcquired c.Db collectorId stackId
+        StackRepository.GetCollected c.Db collectorId stackId
         |>%% Assert.Single
         |>%% fun x -> x.DeckId
         |>%% Assert.equal deckId
@@ -197,7 +197,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``AcquireCards works``(): Task<unit> = task {
+let ``CollectCards works``(): Task<unit> = task {
     use c = new TestContainer()
     
     let authorId = 3

@@ -26,7 +26,7 @@
       @foreach (var instance in _instances) {
         <tr>
           <td>
-            <HoverPreview IsAcquired=@instance.IsAcquired>
+            <HoverPreview IsCollected=@instance.IsCollected>
               <ResizingIframe CollateInstanceId=@instance.Id Back />
             </HoverPreview>
           </td>

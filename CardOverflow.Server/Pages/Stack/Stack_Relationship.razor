@@ -13,7 +13,7 @@
 
 <div class=@(_showAddRelationship ? "" : "d-flex justify-content-between")>
   <h4>Relationships</h4>
-  @if (Stack.IsAnyAcquired) {
+  @if (Stack.IsAnyCollected) {
     @if (_showAddRelationship) {
       <EditForm Model=@Command OnValidSubmit=@Add>
         <div class="form-group btn-group">
@@ -35,7 +35,7 @@
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
       <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => Unacquire(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
-        <HoverPreview IsAcquired=@relationship.IsCollected Padding="0">
+        <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />
           </ChildContent>
@@ -51,7 +51,7 @@
   @foreach (var (relationship, stackId) in Stack.Relationships.Where(x => !x.IsCollected).Select(x => (x, x.SourceStackId == Stack.Id ? x.TargetStackId : x.SourceStackId))) {
     <li>
       <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => Collect(relationship.Name, relationship.SourceStackId, relationship.TargetStackId))>
-        <HoverPreview IsAcquired=@relationship.IsCollected Padding="0">
+        <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
           <ChildContent>
             <ResizingIframe StackId=@stackId Front />
           </ChildContent>

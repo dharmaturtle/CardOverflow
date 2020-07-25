@@ -15,32 +15,32 @@
 @inject TimeProvider TimeProvider
 
 @if (IsStack) {
-  @if (AcquiredIds == null) {
-    <AcquireToggles_Button Css="btn-acquire-card"
-                           OnClick=@_Acquire
+  @if (CollectedIds == null) {
+    <CollectToggles_Button Css="btn-acquire-card"
+                           OnClick=@_Collect
                            BranchUsers=@BranchUsers />
 
   } else {
-    <AcquireToggles_Button Css="btn-unacquire-card"
+    <CollectToggles_Button Css="btn-unacquire-card"
                            OnClick=@(() => _modal.Show())
                            BranchUsers=@(BranchUsers + 1) />
   }
 } else {
-  @if (AcquiredIds?.Value?.BranchInstanceId == Ids.BranchInstanceId) {
-    <AcquireToggles_Button Css="btn-unacquire-card"
+  @if (CollectedIds?.Value?.BranchInstanceId == Ids.BranchInstanceId) {
+    <CollectToggles_Button Css="btn-unacquire-card"
                            OnClick=@(() => _modal.Show())
                            BranchUsers=@(BranchUsers + 1)
                            InstanceUsers=@(InstanceUsers + 1) />
   } else {
-    @if (AcquiredIds?.Value?.BranchId == Ids.BranchId && IsBranch) {
-      <AcquireToggles_Button Css="btn-acquire-card btn-success btn-striped"
-                             OnClick=@_Acquire
+    @if (CollectedIds?.Value?.BranchId == Ids.BranchId && IsBranch) {
+      <CollectToggles_Button Css="btn-acquire-card btn-success btn-striped"
+                             OnClick=@_Collect
                              BranchUsers=@(BranchUsers + 1)
                              InstanceUsers=@InstanceUsers />
 
     } else {
-      <AcquireToggles_Button Css="btn-acquire-card"
-                             OnClick=@_Acquire
+      <CollectToggles_Button Css="btn-acquire-card"
+                             OnClick=@_Collect
                              BranchUsers=@BranchUsers
                              InstanceUsers=@InstanceUsers />
     }
@@ -74,10 +74,10 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; } = new EventCallback<FSharpOption<StackBranchInstanceIds>>();
+  [Parameter] public FSharpOption<StackBranchInstanceIds> CollectedIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<StackBranchInstanceIds>>();
   [Parameter] public StackBranchInstanceIds Ids { get; set; }
-  [Parameter] public EventCallback<List<CollectedCard>> UpdateAcquiredCards { get; set; } = new EventCallback<List<CollectedCard>>();
+  [Parameter] public EventCallback<List<CollectedCard>> UpdateCollectedCards { get; set; } = new EventCallback<List<CollectedCard>>();
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? InstanceUsers { get; set; }
@@ -92,15 +92,15 @@
     StateHasChanged();
   }
 
-  private Task _Acquire() {
+  private Task _Collect() {
     if (_user.Id == 0) {
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
       return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.BranchInstanceId, DeckId)).Match(ToastService, async _ => {
-        await DbExecutor.QueryAsync(db => StackRepository.GetAcquired(db, _user.Id, Ids.StackId)).Match(ToastService, async cards => {
-          await UpdateAcquiredCards.InvokeAsync(cards);
-          await UpdateAcquiredIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.Some(Ids));
+        await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, Ids.StackId)).Match(ToastService, async cards => {
+          await UpdateCollectedCards.InvokeAsync(cards);
+          await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.Some(Ids));
         });
       });
     }
@@ -108,8 +108,8 @@
 
   private Task _Discard() =>
     DbExecutor.QueryAsync(db => StackRepository.unacquireStack(db, _user.Id, Ids.StackId)).Match(ToastService, async _ => {
-      await UpdateAcquiredCards.InvokeAsync(ResizeArray.empty<CollectedCard>());
-      await UpdateAcquiredIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.None);
+      await UpdateCollectedCards.InvokeAsync(ResizeArray.empty<CollectedCard>());
+      await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.None);
       _modal.Hide();
     });
 

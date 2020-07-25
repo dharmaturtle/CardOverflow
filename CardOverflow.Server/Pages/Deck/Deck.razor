@@ -49,7 +49,7 @@
       @foreach (var stack in _stacks) {
         <tr>
           <td>
-            <HoverPreview IsAcquired=@stack.IsAcquired>
+            <HoverPreview IsCollected=@stack.IsCollected>
               <ResizingIframeBranch BranchInstanceId=@stack.Instance.Id Front />
             </HoverPreview>
           </td>

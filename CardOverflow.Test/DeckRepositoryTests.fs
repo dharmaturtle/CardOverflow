@@ -104,7 +104,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let stackId = 1
     let acquiredCardId = 1
     let assertDeckId expectedDeckId = taskResult {
-        let! (card: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+        let! (card: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db userId stackId
         let card = card.Single()
         Assert.equal expectedDeckId card.DeckId
         Assert.equal acquiredCardId card.CollectedCardId
@@ -172,7 +172,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     // deleting deck with cards moves them to new default
     do! SanitizeDeckRepository.delete c.Db userId defaultDeckId
     
-    let! (card: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db userId stackId
+    let! (card: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db userId stackId
     let card = card.Single()
     Assert.equal newDeckId card.DeckId
     let! actualDecks = getTomorrow ()
@@ -215,18 +215,18 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.setIsPublic c.Db userId invalidDeckId true
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
     
-    let invalidAcquiredCardId = 1337
-    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId invalidAcquiredCardId
-    Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" invalidAcquiredCardId, x.error)
+    let invalidCollectedCardId = 1337
+    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId invalidCollectedCardId
+    Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" invalidCollectedCardId, x.error)
     
     let nonauthor = 1
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId acquiredCardId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
     let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor []
-    let nonauthorAcquiredCardId = 2
-    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId nonauthorAcquiredCardId
-    Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" nonauthorAcquiredCardId, x.error)
+    let nonauthorCollectedCardId = 2
+    let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId nonauthorCollectedCardId
+    Assert.Equal(sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" nonauthorCollectedCardId, x.error)
     
     let! (x: Result<_,_>) = SanitizeDeckRepository.delete c.Db nonauthor newDeckId
     Assert.Equal(sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" newDeckId, x.error)
@@ -293,7 +293,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let notificationId = 1
     let stackId = 1
     let branchId = 1
-    let authorAcquiredId = 1
+    let authorCollectedId = 1
     let instance1 =
         {   StackId = stackId
             BranchId = branchId
@@ -341,7 +341,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                            Collected = [] } }
 
     // editing card's state doesn't notify follower
-    do! StackRepository.editState c.Db authorId authorAcquiredId Suspended
+    do! StackRepository.editState c.Db authorId authorCollectedId Suspended
     
     let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
     
@@ -379,7 +379,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                            } |> List.singleton } }
 
     // changing to private deck has notification
-    do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorAcquiredId
+    do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorCollectedId
 
     do! assertNotificationThenDelete
             { Id = 4
@@ -390,7 +390,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                            Deleted = instance3 } }
 
     // changing back to public deck has notification
-    do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorAcquiredId
+    do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorCollectedId
 
     do! assertNotificationThenDelete
             { Id = 5
@@ -405,7 +405,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId true
     do! follow authorDefaultDeckId
 
-    do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorAcquiredId
+    do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorCollectedId
 
     let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
     let a = ns.Results.ToList().[0]
@@ -434,7 +434,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     // back to public deck and some cleanup
     do! NotificationRepository.remove c.Db followerId a.Id
     do! NotificationRepository.remove c.Db followerId b.Id
-    do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorAcquiredId
+    do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorCollectedId
     do! NotificationRepository.remove c.Db followerId 8
     do! NotificationRepository.remove c.Db followerId 9
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId false
@@ -548,7 +548,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     do! follow followerDeckId None |> TaskResult.getOk
     
     let! cc =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { CollectedCardId = 3
@@ -575,7 +575,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     do! follow followerDeckId (Some false) |> TaskResult.getOk
 
     let! ac2 =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { cc with
@@ -590,7 +590,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     do! follow followerDeckId (Some true) |> TaskResult.getOk
 
     let! ac3 =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { cc with
@@ -620,7 +620,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     do! follow followerDeckId None |> TaskResult.getOk
     
     let! (ccs: CollectedCard ResizeArray) =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% (Seq.sortBy (fun x -> x.Index) >> ResizeArray)
     Assert.equal 2 ccs.Count
     let a, b = ccs.[0], ccs.[1]
@@ -655,7 +655,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     do! follow followerDeckId None |> TaskResult.getOk
     
     let! (cc: CollectedCard) =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { b with
@@ -671,7 +671,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
     let! (cc: CollectedCard) =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { b with
@@ -687,7 +687,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     do! follow followerDeckId (Some true) |> TaskResult.getOk
 
     let! (ccs: CollectedCard ResizeArray) =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% (Seq.sortBy (fun x -> x.Index) >> ResizeArray)
     Assert.equal 2 ccs.Count
     let a, b = ccs.[0], ccs.[1]
@@ -755,7 +755,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     do! follow (Guid.NewGuid().ToString()) None |> TaskResult.getOk
     
     let! cc =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { CollectedCardId = 3
@@ -782,7 +782,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     do! follow (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
 
     let! ac2 =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { cc with
@@ -798,7 +798,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let newestDeckId = newDeckId + 2
 
     let! ac3 =
-        StackRepository.GetAcquired c.Db followerId stackId
+        StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
         { cc with
@@ -882,7 +882,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
 
     // moving card to newDeck _ is reflected in the diff
     let! newDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
-    let! (ccs: CollectedCard ResizeArray) = StackRepository.GetAcquired c.Db followerId stackId
+    let! (ccs: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db followerId stackId
     let ccId = ccs.Single().CollectedCardId
     do! SanitizeDeckRepository.switch c.Db followerId newDeckId ccId
      

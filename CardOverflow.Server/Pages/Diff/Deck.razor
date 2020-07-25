@@ -47,9 +47,9 @@
         </h4>
         @foreach (var ids in _diffState.AddedStack) {
           <div>
-            <AcquireToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
+            <CollectToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            UpdateAcquiredCards=@(async ccs => {
+                            UpdateCollectedCards=@(async ccs => {
                                                     var ccId = ccs.Single(cc => cc.Index == ids.Index).CollectedCardId;
                                                     await _switchToMyDeck(ccId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
@@ -75,10 +75,10 @@
         @foreach (var ids in _diffState.RemovedStack) {
           var ids2 = new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId);
           <div>
-            <AcquireToggles Ids=@ids2
+            <CollectToggles Ids=@ids2
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
-                            UpdateAcquiredCards=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
+                            CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
+                            UpdateCollectedCards=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
             @CardPreview(ids.BranchInstanceId, ids.Index)
             @OtherDeckCheck(ids.DeckId)
           </div>
@@ -95,10 +95,10 @@
         </h4>
         @foreach (var (theirs, mine) in _diffState.BranchChanged) {
           <div>
-            <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+            <CollectToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
-                            UpdateAcquiredCards=@(async ccs => {
+                            CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
+                            UpdateCollectedCards=@(async ccs => {
                                                     var ccId = ccs.Single(cc => cc.Index == mine.Index).CollectedCardId;
                                                     await _switchToMyDeck(ccId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
@@ -129,10 +129,10 @@
         </h4>
         @foreach (var (theirs, mine) in _diffState.BranchInstanceChanged) {
           <div>
-            <AcquireToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+            <CollectToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            AcquiredIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
-                            UpdateAcquiredCards=@(async ccs => {
+                            CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
+                            UpdateCollectedCards=@(async ccs => {
                                                     var ccId = ccs.Single(cc => cc.Index == mine.Index).CollectedCardId;
                                                     await _switchToMyDeck(ccId);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()

@@ -333,7 +333,7 @@ type CommunalFieldInstance with
         Value = entity.Value }
 
 type BranchInstanceMeta with
-    static member loadIndex (i: int16) isAcquired isLatest (entity: BranchInstanceEntity) =
+    static member loadIndex (i: int16) isCollected isLatest (entity: BranchInstanceEntity) =
         let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
             StackId = entity.StackId
@@ -343,7 +343,7 @@ type BranchInstanceMeta with
             Modified = entity.Modified |> Option.ofNullable
             IsDmca = entity.IsDmca
             IsLatest = isLatest
-            IsAcquired = isAcquired
+            IsCollected = isCollected
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
             CommunalFields = entity.CommunalFieldInstance_BranchInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
@@ -351,9 +351,9 @@ type BranchInstanceMeta with
             EditSummary = entity.EditSummary
         }
     static member load = BranchInstanceMeta.loadIndex 0s
-    static member loadAll isAcquired isLatest (entity: BranchInstanceEntity) =
+    static member loadAll isCollected isLatest (entity: BranchInstanceEntity) =
         [0s .. entity.MaxIndexInclusive]
-        |> List.map(fun i -> BranchInstanceMeta.loadIndex i isAcquired isLatest entity)
+        |> List.map(fun i -> BranchInstanceMeta.loadIndex i isCollected isLatest entity)
     static member initialize =
         {   Id = 0
             StackId = 0
@@ -363,7 +363,7 @@ type BranchInstanceMeta with
             Modified = None
             IsDmca = false
             IsLatest = true
-            IsAcquired = true
+            IsCollected = true
             StrippedFront = ""
             StrippedBack = ""
             CommunalFields = [].ToList()
@@ -434,13 +434,13 @@ type CollectedCard with
             Tags = tags
             DeckId = deckId
         }
-    static member load (usersTags: string Set) (entity: CollectedCardIsLatestEntity) isAcquired = result {
+    static member load (usersTags: string Set) (entity: CollectedCardIsLatestEntity) isCollected = result {
         let! cardState = entity.CardState |> CardState.create
         return
             {   StackId = entity.StackId
                 BranchId = entity.BranchId
                 CollectedCardId = entity.Id
-                BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isAcquired entity.IsLatest entity.BranchInstance
+                BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isCollected entity.IsLatest entity.BranchInstance
                 Index = entity.Index
                 UserId = entity.UserId
                 CardState = cardState
@@ -473,11 +473,11 @@ type ExploreBranchSummary with
     }
 
 type Branch with
-    static member load (ids: AcquiredIds) (branch: BranchEntity) = {
+    static member load (ids: CollectedIds) (branch: BranchEntity) = {
         Name = branch.Name
         Summary =
             ExploreBranchSummary.load
-                <| BranchInstanceMeta.load (branch.LatestInstanceId = AcquiredIds.branchInstanceId ids) true branch.LatestInstance
+                <| BranchInstanceMeta.load (branch.LatestInstanceId = CollectedIds.branchInstanceId ids) true branch.LatestInstance
                 <| branch
     }
 
@@ -490,7 +490,7 @@ type ExploreStack with
             tagCounts.Select(fun x ->
                 {   Name = x.Name
                     Count = x.Count
-                    IsAcquired = usersTags.Contains x.Name
+                    IsCollected = usersTags.Contains x.Name
                 }) |> toResizeArray
         Relationships =
             relationshipCounts.Select(fun x ->

@@ -262,14 +262,14 @@ let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
     
     Assert.Equal(sprintf "Branch Instance #%i not found" nonexistant, missingCard.error)
 
-    // update on branch that's in a nondefault deck with 0 editAcquiredCardCommands doesn't change the deck
+    // update on branch that's in a nondefault deck with 0 editCollectedCardCommands doesn't change the deck
     let! newDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.switch c.Db userId newDeckId acquiredCardId
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     
     do! SanitizeStackRepository.Update c.Db userId [] stackCommand
 
-    let! (card: CollectedCard) = StackRepository.GetAcquired c.Db userId stackId |>%% Assert.Single
+    let! (card: CollectedCard) = StackRepository.GetCollected c.Db userId stackId |>%% Assert.Single
     Assert.equal newDeckId card.DeckId
     } |> TaskResult.getOk)
 
@@ -490,10 +490,10 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     do! asserts user1 og_s og_b ogEdit_i newValue 2 2
             [ { Name = "A"
                 Count = 1
-                IsAcquired = true }
+                IsCollected = true }
               { Name = "B"
                 Count = 1
-                IsAcquired = true }]
+                IsCollected = true }]
     let! revisions = StackRepository.Revisions c.Db user1 og_b  |> TaskResult.getOk
     let! instance = StackViewRepository.instance c.Db revisions.SortedMeta.[1].Id
     let original, _, _, _ = instance |> Result.getOk |> fun x -> x.FrontBackFrontSynthBackSynth.[0]
@@ -551,10 +551,10 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     do! asserts user2 x.StackId x.BranchId x.Id newValue 3 1
             [ { Name = "A"
                 Count = 1
-                IsAcquired = false }
+                IsCollected = false }
               { Name = "B"
                 Count = 1
-                IsAcquired = false }]
+                IsCollected = false }]
     do! assertCount
             [og_s,     2 ;    copy_s, 1 ]
             [og_b,     1 ;    copy_b, 1 ;
@@ -818,11 +818,11 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     }
 
 [<Fact>]
-let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : Task<unit> = (taskResult {
+let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
-    let testGetAcquired stackId instanceId =
-        StackRepository.GetAcquired c.Db userId stackId
+    let testGetCollected stackId instanceId =
+        StackRepository.GetCollected c.Db userId stackId
         |> TaskResult.map (fun cc -> Assert.Equal(instanceId, cc.Single().BranchInstanceMeta.Id))
 
     let! _ = addBasicStack c.Db userId []
@@ -830,10 +830,10 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let og_b = 1
     let og_i = 1001
 
-    // tests ExactInstanceAcquired
+    // tests ExactInstanceCollected
     do! ExploreStackRepository.get c.Db userId og_s
         |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = og_i }, card.CollectedIds.Value))
-    do! testGetAcquired og_s og_i
+    do! testGetCollected og_s og_i
     
     // update card
     let update_i = 1002
@@ -841,22 +841,22 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(og_b, actualBranchId)
 
-    // tests ExactInstanceAcquired
+    // tests ExactInstanceCollected
     do! ExploreStackRepository.get c.Db userId og_s
         |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = update_i }, card.CollectedIds.Value))
-    do! testGetAcquired og_s update_i
+    do! testGetCollected og_s update_i
 
     // acquiring old instance doesn't change LatestInstanceId
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
     do! StackRepository.CollectCard c.Db userId og_i
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
 
-    // tests OtherInstanceAcquired
+    // tests OtherInstanceCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
     | Some x -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = og_i }, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired og_s og_i
+    do! testGetCollected og_s og_i
 
     // branch card
     let branch_i = 1003
@@ -865,12 +865,12 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branch_b, actualBranchId)
     
-    // tests LatestBranchAcquired
+    // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
     | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = branch_i }, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired og_s branch_i
+    do! testGetCollected og_s branch_i
 
     // update branch
     let updateBranch_i = 1004
@@ -878,12 +878,12 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branch_b, actualBranchId)
 
-    // tests LatestBranchAcquired
+    // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
     | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = updateBranch_i }, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired og_s updateBranch_i
+    do! testGetCollected og_s updateBranch_i
 
     // acquiring old instance doesn't change LatestInstanceId
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
@@ -892,12 +892,12 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
 
-    // tests OtherBranchAcquired
+    // tests OtherBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
     | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = branch_i }, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired og_s branch_i
+    do! testGetCollected og_s branch_i
 
     // try to branch card again, but fail
     let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db <| VNewBranchSourceStackId og_s
@@ -912,19 +912,19 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branch_b2, actualBranchId)
 
-    // tests LatestBranchAcquired
+    // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
     | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; BranchInstanceId = branch_i2 }, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired og_s branch_i2
+    do! testGetCollected og_s branch_i2
 
-    // tests LatestBranchAcquired with og_s
+    // tests LatestBranchCollected with og_s
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
     | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; BranchInstanceId = branch_i2 }, x)
     | _ -> failwith "impossible"
-    do! testGetAcquired og_s branch_i2
+    do! testGetCollected og_s branch_i2
 
     // acquiring old instance doesn't change LatestInstanceId; can also acquire old branch
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
@@ -938,7 +938,7 @@ let ``ExploreStackRepository.get works for all ExploreStackAcquiredStatus``() : 
     let! (error: Result<_,_>) = StackRepository.CollectCard c.Db userId missingId
     Assert.Equal(sprintf "Branch Instance #%i not found" missingId, error.error)
 
-    // tests NotAcquired
+    // tests NotCollected
     let otherUser = 1
     let! stack = ExploreStackRepository.get c.Db otherUser og_s
     Assert.Equal(None, stack.CollectedIds)

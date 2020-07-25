@@ -16,13 +16,13 @@
 
 <tr>
   <th scope="row" style="text-align: center">
-    <AcquireToggles IsBranch=true
-                    AcquiredIds=@AcquiredIds
+    <CollectToggles IsBranch=true
+                    CollectedIds=@CollectedIds
                     Ids=@(new StackBranchInstanceIds(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id))
                     BranchUsers=@Branch.Users
                     InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
-                    UpdateAcquiredCards=@UpdateAcquiredCards
-                    UpdateAcquiredIds=@UpdateAcquiredIds />
+                    UpdateCollectedCards=@UpdateCollectedCards
+                    UpdateCollectedIds=@UpdateCollectedIds />
   </th>
   <td>
     <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
@@ -56,8 +56,8 @@
         @if (Branch.Name != null) {
           <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
         }
-        @if (AcquiredIds?.Value?.BranchInstanceId != null && Branch.Instance.Id != AcquiredIds.Value.BranchInstanceId) {
-          <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{Branch.Instance.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+        @if (CollectedIds?.Value?.BranchInstanceId != null && Branch.Instance.Id != CollectedIds.Value.BranchInstanceId) {
+          <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.BranchInstanceId}/Your Collected Branch/{Branch.Instance.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
         }
       </BSDropdownMenu>
     </BSDropdown>
@@ -69,11 +69,11 @@
       <th></th>
       <td class="row pr-3">
         <div class="col-auto">
-          <AcquireToggles AcquiredIds=@AcquiredIds
+          <CollectToggles CollectedIds=@CollectedIds
                           Ids=@(new StackBranchInstanceIds(revision.StackId, revision.BranchId, revision.Id))
                           InstanceUsers=@revision.Users
-                          UpdateAcquiredCards=@UpdateAcquiredCards
-                          UpdateAcquiredIds=@UpdateAcquiredIds />
+                          UpdateCollectedCards=@UpdateCollectedCards
+                          UpdateCollectedIds=@UpdateCollectedIds />
         </div>
         <button class="col list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
           <Stack_BranchSummary Instance=@revision />
@@ -88,8 +88,8 @@
               <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
             }
             <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Instance/{Branch.Instance.Id}/Latest Branch Instance")">&Delta; Compare with latest Branch Instance</BSDropdownItem>
-            @if (AcquiredIds?.Value?.BranchInstanceId != null && revision.Id != AcquiredIds.Value.BranchInstanceId) {
-              <BSDropdownItem Href="@($"stackdiff/{AcquiredIds.Value.BranchInstanceId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+            @if (CollectedIds?.Value?.BranchInstanceId != null && revision.Id != CollectedIds.Value.BranchInstanceId) {
+              <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.BranchInstanceId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
             }
           </BSDropdownMenu>
         </BSDropdown>
@@ -103,10 +103,10 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Branch Branch { get; set; }
   [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public FSharpOption<StackBranchInstanceIds> AcquiredIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateAcquiredIds { get; set; }
+  [Parameter] public FSharpOption<StackBranchInstanceIds> CollectedIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateCollectedIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
-  [Parameter] public EventCallback<List<CollectedCard>> UpdateAcquiredCards { get; set; }
+  [Parameter] public EventCallback<List<CollectedCard>> UpdateCollectedCards { get; set; }
   private bool _displayAllRevisions;
   private BranchRevision _revisions;
 
@@ -120,7 +120,7 @@
   }
 
   private void sub1() {
-    foreach (var revision in _revisions.SortedMeta.Where(x => x.IsAcquired)) {
+    foreach (var revision in _revisions.SortedMeta.Where(x => x.IsCollected)) {
       revision.Users--;
     }
   }

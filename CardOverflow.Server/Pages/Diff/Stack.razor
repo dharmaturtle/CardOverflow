@@ -38,7 +38,7 @@
 } else {
   <div class="row">
     <div class="col-sm">
-      <HoverPreview IsAcquired=@_aIsAcquired Padding="0">
+      <HoverPreview IsCollected=@_aIsCollected Padding="0">
         <ResizingIframeBranch BranchInstanceId=@A_BranchInstanceId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="branchinstance/@A_BranchInstanceId">
@@ -52,14 +52,14 @@
           Old Template
         </a>
       }
-      @if (_aIsAcquired && !_bIsAcquired && _user.IsAuthenticated) {
+      @if (_aIsCollected && !_bIsCollected && _user.IsAuthenticated) {
         <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewStack>
           Get New Stack
         </button>
       }
     </div>
     <div class="col-sm">
-      <HoverPreview IsAcquired=@_bIsAcquired Padding="0">
+      <HoverPreview IsCollected=@_bIsCollected Padding="0">
         <ResizingIframeBranch BranchInstanceId=@B_BranchInstanceId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="branchinstance/@B_BranchInstanceId">
@@ -251,8 +251,8 @@
   private string _loadingMessage = "Loading...";
   private BranchInstanceView _a;
   private BranchInstanceView _b;
-  private bool _aIsAcquired;
-  private bool _bIsAcquired;
+  private bool _aIsCollected;
+  private bool _bIsCollected;
   private string _collateFields(BranchInstanceView view) => view.CollateInstance.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(BranchInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
@@ -305,7 +305,7 @@
     if (B_BranchInstanceId == 0) {
       var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, A_BranchInstanceId, _user.Id));
       if (x.IsOk) {
-        (_a, _aIsAcquired, _b, _bIsAcquired, B_BranchInstanceId) = x.ResultValue;
+        (_a, _aIsCollected, _b, _bIsCollected, B_BranchInstanceId) = x.ResultValue;
         _OnOk();
       } else {
         _OnError(x.ErrorValue);
@@ -313,7 +313,7 @@
     } else {
       var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, A_BranchInstanceId, B_BranchInstanceId, _user.Id));
       if (x.IsOk) {
-        (_a, _aIsAcquired, _b, _bIsAcquired) = x.ResultValue;
+        (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
         _OnOk();
       } else {
         _OnError(x.ErrorValue);
@@ -324,8 +324,8 @@
   private async Task _GetNewStack() {
     await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_BranchInstanceId));
     var acquiredIds = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollected(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
-    _aIsAcquired = acquiredIds.Contains(A_BranchInstanceId);
-    _bIsAcquired = acquiredIds.Contains(B_BranchInstanceId);
+    _aIsCollected = acquiredIds.Contains(A_BranchInstanceId);
+    _bIsCollected = acquiredIds.Contains(B_BranchInstanceId);
   }
 
 }

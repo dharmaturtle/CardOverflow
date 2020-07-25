@@ -14,9 +14,9 @@
 <div>
   <div class="d-flex justify-content-between">
     <h4>Tags</h4>
-    @if (Stack.IsAnyAcquired) {
+    @if (Stack.IsAnyCollected) {
       @if (_showTagAdder) {
-        <TagAdder AddTag=@(x => AcquireTag(x.Text)) />
+        <TagAdder AddTag=@(x => CollectTag(x.Text)) />
       } else {
         <button class="btn btn-outline-success" @onclick=@(() => _showTagAdder = true)>
           <i class="fas fa-plus"></i>
@@ -25,16 +25,16 @@
     }
   </div>
   <ul class="d-flex flex-wrap list-unstyled">
-    @foreach (var tag in Stack.Tags.Where(x => x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+    @foreach (var tag in Stack.Tags.Where(x => x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
       <li class="m-1">
         <button type="button" class="btn btn-outline-acquired btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
           <span class="badge badge-success">@tag.Count</span> @tag.Name
         </button>
       </li>
     }
-    @foreach (var tag in Stack.Tags.Where(x => !x.IsAcquired).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+    @foreach (var tag in Stack.Tags.Where(x => !x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
       <li class="m-1">
-        <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => AcquireTag(tag.Name, false)) disabled=@(!Stack.IsAnyAcquired)>
+        <button type="button" class="btn btn-outline-unacquired btn-sm" @onclick=@(() => CollectTag(tag.Name, false)) disabled=@(!Stack.IsAnyCollected)>
           <span class="badge badge-success">@tag.Count</span> @tag.Name
         </button>
       </li>
@@ -49,22 +49,22 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (!Stack.IsAnyAcquired) {
-      foreach (var tag in Stack.Tags.Where(t => t.IsAcquired)) {
-        tag.IsAcquired = false;
+    if (!Stack.IsAnyCollected) {
+      foreach (var tag in Stack.Tags.Where(t => t.IsCollected)) {
+        tag.IsCollected = false;
         tag.Count--;
       }
     }
   }
 
-  async Task AcquireTag(string name, bool isNew = true) {
+  async Task CollectTag(string name, bool isNew = true) {
     var user = await UserTask;
     var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, user.Id, name, Stack.Id));
     if (x.IsOk) {
       if (isNew) {
         Stack.Tags = Stack.Tags.Append(new ViewTag(name, 0, false)).ToList();
       }
-      Stack.Tags.Single(t => t.Name == name).IsAcquired = true;
+      Stack.Tags.Single(t => t.Name == name).IsCollected = true;
       Stack.Tags.Single(t => t.Name == name).Count++;
       StateHasChanged();
     } else {
@@ -76,7 +76,7 @@
     var user = await UserTask;
     var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, user.Id, tag, Stack.Id));
     if (x.IsOk) {
-      Stack.Tags.Single(t => t.Name == tag).IsAcquired = false;
+      Stack.Tags.Single(t => t.Name == tag).IsCollected = false;
       Stack.Tags.Single(t => t.Name == tag).Count--;
       StateHasChanged();
     } else {

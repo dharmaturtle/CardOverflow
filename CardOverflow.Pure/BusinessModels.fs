@@ -216,7 +216,7 @@ type QuizCard = {
 //}
 
 // medTODO delete?
-//type AcquiredDisplayCard = { // Acquired cause only private tags can be on a card
+//type CollectedDisplayCard = { // Collected cause only private tags can be on a card
 //    CollateName: string
 //    Front: string
 //    Back: string
@@ -261,12 +261,12 @@ module IntervalOrStepsIndex =
             |> int16
 
 //[<CLIMutable>]
-//type AcquiredConcept = {
+//type CollectedConcept = {
 //    Id: int
 //    // medTODO 100 needs to be tied to the DB max somehow
 //    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
 //    AuthorId: int
-//    AcquiredCards: CollectedCard ResizeArray
+//    CollectedCards: CollectedCard ResizeArray
 //}
 
 type PagedListDetails = {
@@ -365,7 +365,7 @@ type ViewDeck = {
 type ViewTag = {
     Name: string
     Count: int
-    IsAcquired: bool
+    IsCollected: bool
 }
 
 [<CLIMutable>]
@@ -390,7 +390,7 @@ type BranchInstanceMeta = {
     Created: DateTime
     Modified: DateTime option
     IsDmca: bool
-    IsAcquired: bool
+    IsCollected: bool
     IsLatest: bool
     StrippedFront: string
     StrippedBack: string
@@ -434,7 +434,7 @@ type ExploreStackSummary = {
     AuthorId: int
     Instance: BranchInstanceMeta
 } with
-    member this.IsAcquired = this.Instance.IsAcquired
+    member this.IsCollected = this.Instance.IsCollected
 
 [<CLIMutable>]
 type ExploreBranchSummary = {
@@ -444,7 +444,7 @@ type ExploreBranchSummary = {
     AuthorId: int
     Instance: BranchInstanceMeta
 } with
-    member this.IsAcquired = this.Instance.IsAcquired
+    member this.IsCollected = this.Instance.IsCollected
 
 type Branch = {
     Name: string
@@ -456,9 +456,9 @@ type Branch = {
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
 
-type AcquiredIds = StackBranchInstanceIds Option
+type CollectedIds = StackBranchInstanceIds Option
 
-module AcquiredIds =
+module CollectedIds =
     let branchInstanceId =
         function
         | Some (x: StackBranchInstanceIds) -> x.BranchInstanceId
@@ -479,14 +479,14 @@ type ExploreStack = {
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
-    CollectedIds: AcquiredIds
+    CollectedIds: CollectedIds
     Branches: Branch ResizeArray
 } with
     //don't add users - the UI needs it to be mutable
     member this.Default = this.Branches.Single(fun x -> x.Name = null)
     member this.Author = this.Default.Author
     member this.AuthorId = this.Default.AuthorId
-    member this.IsAnyAcquired =
+    member this.IsAnyCollected =
         this.CollectedIds |> Option.isSome
 
 type BranchRevision = {
