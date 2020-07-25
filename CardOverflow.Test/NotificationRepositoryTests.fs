@@ -93,6 +93,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                            MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                            New = ids } }
+    
     // works with DeckUpdatedStack, uncollected
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
@@ -121,4 +122,16 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 DeckId = followerDefaultDeckId
                 Index = 0s }]
         |> assertNotificationThenDelete
+    
+    // works with DeckDeletedStack
+    do! StackRepository.uncollectStack c.Db authorId ids.StackId
+
+    do! assertNotificationThenDelete
+            {   Id = 4
+                SenderId = authorId
+                SenderDisplayName = "RoboTurtle"
+                TimeStamp = DateTime.MinValue
+                Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
+                                             MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                             Deleted = { ids with BranchInstanceId = 1003 } } }
     } |> TaskResult.getOk)

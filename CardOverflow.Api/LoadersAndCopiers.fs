@@ -68,6 +68,7 @@ module Notification =
                 } |> DeckUpdatedStack
             | NotificationType.DeckDeletedStack ->
                 {   TheirDeck = theirDeck.Value
+                    MyDeck = myDeck.Value
                     Deleted = stackBranchInstanceIds.Value
                 } |> DeckDeletedStack
             | x -> failwith <| sprintf "Invalid enum value: %A" x

@@ -387,6 +387,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
               Message = DeckDeletedStack { TheirDeck = theirDeck
+                                           MyDeck = None
                                            Deleted = instance3 } }
 
     // changing back to public deck has notification
@@ -429,6 +430,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
           TimeStamp = b.TimeStamp
           Message = DeckDeletedStack
                      { TheirDeck = theirDeck
+                       MyDeck = None
                        Deleted = instance3 } }
     
     // back to public deck and some cleanup
@@ -448,6 +450,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               SenderDisplayName = "RoboTurtle"
               TimeStamp = DateTime.MinValue
               Message = DeckDeletedStack { TheirDeck = theirDeck
+                                           MyDeck = None
                                            Deleted = instance3 } }
 
     // diff says a stack was removed

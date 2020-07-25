@@ -39,6 +39,7 @@ type DeckUpdatedStack = {
 
 type DeckDeletedStack = {
     TheirDeck: IdName
+    MyDeck: IdName Option
     Deleted: StackBranchInstanceIds
 }
 
