@@ -120,7 +120,7 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = 1002
-    do! StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // acquiring a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
+    do! StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.CollectedCard.Single().BranchInstanceId)
     Assert.Equal(branchId, c.Db.CollectedCard.Single().BranchId)
     Assert.Equal(stackId, c.Db.CollectedCard.Single().StackId)

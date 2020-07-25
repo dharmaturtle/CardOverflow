@@ -896,7 +896,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
             RemovedStack = []
         }
 
-    // Testing simple adding (by unacquiring a stack)
+    // Testing simple adding (by uncollecting a stack)
     do! StackRepository.uncollectStack c.Db followerId stackId
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId

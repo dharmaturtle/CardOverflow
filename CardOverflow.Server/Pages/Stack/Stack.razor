@@ -112,7 +112,7 @@
       var r = await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, _stack.Id));
       if (r.IsOk) {
         _collectedCards = r.ResultValue;
-      } // the only error so far is due to not acquiring the card, so intentionally not showing it.
+      } // the only error so far is due to not collecting the card, so intentionally not showing it.
     }
     StateHasChanged();
   }

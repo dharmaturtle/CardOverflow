@@ -93,7 +93,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     let! _ = FacetRepositoryTests.addBasicStack c.Db author [tagName]
     do! assertTagUserCount 1
 
-    // initial tag has 2 users after acquisition
+    // initial tag has 2 users after collecting
     do! StackRepository.CollectCard c.Db collector branchInstanceId
     do! SanitizeTagRepository.AddTo c.Db collector tagName stackId
     do! assertTagUserCount 2

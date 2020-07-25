@@ -645,7 +645,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 1 ]
 
-    // adventures in acquiring cards
+    // adventures in collecting cards
     let adventurerId = 3
     do! StackRepository.CollectCard c.Db adventurerId og_i |> TaskResult.getOk
     do! assertCount
@@ -707,7 +707,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    // adventures in implicit unacquiring
+    // adventures in implicit uncollecting
     let adventurerId = 1 // changing the adventurer!
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.BranchInstanceId = ogEdit_i && x.UserId = adventurerId)
     do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
@@ -743,7 +743,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 3 ]
-    // adventures in unacquiring and suspending
+    // adventures in uncollecting and suspending
     let adventurerId = 2 // changing the adventurer, again!
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = og_s && x.UserId = adventurerId)
     do! StackRepository.editState c.Db adventurerId cc.Id CardState.Suspended |> Task.map (fun x -> x.Value)
@@ -846,7 +846,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
         |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = update_i }, card.CollectedIds.Value))
     do! testGetCollected og_s update_i
 
-    // acquiring old instance doesn't change LatestInstanceId
+    // collecting old instance doesn't change LatestInstanceId
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
     do! StackRepository.CollectCard c.Db userId og_i
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
@@ -885,7 +885,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     | _ -> failwith "impossible"
     do! testGetCollected og_s updateBranch_i
 
-    // acquiring old instance doesn't change LatestInstanceId
+    // collecting old instance doesn't change LatestInstanceId
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
     do! StackRepository.CollectCard c.Db userId branch_i
@@ -926,7 +926,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i2
 
-    // acquiring old instance doesn't change LatestInstanceId; can also collect old branch
+    // collecting old instance doesn't change LatestInstanceId; can also collect old branch
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
     do! StackRepository.CollectCard c.Db userId branch_i

@@ -281,20 +281,20 @@ let testGetCollected (acCount: int) addCard getCollate name = task {
     )}
     
 [<Fact>]
-let rec ``GetCollected works when acquiring 1 basic card``(): Task<unit> =
+let rec ``GetCollected works when collecting 1 basic card``(): Task<unit> =
     testGetCollected
         1
         FacetRepositoryTests.addBasicStack
         FacetRepositoryTests.basicCollate
-        <| nameof ``GetCollected works when acquiring 1 basic card``
+        <| nameof ``GetCollected works when collecting 1 basic card``
 
 [<Fact>]
-let rec ``GetCollected works when acquiring a pair``(): Task<unit> = 
+let rec ``GetCollected works when collecting a pair``(): Task<unit> = 
     testGetCollected
         2
         FacetRepositoryTests.addReversedBasicStack
         FacetRepositoryTests.reversedBasicCollate
-        <| nameof ``GetCollected works when acquiring a pair``
+        <| nameof ``GetCollected works when collecting a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
