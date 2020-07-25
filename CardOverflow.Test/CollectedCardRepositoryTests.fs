@@ -161,6 +161,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = 3
     do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    let branchId = 1
     let instanceId = 1001
     let stackId = 1
     let collectorId = 1
@@ -193,6 +194,19 @@ let ``collect works``(): Task<unit> = (taskResult {
 
     do! collect <| Some newDeckId
     
+    do! assertDeck newDeckId
+
+    // collecting/updating to *new* instance doesn't change deckId
+    let! stackCommand = VUpdateBranchId branchId |> SanitizeStackRepository.getUpsert c.Db
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+
+    do! StackRepository.collect c.Db collectorId 1002 None
+
+    do! assertDeck newDeckId
+
+    // collecting/updating to *old* instance doesn't change deckId
+    do! StackRepository.collect c.Db collectorId 1001 None
+
     do! assertDeck newDeckId
     } |> TaskResult.getOk)
 
