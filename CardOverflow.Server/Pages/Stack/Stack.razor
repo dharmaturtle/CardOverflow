@@ -23,10 +23,12 @@
                       Branches=@_stack.Branches
                       InstanceSelected=@(x => _selected = x)
                       CollectedIds=@_stack.CollectedIds
-                      UpdateCollectedIds=@(x => _stack.CollectedIds = x)
+                      UpdateCollectedIds=@(async ids => {
+                                             _stack.CollectedIds = ids;
+                                             await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, _stack.Id)).Match(ToastService, ccs => _collectedCards = ccs);
+                                           })
                       Selected=@_selected
-                      IsExplore=@(!IsCurate)
-                      UpdateCollectedCards=@(x => _collectedCards = x) />
+                      IsExplore=@(!IsCurate) />
     </div>
     <div class="col">
       <div class="row">

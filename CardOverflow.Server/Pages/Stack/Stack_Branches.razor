@@ -24,7 +24,6 @@
                           CollectedIds=@CollectedIds
                           Ids=@(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
                           BranchUsers=@Stack.Users
-                          UpdateCollectedCards=@UpdateCollectedCards
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>
       }
@@ -58,8 +57,7 @@
                       InstanceSelected=@InstanceSelected
                       CollectedIds=@CollectedIds
                       UpdateCollectedIds=@UpdateCollectedIds
-                      Selected=@Selected
-                      UpdateCollectedCards=@UpdateCollectedCards />
+                      Selected=@Selected />
       }
     </tbody>
   }
@@ -74,7 +72,6 @@
   [Parameter] public FSharpOption<StackBranchInstanceIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateCollectedIds { get; set; }
   [Parameter] public BranchInstanceMeta Selected { get; set; }
-  [Parameter] public EventCallback<List<CollectedCard>> UpdateCollectedCards { get; set; }
   [Parameter] public bool IsExplore { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {

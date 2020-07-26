@@ -77,7 +77,6 @@
   [Parameter] public FSharpOption<StackBranchInstanceIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<StackBranchInstanceIds>>();
   [Parameter] public StackBranchInstanceIds Ids { get; set; }
-  [Parameter] public EventCallback<List<CollectedCard>> UpdateCollectedCards { get; set; } = new EventCallback<List<CollectedCard>>();
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? InstanceUsers { get; set; }
@@ -99,12 +98,9 @@
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
-      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.BranchInstanceId, DeckId)).Match(ToastService, async _ => {
+      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.BranchInstanceId, DeckId)).Match(ToastService, async ccIds => {
         onSuccess();
-        await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, Ids.StackId)).Match(ToastService, async cards => {
-          await UpdateCollectedCards.InvokeAsync(cards);
-          await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.Some(Ids));
-        });
+        await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.Some(Ids));
       });
     }
   }
@@ -118,7 +114,6 @@
   private Task _Discard() =>
     DbExecutor.QueryAsync(db => StackRepository.uncollectStack(db, _user.Id, Ids.StackId)).Match(ToastService, async _ => {
       _onDiscardSuccess?.Invoke();
-      await UpdateCollectedCards.InvokeAsync(ResizeArray.empty<CollectedCard>());
       await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.None);
       _modal.Hide();
     });
