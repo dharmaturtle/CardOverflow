@@ -33,7 +33,7 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard
 
-    let recollect () = task { do! StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk }
+    let recollect () = StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk
     
     do! recollect ()
     let! (cc: CollectedCard ResizeArray) = getCollected ()
@@ -120,7 +120,7 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = 1002
-    do! StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
+    let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
     Assert.Equal(i2, c.Db.CollectedCard.Single().BranchInstanceId)
     Assert.Equal(branchId, c.Db.CollectedCard.Single().BranchId)
     Assert.Equal(stackId, c.Db.CollectedCard.Single().StackId)
@@ -173,8 +173,9 @@ let ``collect works``(): Task<unit> = (taskResult {
         |>%% fun x -> x.DeckId
         |>%% Assert.equal deckId
 
-    do! collect None
+    let! ccId = collect None
     
+    Assert.areEquivalent [2] ccId
     do! assertDeck collectorDefaultDeckId
 
     // fails for author's deck
@@ -192,21 +193,24 @@ let ``collect works``(): Task<unit> = (taskResult {
     // works for nondefault deck
     let! newDeckId = SanitizeDeckRepository.create c.Db collectorId <| Guid.NewGuid().ToString()
 
-    do! collect <| Some newDeckId
+    let! ccId = collect <| Some newDeckId
     
+    Assert.areEquivalent [3] ccId
     do! assertDeck newDeckId
 
-    // collecting/updating to *new* instance doesn't change deckId
+    // collecting/updating to *new* instance doesn't change deckId or ccId
     let! stackCommand = VUpdateBranchId branchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
 
-    do! StackRepository.collect c.Db collectorId 1002 None
+    let! ccId = StackRepository.collect c.Db collectorId 1002 None
 
+    Assert.areEquivalent [3] ccId
     do! assertDeck newDeckId
 
-    // collecting/updating to *old* instance doesn't change deckId
-    do! StackRepository.collect c.Db collectorId 1001 None
+    // collecting/updating to *old* instance doesn't change deckId or ccId
+    let! ccId = StackRepository.collect c.Db collectorId 1001 None
 
+    Assert.areEquivalent [3] ccId
     do! assertDeck newDeckId
     } |> TaskResult.getOk)
 
@@ -234,11 +238,11 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(3, c.Db.CollectedCard.Count())
     
     let collectorId = 1
-    do! StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.CollectedCard.Count())
-    do! StackRepository.CollectCard c.Db collectorId ci2_1 |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
     // misc
@@ -263,7 +267,7 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(6, c.Db.CollectedCard.Count())
     Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2))
     
-    do! StackRepository.CollectCard c.Db collectorId ci1_2 |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
     // misc

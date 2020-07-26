@@ -230,7 +230,7 @@ let testGetCollected (acCount: int) addCard getCollate name = task {
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
     let collectorId = 2  // this user collects the card
-    do! StackRepository.CollectCard c.Db collectorId branchInstanceId |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId branchInstanceId |> TaskResult.getOk
     let! stack = ExploreStackRepository.get c.Db collectorId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -415,16 +415,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user collects the card
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = 3 // this user collects card in opposite order from user2
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -478,16 +478,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user collects the card
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = 3 // this user collects card in opposite order from user2
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
-    do! StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]

@@ -361,7 +361,8 @@ module StackRepository =
                 |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." deckId)
             ccs |> List.iter (fun cc -> cc.DeckId <- deckId)
         | None -> ()
-        return! db.SaveChangesAsyncI ()
+        do! db.SaveChangesAsyncI ()
+        return ccs |> List.map (fun x -> x.Id)
         }
     let CollectCard (db: CardOverflowDb) userId branchInstanceId =
         collect db userId branchInstanceId None
