@@ -90,3 +90,19 @@ let ``Diff of deck with itself is unchanged _ when it contains 2 of the same bra
     
     |> Assert.areEquivalent
         (a |> List.map Unchanged)
+
+[<Generators>]
+let ``Diff of MoveToAnotherDeck works`` (ids: StackBranchInstanceIndex) : unit =
+    let ids index = { ids with Index = index }
+    let theirs = [ ids 0s ]
+    let mine   = [ ids 0s; ids 1s ]
+    
+    Diff.ids theirs mine |> Diff.toSummary
+    
+    |> Assert.equal 
+        { Unchanged             = [ ids 0s ]
+          MoveToAnotherDeck     = [ ids 1s ]
+          BranchInstanceChanged = []
+          BranchChanged         = []
+          AddedStack            = []
+          RemovedStack          = [] }

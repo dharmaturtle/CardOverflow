@@ -20,6 +20,15 @@ open FacetRepositoryTests
 open CardOverflow.Sanitation.SanitizeDeckRepository
 open CardOverflow.Entity
 
+let emptyDiffStateSummary =
+    {   Unchanged = []
+        BranchInstanceChanged = []
+        BranchChanged = []
+        AddedStack = []
+        RemovedStack = []
+        MoveToAnotherDeck = []
+    }
+
 [<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
@@ -461,17 +470,13 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
 
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack =
-                [ { StackId = stackId
-                    BranchId = branchId
-                    BranchInstanceId = instance2.BranchInstanceId
-                    Index = 0s
-                    DeckId = followerId }]
-        }
+        {   emptyDiffStateSummary with
+                RemovedStack =
+                    [ { StackId = stackId
+                        BranchId = branchId
+                        BranchInstanceId = instance2.BranchInstanceId
+                        Index = 0s
+                        DeckId = followerId }] }
 
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
@@ -843,23 +848,15 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = [ standardIds ]
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                Unchanged = [ standardIds ] }
 
     // diffing two decks, reversed, with the same card yields Unchanged
     do! SanitizeDeckRepository.diff c.Db followerId followerDeckId publicDeckId
     
     |>%% Assert.equal
-        {   Unchanged = [{ standardIds with DeckId = publicDeckId }]
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                Unchanged = [{ standardIds with DeckId = publicDeckId }] }
 
     // diffing with a deck that isn't public fails
     let nonpublicDeckId = 2
@@ -896,12 +893,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = [{ standardIds with DeckId = newDeckId }]
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                AddedStack = [{ standardIds with DeckId = newDeckId }] }
 
     // Testing simple adding (by uncollecting a stack)
     do! StackRepository.uncollectStack c.Db followerId stackId
@@ -909,12 +902,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = [{ standardIds with DeckId = publicDeckId }]
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                AddedStack = [{ standardIds with DeckId = publicDeckId }] }
 
     do! StackRepository.uncollectStack c.Db authorId stackId
     // Unchanged with two clozes
@@ -931,14 +920,10 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged =
-                [ ids
-                  { ids with Index = 1s } ]
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                Unchanged =
+                    [ ids
+                      { ids with Index = 1s } ] }
 
     // two clozes, but different decks, index 1
     let! (ccs: CollectedCardEntity list) =
@@ -952,12 +937,9 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = [ { ids with Index = 1s } ]
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = [ { ids with DeckId = newDeckId } ]
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                Unchanged = [ { ids with Index = 1s } ]
+                AddedStack = [ { ids with DeckId = newDeckId } ] }
 
     // two clozes, but different decks, index 2
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId ccs.[0].Id
@@ -966,12 +948,9 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = [ ids ]
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = [ { ids with Index = 1s; DeckId = newDeckId } ]
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                Unchanged = [ ids ]
+                AddedStack = [ { ids with Index = 1s; DeckId = newDeckId } ] }
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -999,12 +978,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = [ standardIds ]
-            BranchInstanceChanged = []
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                Unchanged = [ standardIds ] }
 
     // author switches to new branch
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranchSourceStackId standardIds.StackId)
@@ -1017,12 +992,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = [ ({ newBranchIds with DeckId = publicDeckId }, standardIds) ]
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                BranchChanged = [ ({ newBranchIds with DeckId = publicDeckId }, standardIds) ] }
 
     // author switches to new branch, and follower's old card is in different deck
     let! newFollowerDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
@@ -1032,12 +1003,10 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = [ ({ newBranchIds with DeckId = publicDeckId }, { standardIds with DeckId = newFollowerDeckId }) ]
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                BranchChanged = 
+                    [ ({ newBranchIds with DeckId = publicDeckId },
+                       { standardIds with DeckId = newFollowerDeckId }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     do! StackRepository.CollectCard c.Db followerId newBranchIds.BranchInstanceId
@@ -1051,12 +1020,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, newBranchIds) ]
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                BranchInstanceChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, newBranchIds) ] }
 
     // author switches to new branchinstance, and follower's old card is in different deck
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId cc.Id
@@ -1064,12 +1029,10 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, { newBranchIds with DeckId = newFollowerDeckId }) ]
-            BranchChanged = []
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                BranchInstanceChanged =
+                    [ ({ newBranchInstanceIds with DeckId = publicDeckId },
+                       { newBranchIds with DeckId = newFollowerDeckId }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     // author on new branch with new branchinstance, follower on old branch & instance
@@ -1078,12 +1041,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, standardIds) ]
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                BranchChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, standardIds) ] }
 
     // author on new branch with new branchinstance, follower on old branch & instance and different deck
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId cc.Id
@@ -1091,10 +1050,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
-        {   Unchanged = []
-            BranchInstanceChanged = []
-            BranchChanged = [ ({ newBranchInstanceIds with DeckId = publicDeckId }, { standardIds with DeckId = newFollowerDeckId }) ]
-            AddedStack = []
-            RemovedStack = []
-        }
+        {   emptyDiffStateSummary with
+                BranchChanged =
+                    [ ({ newBranchInstanceIds with DeckId = publicDeckId },
+                       { standardIds with DeckId = newFollowerDeckId }) ] }
     } |> TaskResult.getOk)

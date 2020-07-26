@@ -252,6 +252,7 @@ type DiffStateSummary = {
     BranchChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
     AddedStack: StackBranchInstanceIndex list
     RemovedStack: StackBranchInstanceIndex list
+    MoveToAnotherDeck: StackBranchInstanceIndex list
 } with
     member this.DeckIds =
         let tupleToList (a, b) = [a; b]
@@ -284,11 +285,11 @@ module Diff =
             | None  , None   -> failwith "impossible"
         )
     let toSummary diffStates =
-        let unchanged = ResizeArray.empty
+        let unchanged             = ResizeArray.empty
         let branchInstanceChanged = ResizeArray.empty
-        let branchChanged = ResizeArray.empty
-        let addedStack = ResizeArray.empty
-        let removedStack = ResizeArray.empty
+        let branchChanged         = ResizeArray.empty
+        let addedStack            = ResizeArray.empty
+        let removedStack          = ResizeArray.empty
         diffStates |> List.iter
             (function
             | Unchanged x ->
@@ -301,9 +302,15 @@ module Diff =
                 addedStack.Add x
             | RemovedStack x ->
                 removedStack.Add x)
+        let moveToAnotherDeck, removedStack =
+            removedStack |> List.ofSeq |> List.partition (fun r ->
+                unchanged
+                    .Select(fun x -> (x.StackId, x.BranchId, x.BranchInstanceId))
+                    .Contains(       (r.StackId, r.BranchId, r.BranchInstanceId)))
         {   Unchanged = unchanged |> Seq.toList
             BranchInstanceChanged = branchInstanceChanged |> Seq.toList
             BranchChanged = branchChanged |> Seq.toList
             AddedStack = addedStack |> Seq.toList
-            RemovedStack = removedStack |> Seq.toList
+            RemovedStack = removedStack
+            MoveToAnotherDeck = moveToAnotherDeck
         }
