@@ -28,13 +28,12 @@
         deck
         @Deck(@deckAddedStack.TheirDeck.Id, deckAddedStack.TheirDeck.Name).
         <CollectToggles Ids=@deckAddedStack.New
-                        DeckId=@deckAddedStack.MyDeck.Select(x => x.Id) />
+                        DeckId=@_getDeckId(deckAddedStack.MyDeck)
+                        IsBranch=@true
+                        CollectedIds=@_collectedState
+                        UpdateCollectedIds=@(x => _collectedState = x) />
       </span>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
-      var collectedIds =
-        deckUpdatedStack.Collected
-          .Pipe(ListModule.TryHead)
-          .Select(x => StackBranchInstanceIdsModule.fromTuple(x.StackId, x.BranchId, x.BranchInstanceId));
       <span>
         @Stack(deckUpdatedStack.New.BranchInstanceId)
         updated in
@@ -42,11 +41,10 @@
         deck
         @Deck(@deckUpdatedStack.TheirDeck.Id, deckUpdatedStack.TheirDeck.Name).
         <CollectToggles Ids=@deckUpdatedStack.New
-                        DeckId=@(collectedIds.HasValue()
-                                 ? FSharpOption<int>.None
-                                 : deckUpdatedStack.MyDeck.Select(x => x.Id))
+                        DeckId=@_getDeckId(deckUpdatedStack.MyDeck)
                         IsBranch=@true
-                        CollectedIds=@collectedIds />
+                        CollectedIds=@_collectedState
+                        UpdateCollectedIds=@(x => _collectedState = x) />
       </span>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
@@ -57,9 +55,10 @@
         @Deck(deckDeletedStack.TheirDeck.Id, deckDeletedStack.TheirDeck.Name).
       </span>
       <CollectToggles Ids=@deckDeletedStack.Deleted
-                      CollectedIds=@(deckDeletedStack.Collected
-                                      .Pipe(ListModule.TryHead)
-                                      .Select(x => StackBranchInstanceIdsModule.fromTuple(x.StackId, x.BranchId, x.BranchInstanceId))) />
+                      DeckId=@_getDeckId(deckDeletedStack.MyDeck)
+                      IsBranch=@true
+                      CollectedIds=@_collectedState
+                      UpdateCollectedIds=@(x => _collectedState = x) />
     }
   </td>
   <td>
@@ -79,10 +78,23 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
+  private FSharpOption<StackBranchInstanceIds> _collectedState;
+  private FSharpOption<int> _getDeckId(FSharpOption<IdName> fallbackDeck) =>
+    _collectedState.HasValue()
+    ? FSharpOption<int>.None
+    : fallbackDeck.Select(x => x.Id);
 
   public override async System.Threading.Tasks.Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
+    _collectedState =
+      Notification.Message.TryDeckAddedStack(out var deckAddedStack)
+      ? deckAddedStack.Collected
+      : Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)
+      ? deckUpdatedStack.Collected
+      : Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)
+      ? deckDeletedStack.Collected
+      : FSharpOption<StackBranchInstanceIds>.None;
     StateHasChanged();
   }
 
