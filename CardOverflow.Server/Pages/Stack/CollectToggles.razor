@@ -17,7 +17,7 @@
 @if (IsStack) {
   @if (CollectedIds == null) {
     <CollectToggles_Button Css="btn-collect-card"
-                           OnClick=@_Collect
+                           OnClick=@Collect
                            BranchUsers=@BranchUsers />
 
   } else {
@@ -34,21 +34,21 @@
   } else {
     @if (CollectedIds?.Value?.BranchId == Ids.BranchId && IsBranch) {
       <CollectToggles_Button Css="btn-collect-card btn-success btn-striped"
-                             OnClick=@_Collect
+                             OnClick=@Collect
                              BranchUsers=@(BranchUsers + 1)
                              InstanceUsers=@InstanceUsers />
 
     } else {
       <CollectToggles_Button Css="btn-collect-card"
-                             OnClick=@_Collect
+                             OnClick=@Collect
                              BranchUsers=@BranchUsers
                              InstanceUsers=@InstanceUsers />
     }
   }
 }
 
-<BSModal @ref=_modal>
-  <BSModalHeader>
+<BSModal @ref=_modal HideEvent=@(() => _onDiscardSuccess = default)>
+  <BSModalHeader OnClick=@_modal.Hide>
     Are you sure you want to discard?
   </BSModalHeader>
   <BSModalBody>
@@ -92,12 +92,15 @@
     StateHasChanged();
   }
 
-  private Task _Collect() {
+  public Task Collect() => Collect(() => { });
+
+  public Task Collect(Action onSuccess) {
     if (_user.Id == 0) {
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
       return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.BranchInstanceId, DeckId)).Match(ToastService, async _ => {
+        onSuccess();
         await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, Ids.StackId)).Match(ToastService, async cards => {
           await UpdateCollectedCards.InvokeAsync(cards);
           await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.Some(Ids));
@@ -106,8 +109,15 @@
     }
   }
 
+  private Action _onDiscardSuccess;
+  public void OpenDiscardModal(Action onSuccess) {
+    _onDiscardSuccess = onSuccess;
+    _modal.Show();
+  }
+
   private Task _Discard() =>
     DbExecutor.QueryAsync(db => StackRepository.uncollectStack(db, _user.Id, Ids.StackId)).Match(ToastService, async _ => {
+      _onDiscardSuccess?.Invoke();
       await UpdateCollectedCards.InvokeAsync(ResizeArray.empty<CollectedCard>());
       await UpdateCollectedIds.InvokeAsync(FSharpOption<StackBranchInstanceIds>.None);
       _modal.Hide();

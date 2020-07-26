@@ -29,11 +29,16 @@
         @Deck(@deckAddedStack.TheirDeck.Id, deckAddedStack.TheirDeck.Name).
       </span>
       <div class="float-right">
-        <CollectToggles Ids=@deckAddedStack.New
+        <CollectToggles @ref="_addedStackCollectToggles"
+                        Ids=@deckAddedStack.New
                         DeckId=@_getDeckId(deckAddedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
+        <button type="button" class="btn btn-primary"
+                @onclick=@(async () => await _addedStackCollectToggles.Collect(async () => await _remove()))>
+          Sync & <span class="oi oi-trash"></span>
+        </button>
       </div>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
       <span>
@@ -44,11 +49,16 @@
         @Deck(@deckUpdatedStack.TheirDeck.Id, deckUpdatedStack.TheirDeck.Name).
       </span>
       <div class="float-right">
-        <CollectToggles Ids=@deckUpdatedStack.New
+        <CollectToggles @ref="_updatedStackCollectToggles"
+                        Ids=@deckUpdatedStack.New
                         DeckId=@_getDeckId(deckUpdatedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
+        <button type="button" class="btn btn-primary"
+                @onclick=@(async () => await _updatedStackCollectToggles.Collect(async () => await _remove()))>
+          Sync & <span class="oi oi-trash"></span>
+        </button>
       </div>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
@@ -59,11 +69,19 @@
         @Deck(deckDeletedStack.TheirDeck.Id, deckDeletedStack.TheirDeck.Name).
       </span>
       <div class="float-right">
-        <CollectToggles Ids=@deckDeletedStack.Deleted
+        <CollectToggles @ref="_deletedStackCollectToggles"
+                        Ids=@deckDeletedStack.Deleted
                         DeckId=@_getDeckId(deckDeletedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
+        <button type="button" class="btn btn-primary"
+                @onclick=@(async () => await _collectedState.Select(_ => {
+                             _deletedStackCollectToggles.OpenDiscardModal(async () => await _remove());
+                             return System.Threading.Tasks.Task.CompletedTask;
+                           }).GetOrElse(_remove))>
+          Sync & <span class="oi oi-trash"></span>
+        </button>
       </div>
     }
   </td>
@@ -85,6 +103,9 @@
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
   private FSharpOption<StackBranchInstanceIds> _collectedState;
+  private CollectToggles _addedStackCollectToggles;
+  private CollectToggles _updatedStackCollectToggles;
+  private CollectToggles _deletedStackCollectToggles;
   private FSharpOption<int> _getDeckId(FSharpOption<IdName> fallbackDeck) =>
     _collectedState.HasValue()
     ? FSharpOption<int>.None
