@@ -50,8 +50,7 @@
             <CollectToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             UpdateCollectedCards=@(async ccs => {
-                                                    var ccId = ccs.Single(cc => cc.Index == ids.Index).CollectedCardId;
-                                                    await _switchToMyDeck(ccId);
+                                                    await _switchToMyDeck(ccs, ids.Index);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
                                                       .ToFList();
@@ -99,8 +98,7 @@
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
                             UpdateCollectedCards=@(async ccs => {
-                                                    var ccId = ccs.Single(cc => cc.Index == mine.Index).CollectedCardId;
-                                                    await _switchToMyDeck(ccId);
+                                                    await _switchToMyDeck(ccs, mine.Index);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
                                                       .ToFList();
@@ -133,8 +131,7 @@
                             DeckId=@(FSharpOption<int>.Some(MyDeckId))
                             CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
                             UpdateCollectedCards=@(async ccs => {
-                                                    var ccId = ccs.Single(cc => cc.Index == mine.Index).CollectedCardId;
-                                                    await _switchToMyDeck(ccId);
+                                                    await _switchToMyDeck(ccs, mine.Index);
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchInstanceChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
                                                       .ToFList();
@@ -192,8 +189,10 @@
     StateHasChanged();
   }
 
-  private async Task _switchToMyDeck(int collectedCardId) =>
+  private async Task _switchToMyDeck(List<CollectedCard> cards, int index) {
+    var collectedCardId = cards.Single(cc => cc.Index == index).CollectedCardId;
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, _user.Id, MyDeckId, collectedCardId)).Match(ToastService);
+  }
 
   private RenderFragment CardPreview(int branchInstanceId, short index) =>
     @<a href="stack?branchinstance=@branchInstanceId">
