@@ -27,12 +27,14 @@
         @Sender()&apos;s
         deck
         @Deck(@deckAddedStack.TheirDeck.Id, deckAddedStack.TheirDeck.Name).
+      </span>
+      <div class="float-right">
         <CollectToggles Ids=@deckAddedStack.New
                         DeckId=@_getDeckId(deckAddedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
-      </span>
+      </div>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
       <span>
         @Stack(deckUpdatedStack.New.BranchInstanceId)
@@ -40,12 +42,14 @@
         @Sender()&apos;s
         deck
         @Deck(@deckUpdatedStack.TheirDeck.Id, deckUpdatedStack.TheirDeck.Name).
+      </span>
+      <div class="float-right">
         <CollectToggles Ids=@deckUpdatedStack.New
                         DeckId=@_getDeckId(deckUpdatedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
-      </span>
+      </div>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
         @Stack(deckDeletedStack.Deleted.BranchInstanceId)
@@ -54,11 +58,13 @@
         deck
         @Deck(deckDeletedStack.TheirDeck.Id, deckDeletedStack.TheirDeck.Name).
       </span>
-      <CollectToggles Ids=@deckDeletedStack.Deleted
-                      DeckId=@_getDeckId(deckDeletedStack.MyDeck)
-                      IsBranch=@true
-                      CollectedIds=@_collectedState
-                      UpdateCollectedIds=@(x => _collectedState = x) />
+      <div class="float-right">
+        <CollectToggles Ids=@deckDeletedStack.Deleted
+                        DeckId=@_getDeckId(deckDeletedStack.MyDeck)
+                        IsBranch=@true
+                        CollectedIds=@_collectedState
+                        UpdateCollectedIds=@(x => _collectedState = x) />
+      </div>
     }
   </td>
   <td>
