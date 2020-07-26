@@ -306,7 +306,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 TimeStamp = DateTime.MinValue
                 Message = DeckAddedStack { TheirDeck = theirDeck
                                            MyDeck = None
-                                           New = instance1 } }
+                                           New = instance1
+                                           Collected = None } }
 
     // notification deleted
     Assert.Empty c.Db.ReceivedNotification
@@ -338,7 +339,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = instance2
-                                           Collected = [] } }
+                                           Collected = None } }
 
     // editing card's state doesn't notify follower
     do! StackRepository.editState c.Db authorId authorCollectedId Suspended
@@ -363,11 +364,9 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
     let collected =
-        [{  StackId = instance2.StackId
+        {   StackId = instance2.StackId
             BranchId = instance2.BranchId
-            BranchInstanceId = instance2.BranchInstanceId
-            DeckId = followerDefaultDeckId
-            Index = 0s }]
+            BranchInstanceId = instance2.BranchInstanceId } |> Some
     do! assertNotificationThenDelete
             { Id = 3
               SenderId = authorId
@@ -401,7 +400,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckAddedStack { TheirDeck = theirDeck
                                          MyDeck = None
-                                         New = instance3 } }
+                                         New = instance3
+                                         Collected = collected } }
 
     // changing to another public deck that's also followed generates 2 notifications
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId true
@@ -423,7 +423,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                         { Id = authorDefaultDeckId
                                           Name = "Default Deck" }
                                      MyDeck = None
-                                     New = instance3 } }
+                                     New = instance3
+                                     Collected = collected } }
     b |> Assert.equal
         { Id = 7
           SenderId = 3

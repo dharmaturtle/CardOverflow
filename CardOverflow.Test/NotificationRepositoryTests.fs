@@ -92,6 +92,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 TimeStamp = DateTime.MinValue
                 Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                            MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                           Collected = None
                                            New = ids } }
     
     // works with DeckUpdatedStack, uncollected
@@ -107,7 +108,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                                              Collected = collected
                                              New = { ids with BranchInstanceId = newInstanceId } } }
 
-    do! expectedDeckUpdatedStackNotification 2 1002 [] |> assertNotificationThenDelete
+    do! expectedDeckUpdatedStackNotification 2 1002 None |> assertNotificationThenDelete
 
     // works with DeckUpdatedStack, collected
     let collectedInstance = ids.BranchInstanceId
@@ -115,11 +116,9 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let collected =
-        [{  StackId = ids.StackId
+        {   StackId = ids.StackId
             BranchId = ids.BranchId
-            BranchInstanceId = collectedInstance
-            DeckId = followerDefaultDeckId
-            Index = 0s }]
+            BranchInstanceId = collectedInstance } |> Some
     
     do! expectedDeckUpdatedStackNotification 3 1003 collected
         |> assertNotificationThenDelete

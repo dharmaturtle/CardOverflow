@@ -28,20 +28,21 @@ type DeckAddedStack = {
     TheirDeck: IdName
     MyDeck: IdName Option
     New: StackBranchInstanceIds
+    Collected: StackBranchInstanceIds Option
 }
 
 type DeckUpdatedStack = {
     TheirDeck: IdName
     MyDeck: IdName Option
     New: StackBranchInstanceIds
-    Collected: StackBranchInstanceIndex list
+    Collected: StackBranchInstanceIds Option
 }
 
 type DeckDeletedStack = {
     TheirDeck: IdName
     MyDeck: IdName Option
     Deleted: StackBranchInstanceIds
-    Collected: StackBranchInstanceIndex list
+    Collected: StackBranchInstanceIds Option
 }
 
 type Message =

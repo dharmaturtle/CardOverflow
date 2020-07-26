@@ -32,7 +32,7 @@ module CollateInstanceEntity =
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module Notification =
-    let load ((n: NotificationEntity), senderName, (cc: CollectedCardEntity ResizeArray), deckName, (myDeck: DeckEntity)) =
+    let load ((n: NotificationEntity), senderName, (cc: CollectedCardEntity), deckName, (myDeck: DeckEntity)) =
         let theirDeck =
             lazy{ Id = n.DeckId.Value
                   Name = deckName }
@@ -46,19 +46,18 @@ module Notification =
                   BranchInstanceId = n.BranchInstanceId.Value
                 }
         let collected =
-            lazy(cc |> List.ofSeq |> List.map (fun card ->
+            lazy(cc |> Option.ofObj |> Option.map (fun card ->
                 {   StackId = card.StackId
                     BranchId = card.BranchId
                     BranchInstanceId = card.BranchInstanceId
-                    Index = card.Index
-                    DeckId = card.DeckId
                 }))
         let message =
             match n.Type with
             | NotificationType.DeckAddedStack ->
-                {   TheirDeck = theirDeck.Value
+                {   DeckAddedStack.TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
                     New = stackBranchInstanceIds.Value
+                    Collected = collected.Value
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
                 {   TheirDeck = theirDeck.Value
