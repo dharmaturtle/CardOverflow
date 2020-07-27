@@ -1,0 +1,57 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@using Microsoft.FSharp.Collections
+@inject DbExecutor DbExecutor
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+
+@if (Decks == null) {
+  <span>Loading...</span>
+} else {
+  <div class="row">
+    <div class="col-auto mt-2">
+      Move
+      <a href="stack?branchinstance=@Mine.BranchInstanceId" class="mx-1">
+        <HoverPreview Padding="0">
+          <ResizingIframe BranchInstance=@((Mine.BranchInstanceId, Mine.Index)) Back />
+        </HoverPreview>
+        @Mine.BranchInstanceId with index @Mine.Index
+      </a>
+      to another deck
+    </div>
+    <div class="col">
+      <DeckSelector Decks=@Decks
+                    SelectedId=@Mine.DeckId
+                    DeckSelected=@(async newDeckId => {
+                                     if (newDeckId != Mine.DeckId) {
+                                       await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, _user.Id, newDeckId, Mine.BranchInstanceId, Mine.Index))
+                                         .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
+                                       await Remove.InvokeAsync(null);
+                                     }
+                                   }) />
+    </div>
+  </div>
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public List<SimpleDeck> Decks { get; set; }
+  [Parameter] public StackBranchInstanceIndex Mine { get; set; }
+  [Parameter] public EventCallback Remove { get; set; }
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+}

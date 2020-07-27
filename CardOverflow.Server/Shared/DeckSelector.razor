@@ -10,26 +10,30 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-<AuthorizeView>
-  <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
-    @foreach (var deck in _decks) {
-      <option value=@deck.Id selected=@(SelectedId == deck.Id)>@deck.Name</option>
-    }
-  </select>
-</AuthorizeView>
+@if (Decks == null) {
+  <p><em>Loading...</em></p>
+} else {
+  <AuthorizeView>
+    <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
+      @foreach (var deck in Decks) {
+        <option value=@deck.Id selected=@(SelectedId == deck.Id)>@deck.Name</option>
+      }
+    </select>
+  </AuthorizeView>
+}
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public int SelectedId { get; set; }
   [Parameter] public EventCallback<int> DeckSelected { get; set; }
-  private List<SimpleDeck> _decks = new List<SimpleDeck>();
+  [Parameter] public List<SimpleDeck> Decks { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
-    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, user.Id));
+    Decks ??= await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, user.Id));
     if (SelectedId == default) {
-      SelectedId = _decks.Single(x => x.IsDefault).Id;
+      SelectedId = Decks.Single(x => x.IsDefault).Id;
     }
     StateHasChanged();
   }

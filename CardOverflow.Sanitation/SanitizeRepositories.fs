@@ -249,6 +249,14 @@ module SanitizeDeckRepository =
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
+    let switchByIds (db: CardOverflowDb) userId deckId branchInstanceId index = taskResult {
+        do! deckBelongsTo db userId deckId
+        let! (cc: CollectedCardEntity) =
+            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.BranchInstanceId = branchInstanceId && x.Index = index && x.UserId = userId)
+            |>% (Result.requireNotNull <| sprintf "Either BranchInstance #%i with Index #%i doesn't belong to you or it doesn't exist" branchInstanceId index)
+        cc.DeckId <- deckId
+        return! db.SaveChangesAsyncI ()
+    }
     let getQuizBatch (db: CardOverflowDb) userId deckId = taskResult {
         do! deckBelongsTo db userId deckId
         return! StackRepository.GetQuizBatchDeck db deckId

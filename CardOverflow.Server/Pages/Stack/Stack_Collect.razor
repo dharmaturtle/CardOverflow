@@ -91,12 +91,8 @@
 
   private async Task _SetDeck(int newId) {
     var user = await UserTask;
-    var r = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, CollectedCard.CollectedCardId));
-    if (r.IsOk) {
-      ToastService.ShowInfo("Deck saved!");
-    } else {
-      ToastService.ShowError(r.ErrorValue);
-    }
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, CollectedCard.CollectedCardId))
+      .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
   }
 
   private async Task _editState(CardState state) {

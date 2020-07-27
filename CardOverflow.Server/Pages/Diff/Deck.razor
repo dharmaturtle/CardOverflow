@@ -149,6 +149,20 @@
       <div class="col-3"></div>
     </div>
   }
+  @if (_diffState.MoveToAnotherDeck.Any()) {
+    <div class="row">
+      <div class="col-3"></div>
+      <div class="col-6 text-center">
+        <h4>
+          Move extraneous cards to another deck to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+        </h4>
+        @foreach (var mine in _diffState.MoveToAnotherDeck) {
+          <Deck_MoveToAnotherDeck Decks=@_decks Mine=@mine Remove=@(() => _diffState.MoveToAnotherDeck = _diffState.MoveToAnotherDeck.Where(x => x != mine).ToFList()) />
+        }
+      </div>
+      <div class="col-3"></div>
+    </div>
+  }
   @if (_diffState.Unchanged.Any()) {
     <h4 class="text-center">
       Synced
@@ -173,14 +187,14 @@
   [Parameter] public int MyDeckId { get; set; }
   private DeckWithFollowMeta _myDeck;
   private DiffStateSummary _diffState;
-  private List<SimpleDeck> _decks = new List<SimpleDeck>();
+  private List<SimpleDeck> _decks;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.diff(db, _user.Id, TheirDeckId, MyDeckId)).Match(ToastService, async x => {
       _diffState = x;
-      if (_diffState.DeckIds.Any(x => x != MyDeckId && x != TheirDeckId)) {
+      if (_diffState.DeckIds.Any(x => x != MyDeckId && x != TheirDeckId) || _diffState.MoveToAnotherDeck.Any()) {
         _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getSimple(db, _user.Id));
       }
     });
