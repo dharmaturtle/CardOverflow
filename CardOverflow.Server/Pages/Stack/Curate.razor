@@ -51,7 +51,7 @@
       <Pager Details=@details PageChanged=@PageChanged />
     </div>
   } else {
-    <Stack BranchInstanceId=@SelectedInstanceId.Value IsCurate=true />
+    <Stack BranchInstanceId=@SelectedInstanceId.Value IsCurate=true Index=@Index />
   }
 </AuthorizeView>
 
@@ -59,6 +59,7 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedInstanceId { get; set; }
+  [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<CollectedCard> cards;
   private PagedListDetails details;

@@ -42,7 +42,7 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Stack StackId=@SelectedStackId BranchId=@BranchId BranchInstanceId=@BranchInstanceId />
+  <Stack StackId=@SelectedStackId BranchId=@BranchId BranchInstanceId=@BranchInstanceId Index=@Index />
 }
 
 @code {
@@ -51,6 +51,7 @@
   [Parameter] public int? SelectedStackId { get; set; }
   [Parameter] public int? BranchId { get; set; }
   [Parameter] public int? BranchInstanceId { get; set; }
+  [Parameter] public short? Index { get; set; }
   private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };

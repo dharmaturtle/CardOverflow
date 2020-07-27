@@ -15,6 +15,10 @@ namespace ThoughtDesign.WebLibrary {
     public static bool TryGetQueryString<T>(this NavigationManager navManager, string key, out T value) { // https://chrissainty.com/working-with-query-strings-in-blazor/
       var uri = navManager.ToAbsoluteUri(navManager.Uri);
       if (QueryHelpers.ParseQuery(uri.Query).TryGetValue(key, out var valueFromQueryString)) {
+        if ((typeof(T) == typeof(short) || typeof(T) == typeof(short?)) && short.TryParse(valueFromQueryString, out var valueAsShort)) {
+          value = (T)(object)valueAsShort;
+          return true;
+        }
         if ((typeof(T) == typeof(int) || typeof(T) == typeof(int?)) && int.TryParse(valueFromQueryString, out var valueAsInt)) {
           value = (T)(object)valueAsInt;
           return true;

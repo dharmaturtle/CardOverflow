@@ -16,15 +16,16 @@
 @inherits QueryStringBase
 
 @if (_isCurate) {
-  <Curate SelectedInstanceId=@_branchInstanceId />
+  <Curate SelectedInstanceId=@_branchInstanceId Index=@_index />
 } else {
-  <Explore SelectedStackId=@StackId BranchId=@_branchId BranchInstanceId=@_branchInstanceId />
+  <Explore SelectedStackId=@StackId BranchId=@_branchId BranchInstanceId=@_branchInstanceId Index=@_index />
 }
 
 @code {
   [Parameter] public int? StackId { get; set; }
-  private int? _branchInstanceId { get; set; }
+  private int? _branchInstanceId;
   private int? _branchId;
+  private short? _index;
   private bool _isCurate => _path.StartsWith("my/", StringComparison.OrdinalIgnoreCase);
   private string _path = "";
 
@@ -32,8 +33,8 @@
     _path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
     if (StackId == null) {
       NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
-      NavigationManager.TryGetQueryString<int?>("branchinstance", out var branchInstanceId);
-      _branchInstanceId = branchInstanceId;
+      NavigationManager.TryGetQueryString<int?>("branchinstance", out _branchInstanceId);
+      NavigationManager.TryGetQueryString<short?>("index", out _index);
     }
   }
 

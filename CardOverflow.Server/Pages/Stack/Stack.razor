@@ -35,7 +35,7 @@
         <div class="col-xl">
           <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
           @foreach (var i in _selected.Indexes) {
-            <div class="row">
+            <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
               @if (IsCurate) {
                 <div class="col-4 @(_collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
                   <Stack_Collect CollectedCard=@(_collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
@@ -65,6 +65,7 @@
   [Parameter] public int? StackId { get; set; }
   [Parameter] public int? BranchId { get; set; }
   [Parameter] public int? BranchInstanceId { get; set; }
+  [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
