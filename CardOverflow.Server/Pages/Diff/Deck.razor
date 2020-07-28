@@ -40,139 +40,163 @@
     </div>
   </div>
   @if (_diffState.AddedStack.Any()) {
-    <div class="row">
+    <div class="row mb-5">
       <div class="col text-center">
-        <h4>
-          Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
-        </h4>
-        @foreach (var ids in _diffState.AddedStack) {
-          <div>
-            <CollectToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
-                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            UpdateCollectedIds=@(async _ => {
+        <div class="card">
+          <h4 class="card-header">
+            Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+          </h4>
+          <div class="card-body">
+            @foreach (var ids in _diffState.AddedStack) {
+              <div>
+                <CollectToggles Ids=@(new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId))
+                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
                                                       .ToFList();
                                                     _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
                                                   }) />
-            @CardPreview(ids.BranchInstanceId, ids.Index)
-            @OtherDeckCheck(ids.DeckId)
+                @CardPreview(ids.BranchInstanceId, ids.Index)
+                @OtherDeckCheck(ids.DeckId)
+              </div>
+            }
           </div>
-        }
+        </div>
       </div>
       <div class="col"></div>
     </div>
   }
   @if (_diffState.RemovedStack.Any()) {
-    <div class="row">
+    <div class="row mb-5">
       <div class="col"></div>
       <div class="col text-center">
-        <h4>
-          Discard to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
-        </h4>
-        @foreach (var ids in _diffState.RemovedStack) {
-          var ids2 = new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId);
-          <div>
-            <CollectToggles Ids=@ids2
-                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
-                            UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
-            @CardPreview(ids.BranchInstanceId, ids.Index)
-            @OtherDeckCheck(ids.DeckId)
+        <div class="card">
+          <h4 class="card-header">
+            Discard to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+          </h4>
+          <div class="card-body">
+            @foreach (var ids in _diffState.RemovedStack) {
+              var ids2 = new StackBranchInstanceIds(ids.StackId, ids.BranchId, ids.BranchInstanceId);
+              <div>
+                <CollectToggles Ids=@ids2
+                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
+                                UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
+                @CardPreview(ids.BranchInstanceId, ids.Index)
+                @OtherDeckCheck(ids.DeckId)
+              </div>
+            }
           </div>
-        }
+        </div>
       </div>
     </div>
   }
   @if (_diffState.BranchChanged.Any()) {
-    <div class="row">
+    <div class="row mb-5">
       <div class="col-3"></div>
       <div class="col-6 text-center">
-        <h4>
-          Switch branch to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
-        </h4>
-        @foreach (var (theirs, mine) in _diffState.BranchChanged) {
-          <div>
-            <CollectToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
-                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
-                            UpdateCollectedIds=@(async _ => {
+        <div class="card">
+          <h4 class="card-header">
+            Switch branch to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+          </h4>
+          <div class="card-body">
+            @foreach (var (theirs, mine) in _diffState.BranchChanged) {
+              <div>
+                <CollectToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
+                                UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
                                                       .ToFList();
                                                     _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
-            Collect to switch from
-            @CardPreview(mine.BranchInstanceId, mine.Index)
-            to
-            @CardPreview(theirs.BranchInstanceId, theirs.Index)
-            <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
-              &Delta;
-            </a>
-            @OtherDeckCheck(mine.DeckId)
+                Collect to switch from
+                @CardPreview(mine.BranchInstanceId, mine.Index)
+                to
+                @CardPreview(theirs.BranchInstanceId, theirs.Index)
+                <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
+                  &Delta;
+                </a>
+                @OtherDeckCheck(mine.DeckId)
+              </div>
+            }
           </div>
-        }
+        </div>
       </div>
       <div class="col-3"></div>
     </div>
   }
   @if (_diffState.BranchInstanceChanged.Any()) {
-    <div class="row">
+    <div class="row mb-5">
       <div class="col-3"></div>
       <div class="col-6 text-center">
-        <h4>
-          Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
-        </h4>
-        @foreach (var (theirs, mine) in _diffState.BranchInstanceChanged) {
-          <div>
-            <CollectToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
-                            DeckId=@(FSharpOption<int>.Some(MyDeckId))
-                            CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
-                            IsBranch=@true
-                            UpdateCollectedIds=@(async _ => {
+        <div class="card">
+          <h4 class="card-header">
+            Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+          </h4>
+          <div class="card-body">
+            @foreach (var (theirs, mine) in _diffState.BranchInstanceChanged) {
+              <div>
+                <CollectToggles Ids=@(new StackBranchInstanceIds(theirs.StackId, theirs.BranchId, theirs.BranchInstanceId))
+                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(new StackBranchInstanceIds(mine.StackId, mine.BranchId, mine.BranchInstanceId)))
+                                IsBranch=@true
+                                UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchInstanceChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
                                                       .ToFList();
                                                     _diffState.BranchInstanceChanged = _diffState.BranchInstanceChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
-            Update to switch from
-            @CardPreview(mine.BranchInstanceId, mine.Index)
-            to
-            @CardPreview(theirs.BranchInstanceId, theirs.Index)
-            <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
-              &Delta;
-            </a>
-            @OtherDeckCheck(mine.DeckId)
+                Update to switch from
+                @CardPreview(mine.BranchInstanceId, mine.Index)
+                to
+                @CardPreview(theirs.BranchInstanceId, theirs.Index)
+                <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
+                  &Delta;
+                </a>
+                @OtherDeckCheck(mine.DeckId)
+              </div>
+            }
           </div>
-        }
+        </div>
       </div>
       <div class="col-3"></div>
     </div>
   }
   @if (_diffState.MoveToAnotherDeck.Any()) {
-    <div class="row">
+    <div class="row mb-5">
       <div class="col-3"></div>
       <div class="col-6 text-center">
-        <h4>
-          Move extraneous cards to another deck to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
-        </h4>
-        @foreach (var mine in _diffState.MoveToAnotherDeck) {
-          <Deck_MoveToAnotherDeck Decks=@_decks Mine=@mine Remove=@(() => _diffState.MoveToAnotherDeck = _diffState.MoveToAnotherDeck.Where(x => x != mine).ToFList()) />
-        }
+        <div class="card">
+          <h4 class="card-header">
+            Move extraneous cards to another deck to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+          </h4>
+          <div class="card-body">
+            @foreach (var mine in _diffState.MoveToAnotherDeck) {
+              <Deck_MoveToAnotherDeck Decks=@_decks Mine=@mine Remove=@(() => _diffState.MoveToAnotherDeck = _diffState.MoveToAnotherDeck.Where(x => x != mine).ToFList()) />
+            }
+          </div>
+        </div>
       </div>
       <div class="col-3"></div>
     </div>
   }
   @if (_diffState.Unchanged.Any()) {
-    <h4 class="text-center">
-      Synced
-    </h4>
     <div class="row">
       <div class="col-3"></div>
       <div class="col-6 text-center">
-        @foreach (var unchanged in _diffState.Unchanged) {
-          @CardPreview(unchanged.BranchInstanceId, unchanged.Index)
-        }
+        <div class="card">
+          <h4 class="card-header">
+            Synced
+          </h4>
+          <div class="card-body">
+            @foreach (var unchanged in _diffState.Unchanged) {
+              @CardPreview(unchanged.BranchInstanceId, unchanged.Index)
+            }
+          </div>
+        </div>
       </div>
       <div class="col-3"></div>
     </div>
