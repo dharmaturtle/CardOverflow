@@ -30,6 +30,49 @@ let emptyDiffStateSummary =
     }
 
 [<Fact>]
+let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let authorId = 1
+    let sourceDeckId = 1
+    let followerId = 3
+    let expectedDeck =
+        {   Id = 3
+            IsPublic = false
+            IsDefault = true
+            Name = "Default Deck"
+            AllCount = 0
+            DueCount = 0
+            SourceDeck =
+                {   Id = sourceDeckId
+                    Name = "Default Deck" } |> Some }
+    let setSource = SanitizeDeckRepository.setSource c.Db followerId expectedDeck.Id
+    let getEquals expected =
+        SanitizeDeckRepository.get c.Db followerId DateTime.UtcNow
+        |>% Seq.exactlyOne
+        |>% Assert.equal expected
+    
+    // nonpublic fails
+    let! (error: Result<unit, string>) = setSource <| Some sourceDeckId
+    Assert.equal "Either Deck #1 doesn't exist or it isn't public." error.error
+    
+    // nonexistant fails
+    let! (error: Result<unit, string>) = setSource <| Some 1337
+    Assert.equal "Either Deck #1337 doesn't exist or it isn't public." error.error
+
+    // public works
+    do! SanitizeDeckRepository.setIsPublic c.Db authorId sourceDeckId true
+
+    do! setSource <| Some sourceDeckId
+    
+    do! getEquals expectedDeck
+
+    // unset works
+    do! setSource None
+    
+    do! getEquals { expectedDeck with SourceDeck = None }
+    } |> TaskResult.getOk)
+
+[<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
@@ -50,7 +93,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
             IsDefault = true
             Name = "Default Deck"
             AllCount = 0
-            DueCount = 0 }
+            DueCount = 0
+            SourceDeck = None }
 
     let! actualDecks = getTomorrow ()
     

@@ -359,6 +359,7 @@ type ViewDeck = {
     Name: string
     DueCount: int
     AllCount: int
+    SourceDeck: IdName option
 }
 
 [<CLIMutable>]

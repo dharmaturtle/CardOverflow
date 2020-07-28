@@ -272,16 +272,22 @@ module SanitizeDeckRepository =
                         x.UserId = userId &&
                         x.Due < currentTime
                     ).Count(),
-                    x.CollectedCards.Count)
+                    x.CollectedCards.Count,
+                    x.Source)
             ).SingleAsync()
         |>% (fun (defaultDeckId, deckCounts) ->
-            deckCounts |> Seq.map(fun (deck, dueCount, allCount) -> {
+            deckCounts |> Seq.map(fun (deck, dueCount, allCount, source) -> {
                 Id = deck.Id
                 Name = deck.Name
                 IsPublic = deck.IsPublic
                 IsDefault = defaultDeckId = deck.Id
                 AllCount = allCount
                 DueCount = dueCount
+                SourceDeck =
+                    source |> Option.ofObj |> Option.map (fun s ->
+                    {   Id = s.Id
+                        Name = s.Name
+                    })
             })  |> List.ofSeq)
     let getSimple (db: CardOverflowDb) userId =
         db.User

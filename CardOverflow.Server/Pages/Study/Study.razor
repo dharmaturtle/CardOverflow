@@ -89,7 +89,7 @@
   }
 
   private void _CreateDeck() =>
-    _decks = _decks.Append(new ViewDeck(0, false, false, "New Deck", 0, 0)).ToFList();
+    _decks = _decks.Append(new ViewDeck(0, false, false, "New Deck", 0, 0, FSharpOption<IdName>.None)).ToFList();
 
   private void _CancelCreateDeck() =>
     _decks = _decks.Where(x => x.Id != default).ToFList();
