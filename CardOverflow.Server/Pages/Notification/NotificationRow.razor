@@ -63,6 +63,9 @@
               <ResizingIframeBranch BranchInstanceId=@_collectedState.Value.BranchInstanceId Back />
             </HoverPreview>
           </span>
+          <a href="stackdiff/@_collectedState.Value.BranchInstanceId/@deckUpdatedStack.New.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
+            &Delta;
+          </a>
         }
         @Stack(deckUpdatedStack.New.BranchInstanceId)
         updated in
