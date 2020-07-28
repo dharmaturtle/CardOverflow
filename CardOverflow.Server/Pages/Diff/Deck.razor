@@ -58,7 +58,7 @@
                                                     _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
                                                   }) />
                 @CardPreview(ids.BranchInstanceId, ids.Index)
-                @OtherDeckCheck(ids.DeckId)
+                @OtherDeckCheck(ids.DeckId, "Collecting")
               </div>
             }
           </div>
@@ -84,7 +84,7 @@
                                 CollectedIds=@(FSharpOption<StackBranchInstanceIds>.Some(ids2))
                                 UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
                 @CardPreview(ids.BranchInstanceId, ids.Index)
-                @OtherDeckCheck(ids.DeckId)
+                @OtherDeckCheck(ids.DeckId, "Discarding")
               </div>
             }
           </div>
@@ -112,14 +112,14 @@
                                                       .ToFList();
                                                     _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
-                Collect to switch from
-                @CardPreview(mine.BranchInstanceId, mine.Index)
+                Switch from
+                @CardPreview(mine.BranchInstanceId, mine.Index, false)
                 to
-                @CardPreview(theirs.BranchInstanceId, theirs.Index)
+                @CardPreview(theirs.BranchInstanceId, theirs.Index, false)
                 <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
                   &Delta;
                 </a>
-                @OtherDeckCheck(mine.DeckId)
+                @OtherDeckCheck(mine.DeckId, "Switching")
               </div>
             }
           </div>
@@ -134,7 +134,7 @@
       <div class="col-6 text-center">
         <div class="card">
           <h4 class="card-header">
-            Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
+            Update to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
             @foreach (var (theirs, mine) in _diffState.BranchInstanceChanged) {
@@ -149,14 +149,14 @@
                                                       .ToFList();
                                                     _diffState.BranchInstanceChanged = _diffState.BranchInstanceChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
-                Update to switch from
-                @CardPreview(mine.BranchInstanceId, mine.Index)
+                Update from
+                @CardPreview(mine.BranchInstanceId, mine.Index, false)
                 to
-                @CardPreview(theirs.BranchInstanceId, theirs.Index)
+                @CardPreview(theirs.BranchInstanceId, theirs.Index, false)
                 <a href="stackdiff/@mine.BranchInstanceId/@theirs.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
                   &Delta;
                 </a>
-                @OtherDeckCheck(mine.DeckId)
+                @OtherDeckCheck(mine.DeckId, "Updating")
               </div>
             }
           </div>
@@ -227,19 +227,21 @@
     StateHasChanged();
   }
 
-  private RenderFragment CardPreview(int branchInstanceId, short index) =>
+  private RenderFragment CardPreview(int branchInstanceId, short index, bool showId = true) =>
     @<a href="stack?branchinstance=@branchInstanceId">
       <HoverPreview Padding="0">
         <ResizingIframe BranchInstance=@((branchInstanceId, index)) Back />
       </HoverPreview>
-      @branchInstanceId
+      @if (showId) {
+        @branchInstanceId
+      }
     </a>;
 
-  private RenderFragment OtherDeckCheck(int cardsDeckId) =>
+  private RenderFragment OtherDeckCheck(int cardsDeckId, string verb) =>
     cardsDeckId == MyDeckId || cardsDeckId == TheirDeckId
     ? (RenderFragment)null
     : @<span>
-         Collecting will move from
+         @verb will move from
          <a href="deck/@cardsDeckId">@(_decks.Single(x => x.Id == cardsDeckId).Name)</a>
          to
          <a href="deck/@MyDeckId">@(_myDeck.Name)</a>.
