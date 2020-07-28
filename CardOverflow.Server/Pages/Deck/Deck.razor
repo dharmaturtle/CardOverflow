@@ -17,11 +17,9 @@
 @inject IToastService ToastService
 
 <div class="container">
-  <Heatmap />
   <table class="table">
     <tr>
       <th></th>
-      <th>Due</th>
       <th></th>
       <th></th>
       <th>
@@ -36,9 +34,6 @@
           <button @onclick=@(() => _selectedDeck = deck) class="btn btn-link">
             @deck.Name
           </button>
-        </td>
-        <td>
-          @deck.DueCount
         </td>
         <td>
           @if (deck.IsDefault) {
