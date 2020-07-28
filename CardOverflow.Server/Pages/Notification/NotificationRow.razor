@@ -22,6 +22,9 @@
   <td>
     @if (Notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
       <span>
+        <HoverPreview Padding="0">
+          <ResizingIframeBranch BranchInstanceId=@(deckAddedStack.New.BranchInstanceId) Back />
+        </HoverPreview>
         @Stack(deckAddedStack.New.BranchInstanceId)
         added to
         @Sender()&apos;s
@@ -41,7 +44,26 @@
         </button>
       </div>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
+      var showBoth = _collectedState.HasValue() && _collectedState.Value.BranchInstanceId != deckUpdatedStack.New.BranchInstanceId;
+      var newId = $"Notification-{Notification.Id}-New";
+      var oldId = $"Notification-{Notification.Id}-Old";
       <span>
+        @if (showBoth) {
+          <BSTooltip Target="@newId" Placement="Placement.Top">Updated</BSTooltip>
+        }
+        <span id="@newId">
+          <HoverPreview Padding="0">
+            <ResizingIframeBranch BranchInstanceId=@deckUpdatedStack.New.BranchInstanceId Back />
+          </HoverPreview>
+        </span>
+        @if (showBoth) {
+          <BSTooltip Target="@oldId" Placement="Placement.Top">Yours</BSTooltip>
+          <span id="@oldId">
+            <HoverPreview Padding="0">
+              <ResizingIframeBranch BranchInstanceId=@_collectedState.Value.BranchInstanceId Back />
+            </HoverPreview>
+          </span>
+        }
         @Stack(deckUpdatedStack.New.BranchInstanceId)
         updated in
         @Sender()&apos;s
@@ -62,6 +84,9 @@
       </div>
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
+        <HoverPreview Padding="0">
+          <ResizingIframeBranch BranchInstanceId=@(deckDeletedStack.Deleted.BranchInstanceId) Back />
+        </HoverPreview>
         @Stack(deckDeletedStack.Deleted.BranchInstanceId)
         deleted from
         @Sender()&apos;s
@@ -131,14 +156,14 @@
   }
 
   private RenderFragment Sender() =>
-    @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
+  @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
 
-  private RenderFragment Stack(int instanceId) =>
-    @<a href="stack?branchinstance=@instanceId">
-      Stack
-    </a>;
+private RenderFragment Stack(int instanceId) =>
+@<a href="stack?branchinstance=@instanceId">
+  Stack
+</a>;
 
-  private RenderFragment Deck(int deckId, string deckName) =>
-    @<span>&quot;<a href="deck/@deckId">@deckName</a>&quot;</span>;
+private RenderFragment Deck(int deckId, string deckName) =>
+@<span>&quot;<a href="deck/@deckId">@deckName</a>&quot;</span>;
 
 }
