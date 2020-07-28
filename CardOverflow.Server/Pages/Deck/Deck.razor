@@ -1,4 +1,4 @@
-@page "/study"
+@page "/deck"
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using Microsoft.FSharp.Collections
@@ -16,55 +16,63 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 
-@if (_selectedDeck == null) {
-  <div class="container">
-    <Heatmap />
-    <table class="table">
+<div class="container">
+  <Heatmap />
+  <table class="table">
+    <tr>
+      <th></th>
+      <th>Due</th>
+      <th></th>
+      <th></th>
+      <th>
+        <button class="btn btn-outline-success" @onclick=@_CreateDeck>
+          <i class="fas fa-plus"></i>
+        </button>
+      </th>
+    </tr>
+    @foreach (var deck in _decks) {
       <tr>
-        <th></th>
-        <th>Due</th>
-        <th></th>
-        <th></th>
-      </tr>
-      @foreach (var deck in _decks) {
-        <tr>
-          <td>
-            <button @onclick=@(() => _selectedDeck = deck) class="btn btn-link">
-              @deck.Name
+        <td>
+          <button @onclick=@(() => _selectedDeck = deck) class="btn btn-link">
+            @deck.Name
+          </button>
+        </td>
+        <td>
+          @deck.DueCount
+        </td>
+        <td>
+          @if (deck.IsDefault) {
+            <button type="button" class="btn bg-transparent" @onclick=@(() => ToastService.ShowInfo("This is the default deck."))>
+              <i class="text-warning fas fa-star" title="The default deck"></i>
             </button>
-          </td>
-          <td>
-            @deck.DueCount
-          </td>
-          <td>
-            @if (deck.IsDefault) {
-              <button type="button" class="btn bg-transparent" @onclick=@(() => ToastService.ShowInfo("This is the default deck."))>
-                <i class="text-warning fas fa-star" title="The default deck"></i>
-              </button>
-            } else {
-              <button type="button" class="btn bg-transparent" @onclick=@(() =>_SetDefault(deck.Id))>
-                <i class="text-muted far fa-star"></i>
-              </button>
-            }
-          </td>
-          <td>
-            @if (deck.IsPublic) {
-              <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, false))>
-                <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
-              </button>
-            } else {
-              <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, true))>
-                <i class="text-muted fas fa-eye-slash" title="Is not displayed on your user profile."></i>
-              </button>
-            }
-          </td>
-        </tr>
-      }
-    </table>
-  </div>
-} else {
-  <Study_Detail DeckId=@_selectedDeck.Id />
-}
+          } else {
+            <button type="button" class="btn bg-transparent" @onclick=@(() =>_SetDefault(deck.Id))>
+              <i class="text-muted far fa-star"></i>
+            </button>
+          }
+        </td>
+        <td>
+          @if (deck.IsPublic) {
+            <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, false))>
+              <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
+            </button>
+          } else {
+            <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, true))>
+              <i class="text-muted fas fa-eye-slash" title="Is not displayed on your user profile."></i>
+            </button>
+          }
+        </td>
+        <td>
+          <DeckMenu Deck=deck
+                    Delete=@(modal => _DeleteDeck(deck.Id, modal))
+                    Create=@(x => _Create(x.Item1, x.Item2))
+                    CancelCreate=_CancelCreateDeck
+                    Rename=@(newName => _Rename(deck.Id, newName)) />
+        </td>
+      </tr>
+    }
+  </table>
+</div>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
