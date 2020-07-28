@@ -318,13 +318,15 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                            New = instance1
                                            Collected = None } }
 
-    // notification deleted
+    // *both* notifications deleted
     Assert.Empty c.Db.ReceivedNotification
+    Assert.Empty c.Db.Notification
     
     // can remove notification, idempotent
     do! NotificationRepository.remove c.Db followerId notificationId
 
     Assert.Empty c.Db.ReceivedNotification
+    Assert.Empty c.Db.Notification
 
     // edit card notifies follower
     let instance2 = { instance1 with BranchInstanceId = 1002 }
