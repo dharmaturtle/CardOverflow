@@ -339,6 +339,18 @@ $$;
 
 ALTER FUNCTION public.fn_tr_user_afterinsert() OWNER TO postgres;
 
+CREATE FUNCTION public.fn_tr_user_beforeinsertupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$  
+begin
+  NEW."TsVector" = to_tsvector('pg_catalog.simple', NEW."DisplayName");
+  return NEW;
+end
+$$;
+
+
+ALTER FUNCTION public.fn_tr_user_beforeinsertupdate() OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -1017,7 +1029,8 @@ CREATE TABLE public."User" (
     "NextDayStartsAtXHoursPastMidnight" smallint NOT NULL,
     "LearnAheadLimitInMinutes" smallint NOT NULL,
     "TimeboxTimeLimitInMinutes" smallint NOT NULL,
-    "IsNightMode" boolean NOT NULL
+    "IsNightMode" boolean NOT NULL,
+    "TsVector" tsvector
 );
 
 
@@ -1284,9 +1297,9 @@ INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVe
 
 
 
-INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (1, 'Admin', 1, 1, true, true, 0, 4, 20, 0, false);
-INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (2, 'The Collective', 2, 2, true, true, 0, 4, 20, 0, false);
-INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode") VALUES (3, 'RoboTurtle', 3, 3, true, true, 0, 4, 20, 0, false);
+INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode", "TsVector") VALUES (1, 'Admin', 1, 1, true, true, 0, 4, 20, 0, false, '''admin'':1');
+INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode", "TsVector") VALUES (2, 'The Collective', 2, 2, true, true, 0, 4, 20, 0, false, '''collective'':2 ''the'':1');
+INSERT INTO public."User" ("Id", "DisplayName", "DefaultCardSettingId", "DefaultDeckId", "ShowNextReviewTime", "ShowRemainingCardCount", "MixNewAndReview", "NextDayStartsAtXHoursPastMidnight", "LearnAheadLimitInMinutes", "TimeboxTimeLimitInMinutes", "IsNightMode", "TsVector") VALUES (3, 'RoboTurtle', 3, 3, true, true, 0, 4, 20, 0, false, '''roboturtle'':1');
 
 
 INSERT INTO public."User_CollateInstance" ("UserId", "CollateInstanceId", "DefaultCardSettingId") VALUES (3, 1001, 3);
@@ -1679,6 +1692,9 @@ CREATE INDEX idx_fts_relationship_tsvector ON public."Relationship" USING gin ("
 CREATE INDEX idx_fts_tag_tsvector ON public."Tag" USING gin ("TsVector");
 
 
+CREATE INDEX idx_fts_user_tsvector ON public."User" USING gin ("TsVector");
+
+
 CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public."Branch" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
 
 
@@ -1713,6 +1729,9 @@ CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Tag"
 
 
 CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_afterinsert();
+
+
+CREATE TRIGGER tr_user_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."User" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_beforeinsertupdate();
 
 
 ALTER TABLE ONLY public."BranchInstance"
