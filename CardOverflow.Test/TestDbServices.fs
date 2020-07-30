@@ -17,6 +17,8 @@ open LoadersAndCopiers
 open Microsoft.EntityFrameworkCore
 open CardOverflow.Sanitation
 open CardOverflow.Pure
+open Npgsql
+open System.Threading.Tasks
 
 type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
@@ -31,6 +33,7 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
             |> sprintf "Ω_%s"
         container.RegisterStuffTestOnly
         container.RegisterTestConnectionString dbName
+        container.GetInstance<Task<NpgsqlConnection>>() |> ignore
         container.Verify()
         match newDb with
         | Some newDb ->
@@ -52,6 +55,11 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         scope.Dispose()
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<CardOverflowDb>()
+
+    member __.Conn () =
+        scope.Dispose()
+        scope <- AsyncScopedLifestyle.BeginScope container
+        container.GetInstance<Task<NpgsqlConnection>>()
 
 module TestCollateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {

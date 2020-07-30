@@ -73,6 +73,61 @@ let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
     } |> TaskResult.getOk)
 
 [<Fact>]
+let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+    let userId = 3
+    use! conn = c.Conn()
+    let searchAssert query expected =
+        SanitizeDeckRepository.search conn userId query
+        |>% Assert.areEquivalent expected
+        
+    let deck1 =
+        {   Id = 1
+            Name = "Default Deck"
+            AuthorId = 1
+            AuthorName = "Admin"
+            IsFollowed = false
+            FollowCount = 0 }
+    let deck2 =
+        {   deck1 with
+                Id = 2
+                AuthorId = 2
+                AuthorName = "The Collective"  }
+    let deck3 =
+        {   deck1 with
+                Id = 3
+                AuthorId = 3
+                AuthorName = "RoboTurtle"  }
+
+    // doesn't reveal private decks
+    do! searchAssert "" [deck3]
+
+    // empty string lists all
+    do! SanitizeDeckRepository.setIsPublic c.Db 1 1 true
+    do! SanitizeDeckRepository.setIsPublic c.Db 2 2 true
+
+    do! searchAssert "" [deck1; deck2; deck3]
+
+    // search works
+    let name1 = "one"
+    let name2 = "two"
+    let name3 = sprintf "%s %s" name1 name2
+    do! SanitizeDeckRepository.rename c.Db 1 1 name1
+    do! SanitizeDeckRepository.rename c.Db 2 2 name2
+    do! SanitizeDeckRepository.rename c.Db 3 3 name3
+    let deck1 = { deck1 with Name = name1 }
+    let deck2 = { deck2 with Name = name2 }
+    let deck3 = { deck3 with Name = name3 }
+
+    do! searchAssert name1 [deck1; deck3]
+    do! searchAssert name2 [deck2; deck3]
+    do! searchAssert name3 [deck3]
+
+    // injection attack fails
+    do! searchAssert "'" []
+    } |> TaskResult.getOk)
+
+[<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3

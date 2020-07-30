@@ -24,6 +24,9 @@ open Microsoft.EntityFrameworkCore.Diagnostics
 open System.Security.Cryptography
 open LoadersAndCopiers
 open CardOverflow.Pure
+open Npgsql
+open FSharp.Control.Tasks
+open System.Threading.Tasks
 
 module Environment =
     let get =
@@ -63,9 +66,15 @@ type EntityHasher () =
 
 type Container with
     member container.RegisterStuffTestOnly =
-        container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle()
+        container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle() // https://simpleinjector.readthedocs.io/en/latest/lifetimes.html#web-request-lifestyle
         container.RegisterInstance<IConfiguration>(Environment.get |> Configuration.get)
         container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
+        let npgsqlConnection = Func<Task<NpgsqlConnection>>(fun() -> task {
+            let conn = new NpgsqlConnection(container.GetInstance<ConnectionString>() |> ConnectionString.value)
+            do! conn.OpenAsync()
+            return conn
+        })
+        container.Register<Task<NpgsqlConnection>>(npgsqlConnection, Lifestyle.Scoped)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
         let loggerFactory = new LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
         ServiceCollection() // https://stackoverflow.com/a/60290696

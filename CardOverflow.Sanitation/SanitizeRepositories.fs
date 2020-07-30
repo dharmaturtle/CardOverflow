@@ -19,6 +19,8 @@ open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
 open System.Runtime.InteropServices
+open Npgsql
+open Dapper
 
 [<CLIMutable>]
 type ViewFilter = {
@@ -511,6 +513,29 @@ module SanitizeDeckRepository =
                 BranchInstanceChanged = branchInstanceChanged @ (diffs.BranchInstanceChanged |> List.filterOut (fun (x, _) -> stackIds.Contains x.StackId))
             }
     }
+    let search (conn: NpgsqlConnection) userId query =
+        let additionalWhere =
+            if String.IsNullOrWhiteSpace query then ""
+            else """AND query @@ d."TsVector" """
+        conn.QueryAsync<DeckWithFollowMeta>(sprintf """SELECT
+        	d."Id" as "Id"
+        	, d."Name" as "Name"
+        	, d."UserId" as "AuthorId"
+        	, u."DisplayName" as "AuthorName"
+        	, EXISTS (
+                SELECT 1
+                FROM   public."DeckFollowers" df
+                WHERE  df."DeckId" = d."Id"
+                AND    df."FollowerId" = @userid
+            ) as "IsFollowed"
+        	, ts_rank_cd(d."TsVector", query) AS rank
+        FROM public."Deck" d
+        JOIN public."User" u ON u."Id" = d."UserId"
+        , websearch_to_tsquery(@query) query
+        WHERE (d."IsPublic" OR d."UserId" = @userid) %s
+        ORDER BY rank DESC
+        LIMIT 10;""" additionalWhere, {| query = query; userid = userId |})
+        |>% Seq.toList
 
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) collectedCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {

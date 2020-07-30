@@ -5,6 +5,9 @@ open Xunit
 open SimpleInjector
 open ContainerExtensions
 open Serilog
+open Npgsql
+open System.Threading.Tasks
+open SimpleInjector.Lifestyles
 
 [<Fact>]
 let ``RegisterStuff verifies`` (): unit =
@@ -12,6 +15,8 @@ let ``RegisterStuff verifies`` (): unit =
     
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
+    AsyncScopedLifestyle.BeginScope c |> ignore
+    c.GetInstance<Task<NpgsqlConnection>>() |> ignore
     
     c.Verify()
 
@@ -21,6 +26,8 @@ let ``Testing logging, needs manual checking`` (): unit =
     
     c.RegisterStuffTestOnly
     c.RegisterStandardConnectionString
+    AsyncScopedLifestyle.BeginScope c |> ignore
+    c.GetInstance<Task<NpgsqlConnection>>() |> ignore
     c.Verify()
     
     Log.Information("Logging test, success!")
