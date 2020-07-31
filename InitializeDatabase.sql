@@ -151,46 +151,30 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
         new_is_public boolean NOT NULL := 'f';
         old_is_public boolean NOT NULL := 'f';
     BEGIN
-		IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
+		IF ((TG_OP = 'DELETE' AND OLD."CardState" <> 3) OR 
+            (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId"
+                                      OR (OLD."CardState" <> 3 AND NEW."CardState" = 3)))) THEN
             UPDATE	"BranchInstance" ci
-            SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
-                                    FROM    "CollectedCard" cc
-                                    WHERE   "BranchInstanceId" = OLD."BranchInstanceId" AND "CardState" <> 3 )_)
+            SET     "Users" = ci."Users" - 1
             WHERE	ci."Id" = OLD."BranchInstanceId";
             UPDATE	"Branch" b
-            SET		"Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
-                                    FROM    "CollectedCard" cc
-                                    WHERE   "BranchId" = OLD."BranchId" AND "CardState" <> 3 )_)
+            SET		"Users" = b."Users" - 1
             WHERE	b."Id" = OLD."BranchId";
             UPDATE  "Stack" stack
-            SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT s."Id", cc."UserId"
-                                    FROM    "Stack" s
-                                    JOIN    "CollectedCard" cc on cc."StackId" = s."Id"
-                                    WHERE   cc."CardState" <> 3 AND cc."StackId" = OLD."StackId")_)
+            SET     "Users" = stack."Users" - 1
             WHERE stack."Id" = OLD."StackId";
         END IF;
-        IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId" OR OLD."CardState" <> NEW."CardState"))) THEN
+        IF (TG_OP = 'INSERT' OR
+           (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId"
+                                     OR (OLD."CardState" = 3 AND NEW."CardState" <> 3)))) THEN
             UPDATE	"BranchInstance" ci
-            SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
-                                    FROM    "CollectedCard" cc
-                                    WHERE   "BranchInstanceId" = NEW."BranchInstanceId" AND "CardState" <> 3 )_)
+            SET     "Users" = ci."Users" + 1
             WHERE	ci."Id" = NEW."BranchInstanceId";
             UPDATE	"Branch" b
-            SET		"Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT cc."StackId", cc."UserId"
-                                    FROM    "CollectedCard" cc
-                                    WHERE   "BranchId" = NEW."BranchId" AND "CardState" <> 3 )_)
+            SET		"Users" = b."Users" + 1
             WHERE	b."Id" = NEW."BranchId";
             UPDATE  "Stack" stack
-            SET     "Users" = ( SELECT  COUNT(*) FROM
-                                  ( SELECT DISTINCT s."Id", cc."UserId"
-                                    FROM    "Stack" s
-                                    JOIN    "CollectedCard" cc on cc."StackId" = s."Id"
-                                    WHERE   cc."CardState" <> 3 AND cc."StackId" = NEW."StackId")_)
+            SET     "Users" = stack."Users" + 1
             WHERE stack."Id" = NEW."StackId";
         END IF;
         new_is_public := COALESCE((SELECT "IsPublic" FROM public."Deck" WHERE "Id" = NEW."DeckId"), 'f');
