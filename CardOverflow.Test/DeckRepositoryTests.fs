@@ -635,10 +635,14 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db authorId   publicDeck.Id             |>%% Assert.equal { publicDeck with FollowCount = 2 }
     do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db followerId publicDeck.Id             |>%% Assert.equal { publicDeck with FollowCount = 2; IsFollowed = true }
     
-    // can delete followed deck
+    // can delete followed deck that is the source of another deck
+    do! SanitizeDeckRepository.setSource c.Db followerId followerDefaultDeckId (Some publicDeck.Id)
+    Assert.equal (Some publicDeck.Id |> Option.toNullable) (c.Db.Deck.Single(fun x -> x.Id = followerDefaultDeckId).SourceId)
     do! SanitizeDeckRepository.setDefault c.Db authorId authorId
+
     do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id
 
+    Assert.equal (Nullable()) (c.Db.Deck.Single(fun x -> x.Id = followerDefaultDeckId).SourceId)
     do! DeckRepository.getPublic                     c.Db authorId   authorId |>% Assert.Empty
     do! DeckRepository.getPublic                     c.Db followerId authorId |>% Assert.Empty
     do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db authorId   publicDeck.Id             |>% (fun x -> Assert.equal "Either Deck #4 doesn't exist or it isn't public." x.error)
