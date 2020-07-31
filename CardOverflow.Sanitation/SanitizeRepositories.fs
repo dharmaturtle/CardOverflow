@@ -310,7 +310,7 @@ module SanitizeDeckRepository =
             .Select(fun x ->
                 x,
                 x.DeckFollowers.Any(fun x -> x.FollowerId = userId),
-                x.DeckFollowers.Count,
+                x.Followers,
                 x.UserId,
                 x.User.DisplayName
             )

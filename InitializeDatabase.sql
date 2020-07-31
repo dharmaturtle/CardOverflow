@@ -284,6 +284,28 @@ $$;
 
 ALTER FUNCTION public.fn_tr_deck_beforeinsertupdate() OWNER TO postgres;
 
+CREATE FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+        IF TG_OP = 'INSERT' THEN
+            UPDATE	"Deck" d
+            SET     "Followers" = d."Followers" + 1
+            WHERE	d."Id" = NEW."DeckId";
+        ELSIF TG_OP = 'DELETE' THEN
+            UPDATE	"Deck" d
+            SET     "Followers" = d."Followers" - 1
+            WHERE	d."Id" = OLD."DeckId";
+        ELSIF TG_OP = 'UPDATE' THEN
+            RAISE EXCEPTION 'Handle the case when "DeckFollower" is updated';
+        END IF;
+        RETURN NULL;
+    END;
+$$;
+
+
+ALTER FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate() OWNER TO postgres;
+
 CREATE FUNCTION public.fn_tr_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -756,6 +778,7 @@ CREATE TABLE public."Deck" (
     "Name" character varying(250) NOT NULL,
     "IsPublic" boolean NOT NULL,
     "SourceId" integer,
+    "Followers" integer NOT NULL,
     "TsVector" tsvector
 );
 
@@ -1262,9 +1285,9 @@ INSERT INTO public."CollateInstance" ("Id", "Name", "CollateId", "Css", "Created
 
 
 
-INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (1, 1, 'Default Deck', false, NULL, NULL);
-INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (2, 2, 'Default Deck', false, NULL, NULL);
-INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "TsVector") VALUES (3, 3, 'Default Deck', false, NULL, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "Followers", "TsVector") VALUES (1, 1, 'Default Deck', false, NULL, 0, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "Followers", "TsVector") VALUES (2, 2, 'Default Deck', false, NULL, 0, NULL);
+INSERT INTO public."Deck" ("Id", "UserId", "Name", "IsPublic", "SourceId", "Followers", "TsVector") VALUES (3, 3, 'Default Deck', false, NULL, 0, NULL);
 
 
 
@@ -1720,6 +1743,9 @@ CREATE TRIGGER tr_communalfieldinstance_beforeinsert BEFORE INSERT ON public."Co
 
 
 CREATE TRIGGER tr_deck_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Deck" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_deck_beforeinsertupdate();
+
+
+CREATE TRIGGER tr_deckfollower_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public."DeckFollowers" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate();
 
 
 CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."Relationship" FOR EACH ROW EXECUTE FUNCTION public.fn_tr_relationship_beforeinsertupdate();

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -32,6 +32,7 @@ namespace CardOverflow.Entity
         public bool IsPublic { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
         public int? SourceId { get; set; }
+        public int Followers { get; set; }
 
         [ForeignKey("SourceId")]
         [InverseProperty("DerivedDecks")]
