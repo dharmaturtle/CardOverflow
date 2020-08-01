@@ -1,4 +1,4 @@
--- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
+﻿-- medTODO counts involving `"CardState" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -151,7 +151,7 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
         new_is_public boolean NOT NULL := 'f';
         old_is_public boolean NOT NULL := 'f';
     BEGIN
-		IF ((TG_OP = 'DELETE' AND OLD."CardState" <> 3) OR 
+		IF ((TG_OP = 'DELETE' AND OLD."Index" = 0 AND OLD."CardState" <> 3) OR 
             (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId"
                                       OR (OLD."CardState" <> 3 AND NEW."CardState" = 3)))) THEN
             UPDATE	"BranchInstance" ci
@@ -164,9 +164,9 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
             SET     "Users" = stack."Users" - 1
             WHERE stack."Id" = OLD."StackId";
         END IF;
-        IF (TG_OP = 'INSERT' OR
-           (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId"
-                                     OR (OLD."CardState" = 3 AND NEW."CardState" <> 3)))) THEN
+        IF ((TG_OP = 'INSERT' AND NEW."Index" = 0) OR
+            (TG_OP = 'UPDATE' AND (OLD."BranchInstanceId" <> NEW."BranchInstanceId"
+                                      OR (OLD."CardState" = 3 AND NEW."CardState" <> 3)))) THEN
             UPDATE	"BranchInstance" ci
             SET     "Users" = ci."Users" + 1
             WHERE	ci."Id" = NEW."BranchInstanceId";
