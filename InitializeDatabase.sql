@@ -182,10 +182,10 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD."deck_id" <> NEW."deck_id" AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("_sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "collate_id", "collate_instance_id")
+                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "collate_id", "collate_instance_id")
                                             VALUES (NEW."user_id", (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW."stack_id", NEW."branch_id", NEW."branch_instance_id", NEW."deck_id",  NULL,       NULL)
                     RETURNING "id"
-                ) INSERT INTO public."received_notification"("_receiver_id", "notification_id")
+                ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
                                                  (SELECT df."follower_id", (SELECT "id" FROM notification_id)
                                                   FROM public."deck_followers" df
                                                   WHERE df."deck_id" = NEW."deck_id"
@@ -193,10 +193,10 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
             END IF;
             IF (TG_OP = 'UPDATE' AND OLD."branch_instance_id" <> NEW."branch_instance_id") THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("_sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "collate_id", "collate_instance_id")
+                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "collate_id", "collate_instance_id")
                                             VALUES (NEW."user_id", (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW."stack_id", NEW."branch_id", NEW."branch_instance_id", NEW."deck_id",  NULL,       NULL)
                     RETURNING "id"
-                ) INSERT INTO public."received_notification"("_receiver_id", "notification_id")
+                ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
                                                  (SELECT df."follower_id", (SELECT "id" FROM notification_id)
                                                   FROM public."deck_followers" df
                                                   WHERE df."deck_id" = NEW."deck_id"
@@ -204,10 +204,10 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD."deck_id" <> NEW."deck_id" AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("_sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "collate_id", "collate_instance_id")
+                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "collate_id", "collate_instance_id")
                                             VALUES (OLD."user_id", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."stack_id", OLD."branch_id", OLD."branch_instance_id", OLD."deck_id",  NULL,       NULL)
                     RETURNING "id"
-                ) INSERT INTO public."received_notification"("_receiver_id", "notification_id")
+                ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
                                                  (SELECT df."follower_id", (SELECT "id" FROM notification_id)
                                                   FROM public."deck_followers" df
                                                   WHERE df."deck_id" = OLD."deck_id"
@@ -1745,303 +1745,303 @@ CREATE TRIGGER tr_user_beforeinsertupdate BEFORE INSERT OR UPDATE ON public."use
 
 
 ALTER TABLE ONLY public."branch_instance"
-    ADD CONSTRAINT "f_k$branch_instance$branch__branch_id" FOREIGN KEY ("branch_id") REFERENCES public."branch"("_id");
+    ADD CONSTRAINT "f_k$branch_instance$branch__branch_id" FOREIGN KEY ("branch_id") REFERENCES public."branch"(id);
 
 
 ALTER TABLE ONLY public."branch_instance"
-    ADD CONSTRAINT "f_k$branch_instance$branch__stack_id__branch_id" FOREIGN KEY ("stack_id", "branch_id") REFERENCES public."branch"("_stack_id", "id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$branch_instance$branch__stack_id__branch_id" FOREIGN KEY ("stack_id", "branch_id") REFERENCES public."branch"("stack_id", "id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."branch_instance"
-    ADD CONSTRAINT "f_k$branch_instance$collate_instance__collate_instance_id" FOREIGN KEY ("collate_instance_id") REFERENCES public."collate_instance"("_id");
+    ADD CONSTRAINT "f_k$branch_instance$collate_instance__collate_instance_id" FOREIGN KEY ("collate_instance_id") REFERENCES public."collate_instance"(id);
 
 
 ALTER TABLE ONLY public."branch"
-    ADD CONSTRAINT "f_k$branch$branch_instance__latest_instance_id" FOREIGN KEY ("latest_instance_id", "id") REFERENCES public."branch_instance"("_id", "branch_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$branch$branch_instance__latest_instance_id" FOREIGN KEY ("latest_instance_id", "id") REFERENCES public."branch_instance"(id, "branch_id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."branch"
-    ADD CONSTRAINT "f_k$branch$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"("_id");
+    ADD CONSTRAINT "f_k$branch$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"(id);
 
 
 ALTER TABLE ONLY public."branch"
-    ADD CONSTRAINT "f_k$branch$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$branch$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."card_setting"
-    ADD CONSTRAINT "f_k$card_setting$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$card_setting$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."collate_instance"
-    ADD CONSTRAINT "f_k$collate_instance$collate__collate_id" FOREIGN KEY ("collate_id") REFERENCES public."collate"("_id");
+    ADD CONSTRAINT "f_k$collate_instance$collate__collate_id" FOREIGN KEY ("collate_id") REFERENCES public."collate"(id);
 
 
 ALTER TABLE ONLY public."collate"
-    ADD CONSTRAINT "f_k$collate$collate_instance__latest_instance_id" FOREIGN KEY ("latest_instance_id", "id") REFERENCES public."collate_instance"("_id", "collate_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$collate$collate_instance__latest_instance_id" FOREIGN KEY ("latest_instance_id", "id") REFERENCES public."collate_instance"(id, "collate_id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."collate"
-    ADD CONSTRAINT "f_k$collate$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$collate$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"("_id");
+    ADD CONSTRAINT "f_k$collected_card$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"(id);
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$branch_instance__branch_instance_id__branch_id" FOREIGN KEY ("branch_id", "branch_instance_id") REFERENCES public."branch_instance"("_branch_id", "id");
+    ADD CONSTRAINT "f_k$collected_card$branch_instance__branch_instance_id__branch_id" FOREIGN KEY ("branch_id", "branch_instance_id") REFERENCES public."branch_instance"("branch_id", "id");
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$branch__branch_id" FOREIGN KEY ("branch_id") REFERENCES public."branch"("_id");
+    ADD CONSTRAINT "f_k$collected_card$branch__branch_id" FOREIGN KEY ("branch_id") REFERENCES public."branch"(id);
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$branch__branch_id__stack_id" FOREIGN KEY ("stack_id", "branch_id") REFERENCES public."branch"("_stack_id", "id");
+    ADD CONSTRAINT "f_k$collected_card$branch__branch_id__stack_id" FOREIGN KEY ("stack_id", "branch_id") REFERENCES public."branch"("stack_id", "id");
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$card_setting__card_setting_id" FOREIGN KEY ("card_setting_id") REFERENCES public."card_setting"("_id");
+    ADD CONSTRAINT "f_k$collected_card$card_setting__card_setting_id" FOREIGN KEY ("card_setting_id") REFERENCES public."card_setting"(id);
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$deck__deck_id" FOREIGN KEY ("deck_id") REFERENCES public."deck"("_id");
+    ADD CONSTRAINT "f_k$collected_card$deck__deck_id" FOREIGN KEY ("deck_id") REFERENCES public."deck"(id);
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"("_id");
+    ADD CONSTRAINT "f_k$collected_card$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"(id);
 
 
 ALTER TABLE ONLY public."collected_card"
-    ADD CONSTRAINT "f_k$collected_card$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$collected_card$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."comment_collate"
-    ADD CONSTRAINT "f_k$comment_collate$collate__collate_id" FOREIGN KEY ("collate_id") REFERENCES public."collate"("_id");
+    ADD CONSTRAINT "f_k$comment_collate$collate__collate_id" FOREIGN KEY ("collate_id") REFERENCES public."collate"(id);
 
 
 ALTER TABLE ONLY public."comment_collate"
-    ADD CONSTRAINT "f_k$comment_collate$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$comment_collate$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."comment_stack"
-    ADD CONSTRAINT "f_k$comment_stack$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"("_id");
+    ADD CONSTRAINT "f_k$comment_stack$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"(id);
 
 
 ALTER TABLE ONLY public."comment_stack"
-    ADD CONSTRAINT "f_k$comment_stack$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$comment_stack$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."communal_field_instance$branch_instance"
-    ADD CONSTRAINT "f_k$communal_field_instance$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"("_id");
+    ADD CONSTRAINT "f_k$communal_field_instance$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"(id);
 
 
 ALTER TABLE ONLY public."communal_field_instance$branch_instance"
-    ADD CONSTRAINT "f_k$communal_field_instance$branch_instance__communal_field_instance_id" FOREIGN KEY ("communal_field_instance_id") REFERENCES public."communal_field_instance"("_id");
+    ADD CONSTRAINT "f_k$communal_field_instance$branch_instance__communal_field_instance_id" FOREIGN KEY ("communal_field_instance_id") REFERENCES public."communal_field_instance"(id);
 
 
 ALTER TABLE ONLY public."communal_field_instance"
-    ADD CONSTRAINT "f_k$communal_field_instance$communal_field__communal_field_id" FOREIGN KEY ("communal_field_id") REFERENCES public."communal_field"("_id");
+    ADD CONSTRAINT "f_k$communal_field_instance$communal_field__communal_field_id" FOREIGN KEY ("communal_field_id") REFERENCES public."communal_field"(id);
 
 
 ALTER TABLE ONLY public."communal_field"
-    ADD CONSTRAINT "f_k$communal_field$communal_field_instance__latest_instance_id" FOREIGN KEY ("latest_instance_id", "id") REFERENCES public."communal_field_instance"("_id", "communal_field_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$communal_field$communal_field_instance__latest_instance_id" FOREIGN KEY ("latest_instance_id", "id") REFERENCES public."communal_field_instance"(id, "communal_field_id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."communal_field"
-    ADD CONSTRAINT "f_k$communal_field$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$communal_field$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."deck_followers"
-    ADD CONSTRAINT "f_k$deck_followers$deck_id" FOREIGN KEY ("deck_id") REFERENCES public."deck"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$deck_followers$deck_id" FOREIGN KEY ("deck_id") REFERENCES public."deck"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."deck_followers"
-    ADD CONSTRAINT "f_k$deck_followers$follower_id" FOREIGN KEY ("follower_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$deck_followers$follower_id" FOREIGN KEY ("follower_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."deck"
-    ADD CONSTRAINT "f_k$deck$deck__source_id" FOREIGN KEY ("source_id") REFERENCES public."deck"("_id") ON DELETE SET NULL;
+    ADD CONSTRAINT "f_k$deck$deck__source_id" FOREIGN KEY ("source_id") REFERENCES public."deck"(id) ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public."deck"
-    ADD CONSTRAINT "f_k$deck$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$deck$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."feedback"
-    ADD CONSTRAINT "f_k$feedback$feedback__parent_id" FOREIGN KEY ("parent_id") REFERENCES public."feedback"("_id");
+    ADD CONSTRAINT "f_k$feedback$feedback__parent_id" FOREIGN KEY ("parent_id") REFERENCES public."feedback"(id);
 
 
 ALTER TABLE ONLY public."feedback"
-    ADD CONSTRAINT "f_k$feedback$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$feedback$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."file$branch_instance"
-    ADD CONSTRAINT "f_k$file$branch_instance__branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"("_id");
+    ADD CONSTRAINT "f_k$file$branch_instance__branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"(id);
 
 
 ALTER TABLE ONLY public."file$branch_instance"
-    ADD CONSTRAINT "f_k$file$branch_instance__file__file_id" FOREIGN KEY ("file_id") REFERENCES public."file"("_id");
+    ADD CONSTRAINT "f_k$file$branch_instance__file__file_id" FOREIGN KEY ("file_id") REFERENCES public."file"(id);
 
 
 ALTER TABLE ONLY public."filter"
-    ADD CONSTRAINT "f_k$filter$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$filter$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."history"
-    ADD CONSTRAINT "f_k$history$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"("_id");
+    ADD CONSTRAINT "f_k$history$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"(id);
 
 
 ALTER TABLE ONLY public."history"
-    ADD CONSTRAINT "f_k$history$collected_card__collected_card_id" FOREIGN KEY ("collected_card_id") REFERENCES public."collected_card"("_id") ON DELETE SET NULL;
+    ADD CONSTRAINT "f_k$history$collected_card__collected_card_id" FOREIGN KEY ("collected_card_id") REFERENCES public."collected_card"(id) ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public."history"
-    ADD CONSTRAINT "f_k$history$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$history$user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"("_id");
+    ADD CONSTRAINT "f_k$notification$branch_instance__branch_instance_id" FOREIGN KEY ("branch_instance_id") REFERENCES public."branch_instance"(id);
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$branch_instance__branch_instance_id__branch_id" FOREIGN KEY ("branch_instance_id", "branch_id") REFERENCES public."branch_instance"("_id", "branch_id");
+    ADD CONSTRAINT "f_k$notification$branch_instance__branch_instance_id__branch_id" FOREIGN KEY ("branch_instance_id", "branch_id") REFERENCES public."branch_instance"(id, "branch_id");
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$branch_instance__branch_instance_id__stack_id" FOREIGN KEY ("branch_instance_id", "stack_id") REFERENCES public."branch_instance"("_id", "stack_id");
+    ADD CONSTRAINT "f_k$notification$branch_instance__branch_instance_id__stack_id" FOREIGN KEY ("branch_instance_id", "stack_id") REFERENCES public."branch_instance"(id, "stack_id");
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$branch__branch_id" FOREIGN KEY ("branch_id") REFERENCES public."branch"("_id");
+    ADD CONSTRAINT "f_k$notification$branch__branch_id" FOREIGN KEY ("branch_id") REFERENCES public."branch"(id);
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$branch__branch_id__stack_id" FOREIGN KEY ("branch_id", "stack_id") REFERENCES public."branch"("_id", "stack_id");
+    ADD CONSTRAINT "f_k$notification$branch__branch_id__stack_id" FOREIGN KEY ("branch_id", "stack_id") REFERENCES public."branch"(id, "stack_id");
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$collate_instance__collate_instance_id" FOREIGN KEY ("collate_instance_id") REFERENCES public."collate_instance"("_id");
+    ADD CONSTRAINT "f_k$notification$collate_instance__collate_instance_id" FOREIGN KEY ("collate_instance_id") REFERENCES public."collate_instance"(id);
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$collate__collate_id" FOREIGN KEY ("collate_id") REFERENCES public."collate"("_id");
+    ADD CONSTRAINT "f_k$notification$collate__collate_id" FOREIGN KEY ("collate_id") REFERENCES public."collate"(id);
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$deck__deck_id" FOREIGN KEY ("deck_id") REFERENCES public."deck"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$notification$deck__deck_id" FOREIGN KEY ("deck_id") REFERENCES public."deck"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"("_id");
+    ADD CONSTRAINT "f_k$notification$stack__stack_id" FOREIGN KEY ("stack_id") REFERENCES public."stack"(id);
 
 
 ALTER TABLE ONLY public."notification"
-    ADD CONSTRAINT "f_k$notification$user__sender_id" FOREIGN KEY ("sender_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$notification$user__sender_id" FOREIGN KEY ("sender_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."received_notification"
-    ADD CONSTRAINT "f_k$received_notification$user__notification_id" FOREIGN KEY ("notification_id") REFERENCES public."notification"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$received_notification$user__notification_id" FOREIGN KEY ("notification_id") REFERENCES public."notification"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."received_notification"
-    ADD CONSTRAINT "f_k$received_notification$user__receiver_id" FOREIGN KEY ("receiver_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$received_notification$user__receiver_id" FOREIGN KEY ("receiver_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__collected_card__source_collected_card" FOREIGN KEY ("source_collected_card_id") REFERENCES public."collected_card"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$relationship$collected_card__collected_card__source_collected_card" FOREIGN KEY ("source_collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__collected_card__target_collected_card" FOREIGN KEY ("target_collected_card_id") REFERENCES public."collected_card"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$relationship$collected_card__collected_card__target_collected_card" FOREIGN KEY ("target_collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__relationship__relationship_id" FOREIGN KEY ("relationship_id") REFERENCES public."relationship"("_id");
+    ADD CONSTRAINT "f_k$relationship$collected_card__relationship__relationship_id" FOREIGN KEY ("relationship_id") REFERENCES public."relationship"(id);
 
 
 ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__source_collected_card__user_id__stackI" FOREIGN KEY ("source_collected_card_id", "user_id", "source_stack_id") REFERENCES public."collected_card"("_id", "user_id", "stack_id");
+    ADD CONSTRAINT "f_k$relationship$collected_card__source_collected_card__user_id__stackI" FOREIGN KEY ("source_collected_card_id", "user_id", "source_stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id");
 
 
 ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__target_collected_card__user_id__stackI" FOREIGN KEY ("target_collected_card_id", "user_id", "target_stack_id") REFERENCES public."collected_card"("_id", "user_id", "stack_id");
+    ADD CONSTRAINT "f_k$relationship$collected_card__target_collected_card__user_id__stackI" FOREIGN KEY ("target_collected_card_id", "user_id", "target_stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id");
 
 
 ALTER TABLE ONLY public."stack"
-    ADD CONSTRAINT "f_k$stack$branch_instance__copy_source_id" FOREIGN KEY ("copy_source_id") REFERENCES public."branch_instance"("_id");
+    ADD CONSTRAINT "f_k$stack$branch_instance__copy_source_id" FOREIGN KEY ("copy_source_id") REFERENCES public."branch_instance"(id);
 
 
 ALTER TABLE ONLY public."stack"
-    ADD CONSTRAINT "f_k$stack$branch__default_branch_id" FOREIGN KEY ("default_branch_id", "id") REFERENCES public."branch"("_id", "stack_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$stack$branch__default_branch_id" FOREIGN KEY ("default_branch_id", "id") REFERENCES public."branch"(id, "stack_id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."stack"
-    ADD CONSTRAINT "f_k$stack$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$stack$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "f_k$tag$collected_card__collected_card_id__user_id__stack_id" FOREIGN KEY ("collected_card_id", "user_id", "stack_id") REFERENCES public."collected_card"("_id", "user_id", "stack_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$tag$collected_card__collected_card_id__user_id__stack_id" FOREIGN KEY ("collected_card_id", "user_id", "stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id") ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "f_k$tag$collected_card__collected_card__collected_card_id" FOREIGN KEY ("collected_card_id") REFERENCES public."collected_card"("_id") ON DELETE CASCADE;
+    ADD CONSTRAINT "f_k$tag$collected_card__collected_card__collected_card_id" FOREIGN KEY ("collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "f_k$tag$collected_card__tag__tag_id" FOREIGN KEY ("tag_id") REFERENCES public."tag"("_id");
+    ADD CONSTRAINT "f_k$tag$collected_card__tag__tag_id" FOREIGN KEY ("tag_id") REFERENCES public."tag"(id);
 
 
 ALTER TABLE ONLY public."tag$user$collate_instance"
-    ADD CONSTRAINT "f_k$tag$user__collate_instance__tag__default_tag_id" FOREIGN KEY ("default_tag_id") REFERENCES public."tag"("_id");
+    ADD CONSTRAINT "f_k$tag$user__collate_instance__tag__default_tag_id" FOREIGN KEY ("default_tag_id") REFERENCES public."tag"(id);
 
 
 ALTER TABLE ONLY public."tag$user$collate_instance"
-    ADD CONSTRAINT "f_k$tag$user__templat_inst__user__templat_inst__user_id__templat_inst_id" FOREIGN KEY ("user_id", "collate_instance_id") REFERENCES public."user$collate_instance"("_user_id", "collate_instance_id");
+    ADD CONSTRAINT "f_k$tag$user__templat_inst__user__templat_inst__user_id__templat_inst_id" FOREIGN KEY ("user_id", "collate_instance_id") REFERENCES public."user$collate_instance"("user_id", "collate_instance_id");
 
 
 ALTER TABLE ONLY public."user"
-    ADD CONSTRAINT "f_k$user$card_setting__default_card_setting_id" FOREIGN KEY ("default_card_setting_id", "id") REFERENCES public."card_setting"("_id", "user_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$user$card_setting__default_card_setting_id" FOREIGN KEY ("default_card_setting_id", "id") REFERENCES public."card_setting"(id, "user_id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."user$collate_instance"
-    ADD CONSTRAINT "f_k$user$collate_instance__card_setting__default_card_setting_id" FOREIGN KEY ("default_card_setting_id") REFERENCES public."card_setting"("_id");
+    ADD CONSTRAINT "f_k$user$collate_instance__card_setting__default_card_setting_id" FOREIGN KEY ("default_card_setting_id") REFERENCES public."card_setting"(id);
 
 
 ALTER TABLE ONLY public."user$collate_instance"
-    ADD CONSTRAINT "f_k$user$collate_instance__collate_instance__collate_instance_id" FOREIGN KEY ("collate_instance_id") REFERENCES public."collate_instance"("_id");
+    ADD CONSTRAINT "f_k$user$collate_instance__collate_instance__collate_instance_id" FOREIGN KEY ("collate_instance_id") REFERENCES public."collate_instance"(id);
 
 
 ALTER TABLE ONLY public."user$collate_instance"
-    ADD CONSTRAINT "f_k$user$collate_instance__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$user$collate_instance__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."user"
-    ADD CONSTRAINT "f_k$user$deck__default_deck_id" FOREIGN KEY ("default_deck_id", "id") REFERENCES public."deck"("_id", "user_id") DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "f_k$user$deck__default_deck_id" FOREIGN KEY ("default_deck_id", "id") REFERENCES public."deck"(id, "user_id") DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public."vote$comment_collate"
-    ADD CONSTRAINT "f_k$vote$comment_collate__comment_collate__comment_collate_id" FOREIGN KEY ("comment_collate_id") REFERENCES public."comment_collate"("_id");
+    ADD CONSTRAINT "f_k$vote$comment_collate__comment_collate__comment_collate_id" FOREIGN KEY ("comment_collate_id") REFERENCES public."comment_collate"(id);
 
 
 ALTER TABLE ONLY public."vote$comment_collate"
-    ADD CONSTRAINT "f_k$vote$comment_collate__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$vote$comment_collate__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."vote$comment_stack"
-    ADD CONSTRAINT "f_k$vote$comment_stack__comment_stack__comment_stack_id" FOREIGN KEY ("comment_stack_id") REFERENCES public."comment_stack"("_id");
+    ADD CONSTRAINT "f_k$vote$comment_stack__comment_stack__comment_stack_id" FOREIGN KEY ("comment_stack_id") REFERENCES public."comment_stack"(id);
 
 
 ALTER TABLE ONLY public."vote$comment_stack"
-    ADD CONSTRAINT "f_k$vote$comment_stack__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$vote$comment_stack__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 ALTER TABLE ONLY public."vote$feedback"
-    ADD CONSTRAINT "f_k$vote$feedback__feedback__feedback_id" FOREIGN KEY ("feedback_id") REFERENCES public."feedback"("_id");
+    ADD CONSTRAINT "f_k$vote$feedback__feedback__feedback_id" FOREIGN KEY ("feedback_id") REFERENCES public."feedback"(id);
 
 
 ALTER TABLE ONLY public."vote$feedback"
-    ADD CONSTRAINT "f_k$vote$feedback__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"("_id");
+    ADD CONSTRAINT "f_k$vote$feedback__user__user_id" FOREIGN KEY ("user_id") REFERENCES public."user"(id);
 
 
 
