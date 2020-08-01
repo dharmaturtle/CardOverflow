@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
+    [Table("communal_field_instance0branch_instance")]
     public partial class CommunalFieldInstance_BranchInstanceEntity
     {
         [Key]

@@ -144,7 +144,7 @@ namespace CardOverflow.Entity
                     .WithOne()
                     .HasForeignKey(x => x.CollectedCardId);
 
-                entity.ToView("CollectedCardIsLatest");
+                entity.ToView("collected_card_is_latest");
             });
 
             modelBuilder.Entity<AlphaBetaKeyEntity>(entity =>
@@ -225,14 +225,14 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.SourceBranchInstanceId, e.TargetBranchInstanceId, e.Name });
 
-                entity.ToView("BranchInstanceRelationshipCount");
+                entity.ToView("branch_instance_relationship_count");
             });
 
             modelBuilder.Entity<BranchInstanceTagCountEntity>(entity =>
             {
                 entity.HasKey(e => new { e.BranchInstanceId, e.Name });
 
-                entity.ToView("BranchInstanceTagCount");
+                entity.ToView("branch_instance_tag_count");
             });
 
             modelBuilder.Entity<CardSettingEntity>(entity =>
@@ -525,14 +525,14 @@ namespace CardOverflow.Entity
             {
                 entity.HasKey(e => new { e.SourceStackId, e.TargetStackId, e.Name });
 
-                entity.ToView("StackRelationshipCount");
+                entity.ToView("stack_relationship_count");
             });
 
             modelBuilder.Entity<StackTagCountEntity>(entity =>
             {
                 entity.HasKey(e => new { e.StackId, e.Name });
 
-                entity.ToView("StackTagCount");
+                entity.ToView("stack_tag_count");
             });
 
             modelBuilder.Entity<TagEntity>(entity =>

@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
+    [Table("tag0collected_card")]
     public partial class Tag_CollectedCardEntity
     {
         [Key]
