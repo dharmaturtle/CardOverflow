@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"card_state" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
+-- medTODO counts involving `"card_state" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -318,24 +318,24 @@ CREATE FUNCTION public.fn_tr_user_afterinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
-        default_card_setting_id integer NOT NULL := 0;
-        default_deck_id         integer NOT NULL := 0;
+        outer_default_card_setting_id integer NOT NULL := 0;
+        outer_default_deck_id         integer NOT NULL := 0;
     BEGIN
-        default_card_setting_id := (SELECT "id" FROM "card_setting" cs WHERE cs."user_id" = 0 LIMIT 1);
-        default_deck_id         := (SELECT "id" FROM "deck"         d WHERE  d."user_id" = 0 LIMIT 1);
+        outer_default_card_setting_id := (SELECT "id" FROM "card_setting" cs WHERE cs."user_id" = 0 LIMIT 1);
+        outer_default_deck_id         := (SELECT "id" FROM "deck"         d WHERE  d."user_id" = 0 LIMIT 1);
 
         UPDATE "card_setting" cs
         SET    "user_id" = NEW."id"
-        WHERE (cs."id" = default_card_setting_id);
+        WHERE (cs."id" = outer_default_card_setting_id);
         UPDATE "user" u
-        SET    "default_card_setting_id" = default_card_setting_id
+        SET    default_card_setting_id = outer_default_card_setting_id
         WHERE (u."id" = NEW."id");
 
         UPDATE "deck" d
         SET    "user_id" = NEW."id"
-        WHERE (d."id" = default_deck_id);
+        WHERE (d."id" = outer_default_deck_id);
         UPDATE "user" u
-        SET    "default_deck_id" = default_deck_id
+        SET    default_deck_id = outer_default_deck_id
         WHERE (u."id" = NEW."id");
 
         RETURN NULL;
