@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
+    [Table("tag0user0collate_instance")]
     public partial class Tag_User_CollateInstanceEntity
     {
         [Key]
