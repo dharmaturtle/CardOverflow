@@ -26,7 +26,7 @@ CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
     DECLARE
         default_branch_id integer NOT NULL := 0;
     BEGIN
-        default_branch_id := (SELECT "default_branch_id" FROM "stack" s WHERE NEW."stack_id" = s."id");
+        default_branch_id := (SELECT s.default_branch_id FROM "stack" s WHERE NEW."stack_id" = s."id");
         IF ((NEW."name" IS NOT NULL) AND (default_branch_id = NEW."id")) THEN
             RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."stack_id"), (NEW."id"), (NEW."author_id"), (NEW."name");
         ELSIF ((NEW."name" IS NULL) AND (default_branch_id <> NEW."id")) THEN
@@ -487,7 +487,7 @@ CREATE TABLE public."tag" (
 
 ALTER TABLE public."tag" OWNER TO postgres;
 
-CREATE TABLE public."tag$collected_card" (
+CREATE TABLE public."tag0collected_card" (
     "tag_id" integer NOT NULL,
     "user_id" integer NOT NULL,
     "stack_id" integer NOT NULL,
@@ -495,7 +495,7 @@ CREATE TABLE public."tag$collected_card" (
 );
 
 
-ALTER TABLE public."tag$collected_card" OWNER TO postgres;
+ALTER TABLE public."tag0collected_card" OWNER TO postgres;
 
 CREATE VIEW public."branch_instance_tag_count" AS
  SELECT i."id" AS "branch_instance_id",
@@ -506,7 +506,7 @@ CREATE VIEW public."branch_instance_tag_count" AS
     count(*) AS "count"
    FROM ((public."branch_instance" i
      JOIN public."collected_card" cc ON ((cc."branch_instance_id" = i."id")))
-     JOIN public."tag$collected_card" ta ON ((ta."collected_card_id" = cc."id")))
+     JOIN public."tag0collected_card" ta ON ((ta."collected_card_id" = cc."id")))
   WHERE (cc."card_state" <> 3)
   GROUP BY i."id", ta."tag_id";
 
@@ -989,7 +989,7 @@ CREATE VIEW public."stack_tag_count" AS
     count(*) AS "count"
    FROM ((public."stack" s
      JOIN public."collected_card" cc ON ((cc."stack_id" = s."id")))
-     JOIN public."tag$collected_card" ta ON ((ta."collected_card_id" = cc."id")))
+     JOIN public."tag0collected_card" ta ON ((ta."collected_card_id" = cc."id")))
   WHERE (cc."card_state" <> 3)
   GROUP BY s."id", ta."tag_id";
 
@@ -1492,8 +1492,8 @@ ALTER TABLE ONLY public."tag"
     ADD CONSTRAINT "p_k$tag" PRIMARY KEY ("id");
 
 
-ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "p_k$tag$collected_card" PRIMARY KEY ("stack_id", "tag_id", "user_id");
+ALTER TABLE ONLY public."tag0collected_card"
+    ADD CONSTRAINT "p_k$tag0collected_card" PRIMARY KEY ("stack_id", "tag_id", "user_id");
 
 
 ALTER TABLE ONLY public."tag$user$collate_instance"
@@ -1651,10 +1651,10 @@ CREATE UNIQUE INDEX "i_x$relationship$name" ON public."relationship" USING btree
 CREATE INDEX "i_x$stack$author_id" ON public."stack" USING btree ("author_id");
 
 
-CREATE INDEX "i_x$tag$collected_card__collected_card_id" ON public."tag$collected_card" USING btree ("collected_card_id");
+CREATE INDEX "i_x$tag0collected_card__collected_card_id" ON public."tag0collected_card" USING btree ("collected_card_id");
 
 
-CREATE UNIQUE INDEX "i_x$tag$collected_card__tag_id__stack_id__user_id" ON public."tag$collected_card" USING btree ("tag_id", "stack_id", "user_id");
+CREATE UNIQUE INDEX "i_x$tag0collected_card__tag_id__stack_id__user_id" ON public."tag0collected_card" USING btree ("tag_id", "stack_id", "user_id");
 
 
 CREATE UNIQUE INDEX "i_x$tag$name" ON public."tag" USING btree (upper(("name")::text));
@@ -1980,16 +1980,16 @@ ALTER TABLE ONLY public."stack"
     ADD CONSTRAINT "f_k$stack$user__author_id" FOREIGN KEY ("author_id") REFERENCES public."user"(id);
 
 
-ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "f_k$tag$collected_card__collected_card_id__user_id__stack_id" FOREIGN KEY ("collected_card_id", "user_id", "stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id") ON DELETE CASCADE;
+ALTER TABLE ONLY public."tag0collected_card"
+    ADD CONSTRAINT "f_k$tag0collected_card__collected_card_id__user_id__stack_id" FOREIGN KEY ("collected_card_id", "user_id", "stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id") ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "f_k$tag$collected_card__collected_card__collected_card_id" FOREIGN KEY ("collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public."tag0collected_card"
+    ADD CONSTRAINT "f_k$tag0collected_card__collected_card__collected_card_id" FOREIGN KEY ("collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."tag$collected_card"
-    ADD CONSTRAINT "f_k$tag$collected_card__tag__tag_id" FOREIGN KEY ("tag_id") REFERENCES public."tag"(id);
+ALTER TABLE ONLY public."tag0collected_card"
+    ADD CONSTRAINT "f_k$tag0collected_card__tag__tag_id" FOREIGN KEY ("tag_id") REFERENCES public."tag"(id);
 
 
 ALTER TABLE ONLY public."tag$user$collate_instance"
