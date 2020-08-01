@@ -448,7 +448,7 @@ CREATE TABLE public."relationship" (
 
 ALTER TABLE public."relationship" OWNER TO postgres;
 
-CREATE TABLE public."relationship$collected_card" (
+CREATE TABLE public."relationship0collected_card" (
     "relationship_id" integer NOT NULL,
     "user_id" integer NOT NULL,
     "source_stack_id" integer NOT NULL,
@@ -458,7 +458,7 @@ CREATE TABLE public."relationship$collected_card" (
 );
 
 
-ALTER TABLE public."relationship$collected_card" OWNER TO postgres;
+ALTER TABLE public."relationship0collected_card" OWNER TO postgres;
 
 CREATE VIEW public."branch_instance_relationship_count" AS
  SELECT sac."branch_instance_id" AS "source_branch_instance_id",
@@ -469,7 +469,7 @@ CREATE VIEW public."branch_instance_relationship_count" AS
           WHERE (r."id" = rac."relationship_id")
          LIMIT 1) AS "name",
     count(*) AS "count"
-   FROM ((public."relationship$collected_card" rac
+   FROM ((public."relationship0collected_card" rac
      JOIN public."collected_card" sac ON ((rac."source_collected_card_id" = sac."id")))
      JOIN public."collected_card" tac ON ((rac."target_collected_card_id" = tac."id")))
   WHERE ((sac."card_state" <> 3) AND (tac."card_state" <> 3))
@@ -971,7 +971,7 @@ CREATE VIEW public."stack_relationship_count" AS
           WHERE (r."id" = rac."relationship_id")
          LIMIT 1) AS "name",
     count(*) AS "count"
-   FROM ((public."relationship$collected_card" rac
+   FROM ((public."relationship0collected_card" rac
      JOIN public."collected_card" sac ON ((rac."source_collected_card_id" = sac."id")))
      JOIN public."collected_card" tac ON ((rac."target_collected_card_id" = tac."id")))
   WHERE ((sac."card_state" <> 3) AND (tac."card_state" <> 3))
@@ -1480,8 +1480,8 @@ ALTER TABLE ONLY public."relationship"
     ADD CONSTRAINT "p_k$relationship" PRIMARY KEY ("id");
 
 
-ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "p_k$relationship$collected_card" PRIMARY KEY ("source_stack_id", "target_stack_id", "relationship_id", "user_id");
+ALTER TABLE ONLY public."relationship0collected_card"
+    ADD CONSTRAINT "p_k$relationship0collected_card" PRIMARY KEY ("source_stack_id", "target_stack_id", "relationship_id", "user_id");
 
 
 ALTER TABLE ONLY public."stack"
@@ -1636,13 +1636,13 @@ CREATE INDEX "i_x$filter$user_id" ON public."filter" USING btree ("user_id");
 CREATE INDEX "i_x$history$collected_card_id" ON public."history" USING btree ("collected_card_id");
 
 
-CREATE INDEX "i_x$relationship$collected_card__relationship_id" ON public."relationship$collected_card" USING btree ("relationship_id");
+CREATE INDEX "i_x$relationship0collected_card__relationship_id" ON public."relationship0collected_card" USING btree ("relationship_id");
 
 
-CREATE INDEX "i_x$relationship$collected_card__source_collected_card_id" ON public."relationship$collected_card" USING btree ("source_collected_card_id");
+CREATE INDEX "i_x$relationship0collected_card__source_collected_card_id" ON public."relationship0collected_card" USING btree ("source_collected_card_id");
 
 
-CREATE INDEX "i_x$relationship$collected_card__target_collected_card_id" ON public."relationship$collected_card" USING btree ("target_collected_card_id");
+CREATE INDEX "i_x$relationship0collected_card__target_collected_card_id" ON public."relationship0collected_card" USING btree ("target_collected_card_id");
 
 
 CREATE UNIQUE INDEX "i_x$relationship$name" ON public."relationship" USING btree (upper(("name")::text));
@@ -1948,24 +1948,24 @@ ALTER TABLE ONLY public."received_notification"
     ADD CONSTRAINT "f_k$received_notification$user__receiver_id" FOREIGN KEY ("receiver_id") REFERENCES public."user"(id);
 
 
-ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__collected_card__source_collected_card" FOREIGN KEY ("source_collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public."relationship0collected_card"
+    ADD CONSTRAINT "f_k$relationship0collected_card__collected_card__source_collected_card" FOREIGN KEY ("source_collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__collected_card__target_collected_card" FOREIGN KEY ("target_collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public."relationship0collected_card"
+    ADD CONSTRAINT "f_k$relationship0collected_card__collected_card__target_collected_card" FOREIGN KEY ("target_collected_card_id") REFERENCES public."collected_card"(id) ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__relationship__relationship_id" FOREIGN KEY ("relationship_id") REFERENCES public."relationship"(id);
+ALTER TABLE ONLY public."relationship0collected_card"
+    ADD CONSTRAINT "f_k$relationship0collected_card__relationship__relationship_id" FOREIGN KEY ("relationship_id") REFERENCES public."relationship"(id);
 
 
-ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__source_collected_card__user_id__stackI" FOREIGN KEY ("source_collected_card_id", "user_id", "source_stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id");
+ALTER TABLE ONLY public."relationship0collected_card"
+    ADD CONSTRAINT "f_k$relationship0collected_card__source_collected_card__user_id__stackI" FOREIGN KEY ("source_collected_card_id", "user_id", "source_stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id");
 
 
-ALTER TABLE ONLY public."relationship$collected_card"
-    ADD CONSTRAINT "f_k$relationship$collected_card__target_collected_card__user_id__stackI" FOREIGN KEY ("target_collected_card_id", "user_id", "target_stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id");
+ALTER TABLE ONLY public."relationship0collected_card"
+    ADD CONSTRAINT "f_k$relationship0collected_card__target_collected_card__user_id__stackI" FOREIGN KEY ("target_collected_card_id", "user_id", "target_stack_id") REFERENCES public."collected_card"(id, "user_id", "stack_id");
 
 
 ALTER TABLE ONLY public."stack"
