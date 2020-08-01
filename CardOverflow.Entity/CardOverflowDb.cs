@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using CardOverflow.Pure;
@@ -68,7 +68,7 @@ namespace CardOverflow.Entity
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasPostgresEnum<NotificationType>("public", "NotificationType");
+            modelBuilder.HasPostgresEnum<NotificationType>("public", "notification_type");
 
             base.OnModelCreating(modelBuilder);
 

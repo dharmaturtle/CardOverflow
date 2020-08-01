@@ -59,14 +59,14 @@ $$;
 
 ALTER FUNCTION public.fn_ctr_collectedcard_insertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_delete_received_notification(notification_id integer, receiver_id integer) RETURNS void
+CREATE FUNCTION public.fn_delete_received_notification(outer_notification_id integer, outer_receiver_id integer) RETURNS void
     LANGUAGE plpgsql
     AS $$
     BEGIN
         WITH del_child AS (
             DELETE FROM public."received_notification" rn
-            WHERE  rn."notification_id" = notification_id
-            AND    rn."receiver_id" = receiver_id
+            WHERE  rn."notification_id" = outer_notification_id
+            AND    rn."receiver_id" = outer_receiver_id
             RETURNING rn."notification_id", rn."receiver_id"
         )
         DELETE FROM public."notification" n

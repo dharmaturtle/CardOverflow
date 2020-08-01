@@ -85,6 +85,7 @@ type Container with
                 //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
                     .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
+                    .UseSnakeCaseNamingConvention()
                     //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                     //.EnableSensitiveDataLogging()
                     |> ignore)

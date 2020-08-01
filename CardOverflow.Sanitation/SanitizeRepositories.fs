@@ -516,23 +516,23 @@ module SanitizeDeckRepository =
     let search (conn: NpgsqlConnection) userId query =
         let additionalWhere =
             if String.IsNullOrWhiteSpace query then ""
-            else """AND query @@ d."TsVector" """
+            else """AND query @@ d.ts_vector"""
         conn.QueryAsync<DeckWithFollowMeta>(sprintf """SELECT
-        	d."Id" as "Id"
-        	, d."Name" as "Name"
-        	, d."UserId" as "AuthorId"
-        	, u."DisplayName" as "AuthorName"
+        	d.id as "Id"
+        	, d.name as "Name"
+        	, d.user_id as "AuthorId"
+        	, u.display_name as "AuthorName"
         	, EXISTS (
                 SELECT 1
-                FROM   public."DeckFollowers" df
-                WHERE  df."DeckId" = d."Id"
-                AND    df."FollowerId" = @userid
+                FROM   public.deck_followers df
+                WHERE  df.deck_id = d.id
+                AND    df.follower_id = @userid
             ) as "IsFollowed"
-        	, ts_rank_cd(d."TsVector", query) AS rank
-        FROM public."Deck" d
-        JOIN public."User" u ON u."Id" = d."UserId"
+        	, ts_rank_cd(d.ts_vector, query) AS rank
+        FROM public.deck d
+        JOIN public.user u ON u.id = d.user_id
         , websearch_to_tsquery(@query) query
-        WHERE (d."IsPublic" OR d."UserId" = @userid) %s
+        WHERE (d.is_public OR d.user_id = @userid) %s
         ORDER BY rank DESC
         LIMIT 10;""" additionalWhere, {| query = query; userid = userId |})
         |>% Seq.toList
