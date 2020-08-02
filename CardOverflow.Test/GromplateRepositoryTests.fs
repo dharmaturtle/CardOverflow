@@ -64,11 +64,11 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
         latestInstance.Fields.Select(fun x -> x.Name))
-    Assert.Equal(userId, c.Db.CollectedCard.Single().UserId)
-    Assert.Equal(1002, c.Db.CollectedCard.Single().LeafId)
+    Assert.Equal(userId, c.Db.Card.Single().UserId)
+    Assert.Equal(1002, c.Db.Card.Single().LeafId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.CollectedCard.Include(fun x -> x.Leaf).Single().Leaf.GrompleafId)
+        c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.GrompleafId)
     Assert.Equal(2, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.Leaf.Count())
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.StackId = 1))

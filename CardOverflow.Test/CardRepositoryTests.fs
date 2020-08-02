@@ -20,35 +20,35 @@ open FsToolkit
 open FsToolkit.ErrorHandling
 
 [<Fact>]
-let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
+let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let branchId = 1
     Assert.Equal(branchId, actualBranchId)
     let getCollected () = StackRepository.GetCollected c.Db userId 1
-    let! (cc: CollectedCard ResizeArray) = getCollected ()
+    let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
 
     do! StackRepository.uncollectStack c.Db userId cc.StackId
-    Assert.Empty c.Db.CollectedCard
+    Assert.Empty c.Db.Card
 
     let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id |> TaskResult.getOk
     
     do! recollect ()
-    let! (cc: CollectedCard ResizeArray) = getCollected ()
+    let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
     do! StackRepository.uncollectStack c.Db userId cc.StackId
-    Assert.Empty c.Db.CollectedCard // still empty after editing then deleting
+    Assert.Empty c.Db.Card // still empty after editing then deleting
 
     let userId = 3
     do! recollect ()
-    let! (cc: CollectedCard ResizeArray) = getCollected ()
+    let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
-    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CollectedCardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
+    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.StackId |> TaskResult.getOk
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     let newCardBranchId = 2
@@ -61,14 +61,14 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
             TargetStackLink = string stack2
         }
     do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
-    Assert.NotEmpty c.Db.CollectedCard
-    Assert.NotEmpty c.Db.Relationship_CollectedCard
+    Assert.NotEmpty c.Db.Card
+    Assert.NotEmpty c.Db.Relationship_Card
     Assert.NotEmpty c.Db.History
-    Assert.NotEmpty c.Db.Tag_CollectedCard
+    Assert.NotEmpty c.Db.Tag_Card
     do! StackRepository.uncollectStack c.Db userId cc.StackId // can delete after adding a history, tag, and relationship
-    Assert.Equal(stack2, c.Db.CollectedCard.Include(fun x -> x.Leaf).Single().Leaf.StackId) // from the other side of the relationship
-    Assert.Empty c.Db.Relationship_CollectedCard
-    Assert.Empty c.Db.Tag_CollectedCard
+    Assert.Equal(stack2, c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.StackId) // from the other side of the relationship
+    Assert.Empty c.Db.Relationship_Card
+    Assert.Empty c.Db.Tag_Card
 
     // but history remains
     Assert.NotEmpty c.Db.History
@@ -90,7 +90,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let! cc = StackRepository.GetCollected c.Db userId 1
     let cc = cc.Value.Single()
     
-    let! x = StackRepository.editState c.Db userId cc.CollectedCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db userId cc.CardId CardState.Suspended
     Assert.Null x.Value
     let! cc = StackRepository.GetCollected c.Db userId cc.StackId
     let cc = cc.Value.Single()
@@ -104,7 +104,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     Assert.Equal(cc.CardState, CardState.Suspended) // still suspended after edit
 
     let otherUserId = 2 // other users can't edit card state
-    let! x = StackRepository.editState c.Db otherUserId cc.CollectedCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db otherUserId cc.CardId CardState.Suspended
     Assert.Equal("You don't own that card.", x.error)
     }
 
@@ -120,14 +120,14 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = 1002
-    let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new CollectedCard; it only swaps out the LeafId
-    Assert.Equal(i2, c.Db.CollectedCard.Single().LeafId)
-    Assert.Equal(branchId, c.Db.CollectedCard.Single().BranchId)
-    Assert.Equal(stackId, c.Db.CollectedCard.Single().StackId)
+    let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
+    Assert.Equal(i2, c.Db.Card.Single().LeafId)
+    Assert.Equal(branchId, c.Db.Card.Single().BranchId)
+    Assert.Equal(stackId, c.Db.Card.Single().StackId)
     
     use db = c.Db
-    db.CollectedCard.AddI <|
-        CollectedCardEntity(
+    db.Card.AddI <|
+        CardEntity(
             StackId = stackId,
             BranchId = branchId,
             LeafId = i2,
@@ -136,13 +136,13 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"ix$collected_card$user_id__leaf_id__index\"",
+        "23505: duplicate key value violates unique constraint \"ix$card$user_id__leaf_id__index\"",
         ex.InnerException.Message)
 
     let i1 = 1001
     use db = c.Db
-    db.CollectedCard.AddI <|
-        CollectedCardEntity(
+    db.Card.AddI <|
+        CardEntity(
             StackId = stackId,
             BranchId = branchId,
             LeafId = i1,
@@ -152,7 +152,7 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
             DeckId = userId)
     let ex = Assert.Throws<Npgsql.PostgresException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "P0001: UserId #3 with CollectedCard #3 and Stack #1 tried to have LeafId #1001, but they already have LeafId #1002",
+        "P0001: UserId #3 with Card #3 and Stack #1 tried to have LeafId #1001, but they already have LeafId #1002",
         ex.Message)
     }
 
@@ -228,27 +228,27 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.Leaf.Single().Users)
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
-    Assert.Equal(1, c.Db.CollectedCard.Count())
+    Assert.Equal(1, c.Db.Card.Count())
     
     let s2 = 2
     let ci2_1 = 1002
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
-    Assert.Equal(3, c.Db.CollectedCard.Count())
+    Assert.Equal(3, c.Db.Card.Count())
     
     let collectorId = 1
     let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
-    Assert.Equal(4, c.Db.CollectedCard.Count())
+    Assert.Equal(4, c.Db.Card.Count())
     let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     // misc
     Assert.Equal(2, c.Db.Leaf.Count())
-    Assert.Equal(6, c.Db.CollectedCard.Count())
-    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_1));
+    Assert.Equal(6, c.Db.Card.Count())
+    Assert.Equal(2, c.Db.Card.Count(fun x -> x.LeafId = ci1_1));
 
     // update branch
     let! r = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId b1
@@ -264,25 +264,25 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(6, c.Db.CollectedCard.Count())
-    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_2))
+    Assert.Equal(6, c.Db.Card.Count())
+    Assert.Equal(1, c.Db.Card.Count(fun x -> x.LeafId = ci1_2))
     
     let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(6, c.Db.CollectedCard.Count())
-    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_2));
+    Assert.Equal(6, c.Db.Card.Count())
+    Assert.Equal(2, c.Db.Card.Count(fun x -> x.LeafId = ci1_2));
 
-    let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
+    let! cc = c.Db.Card.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
     do! StackRepository.uncollectStack c.Db authorId cc.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(5, c.Db.CollectedCard.Count())
-    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_2));
+    Assert.Equal(5, c.Db.Card.Count())
+    Assert.Equal(1, c.Db.Card.Count(fun x -> x.LeafId = ci1_2));
 
     let count = StackRepository.GetDueCount c.Db collectorId ""
     Assert.Equal(3, count)
@@ -297,7 +297,7 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
 
     let! a = StackRepository.GetQuizBatch c.Db userId ""
-    let getId (x: Result<QuizCard, string> seq) = x.First().Value.CollectedCardId
+    let getId (x: Result<QuizCard, string> seq) = x.First().Value.CardId
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     let! b = StackRepository.GetQuizBatch c.Db userId ""
     Assert.NotEqual(getId a, getId b)

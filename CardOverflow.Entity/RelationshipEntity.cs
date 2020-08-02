@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public RelationshipEntity()
         {
-            Relationship_CollectedCards = new HashSet<Relationship_CollectedCardEntity>();
+            Relationship_Cards = new HashSet<Relationship_CardEntity>();
         }
 
         [Key]
@@ -28,6 +28,6 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [InverseProperty("Relationship")]
-        public virtual ICollection<Relationship_CollectedCardEntity> Relationship_CollectedCards { get; set; }
+        public virtual ICollection<Relationship_CardEntity> Relationship_Cards { get; set; }
     }
 }

@@ -56,7 +56,7 @@
             @if (EditStack.Backs.IsOk) {
               @foreach (var (back, i) in EditStack.Backs.ResultValue.Select((x, i) => (x, i))) {
                 <iframe sandbox="allow-scripts" srcdoc=@back style="height: @(80/_indexCount)vh; width: 100%; resize: vertical;"></iframe>
-                <EditStackDetail_CollectedCard Command=@_ccCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateCollectedCardCommand(i, command)) />
+                <EditStackDetail_Card Command=@_ccCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateCardCommand(i, command)) />
               }
             } else {
               <span>
@@ -111,7 +111,7 @@
   [Parameter] public bool NewEditStackOnSave { get; set; }
   [Parameter] public List<ViewGromplateWithAllInstances> Gromplates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  private List<EditCollectedCardCommand> _ccCommands = new List<EditCollectedCardCommand>();
+  private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private UserClaims _user = UserClaims.init;
   private List<ViewGrompleaf> _selectedGrompleafs;
   private int _selectedGromplateId;
@@ -119,9 +119,9 @@
   private bool _isDisabled;
   private int _savedBranchId;
 
-  private void _updateCollectedCardCommand(int i, EditCollectedCardCommand command) {
+  private void _updateCardCommand(int i, EditCardCommand command) {
     while (_ccCommands.ElementAtOrDefault(i) == default) {
-      _ccCommands.Add(EditCollectedCardCommand.init);
+      _ccCommands.Add(EditCardCommand.init);
     }
     _ccCommands[i] = command;
   }
@@ -140,7 +140,7 @@
   }
 
   //private void _SetOption(int newId) {
-  //  EditStack.EditCollectedCard.CardSettingId = newId;
+  //  EditStack.EditCard.CardSettingId = newId;
   //}
 
   async Task UpdateCard() {

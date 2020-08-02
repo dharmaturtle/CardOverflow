@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public TagEntity()
         {
-            Tag_CollectedCards = new HashSet<Tag_CollectedCardEntity>();
+            Tag_Cards = new HashSet<Tag_CardEntity>();
             Tag_User_Grompleafs = new HashSet<Tag_User_GrompleafEntity>();
         }
 
@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [InverseProperty("Tag")]
-        public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
+        public virtual ICollection<Tag_CardEntity> Tag_Cards { get; set; }
         [InverseProperty("DefaultTag")]
         public virtual ICollection<Tag_User_GrompleafEntity> Tag_User_Grompleafs { get; set; }
     }

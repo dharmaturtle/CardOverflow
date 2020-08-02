@@ -21,7 +21,7 @@ open FsCheck
 open FsCheck.Xunit
 
 [<Property(MaxTest = 1)>]
-let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Random.StdGen): unit =
+let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdGen): unit =
     (taskResult {
         let userId = 3
         use c = new TestContainer()
@@ -78,7 +78,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
             StackRepository.GetCollected c.Db userId stackId
             |>%% Assert.Single
         Assert.equal
-            {   CollectedCardId = 1
+            {   CardId = 1
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -105,9 +105,9 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
                 (stackCommand gromplate)
             |>%% Assert.equal branchId
 
-        let! (ccs: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db userId stackId
+        let! (ccs: Card ResizeArray) = StackRepository.GetCollected c.Db userId stackId
         Assert.equal
-            {   CollectedCardId = 2
+            {   CardId = 2
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -124,7 +124,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
             }
             ccs.[0]
         Assert.equal
-            {   CollectedCardId = 3
+            {   CardId = 3
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId

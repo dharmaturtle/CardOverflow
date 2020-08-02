@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public UserEntity()
         {
-            CollectedCards = new HashSet<CollectedCardEntity>();
+            Cards = new HashSet<CardEntity>();
             Branches = new HashSet<BranchEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
             Gromplates = new HashSet<GromplateEntity>();
@@ -58,7 +58,7 @@ namespace CardOverflow.Entity
         [ForeignKey("DefaultDeckId")]
         public virtual DeckEntity DefaultDeck { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
+        public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<BranchEntity> Branches { get; set; }
         [InverseProperty("User")]

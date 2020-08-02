@@ -37,7 +37,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
 
     Assert.Equal(3, c.Db.File_Leaf.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
+    Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(7, c.Db.Grompleaf.Count())
     Assert.Equal(5, c.Db.LatestGrompleaf.Count())
     } |> TaskResult.getOk)
@@ -57,7 +57,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
 
     Assert.Equal(3, c.Db.File_Leaf.Count())
     Assert.Equal(3, c.Db.File.Count())
-    Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
+    Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -129,7 +129,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     use c = new TestContainer()
     let testCommields = testCommields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
-    Assert.Equal(7, c.Db.CollectedCard.Count())
+    Assert.Equal(7, c.Db.Card.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(3, c.Db.Branch.Count())
     Assert.Equal(3, c.Db.Stack.Count())
@@ -192,7 +192,7 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
 
-    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.UserId = userId))
+    Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
     let! view = StackViewRepository.instance c.Db 1001
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
@@ -202,10 +202,10 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     }
 
 [<Fact>]
-let ``Create card works with EditCollectedCardCommand`` (): Task<unit> = (taskResult {
+let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer()
-    let getCollectedCard branchId =
+    let getCard branchId =
         c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
         |> Task.map (fun x -> x.StackId)
         |> Task.bind (fun stackId -> StackRepository.GetCollected c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
@@ -217,33 +217,33 @@ let ``Create card works with EditCollectedCardCommand`` (): Task<unit> = (taskRe
     // insert new stack with invalid settingsId
     let invalidCardId = 1337
     let! (error: Result<_,_>) =
-        {   EditCollectedCardCommand.init with
+        {   EditCardCommand.init with
                 CardSettingId = invalidCardId }
-        |>  SanitizeCollectedCardRepository.update c.Db userId ccId
+        |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
     // insert new stack with someone else's settingId
     let someoneElse'sSettingId = userId - 1
     let! (error: Result<_,_>) =
-        {   EditCollectedCardCommand.init with
+        {   EditCardCommand.init with
                 CardSettingId = someoneElse'sSettingId }
-        |>  SanitizeCollectedCardRepository.update c.Db userId ccId
+        |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
     // insert new stack with invalid deckId
     let invalidDeckId = 1337
     let! (error: Result<_,_>) =
-        {   EditCollectedCardCommand.init with
+        {   EditCardCommand.init with
                 DeckId = invalidDeckId }
-        |>  SanitizeCollectedCardRepository.update c.Db userId ccId
+        |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
     // insert new stack with someone else's deckId
     let someoneElse'sDeckId = userId - 1
     let! (error: Result<_,_>) =
-        {   EditCollectedCardCommand.init with
+        {   EditCardCommand.init with
                 DeckId = someoneElse'sDeckId }
-        |>  SanitizeCollectedCardRepository.update c.Db userId ccId
+        |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized deck id." error.error
 
     // insert new setting
@@ -258,31 +258,31 @@ let ``Create card works with EditCollectedCardCommand`` (): Task<unit> = (taskRe
     let latestSettingId = ids.Last()
     
     // insert new stack with latest settingsId
-    do! {   EditCollectedCardCommand.init with
+    do! {   EditCardCommand.init with
                 CardSettingId = latestSettingId }
-        |> SanitizeCollectedCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getCollectedCard branchId
+        |> SanitizeCardRepository.update c.Db userId ccId
+    let! (card: Card) = getCard branchId
     Assert.Equal(latestSettingId, card.CardSettingId)
 
     // insert new stack with default settingsId
-    do! EditCollectedCardCommand.init
-        |> SanitizeCollectedCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getCollectedCard branchId
+    do! EditCardCommand.init
+        |> SanitizeCardRepository.update c.Db userId ccId
+    let! (card: Card) = getCard branchId
     Assert.Equal(defaultSettingId, card.CardSettingId)
 
     let! latestDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
     // insert new stack with latest deckId
-    do! {   EditCollectedCardCommand.init with
+    do! {   EditCardCommand.init with
                 DeckId = latestDeckId }
-        |> SanitizeCollectedCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getCollectedCard branchId
+        |> SanitizeCardRepository.update c.Db userId ccId
+    let! (card: Card) = getCard branchId
     Assert.Equal(latestDeckId, card.DeckId)
 
     // insert new stack with default deckId
     let defaultDeckId = userId
-    do! EditCollectedCardCommand.init
-        |> SanitizeCollectedCardRepository.update c.Db userId ccId
-    let! (card: CollectedCard) = getCollectedCard branchId
+    do! EditCardCommand.init
+        |> SanitizeCardRepository.update c.Db userId ccId
+    let! (card: Card) = getCard branchId
     Assert.Equal(defaultDeckId, card.DeckId)
     } |> TaskResult.getOk)
 
@@ -309,7 +309,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 do! testCommields id [clozeText]
         otherTest clozeText }
     let assertUserHasNormalCardCount expected =
-        c.Db.CollectedCard.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
+        c.Db.Card.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
@@ -334,7 +334,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             assertCount 0 "{{c1::Portland::city}} was founded in 1845."
     do! assertUserHasNormalCardCount 4
 
-    let! (e: PagedList<Result<CollectedCard, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
+    let! (e: PagedList<Result<Card, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let expected =
         [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
@@ -397,7 +397,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
     let stackId = 1
     let branchId_og = 1
-    Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     let! revisions = StackRepository.Revisions c.Db userId branchId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
@@ -406,15 +406,15 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     do! FacetRepositoryTests.update c userId
             (VNewBranchSourceStackId stackId) id branchId_alt
 
-    Assert.equal 0 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+    Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
-    // updating an uncollected branch doesn't change the CollectedCards
+    // updating an uncollected branch doesn't change the Cards
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId_og) id branchId_og
 
-    Assert.equal 0 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    Assert.equal 2 <| c.Db.CollectedCard.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+    Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
+    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // switching to testing StackRepository.Revisions
     let! revisions = StackRepository.Revisions c.Db userId branchId_og

@@ -115,7 +115,7 @@
 
   async Task SaveScore(Score score) {
     var (timeInterval, intervalOrSteps, easeFactor) = Scheduler.Calculate(batch.First().ResultValue, score);
-    await DbExecutor.CommandAsync(db => SanitizeHistoryRepository.AddAndSaveAsync(db, batch.First().ResultValue.CollectedCardId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps));
+    await DbExecutor.CommandAsync(db => SanitizeHistoryRepository.AddAndSaveAsync(db, batch.First().ResultValue.CardId, score, TimeProvider.utcNow, timeInterval, easeFactor, TimeProvider.utcNow - frontVisible, intervalOrSteps));
     // medTODO needs `undo review` support
     batch.RemoveAt(0);
     await ShowFront();

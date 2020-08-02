@@ -59,25 +59,25 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
-    let! (cards: PagedList<Result<CollectedCard, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
+    let! (cards: PagedList<Result<Card, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
 
     // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
-    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
+    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
     // getCollectedInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
-    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
+    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
     // getCollectedInstanceFromInstance fails gracefully on invalid instanceId
     let invalidInstanceId = 1337
 
-    let! (actual: Result<_,_>) = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
+    let! (actual: Result<_,_>) = CardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
@@ -112,25 +112,25 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
-    let! (cards: PagedList<Result<CollectedCard, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
+    let! (cards: PagedList<Result<Card, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
     Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
 
     // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
-    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
+    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
     // getCollectedInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
-    let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
+    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
 
     Assert.Equal(updatedInstanceId, actual)
 
     // getCollectedInstanceFromInstance fails gracefully on invalid instanceId
     let invalidInstanceId = 1337
 
-    let! (actual: Result<_,_>) = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
+    let! (actual: Result<_,_>) = CardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
@@ -209,7 +209,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     
     let! cc = StackRepository.GetCollected c.Db userId stack.Id
     let cc = cc.Value.Single()
-    let! x = StackRepository.editState c.Db userId cc.CollectedCardId CardState.Suspended
+    let! x = StackRepository.editState c.Db userId cc.CardId CardState.Suspended
     Assert.Null x.Value
     let! stack = ExploreStackRepository.get c.Db userId 1
     Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count
@@ -223,8 +223,8 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     let stackId = 1
     let branchId = 1
     let leafId = 1001
-    let! collectedCards = StackRepository.GetCollectedPages c.Db authorId 1 ""
-    Assert.Equal(acCount, collectedCards.Results.Count())
+    let! cards = StackRepository.GetCollectedPages c.Db authorId 1 ""
+    Assert.Equal(acCount, cards.Results.Count())
     let! cc = StackRepository.GetCollected c.Db authorId stackId
     let cc = cc.Value
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())

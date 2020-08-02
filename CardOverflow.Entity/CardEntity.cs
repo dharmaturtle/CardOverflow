@@ -6,14 +6,14 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class CollectedCardEntity
+    public partial class CardEntity
     {
-        public CollectedCardEntity()
+        public CardEntity()
         {
             Histories = new HashSet<HistoryEntity>();
-            Relationship_CollectedCardSourceCollectedCards = new HashSet<Relationship_CollectedCardEntity>();
-            Relationship_CollectedCardTargetCollectedCards = new HashSet<Relationship_CollectedCardEntity>();
-            Tag_CollectedCards = new HashSet<Tag_CollectedCardEntity>();
+            Relationship_CardSourceCards = new HashSet<Relationship_CardEntity>();
+            Relationship_CardTargetCards = new HashSet<Relationship_CardEntity>();
+            Tag_Cards = new HashSet<Tag_CardEntity>();
         }
 
         [Key]
@@ -38,31 +38,31 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [ForeignKey("BranchId")]
-        [InverseProperty("CollectedCardBranches")]
+        [InverseProperty("CardBranches")]
         public virtual BranchEntity Branch { get; set; }
         [ForeignKey("LeafId")]
-        [InverseProperty("CollectedCards")]
+        [InverseProperty("Cards")]
         public virtual LeafEntity Leaf { get; set; }
         public virtual BranchEntity BranchNavigation { get; set; }
         [ForeignKey("CardSettingId")]
-        [InverseProperty("CollectedCards")]
+        [InverseProperty("Cards")]
         public virtual CardSettingEntity CardSetting { get; set; }
         [ForeignKey("DeckId")]
-        [InverseProperty("CollectedCards")]
+        [InverseProperty("Cards")]
         public virtual DeckEntity Deck { get; set; }
         [ForeignKey("StackId")]
-        [InverseProperty("CollectedCards")]
+        [InverseProperty("Cards")]
         public virtual StackEntity Stack { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("CollectedCards")]
+        [InverseProperty("Cards")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("CollectedCard")]
+        [InverseProperty("Card")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
-        [InverseProperty("SourceCollectedCard")]
-        public virtual ICollection<Relationship_CollectedCardEntity> Relationship_CollectedCardSourceCollectedCards { get; set; }
-        [InverseProperty("TargetCollectedCard")]
-        public virtual ICollection<Relationship_CollectedCardEntity> Relationship_CollectedCardTargetCollectedCards { get; set; }
-        [InverseProperty("CollectedCard")]
-        public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
+        [InverseProperty("SourceCard")]
+        public virtual ICollection<Relationship_CardEntity> Relationship_CardSourceCards { get; set; }
+        [InverseProperty("TargetCard")]
+        public virtual ICollection<Relationship_CardEntity> Relationship_CardTargetCards { get; set; }
+        [InverseProperty("Card")]
+        public virtual ICollection<Tag_CardEntity> Tag_Cards { get; set; }
     }
 }

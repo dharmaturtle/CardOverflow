@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
     {
         public LeafEntity()
         {
-            CollectedCards = new HashSet<CollectedCardEntity>();
+            Cards = new HashSet<CardEntity>();
             Commeaf_Leafs = new HashSet<Commeaf_LeafEntity>();
             File_Leafs = new HashSet<File_LeafEntity>();
             Histories = new HashSet<HistoryEntity>();
@@ -58,7 +58,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Leafs")]
         public virtual GrompleafEntity Grompleaf { get; set; }
         [InverseProperty("Leaf")]
-        public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
+        public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Leaf")]
         public virtual ICollection<Commeaf_LeafEntity> Commeaf_Leafs { get; set; }
         [InverseProperty("Leaf")]

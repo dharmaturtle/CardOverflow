@@ -156,27 +156,27 @@ module SanitizeTagRepository =
         return e.Id
         }
     let private getFirstCollected (db: CardOverflowDb) userId stackId =
-        db.CollectedCard.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
+        db.Card.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
         |>% (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
     let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
         let newTag = sanitize newTag
-        let! (cc: CollectedCardEntity) = getFirstCollected db userId stackId
+        let! (cc: CardEntity) = getFirstCollected db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
-        do! db.Tag_CollectedCard
+        do! db.Tag_Card
                 .AnyAsync(fun x -> x.StackId = stackId && x.UserId = userId && x.TagId = tag.Id)
             |>% (Result.requireFalse <| sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId newTag)
-        Tag_CollectedCardEntity(CollectedCard = cc, Tag = tag)
-        |> db.Tag_CollectedCard.AddI
+        Tag_CardEntity(Card = cc, Tag = tag)
+        |> db.Tag_Card.AddI
         return! db.SaveChangesAsyncI ()
     }
     let DeleteFrom db userId tag stackId = taskResult {
         let tag = MappingTools.toTitleCase tag
-        let! (cc: CollectedCardEntity) = getFirstCollected db userId stackId
+        let! (cc: CardEntity) = getFirstCollected db userId stackId
         let! join =
-            db.Tag_CollectedCard
-                .SingleOrDefaultAsync(fun x -> x.CollectedCardId = cc.Id && x.Tag.Name = tag)
+            db.Tag_Card
+                .SingleOrDefaultAsync(fun x -> x.CardId = cc.Id && x.Tag.Name = tag)
             |>% (Result.requireNotNull <| sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tag)
-        db.Tag_CollectedCard.RemoveI join
+        db.Tag_Card.RemoveI join
         return! db.SaveChangesAsyncI()
     }
 
@@ -221,7 +221,7 @@ module SanitizeDeckRepository =
         do! deckBelongsTo db userId deckId
         let! defaultDeckId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultDeckId).SingleAsync()
         do! deckId <> defaultDeckId |> Result.requireTrue "You can't delete your default deck. Make another deck default first."
-        do! db.CollectedCard.Where(fun x -> x.DeckId = deckId).ToListAsync()
+        do! db.Card.Where(fun x -> x.DeckId = deckId).ToListAsync()
             |> TaskSeq.iter(fun cc -> cc.DeckId <- defaultDeckId)
         db.Remove<DeckEntity> deckId
         return! db.SaveChangesAsyncI()
@@ -243,18 +243,18 @@ module SanitizeDeckRepository =
         deck.Name <- newName
         return! db.SaveChangesAsyncI()
     }
-    let switch (db: CardOverflowDb) userId deckId collectedCardId = taskResult {
+    let switch (db: CardOverflowDb) userId deckId cardId = taskResult {
         do! deckBelongsTo db userId deckId
-        let! (cc: CollectedCardEntity) =
-            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
-            |>% (Result.requireNotNull <| sprintf "Either CollectedCard #%i doesn't belong to you or it doesn't exist" collectedCardId)
+        let! (cc: CardEntity) =
+            db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
+            |>% (Result.requireNotNull <| sprintf "Either Card #%i doesn't belong to you or it doesn't exist" cardId)
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
     let switchByIds (db: CardOverflowDb) userId deckId leafId index = taskResult {
         do! deckBelongsTo db userId deckId
-        let! (cc: CollectedCardEntity) =
-            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.LeafId = leafId && x.Index = index && x.UserId = userId)
+        let! (cc: CardEntity) =
+            db.Card.SingleOrDefaultAsync(fun x -> x.LeafId = leafId && x.Index = index && x.UserId = userId)
             |>% (Result.requireNotNull <| sprintf "Either Leaf #%i with Index #%i doesn't belong to you or it doesn't exist" leafId index)
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
@@ -270,11 +270,11 @@ module SanitizeDeckRepository =
                 x.DefaultDeckId,
                 x.Decks.Select(fun x ->
                     x,
-                    x.CollectedCards.Where(fun x ->
+                    x.Cards.Where(fun x ->
                         x.UserId = userId &&
                         x.Due < currentTime
                     ).Count(),
-                    x.CollectedCards.Count,
+                    x.Cards.Count,
                     x.Source)
             ).SingleAsync()
         |>% (fun (defaultDeckId, deckCounts) ->
@@ -360,7 +360,7 @@ module SanitizeDeckRepository =
             | NoDeck -> ()
             | NewDeck _ | OldDeck _ ->
                 let! (theirs: ResizeArray<StackLeafIndex>) =
-                    db.CollectedCard
+                    db.Card
                         .Where(fun cc -> cc.DeckId = deckId)
                         .Select(fun x -> {
                             StackId = x.StackId
@@ -370,8 +370,8 @@ module SanitizeDeckRepository =
                         })
                         .ToListAsync()
                 let theirStackIds = theirs.Select(fun x -> x.StackId).Distinct().ToList()
-                let! (mine: CollectedCardEntity ResizeArray) =
-                    db.CollectedCard
+                let! (mine: CardEntity ResizeArray) =
+                    db.Card
                         .Where(fun cc -> cc.UserId = userId && theirStackIds.Contains cc.StackId)
                         .ToListAsync()
                 let! theirs =
@@ -414,7 +414,7 @@ module SanitizeDeckRepository =
                         }
                     | _ -> failwith "impossible"
                 let cardSansIndex =
-                    CollectedCard.initialize
+                    Card.initialize
                         userId
                         defaultCardSettingId
                         newDeckId
@@ -438,7 +438,7 @@ module SanitizeDeckRepository =
                         mine.BranchId <- theirs.BranchId
                         mine.LeafId <- theirs.LeafId
                         mine.Index <- theirs.Index
-                        db.CollectedCard.AddI mine
+                        db.Card.AddI mine
                     | None, Some _ -> () // occurs when `editExisting = false`. `their` card has been filtered out, but `mine` still exists.
                     | _ -> failwith "Should be impossible.")
         return! db.SaveChangesAsyncI()
@@ -455,7 +455,7 @@ module SanitizeDeckRepository =
         do! verifyVisible db userId theirDeckId
         do! verifyVisible db userId myDeckId
         let get deckId =
-            db.CollectedCard
+            db.Card
                 .Where(fun x -> x.DeckId = deckId)
                 .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId)
                 .ToListAsync()
@@ -466,7 +466,7 @@ module SanitizeDeckRepository =
         let diffs = Diff.ids theirs mine |> Diff.toSummary
         let addedStackIds = diffs.AddedStack.Select(fun x -> x.StackId).ToList()
         let! (inOtherDeckIds: (int * int * int * int16 * int) ResizeArray) =
-            db.CollectedCard
+            db.Card
                 .Where(fun x -> x.UserId = userId && addedStackIds.Contains x.StackId)
                 .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId)
                 .ToListAsync() // using Task.map over StackLeafIndex.fromTuple doesn't work here for some reason
@@ -538,8 +538,8 @@ module SanitizeDeckRepository =
         |>% Seq.toList
 
 module SanitizeHistoryRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) collectedCardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
-        let! card = db.CollectedCard.SingleAsync(fun x -> x.Id = collectedCardId)
+    let AddAndSaveAsync (db: CardOverflowDb) cardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
+        let! card = db.Card.SingleAsync(fun x -> x.Id = cardId)
         card.Histories.Add
         <|  HistoryEntity(
                 Score = Score.toDb score,
@@ -583,7 +583,7 @@ module SanitizeRelationshipRepository =
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetStackId = GetStackId command.TargetStackLink
         do! if targetStackId = command.SourceStackId then Error "A stack can't be related to itself" else Ok ()
-        let! (ccs: CollectedCardEntity ResizeArray) = db.CollectedCard.Include(fun x -> x.Leaf).Where(fun x -> x.UserId = userId && (x.StackId = targetStackId || x.StackId = command.SourceStackId)).ToListAsync()
+        let! (ccs: CardEntity ResizeArray) = db.Card.Include(fun x -> x.Leaf).Where(fun x -> x.UserId = userId && (x.StackId = targetStackId || x.StackId = command.SourceStackId)).ToListAsync()
         let! t = ccs.FirstOrDefault(fun x -> x.StackId = targetStackId) |> Result.ofNullable (sprintf "You haven't collected the linked stack (Stack #%i)." targetStackId)
         let! s = ccs.FirstOrDefault(fun x -> x.StackId = command.SourceStackId) |> Result.ofNullable (sprintf "You haven't collected the source stack (Stack #%i)." command.SourceStackId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
@@ -597,13 +597,13 @@ module SanitizeRelationshipRepository =
                 else
                     t.Id, s.Id, t.StackId, s.StackId
         return!
-            Relationship_CollectedCardEntity(
+            Relationship_CardEntity(
                 Relationship = r,
                 UserId = userId,
                 SourceStackId = sStackId,
                 TargetStackId = tStackId,
-                SourceCollectedCardId = sid,
-                TargetCollectedCardId = tid
+                SourceCardId = sid,
+                TargetCardId = tid
             ) |> RelationshipRepository.addAndSaveAsync db
         }
     let Remove db sourceInstanceId targetStackId userId name =
@@ -617,7 +617,7 @@ type SearchCommand = {
 }
 
 [<CLIMutable>]
-type EditCollectedCardCommand = {
+type EditCardCommand = {
     CardState: CardState
     CardSettingId: int
     DeckId: int
@@ -693,8 +693,8 @@ type UpsertCardSource =
     | VNewBranchSourceStackId of int
     | VUpdateBranchId of int
 
-module SanitizeCollectedCardRepository =
-    let validateCommands (db: CardOverflowDb) userId (commands: EditCollectedCardCommand ResizeArray) = taskResult {
+module SanitizeCardRepository =
+    let validateCommands (db: CardOverflowDb) userId (commands: EditCardCommand ResizeArray) = taskResult {
         let! defaultDeckId, defaultCardSettingId, areValidDeckIds, areValidCardSettingIds =
             let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> 0).ToList()
             let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> 0).ToList()
@@ -722,11 +722,11 @@ module SanitizeCollectedCardRepository =
                 }
             ).ToList()
     }
-    let update (db: CardOverflowDb) userId collectedCardId (command: EditCollectedCardCommand) = taskResult {
+    let update (db: CardOverflowDb) userId cardId (command: EditCardCommand) = taskResult {
         let! command = command |> ResizeArray.singleton |> validateCommands db userId |>%% Seq.exactlyOne
-        let! (cc: CollectedCardEntity) =
-            db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
-            |>% Result.requireNotNull (sprintf "CollectedCard #%i doesn't belong to you." collectedCardId)
+        let! (cc: CardEntity) =
+            db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
+            |>% Result.requireNotNull (sprintf "Card #%i doesn't belong to you." cardId)
         cc.DeckId <- command.DeckId
         cc.CardSettingId <- command.CardSettingId
         return! db.SaveChangesAsyncI()
@@ -776,9 +776,9 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.LatestInstance.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
-    let Update (db: CardOverflowDb) userId (acCommands: EditCollectedCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
+    let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! leaf = UpdateRepository.stack db userId stackCommand.load
-        let! (ccs: CollectedCardEntity list) =
+        let! (ccs: CardEntity list) =
             match stackCommand.Kind with
             | Update_BranchId_Title _ ->
                 db.Leaf.AddI leaf
@@ -787,14 +787,14 @@ module SanitizeStackRepository =
                 StackRepository.collectStackNoSave db userId leaf true |>% Ok
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
-                let! (ccs: CollectedCardEntity list) = StackRepository.collectStackNoSave db userId leaf true
+                let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true
                 for tagId in tagIds do
-                    ccs.First().Tag_CollectedCards.Add(Tag_CollectedCardEntity(TagId = tagId))
+                    ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))
                 return ccs
                 }
             |>%% List.sortBy (fun x -> x.Index)
         do! acCommands.ToList()
-            |> SanitizeCollectedCardRepository.validateCommands db userId
+            |> SanitizeCardRepository.validateCommands db userId
             |>%% Seq.iteri (fun i command ->
                 let cc = ccs.[i]
                 cc.CardState <- command.CardState |> CardState.toDb
@@ -942,9 +942,9 @@ type ViewCardSetting = {
     }
 
 module SanitizeCardSettingRepository =
-    let setCard (db: CardOverflowDb) userId collectedCardId newCardSettingId = task {
+    let setCard (db: CardOverflowDb) userId cardId newCardSettingId = task {
         let! option = db.CardSetting.SingleOrDefaultAsync(fun x -> x.Id = newCardSettingId && x.UserId = userId)
-        let! card = db.CollectedCard.SingleOrDefaultAsync(fun x -> x.Id = collectedCardId && x.UserId = userId)
+        let! card = db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
         return!
             match option, card with
             | null, _

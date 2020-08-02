@@ -194,7 +194,7 @@ type IntervalOrStepsIndex =
     | Interval of TimeSpan
 
 type QuizCard = {
-    CollectedCardId: int
+    CardId: int
     LeafId: int
     Due: DateTime
     Front: string
@@ -266,7 +266,7 @@ module IntervalOrStepsIndex =
 //    // medTODO 100 needs to be tied to the DB max somehow
 //    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
 //    AuthorId: int
-//    CollectedCards: CollectedCard ResizeArray
+//    Cards: Card ResizeArray
 //}
 
 type PagedListDetails = {
@@ -402,8 +402,8 @@ type LeafMeta = {
     member this.Indexes = [0s .. this.MaxIndexInclusive]
 
 [<CLIMutable>]
-type CollectedCard = {
-    CollectedCardId: int
+type Card = {
+    CardId: int
     UserId: int
     StackId: int
     BranchId: int

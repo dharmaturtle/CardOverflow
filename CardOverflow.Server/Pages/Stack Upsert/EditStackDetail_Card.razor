@@ -27,12 +27,12 @@
 }
 
 @code {
-  [Parameter] public EditCollectedCardCommand Command { get; set; }
-  [Parameter] public EventCallback<EditCollectedCardCommand> UpdateCommand { get; set; }
+  [Parameter] public EditCardCommand Command { get; set; }
+  [Parameter] public EventCallback<EditCardCommand> UpdateCommand { get; set; }
   private bool _isExpanded;
 
   private Task _SetOption(int newId) {
-    Command ??= EditCollectedCardCommand.init;
+    Command ??= EditCardCommand.init;
     Command.CardSettingId = newId;
     return UpdateCommand.InvokeAsync(Command);
   }

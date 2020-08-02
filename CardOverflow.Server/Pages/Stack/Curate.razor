@@ -61,7 +61,7 @@
   [Parameter] public int? SelectedInstanceId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
-  private List<CollectedCard> cards;
+  private List<Card> cards;
   private PagedListDetails details;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -73,7 +73,7 @@
       }
       if (SelectedInstanceId != null) {
         if (cards == null || (cards != null && !cards.Any(card => card.LeafMeta.Id == SelectedInstanceId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollectedInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
+          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
           if (x.IsOk) {
             if (SelectedInstanceId != x.ResultValue) {
               NavigationManager.NavigateTo($"my/stack?leaf={x.ResultValue}");

@@ -74,8 +74,8 @@ module AnkiImporter =
         (cardSettings: CardSettingEntity ResizeArray)
         defaultCardSetting
         getGromplates
+        getCCard
         getCard
-        getCollectedCard
         getHistory =
         let col = ankiDb.Cols.Single()
         let usersTags =
@@ -157,7 +157,7 @@ module AnkiImporter =
             let! cardByNoteId =
                 let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
                 ankiDb.Cards
-                |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getCollectedCard)
+                |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getCCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
             cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.Leaf) |> List.iter (fun (_, card) ->
@@ -165,7 +165,7 @@ module AnkiImporter =
                 | None -> ()
                 | Some nid -> 
                     let _, tags = cardsAndTagsByNoteId.[nid]
-                    card.Tag_CollectedCards <- tags.Select(fun x -> Tag_CollectedCardEntity(Tag = x)).ToList()
+                    card.Tag_Cards <- tags.Select(fun x -> Tag_CardEntity(Tag = x)).ToList()
             )
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory userId cardByNoteId getHistory) |> Result.consolidate
             return
@@ -192,7 +192,7 @@ module AnkiImporter =
             |> Option.ofObj
         let getCard (card: AnkiCardWrite) =
             card.CollectedEquality db hasher
-        let getCollectedCard (card: AnkiCollectedCard) =
+        let getCCard (card: AnkiCard) =
             card.CollectedEquality db |> Option.ofObj
         let getHistory (history: AnkiHistory) =
             history.CollectedEquality db |> Option.ofObj
@@ -209,12 +209,12 @@ module AnkiImporter =
                         .ToList()
                     <| defaultCardSetting
                     <| getGrompleaf
+                    <| getCCard
                     <| getCard
-                    <| getCollectedCard
                     <| getHistory
             ccs |> Seq.iter (fun x ->
                 if x.Leaf <> null && x.LeafId = 0
-                then db.CollectedCard.AddI x
+                then db.Card.AddI x
             )
             histories |> Seq.iter (fun x ->
                 if x.Id = 0L

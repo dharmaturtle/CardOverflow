@@ -39,6 +39,7 @@
     <Content Include="..\Config\appsettings.*.json" Exclude="..\Config\appsettings.Test.json" DependentUpon="appsettings.json" Link="Config\%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Watch Remove="Pages\Stack Upsert\EditStackDetail_Card.razor" />
     <Content Include="..\Config\environment.json" Link="Config\environment.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -5,11 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CollectedCardIsLatestEntity
+    public partial class CardIsLatestEntity
     {
-        public CollectedCardIsLatestEntity()
+        public CardIsLatestEntity()
         {
-            Tag_CollectedCards = new HashSet<Tag_CollectedCardEntity>();
+            Tag_Cards = new HashSet<Tag_CardEntity>();
         }    
     
         public int Id { get; set; }
@@ -29,6 +29,6 @@ namespace CardOverflow.Entity
         public int DeckId { get; set; }
         public bool IsLatest { get; set; }
         public virtual LeafEntity Leaf { get; set; }
-        public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
+        public virtual ICollection<Tag_CardEntity> Tag_Cards { get; set; }
     }
 }

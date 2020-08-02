@@ -117,7 +117,7 @@ type AnkiCardWrite = {
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
 
-type AnkiCollectedCard = {
+type AnkiCard = {
     UserId: int
     Leaf: LeafEntity
     Grompleaf: GrompleafEntity
@@ -131,7 +131,7 @@ type AnkiCollectedCard = {
     Deck: DeckEntity
     CardSetting: CardSettingEntity
 } with
-    member this.CopyToX (entity: CollectedCardEntity) i =
+    member this.CopyToX (entity: CardEntity) i =
         entity.Deck <- this.Deck
         entity.UserId <- this.UserId
         entity.Index <- i
@@ -141,7 +141,7 @@ type AnkiCollectedCard = {
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.Due <- this.Due
     member this.CopyToNew i =
-        let entity = CollectedCardEntity()
+        let entity = CardEntity()
         this.CopyToX entity i
         entity.Stack <- this.Leaf.Branch.Stack
         entity.Branch <- this.Leaf.Branch
@@ -149,8 +149,8 @@ type AnkiCollectedCard = {
         entity.CardSetting <- this.CardSetting
         entity
     member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        db.CollectedCard
-            .Include(fun x -> x.Tag_CollectedCards)
+        db.Card
+            .Include(fun x -> x.Tag_Cards)
             .SingleOrDefault(fun c ->
                 this.UserId = c.UserId &&
                 this.Index = c.Index &&
@@ -159,7 +159,7 @@ type AnkiCollectedCard = {
 
 type AnkiHistory = {
     UserId: int
-    CollectedCard: CollectedCardEntity option
+    Card: CardEntity option
     Score: int16
     Timestamp: DateTime
     IntervalWithUnusedStepsIndex: IntervalOrStepsIndex
@@ -168,7 +168,7 @@ type AnkiHistory = {
 } with
     member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let interval = this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
-        match this.CollectedCard with
+        match this.Card with
         | Some cc ->
             db.History.FirstOrDefault(fun h -> 
                 this.UserId = h.UserId &&
@@ -189,15 +189,15 @@ type AnkiHistory = {
                 this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
             )
     member this.CopyTo (entity: HistoryEntity) =
-        entity.CollectedCard <- this.CollectedCard |> Option.toObj
+        entity.Card <- this.Card |> Option.toObj
         entity.Score <- this.Score
         entity.Created <- this.Timestamp
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
-        entity.Leaf <- this.CollectedCard |> Option.map (fun x -> x.Leaf) |> Option.toObj
+        entity.Leaf <- this.Card |> Option.map (fun x -> x.Leaf) |> Option.toObj
         entity.UserId <- this.UserId
-        entity.Index <- this.CollectedCard |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
+        entity.Index <- this.Card |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
     member this.CopyToNew =
         let history = HistoryEntity()
         this.CopyTo history
@@ -206,7 +206,7 @@ type AnkiHistory = {
 type AnkiCardType = | New | Learning | Due // | Filtered
 
 module Anki =
-    let toHistory userId (cardByAnkiId: Map<int64, CollectedCardEntity>) getHistory (revLog: RevlogEntity) =
+    let toHistory userId (cardByAnkiId: Map<int64, CardEntity>) getHistory (revLog: RevlogEntity) =
         result {
             let! score =
                 match revLog.Ease with
@@ -217,7 +217,7 @@ module Anki =
                 | _ -> Error <| sprintf "Unrecognized Anki revlog ease: %i" revLog.Ease
             let history = {
                 UserId = userId
-                CollectedCard =
+                Card =
                     cardByAnkiId
                     |> Map.tryFind revLog.Cid
                 EaseFactorInPermille = int16 revLog.Factor
@@ -428,7 +428,7 @@ module Anki =
         | _ -> Error "Unexpected card type. Please contact support and attach the file you tried to import."
         |> Result.map (fun cardType ->
             let entity =
-                let c: AnkiCollectedCard =
+                let c: AnkiCard =
                     { UserId = userId
                       Leaf = card
                       Grompleaf = cti
