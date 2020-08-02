@@ -440,7 +440,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let stackId = 1
     let leafId = 1001
 
-    let test _ customTest = task {
+    let test customTest = task {
         let! _ =
             SanitizeStackRepository.Update
                 c.Db
@@ -476,11 +476,11 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         Assert.Null leaf.Modified
         Assert.Equal(editSummary, leaf.EditSummary)
         customTest leaf }
-    do! test <| None <| fun i ->
+    do! test <| fun i ->
             Assert.Equal(leafId, i.Commeaf_Leafs.Single().LeafId)
             Assert.Equal(1001, i.Commeaf_Leafs.Single().CommeafId)
             Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
-    do! test <| Some leafId <| fun i ->
+    do! test <| fun i ->
             Assert.Equal([1001; 1002], i.Commeaf_Leafs.Select(fun x -> x.LeafId))
             Assert.Equal([1001; 1001], i.Commeaf_Leafs.Select(fun x -> x.CommeafId))
             Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
