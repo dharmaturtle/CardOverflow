@@ -21,10 +21,10 @@ namespace CardOverflow.UserContentApi.Controllers {
     public async Task<IActionResult> Back(int id, int index) => _back(index, await GromplateRepository.latest(_db, id));
 
     [HttpGet("gromplateinstance/{id}/{index}/front")]
-    public async Task<IActionResult> InstanceFront(int id, int index) => _front(index, await GromplateRepository.instance(_db, id));
+    public async Task<IActionResult> InstanceFront(int id, int index) => _front(index, await GromplateRepository.leaf(_db, id));
 
     [HttpGet("gromplateinstance/{id}/{index}/back")]
-    public async Task<IActionResult> InstanceBack(int id, int index) => _back(index, await GromplateRepository.instance(_db, id));
+    public async Task<IActionResult> InstanceBack(int id, int index) => _back(index, await GromplateRepository.leaf(_db, id));
 
     private ContentResult _front(int index, FSharpResult<Grompleaf, string> view) =>
       ( view.IsError

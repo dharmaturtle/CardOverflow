@@ -51,7 +51,7 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
         } |> ViewGrompleaf.copyTo
     
-    do! GromplateRepository.UpdateFieldsToNewInstance c.Db userId updated
+    do! GromplateRepository.UpdateFieldsToNewLeaf c.Db userId updated
 
     let! gromplate = SanitizeGromplate.AllInstances c.Db gromplateId
     let latestInstance = gromplate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
@@ -131,12 +131,12 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
     do! testView GromplateRepository.latest gromplateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
 
     let priorInstance = gromplate.Value.Instances |> Seq.minBy (fun x -> x.Created)
-    do! testView GromplateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
+    do! testView GromplateRepository.leaf priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
 
     // test missing
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
     do! testViewError GromplateRepository.latest 0 "Gromplate #0 not found"
-    do! testViewError GromplateRepository.instance 0 "Gromplate Instance #0 not found"
+    do! testViewError GromplateRepository.leaf 0 "Gromplate Instance #0 not found"
     }

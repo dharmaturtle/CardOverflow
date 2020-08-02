@@ -27,8 +27,8 @@ module CommieldRepository =
         let! x = db.LatestCommeaf.SingleAsync(fun x -> x.CommieldId = fieldId)
         return x.Value
     }
-    let getInstance (db: CardOverflowDb) instanceId = task {
-        let! x = db.Commeaf.SingleAsync(fun x -> x.Id = instanceId)
+    let getLeaf (db: CardOverflowDb) leafId = task {
+        let! x = db.Commeaf.SingleAsync(fun x -> x.Id = leafId)
         return x.Value
     }
     let Search (db: CardOverflowDb) (query: string) = task {
@@ -80,23 +80,23 @@ module GromplateRepository =
             .SingleOrDefaultAsync(fun x -> x.GromplateId = gromplateId)
         |> Task.map (Result.requireNotNull <| sprintf "Gromplate #%i not found" gromplateId)
         |> TaskResult.map Grompleaf.load
-    let instance (db: CardOverflowDb) instanceId =
+    let leaf (db: CardOverflowDb) leafId =
         db.Grompleaf
-            .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
-        |> Task.map (Result.requireNotNull <| sprintf "Gromplate Instance #%i not found" instanceId)
+            .SingleOrDefaultAsync(fun x -> x.Id = leafId)
+        |> Task.map (Result.requireNotNull <| sprintf "Gromplate Instance #%i not found" leafId)
         |> TaskResult.map Grompleaf.load
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: Grompleaf) = task {
+    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId (leaf: Grompleaf) = task {
         let gromplate =
-            if instance.GromplateId = 0 then
+            if leaf.GromplateId = 0 then
                 IdOrEntity.Entity <| GromplateEntity(AuthorId = userId)
             else    
-                Id <| instance.GromplateId
-        let newGrompleaf = instance.CopyToNewLeaf gromplate
+                Id <| leaf.GromplateId
+        let newGrompleaf = leaf.CopyToNewLeaf gromplate
         db.Grompleaf.AddI newGrompleaf
         db  
             .Card
             .Include(fun x -> x.Leaf)
-            .Where(fun x -> x.Leaf.GrompleafId = instance.Id)
+            .Where(fun x -> x.Leaf.GrompleafId = leaf.Id)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
                 cc.Leaf.Id <- cc.Leaf.GetHashCode()

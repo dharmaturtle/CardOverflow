@@ -174,7 +174,7 @@ module SanitizeGromplate =
     let latest (db: CardOverflowDb) gromplateId =
         GromplateRepository.latest db gromplateId |> TaskResult.map ViewGrompleaf.load
     let instance (db: CardOverflowDb) instanceId =
-        GromplateRepository.instance db instanceId |> TaskResult.map ViewGrompleaf.load
+        GromplateRepository.leaf db instanceId |> TaskResult.map ViewGrompleaf.load
     let AllInstances (db: CardOverflowDb) gromplateId = task {
         let! gromplate =
             db.Gromplate
@@ -227,7 +227,7 @@ module SanitizeGromplate =
         }
     let Update (db: CardOverflowDb) userId (instance: ViewGrompleaf) =
         let update () = task {
-            let! r = ViewGrompleaf.copyTo instance |> GromplateRepository.UpdateFieldsToNewInstance db userId
+            let! r = ViewGrompleaf.copyTo instance |> GromplateRepository.UpdateFieldsToNewLeaf db userId
             return r |> Ok
         }
         if instance.Fields.Count = instance.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
