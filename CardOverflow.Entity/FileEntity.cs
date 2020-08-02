@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public FileEntity()
         {
-            File_BranchInstances = new HashSet<File_BranchInstanceEntity>();
+            File_Leafs = new HashSet<File_LeafEntity>();
         }
 
         [Key]
@@ -30,6 +30,6 @@ namespace CardOverflow.Entity
         public byte[] Sha256 { get; set; }
 
         [InverseProperty("File")]
-        public virtual ICollection<File_BranchInstanceEntity> File_BranchInstances { get; set; }
+        public virtual ICollection<File_LeafEntity> File_Leafs { get; set; }
     }
 }

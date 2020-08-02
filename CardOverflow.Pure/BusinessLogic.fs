@@ -208,56 +208,56 @@ module Heatmap =
             CurrentStreakDays = counts |> Seq.rev |> Seq.takeWhile (fun x -> x <> 0) |> Seq.length
         }
 
-type StackBranchInstanceIds = {
+type StackLeafIds = {
     StackId: int
     BranchId: int
-    BranchInstanceId: int
+    LeafId: int
 }
 
-type StackBranchInstanceIndex = {
+type StackLeafIndex = {
     StackId: int
     BranchId: int
-    BranchInstanceId: int
+    LeafId: int
     Index: int16
     DeckId: int
 }
 
-module StackBranchInstanceIds =
-    let fromTuple (stackId, branchId, branchInstanceId) =
+module StackLeafIds =
+    let fromTuple (stackId, branchId, leafId) =
         {   StackId = stackId
             BranchId = branchId
-            BranchInstanceId = branchInstanceId
+            LeafId = leafId
         }
 
-module StackBranchInstanceIndex =
-    let fromTuple (stackId, branchId, branchInstanceId, index, deckId) =
+module StackLeafIndex =
+    let fromTuple (stackId, branchId, leafId, index, deckId) =
         {   StackId = stackId
             BranchId = branchId
-            BranchInstanceId = branchInstanceId
+            LeafId = leafId
             Index = index
             DeckId = deckId
         }
 
 type DiffState =
-    | Unchanged of StackBranchInstanceIndex
-    | BranchInstanceChanged of StackBranchInstanceIndex * StackBranchInstanceIndex // theirs, mine
-    | BranchChanged of StackBranchInstanceIndex * StackBranchInstanceIndex
-    | AddedStack of StackBranchInstanceIndex
-    | RemovedStack of StackBranchInstanceIndex
+    | Unchanged of StackLeafIndex
+    | LeafChanged of StackLeafIndex * StackLeafIndex // theirs, mine
+    | BranchChanged of StackLeafIndex * StackLeafIndex
+    | AddedStack of StackLeafIndex
+    | RemovedStack of StackLeafIndex
 
 [<CLIMutable>]
 type DiffStateSummary = {
-    Unchanged: StackBranchInstanceIndex list
-    BranchInstanceChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list // theirs, mine
-    BranchChanged: (StackBranchInstanceIndex * StackBranchInstanceIndex) list
-    AddedStack: StackBranchInstanceIndex list
-    RemovedStack: StackBranchInstanceIndex list
-    MoveToAnotherDeck: StackBranchInstanceIndex list
+    Unchanged: StackLeafIndex list
+    LeafChanged: (StackLeafIndex * StackLeafIndex) list // theirs, mine
+    BranchChanged: (StackLeafIndex * StackLeafIndex) list
+    AddedStack: StackLeafIndex list
+    RemovedStack: StackLeafIndex list
+    MoveToAnotherDeck: StackLeafIndex list
 } with
     member this.DeckIds =
         let tupleToList (a, b) = [a; b]
         [   this.Unchanged
-            (this.BranchInstanceChanged |> List.collect tupleToList)
+            (this.LeafChanged |> List.collect tupleToList)
             (this.BranchChanged |> List.collect tupleToList)
             this.AddedStack
             this.RemovedStack
@@ -267,17 +267,17 @@ type DiffStateSummary = {
 
 module Diff =
     let ids aIds bIds =
-        let sort = List.sortBy (fun x -> x.StackId, x.BranchId, x.BranchInstanceId, x.Index)
+        let sort = List.sortBy (fun x -> x.StackId, x.BranchId, x.LeafId, x.Index)
         let aIds = aIds |> sort
         let bIds = bIds |> sort
         List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId && a.Index = b.Index)
         |> List.map (
             function
             | Some a, Some b ->
-                if a.BranchInstanceId = b.BranchInstanceId && a.Index = b.Index then
+                if a.LeafId = b.LeafId && a.Index = b.Index then
                     Unchanged b
                 elif a.BranchId = b.BranchId then
-                    BranchInstanceChanged (a, b)
+                    LeafChanged (a, b)
                 else
                     BranchChanged (a, b)
             | Some a, None   -> AddedStack a
@@ -286,7 +286,7 @@ module Diff =
         )
     let toSummary diffStates =
         let unchanged             = ResizeArray.empty
-        let branchInstanceChanged = ResizeArray.empty
+        let leafChanged = ResizeArray.empty
         let branchChanged         = ResizeArray.empty
         let addedStack            = ResizeArray.empty
         let removedStack          = ResizeArray.empty
@@ -294,8 +294,8 @@ module Diff =
             (function
             | Unchanged x ->
                 unchanged.Add x
-            | BranchInstanceChanged (x, y) ->
-                branchInstanceChanged.Add (x, y)
+            | LeafChanged (x, y) ->
+                leafChanged.Add (x, y)
             | BranchChanged (x, y) ->
                 branchChanged.Add (x, y)
             | AddedStack x ->
@@ -305,10 +305,10 @@ module Diff =
         let moveToAnotherDeck, removedStack =
             removedStack |> List.ofSeq |> List.partition (fun r ->
                 unchanged
-                    .Select(fun x -> (x.StackId, x.BranchId, x.BranchInstanceId))
-                    .Contains(       (r.StackId, r.BranchId, r.BranchInstanceId)))
+                    .Select(fun x -> (x.StackId, x.BranchId, x.LeafId))
+                    .Contains(       (r.StackId, r.BranchId, r.LeafId)))
         {   Unchanged = unchanged |> Seq.toList
-            BranchInstanceChanged = branchInstanceChanged |> Seq.toList
+            LeafChanged = leafChanged |> Seq.toList
             BranchChanged = branchChanged |> Seq.toList
             AddedStack = addedStack |> Seq.toList
             RemovedStack = removedStack

@@ -55,13 +55,13 @@ module Logger =
 
 type EntityHasher () =
     interface IEntityHasher with
-        member val BranchInstanceHasher =
-            fun struct (branchInstance, gromplateInstanceHash, sha512) -> BranchInstanceEntity.hash gromplateInstanceHash sha512 branchInstance
+        member val LeafHasher =
+            fun struct (leaf, gromplateInstanceHash, sha512) -> LeafEntity.hash gromplateInstanceHash sha512 leaf
         member val GromplateInstanceHasher =
             fun struct (instance, sha512) -> GromplateInstanceEntity.hash sha512 instance
         member _.GetMaxIndexInclusive =
-            fun (e: BranchInstanceEntity) ->
-                (e |> BranchInstanceView.load).MaxIndexInclusive
+            fun (e: LeafEntity) ->
+                (e |> LeafView.load).MaxIndexInclusive
         member _.SanitizeTag = SanitizeTagRepository.sanitize
 
 type Container with

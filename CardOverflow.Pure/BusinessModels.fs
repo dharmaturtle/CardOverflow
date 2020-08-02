@@ -195,7 +195,7 @@ type IntervalOrStepsIndex =
 
 type QuizCard = {
     CollectedCardId: int
-    BranchInstanceId: int
+    LeafId: int
     Due: DateTime
     Front: string
     Back: string
@@ -208,7 +208,7 @@ type QuizCard = {
     Settings: CardSetting
 }
 
-//type BranchInstance = {
+//type Leaf = {
 //    Id: int
 //    Created: DateTime
 //    Modified: DateTime option
@@ -282,7 +282,7 @@ type PagedList<'T> = {
 [<CLIMutable>]
 type CommunalFieldValue = {
     InstanceId: int option
-    CommunalBranchInstanceIds: int ResizeArray
+    CommunalLeafIds: int ResizeArray
 }
 
 [<CLIMutable>]
@@ -302,7 +302,7 @@ module Helper =
         | Standard ts ->
             (ts.Length |> int16) - 1s
 
-type BranchInstanceView = {
+type LeafView = {
     FieldValues: FieldAndValue ResizeArray
     GromplateInstance: GromplateInstance
 } with
@@ -383,7 +383,7 @@ type ViewRelationship = {
         Relationship.split this.Name |> snd
 
 [<CLIMutable>]
-type BranchInstanceMeta = {
+type LeafMeta = {
     Id: int
     StackId: int
     BranchId: int
@@ -407,7 +407,7 @@ type CollectedCard = {
     UserId: int
     StackId: int
     BranchId: int
-    BranchInstanceMeta: BranchInstanceMeta
+    LeafMeta: LeafMeta
     Index: int16
     CardState: CardState
     IsLapsed: bool
@@ -433,7 +433,7 @@ type ExploreStackSummary = {
     Users: int
     Author: string
     AuthorId: int
-    Instance: BranchInstanceMeta
+    Instance: LeafMeta
 } with
     member this.IsCollected = this.Instance.IsCollected
 
@@ -443,7 +443,7 @@ type ExploreBranchSummary = {
     Users: int
     Author: string
     AuthorId: int
-    Instance: BranchInstanceMeta
+    Instance: LeafMeta
 } with
     member this.IsCollected = this.Instance.IsCollected
 
@@ -457,12 +457,12 @@ type Branch = {
     member this.AuthorId = this.Summary.AuthorId
     member this.Instance = this.Summary.Instance
 
-type CollectedIds = StackBranchInstanceIds Option
+type CollectedIds = StackLeafIds Option
 
 module CollectedIds =
-    let branchInstanceId =
+    let leafId =
         function
-        | Some (x: StackBranchInstanceIds) -> x.BranchInstanceId
+        | Some (x: StackLeafIds) -> x.LeafId
         | None -> 0
     let branchId =
         function
@@ -495,7 +495,7 @@ type BranchRevision = {
     Author: string
     AuthorId: int
     Name: string
-    SortedMeta: BranchInstanceMeta list
+    SortedMeta: LeafMeta list
 }
 
 type UpsertKind =

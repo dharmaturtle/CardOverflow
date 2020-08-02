@@ -82,7 +82,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                BranchInstanceMeta = cc.BranchInstanceMeta // untested
+                LeafMeta = cc.LeafMeta // untested
                 Index = 0s
                 CardState = basicCommand.CardState
                 IsLapsed = false
@@ -111,7 +111,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                BranchInstanceMeta = ccs.[0].BranchInstanceMeta // untested
+                LeafMeta = ccs.[0].LeafMeta // untested
                 Index = 0s
                 CardState = aRevCommand.CardState
                 IsLapsed = false
@@ -128,7 +128,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                BranchInstanceMeta = ccs.[1].BranchInstanceMeta // untested
+                LeafMeta = ccs.[1].LeafMeta // untested
                 Index = 1s
                 CardState = bRevCommand.CardState
                 IsLapsed = false

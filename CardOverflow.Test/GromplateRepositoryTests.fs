@@ -65,14 +65,14 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
         ["Front mutated"; "Back mutated"],
         latestInstance.Fields.Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.CollectedCard.Single().UserId)
-    Assert.Equal(1002, c.Db.CollectedCard.Single().BranchInstanceId)
+    Assert.Equal(1002, c.Db.CollectedCard.Single().LeafId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.GromplateInstanceId)
+        c.Db.CollectedCard.Include(fun x -> x.Leaf).Single().Leaf.GromplateInstanceId)
     Assert.Equal(2, c.Db.GromplateInstance.Count(fun x -> x.GromplateId = gromplateId))
-    Assert.Equal(2, c.Db.BranchInstance.Count())
-    Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.Branch.StackId = 1))
-    Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.StackId = 1))
+    Assert.Equal(2, c.Db.Leaf.Count())
+    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.StackId = 1))
+    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.StackId = 1))
     let createds = c.Db.GromplateInstance.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = StackViewRepository.get c.Db 1

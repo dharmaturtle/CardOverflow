@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,7 +30,7 @@ namespace CardOverflow.Entity
         public virtual BranchEntity DefaultBranch { get; set; }
         [ForeignKey("CopySourceId")]
         [InverseProperty("StackCopySources")]
-        public virtual BranchInstanceEntity CopySource { get; set; }
+        public virtual LeafEntity CopySource { get; set; }
         [InverseProperty("Stack")]
         public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("Stack")]

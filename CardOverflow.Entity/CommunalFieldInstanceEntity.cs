@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
     {
         public CommunalFieldInstanceEntity()
         {
-            CommunalFieldInstance_BranchInstances = new HashSet<CommunalFieldInstance_BranchInstanceEntity>();
+            CommunalFieldInstance_Leafs = new HashSet<CommunalFieldInstance_LeafEntity>();
             CommunalFields = new HashSet<CommunalFieldEntity>();
         }
 
@@ -48,7 +48,7 @@ namespace CardOverflow.Entity
         [InverseProperty("CommunalFieldInstances")]
         public virtual CommunalFieldEntity CommunalField { get; set; }
         [InverseProperty("CommunalFieldInstance")]
-        public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
+        public virtual ICollection<CommunalFieldInstance_LeafEntity> CommunalFieldInstance_Leafs { get; set; }
         [InverseProperty("LatestInstance")]
         public virtual ICollection<CommunalFieldEntity> CommunalFields { get; set; }
     }

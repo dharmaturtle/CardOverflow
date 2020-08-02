@@ -40,35 +40,35 @@ module Notification =
             lazy (myDeck |> Option.ofObj |> Option.map(fun myDeck ->
                 { Id = myDeck.Id
                   Name = myDeck.Name }))
-        let stackBranchInstanceIds =
+        let stackLeafIds =
             lazy{ StackId = n.StackId.Value
                   BranchId = n.BranchId.Value
-                  BranchInstanceId = n.BranchInstanceId.Value
+                  LeafId = n.LeafId.Value
                 }
         let collected =
             lazy(cc |> Option.ofObj |> Option.map (fun card ->
                 {   StackId = card.StackId
                     BranchId = card.BranchId
-                    BranchInstanceId = card.BranchInstanceId
+                    LeafId = card.LeafId
                 }))
         let message =
             match n.Type with
             | NotificationType.DeckAddedStack ->
                 {   DeckAddedStack.TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    New = stackBranchInstanceIds.Value
+                    New = stackLeafIds.Value
                     Collected = collected.Value
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    New = stackBranchInstanceIds.Value
+                    New = stackLeafIds.Value
                     Collected = collected.Value
                 } |> DeckUpdatedStack
             | NotificationType.DeckDeletedStack ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    Deleted = stackBranchInstanceIds.Value
+                    Deleted = stackLeafIds.Value
                     Collected = collected.Value
                 } |> DeckDeletedStack
             | x -> failwith <| sprintf "Invalid enum value: %A" x
@@ -79,13 +79,13 @@ module Notification =
             Message = message
         }
 
-module BranchInstanceEntity =
+module LeafEntity =
     let bitArrayToByteArray (bitArray: BitArray) = // https://stackoverflow.com/a/45760138
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
         bitArray.CopyTo(bytes, 0)
         bytes
-    let hash (gromplateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
-        e.CommunalFieldInstance_BranchInstances
+    let hash (gromplateHash: BitArray) (hasher: SHA512) (e: LeafEntity) =
+        e.CommunalFieldInstance_Leafs
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
         |> Seq.toList
@@ -289,7 +289,7 @@ type CollectedGromplateInstance with
           DefaultCardSettingId = entity.User_GromplateInstances.Single().DefaultCardSettingId
           GromplateInstance = GromplateInstance.load entity }
 
-type BranchInstanceView with
+type LeafView with
     static member private toView (gromplateInstance: GromplateInstanceEntity) (fieldValues: string)=
         {   FieldValues = FieldAndValue.load (Fields.fromString gromplateInstance.Fields) fieldValues
             GromplateInstance = GromplateInstance.load gromplateInstance }
@@ -297,19 +297,19 @@ type BranchInstanceView with
         Helper.maxIndexInclusive
             (this.GromplateInstance.Templates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-    static member load (entity: BranchInstanceEntity) =
-        BranchInstanceView.toView
+    static member load (entity: LeafEntity) =
+        LeafView.toView
             entity.GromplateInstance
             entity.FieldValues
-    member this.CopyToX (entity: BranchInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
+    member this.CopyToX (entity: LeafEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
-        entity.CommunalFieldInstance_BranchInstances <-
-            communalFields.Select(fun x -> CommunalFieldInstance_BranchInstanceEntity(CommunalFieldInstance = x))
-            |> entity.CommunalFieldInstance_BranchInstances.Concat
+        entity.CommunalFieldInstance_Leafs <-
+            communalFields.Select(fun x -> CommunalFieldInstance_LeafEntity(CommunalFieldInstance = x))
+            |> entity.CommunalFieldInstance_Leafs.Concat
             |> toResizeArray
         entity.GromplateInstanceId <- this.GromplateInstance.Id
     member this.CopyToNew communalFields =
-        let entity = BranchInstanceEntity()
+        let entity = LeafEntity()
         this.CopyToX entity communalFields
         entity
     member this.CopyFieldsToNewInstance (branch: BranchEntity) editSummary communalFields =
@@ -333,9 +333,9 @@ type CommunalFieldInstance with
         FieldName = entity.FieldName
         Value = entity.Value }
 
-type BranchInstanceMeta with
-    static member loadIndex (i: int16) isCollected isLatest (entity: BranchInstanceEntity) =
-        let front, back, _, _ = entity |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
+type LeafMeta with
+    static member loadIndex (i: int16) isCollected isLatest (entity: LeafEntity) =
+        let front, back, _, _ = entity |> LeafView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
             StackId = entity.StackId
             BranchId = entity.BranchId
@@ -347,14 +347,14 @@ type BranchInstanceMeta with
             IsCollected = isCollected
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            CommunalFields = entity.CommunalFieldInstance_BranchInstances.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
+            CommunalFields = entity.CommunalFieldInstance_Leafs.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
             Users = entity.Users
             EditSummary = entity.EditSummary
         }
-    static member load = BranchInstanceMeta.loadIndex 0s
-    static member loadAll isCollected isLatest (entity: BranchInstanceEntity) =
+    static member load = LeafMeta.loadIndex 0s
+    static member loadAll isCollected isLatest (entity: LeafEntity) =
         [0s .. entity.MaxIndexInclusive]
-        |> List.map(fun i -> BranchInstanceMeta.loadIndex i isCollected isLatest entity)
+        |> List.map(fun i -> LeafMeta.loadIndex i isCollected isLatest entity)
     static member initialize =
         {   Id = 0
             StackId = 0
@@ -371,24 +371,24 @@ type BranchInstanceMeta with
             Users = 0
             EditSummary = ""
         }
-    member this.copyTo (entity: BranchInstanceEntity) =
+    member this.copyTo (entity: LeafEntity) =
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.IsDmca <- this.IsDmca
     member this.copyToNew =
-        let e = BranchInstanceEntity()
+        let e = LeafEntity()
         this.copyTo e
         e
 
 type QuizCard with
     static member load (entity: CollectedCardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
-            entity.BranchInstance |> BranchInstanceView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int entity.Index]
+            entity.Leaf |> LeafView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int entity.Index]
         result {
             let! cardState = CardState.create entity.CardState
             return {
                 CollectedCardId = entity.Id
-                BranchInstanceId = entity.BranchInstanceId
+                LeafId = entity.LeafId
                 Due = entity.Due
                 Front = front
                 Back = back
@@ -423,7 +423,7 @@ type CollectedCard with
         {   StackId = 0
             BranchId = 0
             CollectedCardId = 0
-            BranchInstanceMeta = BranchInstanceMeta.initialize
+            LeafMeta = LeafMeta.initialize
             Index = 0s
             UserId = userId
             CardState = CardState.Normal
@@ -441,7 +441,7 @@ type CollectedCard with
             {   StackId = entity.StackId
                 BranchId = entity.BranchId
                 CollectedCardId = entity.Id
-                BranchInstanceMeta = BranchInstanceMeta.loadIndex entity.Index isCollected entity.IsLatest entity.BranchInstance
+                LeafMeta = LeafMeta.loadIndex entity.Index isCollected entity.IsLatest entity.Leaf
                 Index = entity.Index
                 UserId = entity.UserId
                 CardState = cardState
@@ -478,7 +478,7 @@ type Branch with
         Name = branch.Name
         Summary =
             ExploreBranchSummary.load
-                <| BranchInstanceMeta.load (branch.LatestInstanceId = CollectedIds.branchInstanceId ids) true branch.LatestInstance
+                <| LeafMeta.load (branch.LatestInstanceId = CollectedIds.leafId ids) true branch.LatestInstance
                 <| branch
     }
 
@@ -512,8 +512,8 @@ type BranchRevision with
         AuthorId = e.AuthorId
         Name = e.Name
         SortedMeta =
-            e.BranchInstances
+            e.Leafs
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.mapi (fun i e -> BranchInstanceMeta.load (e.Id = collectedInstanceId) (i = 0) e)
+            |> Seq.mapi (fun i e -> LeafMeta.load (e.Id = collectedInstanceId) (i = 0) e)
             |> Seq.toList
     }

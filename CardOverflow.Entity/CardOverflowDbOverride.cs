@@ -20,9 +20,9 @@ using Npgsql.NameTranslation;
 namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
-    FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
+    FSharpFunc<(LeafEntity, BitArray, SHA512), BitArray> LeafHasher { get; }
     FSharpFunc<(GromplateInstanceEntity, SHA512), BitArray> GromplateInstanceHasher { get; }
-    FSharpFunc<BranchInstanceEntity, short> GetMaxIndexInclusive { get; }
+    FSharpFunc<LeafEntity, short> GetMaxIndexInclusive { get; }
     FSharpFunc<string, string> SanitizeTag { get; }
   }
 
@@ -33,8 +33,8 @@ namespace CardOverflow.Entity {
 
   public static class IQueryableExtensions {
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public static IOrderedQueryable<BranchInstanceEntity> Search(
-      this IQueryable<BranchInstanceEntity> instances,
+    public static IOrderedQueryable<LeafEntity> Search(
+      this IQueryable<LeafEntity> instances,
       string searchTerm,
       string plain,
       string wildcard,
@@ -44,7 +44,7 @@ namespace CardOverflow.Entity {
           NpgsqlTsRankingNormalization.DivideBy1PlusLogLength
         | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
 
-      IQueryable<BranchInstanceEntity> where(IQueryable<BranchInstanceEntity> query) =>
+      IQueryable<LeafEntity> where(IQueryable<LeafEntity> query) =>
         string.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x =>
@@ -53,7 +53,7 @@ namespace CardOverflow.Entity {
             || x.TsVector.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
 
-      IOrderedQueryable<BranchInstanceEntity> order(IQueryable<BranchInstanceEntity> query) =>
+      IOrderedQueryable<LeafEntity> order(IQueryable<LeafEntity> query) =>
         searchOrder == SearchOrder.Popularity
         ? query.OrderByDescending(x => x.Branch.Users)
         : query.OrderByDescending(x =>
@@ -122,14 +122,14 @@ namespace CardOverflow.Entity {
             .Append(MappingTools.stripHtmlTags(gromplate.Templates))
             .Apply(x => string.Join(' ', x));
       }
-      foreach (var branchInstance in _filter<BranchInstanceEntity>(entries)) {
-        if (branchInstance.GromplateInstance == null) {
-          branchInstance.GromplateInstance = await GromplateInstance.FindAsync(branchInstance.GromplateInstanceId);
+      foreach (var leaf in _filter<LeafEntity>(entries)) {
+        if (leaf.GromplateInstance == null) {
+          leaf.GromplateInstance = await GromplateInstance.FindAsync(leaf.GromplateInstanceId);
         }
-        branchInstance.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(branchInstance);
-        var gromplateHash = branchInstance.GromplateInstance?.Hash ?? GromplateInstance.Find(branchInstance.GromplateInstanceId).Hash;
-        branchInstance.Hash = _entityHasher.BranchInstanceHasher.Invoke((branchInstance, gromplateHash, sha512));
-        branchInstance.TsVectorHelper = MappingTools.stripHtmlTags(branchInstance.FieldValues);
+        leaf.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(leaf);
+        var gromplateHash = leaf.GromplateInstance?.Hash ?? GromplateInstance.Find(leaf.GromplateInstanceId).Hash;
+        leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, gromplateHash, sha512));
+        leaf.TsVectorHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
       }
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
         communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
@@ -157,12 +157,12 @@ namespace CardOverflow.Entity {
     }
 
     public IQueryable<CollectedCardIsLatestEntity> CollectedCardIsLatest => _CollectedCardIsLatestTracked.AsNoTracking();
-    public IQueryable<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCount => _BranchInstanceRelationshipCountTracked.AsNoTracking();
-    public IQueryable<BranchInstanceTagCountEntity> BranchInstanceTagCount => _BranchInstanceTagCountTracked.AsNoTracking();
+    public IQueryable<LeafRelationshipCountEntity> LeafRelationshipCount => _LeafRelationshipCountTracked.AsNoTracking();
+    public IQueryable<LeafTagCountEntity> LeafTagCount => _LeafTagCountTracked.AsNoTracking();
     public IQueryable<StackRelationshipCountEntity> StackRelationshipCount => _StackRelationshipCountTracked.AsNoTracking();
     public IQueryable<StackTagCountEntity> StackTagCount => _StackTagCountTracked.AsNoTracking();
-    public IQueryable<BranchInstanceEntity> LatestBranchInstance => BranchInstance.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<BranchInstanceEntity> LatestDefaultBranchInstance => LatestBranchInstance.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
+    public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<GromplateInstanceEntity> LatestGromplateInstance => GromplateInstance.Where(x => x.Gromplate.LatestInstanceId == x.Id).AsNoTracking();
 

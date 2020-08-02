@@ -78,18 +78,18 @@ type AnkiCardWrite = {
     Modified: DateTime option
     AuthorId: int
 } with
-    member this.CopyTo (entity: BranchInstanceEntity) =
+    member this.CopyTo (entity: LeafEntity) =
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.GromplateInstance <- this.Gromplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
-        entity.CommunalFieldInstance_BranchInstances <-
+        entity.CommunalFieldInstance_Leafs <-
             this.CommunalFields
-            |> List.map (fun cf -> CommunalFieldInstance_BranchInstanceEntity(BranchInstance = entity, CommunalFieldInstance = cf))
+            |> List.map (fun cf -> CommunalFieldInstance_LeafEntity(Leaf = entity, CommunalFieldInstance = cf))
             |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
-        let entity = BranchInstanceEntity()
+        let entity = LeafEntity()
         entity.EditSummary <- "Imported from Anki"
         let stack = StackEntity(AuthorId = this.AuthorId)
         entity.Stack <- stack
@@ -98,10 +98,10 @@ type AnkiCardWrite = {
                 Stack = stack,
                 AuthorId = this.AuthorId
             )
-        entity.File_BranchInstances <-
+        entity.File_Leafs <-
             files.Select(fun x ->
-                File_BranchInstanceEntity(
-                    BranchInstance = entity,
+                File_LeafEntity(
+                    Leaf = entity,
                     File = x
                 )
             ).ToList()
@@ -109,17 +109,17 @@ type AnkiCardWrite = {
         entity
     member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let gromplateHash = this.Gromplate |> GromplateInstanceEntity.hash hasher
-        let hash = this.CopyToNew [] |> BranchInstanceEntity.hash gromplateHash hasher
-        db.BranchInstance
-            .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
+        let hash = this.CopyToNew [] |> LeafEntity.hash gromplateHash hasher
+        db.Leaf
+            .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
+                .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
 
 type AnkiCollectedCard = {
     UserId: int
-    BranchInstance: BranchInstanceEntity
+    Leaf: LeafEntity
     GromplateInstance: GromplateInstanceEntity
     Index: int16
     CardState: CardState
@@ -143,9 +143,9 @@ type AnkiCollectedCard = {
     member this.CopyToNew i =
         let entity = CollectedCardEntity()
         this.CopyToX entity i
-        entity.Stack <- this.BranchInstance.Branch.Stack
-        entity.Branch <- this.BranchInstance.Branch
-        entity.BranchInstance <- this.BranchInstance
+        entity.Stack <- this.Leaf.Branch.Stack
+        entity.Branch <- this.Leaf.Branch
+        entity.Leaf <- this.Leaf
         entity.CardSetting <- this.CardSetting
         entity
     member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
@@ -154,7 +154,7 @@ type AnkiCollectedCard = {
             .SingleOrDefault(fun c ->
                 this.UserId = c.UserId &&
                 this.Index = c.Index &&
-                this.BranchInstance.Id = c.BranchInstanceId
+                this.Leaf.Id = c.LeafId
             )
 
 type AnkiHistory = {
@@ -172,7 +172,7 @@ type AnkiHistory = {
         | Some cc ->
             db.History.FirstOrDefault(fun h -> 
                 this.UserId = h.UserId &&
-                Nullable cc.BranchInstanceId = h.BranchInstanceId &&
+                Nullable cc.LeafId = h.LeafId &&
                 this.Score = h.Score &&
                 this.Timestamp = h.Timestamp &&
                 interval = h.IntervalWithUnusedStepsIndex &&
@@ -195,7 +195,7 @@ type AnkiHistory = {
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
-        entity.BranchInstance <- this.CollectedCard |> Option.map (fun x -> x.BranchInstance) |> Option.toObj
+        entity.Leaf <- this.CollectedCard |> Option.map (fun x -> x.Leaf) |> Option.toObj
         entity.UserId <- this.UserId
         entity.Index <- this.CollectedCard |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
     member this.CopyToNew =
@@ -412,7 +412,7 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardSettingAndDeckByDeckId: Map<int64, CardSettingEntity * DeckEntity>)
-        (cardAndTagsByNoteId: Map<int64, BranchInstanceEntity * TagEntity list>)
+        (cardAndTagsByNoteId: Map<int64, LeafEntity * TagEntity list>)
         (colCreateDate: DateTime)
         userId
         getCard
@@ -430,7 +430,7 @@ module Anki =
             let entity =
                 let c: AnkiCollectedCard =
                     { UserId = userId
-                      BranchInstance = card
+                      Leaf = card
                       GromplateInstance = cti
                       Index = ankiCard.Ord |> int16
                       CardState =

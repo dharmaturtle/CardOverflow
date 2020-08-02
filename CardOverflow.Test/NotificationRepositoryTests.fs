@@ -83,7 +83,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let ids =
         {   StackId = 1
             BranchId = 1
-            BranchInstanceId = 1001 }
+            LeafId = 1001 }
 
     do! assertNotificationThenDelete
             {   Id = 1
@@ -106,19 +106,19 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckUpdatedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
-                                             New = { ids with BranchInstanceId = newInstanceId } } }
+                                             New = { ids with LeafId = newInstanceId } } }
 
     do! expectedDeckUpdatedStackNotification 2 1002 None |> assertNotificationThenDelete
 
     // works with DeckUpdatedStack, collected
-    let collectedInstance = ids.BranchInstanceId
+    let collectedInstance = ids.LeafId
     do! StackRepository.CollectCard c.Db followerId collectedInstance
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let collected =
         {   StackId = ids.StackId
             BranchId = ids.BranchId
-            BranchInstanceId = collectedInstance } |> Some
+            LeafId = collectedInstance } |> Some
     
     do! expectedDeckUpdatedStackNotification 3 1003 collected
         |> assertNotificationThenDelete
@@ -134,5 +134,5 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
-                                             Deleted = { ids with BranchInstanceId = 1003 } } }
+                                             Deleted = { ids with LeafId = 1003 } } }
     } |> TaskResult.getOk)

@@ -33,7 +33,7 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.CollectedCard
 
-    let recollect () = StackRepository.CollectCard c.Db userId cc.BranchInstanceMeta.Id |> TaskResult.getOk
+    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id |> TaskResult.getOk
     
     do! recollect ()
     let! (cc: CollectedCard ResizeArray) = getCollected ()
@@ -66,7 +66,7 @@ let ``StackRepository.deleteCollectedCard works``(): Task<unit> = (taskResult {
     Assert.NotEmpty c.Db.History
     Assert.NotEmpty c.Db.Tag_CollectedCard
     do! StackRepository.uncollectStack c.Db userId cc.StackId // can delete after adding a history, tag, and relationship
-    Assert.Equal(stack2, c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.StackId) // from the other side of the relationship
+    Assert.Equal(stack2, c.Db.CollectedCard.Include(fun x -> x.Leaf).Single().Leaf.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_CollectedCard
     Assert.Empty c.Db.Tag_CollectedCard
 
@@ -120,8 +120,8 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = 1002
-    let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new CollectedCard; it only swaps out the BranchInstanceId
-    Assert.Equal(i2, c.Db.CollectedCard.Single().BranchInstanceId)
+    let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new CollectedCard; it only swaps out the LeafId
+    Assert.Equal(i2, c.Db.CollectedCard.Single().LeafId)
     Assert.Equal(branchId, c.Db.CollectedCard.Single().BranchId)
     Assert.Equal(stackId, c.Db.CollectedCard.Single().StackId)
     
@@ -130,13 +130,13 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
         CollectedCardEntity(
             StackId = stackId,
             BranchId = branchId,
-            BranchInstanceId = i2,
+            LeafId = i2,
             Due = DateTime.UtcNow,
             UserId = userId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"ix$collected_card$user_id__branch_instance_id__index\"",
+        "23505: duplicate key value violates unique constraint \"ix$collected_card$user_id__leaf_id__index\"",
         ex.InnerException.Message)
 
     let i1 = 1001
@@ -145,14 +145,14 @@ let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
         CollectedCardEntity(
             StackId = stackId,
             BranchId = branchId,
-            BranchInstanceId = i1,
+            LeafId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
             CardSettingId = userId,
             DeckId = userId)
     let ex = Assert.Throws<Npgsql.PostgresException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "P0001: UserId #3 with CollectedCard #3 and Stack #1 tried to have BranchInstanceId #1001, but they already have BranchInstanceId #1002",
+        "P0001: UserId #3 with CollectedCard #3 and Stack #1 tried to have LeafId #1001, but they already have LeafId #1002",
         ex.Message)
     }
 
@@ -225,30 +225,30 @@ let ``CollectCards works``(): Task<unit> = task {
     let ci1_1 = 1001
     let! _ = FacetRepositoryTests.addBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single().Users)
-    Assert.Equal(1, c.Db.BranchInstance.Single().Users)
+    Assert.Equal(1, c.Db.Leaf.Single().Users)
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
-    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
+    Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(1, c.Db.CollectedCard.Count())
     
     let s2 = 2
     let ci2_1 = 1002
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
-    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
+    Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.CollectedCard.Count())
     
     let collectorId = 1
     let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
-    Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_1).Users)
+    Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.CollectedCard.Count())
     let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
-    Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci2_1).Users)
+    Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     // misc
-    Assert.Equal(2, c.Db.BranchInstance.Count())
+    Assert.Equal(2, c.Db.Leaf.Count())
     Assert.Equal(6, c.Db.CollectedCard.Count())
-    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_1));
+    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_1));
 
     // update branch
     let! r = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId b1
@@ -261,28 +261,28 @@ let ``CollectCards works``(): Task<unit> = task {
     let ci1_2 = 1003
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
-    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
+    Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
-    Assert.Equal(3, c.Db.BranchInstance.Count())
+    Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(6, c.Db.CollectedCard.Count())
-    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2))
+    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_2))
     
     let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
-    Assert.Equal(2, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
+    Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
-    Assert.Equal(3, c.Db.BranchInstance.Count())
+    Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(6, c.Db.CollectedCard.Count())
-    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
+    Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_2));
 
     let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.StackId = s1 && x.UserId = authorId)
     do! StackRepository.uncollectStack c.Db authorId cc.StackId |> TaskResult.getOk
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
-    Assert.Equal(1, c.Db.BranchInstance.Single(fun x -> x.Id = ci1_2).Users)
+    Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
-    Assert.Equal(3, c.Db.BranchInstance.Count())
+    Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(5, c.Db.CollectedCard.Count())
-    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.BranchInstanceId = ci1_2));
+    Assert.Equal(1, c.Db.CollectedCard.Count(fun x -> x.LeafId = ci1_2));
 
     let count = StackRepository.GetDueCount c.Db collectorId ""
     Assert.Equal(3, count)

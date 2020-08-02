@@ -160,8 +160,8 @@ module AnkiImporter =
                 |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getCollectedCard)
                 |> Result.consolidate
                 |> Result.map Map.ofSeq
-            cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.BranchInstance) |> List.iter (fun (_, card) ->
-                match card.BranchInstance.AnkiNoteId |> Option.ofNullable with
+            cardByNoteId |> Map.toList |> List.distinctBy (fun (_, x) -> x.Leaf) |> List.iter (fun (_, card) ->
+                match card.Leaf.AnkiNoteId |> Option.ofNullable with
                 | None -> ()
                 | Some nid -> 
                     let _, tags = cardsAndTagsByNoteId.[nid]
@@ -213,7 +213,7 @@ module AnkiImporter =
                     <| getCollectedCard
                     <| getHistory
             ccs |> Seq.iter (fun x ->
-                if x.BranchInstance <> null && x.BranchInstanceId = 0
+                if x.Leaf <> null && x.LeafId = 0
                 then db.CollectedCard.AddI x
             )
             histories |> Seq.iter (fun x ->

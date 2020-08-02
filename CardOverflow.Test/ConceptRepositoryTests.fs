@@ -54,15 +54,15 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
-    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldInstanceId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<CollectedCard, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
+    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
 
     // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
     let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
@@ -81,13 +81,13 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
-    // StackRepository.Revisions says we collected the most recent branchInstance
+    // StackRepository.Revisions says we collected the most recent leaf
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
-    // collect oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
+    // collect oldest instance, then StackRepository.Revisions says we collected the oldest leaf
     do! StackRepository.CollectCard c.Db userId oldInstanceId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
@@ -107,15 +107,15 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
-    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = oldInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldInstanceId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<CollectedCard, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.BranchInstanceMeta.Id).Distinct().Single())
+    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
 
     // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
     let! actual = CollectedCardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
@@ -134,13 +134,13 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
 
     Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
 
-    // StackRepository.Revisions says we collected the most recent branchInstance
+    // StackRepository.Revisions says we collected the most recent leaf
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
     |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
 
-    // collect oldest instance, then StackRepository.Revisions says we collected the oldest branchInstance
+    // collect oldest instance, then StackRepository.Revisions says we collected the oldest leaf
     do! StackRepository.CollectCard c.Db userId oldInstanceId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
@@ -222,7 +222,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     let! (_: int) = addCard c.Db authorId ["A"]
     let stackId = 1
     let branchId = 1
-    let branchInstanceId = 1001
+    let leafId = 1001
     let! collectedCards = StackRepository.GetCollectedPages c.Db authorId 1 ""
     Assert.Equal(acCount, collectedCards.Results.Count())
     let! cc = StackRepository.GetCollected c.Db authorId stackId
@@ -230,7 +230,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
     let collectorId = 2  // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db collectorId branchInstanceId |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId leafId |> TaskResult.getOk
     let! stack = ExploreStackRepository.get c.Db collectorId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -364,7 +364,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
 
 [<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
-    let branchInstanceIds = [1001; 1002]
+    let leafIds = [1001; 1002]
     use c = new TestContainer()
     let relationshipName = "Test/Relationship"
     
@@ -415,16 +415,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = 3 // this user collects card in opposite order from user2
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -433,7 +433,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
 
 [<Fact>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
-    let branchInstanceIds = [1001; 1002]
+    let leafIds = [1001; 1002]
     use c = new TestContainer()
     let relationshipName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
@@ -478,16 +478,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = 2 // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = 3 // this user collects card in opposite order from user2
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[1] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId branchInstanceIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]

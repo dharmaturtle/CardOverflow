@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class BranchInstanceRelationshipCountEntity
+    public partial class LeafRelationshipCountEntity
     {
-        public int SourceBranchInstanceId { get; set; }
-        public int TargetBranchInstanceId { get; set; }
-        public int BranchInstanceId { get; set; }
+        public int SourceLeafId { get; set; }
+        public int TargetLeafId { get; set; }
+        public int LeafId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;

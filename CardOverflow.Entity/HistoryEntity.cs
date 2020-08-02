@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
         public long Id { get; set; }
         public int? CollectedCardId { get; set; }
         public int UserId { get; set; }
-        public int? BranchInstanceId { get; set; }
+        public int? LeafId { get; set; }
         public short Index { get; set; }
         public short Score { get; set; }
         public DateTime Timestamp { get; set; }
@@ -22,9 +22,9 @@ namespace CardOverflow.Entity
         [ForeignKey("CollectedCardId")]
         [InverseProperty("Histories")]
         public virtual CollectedCardEntity CollectedCard { get; set; }
-        [ForeignKey("BranchInstanceId")]
+        [ForeignKey("LeafId")]
         [InverseProperty("Histories")]
-        public virtual BranchInstanceEntity BranchInstance { get; set; }
+        public virtual LeafEntity Leaf { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("Histories")]
         public virtual UserEntity User { get; set; }

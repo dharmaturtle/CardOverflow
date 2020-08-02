@@ -43,13 +43,13 @@ CREATE FUNCTION public.fn_ctr_collectedcard_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc."branch_instance_id" FROM "collected_card" cc WHERE cc."user_id" = NEW."user_id" AND cc."stack_id" = NEW."stack_id") _)) THEN
-            RAISE EXCEPTION 'UserId #% with CollectedCard #% and Stack #% tried to have BranchInstanceId #%, but they already have BranchInstanceId #%',
-            (NEW."user_id"), (NEW."id"), (NEW."stack_id"), (NEW."branch_instance_id"), (SELECT cc."branch_instance_id" FROM "collected_card" cc WHERE cc."user_id" = NEW."user_id" AND cc."stack_id" = NEW."stack_id" LIMIT 1);
+        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc."leaf_id" FROM "collected_card" cc WHERE cc."user_id" = NEW."user_id" AND cc."stack_id" = NEW."stack_id") _)) THEN
+            RAISE EXCEPTION 'UserId #% with CollectedCard #% and Stack #% tried to have LeafId #%, but they already have LeafId #%',
+            (NEW."user_id"), (NEW."id"), (NEW."stack_id"), (NEW."leaf_id"), (SELECT cc."leaf_id" FROM "collected_card" cc WHERE cc."user_id" = NEW."user_id" AND cc."stack_id" = NEW."stack_id" LIMIT 1);
         END IF;
-		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."branch_instance_id" <> NEW."branch_instance_id" OR OLD."index" <> NEW."index"))) THEN
-		IF ((SELECT bi."max_index_inclusive" FROM public."branch_instance" bi WHERE bi."id" = NEW."branch_instance_id") < NEW."index") THEN
-			RAISE EXCEPTION 'UserId #% with CollectedCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its BranchInstanceId #%', (NEW."user_id"), (NEW."id"), (NEW."index"), (SELECT bi."max_index_inclusive" FROM public."branch_instance" bi WHERE bi."id" = NEW."branch_instance_id"), (NEW."branch_instance_id");
+		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."leaf_id" <> NEW."leaf_id" OR OLD."index" <> NEW."index"))) THEN
+		IF ((SELECT bi."max_index_inclusive" FROM public."leaf" bi WHERE bi."id" = NEW."leaf_id") < NEW."index") THEN
+			RAISE EXCEPTION 'UserId #% with CollectedCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its LeafId #%', (NEW."user_id"), (NEW."id"), (NEW."index"), (SELECT bi."max_index_inclusive" FROM public."leaf" bi WHERE bi."id" = NEW."leaf_id"), (NEW."leaf_id");
 		END IF;
 		END IF;
         RETURN NULL;
@@ -105,7 +105,7 @@ $$;
 
 ALTER FUNCTION public.fn_tr_branch_afterinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_branchinstance_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_leaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -121,7 +121,7 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_tr_branchinstance_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_leaf_beforeinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_gromplateinstance_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
@@ -152,11 +152,11 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
         old_is_public boolean NOT NULL := 'f';
     BEGIN
 		IF ((TG_OP = 'DELETE' AND OLD."index" = 0 AND OLD."card_state" <> 3) OR 
-            (TG_OP = 'UPDATE' AND (OLD."branch_instance_id" <> NEW."branch_instance_id"
+            (TG_OP = 'UPDATE' AND (OLD."leaf_id" <> NEW."leaf_id"
                                       OR (OLD."card_state" <> 3 AND NEW."card_state" = 3)))) THEN
-            UPDATE	"branch_instance" ci
+            UPDATE	"leaf" ci
             SET     "users" = ci."users" - 1
-            WHERE	ci."id" = OLD."branch_instance_id";
+            WHERE	ci."id" = OLD."leaf_id";
             UPDATE	"branch" b
             SET		"users" = b."users" - 1
             WHERE	b."id" = OLD."branch_id";
@@ -165,11 +165,11 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
             WHERE stack."id" = OLD."stack_id";
         END IF;
         IF ((TG_OP = 'INSERT' AND NEW."index" = 0) OR
-            (TG_OP = 'UPDATE' AND (OLD."branch_instance_id" <> NEW."branch_instance_id"
+            (TG_OP = 'UPDATE' AND (OLD."leaf_id" <> NEW."leaf_id"
                                       OR (OLD."card_state" = 3 AND NEW."card_state" <> 3)))) THEN
-            UPDATE	"branch_instance" ci
+            UPDATE	"leaf" ci
             SET     "users" = ci."users" + 1
-            WHERE	ci."id" = NEW."branch_instance_id";
+            WHERE	ci."id" = NEW."leaf_id";
             UPDATE	"branch" b
             SET		"users" = b."users" + 1
             WHERE	b."id" = NEW."branch_id";
@@ -182,8 +182,8 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD."deck_id" <> NEW."deck_id" AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "gromplate_id", "gromplate_instance_id")
-                                            VALUES (NEW."user_id", (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW."stack_id", NEW."branch_id", NEW."branch_instance_id", NEW."deck_id",  NULL,       NULL)
+                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "leaf_id",     "deck_id", "gromplate_id", "gromplate_instance_id")
+                                            VALUES (NEW."user_id", (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW."stack_id", NEW."branch_id", NEW."leaf_id", NEW."deck_id",  NULL,       NULL)
                     RETURNING "id"
                 ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
                                                  (SELECT df."follower_id", (SELECT "id" FROM notification_id)
@@ -191,10 +191,10 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
                                                   WHERE df."deck_id" = NEW."deck_id"
                                                  );
             END IF;
-            IF (TG_OP = 'UPDATE' AND OLD."branch_instance_id" <> NEW."branch_instance_id") THEN
+            IF (TG_OP = 'UPDATE' AND OLD."leaf_id" <> NEW."leaf_id") THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "gromplate_id", "gromplate_instance_id")
-                                            VALUES (NEW."user_id", (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW."stack_id", NEW."branch_id", NEW."branch_instance_id", NEW."deck_id",  NULL,       NULL)
+                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "leaf_id",     "deck_id", "gromplate_id", "gromplate_instance_id")
+                                            VALUES (NEW."user_id", (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW."stack_id", NEW."branch_id", NEW."leaf_id", NEW."deck_id",  NULL,       NULL)
                     RETURNING "id"
                 ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
                                                  (SELECT df."follower_id", (SELECT "id" FROM notification_id)
@@ -204,8 +204,8 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD."deck_id" <> NEW."deck_id" AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "branch_instance_id",     "deck_id", "gromplate_id", "gromplate_instance_id")
-                                            VALUES (OLD."user_id", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."stack_id", OLD."branch_id", OLD."branch_instance_id", OLD."deck_id",  NULL,       NULL)
+                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "leaf_id",     "deck_id", "gromplate_id", "gromplate_instance_id")
+                                            VALUES (OLD."user_id", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."stack_id", OLD."branch_id", OLD."leaf_id", OLD."deck_id",  NULL,       NULL)
                     RETURNING "id"
                 ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
                                                  (SELECT df."follower_id", (SELECT "id" FROM notification_id)
@@ -403,7 +403,7 @@ ALTER TABLE public.branch ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
 );
 
 
-CREATE TABLE public.branch_instance (
+CREATE TABLE public.leaf (
     id integer NOT NULL,
     created timestamp without time zone NOT NULL,
     modified timestamp without time zone,
@@ -419,14 +419,14 @@ CREATE TABLE public.branch_instance (
     ts_vector_helper text,
     ts_vector tsvector,
     max_index_inclusive smallint NOT NULL,
-    CONSTRAINT "branch_instance$ts_vector_helper$is_null" CHECK ((ts_vector_helper IS NULL))
+    CONSTRAINT "leaf$ts_vector_helper$is_null" CHECK ((ts_vector_helper IS NULL))
 );
 
 
-ALTER TABLE public.branch_instance OWNER TO postgres;
+ALTER TABLE public.leaf OWNER TO postgres;
 
-ALTER TABLE public.branch_instance ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public."branch_instance$id$seq"
+ALTER TABLE public.leaf ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public."leaf$id$seq"
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -440,7 +440,7 @@ CREATE TABLE public.collected_card (
     user_id integer NOT NULL,
     stack_id integer NOT NULL,
     branch_id integer NOT NULL,
-    branch_instance_id integer NOT NULL,
+    leaf_id integer NOT NULL,
     index smallint NOT NULL,
     card_state smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
@@ -480,10 +480,10 @@ CREATE TABLE public.relationship0collected_card (
 
 ALTER TABLE public.relationship0collected_card OWNER TO postgres;
 
-CREATE VIEW public.branch_instance_relationship_count AS
- SELECT sac.branch_instance_id AS source_branch_instance_id,
-    tac.branch_instance_id AS target_branch_instance_id,
-    unnest(ARRAY[sac.branch_instance_id, tac.branch_instance_id]) AS branch_instance_id,
+CREATE VIEW public.leaf_relationship_count AS
+ SELECT sac.leaf_id AS source_leaf_id,
+    tac.leaf_id AS target_leaf_id,
+    unnest(ARRAY[sac.leaf_id, tac.leaf_id]) AS leaf_id,
     ( SELECT r.name
            FROM public.relationship r
           WHERE (r.id = rac.relationship_id)
@@ -493,10 +493,10 @@ CREATE VIEW public.branch_instance_relationship_count AS
      JOIN public.collected_card sac ON ((rac.source_collected_card_id = sac.id)))
      JOIN public.collected_card tac ON ((rac.target_collected_card_id = tac.id)))
   WHERE ((sac.card_state <> 3) AND (tac.card_state <> 3))
-  GROUP BY sac.branch_instance_id, tac.branch_instance_id, rac.relationship_id;
+  GROUP BY sac.leaf_id, tac.leaf_id, rac.relationship_id;
 
 
-ALTER TABLE public.branch_instance_relationship_count OWNER TO postgres;
+ALTER TABLE public.leaf_relationship_count OWNER TO postgres;
 
 CREATE TABLE public.tag (
     id integer NOT NULL,
@@ -517,21 +517,21 @@ CREATE TABLE public.tag0collected_card (
 
 ALTER TABLE public.tag0collected_card OWNER TO postgres;
 
-CREATE VIEW public.branch_instance_tag_count AS
- SELECT i.id AS branch_instance_id,
+CREATE VIEW public.leaf_tag_count AS
+ SELECT i.id AS leaf_id,
     ( SELECT t.name
            FROM public.tag t
           WHERE (t.id = ta.tag_id)
          LIMIT 1) AS name,
     count(*) AS count
-   FROM ((public.branch_instance i
-     JOIN public.collected_card cc ON ((cc.branch_instance_id = i.id)))
+   FROM ((public.leaf i
+     JOIN public.collected_card cc ON ((cc.leaf_id = i.id)))
      JOIN public.tag0collected_card ta ON ((ta.collected_card_id = cc.id)))
   WHERE (cc.card_state <> 3)
   GROUP BY i.id, ta.tag_id;
 
 
-ALTER TABLE public.branch_instance_tag_count OWNER TO postgres;
+ALTER TABLE public.leaf_tag_count OWNER TO postgres;
 
 CREATE TABLE public.card_setting (
     id integer NOT NULL,
@@ -640,7 +640,7 @@ CREATE VIEW public.collected_card_is_latest AS
     a.user_id,
     a.stack_id,
     a.branch_id,
-    a.branch_instance_id,
+    a.leaf_id,
     a.index,
     a.card_state,
     a.ease_factor_in_permille,
@@ -653,7 +653,7 @@ CREATE VIEW public.collected_card_is_latest AS
     a.deck_id,
     (b.latest_instance_id IS NULL) AS is_latest
    FROM (public.collected_card a
-     LEFT JOIN public.branch b ON ((b.latest_instance_id = a.branch_instance_id)));
+     LEFT JOIN public.branch b ON ((b.latest_instance_id = a.leaf_id)));
 
 
 ALTER TABLE public.collected_card_is_latest OWNER TO postgres;
@@ -748,13 +748,13 @@ ALTER TABLE public.communal_field_instance ALTER COLUMN id ADD GENERATED BY DEFA
 );
 
 
-CREATE TABLE public.communal_field_instance0branch_instance (
-    branch_instance_id integer NOT NULL,
+CREATE TABLE public.communal_field_instance0leaf (
+    leaf_id integer NOT NULL,
     communal_field_instance_id integer NOT NULL
 );
 
 
-ALTER TABLE public.communal_field_instance0branch_instance OWNER TO postgres;
+ALTER TABLE public.communal_field_instance0leaf OWNER TO postgres;
 
 CREATE TABLE public.deck (
     id integer NOT NULL,
@@ -830,13 +830,13 @@ ALTER TABLE public.file ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
 );
 
 
-CREATE TABLE public.file0branch_instance (
-    branch_instance_id integer NOT NULL,
+CREATE TABLE public.file0leaf (
+    leaf_id integer NOT NULL,
     file_id integer NOT NULL
 );
 
 
-ALTER TABLE public.file0branch_instance OWNER TO postgres;
+ALTER TABLE public.file0leaf OWNER TO postgres;
 
 CREATE TABLE public.filter (
     id integer NOT NULL,
@@ -862,7 +862,7 @@ CREATE TABLE public.history (
     id bigint NOT NULL,
     collected_card_id integer,
     user_id integer NOT NULL,
-    branch_instance_id integer,
+    leaf_id integer,
     index smallint NOT NULL,
     score smallint NOT NULL,
     "timestamp" timestamp without time zone NOT NULL,
@@ -892,7 +892,7 @@ CREATE TABLE public.notification (
     message character varying(4000),
     stack_id integer,
     branch_id integer,
-    branch_instance_id integer,
+    leaf_id integer,
     deck_id integer,
     gromplate_id integer,
     gromplate_instance_id integer
@@ -1328,7 +1328,7 @@ SELECT pg_catalog.setval('public."alpha_beta_key$id$seq"', 1, false);
 SELECT pg_catalog.setval('public."branch$id$seq"', 1, false);
 
 
-SELECT pg_catalog.setval('public."branch_instance$id$seq"', 1001, false);
+SELECT pg_catalog.setval('public."leaf$id$seq"', 1001, false);
 
 
 SELECT pg_catalog.setval('public."card_setting$id$seq"', 4, false);
@@ -1396,8 +1396,8 @@ ALTER TABLE ONLY public.branch
     ADD CONSTRAINT "p_k$branch" PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.branch_instance
-    ADD CONSTRAINT "p_k$branch_instance" PRIMARY KEY (id);
+ALTER TABLE ONLY public.leaf
+    ADD CONSTRAINT "p_k$leaf" PRIMARY KEY (id);
 
 
 ALTER TABLE ONLY public.card_setting
@@ -1432,8 +1432,8 @@ ALTER TABLE ONLY public.communal_field_instance
     ADD CONSTRAINT "p_k$communal_field_instance" PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.communal_field_instance0branch_instance
-    ADD CONSTRAINT "p_k$communal_field_instance$branch_instance" PRIMARY KEY (communal_field_instance_id, branch_instance_id);
+ALTER TABLE ONLY public.communal_field_instance0leaf
+    ADD CONSTRAINT "p_k$communal_field_instance$leaf" PRIMARY KEY (communal_field_instance_id, leaf_id);
 
 
 ALTER TABLE ONLY public.deck
@@ -1452,8 +1452,8 @@ ALTER TABLE ONLY public.file
     ADD CONSTRAINT "p_k$file" PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.file0branch_instance
-    ADD CONSTRAINT "p_k$file0branch_instance" PRIMARY KEY (branch_instance_id, file_id);
+ALTER TABLE ONLY public.file0leaf
+    ADD CONSTRAINT "p_k$file0leaf" PRIMARY KEY (leaf_id, file_id);
 
 
 ALTER TABLE ONLY public.filter
@@ -1524,12 +1524,12 @@ ALTER TABLE ONLY public.branch
     ADD CONSTRAINT "u_q$branch$branch_id__stack_id" UNIQUE (id, stack_id);
 
 
-ALTER TABLE ONLY public.branch_instance
-    ADD CONSTRAINT "u_q$branch_instance$id__branch_id" UNIQUE (id, branch_id);
+ALTER TABLE ONLY public.leaf
+    ADD CONSTRAINT "u_q$leaf$id__branch_id" UNIQUE (id, branch_id);
 
 
-ALTER TABLE ONLY public.branch_instance
-    ADD CONSTRAINT "u_q$branch_instance$id__stack_id" UNIQUE (id, stack_id);
+ALTER TABLE ONLY public.leaf
+    ADD CONSTRAINT "u_q$leaf$id__stack_id" UNIQUE (id, stack_id);
 
 
 ALTER TABLE ONLY public.card_setting
@@ -1552,7 +1552,7 @@ ALTER TABLE ONLY public.deck
     ADD CONSTRAINT "u_q$deck$deck_id__user_id" UNIQUE (id, user_id);
 
 
-CREATE INDEX idx_fts_branchinstance_tsvector ON public.branch_instance USING gin (ts_vector);
+CREATE INDEX idx_fts_leaf_tsvector ON public.leaf USING gin (ts_vector);
 
 
 CREATE INDEX idx_fts_gromplateinstance_tsvector ON public.gromplate_instance USING gin (ts_vector);
@@ -1573,13 +1573,13 @@ CREATE INDEX idx_fts_user_tsvector ON public.padawan USING gin (ts_vector);
 CREATE UNIQUE INDEX "ix$alpha_beta_key$key" ON public.alpha_beta_key USING btree (key);
 
 
-CREATE INDEX "ix$branch_instance$branch_id" ON public.branch_instance USING btree (branch_id);
+CREATE INDEX "ix$leaf$branch_id" ON public.leaf USING btree (branch_id);
 
 
-CREATE INDEX "ix$branch_instance$gromplate_instance_id" ON public.branch_instance USING btree (gromplate_instance_id);
+CREATE INDEX "ix$leaf$gromplate_instance_id" ON public.leaf USING btree (gromplate_instance_id);
 
 
-CREATE INDEX "ix$branch_instance$hash" ON public.branch_instance USING btree (hash);
+CREATE INDEX "ix$leaf$hash" ON public.leaf USING btree (hash);
 
 
 CREATE INDEX "ix$card_setting$user_id" ON public.card_setting USING btree (user_id);
@@ -1594,7 +1594,7 @@ CREATE INDEX "ix$gromplate_instance$gromplate_id" ON public.gromplate_instance U
 CREATE INDEX "ix$gromplate_instance$hash" ON public.gromplate_instance USING btree (hash);
 
 
-CREATE INDEX "ix$collected_card$branch_instance_id" ON public.collected_card USING btree (branch_instance_id);
+CREATE INDEX "ix$collected_card$leaf_id" ON public.collected_card USING btree (leaf_id);
 
 
 CREATE INDEX "ix$collected_card$card_setting_id" ON public.collected_card USING btree (card_setting_id);
@@ -1609,7 +1609,7 @@ CREATE INDEX "ix$collected_card$user_id" ON public.collected_card USING btree (u
 CREATE INDEX "ix$collected_card$user_id__branch_id" ON public.collected_card USING btree (user_id, branch_id);
 
 
-CREATE UNIQUE INDEX "ix$collected_card$user_id__branch_instance_id__index" ON public.collected_card USING btree (user_id, branch_instance_id, index);
+CREATE UNIQUE INDEX "ix$collected_card$user_id__leaf_id__index" ON public.collected_card USING btree (user_id, leaf_id, index);
 
 
 CREATE INDEX "ix$collected_card$user_id__stack_id" ON public.collected_card USING btree (user_id, stack_id);
@@ -1630,7 +1630,7 @@ CREATE INDEX "ix$comment_stack$user_id" ON public.comment_stack USING btree (use
 CREATE INDEX "ix$communal_field$author_id" ON public.communal_field USING btree (author_id);
 
 
-CREATE INDEX "ix$communal_field_instance$branch_instance__branch_instance_id" ON public.communal_field_instance0branch_instance USING btree (branch_instance_id);
+CREATE INDEX "ix$communal_field_instance$leaf__leaf_id" ON public.communal_field_instance0leaf USING btree (leaf_id);
 
 
 CREATE INDEX "ix$communal_field_instance$communal_field_id" ON public.communal_field_instance USING btree (communal_field_id);
@@ -1645,7 +1645,7 @@ CREATE INDEX "ix$feedback$user_id" ON public.feedback USING btree (user_id);
 CREATE UNIQUE INDEX "ix$file$sha256" ON public.file USING btree (sha256);
 
 
-CREATE INDEX "ix$file0branch_instance$file_id" ON public.file0branch_instance USING btree (file_id);
+CREATE INDEX "ix$file0leaf$file_id" ON public.file0leaf USING btree (file_id);
 
 
 CREATE INDEX "ix$filter$user_id" ON public.filter USING btree (user_id);
@@ -1711,7 +1711,7 @@ CREATE CONSTRAINT TRIGGER ctr_collectedcard_insertupdate AFTER INSERT OR UPDATE 
 CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public.branch FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branch_afterinsertupdate();
 
 
-CREATE TRIGGER tr_branchinstance_beforeinsert BEFORE INSERT ON public.branch_instance FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branchinstance_beforeinsert();
+CREATE TRIGGER tr_leaf_beforeinsert BEFORE INSERT ON public.leaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_leaf_beforeinsert();
 
 
 CREATE TRIGGER tr_gromplateinstance_beforeinsert BEFORE INSERT ON public.gromplate_instance FOR EACH ROW EXECUTE FUNCTION public.fn_tr_gromplateinstance_beforeinsert();
@@ -1745,7 +1745,7 @@ CREATE TRIGGER tr_user_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.pada
 
 
 ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT "fk$branch$branch_instance__latest_instance_id" FOREIGN KEY (latest_instance_id, id) REFERENCES public.branch_instance(id, branch_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "fk$branch$leaf__latest_instance_id" FOREIGN KEY (latest_instance_id, id) REFERENCES public.leaf(id, branch_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.branch
@@ -1756,16 +1756,16 @@ ALTER TABLE ONLY public.branch
     ADD CONSTRAINT "fk$branch$user__author_id" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.branch_instance
-    ADD CONSTRAINT "fk$branch_instance$branch__branch_id" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+ALTER TABLE ONLY public.leaf
+    ADD CONSTRAINT "fk$leaf$branch__branch_id" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
 
 
-ALTER TABLE ONLY public.branch_instance
-    ADD CONSTRAINT "fk$branch_instance$branch__stack_id__branch_id" FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id) DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE ONLY public.leaf
+    ADD CONSTRAINT "fk$leaf$branch__stack_id__branch_id" FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id) DEFERRABLE INITIALLY DEFERRED;
 
 
-ALTER TABLE ONLY public.branch_instance
-    ADD CONSTRAINT "fk$branch_instance$gromplate_instance__gromplate_instance_id" FOREIGN KEY (gromplate_instance_id) REFERENCES public.gromplate_instance(id);
+ALTER TABLE ONLY public.leaf
+    ADD CONSTRAINT "fk$leaf$gromplate_instance__gromplate_instance_id" FOREIGN KEY (gromplate_instance_id) REFERENCES public.gromplate_instance(id);
 
 
 ALTER TABLE ONLY public.card_setting
@@ -1793,11 +1793,11 @@ ALTER TABLE ONLY public.collected_card
 
 
 ALTER TABLE ONLY public.collected_card
-    ADD CONSTRAINT "fk$collected_card$branch_instance__branch_instance_id" FOREIGN KEY (branch_instance_id) REFERENCES public.branch_instance(id);
+    ADD CONSTRAINT "fk$collected_card$leaf__leaf_id" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.collected_card
-    ADD CONSTRAINT "fk$collected_card$branch_instance__branch_instance_id__branch_i" FOREIGN KEY (branch_id, branch_instance_id) REFERENCES public.branch_instance(branch_id, id);
+    ADD CONSTRAINT "fk$collected_card$leaf__leaf_id__branch_i" FOREIGN KEY (branch_id, leaf_id) REFERENCES public.leaf(branch_id, id);
 
 
 ALTER TABLE ONLY public.collected_card
@@ -1840,12 +1840,12 @@ ALTER TABLE ONLY public.communal_field
     ADD CONSTRAINT "fk$communal_field$user__author_id" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.communal_field_instance0branch_instance
-    ADD CONSTRAINT "fk$communal_field_instance$branch_instance__branch_instance_id" FOREIGN KEY (branch_instance_id) REFERENCES public.branch_instance(id);
+ALTER TABLE ONLY public.communal_field_instance0leaf
+    ADD CONSTRAINT "fk$communal_field_instance$leaf__leaf_id" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
-ALTER TABLE ONLY public.communal_field_instance0branch_instance
-    ADD CONSTRAINT "fk$communal_field_instance$branch_instance__communal_field_inst" FOREIGN KEY (communal_field_instance_id) REFERENCES public.communal_field_instance(id);
+ALTER TABLE ONLY public.communal_field_instance0leaf
+    ADD CONSTRAINT "fk$communal_field_instance$leaf__communal_field_inst" FOREIGN KEY (communal_field_instance_id) REFERENCES public.communal_field_instance(id);
 
 
 ALTER TABLE ONLY public.communal_field_instance
@@ -1876,12 +1876,12 @@ ALTER TABLE ONLY public.feedback
     ADD CONSTRAINT "fk$feedback$user__user_id" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.file0branch_instance
-    ADD CONSTRAINT "fk$file0branch_instance__branch_instance__branch_instance_id" FOREIGN KEY (branch_instance_id) REFERENCES public.branch_instance(id);
+ALTER TABLE ONLY public.file0leaf
+    ADD CONSTRAINT "fk$file0leaf__leaf__leaf_id" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
-ALTER TABLE ONLY public.file0branch_instance
-    ADD CONSTRAINT "fk$file0branch_instance__file__file_id" FOREIGN KEY (file_id) REFERENCES public.file(id);
+ALTER TABLE ONLY public.file0leaf
+    ADD CONSTRAINT "fk$file0leaf__file__file_id" FOREIGN KEY (file_id) REFERENCES public.file(id);
 
 
 ALTER TABLE ONLY public.filter
@@ -1889,7 +1889,7 @@ ALTER TABLE ONLY public.filter
 
 
 ALTER TABLE ONLY public.history
-    ADD CONSTRAINT "fk$history$branch_instance__branch_instance_id" FOREIGN KEY (branch_instance_id) REFERENCES public.branch_instance(id);
+    ADD CONSTRAINT "fk$history$leaf__leaf_id" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.history
@@ -1909,15 +1909,15 @@ ALTER TABLE ONLY public.notification
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "fk$notification$branch_instance__branch_instance_id" FOREIGN KEY (branch_instance_id) REFERENCES public.branch_instance(id);
+    ADD CONSTRAINT "fk$notification$leaf__leaf_id" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "fk$notification$branch_instance__branch_instance_id__branch_id" FOREIGN KEY (branch_instance_id, branch_id) REFERENCES public.branch_instance(id, branch_id);
+    ADD CONSTRAINT "fk$notification$leaf__leaf_id__branch_id" FOREIGN KEY (leaf_id, branch_id) REFERENCES public.leaf(id, branch_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "fk$notification$branch_instance__branch_instance_id__stack_id" FOREIGN KEY (branch_instance_id, stack_id) REFERENCES public.branch_instance(id, stack_id);
+    ADD CONSTRAINT "fk$notification$leaf__leaf_id__stack_id" FOREIGN KEY (leaf_id, stack_id) REFERENCES public.leaf(id, stack_id);
 
 
 ALTER TABLE ONLY public.notification
@@ -1973,7 +1973,7 @@ ALTER TABLE ONLY public.stack
 
 
 ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT "fk$stack$branch_instance__copy_source_id" FOREIGN KEY (copy_source_id) REFERENCES public.branch_instance(id);
+    ADD CONSTRAINT "fk$stack$leaf__copy_source_id" FOREIGN KEY (copy_source_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.stack

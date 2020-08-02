@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class BranchInstanceTagCountEntity
+    public partial class LeafTagCountEntity
     {
-        public int BranchInstanceId { get; set; }
+        public int LeafId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;

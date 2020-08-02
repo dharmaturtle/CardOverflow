@@ -231,8 +231,8 @@ let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
     let collectedCardId = 1
     let stackId = 1
     let branchId = 1
-    let oldBranchInstanceId = 1001
-    let newBranchInstanceId = 1002
+    let oldLeafId = 1001
+    let newLeafId = 1002
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -246,12 +246,12 @@ let ``ExploreStackRepository.instance works``() : Task<unit> = (taskResult {
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] updated
     Assert.Equal(branchId, actualBranchId)
 
-    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Default.Instance)
-    let! (branch2: BranchInstanceMeta), _ = ExploreStackRepository.instance c.Db userId newBranchInstanceId
+    let! (branch1: LeafMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Default.Instance)
+    let! (branch2: LeafMeta), _ = ExploreStackRepository.instance c.Db userId newLeafId
     Assert.Equal(branch1.InC(), branch2.InC())
     Assert.Equal(newValue                 , branch2.StrippedFront)
     Assert.Equal(newValue + " " + newValue, branch2.StrippedBack)
-    let! (card3: BranchInstanceMeta), _ = ExploreStackRepository.instance c.Db userId oldBranchInstanceId
+    let! (card3: LeafMeta), _ = ExploreStackRepository.instance c.Db userId oldLeafId
     Assert.Equal("Front",      card3.StrippedFront)
     Assert.Equal("Front Back", card3.StrippedBack)
 
@@ -280,8 +280,8 @@ let ``ExploreStackRepository.branch works``() : Task<unit> = (taskResult {
     let! _ = addBasicStack c.Db userId []
     let stackId = 1
     let branchId = 1
-    let oldBranchInstanceId = 1001
-    let newBranchInstanceId = 1002
+    let oldLeafId = 1001
+    let newLeafId = 1002
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -295,13 +295,13 @@ let ``ExploreStackRepository.branch works``() : Task<unit> = (taskResult {
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] updated
     Assert.Equal(branchId, actualBranchId)
 
-    let! (branch1: BranchInstanceMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Default.Instance)
-    let! (branch2: BranchInstanceMeta), _ = ExploreStackRepository.branch   c.Db userId branchId
+    let! (branch1: LeafMeta)    = ExploreStackRepository.get      c.Db userId stackId |> TaskResult.map(fun x -> x.Default.Instance)
+    let! (branch2: LeafMeta), _ = ExploreStackRepository.branch   c.Db userId branchId
     Assert.Equal(branch1.InC(), branch2.InC())
     Assert.Equal(newValue                 , branch2.StrippedFront)
     Assert.Equal(newValue + " " + newValue, branch2.StrippedBack)
     Assert.Equal(branchId, branch2.BranchId)
-    Assert.Equal(newBranchInstanceId, branch2.Id)
+    Assert.Equal(newLeafId, branch2.Id)
 
     // nonexistant id
     let nonexistant = 1337
@@ -347,10 +347,10 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion; FieldValues = [].ToList() }) branchId
     let oldInstanceId = 1001
     let updatedInstanceId = 1002
-    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
     
-    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db oldInstanceId userId
+    let! (a: LeafView), (a_: bool), (b: LeafView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db oldInstanceId userId
     
     do! StackViewRepository.instance c.Db oldInstanceId
         |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
@@ -364,13 +364,13 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
     let branchVersion = Guid.NewGuid().ToString()
     do! update c userId
             (VNewBranchSourceStackId stackId) (fun x -> { x with EditSummary = branchVersion }) newBranchId
-    let branchInstanceId = 1003
-    do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = branchInstanceId)
+    let leafId = 1003
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = leafId)
         |> Task.map (fun x -> Assert.Equal(branchVersion, x.EditSummary))
     
-    let! (a: BranchInstanceView), (a_: bool), (b: BranchInstanceView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db branchInstanceId userId
+    let! (a: LeafView), (a_: bool), (b: LeafView), (b_: bool), bId = StackViewRepository.instanceWithLatest c.Db leafId userId
     
-    do! StackViewRepository.instance c.Db branchInstanceId
+    do! StackViewRepository.instance c.Db leafId
         |> TaskResult.map (fun expected -> Assert.Equal(expected.InC(), a.InC()))
     Assert.True a_
     Assert.False b_
@@ -379,14 +379,14 @@ let ``StackViewRepository.instanceWithLatest works``() : Task<unit> = (taskResul
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``BranchInstance with "" as FieldValues is parsed to empty`` (): unit =
+let ``Leaf with "" as FieldValues is parsed to empty`` (): unit =
     let view =
-        BranchInstanceEntity(
+        LeafEntity(
             FieldValues = "",
             GromplateInstance = GromplateInstanceEntity(
                 Fields = "FrontArial20False0FalseBackArial20False1False"
             ))
-        |> BranchInstanceView.load
+        |> LeafView.load
 
     Assert.Empty view.FieldValues
 
@@ -416,7 +416,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let user2 = 2
     
     use c = new TestContainer()
-    let assertCount (cardsIdsAndCounts: _ list) (branchIdsAndCounts: _ list) (branchInstanceIdsAndCounts: _ list) = task {
+    let assertCount (cardsIdsAndCounts: _ list) (branchIdsAndCounts: _ list) (leafIdsAndCounts: _ list) = task {
         //"XXXXXX Stack Count".D()
         do! c.Db.Stack.CountAsync()
             |> Task.map(fun i -> Assert.Equal(cardsIdsAndCounts.Length, i))
@@ -424,8 +424,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
         do! c.Db.Branch.CountAsync()
             |> Task.map(fun i -> Assert.Equal(branchIdsAndCounts.Length, i))
         //"XXXXXX Branch Instance Count".D()
-        do! c.Db.BranchInstance.CountAsync()
-            |> Task.map(fun i -> Assert.Equal(branchInstanceIdsAndCounts.Length, i))
+        do! c.Db.Leaf.CountAsync()
+            |> Task.map(fun i -> Assert.Equal(leafIdsAndCounts.Length, i))
         for id, count in cardsIdsAndCounts do
             //"XXXXXX".D(sprintf "Stack #%i should have count #%i" id count)
             do! c.Db.Stack.SingleAsync(fun x -> x.Id = id)
@@ -434,9 +434,9 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             //"XXXXXX".D(sprintf "Branch #%i should have count #%i" id count)
             do! c.Db.Branch.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))
-        for id, count in branchInstanceIdsAndCounts do
+        for id, count in leafIdsAndCounts do
             //"XXXXXX".D(sprintf "Branch instance #%i should have count #%i" id count)
-            do! c.Db.BranchInstance.SingleAsync(fun x -> x.Id = id)
+            do! c.Db.Leaf.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
     let! _ = addBasicStack c.Db user1 ["A"; "B"]
     do! assertCount
@@ -469,7 +469,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             instance.Value.FieldValues.Select(fun x -> x.Value))
         Assert.Equal(
             instanceCountForStack,
-            c.Db.BranchInstance.Count(fun x -> x.StackId = stackId))
+            c.Db.Leaf.Count(fun x -> x.StackId = stackId))
         let! stack = ExploreStackRepository.get c.Db userId stackId
         Assert.Equal<ViewTag seq>(
             tags,
@@ -478,7 +478,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [newValue; newValue],
             instance.Value.FieldValues.Select(fun x -> x.Value)
         )
-        let createds = c.Db.BranchInstance.Select(fun x -> x.Created) |> Seq.toList
+        let createds = c.Db.Leaf.Select(fun x -> x.Created) |> Seq.toList
         Assert.NotEqual(createds.[0], createds.[1])
         let! revisions = StackRepository.Revisions c.Db userId branchId |> TaskResult.getOk
         Assert.Equal(revisionCount, revisions.SortedMeta.Count())
@@ -709,7 +709,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 2 ]
     // adventures in implicit uncollecting
     let adventurerId = 1 // changing the adventurer!
-    let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.BranchInstanceId = ogEdit_i && x.UserId = adventurerId)
+    let! cc = c.Db.CollectedCard.SingleAsync(fun x -> x.LeafId = ogEdit_i && x.UserId = adventurerId)
     do! StackRepository.uncollectStack c.Db adventurerId cc.StackId |> TaskResult.getOk
     Assert.Equal(0, c.Db.CollectedCard.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
@@ -823,7 +823,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     let userId = 3
     let testGetCollected stackId instanceId =
         StackRepository.GetCollected c.Db userId stackId
-        |> TaskResult.map (fun cc -> Assert.Equal(instanceId, cc.Single().BranchInstanceMeta.Id))
+        |> TaskResult.map (fun cc -> Assert.Equal(instanceId, cc.Single().LeafMeta.Id))
 
     let! _ = addBasicStack c.Db userId []
     let og_s = 1
@@ -832,7 +832,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests ExactInstanceCollected
     do! ExploreStackRepository.get c.Db userId og_s
-        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = og_i }, card.CollectedIds.Value))
+        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = og_i }, card.CollectedIds.Value))
     do! testGetCollected og_s og_i
     
     // update card
@@ -843,7 +843,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests ExactInstanceCollected
     do! ExploreStackRepository.get c.Db userId og_s
-        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = update_i }, card.CollectedIds.Value))
+        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = update_i }, card.CollectedIds.Value))
     do! testGetCollected og_s update_i
 
     // collecting old instance doesn't change LatestInstanceId
@@ -854,7 +854,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // tests OtherInstanceCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = og_b; BranchInstanceId = og_i }, x)
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = og_i }, x)
     | _ -> failwith "impossible"
     do! testGetCollected og_s og_i
 
@@ -868,7 +868,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = branch_i }, x)
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; LeafId = branch_i }, x)
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i
 
@@ -881,7 +881,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = updateBranch_i }, x)
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; LeafId = updateBranch_i }, x)
     | _ -> failwith "impossible"
     do! testGetCollected og_s updateBranch_i
 
@@ -895,7 +895,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // tests OtherBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; BranchInstanceId = branch_i }, x)
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; LeafId = branch_i }, x)
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i
 
@@ -915,14 +915,14 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; BranchInstanceId = branch_i2 }, x)
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; LeafId = branch_i2 }, x)
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i2
 
     // tests LatestBranchCollected with og_s
     let! stack = ExploreStackRepository.get c.Db userId og_s
     match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; BranchInstanceId = branch_i2 }, x)
+    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; LeafId = branch_i2 }, x)
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i2
 

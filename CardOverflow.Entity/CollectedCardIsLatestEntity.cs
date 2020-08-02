@@ -16,7 +16,7 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         public int StackId { get; set; }
         public int BranchId { get; set; }
-        public int BranchInstanceId { get; set; }
+        public int LeafId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
         public string BackPersonalField { get; set; }
         public int DeckId { get; set; }
         public bool IsLatest { get; set; }
-        public virtual BranchInstanceEntity BranchInstance { get; set; }
+        public virtual LeafEntity Leaf { get; set; }
         public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
     }
 }

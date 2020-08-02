@@ -21,7 +21,7 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         public int StackId { get; set; }
         public int BranchId { get; set; }
-        public int BranchInstanceId { get; set; }
+        public int LeafId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
@@ -40,9 +40,9 @@ namespace CardOverflow.Entity
         [ForeignKey("BranchId")]
         [InverseProperty("CollectedCardBranches")]
         public virtual BranchEntity Branch { get; set; }
-        [ForeignKey("BranchInstanceId")]
+        [ForeignKey("LeafId")]
         [InverseProperty("CollectedCards")]
-        public virtual BranchInstanceEntity BranchInstance { get; set; }
+        public virtual LeafEntity Leaf { get; set; }
         public virtual BranchEntity BranchNavigation { get; set; }
         [ForeignKey("CardSettingId")]
         [InverseProperty("CollectedCards")]

@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
         private string _Message;
         public int? StackId { get; set; }
         public int? BranchId { get; set; }
-        public int? BranchInstanceId { get; set; }
+        public int? LeafId { get; set; }
         public int? DeckId { get; set; }
         public int? GromplateId { get; set; }
         public int? GromplateInstanceId { get; set; }
@@ -37,9 +37,9 @@ namespace CardOverflow.Entity
         [ForeignKey("BranchId")]
         [InverseProperty("NotificationBranches")]
         public virtual BranchEntity Branch { get; set; }
-        [ForeignKey("BranchInstanceId")]
-        [InverseProperty("NotificationBranchInstances")]
-        public virtual BranchInstanceEntity BranchInstance { get; set; }
+        [ForeignKey("LeafId")]
+        [InverseProperty("NotificationLeafs")]
+        public virtual LeafEntity Leaf { get; set; }
         [ForeignKey("GromplateId")]
         [InverseProperty("Notifications")]
         public virtual GromplateEntity Gromplate { get; set; }

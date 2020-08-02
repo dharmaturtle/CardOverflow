@@ -140,30 +140,30 @@ module Generators =
             if not <| array.Contains id then
                 array.[Array.IndexOf(array, initialValue)] <- id
         return array }
-    let StackBranchInstanceIds length = gen {
+    let StackLeafIds length = gen {
         let! stacks = uniqueInts length
         let! branches = uniqueInts length
-        let! branchInstances = uniqueInts length
+        let! leafs = uniqueInts length
         return
-            Seq.zip3 stacks branches branchInstances
-            |> Seq.map StackBranchInstanceIds.fromTuple
+            Seq.zip3 stacks branches leafs
+            |> Seq.map StackLeafIds.fromTuple
             |> List.ofSeq
         }
-    let StackBranchInstanceIds3 =
-        StackBranchInstanceIds 3
-    let StackBranchInstanceIndex length = gen {
+    let StackLeafIds3 =
+        StackLeafIds 3
+    let StackLeafIndex length = gen {
         let! stacks = uniqueInts length
         let! branches = uniqueInts length
-        let! branchInstances = uniqueInts length
+        let! leafs = uniqueInts length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
         let! deckId = Arb.generate<int> |> Gen.listOfLength length
         return
-            Seq.zip5 stacks branches branchInstances indexes deckId
-            |> Seq.map StackBranchInstanceIndex.fromTuple
+            Seq.zip5 stacks branches leafs indexes deckId
+            |> Seq.map StackLeafIndex.fromTuple
             |> List.ofSeq
         }
-    let StackBranchInstanceIndex3 =
-        StackBranchInstanceIndex 3
+    let StackLeafIndex3 =
+        StackLeafIndex 3
 
 type Generators =
     static member editStackCommand =
@@ -174,10 +174,10 @@ type Generators =
         |> Arb.fromGen
     static member notificationEntity =
         Generators.notificationEntity |> Arb.fromGen
-    static member StackBranchInstanceIds3 =
-        Generators.StackBranchInstanceIds3 |> Arb.fromGen
-    static member StackBranchInstanceIndex3 =
-        Generators.StackBranchInstanceIndex3 |> Arb.fromGen
+    static member StackLeafIds3 =
+        Generators.StackLeafIds3 |> Arb.fromGen
+    static member StackLeafIndex3 =
+        Generators.StackLeafIndex3 |> Arb.fromGen
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])

@@ -7,16 +7,16 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class BranchInstanceEntity
+    public partial class LeafEntity
     {
-        public BranchInstanceEntity()
+        public LeafEntity()
         {
             CollectedCards = new HashSet<CollectedCardEntity>();
-            CommunalFieldInstance_BranchInstances = new HashSet<CommunalFieldInstance_BranchInstanceEntity>();
-            File_BranchInstances = new HashSet<File_BranchInstanceEntity>();
+            CommunalFieldInstance_Leafs = new HashSet<CommunalFieldInstance_LeafEntity>();
+            File_Leafs = new HashSet<File_LeafEntity>();
             Histories = new HashSet<HistoryEntity>();
             StackCopySources = new HashSet<StackEntity>();
-            NotificationBranchInstances = new HashSet<NotificationEntity>();
+            NotificationLeafs = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -52,26 +52,26 @@ namespace CardOverflow.Entity
         public virtual StackEntity Stack { get; set; }
 
         [ForeignKey("BranchId")]
-        [InverseProperty("BranchInstances")]
+        [InverseProperty("Leafs")]
         public virtual BranchEntity Branch { get; set; }
         [ForeignKey("GromplateInstanceId")]
-        [InverseProperty("BranchInstances")]
+        [InverseProperty("Leafs")]
         public virtual GromplateInstanceEntity GromplateInstance { get; set; }
-        [InverseProperty("BranchInstance")]
+        [InverseProperty("Leaf")]
         public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
-        [InverseProperty("BranchInstance")]
-        public virtual ICollection<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstances { get; set; }
-        [InverseProperty("BranchInstance")]
-        public virtual ICollection<File_BranchInstanceEntity> File_BranchInstances { get; set; }
-        [InverseProperty("BranchInstance")]
+        [InverseProperty("Leaf")]
+        public virtual ICollection<CommunalFieldInstance_LeafEntity> CommunalFieldInstance_Leafs { get; set; }
+        [InverseProperty("Leaf")]
+        public virtual ICollection<File_LeafEntity> File_Leafs { get; set; }
+        [InverseProperty("Leaf")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
-        [InverseProperty("BranchInstance")]
-        public virtual ICollection<NotificationEntity> NotificationBranchInstances { get; set; }
+        [InverseProperty("Leaf")]
+        public virtual ICollection<NotificationEntity> NotificationLeafs { get; set; }
         [InverseProperty("CopySource")]
         public virtual ICollection<StackEntity> StackCopySources { get; set; }
         public virtual ICollection<StackTagCountEntity> StackTagCounts { get; set; }
         public virtual ICollection<StackRelationshipCountEntity> StackRelationshipCounts { get; set; }
-        public virtual ICollection<BranchInstanceTagCountEntity> BranchInstanceTagCounts { get; set; }
-        public virtual ICollection<BranchInstanceRelationshipCountEntity> BranchInstanceRelationshipCounts { get; set; }
+        public virtual ICollection<LeafTagCountEntity> LeafTagCounts { get; set; }
+        public virtual ICollection<LeafRelationshipCountEntity> LeafRelationshipCounts { get; set; }
   }
 }

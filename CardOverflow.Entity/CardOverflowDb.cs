@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using CardOverflow.Pure;
@@ -11,9 +11,9 @@ namespace CardOverflow.Entity
         private DbSet<CollectedCardIsLatestEntity> _CollectedCardIsLatestTracked { get; set; }
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<BranchEntity> Branch { get; set; }
-        public virtual DbSet<BranchInstanceEntity> BranchInstance { get; set; }
-        private DbSet<BranchInstanceRelationshipCountEntity> _BranchInstanceRelationshipCountTracked { get; set; }
-        private DbSet<BranchInstanceTagCountEntity> _BranchInstanceTagCountTracked { get; set; }
+        public virtual DbSet<LeafEntity> Leaf { get; set; }
+        private DbSet<LeafRelationshipCountEntity> _LeafRelationshipCountTracked { get; set; }
+        private DbSet<LeafTagCountEntity> _LeafTagCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
         public virtual DbSet<GromplateEntity> Gromplate { get; set; }
         public virtual DbSet<GromplateInstanceEntity> GromplateInstance { get; set; }
@@ -21,12 +21,12 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
         public virtual DbSet<CommunalFieldInstanceEntity> CommunalFieldInstance { get; set; }
-        public virtual DbSet<CommunalFieldInstance_BranchInstanceEntity> CommunalFieldInstance_BranchInstance { get; set; }
+        public virtual DbSet<CommunalFieldInstance_LeafEntity> CommunalFieldInstance_Leaf { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<DeckFollowersEntity> DeckFollowers { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
-        public virtual DbSet<File_BranchInstanceEntity> File_BranchInstance { get; set; }
+        public virtual DbSet<File_LeafEntity> File_Leaf { get; set; }
         public virtual DbSet<FilterEntity> Filter { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
         public virtual DbSet<NotificationEntity> Notification { get; set; }
@@ -77,7 +77,7 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
                     () => entity.Ignore(e => e.TsVector));
 
-                entity.HasIndex(e => e.BranchInstanceId);
+                entity.HasIndex(e => e.LeafId);
 
                 entity.HasIndex(e => e.CardSettingId);
 
@@ -92,7 +92,7 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => new { e.Id, e.StackId, e.UserId })
                     .IsUnique();
 
-                entity.HasIndex(e => new { e.UserId, e.BranchInstanceId, e.Index })
+                entity.HasIndex(e => new { e.UserId, e.LeafId, e.Index })
                     .IsUnique();
 
                 entity.HasOne(d => d.Branch)
@@ -100,9 +100,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.BranchId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.BranchInstance)
+                entity.HasOne(d => d.Leaf)
                     .WithMany(p => p.CollectedCards)
-                    .HasForeignKey(d => d.BranchInstanceId)
+                    .HasForeignKey(d => d.LeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.CardSetting)
@@ -128,7 +128,7 @@ namespace CardOverflow.Entity
                 //entity.HasOne(d => d.BranchI)
                 //    .WithMany(p => p.CollectedCardBranchIs)
                 //    .HasPrincipalKey(p => new { p.BranchId, p.Id })
-                //    .HasForeignKey(d => new { d.BranchId, d.BranchInstanceId })
+                //    .HasForeignKey(d => new { d.BranchId, d.LeafId })
                 //    .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.BranchNavigation)
@@ -176,7 +176,7 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<BranchInstanceEntity>(entity =>
+            modelBuilder.Entity<LeafEntity>(entity =>
             {
                 entity.HasIndex(e => e.BranchId);
 
@@ -195,12 +195,12 @@ namespace CardOverflow.Entity
                     .IsUnique();
 
                 entity.HasOne(d => d.Branch)
-                    .WithMany(p => p.BranchInstances)
+                    .WithMany(p => p.Leafs)
                     .HasForeignKey(d => d.BranchId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.GromplateInstance)
-                    .WithMany(p => p.BranchInstances)
+                    .WithMany(p => p.Leafs)
                     .HasForeignKey(d => d.GromplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
@@ -212,27 +212,27 @@ namespace CardOverflow.Entity
                     .WithOne()
                     .HasForeignKey(x => x.StackId);
 
-                entity.HasMany(x => x.BranchInstanceTagCounts)
+                entity.HasMany(x => x.LeafTagCounts)
                     .WithOne()
-                    .HasForeignKey(x => x.BranchInstanceId);
+                    .HasForeignKey(x => x.LeafId);
 
-                entity.HasMany(x => x.BranchInstanceRelationshipCounts)
+                entity.HasMany(x => x.LeafRelationshipCounts)
                     .WithOne()
-                    .HasForeignKey(x => x.BranchInstanceId);
+                    .HasForeignKey(x => x.LeafId);
             });
 
-            modelBuilder.Entity<BranchInstanceRelationshipCountEntity>(entity =>
+            modelBuilder.Entity<LeafRelationshipCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.SourceBranchInstanceId, e.TargetBranchInstanceId, e.Name });
+                entity.HasKey(e => new { e.SourceLeafId, e.TargetLeafId, e.Name });
 
-                entity.ToView("branch_instance_relationship_count");
+                entity.ToView("leaf_relationship_count");
             });
 
-            modelBuilder.Entity<BranchInstanceTagCountEntity>(entity =>
+            modelBuilder.Entity<LeafTagCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.BranchInstanceId, e.Name });
+                entity.HasKey(e => new { e.LeafId, e.Name });
 
-                entity.ToView("branch_instance_tag_count");
+                entity.ToView("leaf_tag_count");
             });
 
             modelBuilder.Entity<CardSettingEntity>(entity =>
@@ -351,23 +351,23 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommunalFieldInstance_BranchInstanceEntity>(entity =>
+            modelBuilder.Entity<CommunalFieldInstance_LeafEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommunalFieldInstanceId, e.BranchInstanceId });
+                entity.HasKey(e => new { e.CommunalFieldInstanceId, e.LeafId });
 
-                entity.HasIndex(e => e.BranchInstanceId);
+                entity.HasIndex(e => e.LeafId);
 
-                entity.HasOne(d => d.BranchInstance)
-                    .WithMany(p => p.CommunalFieldInstance_BranchInstances)
-                    .HasForeignKey(d => d.BranchInstanceId)
+                entity.HasOne(d => d.Leaf)
+                    .WithMany(p => p.CommunalFieldInstance_Leafs)
+                    .HasForeignKey(d => d.LeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommunalFieldInstance_BranchInstance_BranchInstanceId");
+                    .HasConstraintName("FK_CommunalFieldInstance_Leaf_LeafId");
 
                 entity.HasOne(d => d.CommunalFieldInstance)
-                    .WithMany(p => p.CommunalFieldInstance_BranchInstances)
+                    .WithMany(p => p.CommunalFieldInstance_Leafs)
                     .HasForeignKey(d => d.CommunalFieldInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommunalFieldInstance_BranchInstance_CommunalFieldInstanceId");
+                    .HasConstraintName("FK_CommunalFieldInstance_Leaf_CommunalFieldInstanceId");
             });
 
             modelBuilder.Entity<DeckEntity>(entity =>
@@ -422,19 +422,19 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<File_BranchInstanceEntity>(entity =>
+            modelBuilder.Entity<File_LeafEntity>(entity =>
             {
-                entity.HasKey(e => new { e.BranchInstanceId, e.FileId });
+                entity.HasKey(e => new { e.LeafId, e.FileId });
 
                 entity.HasIndex(e => e.FileId);
 
-                entity.HasOne(d => d.BranchInstance)
-                    .WithMany(p => p.File_BranchInstances)
-                    .HasForeignKey(d => d.BranchInstanceId)
+                entity.HasOne(d => d.Leaf)
+                    .WithMany(p => p.File_Leafs)
+                    .HasForeignKey(d => d.LeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.File)
-                    .WithMany(p => p.File_BranchInstances)
+                    .WithMany(p => p.File_Leafs)
                     .HasForeignKey(d => d.FileId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
