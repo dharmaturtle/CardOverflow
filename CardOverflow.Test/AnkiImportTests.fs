@@ -23,9 +23,9 @@ open SimpleInjector
 open SimpleInjector.Lifestyles
 
 [<Fact>]
-let ``Import relationships has reduced Collates, also fieldvalue tests`` (): unit =
+let ``Import relationships has reduced Gromplates, also fieldvalue tests`` (): unit =
     let userId = 3
-    let collates =
+    let gromplates =
         AnkiImportTestData.relationships.Cols.Single().Models
         |> Anki.parseModels userId
         |> Result.getOk
@@ -33,7 +33,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
         |> List.groupBy (fun x -> x.AnkiId)
         |> List.map snd
     
-    let myBasic = collates.[0].First()
+    let myBasic = gromplates.[0].First()
     Assert.Equal(
         "Basic (optional reversed custom card) with source",
         myBasic.Name)
@@ -47,7 +47,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
         "<div id=\"front\">\n{{FrontSide}}\n</div>\n\n<hr id=answer>\n\n{{Back}}\n\n<script>\nlet uls = document.getElementsByClassName(\"random\");\nlet ulsArray = Array.prototype.slice.call(uls);\n\nlet arrayLength = ulsArray.length;\nfor (let i = 0; i < arrayLength; i++) {\n  let lis = ulsArray[i].getElementsByTagName(\"li\");\n  let lisArray = Array.prototype.slice.call(lis);\n  shuffle(lisArray);\n\t\n  ulsArray[i].innerHTML = [].map.call(lisArray, function(node) {\n    return node.outerHTML;\n  }).join(\"\");\n}\n\n// http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript\nfunction shuffle(a) {\n  let j, x, i;\n  for (i = a.length; i; i -= 1) {\n    j = Math.floor(Math.random() * i);\n    x = a[i - 1];\n    a[i - 1] = a[j];\n    a[j] = x;\n  }\n}\n\ndocument.onkeydown = function(evt) {\n  if (evt.keyCode == 90) {\n    // If you want to change the keyboard trigger, change the number http://keycode.info/ \n\n    let allDetails = document.getElementsByTagName('details');\n    for (i = 0; i < allDetails.length; i++) {\n      if (!allDetails[i].hasAttribute(\"open\")) {\n        allDetails[i].setAttribute('open', '');\n        break;\n      }\n    }\n  }\n};\n\nlet frontDetails = document.getElementById(\"front\").getElementsByTagName('details')\nfor (i = 0; i < frontDetails.length; i++) {\n  frontDetails[i].setAttribute('open', '');\n}\n\n</script>",
         myBasic.Templates.[0].Back)
 
-    let sketchy = collates.[1]
+    let sketchy = gromplates.[1]
     Assert.Equal<string seq>(
         ["SketchyPharm"],
         sketchy.Select(fun x -> x.Name) |> Seq.sort)
@@ -78,7 +78,7 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
         "<div class=textstyling>\n{{#Extra Q}}<font color=\"#DC143C\"></font>\n<center>{{Extra Q}}</center>\n{{/Extra Q}}\n</div>\n\n",
         sketchy.Select(fun x -> x.Templates.[0].Front) |> Seq.distinct |> Seq.exactlyOne)
 
-    let cloze = collates.[2].Single()
+    let cloze = gromplates.[2].Single()
     Assert.Equal(
         "Cloze-Lightyear",
         cloze.Name)
@@ -107,9 +107,9 @@ let ``Import relationships has reduced Collates, also fieldvalue tests`` (): uni
             (fun _ -> None)
             (fun _ -> None)
         |> Result.getOk
-    let getFieldValues (collateName: string) =
+    let getFieldValues (gromplateName: string) =
         cards
-            .Where(fun x -> x.BranchInstance.CollateInstance.Name.Contains collateName)
+            .Where(fun x -> x.BranchInstance.GromplateInstance.Name.Contains gromplateName)
             .Select(fun x -> (BranchInstanceView.load x.BranchInstance).FieldValues.Select(fun x -> x.Value) |> List.ofSeq |> List.distinct) |> List.ofSeq |> List.distinct |> List.exactlyOne
 
     Assert.Equal<string list>(
@@ -175,14 +175,14 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count + 1, c.Db.Collate.Count())
-    Assert.Equal(10, c.Db.CollateInstance.Count())
+    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count + 1, c.Db.Gromplate.Count())
+    Assert.Equal(10, c.Db.GromplateInstance.Count())
 
-    let getInstances (collateName: string) =
-        c.Db.CollateInstance
+    let getInstances (gromplateName: string) =
+        c.Db.GromplateInstance
             .Include(fun x -> x.BranchInstances :> IEnumerable<_>)
-                .ThenInclude(fun (x: BranchInstanceEntity) -> x.CollateInstance)
-            .Where(fun x -> x.Name.Contains collateName)
+                .ThenInclude(fun (x: BranchInstanceEntity) -> x.GromplateInstance)
+            .Where(fun x -> x.Name.Contains gromplateName)
             .SelectMany(fun x -> x.BranchInstances :> IEnumerable<_>)
             .ToListAsync()
     
@@ -221,20 +221,20 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     }
 
 [<Fact>]
-let ``Can import myHighPriority, but really testing duplicate card collates`` (): Task<unit> = (taskResult {
+let ``Can import myHighPriority, but really testing duplicate card gromplates`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     do! AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     
     Assert.Equal(2, c.Db.Stack.Count())
     Assert.Equal(2, c.Db.BranchInstance.Count())
-    Assert.Equal(6, c.Db.Collate.Count())
-    Assert.Equal(8, c.Db.CollateInstance.Count())
+    Assert.Equal(6, c.Db.Gromplate.Count())
+    Assert.Equal(8, c.Db.GromplateInstance.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task<unit> = task {
     use c = new TestContainer(false, ankiFileName)
     let userId = 3
@@ -249,7 +249,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
         ].ToList(),
-        c.Db.CollateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.GromplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/23/2020 19:40:46"
@@ -260,7 +260,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "6/16/2019 00:51:55"
             "6/16/2019 00:53:30"
         ].ToList(),
-        c.Db.CollateInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.GromplateInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32"
@@ -313,10 +313,10 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             .Single(fun c -> c.BranchInstance.FieldValues.Contains("mp3"))
             .Deck.Name)
 
-    let getInstances (collateName: string) =
-        c.Db.CollateInstance
+    let getInstances (gromplateName: string) =
+        c.Db.GromplateInstance
             .Include(fun x -> x.BranchInstances)
-            .Where(fun x -> x.Name.Contains collateName)
+            .Where(fun x -> x.Name.Contains gromplateName)
             .SelectMany(fun x -> x.BranchInstances :> IEnumerable<_>)
             .ToListAsync()
 
@@ -335,9 +335,9 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         Assert.Empty stack.Default.Instance.CommunalFields
 
     Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 1, c.Db.User_CollateInstance.Count(fun x -> x.UserId = userId))
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count, c.Db.CollateInstance.Count())
-    Assert.Equal(AnkiDefaults.collateInstanceIdByHash.Count - 2, c.Db.LatestCollateInstance.Count())
+    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count - 1, c.Db.User_GromplateInstance.Count(fun x -> x.UserId = userId))
+    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count, c.Db.GromplateInstance.Count())
+    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count - 2, c.Db.LatestGromplateInstance.Count())
     }
 
 let assertHasHistory db ankiDb: Task<unit> = (taskResult {
@@ -383,7 +383,7 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
     }
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
     let userId = 3
@@ -396,8 +396,8 @@ let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> =
     } |> TaskResult.getOk)
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
-let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
+[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
+let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
     let theCollectiveId = 2
     let userId = 3
@@ -405,11 +405,11 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFi
         do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
         Assert.Equal(2, c.Db.CardSetting.Count(fun x -> x.UserId = userId))
         Assert.Equal(3, c.Db.Tag.Count())
-        Assert.Equal(5, c.Db.Collate.Count(fun x -> x.AuthorId = theCollectiveId))
-        Assert.Equal(7, c.Db.CollateInstance.Count(fun x -> x.Collate.AuthorId = theCollectiveId))
-        Assert.Equal(0, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(0, c.Db.CollateInstance.Count(fun x -> x.Collate.AuthorId = userId))
-        Assert.Equal(0, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(5, c.Db.Gromplate.Count(fun x -> x.AuthorId = theCollectiveId))
+        Assert.Equal(7, c.Db.GromplateInstance.Count(fun x -> x.Gromplate.AuthorId = theCollectiveId))
+        Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(0, c.Db.GromplateInstance.Count(fun x -> x.Gromplate.AuthorId = userId))
+        Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(8, c.Db.Stack.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(8, c.Db.Stack.Count())
         Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
@@ -422,13 +422,13 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Collates`` ankiFi
         Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
         Assert.Equal(0, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(0, c.Db.CommunalField.Count())
-        Assert.Equal(7, c.Db.CollateInstance.Count())
-        Assert.Equal(5, c.Db.LatestCollateInstance.Count())
+        Assert.Equal(7, c.Db.GromplateInstance.Count())
+        Assert.Equal(5, c.Db.LatestGromplateInstance.Count())
         Assert.Equal(4, c.Db.Deck.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb, then again with different card lapses, updates db`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     let easeFactorA = 13s
     let easeFactorB = 45s

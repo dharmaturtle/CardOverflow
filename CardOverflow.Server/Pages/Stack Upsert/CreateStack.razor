@@ -13,10 +13,10 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_command == null || _collates == null) {
+@if (_command == null || _gromplates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditStackDetail EditStack=@_command Collates=@_collates NewEditStackOnSave=true />
+  <EditStackDetail EditStack=@_command Gromplates=@_gromplates NewEditStackOnSave=true />
 }
 
 @code {
@@ -24,7 +24,7 @@
   private UserClaims _user = UserClaims.init;
   string LoadingMessage = "Loading...";
   private ViewEditStackCommand _command;
-  private List<ViewCollateWithAllInstances> _collates;
+  private List<ViewGromplateWithAllInstances> _gromplates;
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
@@ -35,7 +35,7 @@
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
-    _collates = (await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, user.Id))).ToList();
+    _gromplates = (await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMine(db, user.Id))).ToList();
     StateHasChanged();
   }
 

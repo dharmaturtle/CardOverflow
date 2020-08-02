@@ -44,7 +44,7 @@ let assertBody expectedBody actualHtml =
     )
 
 [<Fact>]
-let ``CardHtml generates proper basic card collate``(): unit =
+let ``CardHtml generates proper basic card gromplate``(): unit =
     let front, back, frontVoice, backVoice =
         CardHtml.generate
             [("Back", "Ottawa"); ("Front", "What is the capital of Canada?")]
@@ -66,7 +66,7 @@ let ``CardHtml generates proper basic card collate``(): unit =
     Assert.Equal("Ottawa", backVoice)
 
 [<Fact>]
-let ``CardHtml generates proper basic with optional reversed custom card collate``(): unit =
+let ``CardHtml generates proper basic with optional reversed custom card gromplate``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
@@ -90,7 +90,7 @@ let ``CardHtml generates proper basic with optional reversed custom card collate
         back
 
 [<Fact>]
-let ``CardHtml generates proper basic with optional reversed custom card collate, but for {{Front}}``(): unit =
+let ``CardHtml generates proper basic with optional reversed custom card gromplate, but for {{Front}}``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
@@ -114,7 +114,7 @@ let ``CardHtml generates proper basic with optional reversed custom card collate
         back
 
 [<Fact>]
-let ``CardHtml generates proper basic card collate, but with (empty) conditional Category``(): unit =
+let ``CardHtml generates proper basic card gromplate, but with (empty) conditional Category``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
@@ -137,7 +137,7 @@ let ``CardHtml generates proper basic card collate, but with (empty) conditional
         back
 
 [<Fact>]
-let ``CardHtml generates proper basic card collate, but with conditional Category that's shown``(): unit =
+let ``CardHtml generates proper basic card gromplate, but with conditional Category that's shown``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
@@ -160,7 +160,7 @@ let ``CardHtml generates proper basic card collate, but with conditional Categor
         back
 
 [<Fact>]
-let ``CardHtml generates proper basic card collate, with conditional Category (inverted and empty)``(): unit =
+let ``CardHtml generates proper basic card gromplate, with conditional Category (inverted and empty)``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
@@ -183,7 +183,7 @@ let ``CardHtml generates proper basic card collate, with conditional Category (i
         back
 
 [<Fact>]
-let ``CardHtml generates proper basic card collate, with conditional Category (inverted and populated)``(): unit =
+let ``CardHtml generates proper basic card gromplate, with conditional Category (inverted and populated)``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [("Back", "Ottawa")
@@ -259,7 +259,7 @@ let assertStripped expected actual =
         MappingTools.stripHtmlTags actual)
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 1``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 1``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
@@ -277,7 +277,7 @@ let ``CardHtml renders multiple cloze collates properly 1``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 2``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 2``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
@@ -295,7 +295,7 @@ let ``CardHtml renders multiple cloze collates properly 2``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 3``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 3``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492}}"
@@ -313,7 +313,7 @@ let ``CardHtml renders multiple cloze collates properly 3``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 4``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 4``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "{{c1::Columbus}} first crossed the Atlantic in {{c1::1492}}"
@@ -358,7 +358,7 @@ let ``CardHtml renders {{cloze:FieldName}} properly with hint``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 1 with hint``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 1 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
@@ -376,7 +376,7 @@ let ``CardHtml renders multiple cloze collates properly 1 with hint``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 2 with hint``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 2 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
@@ -394,7 +394,7 @@ let ``CardHtml renders multiple cloze collates properly 2 with hint``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 3 with hint``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 3 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "Columbus first crossed the Atlantic in {{c1::1492::year}}"
@@ -412,7 +412,7 @@ let ``CardHtml renders multiple cloze collates properly 3 with hint``(): unit =
         back
 
 [<Fact>]
-let ``CardHtml renders multiple cloze collates properly 4 with hint``(): unit =
+let ``CardHtml renders multiple cloze gromplates properly 4 with hint``(): unit =
     let front, back, _, _ =
         CardHtml.generate
             [   "Field1", "{{c1::Columbus::person}} first crossed the Atlantic in {{c1::1492::year}}"
@@ -430,8 +430,8 @@ let ``CardHtml renders multiple cloze collates properly 4 with hint``(): unit =
         back
 
 [<Fact>]
-let ``CollateInstance.FrontBackFrontSynthBackSynth works``(): unit =
-    let front, back, _, _ = CollateInstance.initialize.FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
+let ``GromplateInstance.FrontBackFrontSynthBackSynth works``(): unit =
+    let front, back, _, _ = GromplateInstance.initialize.FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
     assertStripped
         "{{Front}}"
         front

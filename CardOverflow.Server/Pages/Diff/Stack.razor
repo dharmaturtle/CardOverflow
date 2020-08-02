@@ -44,11 +44,11 @@
       <a href="branchinstance/@A_BranchInstanceId">
         @(ATitle ?? "Old Stack")
       </a>
-      @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
+      @if (_a.GromplateInstance.Id != _b.GromplateInstance.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="collateinstance/@_a.CollateInstance.Id">
+        <a href="gromplateinstance/@_a.GromplateInstance.Id">
           Old Template
         </a>
       }
@@ -65,15 +65,15 @@
       <a href="branchinstance/@B_BranchInstanceId">
         @(BTitle ?? "New Stack")
       </a>
-      @if (_a.CollateInstance.Id != _b.CollateInstance.Id) {
+      @if (_a.GromplateInstance.Id != _b.GromplateInstance.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="collateinstance/@_b.CollateInstance.Id">
+        <a href="gromplateinstance/@_b.GromplateInstance.Id">
           New Template
         </a>
       } else {
-        <a href="collateinstance/@_a.CollateInstance.Id" class="float-right">
+        <a href="gromplateinstance/@_a.GromplateInstance.Id" class="float-right">
           Template
         </a>
       }
@@ -185,14 +185,14 @@
         <BSTabLabel>
           Templates detailed
           @if (
-       _collateFields(_a) != _collateFields(_b) ||
+       _gromplateFields(_a) != _gromplateFields(_b) ||
        _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-       _a.CollateInstance.Css != _b.CollateInstance.Css) {
+       _a.GromplateInstance.Css != _b.GromplateInstance.Css) {
       <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
     }
         </BSTabLabel>
         <BSTabContent>
-          <TextDiff OldText=@_collateFields(_a) NewText=@_collateFields(_b) CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_gromplateFields(_a) NewText=@_gromplateFields(_b) CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Fields
@@ -224,7 +224,7 @@
               </Header>
             </TextDiff>
           }
-          <TextDiff OldText=@_a.CollateInstance.Css NewText=@_b.CollateInstance.Css CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.GromplateInstance.Css NewText=@_b.GromplateInstance.Css CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 CSS
@@ -253,7 +253,7 @@
   private BranchInstanceView _b;
   private bool _aIsCollected;
   private bool _bIsCollected;
-  private string _collateFields(BranchInstanceView view) => view.CollateInstance.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
+  private string _gromplateFields(BranchInstanceView view) => view.GromplateInstance.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(BranchInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
   private List<(string AFront, string ABack, string BFront, string BBack)> _stackZips() =>
@@ -270,7 +270,7 @@
       ).ToList();
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
   private List<(string Front, string Back)> _XemplateHolistic() =>
-    _a.CollateInstance.FrontBackFrontSynthBackSynth().ZipLongest(_b.CollateInstance.FrontBackFrontSynthBackSynth(), (a, b) =>
+    _a.GromplateInstance.FrontBackFrontSynthBackSynth().ZipLongest(_b.GromplateInstance.FrontBackFrontSynthBackSynth(), (a, b) =>
      (AFront: a?.Item1 ?? "",
        ABack: a?.Item2 ?? "",
        BFront: b?.Item1 ?? "",
@@ -280,7 +280,7 @@
         ViewLogic.diff(x.ABack, x.BBack))
       ).ToList();
   private List<(string AFront, string ABack, string BFront, string BBack)> _XemplateDetailed() =>
-    _a.CollateInstance.JustTemplates.ZipLongest(_b.CollateInstance.JustTemplates, (a, b) =>
+    _a.GromplateInstance.JustTemplates.ZipLongest(_b.GromplateInstance.JustTemplates, (a, b) =>
      (AFront: a?.Front ?? "",
        ABack: a?.Back ?? "",
        BFront: b?.Front ?? "",

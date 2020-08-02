@@ -12,7 +12,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (Collates == null) {
+@if (Gromplates == null) {
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@EditStack OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
@@ -34,21 +34,21 @@
           </div>
           <div class="col-sm">
             <div class="row">
-              <a href="Collate/@_selectedCollateId" class="col-sm-2 mt-2">
+              <a href="Gromplate/@_selectedGromplateId" class="col-sm-2 mt-2">
                 Card Template
               </a>
-              <select value=@_selectedCollateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedCollate(id)))>
-                @foreach (var collate in Collates) {
-                  <option value=@collate.Id>@collate.Editable.Name</option>
+              <select value=@_selectedGromplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedGromplate(id)))>
+                @foreach (var gromplate in Gromplates) {
+                  <option value=@gromplate.Id>@gromplate.Editable.Name</option>
                 }
               </select>
             </div>
             <div class="row">
-              <a href="Collate/@_selectedCollateId?InstanceId=@_selectedCollateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Gromplate/@_selectedGromplateId?InstanceId=@_selectedGromplateInstanceId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
-              <select value=@_selectedCollateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedCollateInstance))>
-                @foreach (var instance in _selectedCollateInstances) {
+              <select value=@_selectedGromplateInstanceId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedGromplateInstance))>
+                @foreach (var instance in _selectedGromplateInstances) {
                   <option value=@instance.Id>@instance.Created - @instance.EditSummary</option>
                 }
               </select>
@@ -109,13 +109,13 @@
 @code {
   [Parameter] public ViewEditStackCommand EditStack { get; set; }
   [Parameter] public bool NewEditStackOnSave { get; set; }
-  [Parameter] public List<ViewCollateWithAllInstances> Collates { get; set; }
+  [Parameter] public List<ViewGromplateWithAllInstances> Gromplates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<EditCollectedCardCommand> _ccCommands = new List<EditCollectedCardCommand>();
   private UserClaims _user = UserClaims.init;
-  private List<ViewCollateInstance> _selectedCollateInstances;
-  private int _selectedCollateId;
-  private int _selectedCollateInstanceId;
+  private List<ViewGromplateInstance> _selectedGromplateInstances;
+  private int _selectedGromplateId;
+  private int _selectedGromplateInstanceId;
   private bool _isDisabled;
   private int _savedBranchId;
 
@@ -129,13 +129,13 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (Collates == null) {
-      Collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMineWith(db, _user.Id, EditStack.CollateInstance.CollateId));
+    if (Gromplates == null) {
+      Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditStack.GromplateInstance.GromplateId));
     }
     if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Collates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
     }
-    UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
+    UpdateSelectedGromplate(EditStack.GromplateInstance.GromplateId, EditStack.GromplateInstance.Id);
     StateHasChanged();
   }
 
@@ -151,8 +151,8 @@
       _savedBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
         var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.CollateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
-        UpdateSelectedCollate(EditStack.CollateInstance.CollateId, EditStack.CollateInstance.Id);
+        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.GromplateInstance, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+        UpdateSelectedGromplate(EditStack.GromplateInstance.GromplateId, EditStack.GromplateInstance.Id);
         _isDisabled = false;
       }
     } else {
@@ -161,17 +161,17 @@
     }
   }
 
-  void UpdateSelectedCollate(int collateId, int? instanceId = null) {
-    _selectedCollateId = collateId;
-    _selectedCollateInstances = Collates.Single(t => t.Id == collateId).Instances;
-    UpdateSelectedCollateInstance(instanceId ?? _selectedCollateInstances.First().Id);
+  void UpdateSelectedGromplate(int gromplateId, int? instanceId = null) {
+    _selectedGromplateId = gromplateId;
+    _selectedGromplateInstances = Gromplates.Single(t => t.Id == gromplateId).Instances;
+    UpdateSelectedGromplateInstance(instanceId ?? _selectedGromplateInstances.First().Id);
   }
 
-  void UpdateSelectedCollateInstance(int instanceId) {
-    _selectedCollateInstanceId = instanceId;
-    EditStack.CollateInstance = Collates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
+  void UpdateSelectedGromplateInstance(int instanceId) {
+    _selectedGromplateInstanceId = instanceId;
+    EditStack.GromplateInstance = Gromplates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
     var valuesByField = EditStack.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
-    EditStack.FieldValues = EditStack.CollateInstance.Fields
+    EditStack.FieldValues = EditStack.GromplateInstance.Fields
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)

@@ -1,5 +1,5 @@
-@page "/my/collate"
-@page "/my/collate/{CollateId:int}"
+@page "/my/gromplate"
+@page "/my/gromplate/{GromplateId:int}"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
@@ -16,22 +16,22 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_collates == null) {
+@if (_gromplates == null) {
   <p><em>"Loading..."</em></p>
 } else {
   <div class="row">
     <div class="col-sm-10">
-      <CollateEditor Collate=@_collates[_selectedIndex] />
+      <GromplateEditor Gromplate=@_gromplates[_selectedIndex] />
     </div>
     <div class="col-sm-2 list-group">
       <h5 class="text-center">Card Templates</h5>
       <button type="button" class="btn btn-success mb-2" @onclick=@_Add>
         <span class="oi oi-plus"></span>
       </button>
-      @foreach (var x in _collates.Select((t, i) => new { Collate = t, Index = i })) {
+      @foreach (var x in _gromplates.Select((t, i) => new { Gromplate = t, Index = i })) {
         <button class="list-group-item list-group-item-action @(x.Index == _selectedIndex ? "active" : "")"
                 @onclick=@(() => _selectedIndex = x.Index)>
-          @x.Collate.Editable.Name
+          @x.Gromplate.Editable.Name
         </button>
       }
     </div>
@@ -39,25 +39,25 @@
 }
 
 @code {
-  [Parameter] public int CollateId { get; set; }
+  [Parameter] public int GromplateId { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  private List<ViewCollateWithAllInstances> _collates;
+  private List<ViewGromplateWithAllInstances> _gromplates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
     _user = await UserTask;
     if (_user.IsAuthenticated) {
-      _collates = await DbExecutor.QueryAsync(db => SanitizeCollate.GetMine(db, _user.Id));
-      _selectedIndex = (_collates.SingleOrDefault(x => x.Id == CollateId) ?? _collates.First())
-        .Apply(_collates.IndexOf);
+      _gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMine(db, _user.Id));
+      _selectedIndex = (_gromplates.SingleOrDefault(x => x.Id == GromplateId) ?? _gromplates.First())
+        .Apply(_gromplates.IndexOf);
     }
   }
 
   private void _Add() {
-    var t = ViewCollateWithAllInstances.initialize(_user.Id);
-    _collates = _collates.Prepend(t).ToList();
-    _selectedIndex = _collates.IndexOf(t);
+    var t = ViewGromplateWithAllInstances.initialize(_user.Id);
+    _gromplates = _gromplates.Prepend(t).ToList();
+    _selectedIndex = _gromplates.IndexOf(t);
   }
 
 }

@@ -17,17 +17,17 @@
 
 <div class="font-weight-bold">Type</div>
 <div class="btn-group" role="group">
-  <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(CollateType.NewStandard(_originalTemplates)))>
+  <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(GromplateType.NewStandard(_originalTemplates)))>
     Standard
   </button>
-  <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(CollateType.NewCloze(_originalTemplates.First())))>
+  <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(GromplateType.NewCloze(_originalTemplates.First())))>
     Cloze
   </button>
 </div>
 
 @code {
-  private ViewCollateInstance _instance;
-  [Parameter] public ViewCollateInstance Instance {
+  private ViewGromplateInstance _instance;
+  [Parameter] public ViewGromplateInstance Instance {
     get => _instance;
     set {
       _instance = value;
@@ -37,11 +37,11 @@
     }
   }
   private FSharpList<Template> _originalTemplates;
-  [Parameter] public EventCallback<CollateType> UpdateCollateType { get; set; }
+  [Parameter] public EventCallback<GromplateType> UpdateGromplateType { get; set; }
 
   private bool _isStandard => Instance.Templates.IsStandard;
 
-  private Task _setType(CollateType collateType) =>
-    UpdateCollateType.InvokeAsync(collateType);
+  private Task _setType(GromplateType gromplateType) =>
+    UpdateGromplateType.InvokeAsync(gromplateType);
 
 }

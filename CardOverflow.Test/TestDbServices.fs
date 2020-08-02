@@ -61,21 +61,21 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<Task<NpgsqlConnection>>()
 
-module TestCollateRepo =
+module TestGromplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.LatestCollateInstance
+            db.LatestGromplateInstance
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (CollateInstance.load >> ViewCollateInstance.load) |> toResizeArray
+        return x |> Seq.map (GromplateInstance.load >> ViewGromplateInstance.load) |> toResizeArray
         }
     let SearchEarliest (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.CollateInstance
+            db.GromplateInstance
                 .Where(fun x -> x.Name = query)
                 .OrderBy(fun x -> x.Created)
                 .FirstAsync()
-        return x |> CollateInstance.load |> ViewCollateInstance.load
+        return x |> GromplateInstance.load |> ViewGromplateInstance.load
         }
 
 // Sqlite

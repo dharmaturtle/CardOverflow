@@ -67,16 +67,16 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
 
     // Insert new card
     let branchId = 1
-    let! collate = FacetRepositoryTests.basicCollate c.Db
+    let! gromplate = FacetRepositoryTests.basicGromplate c.Db
     let! r =
         SanitizeStackRepository.Update c.Db userId []
             {   EditSummary = "Initial creation"
                 FieldValues =
-                    collate.Fields.Select(fun f -> {
+                    gromplate.Fields.Select(fun f -> {
                         EditField = ViewField.copyTo f
                         Value = Guid.NewGuid().ToString()
                     }).ToList()
-                CollateInstance = collate
+                GromplateInstance = gromplate
                 Kind = NewOriginal_TagIds []
                 Title = null
             }

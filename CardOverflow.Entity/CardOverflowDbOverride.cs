@@ -21,7 +21,7 @@ namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
     FSharpFunc<(BranchInstanceEntity, BitArray, SHA512), BitArray> BranchInstanceHasher { get; }
-    FSharpFunc<(CollateInstanceEntity, SHA512), BitArray> CollateInstanceHasher { get; }
+    FSharpFunc<(GromplateInstanceEntity, SHA512), BitArray> GromplateInstanceHasher { get; }
     FSharpFunc<BranchInstanceEntity, short> GetMaxIndexInclusive { get; }
     FSharpFunc<string, string> SanitizeTag { get; }
   }
@@ -115,20 +115,20 @@ namespace CardOverflow.Entity {
     private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var collate in _filter<CollateInstanceEntity>(entries)) {
-        collate.Hash = _entityHasher.CollateInstanceHasher.Invoke((collate, sha512));
-        collate.CWeightTsVectorHelper =
-          Fields.fromString.Invoke(collate.Fields).Select(x => x.Name)
-            .Append(MappingTools.stripHtmlTags(collate.Templates))
+      foreach (var gromplate in _filter<GromplateInstanceEntity>(entries)) {
+        gromplate.Hash = _entityHasher.GromplateInstanceHasher.Invoke((gromplate, sha512));
+        gromplate.CWeightTsVectorHelper =
+          Fields.fromString.Invoke(gromplate.Fields).Select(x => x.Name)
+            .Append(MappingTools.stripHtmlTags(gromplate.Templates))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var branchInstance in _filter<BranchInstanceEntity>(entries)) {
-        if (branchInstance.CollateInstance == null) {
-          branchInstance.CollateInstance = await CollateInstance.FindAsync(branchInstance.CollateInstanceId);
+        if (branchInstance.GromplateInstance == null) {
+          branchInstance.GromplateInstance = await GromplateInstance.FindAsync(branchInstance.GromplateInstanceId);
         }
         branchInstance.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(branchInstance);
-        var collateHash = branchInstance.CollateInstance?.Hash ?? CollateInstance.Find(branchInstance.CollateInstanceId).Hash;
-        branchInstance.Hash = _entityHasher.BranchInstanceHasher.Invoke((branchInstance, collateHash, sha512));
+        var gromplateHash = branchInstance.GromplateInstance?.Hash ?? GromplateInstance.Find(branchInstance.GromplateInstanceId).Hash;
+        branchInstance.Hash = _entityHasher.BranchInstanceHasher.Invoke((branchInstance, gromplateHash, sha512));
         branchInstance.TsVectorHelper = MappingTools.stripHtmlTags(branchInstance.FieldValues);
       }
       foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
@@ -164,7 +164,7 @@ namespace CardOverflow.Entity {
     public IQueryable<BranchInstanceEntity> LatestBranchInstance => BranchInstance.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<BranchInstanceEntity> LatestDefaultBranchInstance => LatestBranchInstance.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<CollateInstanceEntity> LatestCollateInstance => CollateInstance.Where(x => x.Collate.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<GromplateInstanceEntity> LatestGromplateInstance => GromplateInstance.Where(x => x.Gromplate.LatestInstanceId == x.Id).AsNoTracking();
 
   }
 }

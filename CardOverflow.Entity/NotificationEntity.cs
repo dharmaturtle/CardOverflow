@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -31,8 +31,8 @@ namespace CardOverflow.Entity
         public int? BranchId { get; set; }
         public int? BranchInstanceId { get; set; }
         public int? DeckId { get; set; }
-        public int? CollateId { get; set; }
-        public int? CollateInstanceId { get; set; }
+        public int? GromplateId { get; set; }
+        public int? GromplateInstanceId { get; set; }
 
         [ForeignKey("BranchId")]
         [InverseProperty("NotificationBranches")]
@@ -40,12 +40,12 @@ namespace CardOverflow.Entity
         [ForeignKey("BranchInstanceId")]
         [InverseProperty("NotificationBranchInstances")]
         public virtual BranchInstanceEntity BranchInstance { get; set; }
-        [ForeignKey("CollateId")]
+        [ForeignKey("GromplateId")]
         [InverseProperty("Notifications")]
-        public virtual CollateEntity Collate { get; set; }
-        [ForeignKey("CollateInstanceId")]
+        public virtual GromplateEntity Gromplate { get; set; }
+        [ForeignKey("GromplateInstanceId")]
         [InverseProperty("Notifications")]
-        public virtual CollateInstanceEntity CollateInstance { get; set; }
+        public virtual GromplateInstanceEntity GromplateInstance { get; set; }
         [ForeignKey("DeckId")]
         [InverseProperty("Notifications")]
         public virtual DeckEntity Deck { get; set; }

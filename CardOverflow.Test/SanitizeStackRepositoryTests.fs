@@ -57,21 +57,21 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
             } |> Gen.listOfLength 5
             |> Gen.eval 100 stdGen
             |> fun x -> x.[0], x.[1], x.[2], x.[3], x.[4]
-        let stackCommand collate =
+        let stackCommand gromplate =
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
-                CollateInstance = collate
+                GromplateInstance = gromplate
                 Kind = NewOriginal_TagIds []
                 Title = null
             }
 
-        let! collate = FacetRepositoryTests.basicCollate c.Db
+        let! gromplate = FacetRepositoryTests.basicGromplate c.Db
         let stackId = 1
         let branchId = 1
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ basicCommand ]
-                (stackCommand collate)
+                (stackCommand gromplate)
             |>%% Assert.equal branchId
 
         let! cc =
@@ -95,14 +95,14 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
             }
             cc
     
-        // works on multiple collected cards, e.g. reversedBasicCollate
-        let! collate = FacetRepositoryTests.reversedBasicCollate c.Db
+        // works on multiple collected cards, e.g. reversedBasicGromplate
+        let! gromplate = FacetRepositoryTests.reversedBasicGromplate c.Db
         let stackId = 2
         let branchId = 2
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
-                (stackCommand collate)
+                (stackCommand gromplate)
             |>%% Assert.equal branchId
 
         let! (ccs: CollectedCard ResizeArray) = StackRepository.GetCollected c.Db userId stackId
@@ -146,7 +146,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
-                (stackCommand collate)
+                (stackCommand gromplate)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with someone else's cardSettingId
@@ -154,7 +154,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                (stackCommand collate)
+                (stackCommand gromplate)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
         // doesn't work with invalid deckId
@@ -162,7 +162,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
-                (stackCommand collate)
+                (stackCommand gromplate)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with invalid cardSettingId
@@ -170,6 +170,6 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                (stackCommand collate)
+                (stackCommand gromplate)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     } |> TaskResult.getOk).GetAwaiter().GetResult()

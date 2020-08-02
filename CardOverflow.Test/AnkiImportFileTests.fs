@@ -24,7 +24,7 @@ open System.Collections.Generic
 open FsToolkit.ErrorHandling
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer(false, ankiFileName)
@@ -38,12 +38,12 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.Equal(3, c.Db.File_BranchInstance.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
-    Assert.Equal(7, c.Db.CollateInstance.Count())
-    Assert.Equal(5, c.Db.LatestCollateInstance.Count())
+    Assert.Equal(7, c.Db.GromplateInstance.Count())
+    Assert.Equal(5, c.Db.LatestGromplateInstance.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultCollatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = 3
     use c = new TestContainer(false, ankiFileName)
@@ -76,7 +76,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
 </audio>
 Basic back, no mp3"""
         """<img src="/image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4"><img src="/image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4">"""]
-    let fields = AnkiImportTestData.allDefaultCollatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
+    let fields = AnkiImportTestData.allDefaultGromplatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
     let map =
         [ ("png1.png", FileEntity(
             Sha256 = Array.init 32 (fun index -> index + index |> byte)
@@ -112,8 +112,8 @@ let ``AnkiImporter import cards that have the same collectHash as distinct cards
     Assert.SingleI(c.Db.Deck.Where(fun x -> x.Name = "duplicate cards"))
     Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.BranchInstance.Count())
-    Assert.Equal(8, c.Db.CollateInstance.Count())
-    Assert.Equal(6, c.Db.LatestCollateInstance.Count())
+    Assert.Equal(8, c.Db.GromplateInstance.Count())
+    Assert.Equal(6, c.Db.LatestGromplateInstance.Count())
     } |> TaskResult.getOk)
 
 let testCommunalFields (c: TestContainer) userId stackId expected = task {
@@ -137,7 +137,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Null x.Value
     let allBranchInstanceViews =
         c.Db.BranchInstance
-            .Include(fun x -> x.CollateInstance)
+            .Include(fun x -> x.GromplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -314,7 +314,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
         c.Db.BranchInstance
-            .Include(fun x -> x.CollateInstance)
+            .Include(fun x -> x.GromplateInstance)
             .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -432,8 +432,8 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
-    let! collate =
-        TestCollateRepo.Search c.Db "Basic"
+    let! gromplate =
+        TestGromplateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
@@ -448,7 +448,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                 []
                 {   EditSummary = editSummary
                     FieldValues =
-                        collate
+                        gromplate
                             .Fields
                             .Select(fun f ->
                                 let value =
@@ -460,7 +460,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     Value = value
                                 })
                             .ToList()
-                    CollateInstance = collate
+                    GromplateInstance = gromplate
                     Kind = NewOriginal_TagIds []
                     Title = null
                 }
@@ -488,28 +488,28 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     Assert.SingleI c.Db.CommunalFieldInstance }
 
 [<Fact>]
-let ``AnkiDefaults.collateIdByHash is same as initial database`` (): unit =
+let ``AnkiDefaults.gromplateIdByHash is same as initial database`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()
-    let dbCollates =
-        c.Db.CollateInstance
+    let dbGromplates =
+        c.Db.GromplateInstance
             .OrderBy(fun x -> x.Id)
             .ToList()
     
     // test that the calculated hash is the same as the one stored in the db
-    for collate in dbCollates do
-        let calculated = CollateInstanceEntity.hashBase64 hasher collate
-        let dbValue = BranchInstanceEntity.bitArrayToByteArray collate.Hash |> Convert.ToBase64String
-        //for x in CollateInstanceEntity.hash hasher collate do
+    for gromplate in dbGromplates do
+        let calculated = GromplateInstanceEntity.hashBase64 hasher gromplate
+        let dbValue = BranchInstanceEntity.bitArrayToByteArray gromplate.Hash |> Convert.ToBase64String
+        //for x in GromplateInstanceEntity.hash hasher gromplate do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
         Assert.Equal(calculated, dbValue)
 
-    // test that AnkiDefaults.collateIdByHash is up to date
-    for dbCollate in dbCollates do
-        let calculated = CollateInstanceEntity.hashBase64 hasher dbCollate
-        //calculated.D(string dbCollate.Id)
-        Assert.Equal(AnkiDefaults.collateInstanceIdByHash.[calculated], dbCollate.Id)
+    // test that AnkiDefaults.gromplateIdByHash is up to date
+    for dbGromplate in dbGromplates do
+        let calculated = GromplateInstanceEntity.hashBase64 hasher dbGromplate
+        //calculated.D(string dbGromplate.Id)
+        Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.[calculated], dbGromplate.Id)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {

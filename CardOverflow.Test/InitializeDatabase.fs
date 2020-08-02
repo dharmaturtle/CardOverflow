@@ -32,14 +32,14 @@ let deleteAndRecreateDatabase(db: CardOverflowDb) = task {
     do! UserRepository.create db 2 "The Collective"
     do! UserRepository.create db 3 "RoboTurtle"
     let theCollective = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.DisplayName = "The Collective")
-    let toEntity (collate: AnkiCollateInstance) =
-        collate.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting
+    let toEntity (gromplate: AnkiGromplateInstance) =
+        gromplate.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting
     Anki.parseModels
         theCollective.Id
         ankiModels
     |> Result.getOk
     |> Seq.map (snd >> toEntity)
-    |> db.CollateInstance.AddRange
+    |> db.GromplateInstance.AddRange
     do! db.SaveChangesAsyncI () }
 
 //[<Fact>]

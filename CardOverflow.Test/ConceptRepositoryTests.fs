@@ -215,7 +215,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count
     }
 
-let testGetCollected (acCount: int) addCard getCollate name = task {
+let testGetCollected (acCount: int) addCard getGromplate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = 1 // this user creates the card
@@ -250,11 +250,11 @@ let testGetCollected (acCount: int) addCard getCollate name = task {
     Assert.Equal(1, stacks.Results.Count())
 
     // author branching keeps tags
-    let! collate = getCollate c.Db
+    let! gromplate = getGromplate c.Db
     let! _ =
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
-            CollateInstance = collate |> ViewCollateInstance.copyTo
+            GromplateInstance = gromplate |> ViewGromplateInstance.copyTo
             Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
         } |> UpdateRepository.stack c.Db authorId
 
@@ -285,7 +285,7 @@ let rec ``GetCollected works when collecting 1 basic card``(): Task<unit> =
     testGetCollected
         1
         FacetRepositoryTests.addBasicStack
-        FacetRepositoryTests.basicCollate
+        FacetRepositoryTests.basicGromplate
         <| nameof ``GetCollected works when collecting 1 basic card``
 
 [<Fact>]
@@ -293,7 +293,7 @@ let rec ``GetCollected works when collecting a pair``(): Task<unit> =
     testGetCollected
         2
         FacetRepositoryTests.addReversedBasicStack
-        FacetRepositoryTests.reversedBasicCollate
+        FacetRepositoryTests.reversedBasicGromplate
         <| nameof ``GetCollected works when collecting a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
@@ -615,58 +615,58 @@ let ``Card search works`` (): Task<unit> = task {
     let! hits = search tag
     Assert.Equal(lorem, hits.Results.First().Instance.StrippedFront)
 
-    // testing collate search
-    let search = SanitizeCollate.Search c.Db userId 1
-    let! collates = search "Cloze"
-    Assert.Equal("Cloze", collates.Results.Single().Name)
-    Assert.Equal(1, collates.Results.Single().CollateUsers)
-    Assert.False(collates.Results.Single().IsCollected) // most recent cloze is not collected because it's missing Extra. Why Damien?
-    let! collates = search "type"
-    Assert.Equal("Basic (type in the answer)", collates.Results.Single().Name)
-    Assert.Equal(1, collates.Results.Single().CollateUsers)
-    Assert.True(collates.Results.Single().IsCollected)
-    let! collates = search "Basic"
-    Assert.Equal(4, collates.Results.Count())
-    Assert.True(collates.Results.All(fun x -> x.CollateUsers = 1))
-    Assert.True(collates.Results.All(fun x -> x.IsCollected))
+    // testing gromplate search
+    let search = SanitizeGromplate.Search c.Db userId 1
+    let! gromplates = search "Cloze"
+    Assert.Equal("Cloze", gromplates.Results.Single().Name)
+    Assert.Equal(1, gromplates.Results.Single().GromplateUsers)
+    Assert.False(gromplates.Results.Single().IsCollected) // most recent cloze is not collected because it's missing Extra. Why Damien?
+    let! gromplates = search "type"
+    Assert.Equal("Basic (type in the answer)", gromplates.Results.Single().Name)
+    Assert.Equal(1, gromplates.Results.Single().GromplateUsers)
+    Assert.True(gromplates.Results.Single().IsCollected)
+    let! gromplates = search "Basic"
+    Assert.Equal(4, gromplates.Results.Count())
+    Assert.True(gromplates.Results.All(fun x -> x.GromplateUsers = 1))
+    Assert.True(gromplates.Results.All(fun x -> x.IsCollected))
     }
 
 [<Fact>]
-let ``New user has TheCollective's card collates`` (): Task<unit> = task {
+let ``New user has TheCollective's card gromplates`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
-    let! myCollates = SanitizeCollate.GetMine c.Db userId
+    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
     let theCollectiveId = c.Db.User.Single(fun x -> x.DisplayName = "The Collective").Id
-    for collate in myCollates do
-        Assert.Equal(theCollectiveId, collate.AuthorId)
+    for gromplate in myGromplates do
+        Assert.Equal(theCollectiveId, gromplate.AuthorId)
     }
 
 [<Fact>]
-let ``Updating card collate with duplicate field names yields error`` (): Task<unit> = task {
+let ``Updating card gromplate with duplicate field names yields error`` (): Task<unit> = task {
     let userId = 3
     let fieldName = Guid.NewGuid().ToString()
-    let collate = CollateInstance.initialize |> ViewCollateInstance.load
-    let collate = { collate with Fields = collate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
+    let gromplate = GromplateInstance.initialize |> ViewGromplateInstance.load
+    let gromplate = { gromplate with Fields = gromplate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
-    let! error = SanitizeCollate.Update null userId collate
+    let! error = SanitizeGromplate.Update null userId gromplate
     
     Assert.Equal("Field names must differ", error.error)
     }
 
 [<Fact>]
-let ``Can create card collate and insert a modified one`` (): Task<unit> = task {
+let ``Can create card gromplate and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let name = Guid.NewGuid().ToString()
-    let initialCollate = ViewCollateWithAllInstances.initialize userId
+    let initialGromplate = ViewGromplateWithAllInstances.initialize userId
 
-    let! x = SanitizeCollate.Update c.Db userId { initialCollate.Editable with Name = name }
+    let! x = SanitizeGromplate.Update c.Db userId { initialGromplate.Editable with Name = name }
     Assert.Null x.Value
-    let! myCollates = SanitizeCollate.GetMine c.Db userId
+    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
 
-    Assert.SingleI(myCollates.Where(fun x -> x.Editable.Name = name))
+    Assert.SingleI(myGromplates.Where(fun x -> x.Editable.Name = name))
     
-    // testing a brand new collate, but slightly different
+    // testing a brand new gromplate, but slightly different
     let fieldName = Guid.NewGuid().ToString()
     let newEditable =
         let newField =
@@ -674,70 +674,70 @@ let ``Can create card collate and insert a modified one`` (): Task<unit> = task 
                 IsRightToLeft = false
                 IsSticky = false
             }
-        {   initialCollate.Editable with
-                Fields = initialCollate.Editable.Fields.Append newField |> Core.toResizeArray
+        {   initialGromplate.Editable with
+                Fields = initialGromplate.Editable.Fields.Append newField |> Core.toResizeArray
         }
-    let! x = SanitizeCollate.Update c.Db userId newEditable
+    let! x = SanitizeGromplate.Update c.Db userId newEditable
     Assert.Null x.Value
     
-    Assert.Equal(2, c.Db.Collate.Count(fun x -> x.AuthorId = userId))
-    let! myCollates = SanitizeCollate.GetMine c.Db userId
-    let latestCollate = myCollates.OrderBy(fun x -> x.Id).Last().Editable
-    Assert.True(latestCollate.Fields.Any(fun x -> x.Name = fieldName))
+    Assert.Equal(2, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
+    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
+    let latestGromplate = myGromplates.OrderBy(fun x -> x.Id).Last().Editable
+    Assert.True(latestGromplate.Fields.Any(fun x -> x.Name = fieldName))
 
-    // updating the slightly different collate
+    // updating the slightly different gromplate
     let name = Guid.NewGuid().ToString()
-    let! x = SanitizeCollate.Update c.Db userId { latestCollate with Name = name }
+    let! x = SanitizeGromplate.Update c.Db userId { latestGromplate with Name = name }
     Assert.Null x.Value
 
-    let! myCollates = SanitizeCollate.GetMine c.Db userId
-    Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
+    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
+    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).GromplateId)
 
     // updating to cloze
     let name = Guid.NewGuid().ToString()
     let! x =
-        SanitizeCollate.Update c.Db userId
-            { latestCollate
+        SanitizeGromplate.Update c.Db userId
+            { latestGromplate
                 with
                     Name = name
-                    Templates = Cloze <| latestCollate.JustTemplates.First()
+                    Templates = Cloze <| latestGromplate.JustTemplates.First()
             }
     Assert.Null x.Value
 
-    let! myCollates = SanitizeCollate.GetMine c.Db userId
-    Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
-    Assert.True(myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).IsCloze)
+    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
+    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).GromplateId)
+    Assert.True(myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).IsCloze)
 
     // updating to multiple templates
     let name = Guid.NewGuid().ToString()
     let! x =
-        SanitizeCollate.Update c.Db userId
-            { latestCollate
+        SanitizeGromplate.Update c.Db userId
+            { latestGromplate
                 with
                     Name = name
-                    Templates = Standard [ latestCollate.JustTemplates.First() ; latestCollate.JustTemplates.First() ]
+                    Templates = Standard [ latestGromplate.JustTemplates.First() ; latestGromplate.JustTemplates.First() ]
             }
     Assert.Null x.Value
 
-    let! myCollates = SanitizeCollate.GetMine c.Db userId
-    Assert.Equal(latestCollate.CollateId, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).CollateId)
-    Assert.Equal(2, myCollates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).JustTemplates.Count())
+    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
+    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).GromplateId)
+    Assert.Equal(2, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).JustTemplates.Count())
     }
 
 [<Fact>]
-let ``New card collate has correct hash`` (): Task<unit> = (taskResult {
+let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
-    let initialCollate = ViewCollateWithAllInstances.initialize userId
+    let initialGromplate = ViewGromplateWithAllInstances.initialize userId
     use sha512 = SHA512.Create()
-    do! SanitizeCollate.Update c.Db userId initialCollate.Editable
-    let! (dbCollate: CollateInstanceEntity) = c.Db.CollateInstance.SingleAsync(fun x -> x.Collate.AuthorId = userId)
+    do! SanitizeGromplate.Update c.Db userId initialGromplate.Editable
+    let! (dbGromplate: GromplateInstanceEntity) = c.Db.GromplateInstance.SingleAsync(fun x -> x.Gromplate.AuthorId = userId)
     
     let computedHash =
-        initialCollate.Editable
-        |> ViewCollateInstance.copyTo
-        |> fun x -> CollateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
-        |> CollateInstanceEntity.hash sha512
+        initialGromplate.Editable
+        |> ViewGromplateInstance.copyTo
+        |> fun x -> GromplateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
+        |> GromplateInstanceEntity.hash sha512
     
-    Assert.Equal<BitArray>(dbCollate.Hash, computedHash)
+    Assert.Equal<BitArray>(dbGromplate.Hash, computedHash)
     } |> TaskResult.getOk)

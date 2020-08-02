@@ -25,13 +25,13 @@
     <EmbeddedResource Include="..\TweakDevelopment.sql" Link="Stuff\TweakDevelopment.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3.apkg">
+    <None Include="AnkiExports\AllDefaultGromplatesAndImageAndMp3.apkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3.colpkg">
+    <None Include="AnkiExports\AllDefaultGromplatesAndImageAndMp3.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="AnkiExports\AllDefaultCollatesAndImageAndMp3-21.colpkg">
+    <None Include="AnkiExports\AllDefaultGromplatesAndImageAndMp3-21.colpkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="AnkiExports\RandomReviews.apkg">
@@ -64,7 +64,7 @@
     <Compile Include="CollectedCardRepositoryTests.fs" />
     <Compile Include="ConceptRepositoryTests.fs" />
     <Compile Include="NotificationRepositoryTests.fs" />
-    <Compile Include="CollateRepositoryTests.fs" />
+    <Compile Include="GromplateRepositoryTests.fs" />
     <Compile Include="CardSettingTests.fs" />
     <Compile Include="SanitizeStackRepositoryTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />

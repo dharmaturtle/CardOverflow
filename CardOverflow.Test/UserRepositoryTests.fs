@@ -25,7 +25,7 @@ let ``UserRepository works``(): Task<unit> = (taskResult {
     do! UserRepository.create c.Db userId displayName
     
     Assert.equal userId <| c.Db.User.Single(fun x -> x.DisplayName = displayName).Id
-    let! (ucs: User_CollateInstanceEntity ResizeArray) = c.Db.User_CollateInstance.Where(fun x -> x.UserId = userId).ToListAsync()
-    Assert.areEquivalent [1001; 1002; 1003; 1006; 1005] <| ucs.Select(fun x -> x.CollateInstanceId)
+    let! (ucs: User_GromplateInstanceEntity ResizeArray) = c.Db.User_GromplateInstance.Where(fun x -> x.UserId = userId).ToListAsync()
+    Assert.areEquivalent [1001; 1002; 1003; 1006; 1005] <| ucs.Select(fun x -> x.GromplateInstanceId)
     Assert.equal 4 <| ucs.Select(fun x -> x.DefaultCardSettingId).Distinct().Single()
     } |> TaskResult.getOk)

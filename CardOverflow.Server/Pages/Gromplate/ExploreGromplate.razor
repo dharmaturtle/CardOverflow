@@ -1,5 +1,5 @@
-@page "/collate"
-@page "/collate/{SelectedId:int}"
+@page "/gromplate"
+@page "/gromplate/{SelectedId:int}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,7 +11,7 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/collate/" CreateLink=@(x => $"/collate/{x}") Ids=@_instances?.Select(x => x.CollateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/gromplate/" CreateLink=@(x => $"/gromplate/{x}") Ids=@_instances?.Select(x => x.GromplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
   @if (_instances == null) {
@@ -27,14 +27,14 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@instance.IsCollected>
-              <ResizingIframe CollateInstanceId=@instance.Id Back />
+              <ResizingIframe GromplateInstanceId=@instance.Id Back />
             </HoverPreview>
           </td>
           <td>
-            @instance.CollateUsers
+            @instance.GromplateUsers
           </td>
           <td>
-            <a href="/collate/@instance.CollateId">
+            <a href="/gromplate/@instance.GromplateId">
               @instance.Name
             </a>
           </td>
@@ -44,14 +44,14 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <CollateEditor CollateId=@SelectedId.Value />
+  <GromplateEditor GromplateId=@SelectedId.Value />
 }
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedId { get; set; }
-  private IList<ViewSearchCollateInstance> _instances;
+  private IList<ViewSearchGromplateInstance> _instances;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 
@@ -65,7 +65,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeCollate.Search(db, _user.Id, pageNumber, _search.Query));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeGromplate.Search(db, _user.Id, pageNumber, _search.Query));
     _details = pagedList.Details;
     _instances = pagedList.Results.ToList();
   }

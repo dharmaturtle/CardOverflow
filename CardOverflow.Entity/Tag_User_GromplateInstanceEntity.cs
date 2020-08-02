@@ -5,21 +5,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    [Table("tag0user0collate_instance")]
-    public partial class Tag_User_CollateInstanceEntity
+    [Table("tag0user0gromplate_instance")]
+    public partial class Tag_User_GromplateInstanceEntity
     {
         [Key]
         public int UserId { get; set; }
         [Key]
-        public int CollateInstanceId { get; set; }
+        public int GromplateInstanceId { get; set; }
         [Key]
         public int DefaultTagId { get; set; }
 
         [ForeignKey("DefaultTagId")]
-        [InverseProperty("Tag_User_CollateInstances")]
+        [InverseProperty("Tag_User_GromplateInstances")]
         public virtual TagEntity DefaultTag { get; set; }
-        [ForeignKey("UserId,CollateInstanceId")]
-        [InverseProperty("Tag_User_CollateInstances")]
-        public virtual User_CollateInstanceEntity User_CollateInstance { get; set; }
+        [ForeignKey("UserId,GromplateInstanceId")]
+        [InverseProperty("Tag_User_GromplateInstances")]
+        public virtual User_GromplateInstanceEntity User_GromplateInstance { get; set; }
     }
 }

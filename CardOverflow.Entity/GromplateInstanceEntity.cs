@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,14 +7,14 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class CollateInstanceEntity
+    public partial class GromplateInstanceEntity
     {
-        public CollateInstanceEntity()
+        public GromplateInstanceEntity()
         {
             BranchInstances = new HashSet<BranchInstanceEntity>();
-            Collates = new HashSet<CollateEntity>();
+            Gromplates = new HashSet<GromplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
-            User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
+            User_GromplateInstances = new HashSet<User_GromplateInstanceEntity>();
         }
 
         [Key]
@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public int CollateId { get; set; }
+        public int GromplateId { get; set; }
         [Required]
         [StringLength(4000)]
         public string Css {
@@ -93,16 +93,16 @@ namespace CardOverflow.Entity
         public string CWeightTsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 
-        [ForeignKey("CollateId")]
-        [InverseProperty("CollateInstances")]
-        public virtual CollateEntity Collate { get; set; }
-        [InverseProperty("CollateInstance")]
+        [ForeignKey("GromplateId")]
+        [InverseProperty("GromplateInstances")]
+        public virtual GromplateEntity Gromplate { get; set; }
+        [InverseProperty("GromplateInstance")]
         public virtual ICollection<BranchInstanceEntity> BranchInstances { get; set; }
         [InverseProperty("LatestInstance")]
-        public virtual ICollection<CollateEntity> Collates { get; set; }
-        [InverseProperty("CollateInstance")]
+        public virtual ICollection<GromplateEntity> Gromplates { get; set; }
+        [InverseProperty("GromplateInstance")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
-        [InverseProperty("CollateInstance")]
-        public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
+        [InverseProperty("GromplateInstance")]
+        public virtual ICollection<User_GromplateInstanceEntity> User_GromplateInstances { get; set; }
     }
 }

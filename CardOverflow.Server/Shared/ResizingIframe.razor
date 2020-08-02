@@ -17,8 +17,8 @@
 @code {
   [Parameter] public int StackId { get; set; }
   [Parameter] public (int BranchInstanceId, short Index) BranchInstance { get; set; }
-  [Parameter] public int CollateId { get; set; }
-  [Parameter] public int CollateInstanceId { get; set; }
+  [Parameter] public int GromplateId { get; set; }
+  [Parameter] public int GromplateInstanceId { get; set; }
   [Parameter] public int CommunalFieldId { get; set; }
   [Parameter] public int CommunalFieldInstanceId { get; set; }
   [Parameter] public bool Front { get; set; }
@@ -33,10 +33,10 @@
       middle = "stack/" + StackId;
     } else if (!BranchInstance.Equals(default)) {
       middle = "branchinstance/" + BranchInstance.BranchInstanceId + "/" + BranchInstance.Index;
-    } else if (CollateId != 0) {
-      middle = "collate/" + CollateId;
-    } else if (CollateInstanceId != 0) {
-      middle = "collateinstance/" + CollateInstanceId;
+    } else if (GromplateId != 0) {
+      middle = "gromplate/" + GromplateId;
+    } else if (GromplateInstanceId != 0) {
+      middle = "gromplateinstance/" + GromplateInstanceId;
     } else if (CommunalFieldId != 0) {
       middle = "communalfield/" + CommunalFieldId;
     } else if (CommunalFieldInstanceId != 0) {

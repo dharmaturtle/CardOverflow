@@ -1,4 +1,4 @@
-@page "/collateinstance/{InstanceId:int}"
+@page "/gromplateinstance/{InstanceId:int}"
 
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Collections
@@ -32,7 +32,7 @@
           </div>
           <div class="row">
             <div class="col-sm">
-              <CollateEditor_Type Instance=@Instance UpdateCollateType=@(x => Instance.Templates = x) />
+              <GromplateEditor_Type Instance=@Instance UpdateGromplateType=@(x => Instance.Templates = x) />
               <table class="table-borderless my-3">
                 <thead>
                   <tr>
@@ -73,16 +73,16 @@
               <ValidationMessage For=@(() => Instance.Css) />
             </div>
           </div>
-          <CollateEditor_Templates Instance=@Instance IsDisabled=@IsDisabled UpdateCollateType=@(x => Instance.Templates = x) />
+          <GromplateEditor_Templates Instance=@Instance IsDisabled=@IsDisabled UpdateGromplateType=@(x => Instance.Templates = x) />
         </fieldset>
         <div class="mt-3">
           <div class="row">
             <div class="col"></div>
             <div class="col btn-group">
-              @if (IsDisabled && Collate != null) {
+              @if (IsDisabled && Gromplate != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
-                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Instance = Collate.Instances.Single(x => x.Id == id)))>
-                  @foreach (var instance in Collate.Instances.OrderByDescending(x => x.Created)) {
+                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Instance = Gromplate.Instances.Single(x => x.Id == id)))>
+                  @foreach (var instance in Gromplate.Instances.OrderByDescending(x => x.Created)) {
                     <option value=@instance.Id selected=@(Instance.Id == instance.Id)>
                       @instance.EditSummary - @instance.Created
                     </option>
@@ -109,20 +109,20 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int CollateId { get; set; }
+  [Parameter] public int GromplateId { get; set; }
   [Parameter] public int InstanceId { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
-  [Parameter] public ViewCollateInstance Instance { get; set; }
-  [Parameter] public ViewCollateWithAllInstances Collate { get; set; }
+  [Parameter] public ViewGromplateInstance Instance { get; set; }
+  [Parameter] public ViewGromplateWithAllInstances Gromplate { get; set; }
   private string _loadingMessage = "Loading...";
 
   private async Task _isChildComponent() {
-    var x = (Collate == null || (Collate.Id != CollateId && CollateId != 0))
-      ? await DbExecutor.QueryAsync(db => SanitizeCollate.AllInstances(db, CollateId))
-      : FSharpResult<ViewCollateWithAllInstances, string>.NewOk(Collate);
+    var x = (Gromplate == null || (Gromplate.Id != GromplateId && GromplateId != 0))
+      ? await DbExecutor.QueryAsync(db => SanitizeGromplate.AllInstances(db, GromplateId))
+      : FSharpResult<ViewGromplateWithAllInstances, string>.NewOk(Gromplate);
     if (x.IsOk) {
-      Collate = x.ResultValue;
-      Instance = Collate.Instances.SingleOrDefault(x => x.Id == NavigationManager.GetQueryInt("InstanceId")) ?? Collate.Instances.First();
+      Gromplate = x.ResultValue;
+      Instance = Gromplate.Instances.SingleOrDefault(x => x.Id == NavigationManager.GetQueryInt("InstanceId")) ?? Gromplate.Instances.First();
     } else {
       _loadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
@@ -130,7 +130,7 @@
   }
 
   private async Task _isInstancePage() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCollate.instance(db, InstanceId));
+    var x = await DbExecutor.QueryAsync(db => SanitizeGromplate.instance(db, InstanceId));
     if (x.IsOk) {
       Instance = x.ResultValue;
     } else {
@@ -145,12 +145,12 @@
     await (InstanceId == 0
       ? _isChildComponent()
       : _isInstancePage());
-    IsDisabled = Collate.AuthorId != _user.Id;
+    IsDisabled = Gromplate.AuthorId != _user.Id;
   }
 
   async Task Submit() {
     IsDisabled = true;
-    var x = await DbExecutor.QueryAsync(db => SanitizeCollate.Update(db, _user.Id, Instance));
+    var x = await DbExecutor.QueryAsync(db => SanitizeGromplate.Update(db, _user.Id, Instance));
     if (x.IsOk) {
       ToastService.ShowSuccess("Saved!");
     } else {

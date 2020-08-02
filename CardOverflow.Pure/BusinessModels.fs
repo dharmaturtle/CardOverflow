@@ -125,7 +125,7 @@ type Template = {
             ShortBack = ""
         }
 
-type CollateType =
+type GromplateType =
     | Standard of Template list
     | Cloze of Template
   with
@@ -137,21 +137,21 @@ type CollateType =
         function
         | 0s -> Standard templates
         | 1s -> Cloze <| templates.Single()
-        | x -> failwith <| sprintf "Unable to convert '%i' to a CollateType" x
+        | x -> failwith <| sprintf "Unable to convert '%i' to a GromplateType" x
     static member initStandard =
         Template.initStandard |> List.singleton |> Standard
 
-type CollateInstance = {
+type GromplateInstance = {
     Id: int
     Name: string
-    CollateId: int
+    GromplateId: int
     Css: string
     Fields: Field list
     Created: DateTime
     Modified: DateTime option
     LatexPre: string
     LatexPost: string
-    Templates: CollateType
+    Templates: GromplateType
     EditSummary: string
 } with
     member this.JustTemplates =
@@ -176,16 +176,16 @@ type CollateInstance = {
         |> Seq.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
-type CollectedCollateInstance = {
+type CollectedGromplateInstance = {
     DefaultTags: int seq
     DefaultCardSettingId: int
-    CollateInstance: CollateInstance
+    GromplateInstance: GromplateInstance
 }
 
-type Collate = {
+type Gromplate = {
     Id: int
     AuthorId: int
-    LatestInstance: CollateInstance
+    LatestInstance: GromplateInstance
 }
 
 type IntervalOrStepsIndex =
@@ -217,7 +217,7 @@ type QuizCard = {
 
 // medTODO delete?
 //type CollectedDisplayCard = { // Collected cause only private tags can be on a card
-//    CollateName: string
+//    GromplateName: string
 //    Front: string
 //    Back: string
 //    Tags: string seq
@@ -304,22 +304,22 @@ module Helper =
 
 type BranchInstanceView = {
     FieldValues: FieldAndValue ResizeArray
-    CollateInstance: CollateInstance
+    GromplateInstance: GromplateInstance
 } with
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.CollateInstance.Templates)
+            (this.GromplateInstance.Templates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     member this.Indexes = [0s .. this.MaxIndexInclusive]
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
-        match this.CollateInstance.Templates with
+        match this.GromplateInstance.Templates with
         | Standard ts -> 
             ts.Select(fun t ->
                 CardHtml.generate
                 <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
                 <| t.Front
                 <| t.Back
-                <| this.CollateInstance.Css
+                <| this.GromplateInstance.Css
                 <| CardHtml.Standard
             ).ToList()
         | Cloze t ->
@@ -328,7 +328,7 @@ type BranchInstanceView = {
                 <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
                 <| t.Front
                 <| t.Back
-                <| this.CollateInstance.Css
+                <| this.GromplateInstance.Css
                 <| CardHtml.Cloze i
             ) |> toResizeArray
     member this.FrontBackFrontSynthBackSynthIndex i =
@@ -516,7 +516,7 @@ with
 type EditStackCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    CollateInstance: CollateInstance
+    GromplateInstance: GromplateInstance
     Kind: UpsertKind
 } with
     member this.CardView = {   
@@ -525,8 +525,8 @@ type EditStackCommand = {
                 {   Field = x.EditField
                     Value =  x.Value
                 }).ToList()
-        CollateInstance = this.CollateInstance }
+        GromplateInstance = this.GromplateInstance }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.CollateInstance.Templates)
+            (this.GromplateInstance.Templates)
             (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls

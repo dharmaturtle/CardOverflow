@@ -28,7 +28,7 @@
 </div>
 <div class="">
   @foreach (var template in Instance.JustTemplates) {
-    <CollateEditor_Template
+    <GromplateEditor_Template
                             Template=@template
                             Css=@Instance.Css
                             DisplayDelete=@(Instance.JustTemplates.Count() >= 2)
@@ -38,18 +38,18 @@
 </div>
 
 @code {
-  [Parameter] public ViewCollateInstance Instance { get; set; }
-  [Parameter] public EventCallback<CollateType> UpdateCollateType { get; set; }
+  [Parameter] public ViewGromplateInstance Instance { get; set; }
+  [Parameter] public EventCallback<GromplateType> UpdateGromplateType { get; set; }
   [Parameter] public bool IsDisabled { get; set; }
 
   private Task AddTemplate() =>
     Instance.JustTemplates.Append(Template.initStandard).ToFList()
-    .Apply(CollateType.NewStandard)
-    .Apply(UpdateCollateType.InvokeAsync);
+    .Apply(GromplateType.NewStandard)
+    .Apply(UpdateGromplateType.InvokeAsync);
 
   private Task DeleteTemplate(Template template) =>
     Instance.JustTemplates.Where(x => x != template).ToFList()
-    .Apply(CollateType.NewStandard)
-    .Apply(UpdateCollateType.InvokeAsync);
+    .Apply(GromplateType.NewStandard)
+    .Apply(UpdateGromplateType.InvokeAsync);
 
 }

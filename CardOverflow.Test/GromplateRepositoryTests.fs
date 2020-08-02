@@ -1,4 +1,4 @@
-module CollateRepositoryTests
+module GromplateRepositoryTests
 
 open FsToolkit.ErrorHandling
 open LoadersAndCopiers
@@ -18,48 +18,48 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
+let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     let userId = 3
     use c = new TestContainer()
     
-    let collateId = c.Db.Collate.Single(fun x -> x.CollateInstances.Any(fun x -> x.Name = "Basic")).Id
-    let! collate = SanitizeCollate.AllInstances c.Db collateId
-    let latestInstance = collate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
+    let gromplateId = c.Db.Gromplate.Single(fun x -> x.GromplateInstances.Any(fun x -> x.Name = "Basic")).Id
+    let! gromplate = SanitizeGromplate.AllInstances c.Db gromplateId
+    let latestInstance = gromplate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
-        collate.Value.Instances.Single().Name)
+        gromplate.Value.Instances.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
         latestInstance.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
         latestInstance.FirstTemplate.Front)
-    Assert.Equal(1, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
+    Assert.Equal(1, c.Db.GromplateInstance.Count(fun x -> x.GromplateId = gromplateId))
 
     // Testing UpdateFieldsToNewInstance
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let newQuestionXemplate = "modified {{Front mutated}}"
-    let newCollateName = "new name"
+    let newGromplateName = "new name"
     let updated =
         { latestInstance with
-            Name = newCollateName
+            Name = newGromplateName
             Templates =
                 {   latestInstance.FirstTemplate with
                         Front = newQuestionXemplate
                 } |> List.singleton |> Standard
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
-        } |> ViewCollateInstance.copyTo
+        } |> ViewGromplateInstance.copyTo
     
-    do! CollateRepository.UpdateFieldsToNewInstance c.Db userId updated
+    do! GromplateRepository.UpdateFieldsToNewInstance c.Db userId updated
 
-    let! collate = SanitizeCollate.AllInstances c.Db collateId
-    let latestInstance = collate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
+    let! gromplate = SanitizeGromplate.AllInstances c.Db gromplateId
+    let latestInstance = gromplate.Value.Instances |> Seq.maxBy (fun x -> x.Created)
     Assert.Equal(
         newQuestionXemplate,
         latestInstance.FirstTemplate.Front)
     Assert.Equal(
-        newCollateName,
+        newGromplateName,
         latestInstance.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
@@ -68,12 +68,12 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
     Assert.Equal(1002, c.Db.CollectedCard.Single().BranchInstanceId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.CollateInstanceId)
-    Assert.Equal(2, c.Db.CollateInstance.Count(fun x -> x.CollateId = collateId))
+        c.Db.CollectedCard.Include(fun x -> x.BranchInstance).Single().BranchInstance.GromplateInstanceId)
+    Assert.Equal(2, c.Db.GromplateInstance.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.BranchInstance.Count())
     Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.Branch.StackId = 1))
     Assert.Equal(2, c.Db.BranchInstance.Count(fun x -> x.StackId = 1))
-    let createds = c.Db.CollateInstance.Where(fun x -> x.CollateId = collateId).Select(fun x -> x.Created) |> Seq.toList
+    let createds = c.Db.GromplateInstance.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = StackViewRepository.get c.Db 1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth.[0]
@@ -122,21 +122,21 @@ let ``CollateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task {
 
     // test existing
     let testView getView id expectedFront expectedBack = task {
-        let! (actual: Result<CollateInstance, string>) = getView c.Db id
+        let! (actual: Result<GromplateInstance, string>) = getView c.Db id
         let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
         BusinessLogicTests.assertStripped expectedFront front
         BusinessLogicTests.assertStripped expectedBack back
     }
     
-    do! testView CollateRepository.latest collateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
+    do! testView GromplateRepository.latest gromplateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
 
-    let priorInstance = collate.Value.Instances |> Seq.minBy (fun x -> x.Created)
-    do! testView CollateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
+    let priorInstance = gromplate.Value.Instances |> Seq.minBy (fun x -> x.Created)
+    do! testView GromplateRepository.instance priorInstance.Id "{{Front}}" "{{Front}} {{Back}}"
 
     // test missing
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
-    do! testViewError CollateRepository.latest 0 "Collate #0 not found"
-    do! testViewError CollateRepository.instance 0 "Collate Instance #0 not found"
+    do! testViewError GromplateRepository.latest 0 "Gromplate #0 not found"
+    do! testViewError GromplateRepository.instance 0 "Gromplate Instance #0 not found"
     }

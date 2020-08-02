@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
         public bool IsDmca { get; set; }
         [Required]
         public string FieldValues { get; set; }
-        public int CollateInstanceId { get; set; }
+        public int GromplateInstanceId { get; set; }
         public int Users { get; set; }
         [Required]
         [StringLength(200)]
@@ -54,9 +54,9 @@ namespace CardOverflow.Entity
         [ForeignKey("BranchId")]
         [InverseProperty("BranchInstances")]
         public virtual BranchEntity Branch { get; set; }
-        [ForeignKey("CollateInstanceId")]
+        [ForeignKey("GromplateInstanceId")]
         [InverseProperty("BranchInstances")]
-        public virtual CollateInstanceEntity CollateInstance { get; set; }
+        public virtual GromplateInstanceEntity GromplateInstance { get; set; }
         [InverseProperty("BranchInstance")]
         public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("BranchInstance")]

@@ -70,7 +70,7 @@ module Generators =
                     ShortBack = ""
                 } |> Cloze
         }
-    let collateType fields =
+    let gromplateType fields =
         Gen.oneof [
             standardTemplate fields
             clozeTemplate fields
@@ -78,14 +78,14 @@ module Generators =
     let fields =
         List.map (fun fieldName -> Gen.genMap<Field> (fun field -> { field with Name = fieldName }))
         >> Gen.sequence
-    let collateInstance collateType fieldNames =
+    let gromplateInstance gromplateType fieldNames =
         gen {
             let! fields = fields fieldNames
             return!
-                Gen.genMap<CollateInstance> (fun collateInstance -> {
-                    collateInstance with
+                Gen.genMap<GromplateInstance> (fun gromplateInstance -> {
+                    gromplateInstance with
                         Fields = fields
-                        Templates = collateType
+                        Templates = gromplateType
                 })
         }
     type ClozeText = ClozeText of string
@@ -99,10 +99,10 @@ module Generators =
     let editStackCommand =
         gen {
             let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
-            let! collateType = collateType fieldNames
-            let! collateInstance = collateInstance collateType fieldNames
+            let! gromplateType = gromplateType fieldNames
+            let! gromplateInstance = gromplateInstance gromplateType fieldNames
             let values =
-                match collateType with
+                match gromplateType with
                 | Standard _ -> alphanumericString
                 | Cloze _ -> clozeText
             let! fields = fields fieldNames
@@ -114,7 +114,7 @@ module Generators =
                 Gen.genMap<EditStackCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
-                            CollateInstance = collateInstance
+                            GromplateInstance = gromplateInstance
                     })
         }
     let notificationEntity = gen {

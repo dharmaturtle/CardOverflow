@@ -25,7 +25,7 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiCollateInstance = {
+type AnkiGromplateInstance = {
     AnkiId: int64
     AuthorId: int
     Name: string
@@ -41,7 +41,7 @@ type AnkiCollateInstance = {
     DeckId: int64
     IsCloze: bool
 } with
-    member this.CopyTo (entity: CollateInstanceEntity) =
+    member this.CopyTo (entity: GromplateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -52,27 +52,27 @@ type AnkiCollateInstance = {
         entity.Templates <- this.Templates |> Template.copyToMany
         entity.EditSummary <- "Imported from Anki"
         entity.Type <- if this.IsCloze then 1s else 0s
-    member this.CopyToNewWithCollate userId collate defaultCardSetting =
-        let entity = CollateInstanceEntity()
-        entity.User_CollateInstances <-
-            [User_CollateInstanceEntity(
+    member this.CopyToNewWithGromplate userId gromplate defaultCardSetting =
+        let entity = GromplateInstanceEntity()
+        entity.User_GromplateInstances <-
+            [User_GromplateInstanceEntity(
                 UserId = userId,
-                Tag_User_CollateInstances =
+                Tag_User_GromplateInstances =
                     (this.DefaultTags
-                        .Select(fun x -> Tag_User_CollateInstanceEntity(UserId = userId, DefaultTagId = x))
+                        .Select(fun x -> Tag_User_GromplateInstanceEntity(UserId = userId, DefaultTagId = x))
                         .ToList()),
                 DefaultCardSetting = defaultCardSetting)].ToList()
-        entity.Collate <- collate
+        entity.Gromplate <- gromplate
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
         entity
     member this.CopyToNew userId defaultCardSetting =
-        this.CopyToNewWithCollate userId (CollateEntity(AuthorId = this.AuthorId)) defaultCardSetting
+        this.CopyToNewWithGromplate userId (GromplateEntity(AuthorId = this.AuthorId)) defaultCardSetting
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
     CommunalFields: CommunalFieldInstanceEntity list
-    Collate: CollateInstanceEntity
+    Gromplate: GromplateInstanceEntity
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
@@ -82,7 +82,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.CollateInstance <- this.Collate
+        entity.GromplateInstance <- this.Gromplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.CommunalFieldInstance_BranchInstances <-
             this.CommunalFields
@@ -108,8 +108,8 @@ type AnkiCardWrite = {
         this.CopyTo entity
         entity
     member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let collateHash = this.Collate |> CollateInstanceEntity.hash hasher
-        let hash = this.CopyToNew [] |> BranchInstanceEntity.hash collateHash hasher
+        let gromplateHash = this.Gromplate |> GromplateInstanceEntity.hash hasher
+        let hash = this.CopyToNew [] |> BranchInstanceEntity.hash gromplateHash hasher
         db.BranchInstance
             .Include(fun x -> x.CommunalFieldInstance_BranchInstances :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_BranchInstanceEntity) -> x.CommunalFieldInstance)
@@ -120,7 +120,7 @@ type AnkiCardWrite = {
 type AnkiCollectedCard = {
     UserId: int
     BranchInstance: BranchInstanceEntity
-    CollateInstance: CollateInstanceEntity
+    GromplateInstance: GromplateInstanceEntity
     Index: int16
     CardState: CardState
     IsLapsed: bool
@@ -279,7 +279,7 @@ module Anki =
         |> Decode.fromString
     let parseModels userId =
         Decode.object(fun get ->
-            let collates =
+            let gromplates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
                             { Name = g.Required.Field "name" Decode.string
                               Front = g.Required.Field "qfmt" Decode.string
@@ -302,7 +302,7 @@ module Anki =
                         |> Decode.list)
                         |> List.sortBy snd
                         |> List.map fst
-                Templates = collates
+                Templates = gromplates
                 Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
                 Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
                 DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
@@ -354,7 +354,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (collateByModelId: Map<string, {| Entity: CollateInstanceEntity; Collate: AnkiCollateInstance |}>)
+        (gromplateByModelId: Map<string, {| Entity: GromplateInstanceEntity; Gromplate: AnkiGromplateInstance |}>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -378,11 +378,11 @@ module Anki =
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
-                let collate = collateByModelId.[string note.Mid]
-                let toCard fields collate =
+                let gromplate = gromplateByModelId.[string note.Mid]
+                let toCard fields gromplate =
                     let c = {
                         AnkiNoteId = note.Id
-                        Collate = collate
+                        Gromplate = gromplate
                         CommunalFields = []
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
@@ -393,12 +393,12 @@ module Anki =
                         <| c.CopyToNew files
                 let noteIdCardsAndTags =
                     let cards =
-                        if collate.Collate.IsCloze then
+                        if gromplate.Gromplate.IsCloze then
                             toCard
                                 <| fieldValues
-                                <| collate.Entity
+                                <| gromplate.Entity
                         else
-                            toCard fieldValues collate.Entity
+                            toCard fieldValues gromplate.Entity
                     let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
                     note.Id, (cards, relevantTags)
                 parseNotesRec
@@ -419,7 +419,7 @@ module Anki =
         (ankiCard: Anki.CardEntity) =
         let cardSetting, deck = cardSettingAndDeckByDeckId.[ankiCard.Did]
         let card, _ = cardAndTagsByNoteId.[ankiCard.Nid]
-        let cti = card.CollateInstance
+        let cti = card.GromplateInstance
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
@@ -431,7 +431,7 @@ module Anki =
                 let c: AnkiCollectedCard =
                     { UserId = userId
                       BranchInstance = card
-                      CollateInstance = cti
+                      GromplateInstance = cti
                       Index = ankiCard.Ord |> int16
                       CardState =
                         match ankiCard.Queue with

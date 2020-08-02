@@ -14,8 +14,8 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 open System.Collections
 
-module CollateInstanceEntity =
-    let byteArrayHash (hasher: SHA512) (e: CollateInstanceEntity) =
+module GromplateInstanceEntity =
+    let byteArrayHash (hasher: SHA512) (e: GromplateInstanceEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -84,7 +84,7 @@ module BranchInstanceEntity =
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
         bitArray.CopyTo(bytes, 0)
         bytes
-    let hash (collateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
+    let hash (gromplateHash: BitArray) (hasher: SHA512) (e: BranchInstanceEntity) =
         e.CommunalFieldInstance_BranchInstances
             .Select(fun x -> x.CommunalFieldInstance.Value)
             .OrderBy(fun x -> x)
@@ -92,12 +92,12 @@ module BranchInstanceEntity =
         |> List.append
             [   e.FieldValues
                 e.AnkiNoteId.ToString()
-                //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by collateHash and e.FieldValues
-                e.CollateInstance.AnkiId.ToString()]
+                //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by gromplateHash and e.FieldValues
+                e.GromplateInstance.AnkiId.ToString()]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Array.append (bitArrayToByteArray collateHash)
+        |> Array.append (bitArrayToByteArray gromplateHash)
         |> hasher.ComputeHash
         |> BitArray
 
@@ -212,24 +212,24 @@ type Template with
         List.map Template.copyTo
         >> MappingTools.joinByRecordSeparator
 
-type CollateInstance with
-    static member load (entity: CollateInstanceEntity) =
+type GromplateInstance with
+    static member load (entity: GromplateInstanceEntity) =
         {   Id = entity.Id
             Name = entity.Name
-            CollateId = entity.CollateId
+            GromplateId = entity.GromplateId
             Css = entity.Css
             Fields = Fields.fromString entity.Fields
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             LatexPre = entity.LatexPre
             LatexPost = entity.LatexPost
-            Templates = entity.Type |> CollateType.fromDb (entity.Templates |> Template.loadMany)
+            Templates = entity.Type |> GromplateType.fromDb (entity.Templates |> Template.loadMany)
             EditSummary = entity.EditSummary
         }
     static member initialize = {
         Id = 0
         Name = "New Template"
-        CollateId = 0
+        GromplateId = 0
         Css = """.card {
      font-family: arial;
      font-size: 20px;
@@ -257,9 +257,9 @@ type CollateInstance with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        Templates = CollateType.initStandard
+        Templates = GromplateType.initStandard
         EditSummary = "Initial creation" }
-    member this.CopyTo (entity: CollateInstanceEntity) =
+    member this.CopyTo (entity: GromplateInstanceEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -273,33 +273,33 @@ type CollateInstance with
             match this.Templates with
             | Standard _ -> 0s
             | Cloze _ -> 1s
-    member this.CopyToNewInstance collate =
-        let e = CollateInstanceEntity()
+    member this.CopyToNewInstance gromplate =
+        let e = GromplateInstanceEntity()
         this.CopyTo e
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
-        match collate with
-        | Id id -> e.CollateId <- id
-        | Entity entity -> e.Collate <- entity
+        match gromplate with
+        | Id id -> e.GromplateId <- id
+        | Entity entity -> e.Gromplate <- entity
         e
 
-type CollectedCollateInstance with
-    static member load(entity: CollateInstanceEntity) =
-        { DefaultTags = entity.User_CollateInstances.Single().Tag_User_CollateInstances.Select(fun x -> x.DefaultTagId)
-          DefaultCardSettingId = entity.User_CollateInstances.Single().DefaultCardSettingId
-          CollateInstance = CollateInstance.load entity }
+type CollectedGromplateInstance with
+    static member load(entity: GromplateInstanceEntity) =
+        { DefaultTags = entity.User_GromplateInstances.Single().Tag_User_GromplateInstances.Select(fun x -> x.DefaultTagId)
+          DefaultCardSettingId = entity.User_GromplateInstances.Single().DefaultCardSettingId
+          GromplateInstance = GromplateInstance.load entity }
 
 type BranchInstanceView with
-    static member private toView (collateInstance: CollateInstanceEntity) (fieldValues: string)=
-        {   FieldValues = FieldAndValue.load (Fields.fromString collateInstance.Fields) fieldValues
-            CollateInstance = CollateInstance.load collateInstance }
+    static member private toView (gromplateInstance: GromplateInstanceEntity) (fieldValues: string)=
+        {   FieldValues = FieldAndValue.load (Fields.fromString gromplateInstance.Fields) fieldValues
+            GromplateInstance = GromplateInstance.load gromplateInstance }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.CollateInstance.Templates)
+            (this.GromplateInstance.Templates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     static member load (entity: BranchInstanceEntity) =
         BranchInstanceView.toView
-            entity.CollateInstance
+            entity.GromplateInstance
             entity.FieldValues
     member this.CopyToX (entity: BranchInstanceEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
@@ -307,7 +307,7 @@ type BranchInstanceView with
             communalFields.Select(fun x -> CommunalFieldInstance_BranchInstanceEntity(CommunalFieldInstance = x))
             |> entity.CommunalFieldInstance_BranchInstances.Concat
             |> toResizeArray
-        entity.CollateInstanceId <- this.CollateInstance.Id
+        entity.GromplateInstanceId <- this.GromplateInstance.Id
     member this.CopyToNew communalFields =
         let entity = BranchInstanceEntity()
         this.CopyToX entity communalFields

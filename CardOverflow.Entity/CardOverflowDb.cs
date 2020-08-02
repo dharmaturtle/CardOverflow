@@ -15,9 +15,9 @@ namespace CardOverflow.Entity
         private DbSet<BranchInstanceRelationshipCountEntity> _BranchInstanceRelationshipCountTracked { get; set; }
         private DbSet<BranchInstanceTagCountEntity> _BranchInstanceTagCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
-        public virtual DbSet<CollateEntity> Collate { get; set; }
-        public virtual DbSet<CollateInstanceEntity> CollateInstance { get; set; }
-        public virtual DbSet<CommentCollateEntity> CommentCollate { get; set; }
+        public virtual DbSet<GromplateEntity> Gromplate { get; set; }
+        public virtual DbSet<GromplateInstanceEntity> GromplateInstance { get; set; }
+        public virtual DbSet<CommentGromplateEntity> CommentGromplate { get; set; }
         public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
         public virtual DbSet<CommunalFieldInstanceEntity> CommunalFieldInstance { get; set; }
@@ -39,10 +39,10 @@ namespace CardOverflow.Entity
         private DbSet<StackTagCountEntity> _StackTagCountTracked { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_CollectedCardEntity> Tag_CollectedCard { get; set; }
-        public virtual DbSet<Tag_User_CollateInstanceEntity> Tag_User_CollateInstance { get; set; }
+        public virtual DbSet<Tag_User_GromplateInstanceEntity> Tag_User_GromplateInstance { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
-        public virtual DbSet<User_CollateInstanceEntity> User_CollateInstance { get; set; }
-        public virtual DbSet<Vote_CommentCollateEntity> Vote_CommentCollate { get; set; }
+        public virtual DbSet<User_GromplateInstanceEntity> User_GromplateInstance { get; set; }
+        public virtual DbSet<Vote_CommentGromplateEntity> Vote_CommentGromplate { get; set; }
         public virtual DbSet<Vote_CommentStackEntity> Vote_CommentStack { get; set; }
         public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
 
@@ -180,7 +180,7 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.BranchId);
 
-                entity.HasIndex(e => e.CollateInstanceId);
+                entity.HasIndex(e => e.GromplateInstanceId);
 
                 IfNpg(() => entity.HasIndex(e => e.Hash),
                     () => entity.Ignore(e => e.Hash));
@@ -199,9 +199,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.BranchId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.CollateInstance)
+                entity.HasOne(d => d.GromplateInstance)
                     .WithMany(p => p.BranchInstances)
-                    .HasForeignKey(d => d.CollateInstanceId)
+                    .HasForeignKey(d => d.GromplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasMany(x => x.StackTagCounts)
@@ -248,26 +248,26 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CollateEntity>(entity =>
+            modelBuilder.Entity<GromplateEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
-                    .WithMany(p => p.Collates)
+                    .WithMany(p => p.Gromplates)
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.LatestInstance)
-                    .WithMany(p => p.Collates)
+                    .WithMany(p => p.Gromplates)
                     .HasForeignKey(d => d.LatestInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CollateInstanceEntity>(entity =>
+            modelBuilder.Entity<GromplateInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CollateId);
+                entity.HasIndex(e => e.GromplateId);
 
                 IfNpg(() => entity.HasIndex(e => e.Hash),
                     () => entity.Ignore(e => e.Hash));
@@ -275,28 +275,28 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
                     () => entity.Ignore(e => e.TsVector));
 
-                entity.HasIndex(e => new { e.Id, e.CollateId })
+                entity.HasIndex(e => new { e.Id, e.GromplateId })
                     .IsUnique();
 
-                entity.HasOne(d => d.Collate)
-                    .WithMany(p => p.CollateInstances)
-                    .HasForeignKey(d => d.CollateId)
+                entity.HasOne(d => d.Gromplate)
+                    .WithMany(p => p.GromplateInstances)
+                    .HasForeignKey(d => d.GromplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommentCollateEntity>(entity =>
+            modelBuilder.Entity<CommentGromplateEntity>(entity =>
             {
-                entity.HasIndex(e => e.CollateId);
+                entity.HasIndex(e => e.GromplateId);
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasOne(d => d.Collate)
-                    .WithMany(p => p.CommentCollates)
-                    .HasForeignKey(d => d.CollateId)
+                entity.HasOne(d => d.Gromplate)
+                    .WithMany(p => p.CommentGromplates)
+                    .HasForeignKey(d => d.GromplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.CommentCollates)
+                    .WithMany(p => p.CommentGromplates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -556,20 +556,20 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Tag_User_CollateInstanceEntity>(entity =>
+            modelBuilder.Entity<Tag_User_GromplateInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.DefaultTagId, e.CollateInstanceId, e.UserId });
+                entity.HasKey(e => new { e.DefaultTagId, e.GromplateInstanceId, e.UserId });
 
                 entity.HasIndex(e => e.DefaultTagId);
 
                 entity.HasOne(d => d.DefaultTag)
-                    .WithMany(p => p.Tag_User_CollateInstances)
+                    .WithMany(p => p.Tag_User_GromplateInstances)
                     .HasForeignKey(d => d.DefaultTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.User_CollateInstance)
-                    .WithMany(p => p.Tag_User_CollateInstances)
-                    .HasForeignKey(d => new { d.UserId, d.CollateInstanceId })
+                entity.HasOne(d => d.User_GromplateInstance)
+                    .WithMany(p => p.Tag_User_GromplateInstances)
+                    .HasForeignKey(d => new { d.UserId, d.GromplateInstanceId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Tag_User_TemplatInst_User_TemplatInst_UserId_TemplatInstId");
             });
@@ -583,43 +583,43 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.DefaultDeck);
             });
 
-            modelBuilder.Entity<User_CollateInstanceEntity>(entity =>
+            modelBuilder.Entity<User_GromplateInstanceEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CollateInstanceId, e.UserId });
+                entity.HasKey(e => new { e.GromplateInstanceId, e.UserId });
 
-                entity.HasIndex(e => e.CollateInstanceId);
+                entity.HasIndex(e => e.GromplateInstanceId);
 
                 entity.HasIndex(e => e.DefaultCardSettingId);
 
-                entity.HasOne(d => d.CollateInstance)
-                    .WithMany(p => p.User_CollateInstances)
-                    .HasForeignKey(d => d.CollateInstanceId)
+                entity.HasOne(d => d.GromplateInstance)
+                    .WithMany(p => p.User_GromplateInstances)
+                    .HasForeignKey(d => d.GromplateInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.DefaultCardSetting)
-                    .WithMany(p => p.User_CollateInstances)
+                    .WithMany(p => p.User_GromplateInstances)
                     .HasForeignKey(d => d.DefaultCardSettingId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.User_CollateInstances)
+                    .WithMany(p => p.User_GromplateInstances)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Vote_CommentCollateEntity>(entity =>
+            modelBuilder.Entity<Vote_CommentGromplateEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommentCollateId, e.UserId });
+                entity.HasKey(e => new { e.CommentGromplateId, e.UserId });
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasOne(d => d.CommentCollate)
-                    .WithMany(p => p.Vote_CommentCollates)
-                    .HasForeignKey(d => d.CommentCollateId)
+                entity.HasOne(d => d.CommentGromplate)
+                    .WithMany(p => p.Vote_CommentGromplates)
+                    .HasForeignKey(d => d.CommentGromplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.Vote_CommentCollates)
+                    .WithMany(p => p.Vote_CommentGromplates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });

@@ -640,13 +640,13 @@ type ViewEditStackCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    CollateInstance: ViewCollateInstance
+    GromplateInstance: ViewGromplateInstance
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-        match this.CollateInstance.Templates with
+        match this.GromplateInstance.Templates with
         | Cloze t ->
              result {
                 let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (valueByFieldName |> Map.ofSeq) t.Front
@@ -655,7 +655,7 @@ type ViewEditStackCommand = {
                         <| valueByFieldName
                         <| t.Front
                         <| t.Back
-                        <| this.CollateInstance.Css
+                        <| this.GromplateInstance.Css
                         <| CardHtml.Cloze clozeIndex
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
@@ -666,7 +666,7 @@ type ViewEditStackCommand = {
                     <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
                     <| t.Front
                     <| t.Back
-                    <| this.CollateInstance.Css
+                    <| this.GromplateInstance.Css
                     <| CardHtml.Standard
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
@@ -683,7 +683,7 @@ type ViewEditStackCommand = {
                 | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
         {   EditStackCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            CollateInstance = this.CollateInstance |> ViewCollateInstance.copyTo
+            GromplateInstance = this.GromplateInstance |> ViewGromplateInstance.copyTo
             Kind = kind
         }
 
@@ -738,9 +738,9 @@ module SanitizeStackRepository =
             {   EditSummary = ""
                 FieldValues =
                     EditFieldAndValue.load
-                        <| Fields.fromString branch.CollateInstance.Fields
+                        <| Fields.fromString branch.GromplateInstance.Fields
                         <| branch.FieldValues
-                CollateInstance = branch.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
+                GromplateInstance = branch.GromplateInstance |> GromplateInstance.load |> ViewGromplateInstance.load
                 Kind = kind
                 Title =
                     match kind with
@@ -751,29 +751,29 @@ module SanitizeStackRepository =
             }
         match source with
         | VNewOriginalUserId userId ->
-            db.User_CollateInstance.Include(fun x -> x.CollateInstance).FirstOrDefaultAsync(fun x -> x.UserId = userId)
+            db.User_GromplateInstance.Include(fun x -> x.GromplateInstance).FirstOrDefaultAsync(fun x -> x.UserId = userId)
             |>% (Result.requireNotNull (sprintf "User #%i doesn't have any templates" userId))
             |>%% (fun j ->
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString j.CollateInstance.Fields
+                            <| Fields.fromString j.GromplateInstance.Fields
                             <| ""
-                    CollateInstance = j.CollateInstance |> CollateInstance.load |> ViewCollateInstance.load
+                    GromplateInstance = j.GromplateInstance |> GromplateInstance.load |> ViewGromplateInstance.load
                     Kind = NewOriginal_TagIds []
                     Title = null
                 }
             )
         | VNewBranchSourceStackId stackId ->
-            db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
+            db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.GromplateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%i not found." stackId)
             |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance
         | VNewCopySourceInstanceId branchInstanceId ->
-            db.BranchInstance.Include(fun x -> x.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
+            db.BranchInstance.Include(fun x -> x.GromplateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchInstanceId)
             |>% Result.requireNotNull (sprintf "Branch Instance #%i not found." branchInstanceId)
             |>%% toCommand (NewCopy_SourceInstanceId_TagIds (branchInstanceId, []))
         | VUpdateBranchId branchId ->
-            db.Branch.Include(fun x -> x.LatestInstance.CollateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
+            db.Branch.Include(fun x -> x.LatestInstance.GromplateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
     let Update (db: CardOverflowDb) userId (acCommands: EditCollectedCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {

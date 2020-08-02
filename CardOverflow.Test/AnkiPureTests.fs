@@ -13,7 +13,7 @@ open CardOverflow.Entity
 open MappingTools
 
 [<Fact>]
-let ``AnkiMap.parseDconf on allDefaultCollatesAndImageAndMp3_apkg returns expected`` (): unit =
+let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expected`` (): unit =
     let expected =
         {   Id = 0
             Name = "Default"
@@ -38,7 +38,7 @@ let ``AnkiMap.parseDconf on allDefaultCollatesAndImageAndMp3_apkg returns expect
             AutomaticallyPlayAudio = true
             ReplayQuestionAudioOnAnswer = true
         }
-    let col = AnkiImportTestData.allDefaultCollatesAndImageAndMp3_apkg.Cols.Head
+    let col = AnkiImportTestData.allDefaultGromplatesAndImageAndMp3_apkg.Cols.Head
 
     let cardSettings = Anki.parseCardSettings col.Dconf
     

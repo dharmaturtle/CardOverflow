@@ -9,24 +9,24 @@ using ThoughtDesign.WebLibrary;
 namespace CardOverflow.UserContentApi.Controllers {
   [ApiController]
   //[Route("[controller]")]
-  public class Collate : Controller {
+  public class Gromplate : Controller {
     private readonly CardOverflowDb _db;
 
-    public Collate(CardOverflowDb db) => _db = db;
+    public Gromplate(CardOverflowDb db) => _db = db;
 
-    [HttpGet("collate/{id}/{index}/front")]
-    public async Task<IActionResult> Front(int id, int index) => _front(index, await CollateRepository.latest(_db, id));
+    [HttpGet("gromplate/{id}/{index}/front")]
+    public async Task<IActionResult> Front(int id, int index) => _front(index, await GromplateRepository.latest(_db, id));
 
-    [HttpGet("collate/{id}/{index}/back")]
-    public async Task<IActionResult> Back(int id, int index) => _back(index, await CollateRepository.latest(_db, id));
+    [HttpGet("gromplate/{id}/{index}/back")]
+    public async Task<IActionResult> Back(int id, int index) => _back(index, await GromplateRepository.latest(_db, id));
 
-    [HttpGet("collateinstance/{id}/{index}/front")]
-    public async Task<IActionResult> InstanceFront(int id, int index) => _front(index, await CollateRepository.instance(_db, id));
+    [HttpGet("gromplateinstance/{id}/{index}/front")]
+    public async Task<IActionResult> InstanceFront(int id, int index) => _front(index, await GromplateRepository.instance(_db, id));
 
-    [HttpGet("collateinstance/{id}/{index}/back")]
-    public async Task<IActionResult> InstanceBack(int id, int index) => _back(index, await CollateRepository.instance(_db, id));
+    [HttpGet("gromplateinstance/{id}/{index}/back")]
+    public async Task<IActionResult> InstanceBack(int id, int index) => _back(index, await GromplateRepository.instance(_db, id));
 
-    private ContentResult _front(int index, FSharpResult<CollateInstance, string> view) =>
+    private ContentResult _front(int index, FSharpResult<GromplateInstance, string> view) =>
       ( view.IsError
       ? view.ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).IsError
@@ -34,7 +34,7 @@ namespace CardOverflow.UserContentApi.Controllers {
       : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).ResultValue.Item1
       ) .ToTextHtmlContent(this);
 
-    private ContentResult _back(int index, FSharpResult<CollateInstance, string> view) =>
+    private ContentResult _back(int index, FSharpResult<GromplateInstance, string> view) =>
       ( view.IsError
       ? view.ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).IsError

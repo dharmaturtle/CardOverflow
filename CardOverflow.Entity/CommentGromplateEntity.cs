@@ -1,20 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommentCollateEntity
+    public partial class CommentGromplateEntity
     {
-        public CommentCollateEntity()
+        public CommentGromplateEntity()
         {
-            Vote_CommentCollates = new HashSet<Vote_CommentCollateEntity>();
+            Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
         }
 
         [Key]
         public int Id { get; set; }
-        public int CollateId { get; set; }
+        public int GromplateId { get; set; }
         public int UserId { get; set; }
         [Required]
         [StringLength(500)]
@@ -29,13 +29,13 @@ namespace CardOverflow.Entity
         public DateTime Created { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("CollateId")]
-        [InverseProperty("CommentCollates")]
-        public virtual CollateEntity Collate { get; set; }
+        [ForeignKey("GromplateId")]
+        [InverseProperty("CommentGromplates")]
+        public virtual GromplateEntity Gromplate { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("CommentCollates")]
+        [InverseProperty("CommentGromplates")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("CommentCollate")]
-        public virtual ICollection<Vote_CommentCollateEntity> Vote_CommentCollates { get; set; }
+        [InverseProperty("CommentGromplate")]
+        public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
     }
 }

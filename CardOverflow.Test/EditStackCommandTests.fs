@@ -27,11 +27,11 @@ let clozeFields =
     | Cloze t -> Cloze.templateRegex.TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
     | _ -> failwith "impossible"
 
-let test text expected collateInstance =
+let test text expected gromplateInstance =
     let view =
         {   EditSummary = ""
             FieldValues =
-                CollateInstance.initialize.Fields.Select(fun f -> {
+                GromplateInstance.initialize.Fields.Select(fun f -> {
                     EditField = f
                     Value =
                         if f.Name = "Front" then
@@ -39,12 +39,12 @@ let test text expected collateInstance =
                         else
                             f.Name
                 }).ToList()
-            CollateInstance = collateInstance
+            GromplateInstance = gromplateInstance
             Kind = NewOriginal_TagIds []
             Title = null
         }
-    if collateInstance.FirstTemplate.Name = "Cloze" then
-        Assert.Equal<string seq>(["Front"], clozeFields view.CollateInstance.Templates)
+    if gromplateInstance.FirstTemplate.Name = "Cloze" then
+        Assert.Equal<string seq>(["Front"], clozeFields view.GromplateInstance.Templates)
     view.Backs.Value
     |> Seq.map MappingTools.stripHtmlTags
     |> fun x -> Assert.Equal<string seq>(expected, x)
@@ -53,7 +53,7 @@ let test text expected collateInstance =
 let ``EditStackCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
-            ({ CollateInstance.initialize with
+            ({ GromplateInstance.initialize with
                 Templates =
                 {   Name = "Basic"
                     Front = "{{Front}}"
@@ -61,7 +61,7 @@ let ``EditStackCommand's back works with basic`` (): unit =
                     ShortFront = ""
                     ShortBack = ""
                 } |> List.singleton |>Standard
-            } |> ViewCollateInstance.load)
+            } |> ViewGromplateInstance.load)
     testOrdinary
         "The front"
         [ "The front Back" ]
@@ -70,7 +70,7 @@ let ``EditStackCommand's back works with basic`` (): unit =
 let ``EditStackCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
-            ({ CollateInstance.initialize with
+            ({ GromplateInstance.initialize with
                 Templates =
                     {   Name = "Cloze"
                         Front = "{{cloze:Front}}"
@@ -78,7 +78,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                         ShortFront = ""
                         ShortBack = ""
                     } |> Cloze
-            } |> ViewCollateInstance.load)
+            } |> ViewGromplateInstance.load)
     testCloze
         "{{c1::Canberra::city}} was founded in {{c1::1913}}."
         [   "[ Canberra ] was founded in [ 1913 ] . Back" ]
@@ -91,7 +91,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    CollateInstance.initialize.Fields.Select(fun f -> {
+                    GromplateInstance.initialize.Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             match f.Name with
@@ -99,18 +99,18 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                             | "Back" -> back
                             | _ -> "Source goes here"
                     }).ToList()
-                CollateInstance =
-                    {   CollateInstance.initialize with
+                GromplateInstance =
+                    {   GromplateInstance.initialize with
                             Templates =
-                                {   CollateInstance.initialize.JustTemplates.[0] with
+                                {   GromplateInstance.initialize.JustTemplates.[0] with
                                         Front = "{{cloze:Front}}{{cloze:Back}}"
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
-                    } |> ViewCollateInstance.load
+                    } |> ViewGromplateInstance.load
                 Kind = NewOriginal_TagIds []
                 Title = null
             }
-        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.CollateInstance.Templates)
+        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.GromplateInstance.Templates)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expectedBack, x)

@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
         public TagEntity()
         {
             Tag_CollectedCards = new HashSet<Tag_CollectedCardEntity>();
-            Tag_User_CollateInstances = new HashSet<Tag_User_CollateInstanceEntity>();
+            Tag_User_GromplateInstances = new HashSet<Tag_User_GromplateInstanceEntity>();
         }
 
         [Key]
@@ -31,6 +31,6 @@ namespace CardOverflow.Entity
         [InverseProperty("Tag")]
         public virtual ICollection<Tag_CollectedCardEntity> Tag_CollectedCards { get; set; }
         [InverseProperty("DefaultTag")]
-        public virtual ICollection<Tag_User_CollateInstanceEntity> Tag_User_CollateInstances { get; set; }
+        public virtual ICollection<Tag_User_GromplateInstanceEntity> Tag_User_GromplateInstances { get; set; }
     }
 }

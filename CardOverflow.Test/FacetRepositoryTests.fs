@@ -17,14 +17,14 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 
-let normalCommand fieldValues collateInstance tagIds =
+let normalCommand fieldValues gromplateInstance tagIds =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    {   CollateInstance = collateInstance
+    {   GromplateInstance = gromplateInstance
         FieldValues =
-            collateInstance.Fields
+            gromplateInstance.Fields
             |> Seq.mapi (fun i field -> {
                 EditField = ViewField.copyTo field
                 Value = fieldValues.[i]
@@ -34,10 +34,10 @@ let normalCommand fieldValues collateInstance tagIds =
         Title = null
     }
 
-let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
+let clozeCommand clozeText (clozeGromplate: ViewGromplateInstance) tagIds = {
     EditSummary = "Initial creation"
     FieldValues =
-        clozeCollate.Fields.Select(fun f -> {
+        clozeGromplate.Fields.Select(fun f -> {
             EditField = ViewField.copyTo f
             Value =
                 if f.Name = "Text" then
@@ -45,18 +45,18 @@ let clozeCommand clozeText (clozeCollate: ViewCollateInstance) tagIds = {
                 else
                     "extra"
         }).ToList()
-    CollateInstance = clozeCollate
+    GromplateInstance = clozeGromplate
     Kind = NewOriginal_TagIds tagIds
     Title = null }
 
-let add collateName createCommand (db: CardOverflowDb) userId tags = task {
+let add gromplateName createCommand (db: CardOverflowDb) userId tags = task {
     let tagIds = ResizeArray.empty
     for tag in tags do
         let! tagId = SanitizeTagRepository.upsert db tag |> TaskResult.getOk
         tagIds.Add tagId
-    let! collate = TestCollateRepo.SearchEarliest db collateName
+    let! gromplate = TestGromplateRepo.SearchEarliest db gromplateName
     let! r =
-        createCommand collate (tagIds |> List.ofSeq)
+        createCommand gromplate (tagIds |> List.ofSeq)
         |> SanitizeStackRepository.Update db userId []
     return r.Value
     }
@@ -73,11 +73,11 @@ let addBasicCustomStack fieldValues =
 let addCloze fieldValues =
     add "Cloze" <| clozeCommand fieldValues
 
-let reversedBasicCollate db =
-    TestCollateRepo.SearchEarliest db "Basic (and reversed card)"
+let reversedBasicGromplate db =
+    TestGromplateRepo.SearchEarliest db "Basic (and reversed card)"
 
-let basicCollate db =
-    TestCollateRepo.SearchEarliest db "Basic"
+let basicGromplate db =
+    TestGromplateRepo.SearchEarliest db "Basic"
 
 let update (c: TestContainer) authorId kind commandTransformer expectedBranchId = taskResult {
     let! (upsert: ViewEditStackCommand) = kind |> SanitizeStackRepository.getUpsert c.Db // using |>!! is *extremely* inconsistent and unstable for some reason
@@ -383,7 +383,7 @@ let ``BranchInstance with "" as FieldValues is parsed to empty`` (): unit =
     let view =
         BranchInstanceEntity(
             FieldValues = "",
-            CollateInstance = CollateInstanceEntity(
+            GromplateInstance = GromplateInstanceEntity(
                 Fields = "FrontArial20False0FalseBackArial20False1False"
             ))
         |> BranchInstanceView.load

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
         public CardSettingEntity()
         {
             CollectedCards = new HashSet<CollectedCardEntity>();
-            User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
+            User_GromplateInstances = new HashSet<User_GromplateInstanceEntity>();
         }
 
         [Key]
@@ -70,7 +70,7 @@ namespace CardOverflow.Entity
         [InverseProperty("CardSetting")]
         public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("DefaultCardSetting")]
-        public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
+        public virtual ICollection<User_GromplateInstanceEntity> User_GromplateInstances { get; set; }
     }
 }
 

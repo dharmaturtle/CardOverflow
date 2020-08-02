@@ -13,8 +13,8 @@ namespace CardOverflow.Entity
             CollectedCards = new HashSet<CollectedCardEntity>();
             Branches = new HashSet<BranchEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
-            Collates = new HashSet<CollateEntity>();
-            CommentCollates = new HashSet<CommentCollateEntity>();
+            Gromplates = new HashSet<GromplateEntity>();
+            CommentGromplates = new HashSet<CommentGromplateEntity>();
             CommentStacks = new HashSet<CommentStackEntity>();
             CommunalFields = new HashSet<CommunalFieldEntity>();
             DeckFollowers = new HashSet<DeckFollowersEntity>();
@@ -25,8 +25,8 @@ namespace CardOverflow.Entity
             SentNotifications = new HashSet<NotificationEntity>();
             ReceivedNotifications = new HashSet<ReceivedNotificationEntity>();
             Stacks = new HashSet<StackEntity>();
-            User_CollateInstances = new HashSet<User_CollateInstanceEntity>();
-            Vote_CommentCollates = new HashSet<Vote_CommentCollateEntity>();
+            User_GromplateInstances = new HashSet<User_GromplateInstanceEntity>();
+            Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
             Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
@@ -64,9 +64,9 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<CollateEntity> Collates { get; set; }
+        public virtual ICollection<GromplateEntity> Gromplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentCollateEntity> CommentCollates { get; set; }
+        public virtual ICollection<CommentGromplateEntity> CommentGromplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
         [InverseProperty("Author")]
@@ -88,9 +88,9 @@ namespace CardOverflow.Entity
         [InverseProperty("Author")]
         public virtual ICollection<StackEntity> Stacks { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<User_CollateInstanceEntity> User_CollateInstances { get; set; }
+        public virtual ICollection<User_GromplateInstanceEntity> User_GromplateInstances { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentCollateEntity> Vote_CommentCollates { get; set; }
+        public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
         [InverseProperty("User")]

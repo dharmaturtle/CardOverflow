@@ -18,7 +18,7 @@ open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
-    let collateInstanceIdByHash = // lowTODO could make this a byte array
+    let gromplateInstanceIdByHash = // lowTODO could make this a byte array
         [("WX831/PqYECBDQaRxa7nceZWfvK27SNOudsTuAajr7tDTo25RDWsjXiaotM8OgBtFthzKcmiAgB0ihSM06e0Mw==", 1001)
          ("OfVUXbEwX3TYmYE4dp1lmVEuViCrST9in+wdGi9IM/lubv7kOUwIqS9EVQxGe6sMV7lqtoHnSC3A/P4NC4R/bQ==", 1002)
          ("q1nY+8Gro/Nx9Cjbjlqwqcl6wDxqSNMFfO8WSwVjieLBVC1lYIgGt/qH8lAn1lf9UxMjK0KsqAHdVmQMx7Wwhg==", 1003)
@@ -73,7 +73,7 @@ module AnkiImporter =
         (getDecks: string list -> DeckEntity list)
         (cardSettings: CardSettingEntity ResizeArray)
         defaultCardSetting
-        getCollates
+        getGromplates
         getCard
         getCollectedCard
         getHistory =
@@ -121,33 +121,33 @@ module AnkiImporter =
                     decks.SingleOrDefault(fun x -> x.Name = deckName)
                     |?? lazy (DeckEntity(UserId = userId, Name = deckName))
                 )
-            let! collatesByModelId =
-                let toEntity collateEntity (collate: AnkiCollateInstance) =
+            let! gromplatesByModelId =
+                let toEntity gromplateEntity (gromplate: AnkiGromplateInstance) =
                     let defaultCardSetting =
-                        cardSettingAndDeckByDeckId.TryFind collate.DeckId
+                        cardSettingAndDeckByDeckId.TryFind gromplate.DeckId
                         |> function
                         | Some (cardSetting, _) -> cardSetting
                         | None -> defaultCardSetting // veryLowTODO some anki models have invalid deck ids. Perhaps log this
-                    getCollates collate
+                    getGromplates gromplate
                     |> function
-                    | Some (e: CollateInstanceEntity) ->
-                        if e.User_CollateInstances.Any(fun x -> x.UserId = userId) |> not then
-                            User_CollateInstanceEntity(
+                    | Some (e: GromplateInstanceEntity) ->
+                        if e.User_GromplateInstances.Any(fun x -> x.UserId = userId) |> not then
+                            User_GromplateInstanceEntity(
                                 UserId = userId,
-                                Tag_User_CollateInstances =
-                                    (collate.DefaultTags.ToList()
-                                    |> Seq.map (fun x -> Tag_User_CollateInstanceEntity(UserId = userId, DefaultTagId = x))
+                                Tag_User_GromplateInstances =
+                                    (gromplate.DefaultTags.ToList()
+                                    |> Seq.map (fun x -> Tag_User_GromplateInstanceEntity(UserId = userId, DefaultTagId = x))
                                     |> fun x -> x.ToList()),
                                 DefaultCardSetting = defaultCardSetting)
-                            |> e.User_CollateInstances.Add
+                            |> e.User_GromplateInstances.Add
                         e
-                    | None -> collate.CopyToNewWithCollate userId collateEntity defaultCardSetting
-                    |> fun x -> {| Entity = x; Collate = collate |}
+                    | None -> gromplate.CopyToNewWithGromplate userId gromplateEntity defaultCardSetting
+                    |> fun x -> {| Entity = x; Gromplate = gromplate |}
                 Anki.parseModels userId col.Models
-                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> (toEntity <| CollateEntity(AuthorId = userId))))
+                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> (toEntity <| GromplateEntity(AuthorId = userId))))
             let cardsAndTagsByNoteId =
                 Anki.parseNotes
-                    collatesByModelId
+                    gromplatesByModelId
                     usersTags
                     userId
                     fileEntityByAnkiFileName
@@ -175,18 +175,18 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()
         let defaultCardSetting = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.Id = userId).DefaultCardSetting
-        let getCollateInstance (collateInstance: AnkiCollateInstance) =
-            let ti = collateInstance.CopyToNew userId defaultCardSetting
-            let hash = CollateInstanceEntity.hashBase64 hasher ti
-            AnkiDefaults.collateInstanceIdByHash.TryFind hash
+        let getGromplateInstance (gromplateInstance: AnkiGromplateInstance) =
+            let ti = gromplateInstance.CopyToNew userId defaultCardSetting
+            let hash = GromplateInstanceEntity.hashBase64 hasher ti
+            AnkiDefaults.gromplateInstanceIdByHash.TryFind hash
             |> function
             | Some id ->
-                db.CollateInstance
-                    .Include(fun x -> x.User_CollateInstances)
+                db.GromplateInstance
+                    .Include(fun x -> x.User_GromplateInstances)
                     .Single(fun x -> x.Id = id)
             | None ->
-                db.CollateInstance
-                    .Include(fun x -> x.User_CollateInstances)
+                db.GromplateInstance
+                    .Include(fun x -> x.User_GromplateInstances)
                     .OrderBy(fun x -> x.Created)
                     .FirstOrDefault(fun x -> x.Hash = ti.Hash)
             |> Option.ofObj
@@ -208,7 +208,7 @@ module AnkiImporter =
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
                     <| defaultCardSetting
-                    <| getCollateInstance
+                    <| getGromplateInstance
                     <| getCard
                     <| getCollectedCard
                     <| getHistory
