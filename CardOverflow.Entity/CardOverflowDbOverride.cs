@@ -161,10 +161,10 @@ namespace CardOverflow.Entity {
     public IQueryable<LeafTagCountEntity> LeafTagCount => _LeafTagCountTracked.AsNoTracking();
     public IQueryable<StackRelationshipCountEntity> StackRelationshipCount => _StackRelationshipCountTracked.AsNoTracking();
     public IQueryable<StackTagCountEntity> StackTagCount => _StackTagCountTracked.AsNoTracking();
-    public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Branch.LatestId == x.Id).AsNoTracking();
     public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
-    public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<GrompleafEntity> LatestGrompleaf => Grompleaf.Where(x => x.Gromplate.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestId == x.Id).AsNoTracking();
+    public IQueryable<GrompleafEntity> LatestGrompleaf => Grompleaf.Where(x => x.Gromplate.LatestId == x.Id).AsNoTracking();
 
   }
 }

@@ -15,15 +15,15 @@ namespace CardOverflow.Entity
         [Key]
         public int Id { get; set; }
         public int AuthorId { get; set; }
-        public int LatestInstanceId { get; set; }
+        public int LatestId { get; set; }
         public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Commields")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("LatestInstanceId")]
+        [ForeignKey("LatestId")]
         [InverseProperty("Commields")]
-        public virtual CommeafEntity LatestInstance { get; set; }
+        public virtual CommeafEntity Latest { get; set; }
         [InverseProperty("Commield")]
         public virtual ICollection<CommeafEntity> Commeafs { get; set; }
     }

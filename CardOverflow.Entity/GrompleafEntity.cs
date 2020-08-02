@@ -98,7 +98,7 @@ namespace CardOverflow.Entity
         public virtual GromplateEntity Gromplate { get; set; }
         [InverseProperty("Grompleaf")]
         public virtual ICollection<LeafEntity> Leafs { get; set; }
-        [InverseProperty("LatestInstance")]
+        [InverseProperty("Latest")]
         public virtual ICollection<GromplateEntity> Gromplates { get; set; }
         [InverseProperty("Grompleaf")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }

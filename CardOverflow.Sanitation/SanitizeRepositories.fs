@@ -765,17 +765,17 @@ module SanitizeStackRepository =
                 }
             )
         | VNewBranchSourceStackId stackId ->
-            db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
+            db.Stack.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%i not found." stackId)
-            |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance
+            |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.Latest
         | VNewCopySourceInstanceId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Branch Instance #%i not found." leafId)
             |>%% toCommand (NewCopy_SourceInstanceId_TagIds (leafId, []))
         | VUpdateBranchId branchId ->
-            db.Branch.Include(fun x -> x.LatestInstance.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
+            db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
-            |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
+            |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.Latest
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! leaf = UpdateRepository.stack db userId stackCommand.load
         let! (ccs: CardEntity list) =

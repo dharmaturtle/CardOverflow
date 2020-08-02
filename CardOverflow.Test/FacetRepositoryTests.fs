@@ -846,10 +846,10 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
         |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = update_i }, card.CollectedIds.Value))
     do! testGetCollected og_s update_i
 
-    // collecting old instance doesn't change LatestInstanceId
-    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
+    // collecting old instance doesn't change LatestId
+    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestId)
     do! StackRepository.CollectCard c.Db userId og_i
-    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestId)
 
     // tests OtherInstanceCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
@@ -885,12 +885,12 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     | _ -> failwith "impossible"
     do! testGetCollected og_s updateBranch_i
 
-    // collecting old instance doesn't change LatestInstanceId
-    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
-    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
+    // collecting old instance doesn't change LatestId
+    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
+    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
     do! StackRepository.CollectCard c.Db userId branch_i
-    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
-    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
+    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
 
     // tests OtherBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
@@ -926,12 +926,12 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     | _ -> failwith "impossible"
     do! testGetCollected og_s branch_i2
 
-    // collecting old instance doesn't change LatestInstanceId; can also collect old branch
-    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
-    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
+    // collecting old instance doesn't change LatestId; can also collect old branch
+    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
+    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
     do! StackRepository.CollectCard c.Db userId branch_i
-    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestInstanceId)
-    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestInstanceId)
+    Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
+    Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
 
     // can't collect missing id
     let missingId = 9001

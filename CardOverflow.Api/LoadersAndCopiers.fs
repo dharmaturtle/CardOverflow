@@ -478,7 +478,7 @@ type Branch with
         Name = branch.Name
         Summary =
             ExploreBranchSummary.load
-                <| LeafMeta.load (branch.LatestInstanceId = CollectedIds.leafId ids) true branch.LatestInstance
+                <| LeafMeta.load (branch.LatestId = CollectedIds.leafId ids) true branch.Latest
                 <| branch
     }
 

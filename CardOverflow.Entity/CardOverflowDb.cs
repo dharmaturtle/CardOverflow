@@ -170,9 +170,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.StackId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.LatestInstance)
+                entity.HasOne(d => d.Latest)
                     .WithMany()
-                    .HasForeignKey(d => d.LatestInstanceId)
+                    .HasForeignKey(d => d.LatestId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -259,9 +259,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.LatestInstance)
+                entity.HasOne(d => d.Latest)
                     .WithMany(p => p.Gromplates)
-                    .HasForeignKey(d => d.LatestInstanceId)
+                    .HasForeignKey(d => d.LatestId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -329,9 +329,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.LatestInstance)
+                entity.HasOne(d => d.Latest)
                     .WithMany(p => p.Commields)
-                    .HasForeignKey(d => d.LatestInstanceId)
+                    .HasForeignKey(d => d.LatestId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

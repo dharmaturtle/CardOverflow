@@ -128,7 +128,7 @@ module ExploreStackRepository =
     let getCollectedIds (db: CardOverflowDb) userId stackId =
         db.Card
             .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
-                .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance)
+                .ThenInclude(fun (x: BranchEntity) -> x.Latest)
             .Where(fun x -> x.UserId = userId && x.StackId = stackId)
             .Select(fun x -> x.StackId, x.BranchId, x.LeafId)
             .Distinct()
@@ -141,7 +141,7 @@ module ExploreStackRepository =
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Stack.Author)
                 .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.Grompleaf)
+                    .ThenInclude(fun (x: BranchEntity) -> x.Latest.Grompleaf)
                 .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchEntity) -> x.Author)
                 .Include(fun x -> x.Stack.CommentStacks :> IEnumerable<_>)
@@ -175,7 +175,7 @@ module ExploreStackRepository =
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found" instanceId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.LeafId = instanceId)
         let! latest = get db userId e.StackId
-        return LeafMeta.load isCollected (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
+        return LeafMeta.load isCollected (e.Branch.LatestId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
     let branch (db: CardOverflowDb) userId branchId = taskResult {
         let! (e: LeafEntity) =
@@ -190,7 +190,7 @@ module ExploreStackRepository =
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found" branchId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         let! latest = get db userId e.StackId
-        return LeafMeta.load isCollected (e.Branch.LatestInstanceId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
+        return LeafMeta.load isCollected (e.Branch.LatestId = e.Id) e, latest // lowTODO optimization, only send the old instance - the latest instance isn't used
     }
 
 module FileRepository =

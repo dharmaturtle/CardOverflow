@@ -49,7 +49,7 @@ namespace CardOverflow.Entity
         public virtual CommieldEntity Commield { get; set; }
         [InverseProperty("Commeaf")]
         public virtual ICollection<Commeaf_LeafEntity> Commeaf_Leafs { get; set; }
-        [InverseProperty("LatestInstance")]
+        [InverseProperty("Latest")]
         public virtual ICollection<CommieldEntity> Commields { get; set; }
     }
 }

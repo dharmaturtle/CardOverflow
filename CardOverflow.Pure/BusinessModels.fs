@@ -185,7 +185,7 @@ type CollectedGrompleaf = {
 type Gromplate = {
     Id: int
     AuthorId: int
-    LatestInstance: Grompleaf
+    Latest: Grompleaf
 }
 
 type IntervalOrStepsIndex =

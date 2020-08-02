@@ -28,15 +28,15 @@ namespace CardOverflow.Entity
         private string _Name;
         public int AuthorId { get; set; }
         public int StackId { get; set; }
-        public int LatestInstanceId { get; set; }
+        public int LatestId { get; set; }
         public int Users { get; set; }
         public bool IsListed { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Branches")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("LatestInstanceId")]
-        public virtual LeafEntity LatestInstance { get; set; }
+        [ForeignKey("LatestId")]
+        public virtual LeafEntity Latest { get; set; }
         [ForeignKey("StackId")]
         [InverseProperty("Branches")]
         public virtual StackEntity Stack { get; set; }

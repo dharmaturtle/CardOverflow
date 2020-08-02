@@ -17,15 +17,15 @@ namespace CardOverflow.Entity
         [Key]
         public int Id { get; set; }
         public int AuthorId { get; set; }
-        public int LatestInstanceId { get; set; }
+        public int LatestId { get; set; }
         public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Gromplates")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("LatestInstanceId")]
+        [ForeignKey("LatestId")]
         [InverseProperty("Gromplates")]
-        public virtual GrompleafEntity LatestInstance { get; set; }
+        public virtual GrompleafEntity Latest { get; set; }
         [InverseProperty("Gromplate")]
         public virtual ICollection<GrompleafEntity> Grompleafs { get; set; }
         [InverseProperty("Gromplate")]
