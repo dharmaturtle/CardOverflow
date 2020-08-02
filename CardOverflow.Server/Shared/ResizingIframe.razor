@@ -31,8 +31,8 @@
     var middle = "";
     if (StackId != 0) {
       middle = "stack/" + StackId;
-    } else if (!BranchInstance.Equals(default)) {
-      middle = "branchinstance/" + BranchInstance.BranchInstanceId + "/" + BranchInstance.Index;
+    } else if (!Leaf.Equals(default)) {
+      middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
     } else if (GromplateId != 0) {
       middle = "gromplate/" + GromplateId;
     } else if (GromplateInstanceId != 0) {

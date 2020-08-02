@@ -21,14 +21,14 @@
 } else {
   @Instance.EditSummary
 }
-<a style="color:unset" class="font-italic float-right" title=@(Instance.Created + " UTC") href=@($"stack?branchinstance={Instance.Id}")>
+<a style="color:unset" class="font-italic float-right" title=@(Instance.Created + " UTC") href=@($"stack?leaf={Instance.Id}")>
   - @ViewLogic.timestampToPretty(Instance.Created, TimeProvider.utcNow)
 </a>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public BranchInstanceMeta Instance { get; set; }
+  [Parameter] public LeafMeta Instance { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

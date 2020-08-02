@@ -22,7 +22,7 @@
         <th scope="col" style="text-align:center;">
           <CollectToggles IsStack=true
                           CollectedIds=@CollectedIds
-                          Ids=@(new StackBranchInstanceIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
+                          Ids=@(new StackLeafIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
                           BranchUsers=@Stack.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>
@@ -32,10 +32,10 @@
           <h4>Branches</h4>
         } else {
           <div class="btn-group" role="group">
-            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="stack?branchinstance=@CollectedIds.Value.BranchInstanceId">
+            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="stack?leaf=@CollectedIds.Value.LeafId">
               All Branches
             </a>
-            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/stack?branchinstance=@CollectedIds.Value.BranchInstanceId">
+            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/stack?leaf=@CollectedIds.Value.LeafId">
               My Branch
             </a>
           </div>
@@ -68,10 +68,10 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public ExploreStack Stack { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
-  [Parameter] public EventCallback<BranchInstanceMeta> InstanceSelected { get; set; }
-  [Parameter] public FSharpOption<StackBranchInstanceIds> CollectedIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackBranchInstanceIds>> UpdateCollectedIds { get; set; }
-  [Parameter] public BranchInstanceMeta Selected { get; set; }
+  [Parameter] public EventCallback<LeafMeta> InstanceSelected { get; set; }
+  [Parameter] public FSharpOption<StackLeafIds> CollectedIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<StackLeafIds>> UpdateCollectedIds { get; set; }
+  [Parameter] public LeafMeta Selected { get; set; }
   [Parameter] public bool IsExplore { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {

@@ -11,7 +11,7 @@
 <div class="d-flex justify-content-between align-items-center">
   <SearchBar SearchClicked="@SearchClicked" BackLink="/stack/" CreateLink=@(x => $"/stack/{x}") Ids=@_stacks?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedStackId.ToString() />
 </div>
-@if (SelectedStackId == default && BranchId == default && BranchInstanceId == default) {
+@if (SelectedStackId == default && BranchId == default && LeafId == default) {
   @if (_stacks == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -25,7 +25,7 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@stack.IsCollected>
-              <ResizingIframeBranch BranchInstanceId=@stack.Instance.Id Front />
+              <ResizingIframeBranch LeafId=@stack.Instance.Id Front />
             </HoverPreview>
           </td>
           <td>
@@ -42,7 +42,7 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Stack StackId=@SelectedStackId BranchId=@BranchId BranchInstanceId=@BranchInstanceId Index=@Index />
+  <Stack StackId=@SelectedStackId BranchId=@BranchId LeafId=@LeafId Index=@Index />
 }
 
 @code {
@@ -50,7 +50,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedStackId { get; set; }
   [Parameter] public int? BranchId { get; set; }
-  [Parameter] public int? BranchInstanceId { get; set; }
+  [Parameter] public int? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
   private PagedListDetails _details;
@@ -59,7 +59,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (SelectedStackId == default && BranchId == default && BranchInstanceId == default && _stacks == default) {
+    if (SelectedStackId == default && BranchId == default && LeafId == default && _stacks == default) {
       await PageChanged(1);
     }
     StateHasChanged();

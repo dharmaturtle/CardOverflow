@@ -1,6 +1,6 @@
-@page "/stackdiff/{A_BranchInstanceId:int}"
-@page "/stackdiff/{A_BranchInstanceId:int}/{B_BranchInstanceId:int}"
-@page "/stackdiff/{A_BranchInstanceId:int}/{ATitle}/{B_BranchInstanceId:int}/{BTitle}"
+@page "/stackdiff/{A_LeafId:int}"
+@page "/stackdiff/{A_LeafId:int}/{B_LeafId:int}"
+@page "/stackdiff/{A_LeafId:int}/{ATitle}/{B_LeafId:int}/{BTitle}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -39,9 +39,9 @@
   <div class="row">
     <div class="col-sm">
       <HoverPreview IsCollected=@_aIsCollected Padding="0">
-        <ResizingIframeBranch BranchInstanceId=@A_BranchInstanceId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
+        <ResizingIframeBranch LeafId=@A_LeafId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
       </HoverPreview>
-      <a href="branchinstance/@A_BranchInstanceId">
+      <a href="leaf/@A_LeafId">
         @(ATitle ?? "Old Stack")
       </a>
       @if (_a.GromplateInstance.Id != _b.GromplateInstance.Id) {
@@ -60,9 +60,9 @@
     </div>
     <div class="col-sm">
       <HoverPreview IsCollected=@_bIsCollected Padding="0">
-        <ResizingIframeBranch BranchInstanceId=@B_BranchInstanceId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
+        <ResizingIframeBranch LeafId=@B_LeafId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
       </HoverPreview>
-      <a href="branchinstance/@B_BranchInstanceId">
+      <a href="leaf/@B_LeafId">
         @(BTitle ?? "New Stack")
       </a>
       @if (_a.GromplateInstance.Id != _b.GromplateInstance.Id) {
@@ -244,18 +244,18 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int A_BranchInstanceId { get; set; }
-  [Parameter] public int B_BranchInstanceId { get; set; }
+  [Parameter] public int A_LeafId { get; set; }
+  [Parameter] public int B_LeafId { get; set; }
   [Parameter] public string ATitle { get; set; }
   [Parameter] public string BTitle { get; set; }
   private string _loadingMessage = "Loading...";
-  private BranchInstanceView _a;
-  private BranchInstanceView _b;
+  private LeafView _a;
+  private LeafView _b;
   private bool _aIsCollected;
   private bool _bIsCollected;
-  private string _gromplateFields(BranchInstanceView view) => view.GromplateInstance.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
+  private string _gromplateFields(LeafView view) => view.GromplateInstance.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
-  private string _value(BranchInstanceView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
+  private string _value(LeafView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
   private List<(string AFront, string ABack, string BFront, string BBack)> _stackZips() =>
     _a.FrontBackFrontSynthBackSynth.ZipLongest(_b.FrontBackFrontSynthBackSynth, (a, b) =>
       (AFront: a?.Item1 ?? "",
@@ -302,16 +302,16 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    if (B_BranchInstanceId == 0) {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, A_BranchInstanceId, _user.Id));
+    if (B_LeafId == 0) {
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, A_LeafId, _user.Id));
       if (x.IsOk) {
-        (_a, _aIsCollected, _b, _bIsCollected, B_BranchInstanceId) = x.ResultValue;
+        (_a, _aIsCollected, _b, _bIsCollected, B_LeafId) = x.ResultValue;
         _OnOk();
       } else {
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, A_BranchInstanceId, B_BranchInstanceId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, A_LeafId, B_LeafId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
         _OnOk();
@@ -322,10 +322,10 @@
   }
 
   private async Task _GetNewStack() {
-    await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_BranchInstanceId));
-    var collectedIds = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollected(db, _user.Id, new List<int> { A_BranchInstanceId, B_BranchInstanceId }));
-    _aIsCollected = collectedIds.Contains(A_BranchInstanceId);
-    _bIsCollected = collectedIds.Contains(B_BranchInstanceId);
+    await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_LeafId));
+    var collectedIds = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollected(db, _user.Id, new List<int> { A_LeafId, B_LeafId }));
+    _aIsCollected = collectedIds.Contains(A_LeafId);
+    _bIsCollected = collectedIds.Contains(B_LeafId);
   }
 
 }

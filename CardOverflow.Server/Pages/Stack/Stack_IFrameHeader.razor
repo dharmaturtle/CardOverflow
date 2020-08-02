@@ -40,7 +40,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public BranchInstanceMeta Instance { get; set; }
+  [Parameter] public LeafMeta Instance { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
   private Branch _branch => Stack.Branches.Single(b => b.Id == Instance.BranchId);
 

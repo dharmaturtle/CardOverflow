@@ -23,9 +23,9 @@
     @if (Notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeBranch BranchInstanceId=@(deckAddedStack.New.BranchInstanceId) Back />
+          <ResizingIframeBranch LeafId=@(deckAddedStack.New.LeafId) Back />
         </HoverPreview>
-        @Stack(deckAddedStack.New.BranchInstanceId)
+        @Stack(deckAddedStack.New.LeafId)
         added to
         @Sender()&apos;s
         deck
@@ -44,7 +44,7 @@
         </button>
       </div>
     } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
-      var showBoth = _collectedState.HasValue() && _collectedState.Value.BranchInstanceId != deckUpdatedStack.New.BranchInstanceId;
+      var showBoth = _collectedState.HasValue() && _collectedState.Value.LeafId != deckUpdatedStack.New.LeafId;
       var newId = $"Notification-{Notification.Id}-New";
       var oldId = $"Notification-{Notification.Id}-Old";
       <span>
@@ -53,21 +53,21 @@
         }
         <span id="@newId">
           <HoverPreview Padding="0">
-            <ResizingIframeBranch BranchInstanceId=@deckUpdatedStack.New.BranchInstanceId Back />
+            <ResizingIframeBranch LeafId=@deckUpdatedStack.New.LeafId Back />
           </HoverPreview>
         </span>
         @if (showBoth) {
           <BSTooltip Target="@oldId" Placement="Placement.Top">Yours</BSTooltip>
           <span id="@oldId">
             <HoverPreview Padding="0">
-              <ResizingIframeBranch BranchInstanceId=@_collectedState.Value.BranchInstanceId Back />
+              <ResizingIframeBranch LeafId=@_collectedState.Value.LeafId Back />
             </HoverPreview>
           </span>
-          <a href="stackdiff/@_collectedState.Value.BranchInstanceId/@deckUpdatedStack.New.BranchInstanceId" class="btn btn-info px-2 py-0" title="Go to diff.">
+          <a href="stackdiff/@_collectedState.Value.LeafId/@deckUpdatedStack.New.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
             &Delta;
           </a>
         }
-        @Stack(deckUpdatedStack.New.BranchInstanceId)
+        @Stack(deckUpdatedStack.New.LeafId)
         updated in
         @Sender()&apos;s
         deck
@@ -88,9 +88,9 @@
     } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeBranch BranchInstanceId=@(deckDeletedStack.Deleted.BranchInstanceId) Back />
+          <ResizingIframeBranch LeafId=@(deckDeletedStack.Deleted.LeafId) Back />
         </HoverPreview>
-        @Stack(deckDeletedStack.Deleted.BranchInstanceId)
+        @Stack(deckDeletedStack.Deleted.LeafId)
         deleted from
         @Sender()&apos;s
         deck
@@ -130,7 +130,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
-  private FSharpOption<StackBranchInstanceIds> _collectedState;
+  private FSharpOption<StackLeafIds> _collectedState;
   private CollectToggles _addedStackCollectToggles;
   private CollectToggles _updatedStackCollectToggles;
   private CollectToggles _deletedStackCollectToggles;
@@ -149,7 +149,7 @@
       ? deckUpdatedStack.Collected
       : Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)
       ? deckDeletedStack.Collected
-      : FSharpOption<StackBranchInstanceIds>.None;
+      : FSharpOption<StackLeafIds>.None;
     StateHasChanged();
   }
 
@@ -162,7 +162,7 @@
   @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
 
 private RenderFragment Stack(int instanceId) =>
-@<a href="stack?branchinstance=@instanceId">
+@<a href="stack?leaf=@instanceId">
   Stack
 </a>;
 

@@ -12,7 +12,7 @@
 
 <AuthorizeView>
   <div class="d-flex justify-content-between align-items-center">
-    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?branchinstance={x}") Ids=@cards?.Select(x => x.BranchInstanceMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
+    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?leaf={x}") Ids=@cards?.Select(x => x.LeafMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
   </div>
   @if (SelectedInstanceId == null) {
     <div>
@@ -29,13 +29,13 @@
           @foreach (var card in cards) {
             <tr>
               <td>
-                <HoverPreview IsCollected=@card.BranchInstanceMeta.IsCollected>
-                  <ResizingIframeBranch BranchInstanceId=@card.BranchInstanceMeta.Id MaxIndexInclusive=@card.BranchInstanceMeta.MaxIndexInclusive Front />
+                <HoverPreview IsCollected=@card.LeafMeta.IsCollected>
+                  <ResizingIframeBranch LeafId=@card.LeafMeta.Id MaxIndexInclusive=@card.LeafMeta.MaxIndexInclusive Front />
                 </HoverPreview>
               </td>
               <td>
-                <a href="/my/stack?branchinstance=@card.BranchInstanceMeta.Id">
-                  @card.BranchInstanceMeta.StrippedFront
+                <a href="/my/stack?leaf=@card.LeafMeta.Id">
+                  @card.LeafMeta.StrippedFront
                 </a>
               </td>
               <td>
@@ -51,7 +51,7 @@
       <Pager Details=@details PageChanged=@PageChanged />
     </div>
   } else {
-    <Stack BranchInstanceId=@SelectedInstanceId.Value IsCurate=true Index=@Index />
+    <Stack LeafId=@SelectedInstanceId.Value IsCurate=true Index=@Index />
   }
 </AuthorizeView>
 
@@ -72,11 +72,11 @@
         await PageChanged(1);
       }
       if (SelectedInstanceId != null) {
-        if (cards == null || (cards != null && !cards.Any(card => card.BranchInstanceMeta.Id == SelectedInstanceId.Value))) {
+        if (cards == null || (cards != null && !cards.Any(card => card.LeafMeta.Id == SelectedInstanceId.Value))) {
           var x = await DbExecutor.QueryAsync(db => CollectedCardRepository.getCollectedInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
           if (x.IsOk) {
             if (SelectedInstanceId != x.ResultValue) {
-              NavigationManager.NavigateTo($"my/stack?branchinstance={x.ResultValue}");
+              NavigationManager.NavigateTo($"my/stack?leaf={x.ResultValue}");
             } else {
               SelectedInstanceId = x.ResultValue;
             }

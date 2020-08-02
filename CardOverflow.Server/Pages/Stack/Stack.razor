@@ -37,12 +37,12 @@
           @foreach (var i in _selected.Indexes) {
             <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
               @if (IsCurate) {
-                <div class="col-4 @(_collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
-                  <Stack_Collect CollectedCard=@(_collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
+                <div class="col-4 @(_collectedCards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
+                  <Stack_Collect CollectedCard=@(_collectedCards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
                 </div>
               }
               <div class="col">
-                <ResizingIframe BranchInstance=@((_selected.Id, i)) Back />
+                <ResizingIframe Leaf=@((_selected.Id, i)) Back />
               </div>
             </div>
           }
@@ -64,13 +64,13 @@
 @code {
   [Parameter] public int? StackId { get; set; }
   [Parameter] public int? BranchId { get; set; }
-  [Parameter] public int? BranchInstanceId { get; set; }
+  [Parameter] public int? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   private CardOverflow.Pure.ExploreStack _stack;
-  private BranchInstanceMeta _selected;
+  private LeafMeta _selected;
   private List<CollectedCard> _collectedCards = new List<CollectedCard>();
   private string _loadingMessage = "Loading...";
 
@@ -82,7 +82,7 @@
       _selected.Users--;
     }
     foreach (var branch in _stack.Branches) {
-      if (branch.Instance.Id == _stack.CollectedIds?.Value?.BranchInstanceId || branch.Id == _stack.CollectedIds?.Value?.BranchId) {
+      if (branch.Instance.Id == _stack.CollectedIds?.Value?.LeafId || branch.Id == _stack.CollectedIds?.Value?.BranchId) {
         branch.Summary.Users--;
       }
     }
@@ -91,7 +91,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     var oldStackId = StackId;
     var oldBranchId = BranchId;
-    var oldBranchInstanceId = BranchInstanceId;
+    var oldLeafId = LeafId;
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (StackId.HasValue && oldStackId != StackId) {
@@ -105,8 +105,8 @@
         (_selected, _stack) = x;
         sub1();
       });
-    } else if (BranchInstanceId.HasValue && oldBranchInstanceId != BranchInstanceId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, _user.Id, BranchInstanceId.Value)).Match(_ShowError, x => {
+    } else if (LeafId.HasValue && oldLeafId != LeafId) {
+      await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, _user.Id, LeafId.Value)).Match(_ShowError, x => {
         (_selected, _stack) = x;
         sub1();
       });
@@ -126,13 +126,13 @@
   }
 
   private void _CardStateUpdated(int index, CardState newState) {
-    var oldState = _collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState;
+    var oldState = _collectedCards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == index).CardState;
     if (!oldState.IsSuspended && newState.IsSuspended && _collectedCards.All(x => x.CardState.IsSuspended)) {
       _stack.Users--;
     } else if (oldState.IsSuspended && !newState.IsSuspended && _collectedCards.All(x => !x.CardState.IsSuspended)) {
       _stack.Users++;
     }
-    _collectedCards.Single(x => x.BranchInstanceMeta.Id == _selected.Id && x.Index == index).CardState = newState;
+    _collectedCards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == index).CardState = newState;
   }
 
 }
