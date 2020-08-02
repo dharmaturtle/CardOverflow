@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    [Table("commeaf0leaf")]
+    [Table("commeaf_2_leaf")]
     public partial class Commeaf_LeafEntity
     {
         [Key]

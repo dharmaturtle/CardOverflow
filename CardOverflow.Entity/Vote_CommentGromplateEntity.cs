@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    [Table("vote0comment_gromplate")]
+    [Table("vote_2_comment_gromplate")]
     public partial class Vote_CommentGromplateEntity
     {
         [Key]

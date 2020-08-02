@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    [Table("vote0feedback")]
+    [Table("vote_2_feedback")]
     public partial class Vote_FeedbackEntity
     {
         [Key]
