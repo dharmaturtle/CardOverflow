@@ -16,7 +16,7 @@ namespace CardOverflow.UserContentApi.Controllers {
     [HttpGet("communalfield/{id}")]
     public async Task<IActionResult> Get(int id) => (await CommieldRepository.get(_db, id)).ToTextHtmlContent(this);
 
-    [HttpGet("communalfieldinstance/{id}")]
+    [HttpGet("communalfieldleaf/{id}")]
     public async Task<IActionResult> GetInstance(int id) => (await CommieldRepository.getInstance(_db, id)).ToTextHtmlContent(this);
 
   }
