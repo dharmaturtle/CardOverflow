@@ -543,7 +543,7 @@ module SanitizeHistoryRepository =
         card.Histories.Add
         <|  HistoryEntity(
                 Score = Score.toDb score,
-                Timestamp = timestamp,
+                Created = timestamp,
                 IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
                 EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
                 TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16),

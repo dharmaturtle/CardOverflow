@@ -174,7 +174,7 @@ type AnkiHistory = {
                 this.UserId = h.UserId &&
                 Nullable cc.LeafId = h.LeafId &&
                 this.Score = h.Score &&
-                this.Timestamp = h.Timestamp &&
+                this.Timestamp = h.Created &&
                 interval = h.IntervalWithUnusedStepsIndex &&
                 this.EaseFactorInPermille = h.EaseFactorInPermille &&
                 this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
@@ -183,7 +183,7 @@ type AnkiHistory = {
             db.History.FirstOrDefault(fun h ->
                 this.UserId = h.UserId &&
                 this.Score = h.Score &&
-                this.Timestamp = h.Timestamp &&
+                this.Timestamp = h.Created &&
                 interval = h.IntervalWithUnusedStepsIndex &&
                 this.EaseFactorInPermille = h.EaseFactorInPermille &&
                 this.TimeFromSeeingQuestionToScoreInSecondsMinus32768 = h.TimeFromSeeingQuestionToScoreInSecondsPlus32768
@@ -191,7 +191,7 @@ type AnkiHistory = {
     member this.CopyTo (entity: HistoryEntity) =
         entity.CollectedCard <- this.CollectedCard |> Option.toObj
         entity.Score <- this.Score
-        entity.Timestamp <- this.Timestamp
+        entity.Created <- this.Timestamp
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768

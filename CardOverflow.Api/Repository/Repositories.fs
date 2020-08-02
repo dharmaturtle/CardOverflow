@@ -118,8 +118,8 @@ module HistoryRepository =
         let! dateCounts =
             (query {
                 for h in db.History do
-                where (h.Timestamp >= oneYearishAgo && h.CollectedCard.UserId = userId)
-                groupValBy h h.Timestamp.Date into g
+                where (h.Created >= oneYearishAgo && h.CollectedCard.UserId = userId)
+                groupValBy h h.Created.Date into g
                 select { Date = g.Key; Count = g.Count() }
             }).ToListAsync()
         return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }

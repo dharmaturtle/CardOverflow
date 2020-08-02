@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         public int? LeafId { get; set; }
         public short Index { get; set; }
         public short Score { get; set; }
-        public DateTime Timestamp { get; set; }
+        public DateTime Created { get; set; }
         public short IntervalWithUnusedStepsIndex { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short TimeFromSeeingQuestionToScoreInSecondsPlus32768 { get; set; }

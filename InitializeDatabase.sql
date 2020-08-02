@@ -1,4 +1,4 @@
--- medTODO counts involving `"card_state" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
+﻿-- medTODO counts involving `"card_state" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -759,7 +759,7 @@ CREATE TABLE public.history (
     leaf_id integer,
     index smallint NOT NULL,
     score smallint NOT NULL,
-    "timestamp" timestamp without time zone NOT NULL,
+    created timestamp without time zone NOT NULL,
     interval_with_unused_steps_index smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
     time_from_seeing_question_to_score_in_seconds_plus32768 smallint NOT NULL
