@@ -1,4 +1,4 @@
--- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -39,7 +39,7 @@ $$;
 
 ALTER FUNCTION public.fn_ctr_branch_insertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_ctr_collectedcard_insertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_ctr_card_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -57,7 +57,7 @@ CREATE FUNCTION public.fn_ctr_collectedcard_insertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_ctr_collectedcard_insertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_ctr_card_insertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_delete_received_notification(outer_notification_id integer, outer_receiver_id integer) RETURNS void
     LANGUAGE plpgsql
@@ -105,7 +105,7 @@ $$;
 
 ALTER FUNCTION public.fn_tr_branch_afterinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -180,9 +180,9 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
 $$;
 
 
-ALTER FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_card_afterinsertdeleteupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_card_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -195,7 +195,7 @@ CREATE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_card_beforeinsertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_commeaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
@@ -251,7 +251,7 @@ $$;
 
 ALTER FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_gromplateinstance_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_grompleaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -270,7 +270,7 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_tr_gromplateinstance_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_grompleaf_beforeinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_leaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
@@ -1552,10 +1552,16 @@ ALTER TABLE ONLY public.leaf
     ADD CONSTRAINT "u_q$leaf$id__stack_id" UNIQUE (id, stack_id);
 
 
+CREATE INDEX idx_fts_card_tsvector ON public.card USING gin (ts_vector);
+
+
 CREATE INDEX idx_fts_commeaf_tsvector ON public.commeaf USING gin (ts_vector);
 
 
-CREATE INDEX idx_fts_gromplateinstance_tsvector ON public.grompleaf USING gin (ts_vector);
+CREATE INDEX idx_fts_deck_tsvector ON public.deck USING gin (ts_vector);
+
+
+CREATE INDEX idx_fts_grompleaf_tsvector ON public.grompleaf USING gin (ts_vector);
 
 
 CREATE INDEX idx_fts_leaf_tsvector ON public.leaf USING gin (ts_vector);
@@ -1705,16 +1711,16 @@ CREATE UNIQUE INDEX "u_q$deck$user_id__name" ON public.deck USING btree (user_id
 CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public.branch DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
 
 
-CREATE CONSTRAINT TRIGGER ctr_collectedcard_insertupdate AFTER INSERT OR UPDATE ON public.card DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_collectedcard_insertupdate();
+CREATE CONSTRAINT TRIGGER ctr_card_insertupdate AFTER INSERT OR UPDATE ON public.card DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_card_insertupdate();
 
 
 CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public.branch FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branch_afterinsertupdate();
 
 
-CREATE TRIGGER tr_collectedcard_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public.card FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate();
+CREATE TRIGGER tr_card_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public.card FOR EACH ROW EXECUTE FUNCTION public.fn_tr_card_afterinsertdeleteupdate();
 
 
-CREATE TRIGGER tr_collectedcard_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.card FOR EACH ROW EXECUTE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate();
+CREATE TRIGGER tr_card_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.card FOR EACH ROW EXECUTE FUNCTION public.fn_tr_card_beforeinsertupdate();
 
 
 CREATE TRIGGER tr_commeaf_beforeinsert BEFORE INSERT ON public.commeaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_commeaf_beforeinsert();
@@ -1726,7 +1732,7 @@ CREATE TRIGGER tr_deck_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.deck
 CREATE TRIGGER tr_deckfollower_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public.deck_follower FOR EACH ROW EXECUTE FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate();
 
 
-CREATE TRIGGER tr_gromplateinstance_beforeinsert BEFORE INSERT ON public.grompleaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_gromplateinstance_beforeinsert();
+CREATE TRIGGER tr_grompleaf_beforeinsert BEFORE INSERT ON public.grompleaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_grompleaf_beforeinsert();
 
 
 CREATE TRIGGER tr_leaf_beforeinsert BEFORE INSERT ON public.leaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_leaf_beforeinsert();
@@ -1949,11 +1955,11 @@ ALTER TABLE ONLY public.received_notification
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT "fk$relationship_2_card__card__source_collecte" FOREIGN KEY (source_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "fk$relationship_2_card__card__source_card" FOREIGN KEY (source_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT "fk$relationship_2_card__card__target_collecte" FOREIGN KEY (target_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "fk$relationship_2_card__card__target_card" FOREIGN KEY (target_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
