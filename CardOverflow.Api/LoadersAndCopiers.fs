@@ -273,7 +273,7 @@ type Grompleaf with
             match this.Templates with
             | Standard _ -> 0s
             | Cloze _ -> 1s
-    member this.CopyToNewInstance gromplate =
+    member this.CopyToNewLeaf gromplate =
         let e = GrompleafEntity()
         this.CopyTo e
         e.Created <- DateTime.UtcNow
