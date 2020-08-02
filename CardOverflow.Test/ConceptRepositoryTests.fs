@@ -736,7 +736,7 @@ let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     let computedHash =
         initialGromplate.Editable
         |> ViewGrompleaf.copyTo
-        |> fun x -> GromplateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
+        |> fun x -> GromplateEntity() |> IdOrEntity.Entity |> x.CopyToNewLeaf
         |> GrompleafEntity.hash sha512
     
     Assert.Equal<BitArray>(dbGromplate.Hash, computedHash)

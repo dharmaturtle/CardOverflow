@@ -161,8 +161,8 @@
   private RenderFragment Sender() =>
   @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
 
-private RenderFragment Stack(int instanceId) =>
-@<a href="stack?leaf=@instanceId">
+private RenderFragment Stack(int leafId) =>
+@<a href="stack?leaf=@leafId">
   Stack
 </a>;
 

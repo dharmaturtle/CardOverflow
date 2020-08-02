@@ -91,7 +91,7 @@ module GromplateRepository =
                 IdOrEntity.Entity <| GromplateEntity(AuthorId = userId)
             else    
                 Id <| instance.GromplateId
-        let newGrompleaf = instance.CopyToNewInstance gromplate
+        let newGrompleaf = instance.CopyToNewLeaf gromplate
         db.Grompleaf.AddI newGrompleaf
         db  
             .Card
@@ -546,7 +546,7 @@ module UpdateRepository =
                                 StackEntity(
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            return command.CardView.CopyFieldsToNewInstance branch command.EditSummary []
+            return command.CardView.CopyFieldsToNewLeaf branch command.EditSummary []
         }
 
 module NotificationRepository =

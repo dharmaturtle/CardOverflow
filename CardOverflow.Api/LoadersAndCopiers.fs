@@ -312,7 +312,7 @@ type LeafView with
         let entity = LeafEntity()
         this.CopyToX entity commields
         entity
-    member this.CopyFieldsToNewInstance (branch: BranchEntity) editSummary commields =
+    member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields =
         let e = this.CopyToNew commields
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
@@ -506,7 +506,7 @@ type ExploreStack with
     }
 
 type BranchRevision with
-    static member load collectedInstanceId (e: BranchEntity) = {
+    static member load leafId (e: BranchEntity) = {
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
@@ -514,6 +514,6 @@ type BranchRevision with
         SortedMeta =
             e.Leafs
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.mapi (fun i e -> LeafMeta.load (e.Id = collectedInstanceId) (i = 0) e)
+            |> Seq.mapi (fun i e -> LeafMeta.load (e.Id = leafId) (i = 0) e)
             |> Seq.toList
     }
