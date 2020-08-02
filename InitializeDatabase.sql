@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `"card_state" <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
+-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using CollectedCard, and a Card can have multiple CollectedCards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -26,11 +26,11 @@ CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
     DECLARE
         default_branch_id integer NOT NULL := 0;
     BEGIN
-        default_branch_id := (SELECT s.default_branch_id FROM "stack" s WHERE NEW."stack_id" = s."id");
-        IF ((NEW."name" IS NOT NULL) AND (default_branch_id = NEW."id")) THEN
-            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."stack_id"), (NEW."id"), (NEW."author_id"), (NEW."name");
-        ELSIF ((NEW."name" IS NULL) AND (default_branch_id <> NEW."id")) THEN
-            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled "%"', (NEW."stack_id"), (NEW."id"), (NEW."author_id"), (NEW."name");
+        default_branch_id := (SELECT s.default_branch_id FROM stack s WHERE NEW.stack_id = s.id);
+        IF ((NEW.name IS NOT NULL) AND (default_branch_id = NEW.id)) THEN
+            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.stack_id), (NEW.id), (NEW.author_id), (NEW.name);
+        ELSIF ((NEW.name IS NULL) AND (default_branch_id <> NEW.id)) THEN
+            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.stack_id), (NEW.id), (NEW.author_id), (NEW.name);
         END IF;
         RETURN NULL;
     END;
@@ -43,13 +43,13 @@ CREATE FUNCTION public.fn_ctr_collectedcard_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc."leaf_id" FROM "collected_card" cc WHERE cc."user_id" = NEW."user_id" AND cc."stack_id" = NEW."stack_id") _)) THEN
+        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc.leaf_id FROM collected_card cc WHERE cc.user_id = NEW.user_id AND cc.stack_id = NEW.stack_id) _)) THEN
             RAISE EXCEPTION 'UserId #% with CollectedCard #% and Stack #% tried to have LeafId #%, but they already have LeafId #%',
-            (NEW."user_id"), (NEW."id"), (NEW."stack_id"), (NEW."leaf_id"), (SELECT cc."leaf_id" FROM "collected_card" cc WHERE cc."user_id" = NEW."user_id" AND cc."stack_id" = NEW."stack_id" LIMIT 1);
+            (NEW.user_id), (NEW.id), (NEW.stack_id), (NEW.leaf_id), (SELECT cc.leaf_id FROM collected_card cc WHERE cc.user_id = NEW.user_id AND cc.stack_id = NEW.stack_id LIMIT 1);
         END IF;
-		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD."leaf_id" <> NEW."leaf_id" OR OLD."index" <> NEW."index"))) THEN
-		IF ((SELECT bi."max_index_inclusive" FROM public."leaf" bi WHERE bi."id" = NEW."leaf_id") < NEW."index") THEN
-			RAISE EXCEPTION 'UserId #% with CollectedCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its LeafId #%', (NEW."user_id"), (NEW."id"), (NEW."index"), (SELECT bi."max_index_inclusive" FROM public."leaf" bi WHERE bi."id" = NEW."leaf_id"), (NEW."leaf_id");
+		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id OR OLD.index <> NEW.index))) THEN
+		IF ((SELECT bi.max_index_inclusive FROM public.leaf bi WHERE bi.id = NEW.leaf_id) < NEW.index) THEN
+			RAISE EXCEPTION 'UserId #% with CollectedCard #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its LeafId #%', (NEW.user_id), (NEW.id), (NEW.index), (SELECT bi.max_index_inclusive FROM public.leaf bi WHERE bi.id = NEW.leaf_id), (NEW.leaf_id);
 		END IF;
 		END IF;
         RETURN NULL;
@@ -64,19 +64,19 @@ CREATE FUNCTION public.fn_delete_received_notification(outer_notification_id int
     AS $$
     BEGIN
         WITH del_child AS (
-            DELETE FROM public."received_notification" rn
-            WHERE  rn."notification_id" = outer_notification_id
-            AND    rn."receiver_id" = outer_receiver_id
-            RETURNING rn."notification_id", rn."receiver_id"
+            DELETE FROM public.received_notification rn
+            WHERE  rn.notification_id = outer_notification_id
+            AND    rn.receiver_id = outer_receiver_id
+            RETURNING rn.notification_id, rn.receiver_id
         )
-        DELETE FROM public."notification" n
+        DELETE FROM public.notification n
         USING  del_child x
-        WHERE  n."id" = x."notification_id"
+        WHERE  n.id = x.notification_id
         AND NOT EXISTS (
             SELECT 1
-            FROM   public."received_notification" rn
-            WHERE  rn."notification_id" = x."notification_id"
-            AND    rn."receiver_id" <> x."receiver_id"
+            FROM   public.received_notification rn
+            WHERE  rn.notification_id = x.notification_id
+            AND    rn.receiver_id <> x.receiver_id
         );
     END
 $$;
@@ -94,9 +94,9 @@ CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
         default_branch_id integer NOT NULL := 0;
     BEGIN
         IF (TG_OP = 'INSERT') THEN
-            UPDATE "stack" s
-            SET    "default_branch_id" = (NEW."id")
-            WHERE (s."id" = NEW."stack_id" AND s."default_branch_id" = 0);
+            UPDATE stack s
+            SET    default_branch_id = (NEW.id)
+            WHERE (s.id = NEW.stack_id AND s.default_branch_id = 0);
         END IF;
         RETURN NULL;
     END;
@@ -112,66 +112,66 @@ CREATE FUNCTION public.fn_tr_collectedcard_afterinsertdeleteupdate() RETURNS tri
         new_is_public boolean NOT NULL := 'f';
         old_is_public boolean NOT NULL := 'f';
     BEGIN
-		IF ((TG_OP = 'DELETE' AND OLD."index" = 0 AND OLD."card_state" <> 3) OR 
-            (TG_OP = 'UPDATE' AND (OLD."leaf_id" <> NEW."leaf_id"
-                                      OR (OLD."card_state" <> 3 AND NEW."card_state" = 3)))) THEN
-            UPDATE	"leaf" ci
-            SET     "users" = ci."users" - 1
-            WHERE	ci."id" = OLD."leaf_id";
-            UPDATE	"branch" b
-            SET		"users" = b."users" - 1
-            WHERE	b."id" = OLD."branch_id";
-            UPDATE  "stack" stack
-            SET     "users" = stack."users" - 1
-            WHERE stack."id" = OLD."stack_id";
+		IF ((TG_OP = 'DELETE' AND OLD.index = 0 AND OLD.card_state <> 3) OR 
+            (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id
+                                      OR (OLD.card_state <> 3 AND NEW.card_state = 3)))) THEN
+            UPDATE	leaf ci
+            SET     users = ci.users - 1
+            WHERE	ci.id = OLD.leaf_id;
+            UPDATE	branch b
+            SET		users = b.users - 1
+            WHERE	b.id = OLD.branch_id;
+            UPDATE  stack stack
+            SET     users = stack.users - 1
+            WHERE stack.id = OLD.stack_id;
         END IF;
-        IF ((TG_OP = 'INSERT' AND NEW."index" = 0) OR
-            (TG_OP = 'UPDATE' AND (OLD."leaf_id" <> NEW."leaf_id"
-                                      OR (OLD."card_state" = 3 AND NEW."card_state" <> 3)))) THEN
-            UPDATE	"leaf" ci
-            SET     "users" = ci."users" + 1
-            WHERE	ci."id" = NEW."leaf_id";
-            UPDATE	"branch" b
-            SET		"users" = b."users" + 1
-            WHERE	b."id" = NEW."branch_id";
-            UPDATE  "stack" stack
-            SET     "users" = stack."users" + 1
-            WHERE stack."id" = NEW."stack_id";
+        IF ((TG_OP = 'INSERT' AND NEW.index = 0) OR
+            (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id
+                                      OR (OLD.card_state = 3 AND NEW.card_state <> 3)))) THEN
+            UPDATE	leaf ci
+            SET     users = ci.users + 1
+            WHERE	ci.id = NEW.leaf_id;
+            UPDATE	branch b
+            SET		users = b.users + 1
+            WHERE	b.id = NEW.branch_id;
+            UPDATE  stack stack
+            SET     users = stack.users + 1
+            WHERE stack.id = NEW.stack_id;
         END IF;
-        new_is_public := COALESCE((SELECT "is_public" FROM public."deck" WHERE "id" = NEW."deck_id"), 'f');
-        old_is_public := COALESCE((SELECT "is_public" FROM public."deck" WHERE "id" = OLD."deck_id"), 'f');
+        new_is_public := COALESCE((SELECT is_public FROM public.deck WHERE id = NEW.deck_id), 'f');
+        old_is_public := COALESCE((SELECT is_public FROM public.deck WHERE id = OLD.deck_id), 'f');
         IF (new_is_public OR old_is_public) THEN
-            IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD."deck_id" <> NEW."deck_id" AND new_is_public)) THEN
+            IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "leaf_id",     "deck_id", "gromplate_id", "grompleaf_id")
-                                            VALUES (NEW."user_id", (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW."stack_id", NEW."branch_id", NEW."leaf_id", NEW."deck_id",  NULL,       NULL)
-                    RETURNING "id"
-                ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
-                                                 (SELECT df."follower_id", (SELECT "id" FROM notification_id)
-                                                  FROM public."deck_followers" df
-                                                  WHERE df."deck_id" = NEW."deck_id"
+                    INSERT INTO public.notification(sender_id, time_stamp,              type,          message,     stack_id,     branch_id,     leaf_id,     deck_id, gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id,  NULL,       NULL)
+                    RETURNING id
+                ) INSERT INTO public.received_notification(receiver_id, notification_id)
+                                                 (SELECT df.follower_id, (SELECT id FROM notification_id)
+                                                  FROM public.deck_followers df
+                                                  WHERE df.deck_id = NEW.deck_id
                                                  );
             END IF;
-            IF (TG_OP = 'UPDATE' AND OLD."leaf_id" <> NEW."leaf_id") THEN
+            IF (TG_OP = 'UPDATE' AND OLD.leaf_id <> NEW.leaf_id) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "leaf_id",     "deck_id", "gromplate_id", "grompleaf_id")
-                                            VALUES (NEW."user_id", (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW."stack_id", NEW."branch_id", NEW."leaf_id", NEW."deck_id",  NULL,       NULL)
-                    RETURNING "id"
-                ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
-                                                 (SELECT df."follower_id", (SELECT "id" FROM notification_id)
-                                                  FROM public."deck_followers" df
-                                                  WHERE df."deck_id" = NEW."deck_id"
+                    INSERT INTO public.notification(sender_id, time_stamp,              type,          message,     stack_id,     branch_id,     leaf_id,     deck_id, gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id,  NULL,       NULL)
+                    RETURNING id
+                ) INSERT INTO public.received_notification(receiver_id, notification_id)
+                                                 (SELECT df.follower_id, (SELECT id FROM notification_id)
+                                                  FROM public.deck_followers df
+                                                  WHERE df.deck_id = NEW.deck_id
                                                  );
             END IF;
-            IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD."deck_id" <> NEW."deck_id" AND old_is_public)) THEN
+            IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public."notification"("sender_id", "time_stamp",              "type",          "message",     "stack_id",     "branch_id",     "leaf_id",     "deck_id", "gromplate_id", "grompleaf_id")
-                                            VALUES (OLD."user_id", (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD."stack_id", OLD."branch_id", OLD."leaf_id", OLD."deck_id",  NULL,       NULL)
-                    RETURNING "id"
-                ) INSERT INTO public."received_notification"("receiver_id", "notification_id")
-                                                 (SELECT df."follower_id", (SELECT "id" FROM notification_id)
-                                                  FROM public."deck_followers" df
-                                                  WHERE df."deck_id" = OLD."deck_id"
+                    INSERT INTO public.notification(sender_id, time_stamp,              type,          message,     stack_id,     branch_id,     leaf_id,     deck_id, gromplate_id, grompleaf_id)
+                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD.stack_id, OLD.branch_id, OLD.leaf_id, OLD.deck_id,  NULL,       NULL)
+                    RETURNING id
+                ) INSERT INTO public.received_notification(receiver_id, notification_id)
+                                                 (SELECT df.follower_id, (SELECT id FROM notification_id)
+                                                  FROM public.deck_followers df
+                                                  WHERE df.deck_id = OLD.deck_id
                                                  );
             END IF;
         END IF;
@@ -186,9 +186,9 @@ CREATE FUNCTION public.fn_tr_collectedcard_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (NEW."ts_vector_helper" IS NOT NULL) THEN
-            NEW."ts_vector" = to_tsvector('pg_catalog.english', NEW."ts_vector_helper");
-            NEW."ts_vector_helper" = NULL;
+        IF (NEW.ts_vector_helper IS NOT NULL) THEN
+            NEW.ts_vector = to_tsvector('pg_catalog.english', NEW.ts_vector_helper);
+            NEW.ts_vector_helper = NULL;
         END IF;
         RETURN NEW;
     END;
@@ -201,14 +201,14 @@ CREATE FUNCTION public.fn_tr_communalfieldinstance_beforeinsert() RETURNS trigge
     LANGUAGE plpgsql
     AS $$  
 begin
-  UPDATE "communal_field" cf
-  SET    "latest_instance_id" = NEW."id"
-  WHERE  cf."id" = NEW."communal_field_id";
-  IF (NEW."b_weight_ts_vector_helper" IS NOT NULL) THEN
-    NEW."ts_vector" =
-        setweight(to_tsvector('pg_catalog.english', NEW."field_name"), 'A') ||
-        setweight(to_tsvector('pg_catalog.english', NEW."b_weight_ts_vector_helper"), 'B');
-    NEW."b_weight_ts_vector_helper" = NULL;
+  UPDATE communal_field cf
+  SET    latest_instance_id = NEW.id
+  WHERE  cf.id = NEW.communal_field_id;
+  IF (NEW.b_weight_ts_vector_helper IS NOT NULL) THEN
+    NEW.ts_vector =
+        setweight(to_tsvector('pg_catalog.english', NEW.field_name), 'A') ||
+        setweight(to_tsvector('pg_catalog.english', NEW.b_weight_ts_vector_helper), 'B');
+    NEW.b_weight_ts_vector_helper = NULL;
   END IF;
   return NEW;
 end  
@@ -221,7 +221,7 @@ CREATE FUNCTION public.fn_tr_deck_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  NEW."ts_vector" = to_tsvector('pg_catalog.english', NEW."name");
+  NEW.ts_vector = to_tsvector('pg_catalog.english', NEW.name);
   return NEW;
 end
 $$;
@@ -234,15 +234,15 @@ CREATE FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate() RETURNS trig
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
-            UPDATE	"deck" d
-            SET     "followers" = d."followers" + 1
-            WHERE	d."id" = NEW."deck_id";
+            UPDATE	deck d
+            SET     followers = d.followers + 1
+            WHERE	d.id = NEW.deck_id;
         ELSIF TG_OP = 'DELETE' THEN
-            UPDATE	"deck" d
-            SET     "followers" = d."followers" - 1
-            WHERE	d."id" = OLD."deck_id";
+            UPDATE	deck d
+            SET     followers = d.followers - 1
+            WHERE	d.id = OLD.deck_id;
         ELSIF TG_OP = 'UPDATE' THEN
-            RAISE EXCEPTION 'Handle the case when "deck0follower" is updated';
+            RAISE EXCEPTION 'Handle the case when deck0follower is updated';
         END IF;
         RETURN NULL;
     END;
@@ -256,14 +256,14 @@ CREATE FUNCTION public.fn_tr_gromplateinstance_beforeinsert() RETURNS trigger
     AS $$  
 begin
   UPDATE gromplate g
-  SET    "latest_instance_id" = NEW."id"
-  WHERE  g."id" = NEW."gromplate_id";
-  IF (NEW."c_weight_ts_vector_helper" IS NOT NULL) THEN
-    NEW."ts_vector" =
-        setweight(to_tsvector('pg_catalog.english', NEW."name"), 'A') ||
-        setweight(to_tsvector('pg_catalog.english', NEW."c_weight_ts_vector_helper"), 'C') ||
-        setweight(to_tsvector('pg_catalog.english', NEW."css"), 'D');
-    NEW."c_weight_ts_vector_helper" = NULL;
+  SET    latest_instance_id = NEW.id
+  WHERE  g.id = NEW.gromplate_id;
+  IF (NEW.c_weight_ts_vector_helper IS NOT NULL) THEN
+    NEW.ts_vector =
+        setweight(to_tsvector('pg_catalog.english', NEW.name), 'A') ||
+        setweight(to_tsvector('pg_catalog.english', NEW.c_weight_ts_vector_helper), 'C') ||
+        setweight(to_tsvector('pg_catalog.english', NEW.css), 'D');
+    NEW.c_weight_ts_vector_helper = NULL;
   END IF;
   return NEW;
 end  
@@ -276,12 +276,12 @@ CREATE FUNCTION public.fn_tr_leaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  UPDATE "branch" b
-  SET    "latest_instance_id" = NEW."id"
-  WHERE  b."id" = NEW."branch_id";
-  IF (NEW."ts_vector_helper" IS NOT NULL) THEN
-    NEW."ts_vector" = to_tsvector('pg_catalog.english', NEW."ts_vector_helper");
-    NEW."ts_vector_helper" = NULL;
+  UPDATE branch b
+  SET    latest_instance_id = NEW.id
+  WHERE  b.id = NEW.branch_id;
+  IF (NEW.ts_vector_helper IS NOT NULL) THEN
+    NEW.ts_vector = to_tsvector('pg_catalog.english', NEW.ts_vector_helper);
+    NEW.ts_vector_helper = NULL;
   END IF;
   return NEW;
 end  
@@ -294,7 +294,7 @@ CREATE FUNCTION public.fn_tr_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
-  NEW."ts_vector" = to_tsvector('pg_catalog.english', NEW."name");
+  NEW.ts_vector = to_tsvector('pg_catalog.english', NEW.name);
   return NEW;
 end
 $$;
@@ -306,7 +306,7 @@ CREATE FUNCTION public.fn_tr_tag_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  NEW."ts_vector" = to_tsvector('pg_catalog.english', NEW."name");
+  NEW.ts_vector = to_tsvector('pg_catalog.english', NEW.name);
   return NEW;
 end
 $$;
@@ -321,22 +321,22 @@ CREATE FUNCTION public.fn_tr_user_afterinsert() RETURNS trigger
         outer_default_card_setting_id integer NOT NULL := 0;
         outer_default_deck_id         integer NOT NULL := 0;
     BEGIN
-        outer_default_card_setting_id := (SELECT "id" FROM "card_setting" cs WHERE cs."user_id" = 0 LIMIT 1);
-        outer_default_deck_id         := (SELECT "id" FROM "deck"         d WHERE  d."user_id" = 0 LIMIT 1);
+        outer_default_card_setting_id := (SELECT id FROM card_setting cs WHERE cs.user_id = 0 LIMIT 1);
+        outer_default_deck_id         := (SELECT id FROM deck         d WHERE  d.user_id = 0 LIMIT 1);
 
-        UPDATE "card_setting" cs
-        SET    "user_id" = NEW."id"
-        WHERE (cs."id" = outer_default_card_setting_id);
+        UPDATE card_setting cs
+        SET    user_id = NEW.id
+        WHERE (cs.id = outer_default_card_setting_id);
         UPDATE padawan p
         SET    default_card_setting_id = outer_default_card_setting_id
-        WHERE (p."id" = NEW."id");
+        WHERE (p.id = NEW.id);
 
-        UPDATE "deck" d
-        SET    "user_id" = NEW."id"
-        WHERE (d."id" = outer_default_deck_id);
+        UPDATE deck d
+        SET    user_id = NEW.id
+        WHERE (d.id = outer_default_deck_id);
         UPDATE padawan p
         SET    default_deck_id = outer_default_deck_id
-        WHERE (p."id" = NEW."id");
+        WHERE (p.id = NEW.id);
 
         RETURN NULL;
     END;
@@ -349,7 +349,7 @@ CREATE FUNCTION public.fn_tr_user_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  NEW."ts_vector" = to_tsvector('pg_catalog.simple', NEW."display_name");
+  NEW.ts_vector = to_tsvector('pg_catalog.simple', NEW.display_name);
   return NEW;
 end
 $$;
