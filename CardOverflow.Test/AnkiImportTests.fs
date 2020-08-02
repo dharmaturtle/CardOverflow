@@ -191,7 +191,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.CommunalFields
+        Assert.Empty stack.Default.Instance.Commields
     
     let! sketchy = getInstances "Sketchy"
     let expectedFieldAndValues =
@@ -201,7 +201,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! stack = ExploreStackRepository.get c.Db userId card.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.CommunalFields
+        Assert.Empty stack.Default.Instance.Commields
         let! view = StackViewRepository.get c.Db stack.Id
         Assert.Equal(
             expectedFieldAndValues,
@@ -325,14 +325,14 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         let! stack = ExploreStackRepository.get c.Db userId instance.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.CommunalFields
+        Assert.Empty stack.Default.Instance.Commields
 
     let! instances = getInstances "and reversed card)"
     for instance in instances do
         let! stack = ExploreStackRepository.get c.Db userId instance.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.CommunalFields
+        Assert.Empty stack.Default.Instance.Commields
 
     Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.grompleafIdByHash.Count - 1, c.Db.User_Grompleaf.Count(fun x -> x.UserId = userId))
@@ -420,8 +420,8 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` anki
         Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
-        Assert.Equal(0, c.Db.CommunalFieldInstance.Count())
-        Assert.Equal(0, c.Db.CommunalField.Count())
+        Assert.Equal(0, c.Db.CommieldInstance.Count())
+        Assert.Equal(0, c.Db.Commield.Count())
         Assert.Equal(7, c.Db.Grompleaf.Count())
         Assert.Equal(5, c.Db.LatestGrompleaf.Count())
         Assert.Equal(4, c.Db.Deck.Count())

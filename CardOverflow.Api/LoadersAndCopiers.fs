@@ -85,8 +85,8 @@ module LeafEntity =
         bitArray.CopyTo(bytes, 0)
         bytes
     let hash (gromplateHash: BitArray) (hasher: SHA512) (e: LeafEntity) =
-        e.CommunalFieldInstance_Leafs
-            .Select(fun x -> x.CommunalFieldInstance.Value)
+        e.CommieldInstance_Leafs
+            .Select(fun x -> x.CommieldInstance.Value)
             .OrderBy(fun x -> x)
         |> Seq.toList
         |> List.append
@@ -301,19 +301,19 @@ type LeafView with
         LeafView.toView
             entity.Grompleaf
             entity.FieldValues
-    member this.CopyToX (entity: LeafEntity) (communalFields: CommunalFieldInstanceEntity seq) =
+    member this.CopyToX (entity: LeafEntity) (commields: CommieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
-        entity.CommunalFieldInstance_Leafs <-
-            communalFields.Select(fun x -> CommunalFieldInstance_LeafEntity(CommunalFieldInstance = x))
-            |> entity.CommunalFieldInstance_Leafs.Concat
+        entity.CommieldInstance_Leafs <-
+            commields.Select(fun x -> CommieldInstance_LeafEntity(CommieldInstance = x))
+            |> entity.CommieldInstance_Leafs.Concat
             |> toResizeArray
         entity.GrompleafId <- this.Grompleaf.Id
-    member this.CopyToNew communalFields =
+    member this.CopyToNew commields =
         let entity = LeafEntity()
-        this.CopyToX entity communalFields
+        this.CopyToX entity commields
         entity
-    member this.CopyFieldsToNewInstance (branch: BranchEntity) editSummary communalFields =
-        let e = this.CopyToNew communalFields
+    member this.CopyFieldsToNewInstance (branch: BranchEntity) editSummary commields =
+        let e = this.CopyToNew commields
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
         if branch.Stack = null then
@@ -327,8 +327,8 @@ type LeafView with
         e.MaxIndexInclusive <- this.MaxIndexInclusive
         e
 
-type CommunalFieldInstance with
-    static member load (entity: CommunalFieldInstanceEntity) = {   
+type CommieldInstance with
+    static member load (entity: CommieldInstanceEntity) = {   
         Id = entity.Id
         FieldName = entity.FieldName
         Value = entity.Value }
@@ -347,7 +347,7 @@ type LeafMeta with
             IsCollected = isCollected
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            CommunalFields = entity.CommunalFieldInstance_Leafs.Select(fun x -> CommunalFieldInstance.load x.CommunalFieldInstance).ToList()
+            Commields = entity.CommieldInstance_Leafs.Select(fun x -> CommieldInstance.load x.CommieldInstance).ToList()
             Users = entity.Users
             EditSummary = entity.EditSummary
         }
@@ -367,7 +367,7 @@ type LeafMeta with
             IsCollected = true
             StrippedFront = ""
             StrippedBack = ""
-            CommunalFields = [].ToList()
+            Commields = [].ToList()
             Users = 0
             EditSummary = ""
         }

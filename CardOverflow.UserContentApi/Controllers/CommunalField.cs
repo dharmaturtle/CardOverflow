@@ -8,16 +8,16 @@ using ThoughtDesign.WebLibrary;
 namespace CardOverflow.UserContentApi.Controllers {
   [ApiController]
   //[Route("[controller]")]
-  public class CommunalField : Controller {
+  public class Commield : Controller {
     private readonly CardOverflowDb _db;
 
-    public CommunalField(CardOverflowDb db) => _db = db;
+    public Commield(CardOverflowDb db) => _db = db;
 
     [HttpGet("communalfield/{id}")]
-    public async Task<IActionResult> Get(int id) => (await CommunalFieldRepository.get(_db, id)).ToTextHtmlContent(this);
+    public async Task<IActionResult> Get(int id) => (await CommieldRepository.get(_db, id)).ToTextHtmlContent(this);
 
     [HttpGet("communalfieldinstance/{id}")]
-    public async Task<IActionResult> GetInstance(int id) => (await CommunalFieldRepository.getInstance(_db, id)).ToTextHtmlContent(this);
+    public async Task<IActionResult> GetInstance(int id) => (await CommieldRepository.getInstance(_db, id)).ToTextHtmlContent(this);
 
   }
 }

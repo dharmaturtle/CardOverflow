@@ -19,9 +19,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<GrompleafEntity> Grompleaf { get; set; }
         public virtual DbSet<CommentGromplateEntity> CommentGromplate { get; set; }
         public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
-        public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
-        public virtual DbSet<CommunalFieldInstanceEntity> CommunalFieldInstance { get; set; }
-        public virtual DbSet<CommunalFieldInstance_LeafEntity> CommunalFieldInstance_Leaf { get; set; }
+        public virtual DbSet<CommieldEntity> Commield { get; set; }
+        public virtual DbSet<CommieldInstanceEntity> CommieldInstance { get; set; }
+        public virtual DbSet<CommieldInstance_LeafEntity> CommieldInstance_Leaf { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<DeckFollowersEntity> DeckFollowers { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
@@ -318,56 +318,56 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommunalFieldEntity>(entity =>
+            modelBuilder.Entity<CommieldEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
-                    .WithMany(p => p.CommunalFields)
+                    .WithMany(p => p.Commields)
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.LatestInstance)
-                    .WithMany(p => p.CommunalFields)
+                    .WithMany(p => p.Commields)
                     .HasForeignKey(d => d.LatestInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommunalFieldInstanceEntity>(entity =>
+            modelBuilder.Entity<CommieldInstanceEntity>(entity =>
             {
-                entity.HasIndex(e => e.CommunalFieldId);
+                entity.HasIndex(e => e.CommieldId);
 
                 IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
                     () => entity.Ignore(e => e.TsVector));
 
-                entity.HasIndex(e => new { e.Id, e.CommunalFieldId })
+                entity.HasIndex(e => new { e.Id, e.CommieldId })
                     .IsUnique();
 
-                entity.HasOne(d => d.CommunalField)
-                    .WithMany(p => p.CommunalFieldInstances)
-                    .HasForeignKey(d => d.CommunalFieldId)
+                entity.HasOne(d => d.Commield)
+                    .WithMany(p => p.CommieldInstances)
+                    .HasForeignKey(d => d.CommieldId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommunalFieldInstance_LeafEntity>(entity =>
+            modelBuilder.Entity<CommieldInstance_LeafEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommunalFieldInstanceId, e.LeafId });
+                entity.HasKey(e => new { e.CommieldInstanceId, e.LeafId });
 
                 entity.HasIndex(e => e.LeafId);
 
                 entity.HasOne(d => d.Leaf)
-                    .WithMany(p => p.CommunalFieldInstance_Leafs)
+                    .WithMany(p => p.CommieldInstance_Leafs)
                     .HasForeignKey(d => d.LeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommunalFieldInstance_Leaf_LeafId");
+                    .HasConstraintName("FK_CommieldInstance_Leaf_LeafId");
 
-                entity.HasOne(d => d.CommunalFieldInstance)
-                    .WithMany(p => p.CommunalFieldInstance_Leafs)
-                    .HasForeignKey(d => d.CommunalFieldInstanceId)
+                entity.HasOne(d => d.CommieldInstance)
+                    .WithMany(p => p.CommieldInstance_Leafs)
+                    .HasForeignKey(d => d.CommieldInstanceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommunalFieldInstance_Leaf_CommunalFieldInstanceId");
+                    .HasConstraintName("FK_CommieldInstance_Leaf_CommieldInstanceId");
             });
 
             modelBuilder.Entity<DeckEntity>(entity =>

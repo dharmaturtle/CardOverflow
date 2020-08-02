@@ -19,8 +19,8 @@
   [Parameter] public (int LeafId, short Index) Leaf { get; set; }
   [Parameter] public int GromplateId { get; set; }
   [Parameter] public int GrompleafId { get; set; }
-  [Parameter] public int CommunalFieldId { get; set; }
-  [Parameter] public int CommunalFieldInstanceId { get; set; }
+  [Parameter] public int CommieldId { get; set; }
+  [Parameter] public int CommieldInstanceId { get; set; }
   [Parameter] public bool Front { get; set; }
   [Parameter] public bool Back { get; set; }
   private ElementReference iframe;
@@ -37,10 +37,10 @@
       middle = "gromplate/" + GromplateId;
     } else if (GrompleafId != 0) {
       middle = "gromplateinstance/" + GrompleafId;
-    } else if (CommunalFieldId != 0) {
-      middle = "communalfield/" + CommunalFieldId;
-    } else if (CommunalFieldInstanceId != 0) {
-      middle = "communalfieldinstance/" + CommunalFieldInstanceId;
+    } else if (CommieldId != 0) {
+      middle = "communalfield/" + CommieldId;
+    } else if (CommieldInstanceId != 0) {
+      middle = "communalfieldinstance/" + CommieldInstanceId;
     } else {
       throw new Exception("You done goofed.");
     }

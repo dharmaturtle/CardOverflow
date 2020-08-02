@@ -16,7 +16,7 @@ namespace CardOverflow.Entity
             Gromplates = new HashSet<GromplateEntity>();
             CommentGromplates = new HashSet<CommentGromplateEntity>();
             CommentStacks = new HashSet<CommentStackEntity>();
-            CommunalFields = new HashSet<CommunalFieldEntity>();
+            Commields = new HashSet<CommieldEntity>();
             DeckFollowers = new HashSet<DeckFollowersEntity>();
             Decks = new HashSet<DeckEntity>();
             Feedbacks = new HashSet<FeedbackEntity>();
@@ -70,7 +70,7 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<CommunalFieldEntity> CommunalFields { get; set; }
+        public virtual ICollection<CommieldEntity> Commields { get; set; }
         [InverseProperty("Follower")]
         public virtual ICollection<DeckFollowersEntity> DeckFollowers { get; set; }
         [InverseProperty("User")]

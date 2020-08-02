@@ -6,17 +6,17 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommunalFieldInstanceEntity
+    public partial class CommieldInstanceEntity
     {
-        public CommunalFieldInstanceEntity()
+        public CommieldInstanceEntity()
         {
-            CommunalFieldInstance_Leafs = new HashSet<CommunalFieldInstance_LeafEntity>();
-            CommunalFields = new HashSet<CommunalFieldEntity>();
+            CommieldInstance_Leafs = new HashSet<CommieldInstance_LeafEntity>();
+            Commields = new HashSet<CommieldEntity>();
         }
 
         [Key]
         public int Id { get; set; }
-        public int CommunalFieldId { get; set; }
+        public int CommieldId { get; set; }
         [Required]
         [StringLength(200)]
         public string FieldName {
@@ -44,12 +44,12 @@ namespace CardOverflow.Entity
         public string BWeightTsVectorHelper { get; set; }
         public NpgsqlTsVector TsVector { get; set; }
 
-        [ForeignKey("CommunalFieldId")]
-        [InverseProperty("CommunalFieldInstances")]
-        public virtual CommunalFieldEntity CommunalField { get; set; }
-        [InverseProperty("CommunalFieldInstance")]
-        public virtual ICollection<CommunalFieldInstance_LeafEntity> CommunalFieldInstance_Leafs { get; set; }
+        [ForeignKey("CommieldId")]
+        [InverseProperty("CommieldInstances")]
+        public virtual CommieldEntity Commield { get; set; }
+        [InverseProperty("CommieldInstance")]
+        public virtual ICollection<CommieldInstance_LeafEntity> CommieldInstance_Leafs { get; set; }
         [InverseProperty("LatestInstance")]
-        public virtual ICollection<CommunalFieldEntity> CommunalFields { get; set; }
+        public virtual ICollection<CommieldEntity> Commields { get; set; }
     }
 }

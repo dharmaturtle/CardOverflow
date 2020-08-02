@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommunalFieldEntity
+    public partial class CommieldEntity
     {
-        public CommunalFieldEntity()
+        public CommieldEntity()
         {
-            CommunalFieldInstances = new HashSet<CommunalFieldInstanceEntity>();
+            CommieldInstances = new HashSet<CommieldInstanceEntity>();
         }
 
         [Key]
@@ -19,12 +19,12 @@ namespace CardOverflow.Entity
         public bool IsListed { get; set; } = true;
 
         [ForeignKey("AuthorId")]
-        [InverseProperty("CommunalFields")]
+        [InverseProperty("Commields")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestInstanceId")]
-        [InverseProperty("CommunalFields")]
-        public virtual CommunalFieldInstanceEntity LatestInstance { get; set; }
-        [InverseProperty("CommunalField")]
-        public virtual ICollection<CommunalFieldInstanceEntity> CommunalFieldInstances { get; set; }
+        [InverseProperty("Commields")]
+        public virtual CommieldInstanceEntity LatestInstance { get; set; }
+        [InverseProperty("Commield")]
+        public virtual ICollection<CommieldInstanceEntity> CommieldInstances { get; set; }
     }
 }

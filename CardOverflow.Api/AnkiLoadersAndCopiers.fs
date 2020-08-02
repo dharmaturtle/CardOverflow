@@ -71,7 +71,7 @@ type AnkiGrompleaf = {
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
-    CommunalFields: CommunalFieldInstanceEntity list
+    Commields: CommieldInstanceEntity list
     Gromplate: GrompleafEntity
     FieldValues: string
     Created: DateTime
@@ -84,9 +84,9 @@ type AnkiCardWrite = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.Grompleaf <- this.Gromplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
-        entity.CommunalFieldInstance_Leafs <-
-            this.CommunalFields
-            |> List.map (fun cf -> CommunalFieldInstance_LeafEntity(Leaf = entity, CommunalFieldInstance = cf))
+        entity.CommieldInstance_Leafs <-
+            this.Commields
+            |> List.map (fun cf -> CommieldInstance_LeafEntity(Leaf = entity, CommieldInstance = cf))
             |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = LeafEntity()
@@ -111,8 +111,8 @@ type AnkiCardWrite = {
         let gromplateHash = this.Gromplate |> GrompleafEntity.hash hasher
         let hash = this.CopyToNew [] |> LeafEntity.hash gromplateHash hasher
         db.Leaf
-            .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
+            .Include(fun x -> x.CommieldInstance_Leafs :> IEnumerable<_>)
+                .ThenInclude(fun (x: CommieldInstance_LeafEntity) -> x.CommieldInstance)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
@@ -383,7 +383,7 @@ module Anki =
                     let c = {
                         AnkiNoteId = note.Id
                         Gromplate = gromplate
-                        CommunalFields = []
+                        Commields = []
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
                         Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some

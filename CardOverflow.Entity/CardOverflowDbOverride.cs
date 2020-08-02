@@ -131,8 +131,8 @@ namespace CardOverflow.Entity {
         leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, gromplateHash, sha512));
         leaf.TsVectorHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
       }
-      foreach (var communalFieldInstance in _filter<CommunalFieldInstanceEntity>(entries)) {
-        communalFieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(communalFieldInstance.Value);
+      foreach (var commieldInstance in _filter<CommieldInstanceEntity>(entries)) {
+        commieldInstance.BWeightTsVectorHelper = MappingTools.stripHtmlTags(commieldInstance.Value);
       }
       foreach (var collectedCard in _filter<CollectedCardEntity>(entries)) {
         collectedCard.TsVectorHelper = MappingTools.stripHtmlTags(collectedCard.FrontPersonalField) + " " + MappingTools.stripHtmlTags(collectedCard.BackPersonalField);
@@ -163,7 +163,7 @@ namespace CardOverflow.Entity {
     public IQueryable<StackTagCountEntity> StackTagCount => _StackTagCountTracked.AsNoTracking();
     public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
-    public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<CommieldInstanceEntity> LatestCommieldInstance => CommieldInstance.Where(x => x.Commield.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<GrompleafEntity> LatestGrompleaf => Grompleaf.Where(x => x.Gromplate.LatestInstanceId == x.Id).AsNoTracking();
 
   }

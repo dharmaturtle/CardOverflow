@@ -280,7 +280,7 @@ type PagedList<'T> = {
 }
 
 [<CLIMutable>]
-type CommunalFieldValue = {
+type CommieldValue = {
     InstanceId: int option
     CommunalLeafIds: int ResizeArray
 }
@@ -337,7 +337,7 @@ type LeafView = {
         |> Result.requireSome (sprintf "Index %i out of range" i)
         
 
-type CommunalFieldInstance = {
+type CommieldInstance = {
     Id: int
     FieldName: string
     Value: string
@@ -395,7 +395,7 @@ type LeafMeta = {
     IsLatest: bool
     StrippedFront: string
     StrippedBack: string
-    CommunalFields: CommunalFieldInstance ResizeArray
+    Commields: CommieldInstance ResizeArray
     Users: int
     EditSummary: string
 } with
