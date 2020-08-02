@@ -1,5 +1,5 @@
 @page "/stack/editbranch/{BranchId:int}"
-@page "/stack/copyinstance/{CopySourceInstanceId:int}"
+@page "/stack/copyleaf/{CopySourceLeafId:int}"
 @page "/stack/branchstack/{BranchSourceStackId:int}"
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
@@ -23,7 +23,7 @@
 
 @code {
   [Parameter] public int BranchId { get; set; }
-  [Parameter] public int CopySourceInstanceId { get; set; }
+  [Parameter] public int CopySourceLeafId { get; set; }
   [Parameter] public int BranchSourceStackId { get; set; }
   string LoadingMessage = "Loading...";
   ViewEditStackCommand _command;
@@ -41,8 +41,8 @@
   private Task<FSharpResult<ViewEditStackCommand, string>> _GetCommandAndCard() {
     if (BranchId != 0) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdateBranchId(BranchId)));
-    } else if (CopySourceInstanceId != 0) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySourceInstanceId(CopySourceInstanceId)));
+    } else if (CopySourceLeafId != 0) {
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySourceLeafId(CopySourceLeafId)));
     } else if (BranchSourceStackId != 0) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranchSourceStackId(BranchSourceStackId)));
     } else {

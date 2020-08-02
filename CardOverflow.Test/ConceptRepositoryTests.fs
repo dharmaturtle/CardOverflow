@@ -52,48 +52,48 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
-    let oldInstanceId = 1001
-    let updatedInstanceId = 1002
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldInstanceId)
+    let oldLeafId = 1001
+    let updatedLeafId = 1002
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<Card, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
+    Assert.Equal(updatedLeafId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
 
-    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
-    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
+    // getCollectedLeafFromLeaf gets the updatedLeafId when given the oldLeafId
+    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId oldLeafId
 
-    Assert.Equal(updatedInstanceId, actual)
+    Assert.Equal(updatedLeafId, actual)
 
-    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
-    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
+    // getCollectedLeafFromLeaf gets the updatedLeafId when given the updatedLeafId
+    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId updatedLeafId
 
-    Assert.Equal(updatedInstanceId, actual)
+    Assert.Equal(updatedLeafId, actual)
 
-    // getCollectedInstanceFromInstance fails gracefully on invalid instanceId
-    let invalidInstanceId = 1337
+    // getCollectedLeafFromLeaf fails gracefully on invalid leafId
+    let invalidLeafId = 1337
 
-    let! (actual: Result<_,_>) = CardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
+    let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
-    Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
+    Assert.Equal("You don't have any cards with Branch Leaf #1337", actual.error)
 
     // StackRepository.Revisions says we collected the most recent leaf
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
+    |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
 
-    // collect oldest instance, then StackRepository.Revisions says we collected the oldest leaf
-    do! StackRepository.CollectCard c.Db userId oldInstanceId
+    // collect oldest leaf, then StackRepository.Revisions says we collected the oldest leaf
+    do! StackRepository.CollectCard c.Db userId oldLeafId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldInstanceId, true); (updatedInstanceId, false)]
+    |> Assert.equal [(oldLeafId, true); (updatedLeafId, false)]
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -105,48 +105,48 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
-    let oldInstanceId = 1001
-    let updatedInstanceId = 1002
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldInstanceId)
+    let oldLeafId = 1001
+    let updatedLeafId = 1002
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedInstanceId)
+    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<Card, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedInstanceId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
+    Assert.Equal(updatedLeafId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
 
-    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the oldInstanceId
-    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId oldInstanceId
+    // getCollectedLeafFromLeaf gets the updatedLeafId when given the oldLeafId
+    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId oldLeafId
 
-    Assert.Equal(updatedInstanceId, actual)
+    Assert.Equal(updatedLeafId, actual)
 
-    // getCollectedInstanceFromInstance gets the updatedInstanceId when given the updatedInstanceId
-    let! actual = CardRepository.getCollectedInstanceFromInstance c.Db userId updatedInstanceId
+    // getCollectedLeafFromLeaf gets the updatedLeafId when given the updatedLeafId
+    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId updatedLeafId
 
-    Assert.Equal(updatedInstanceId, actual)
+    Assert.Equal(updatedLeafId, actual)
 
-    // getCollectedInstanceFromInstance fails gracefully on invalid instanceId
-    let invalidInstanceId = 1337
+    // getCollectedLeafFromLeaf fails gracefully on invalid leafId
+    let invalidLeafId = 1337
 
-    let! (actual: Result<_,_>) = CardRepository.getCollectedInstanceFromInstance c.Db userId invalidInstanceId
+    let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
-    Assert.Equal("You don't have any cards with Branch Instance #1337", actual.error)
+    Assert.Equal("You don't have any cards with Branch Leaf #1337", actual.error)
 
     // StackRepository.Revisions says we collected the most recent leaf
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldInstanceId, false); (updatedInstanceId, true)]
+    |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
 
-    // collect oldest instance, then StackRepository.Revisions says we collected the oldest leaf
-    do! StackRepository.CollectCard c.Db userId oldInstanceId
+    // collect oldest leaf, then StackRepository.Revisions says we collected the oldest leaf
+    do! StackRepository.CollectCard c.Db userId oldLeafId
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldInstanceId, true); (updatedInstanceId, false)]
+    |> Assert.equal [(oldLeafId, true); (updatedLeafId, false)]
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -169,7 +169,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = view.Value.FrontBackFrontSynthBackSynth.[0]
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| stack.Comments
-    Assert.True stack.Default.Instance.IsCollected
+    Assert.True stack.Default.Leaf.IsCollected
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 1
@@ -212,7 +212,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     let! x = StackRepository.editState c.Db userId cc.CardId CardState.Suspended
     Assert.Null x.Value
     let! stack = ExploreStackRepository.get c.Db userId 1
-    Assert.Equal(0, stack.Value.Default.Instance.Users) // suspended cards don't count to User count
+    Assert.Equal(0, stack.Value.Default.Leaf.Users) // suspended cards don't count to User count
     }
 
 let testGetCollected (acCount: int) addCard getGromplate name = task {
@@ -658,7 +658,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
     use c = new TestContainer()
     let userId = 3
     let name = Guid.NewGuid().ToString()
-    let initialGromplate = ViewGromplateWithAllInstances.initialize userId
+    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId
 
     let! x = SanitizeGromplate.Update c.Db userId { initialGromplate.Editable with Name = name }
     Assert.Null x.Value
@@ -691,7 +691,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
     Assert.Null x.Value
 
     let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).GromplateId)
+    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
 
     // updating to cloze
     let name = Guid.NewGuid().ToString()
@@ -705,8 +705,8 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
     Assert.Null x.Value
 
     let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).GromplateId)
-    Assert.True(myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).IsCloze)
+    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
+    Assert.True(myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).IsCloze)
 
     // updating to multiple templates
     let name = Guid.NewGuid().ToString()
@@ -720,15 +720,15 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
     Assert.Null x.Value
 
     let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).GromplateId)
-    Assert.Equal(2, myGromplates.Select(fun x -> x.Instances.First()).Single(fun x -> x.Name = name).JustTemplates.Count())
+    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
+    Assert.Equal(2, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).JustTemplates.Count())
     }
 
 [<Fact>]
 let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
-    let initialGromplate = ViewGromplateWithAllInstances.initialize userId
+    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId
     use sha512 = SHA512.Create()
     do! SanitizeGromplate.Update c.Db userId initialGromplate.Editable
     let! (dbGromplate: GrompleafEntity) = c.Db.Grompleaf.SingleAsync(fun x -> x.Gromplate.AuthorId = userId)

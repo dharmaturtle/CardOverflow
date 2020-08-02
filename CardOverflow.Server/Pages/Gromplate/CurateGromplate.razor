@@ -42,7 +42,7 @@
   [Parameter] public int GromplateId { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  private List<ViewGromplateWithAllInstances> _gromplates;
+  private List<ViewGromplateWithAllLeafs> _gromplates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
@@ -55,7 +55,7 @@
   }
 
   private void _Add() {
-    var t = ViewGromplateWithAllInstances.initialize(_user.Id);
+    var t = ViewGromplateWithAllLeafs.initialize(_user.Id);
     _gromplates = _gromplates.Prepend(t).ToList();
     _selectedIndex = _gromplates.IndexOf(t);
   }

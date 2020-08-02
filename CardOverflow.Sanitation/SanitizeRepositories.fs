@@ -606,8 +606,8 @@ module SanitizeRelationshipRepository =
                 TargetCardId = tid
             ) |> RelationshipRepository.addAndSaveAsync db
         }
-    let Remove db sourceInstanceId targetStackId userId name =
-        RelationshipRepository.removeAndSaveAsync db sourceInstanceId targetStackId userId name // don't eta reduce - consumed by C#
+    let Remove db sourceLeafId targetStackId userId name =
+        RelationshipRepository.removeAndSaveAsync db sourceLeafId targetStackId userId name // don't eta reduce - consumed by C#
 
 [<CLIMutable>]
 type SearchCommand = {
@@ -678,7 +678,7 @@ type ViewEditStackCommand = {
             | title ->
                 match this.Kind with
                 | NewOriginal_TagIds _
-                | NewCopy_SourceInstanceId_TagIds _ -> this.Kind
+                | NewCopy_SourceLeafId_TagIds _ -> this.Kind
                 | NewBranch_SourceStackId_Title (id, _) -> NewBranch_SourceStackId_Title (id, title)
                 | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
         {   EditStackCommand.EditSummary = this.EditSummary
@@ -689,7 +689,7 @@ type ViewEditStackCommand = {
 
 type UpsertCardSource =
     | VNewOriginalUserId of int
-    | VNewCopySourceInstanceId of int
+    | VNewCopySourceLeafId of int
     | VNewBranchSourceStackId of int
     | VUpdateBranchId of int
 
@@ -745,7 +745,7 @@ module SanitizeStackRepository =
                 Title =
                     match kind with
                     | NewOriginal_TagIds _
-                    | NewCopy_SourceInstanceId_TagIds _ -> null
+                    | NewCopy_SourceLeafId_TagIds _ -> null
                     | NewBranch_SourceStackId_Title (_, title)
                     | Update_BranchId_Title (_, title) -> title
             }
@@ -768,10 +768,10 @@ module SanitizeStackRepository =
             db.Stack.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%i not found." stackId)
             |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.Latest
-        | VNewCopySourceInstanceId leafId ->
+        | VNewCopySourceLeafId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |>% Result.requireNotNull (sprintf "Branch Instance #%i not found." leafId)
-            |>%% toCommand (NewCopy_SourceInstanceId_TagIds (leafId, []))
+            |>% Result.requireNotNull (sprintf "Branch Leaf #%i not found." leafId)
+            |>%% toCommand (NewCopy_SourceLeafId_TagIds (leafId, []))
         | VUpdateBranchId branchId ->
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
@@ -786,7 +786,7 @@ module SanitizeStackRepository =
             | NewBranch_SourceStackId_Title _ ->
                 StackRepository.collectStackNoSave db userId leaf true |>% Ok
             | NewOriginal_TagIds tagIds
-            | NewCopy_SourceInstanceId_TagIds (_, tagIds) -> taskResult {
+            | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
                 let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true
                 for tagId in tagIds do
                     ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))

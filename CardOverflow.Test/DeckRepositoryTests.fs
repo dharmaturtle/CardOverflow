@@ -413,7 +413,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let stackId = 1
     let branchId = 1
     let authorCollectedId = 1
-    let instance1 =
+    let leaf1 =
         {   StackId = stackId
             BranchId = branchId
             LeafId = 1001 }
@@ -425,7 +425,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 TimeStamp = DateTime.MinValue
                 Message = DeckAddedStack { TheirDeck = theirDeck
                                            MyDeck = None
-                                           New = instance1
+                                           New = leaf1
                                            Collected = None } }
 
     // *both* notifications deleted
@@ -439,7 +439,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     Assert.Empty c.Db.Notification
 
     // edit card notifies follower
-    let instance2 = { instance1 with LeafId = 1002 }
+    let leaf2 = { leaf1 with LeafId = 1002 }
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -459,7 +459,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
-                                           New = instance2
+                                           New = leaf2
                                            Collected = None } }
 
     // editing card's state doesn't notify follower
@@ -470,8 +470,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     ns.Results |> Assert.Empty
 
     // Update notifies with follower's collected card
-    do! StackRepository.CollectCard c.Db followerId instance2.LeafId
-    let instance3 = { instance2 with LeafId = 1003 }
+    do! StackRepository.CollectCard c.Db followerId leaf2.LeafId
+    let leaf3 = { leaf2 with LeafId = 1003 }
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
     let updated = {
@@ -485,9 +485,9 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
     let collected =
-        {   StackId = instance2.StackId
-            BranchId = instance2.BranchId
-            LeafId = instance2.LeafId } |> Some
+        {   StackId = leaf2.StackId
+            BranchId = leaf2.BranchId
+            LeafId = leaf2.LeafId } |> Some
     do! assertNotificationThenDelete
             { Id = 3
               SenderId = authorId
@@ -495,7 +495,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
-                                           New = instance3
+                                           New = leaf3
                                            Collected = collected } }
 
     // changing to private deck has notification
@@ -509,7 +509,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            Collected = collected
-                                           Deleted = instance3 } }
+                                           Deleted = leaf3 } }
 
     // changing back to public deck has notification
     do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorCollectedId
@@ -521,7 +521,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               TimeStamp = DateTime.MinValue
               Message = DeckAddedStack { TheirDeck = theirDeck
                                          MyDeck = None
-                                         New = instance3
+                                         New = leaf3
                                          Collected = collected } }
 
     // changing to another public deck that's also followed generates 2 notifications
@@ -544,7 +544,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                         { Id = authorDefaultDeckId
                                           Name = "Default Deck" }
                                      MyDeck = None
-                                     New = instance3
+                                     New = leaf3
                                      Collected = collected } }
     b |> Assert.equal
         { Id = 7
@@ -555,7 +555,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                      { TheirDeck = theirDeck
                        MyDeck = None
                        Collected = collected
-                       Deleted = instance3 } }
+                       Deleted = leaf3 } }
     
     // back to public deck and some cleanup
     do! NotificationRepository.remove c.Db followerId a.Id
@@ -576,7 +576,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            Collected = collected
-                                           Deleted = instance3 } }
+                                           Deleted = leaf3 } }
 
     // diff says a stack was removed
     do! SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
@@ -586,7 +586,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 RemovedStack =
                     [ { StackId = stackId
                         BranchId = branchId
-                        LeafId = instance2.LeafId
+                        LeafId = leaf2.LeafId
                         Index = 0s
                         DeckId = followerId }] }
 
@@ -1083,7 +1083,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchanges``(): Task<unit> = (taskResult {
+let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``(): Task<unit> = (taskResult {
     let authorId = 3
     let publicDeckId = 3
     use c = new TestContainer()
@@ -1164,7 +1164,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
                        { newBranchIds with DeckId = newFollowerDeckId }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
-    // author on new branch with new leaf, follower on old branch & instance
+    // author on new branch with new leaf, follower on old branch & leaf
     do! StackRepository.CollectCard c.Db followerId standardIds.LeafId
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
@@ -1173,7 +1173,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Instance)Changed and deckchang
         {   emptyDiffStateSummary with
                 BranchChanged = [ ({ newLeafIds with DeckId = publicDeckId }, standardIds) ] }
 
-    // author on new branch with new leaf, follower on old branch & instance and different deck
+    // author on new branch with new leaf, follower on old branch & leaf and different deck
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId cc.Id
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId

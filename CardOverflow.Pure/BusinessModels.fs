@@ -281,7 +281,7 @@ type PagedList<'T> = {
 
 [<CLIMutable>]
 type CommieldValue = {
-    InstanceId: int option
+    LeafId: int option
     CommunalLeafIds: int ResizeArray
 }
 
@@ -455,7 +455,7 @@ type Branch = {
     member this.Users = this.Summary.Users
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
-    member this.Instance = this.Summary.Leaf
+    member this.Leaf = this.Summary.Leaf
 
 type CollectedIds = StackLeafIds Option
 
@@ -500,13 +500,13 @@ type BranchRevision = {
 
 type UpsertKind =
     | NewOriginal_TagIds of int list
-    | NewCopy_SourceInstanceId_TagIds of int * int list
+    | NewCopy_SourceLeafId_TagIds of int * int list
     | NewBranch_SourceStackId_Title of int * string
     | Update_BranchId_Title of int * string
 with
-    member this.TryGetCopySourceInstanceId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
+    member this.TryGetCopySourceLeafId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with
-        | NewCopy_SourceInstanceId_TagIds (instanceId, _) -> x <- instanceId; true
+        | NewCopy_SourceLeafId_TagIds (leafId, _) -> x <- leafId; true
         | _ -> false
     member this.TryGetBranchSourceStackId([<Out>] x:byref<_>) =
         match this with

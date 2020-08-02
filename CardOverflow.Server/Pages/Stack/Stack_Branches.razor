@@ -22,7 +22,7 @@
         <th scope="col" style="text-align:center;">
           <CollectToggles IsStack=true
                           CollectedIds=@CollectedIds
-                          Ids=@(new StackLeafIds(Stack.Id, Stack.Default.Instance.BranchId, Stack.Default.Instance.Id))
+                          Ids=@(new StackLeafIds(Stack.Id, Stack.Default.Leaf.BranchId, Stack.Default.Leaf.Id))
                           BranchUsers=@Stack.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>
@@ -54,7 +54,7 @@
     <tbody>
       @foreach (var branch in Branches) {
         <Stack_Branch Branch=@branch
-                      InstanceSelected=@InstanceSelected
+                      LeafSelected=@LeafSelected
                       CollectedIds=@CollectedIds
                       UpdateCollectedIds=@UpdateCollectedIds
                       Selected=@Selected />
@@ -68,7 +68,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public ExploreStack Stack { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
-  [Parameter] public EventCallback<LeafMeta> InstanceSelected { get; set; }
+  [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
   [Parameter] public FSharpOption<StackLeafIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<StackLeafIds>> UpdateCollectedIds { get; set; }
   [Parameter] public LeafMeta Selected { get; set; }

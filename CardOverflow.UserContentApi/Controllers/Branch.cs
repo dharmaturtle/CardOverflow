@@ -23,10 +23,10 @@ namespace CardOverflow.UserContentApi.Controllers {
     public async Task<IActionResult> Back(int id, int index) => _Back(index, await StackViewRepository.get(_db, id));
 
     [HttpGet("leaf/{id}/{index}/front")]
-    public async Task<IActionResult> InstanceFront(int id, int index) => _Front(index, await StackViewRepository.instance(_db, id));
+    public async Task<IActionResult> LeafFront(int id, int index) => _Front(index, await StackViewRepository.leaf(_db, id));
 
     [HttpGet("leaf/{id}/{index}/back")]
-    public async Task<IActionResult> InstanceBack(int id, int index) => _Back(index, await StackViewRepository.instance(_db, id));
+    public async Task<IActionResult> LeafBack(int id, int index) => _Back(index, await StackViewRepository.leaf(_db, id));
 
     private ContentResult _Front(int index, FSharpResult<LeafView, string> view) =>
       ( view.IsError

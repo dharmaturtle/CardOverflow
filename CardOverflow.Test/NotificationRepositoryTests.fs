@@ -98,7 +98,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     // works with DeckUpdatedStack, uncollected
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
-    let expectedDeckUpdatedStackNotification nid newInstanceId collected =
+    let expectedDeckUpdatedStackNotification nid newLeafId collected =
             {   Id = nid
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
@@ -106,19 +106,19 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckUpdatedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
-                                             New = { ids with LeafId = newInstanceId } } }
+                                             New = { ids with LeafId = newLeafId } } }
 
     do! expectedDeckUpdatedStackNotification 2 1002 None |> assertNotificationThenDelete
 
     // works with DeckUpdatedStack, collected
-    let collectedInstance = ids.LeafId
-    do! StackRepository.CollectCard c.Db followerId collectedInstance
+    let collectedLeaf = ids.LeafId
+    do! StackRepository.CollectCard c.Db followerId collectedLeaf
     let! stackCommand = VUpdateBranchId ids.BranchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let collected =
         {   StackId = ids.StackId
             BranchId = ids.BranchId
-            LeafId = collectedInstance } |> Some
+            LeafId = collectedLeaf } |> Some
     
     do! expectedDeckUpdatedStackNotification 3 1003 collected
         |> assertNotificationThenDelete

@@ -44,12 +44,12 @@
               </select>
             </div>
             <div class="row">
-              <a href="Gromplate/@_selectedGromplateId?InstanceId=@_selectedGrompleafId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Gromplate/@_selectedGromplateId?LeafId=@_selectedGrompleafId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
               <select value=@_selectedGrompleafId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedGrompleaf))>
-                @foreach (var instance in _selectedGrompleafs) {
-                  <option value=@instance.Id>@instance.Created - @instance.EditSummary</option>
+                @foreach (var leaf in _selectedGrompleafs) {
+                  <option value=@leaf.Id>@leaf.Created - @leaf.EditSummary</option>
                 }
               </select>
             </div>
@@ -68,9 +68,9 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditStack.Kind.TryGetCopySourceInstanceId(out var instanceId)) {
+          @if (EditStack.Kind.TryGetCopySourceLeafId(out var leafId)) {
             <span>Copied from</span>
-            <a href="leaf/@instanceId">
+            <a href="leaf/@leafId">
               Card
             </a>
           }
@@ -109,7 +109,7 @@
 @code {
   [Parameter] public ViewEditStackCommand EditStack { get; set; }
   [Parameter] public bool NewEditStackOnSave { get; set; }
-  [Parameter] public List<ViewGromplateWithAllInstances> Gromplates { get; set; }
+  [Parameter] public List<ViewGromplateWithAllLeafs> Gromplates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private UserClaims _user = UserClaims.init;
@@ -133,7 +133,7 @@
       Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditStack.Grompleaf.GromplateId));
     }
     if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Instances.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
     }
     UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
     StateHasChanged();
@@ -161,15 +161,15 @@
     }
   }
 
-  void UpdateSelectedGromplate(int gromplateId, int? instanceId = null) {
+  void UpdateSelectedGromplate(int gromplateId, int? leafId = null) {
     _selectedGromplateId = gromplateId;
-    _selectedGrompleafs = Gromplates.Single(t => t.Id == gromplateId).Instances;
-    UpdateSelectedGrompleaf(instanceId ?? _selectedGrompleafs.First().Id);
+    _selectedGrompleafs = Gromplates.Single(t => t.Id == gromplateId).Leafs;
+    UpdateSelectedGrompleaf(leafId ?? _selectedGrompleafs.First().Id);
   }
 
-  void UpdateSelectedGrompleaf(int instanceId) {
-    _selectedGrompleafId = instanceId;
-    EditStack.Grompleaf = Gromplates.SelectMany(x => x.Instances).Single(x => x.Id == instanceId);
+  void UpdateSelectedGrompleaf(int leafId) {
+    _selectedGrompleafId = leafId;
+    EditStack.Grompleaf = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
     var valuesByField = EditStack.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
     EditStack.FieldValues = EditStack.Grompleaf.Fields
       .Select(ViewFieldModule.copyTo)

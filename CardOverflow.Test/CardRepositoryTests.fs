@@ -109,7 +109,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     }
 
 [<Fact>]
-let ``Users can't collect multiple instances of a card``(): Task<unit> = task {
+let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = 3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
@@ -162,11 +162,11 @@ let ``collect works``(): Task<unit> = (taskResult {
     let authorId = 3
     do! FacetRepositoryTests.addBasicStack c.Db authorId []
     let branchId = 1
-    let instanceId = 1001
+    let leafId = 1001
     let stackId = 1
     let collectorId = 1
     let collectorDefaultDeckId = 1
-    let collect = StackRepository.collect c.Db collectorId instanceId
+    let collect = StackRepository.collect c.Db collectorId leafId
     let assertDeck deckId =
         StackRepository.GetCollected c.Db collectorId stackId
         |>%% Assert.Single
@@ -198,7 +198,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     Assert.areEquivalent [3] ccId
     do! assertDeck newDeckId
 
-    // collecting/updating to *new* instance doesn't change deckId or ccId
+    // collecting/updating to *new* leaf doesn't change deckId or ccId
     let! stackCommand = VUpdateBranchId branchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
 
@@ -207,7 +207,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     Assert.areEquivalent [3] ccId
     do! assertDeck newDeckId
 
-    // collecting/updating to *old* instance doesn't change deckId or ccId
+    // collecting/updating to *old* leaf doesn't change deckId or ccId
     let! ccId = StackRepository.collect c.Db collectorId 1001 None
 
     Assert.areEquivalent [3] ccId

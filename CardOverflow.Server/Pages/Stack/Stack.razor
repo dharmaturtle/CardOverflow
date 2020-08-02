@@ -21,7 +21,7 @@
     <div class="col-4">
       <Stack_Branches Stack=@_stack
                       Branches=@_stack.Branches
-                      InstanceSelected=@(x => _selected = x)
+                      LeafSelected=@(x => _selected = x)
                       CollectedIds=@_stack.CollectedIds
                       UpdateCollectedIds=@(async ids => {
                                              _stack.CollectedIds = ids;
@@ -33,7 +33,7 @@
     <div class="col">
       <div class="row">
         <div class="col-xl">
-          <Stack_IFrameHeader Stack=@_stack Instance=@_selected />
+          <Stack_IFrameHeader Stack=@_stack Leaf=@_selected />
           @foreach (var i in _selected.Indexes) {
             <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
               @if (IsCurate) {
@@ -82,7 +82,7 @@
       _selected.Users--;
     }
     foreach (var branch in _stack.Branches) {
-      if (branch.Instance.Id == _stack.CollectedIds?.Value?.LeafId || branch.Id == _stack.CollectedIds?.Value?.BranchId) {
+      if (branch.Leaf.Id == _stack.CollectedIds?.Value?.LeafId || branch.Id == _stack.CollectedIds?.Value?.BranchId) {
         branch.Summary.Users--;
       }
     }
@@ -97,7 +97,7 @@
     if (StackId.HasValue && oldStackId != StackId) {
       await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, _user.Id, StackId.Value)).Match(_ShowError, x => {
         _stack = x;
-        _selected = _stack.Default.Instance;
+        _selected = _stack.Default.Leaf;
         sub1();
       });
     } else if (BranchId.HasValue && oldBranchId != BranchId) {
@@ -106,7 +106,7 @@
         sub1();
       });
     } else if (LeafId.HasValue && oldLeafId != LeafId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.instance(db, _user.Id, LeafId.Value)).Match(_ShowError, x => {
+      await DbExecutor.QueryAsync(db => ExploreStackRepository.leaf(db, _user.Id, LeafId.Value)).Match(_ShowError, x => {
         (_selected, _stack) = x;
         sub1();
       });

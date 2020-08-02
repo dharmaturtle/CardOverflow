@@ -143,39 +143,39 @@ module ViewSearchGrompleaf =
     }
 
 [<CLIMutable>]
-type ViewGromplateWithAllInstances = {
+type ViewGromplateWithAllLeafs = {
     Id: int
     AuthorId: int
-    Instances: ViewGrompleaf ResizeArray
+    Leafs: ViewGrompleaf ResizeArray
     Editable: ViewGrompleaf
 } with
     static member load (entity: GromplateEntity) =
-        let instances =
+        let leafs =
             entity.Grompleafs
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
             |> Seq.map (Grompleaf.load >> ViewGrompleaf.load)
             |> toResizeArray
         {   Id = entity.Id
             AuthorId = entity.AuthorId
-            Instances = instances
+            Leafs = leafs
             Editable = {
-                instances.First() with
+                leafs.First() with
                     Id = 0
                     EditSummary = "" }}
     static member initialize userId =
-        let instance = Grompleaf.initialize |> ViewGrompleaf.load
+        let leaf = Grompleaf.initialize |> ViewGrompleaf.load
         {   Id = 0
             AuthorId = userId
-            Instances = [instance].ToList()
-            Editable = instance
+            Leafs = [leaf].ToList()
+            Editable = leaf
         }
 
 module SanitizeGromplate =
     let latest (db: CardOverflowDb) gromplateId =
         GromplateRepository.latest db gromplateId |> TaskResult.map ViewGrompleaf.load
-    let instance (db: CardOverflowDb) instanceId =
-        GromplateRepository.leaf db instanceId |> TaskResult.map ViewGrompleaf.load
-    let AllInstances (db: CardOverflowDb) gromplateId = task {
+    let leaf (db: CardOverflowDb) leafId =
+        GromplateRepository.leaf db leafId |> TaskResult.map ViewGrompleaf.load
+    let AllLeafs (db: CardOverflowDb) gromplateId = task {
         let! gromplate =
             db.Gromplate
                 .Include(fun x -> x.Grompleafs)
@@ -183,7 +183,7 @@ module SanitizeGromplate =
         return
             match gromplate with
             | null -> sprintf "Gromplate #%i doesn't exist" gromplateId |> Error
-            | x -> Ok <| ViewGromplateWithAllInstances.load x
+            | x -> Ok <| ViewGromplateWithAllLeafs.load x
         }
     let Search (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
@@ -213,7 +213,7 @@ module SanitizeGromplate =
                 .Distinct()
                 .Include(fun x -> x.Grompleafs)
                 .ToListAsync()
-        return x |> Seq.map ViewGromplateWithAllInstances.load |> toResizeArray
+        return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
         }
     let GetMineWith (db: CardOverflowDb) userId gromplateId = task {
         let! x =
@@ -223,15 +223,15 @@ module SanitizeGromplate =
                 .Distinct()
                 .Include(fun x -> x.Grompleafs)
                 .ToListAsync()
-        return x |> Seq.map ViewGromplateWithAllInstances.load |> toResizeArray
+        return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
         }
-    let Update (db: CardOverflowDb) userId (instance: ViewGrompleaf) =
+    let Update (db: CardOverflowDb) userId (leaf: ViewGrompleaf) =
         let update () = task {
-            let! r = ViewGrompleaf.copyTo instance |> GromplateRepository.UpdateFieldsToNewLeaf db userId
+            let! r = ViewGrompleaf.copyTo leaf |> GromplateRepository.UpdateFieldsToNewLeaf db userId
             return r |> Ok
         }
-        if instance.Fields.Count = instance.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
-            db.Gromplate.SingleOrDefault(fun x -> x.Id = instance.GromplateId)
+        if leaf.Fields.Count = leaf.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
+            db.Gromplate.SingleOrDefault(fun x -> x.Id = leaf.GromplateId)
             |> function
             | null -> update ()
             | gromplate ->

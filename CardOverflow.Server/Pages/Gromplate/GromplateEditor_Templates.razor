@@ -19,7 +19,7 @@
   <div></div>
   <h3>Templates</h3>
   <div>
-    @if (Instance.Templates.IsStandard) {
+    @if (Leaf.Templates.IsStandard) {
       <button type="button" class="btn btn-success" @onclick=AddTemplate disabled=@IsDisabled>
         <span class="oi oi-plus"></span>
       </button>
@@ -27,28 +27,28 @@
   </div>
 </div>
 <div class="">
-  @foreach (var template in Instance.JustTemplates) {
+  @foreach (var template in Leaf.JustTemplates) {
     <GromplateEditor_Template
                             Template=@template
-                            Css=@Instance.Css
-                            DisplayDelete=@(Instance.JustTemplates.Count() >= 2)
+                            Css=@Leaf.Css
+                            DisplayDelete=@(Leaf.JustTemplates.Count() >= 2)
                             Delete=@(() => DeleteTemplate(template))
                             IsDisabled=@IsDisabled />
   }
 </div>
 
 @code {
-  [Parameter] public ViewGrompleaf Instance { get; set; }
+  [Parameter] public ViewGrompleaf Leaf { get; set; }
   [Parameter] public EventCallback<GromplateType> UpdateGromplateType { get; set; }
   [Parameter] public bool IsDisabled { get; set; }
 
   private Task AddTemplate() =>
-    Instance.JustTemplates.Append(Template.initStandard).ToFList()
+    Leaf.JustTemplates.Append(Template.initStandard).ToFList()
     .Apply(GromplateType.NewStandard)
     .Apply(UpdateGromplateType.InvokeAsync);
 
   private Task DeleteTemplate(Template template) =>
-    Instance.JustTemplates.Where(x => x != template).ToFList()
+    Leaf.JustTemplates.Where(x => x != template).ToFList()
     .Apply(GromplateType.NewStandard)
     .Apply(UpdateGromplateType.InvokeAsync);
 

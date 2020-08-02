@@ -48,7 +48,7 @@
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="gromplateinstance/@_a.Grompleaf.Id">
+        <a href="gromplateleaf/@_a.Grompleaf.Id">
           Old Template
         </a>
       }
@@ -69,11 +69,11 @@
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="gromplateinstance/@_b.Grompleaf.Id">
+        <a href="gromplateleaf/@_b.Grompleaf.Id">
           New Template
         </a>
       } else {
-        <a href="gromplateinstance/@_a.Grompleaf.Id" class="float-right">
+        <a href="gromplateleaf/@_a.Grompleaf.Id" class="float-right">
           Template
         </a>
       }
@@ -303,7 +303,7 @@
     await base.OnParametersSetAsync();
     _user = await UserTask;
     if (B_LeafId == 0) {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instanceWithLatest(db, A_LeafId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.leafWithLatest(db, A_LeafId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected, B_LeafId) = x.ResultValue;
         _OnOk();
@@ -311,7 +311,7 @@
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.instancePair(db, A_LeafId, B_LeafId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => StackViewRepository.leafPair(db, A_LeafId, B_LeafId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
         _OnOk();

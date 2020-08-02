@@ -26,20 +26,20 @@
 </div>
 
 @code {
-  private ViewGrompleaf _instance;
-  [Parameter] public ViewGrompleaf Instance {
-    get => _instance;
+  private ViewGrompleaf _leaf;
+  [Parameter] public ViewGrompleaf Leaf {
+    get => _leaf;
     set {
-      _instance = value;
+      _leaf = value;
       if (_originalTemplates == null) {
-        _originalTemplates = _instance.JustTemplates;
+        _originalTemplates = _leaf.JustTemplates;
       }
     }
   }
   private FSharpList<Template> _originalTemplates;
   [Parameter] public EventCallback<GromplateType> UpdateGromplateType { get; set; }
 
-  private bool _isStandard => Instance.Templates.IsStandard;
+  private bool _isStandard => Leaf.Templates.IsStandard;
 
   private Task _setType(GromplateType gromplateType) =>
     UpdateGromplateType.InvokeAsync(gromplateType);

@@ -12,9 +12,9 @@
 
 <AuthorizeView>
   <div class="d-flex justify-content-between align-items-center">
-    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?leaf={x}") Ids=@cards?.Select(x => x.LeafMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedInstanceId.ToString() Query=@search.Query />
+    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?leaf={x}") Ids=@cards?.Select(x => x.LeafMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedLeafId.ToString() Query=@search.Query />
   </div>
-  @if (SelectedInstanceId == null) {
+  @if (SelectedLeafId == null) {
     <div>
       @if (cards == null) {
         <p><em>Loading...</em></p>
@@ -51,14 +51,14 @@
       <Pager Details=@details PageChanged=@PageChanged />
     </div>
   } else {
-    <Stack LeafId=@SelectedInstanceId.Value IsCurate=true Index=@Index />
+    <Stack LeafId=@SelectedLeafId.Value IsCurate=true Index=@Index />
   }
 </AuthorizeView>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int? SelectedInstanceId { get; set; }
+  [Parameter] public int? SelectedLeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<Card> cards;
@@ -68,20 +68,20 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (_user.IsAuthenticated) {
-      if (SelectedInstanceId == null && cards == null) {
+      if (SelectedLeafId == null && cards == null) {
         await PageChanged(1);
       }
-      if (SelectedInstanceId != null) {
-        if (cards == null || (cards != null && !cards.Any(card => card.LeafMeta.Id == SelectedInstanceId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedInstanceFromInstance(db, _user.Id, SelectedInstanceId.Value));
+      if (SelectedLeafId != null) {
+        if (cards == null || (cards != null && !cards.Any(card => card.LeafMeta.Id == SelectedLeafId.Value))) {
+          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedLeafFromLeaf(db, _user.Id, SelectedLeafId.Value));
           if (x.IsOk) {
-            if (SelectedInstanceId != x.ResultValue) {
+            if (SelectedLeafId != x.ResultValue) {
               NavigationManager.NavigateTo($"my/stack?leaf={x.ResultValue}");
             } else {
-              SelectedInstanceId = x.ResultValue;
+              SelectedLeafId = x.ResultValue;
             }
           } else {
-            SelectedInstanceId = null;
+            SelectedLeafId = null;
             ToastService.ShowError(x.ErrorValue);
           }
         }
@@ -103,7 +103,7 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedInstanceId = null;
+    SelectedLeafId = null;
     search = newSearch;
     return PageChanged(1);
   }

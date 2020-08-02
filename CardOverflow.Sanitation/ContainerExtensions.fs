@@ -58,7 +58,7 @@ type EntityHasher () =
         member val LeafHasher =
             fun struct (leaf, grompleafHash, sha512) -> LeafEntity.hash grompleafHash sha512 leaf
         member val GrompleafHasher =
-            fun struct (instance, sha512) -> GrompleafEntity.hash sha512 instance
+            fun struct (leaf, sha512) -> GrompleafEntity.hash sha512 leaf
         member _.GetMaxIndexInclusive =
             fun (e: LeafEntity) ->
                 (e |> LeafView.load).MaxIndexInclusive
@@ -82,7 +82,7 @@ type Container with
             .AddSingleton<ILoggerFactory>(loggerFactory)
             .AddSingleton<IEntityHasher, EntityHasher>()
             .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
-                //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
+                //loggerFactory.AddSerilog(container.GetLeaf<ILogger>()) |> ignore
                 optionsBuilder
                     .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
                     .UseSnakeCaseNamingConvention()

@@ -19,19 +19,19 @@
       <span class="oi oi-pencil ml-2" />
     </a>
   }
-  <a href="stack/copyinstance/@Instance.Id" title="Edit a Copy">
+  <a href="stack/copyleaf/@Leaf.Id" title="Edit a Copy">
     <span class="fas fa-copy ml-2" />
   </a>
   <a href="/branch/@_branch.Id/revision" title="Revisions">
     <i class="fas fa-history ml-2"></i>
   </a>
-  @if (Instance.IsLatest) {
+  @if (Leaf.IsLatest) {
     <a>
       @*Hack: The empty <a> keeps it in alignment with the other icons*@
       <span class="fas fa-sync text-success ml-2" title="Up to date" />
     </a>
   } else {
-    <a href="@($"stackdiff/{Instance.Id}/Older Branch Instance/{_branch.Instance.Id}/Latest Branch Instance")">
+    <a href="@($"stackdiff/{Leaf.Id}/Older Branch Leaf/{_branch.Leaf.Id}/Latest Branch Leaf")">
       <span class="fas fa-sync text-danger ml-2" title="Out of date" />
     </a>
   }
@@ -40,9 +40,9 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public LeafMeta Instance { get; set; }
+  [Parameter] public LeafMeta Leaf { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
-  private Branch _branch => Stack.Branches.Single(b => b.Id == Instance.BranchId);
+  private Branch _branch => Stack.Branches.Single(b => b.Id == Leaf.BranchId);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

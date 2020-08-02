@@ -34,9 +34,9 @@
   </h3>
 }
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?leaf={x}") Ids=@_stacks?.Select(x => x.Leaf.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedInstanceId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?leaf={x}") Ids=@_stacks?.Select(x => x.Leaf.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedLeafId.ToString() />
 </div>
-@if (_selectedInstanceId == default) {
+@if (_selectedLeafId == default) {
   @if (_stacks == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -67,7 +67,7 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Stack LeafId=@_selectedInstanceId.Value />
+  <Stack LeafId=@_selectedLeafId.Value />
 }
 
 @code {
@@ -77,13 +77,13 @@
   private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
-  private int? _selectedInstanceId;
+  private int? _selectedLeafId;
   private DeckWithFollowMeta _deck;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (_selectedInstanceId == default) {
+    if (_selectedLeafId == default) {
       await PageChanged(1);
     }
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, DeckId)).Match(ToastService, x => _deck = x);
@@ -97,12 +97,12 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    _selectedInstanceId = null;
+    _selectedLeafId = null;
     _search = newSearch;
     return PageChanged(1);
   }
 
   protected override void GetQueryStringValues() =>
-    NavigationManager.TryGetQueryString<int?>("leaf", out _selectedInstanceId);
+    NavigationManager.TryGetQueryString<int?>("leaf", out _selectedLeafId);
 
 }

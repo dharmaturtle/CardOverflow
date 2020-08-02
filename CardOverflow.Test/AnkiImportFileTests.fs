@@ -175,14 +175,14 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let stack = stack.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        stack.Default.Instance.StrippedFront)
+        stack.Default.Leaf.StrippedFront)
     let! stack = ExploreStackRepository.get c.Db userId 1
     Assert.Empty stack.Value.Relationships
     Assert.Empty c.Db.Relationship
 
     let! clozes = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value.Contains "mnemonic")).ToListAsync()
-    for instance in clozes do
-        do! testCommields instance.StackId [longThing; ""]
+    for leaf in clozes do
+        do! testCommields leaf.StackId [longThing; ""]
     }
 
 [<Fact>]
@@ -193,7 +193,7 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
-    let! view = StackViewRepository.instance c.Db 1001
+    let! view = StackViewRepository.leaf c.Db 1001
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
     Assert.Equal<string seq>(
@@ -440,7 +440,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let stackId = 1
     let leafId = 1001
 
-    let test instanceId customTest = task {
+    let test _ customTest = task {
         let! _ =
             SanitizeStackRepository.Update
                 c.Db
@@ -468,14 +468,14 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         let! field = c.Db.Commield.SingleAsync()
         Assert.Equal(stackId, field.Id)
         Assert.Equal(3, field.AuthorId)
-        let! instance = c.Db.Commeaf.Include(fun x -> x.Commeaf_Leafs).SingleAsync(fun x -> x.Value = communalValue)
-        Assert.Equal(leafId, instance.Id)
-        Assert.Equal(1, instance.CommieldId)
-        Assert.Equal("Back", instance.FieldName)
-        Assert.Equal(communalValue, instance.Value)
-        Assert.Null instance.Modified
-        Assert.Equal(editSummary, instance.EditSummary)
-        customTest instance }
+        let! leaf = c.Db.Commeaf.Include(fun x -> x.Commeaf_Leafs).SingleAsync(fun x -> x.Value = communalValue)
+        Assert.Equal(leafId, leaf.Id)
+        Assert.Equal(1, leaf.CommieldId)
+        Assert.Equal("Back", leaf.FieldName)
+        Assert.Equal(communalValue, leaf.Value)
+        Assert.Null leaf.Modified
+        Assert.Equal(editSummary, leaf.EditSummary)
+        customTest leaf }
     do! test <| None <| fun i ->
             Assert.Equal(leafId, i.Commeaf_Leafs.Single().LeafId)
             Assert.Equal(1001, i.Commeaf_Leafs.Single().CommeafId)
@@ -523,7 +523,7 @@ let ``Manual Anki import`` (): Task<unit> = (taskResult {
     //c.RegisterStuffTestOnly
     //c.RegisterStandardConnectionString
     //use __ = AsyncScopedLifestyle.BeginScope c
-    //let db = c.GetInstance<CardOverflowDb>()
+    //let db = c.GetLeaf<CardOverflowDb>()
 
     let ankiDb =
         AnkiImporter.getSimpleAnkiDb

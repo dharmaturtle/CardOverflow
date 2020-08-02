@@ -38,9 +38,9 @@
         <span>&nbsp;</span>
       }
     </div>
-    @if (InstanceUsers != default) {
+    @if (LeafUsers != default) {
       <div>
-        @InstanceUsers
+        @LeafUsers
       </div>
     }
   </div>
@@ -50,7 +50,7 @@
   [Parameter] public string Css { get; set; }
   [Parameter] public EventCallback OnClick { get; set; }
   [Parameter] public int? BranchUsers { get; set; }
-  [Parameter] public int? InstanceUsers { get; set; }
+  [Parameter] public int? LeafUsers { get; set; }
   private double _scaleX() => Math.Max(1.5, (BranchUsers?.ToString() ?? "").Length);
 
 }

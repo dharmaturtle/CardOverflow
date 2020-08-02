@@ -18,13 +18,13 @@
   <th scope="row" style="text-align: center">
     <CollectToggles IsBranch=true
                     CollectedIds=@CollectedIds
-                    Ids=@(new StackLeafIds(Branch.Instance.StackId, Branch.Id, Branch.Instance.Id))
+                    Ids=@(new StackLeafIds(Branch.Leaf.StackId, Branch.Id, Branch.Leaf.Id))
                     BranchUsers=@Branch.Users
-                    InstanceUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
+                    LeafUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                     UpdateCollectedIds=@UpdateCollectedIds />
   </th>
   <td>
-    <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Instance.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(Branch.Instance))">
+    <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Leaf.Id ? "active" : "border-0")" @onclick="@(() => LeafSelected.InvokeAsync(Branch.Leaf))">
       <span class="font-weight-bolder">
         @if (Branch.Name == null) {
           <span>&laquo; Default &raquo;</span>
@@ -37,7 +37,7 @@
       </span>
       @if (_revisions != null && _displayAllRevisions) {
         <div>
-          <Stack_BranchSummary Instance=@_revisions.SortedMeta.First() />
+          <Stack_BranchSummary Leaf=@_revisions.SortedMeta.First() />
         </div>
       }
     </div>
@@ -49,14 +49,14 @@
         @if (Branch.AuthorId == _user.Id) {
           <BSDropdownItem Href="@($"stack/editbranch/{Branch.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
         }
-        <BSDropdownItem Href="@($"stack/copyinstance/{Branch.Instance.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+        <BSDropdownItem Href="@($"stack/copyleaf/{Branch.Leaf.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
         <BSDropdownItem Href="@($"branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
         <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
         @if (Branch.Name != null) {
-          <BSDropdownItem Href="@($"stackdiff/{Branch.Instance.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+          <BSDropdownItem Href="@($"stackdiff/{Branch.Leaf.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
         }
-        @if (CollectedIds?.Value?.LeafId != null && Branch.Instance.Id != CollectedIds.Value.LeafId) {
-          <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{Branch.Instance.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+        @if (CollectedIds?.Value?.LeafId != null && Branch.Leaf.Id != CollectedIds.Value.LeafId) {
+          <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{Branch.Leaf.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
         }
       </BSDropdownMenu>
     </BSDropdown>
@@ -70,22 +70,22 @@
         <div class="col-auto">
           <CollectToggles CollectedIds=@CollectedIds
                           Ids=@(new StackLeafIds(revision.StackId, revision.BranchId, revision.Id))
-                          InstanceUsers=@revision.Users
+                          LeafUsers=@revision.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </div>
-        <button class="col list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => InstanceSelected.InvokeAsync(revision))">
-          <Stack_BranchSummary Instance=@revision />
+        <button class="col list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => LeafSelected.InvokeAsync(revision))">
+          <Stack_BranchSummary Leaf=@revision />
         </button>
       </td>
       <td>
         <BSDropdown Class="align-self-center">
           <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
           <BSDropdownMenu>
-            <BSDropdownItem Href="@($"stack/copyinstance/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+            <BSDropdownItem Href="@($"stack/copyleaf/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
             @if (Branch.Name != null) {
               <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
             }
-            <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Instance/{Branch.Instance.Id}/Latest Branch Instance")">&Delta; Compare with latest Branch Instance</BSDropdownItem>
+            <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Leaf/{Branch.Leaf.Id}/Latest Branch Leaf")">&Delta; Compare with latest Branch Leaf</BSDropdownItem>
             @if (CollectedIds?.Value?.LeafId != null && revision.Id != CollectedIds.Value.LeafId) {
               <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
             }
@@ -100,7 +100,7 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public Branch Branch { get; set; }
-  [Parameter] public EventCallback<LeafMeta> InstanceSelected { get; set; }
+  [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
   [Parameter] public FSharpOption<StackLeafIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<StackLeafIds>> UpdateCollectedIds { get; set; }
   [Parameter] public LeafMeta Selected { get; set; }
@@ -110,7 +110,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (Selected.BranchId == Branch.Id && Selected.Id != Branch.Instance.Id && !_displayAllRevisions) {
+    if (Selected.BranchId == Branch.Id && Selected.Id != Branch.Leaf.Id && !_displayAllRevisions) {
       await toggleRevisions();
     }
     StateHasChanged();
@@ -131,7 +131,7 @@
       });
     }
     if (!_displayAllRevisions && _revisions.SortedMeta.Skip(1).Select(x => x.Id).Contains(Selected.Id)) {
-      await InstanceSelected.InvokeAsync(Branch.Instance);
+      await LeafSelected.InvokeAsync(Branch.Leaf);
     }
   }
 

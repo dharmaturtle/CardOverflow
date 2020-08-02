@@ -16,7 +16,7 @@
 @inherits QueryStringBase
 
 @if (_isCurate) {
-  <Curate SelectedInstanceId=@_leafId Index=@_index />
+  <Curate SelectedLeafId=@_leafId Index=@_index />
 } else {
   <Explore SelectedStackId=@StackId BranchId=@_branchId LeafId=@_leafId Index=@_index />
 }

@@ -178,7 +178,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     Assert.Equal(AnkiDefaults.grompleafIdByHash.Count + 1, c.Db.Gromplate.Count())
     Assert.Equal(10, c.Db.Grompleaf.Count())
 
-    let getInstances (gromplateName: string) =
+    let getLeafs (gromplateName: string) =
         c.Db.Grompleaf
             .Include(fun x -> x.Leafs :> IEnumerable<_>)
                 .ThenInclude(fun (x: LeafEntity) -> x.Grompleaf)
@@ -186,14 +186,14 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
             .SelectMany(fun x -> x.Leafs :> IEnumerable<_>)
             .ToListAsync()
     
-    let! basic = getInstances "Basic"
+    let! basic = getLeafs "Basic"
     for leaf in basic do
         let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.Commields
+        Assert.Empty stack.Default.Leaf.Commields
     
-    let! sketchy = getInstances "Sketchy"
+    let! sketchy = getLeafs "Sketchy"
     let expectedFieldAndValues =
         ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
          "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
@@ -201,7 +201,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! stack = ExploreStackRepository.get c.Db userId card.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.Commields
+        Assert.Empty stack.Default.Leaf.Commields
         let! view = StackViewRepository.get c.Db stack.Id
         Assert.Equal(
             expectedFieldAndValues,
@@ -209,15 +209,15 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value).OrderBy(fun x -> x))
 
-    let! cloze = getInstances "Cloze"
-    for instance in cloze do
-        let! view = StackViewRepository.get c.Db instance.StackId
+    let! cloze = getLeafs "Cloze"
+    for leaf in cloze do
+        let! view = StackViewRepository.get c.Db leaf.StackId
         [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
             "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.Select(fun x -> x.Field.Name, x.Value))
-        let instances = LeafMeta.loadAll true true instance
-        Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", instances.[0].StrippedFront)
-        Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", instances.[1].StrippedFront)
+        let leafs = LeafMeta.loadAll true true leaf
+        Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", leafs.[0].StrippedFront)
+        Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", leafs.[1].StrippedFront)
     }
 
 [<Fact>]
@@ -313,26 +313,26 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             .Single(fun c -> c.Leaf.FieldValues.Contains("mp3"))
             .Deck.Name)
 
-    let getInstances (gromplateName: string) =
+    let getLeafs (gromplateName: string) =
         c.Db.Grompleaf
             .Include(fun x -> x.Leafs)
             .Where(fun x -> x.Name.Contains gromplateName)
             .SelectMany(fun x -> x.Leafs :> IEnumerable<_>)
             .ToListAsync()
 
-    let! instances = getInstances "optional"
-    for instance in instances do
-        let! stack = ExploreStackRepository.get c.Db userId instance.StackId
+    let! leafs = getLeafs "optional"
+    for leaf in leafs do
+        let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.Commields
+        Assert.Empty stack.Default.Leaf.Commields
 
-    let! instances = getInstances "and reversed card)"
-    for instance in instances do
-        let! stack = ExploreStackRepository.get c.Db userId instance.StackId
+    let! leafs = getLeafs "and reversed card)"
+    for leaf in leafs do
+        let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
         let stack = stack.Value
         Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Instance.Commields
+        Assert.Empty stack.Default.Leaf.Commields
 
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.grompleafIdByHash.Count - 1, c.Db.User_Grompleaf.Count(fun x -> x.UserId = userId))

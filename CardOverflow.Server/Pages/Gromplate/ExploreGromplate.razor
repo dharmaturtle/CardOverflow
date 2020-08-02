@@ -11,10 +11,10 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/gromplate/" CreateLink=@(x => $"/gromplate/{x}") Ids=@_instances?.Select(x => x.GromplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/gromplate/" CreateLink=@(x => $"/gromplate/{x}") Ids=@_leafs?.Select(x => x.GromplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
-  @if (_instances == null) {
+  @if (_leafs == null) {
     <p><em>Loading...</em></p>
   } else {
     <table class="table">
@@ -23,19 +23,19 @@
         <th>Users</th>
         <th>Name</th>
       </tr>
-      @foreach (var instance in _instances) {
+      @foreach (var leaf in _leafs) {
         <tr>
           <td>
-            <HoverPreview IsCollected=@instance.IsCollected>
-              <ResizingIframe GrompleafId=@instance.Id Back />
+            <HoverPreview IsCollected=@leaf.IsCollected>
+              <ResizingIframe GrompleafId=@leaf.Id Back />
             </HoverPreview>
           </td>
           <td>
-            @instance.GromplateUsers
+            @leaf.GromplateUsers
           </td>
           <td>
-            <a href="/gromplate/@instance.GromplateId">
-              @instance.Name
+            <a href="/gromplate/@leaf.GromplateId">
+              @leaf.Name
             </a>
           </td>
         </tr>
@@ -51,14 +51,14 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedId { get; set; }
-  private IList<ViewSearchGrompleaf> _instances;
+  private IList<ViewSearchGrompleaf> _leafs;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (SelectedId == null && _instances == null) {
+    if (SelectedId == null && _leafs == null) {
       await PageChanged(1);
     }
     StateHasChanged();
@@ -67,7 +67,7 @@
   async Task PageChanged(int pageNumber) {
     var pagedList = await DbExecutor.QueryAsync(db => SanitizeGromplate.Search(db, _user.Id, pageNumber, _search.Query));
     _details = pagedList.Details;
-    _instances = pagedList.Results.ToList();
+    _leafs = pagedList.Results.ToList();
   }
 
   Task SearchClicked(SearchCommand newSearch) {
