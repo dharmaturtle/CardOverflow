@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public CommieldEntity()
         {
-            CommieldInstances = new HashSet<CommieldInstanceEntity>();
+            Commeafs = new HashSet<CommeafEntity>();
         }
 
         [Key]
@@ -23,8 +23,8 @@ namespace CardOverflow.Entity
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestInstanceId")]
         [InverseProperty("Commields")]
-        public virtual CommieldInstanceEntity LatestInstance { get; set; }
+        public virtual CommeafEntity LatestInstance { get; set; }
         [InverseProperty("Commield")]
-        public virtual ICollection<CommieldInstanceEntity> CommieldInstances { get; set; }
+        public virtual ICollection<CommeafEntity> Commeafs { get; set; }
     }
 }

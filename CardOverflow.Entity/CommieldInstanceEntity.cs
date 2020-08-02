@@ -6,11 +6,11 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommieldInstanceEntity
+    public partial class CommeafEntity
     {
-        public CommieldInstanceEntity()
+        public CommeafEntity()
         {
-            CommieldInstance_Leafs = new HashSet<CommieldInstance_LeafEntity>();
+            Commeaf_Leafs = new HashSet<Commeaf_LeafEntity>();
             Commields = new HashSet<CommieldEntity>();
         }
 
@@ -45,10 +45,10 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [ForeignKey("CommieldId")]
-        [InverseProperty("CommieldInstances")]
+        [InverseProperty("Commeafs")]
         public virtual CommieldEntity Commield { get; set; }
-        [InverseProperty("CommieldInstance")]
-        public virtual ICollection<CommieldInstance_LeafEntity> CommieldInstance_Leafs { get; set; }
+        [InverseProperty("Commeaf")]
+        public virtual ICollection<Commeaf_LeafEntity> Commeaf_Leafs { get; set; }
         [InverseProperty("LatestInstance")]
         public virtual ICollection<CommieldEntity> Commields { get; set; }
     }

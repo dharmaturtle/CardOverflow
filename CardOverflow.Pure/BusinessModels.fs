@@ -337,7 +337,7 @@ type LeafView = {
         |> Result.requireSome (sprintf "Index %i out of range" i)
         
 
-type CommieldInstance = {
+type Commeaf = {
     Id: int
     FieldName: string
     Value: string
@@ -395,7 +395,7 @@ type LeafMeta = {
     IsLatest: bool
     StrippedFront: string
     StrippedBack: string
-    Commields: CommieldInstance ResizeArray
+    Commields: Commeaf ResizeArray
     Users: int
     EditSummary: string
 } with

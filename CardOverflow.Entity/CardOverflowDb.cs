@@ -20,8 +20,8 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommentGromplateEntity> CommentGromplate { get; set; }
         public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
         public virtual DbSet<CommieldEntity> Commield { get; set; }
-        public virtual DbSet<CommieldInstanceEntity> CommieldInstance { get; set; }
-        public virtual DbSet<CommieldInstance_LeafEntity> CommieldInstance_Leaf { get; set; }
+        public virtual DbSet<CommeafEntity> Commeaf { get; set; }
+        public virtual DbSet<Commeaf_LeafEntity> Commeaf_Leaf { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<DeckFollowersEntity> DeckFollowers { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
@@ -335,7 +335,7 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommieldInstanceEntity>(entity =>
+            modelBuilder.Entity<CommeafEntity>(entity =>
             {
                 entity.HasIndex(e => e.CommieldId);
 
@@ -346,28 +346,28 @@ namespace CardOverflow.Entity
                     .IsUnique();
 
                 entity.HasOne(d => d.Commield)
-                    .WithMany(p => p.CommieldInstances)
+                    .WithMany(p => p.Commeafs)
                     .HasForeignKey(d => d.CommieldId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommieldInstance_LeafEntity>(entity =>
+            modelBuilder.Entity<Commeaf_LeafEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommieldInstanceId, e.LeafId });
+                entity.HasKey(e => new { e.CommeafId, e.LeafId });
 
                 entity.HasIndex(e => e.LeafId);
 
                 entity.HasOne(d => d.Leaf)
-                    .WithMany(p => p.CommieldInstance_Leafs)
+                    .WithMany(p => p.Commeaf_Leafs)
                     .HasForeignKey(d => d.LeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommieldInstance_Leaf_LeafId");
+                    .HasConstraintName("FK_Commeaf_Leaf_LeafId");
 
-                entity.HasOne(d => d.CommieldInstance)
-                    .WithMany(p => p.CommieldInstance_Leafs)
-                    .HasForeignKey(d => d.CommieldInstanceId)
+                entity.HasOne(d => d.Commeaf)
+                    .WithMany(p => p.Commeaf_Leafs)
+                    .HasForeignKey(d => d.CommeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CommieldInstance_Leaf_CommieldInstanceId");
+                    .HasConstraintName("FK_Commeaf_Leaf_CommeafId");
             });
 
             modelBuilder.Entity<DeckEntity>(entity =>

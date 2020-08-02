@@ -138,8 +138,8 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let allLeafViews =
         c.Db.Leaf
             .Include(fun x -> x.Grompleaf)
-            .Include(fun x -> x.CommieldInstance_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommieldInstance_LeafEntity) -> x.CommieldInstance)
+            .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
+                .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
             .ToList()
             .Select(LeafView.load)
     let assertCount expected (clozeText: string) =
@@ -180,7 +180,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Empty stack.Value.Relationships
     Assert.Empty c.Db.Relationship
 
-    let! clozes = c.Db.Leaf.Where(fun x -> x.CommieldInstance_Leafs.Any(fun x -> x.CommieldInstance.Value.Contains "mnemonic")).ToListAsync()
+    let! clozes = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value.Contains "mnemonic")).ToListAsync()
     for instance in clozes do
         do! testCommields instance.StackId [longThing; ""]
     }
@@ -292,18 +292,18 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let testCommields = testCommields c userId
 
-    let getLeafs clozeText = c.Db.Leaf.Where(fun x -> x.CommieldInstance_Leafs.Any(fun x -> x.CommieldInstance.Value = clozeText))
+    let getLeafs clozeText = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
         let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
             Assert.SingleI <| c.Db.LatestLeaf.Where(fun x -> x.FieldValues.Contains clozeText)
-            Assert.Equal(0, c.Db.LatestLeaf.Count(fun x -> x.CommieldInstance_Leafs.Any(fun x -> x.CommieldInstance.Value = clozeText)))
-            let! commieldInstanceIds =
+            Assert.Equal(0, c.Db.LatestLeaf.Count(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText)))
+            let! commeafIds =
                 (getLeafs clozeText)
-                    .Select(fun x -> x.CommieldInstance_Leafs.Single().CommieldInstance.Id)
+                    .Select(fun x -> x.Commeaf_Leafs.Single().Commeaf.Id)
                     .ToListAsync()
-            for id in commieldInstanceIds do
-                Assert.True(c.Db.LatestCommieldInstance.Any(fun x -> x.Id = id))
+            for id in commeafIds do
+                Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = id))
             let! stackIds = (getLeafs clozeText).Select(fun x -> x.StackId).ToListAsync()
             for id in stackIds do
                 do! testCommields id [clozeText]
@@ -315,8 +315,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     let assertCount expected (clozeText: string) =
         c.Db.Leaf
             .Include(fun x -> x.Grompleaf)
-            .Include(fun x -> x.CommieldInstance_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommieldInstance_LeafEntity) -> x.CommieldInstance)
+            .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
+                .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
             .ToList()
             .Select(LeafView.load)
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
@@ -468,7 +468,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         let! field = c.Db.Commield.SingleAsync()
         Assert.Equal(stackId, field.Id)
         Assert.Equal(3, field.AuthorId)
-        let! instance = c.Db.CommieldInstance.Include(fun x -> x.CommieldInstance_Leafs).SingleAsync(fun x -> x.Value = communalValue)
+        let! instance = c.Db.Commeaf.Include(fun x -> x.Commeaf_Leafs).SingleAsync(fun x -> x.Value = communalValue)
         Assert.Equal(leafId, instance.Id)
         Assert.Equal(1, instance.CommieldId)
         Assert.Equal("Back", instance.FieldName)
@@ -477,15 +477,15 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         Assert.Equal(editSummary, instance.EditSummary)
         customTest instance }
     do! test <| None <| fun i ->
-            Assert.Equal(leafId, i.CommieldInstance_Leafs.Single().LeafId)
-            Assert.Equal(1001, i.CommieldInstance_Leafs.Single().CommieldInstanceId)
-            Assert.True(c.Db.LatestCommieldInstance.Any(fun x -> x.Id = i.Id))
+            Assert.Equal(leafId, i.Commeaf_Leafs.Single().LeafId)
+            Assert.Equal(1001, i.Commeaf_Leafs.Single().CommeafId)
+            Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
     do! test <| Some leafId <| fun i ->
-            Assert.Equal([1001; 1002], i.CommieldInstance_Leafs.Select(fun x -> x.LeafId))
-            Assert.Equal([1001; 1001], i.CommieldInstance_Leafs.Select(fun x -> x.CommieldInstanceId))
-            Assert.True(c.Db.LatestCommieldInstance.Any(fun x -> x.Id = i.Id))
+            Assert.Equal([1001; 1002], i.Commeaf_Leafs.Select(fun x -> x.LeafId))
+            Assert.Equal([1001; 1001], i.Commeaf_Leafs.Select(fun x -> x.CommeafId))
+            Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
     Assert.SingleI c.Db.Commield
-    Assert.SingleI c.Db.CommieldInstance }
+    Assert.SingleI c.Db.Commeaf }
 
 [<Fact>]
 let ``AnkiDefaults.gromplateIdByHash is same as initial database`` (): unit =

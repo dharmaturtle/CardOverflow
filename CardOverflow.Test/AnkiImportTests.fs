@@ -420,7 +420,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` anki
         Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(2, c.Db.CollectedCard.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
-        Assert.Equal(0, c.Db.CommieldInstance.Count())
+        Assert.Equal(0, c.Db.Commeaf.Count())
         Assert.Equal(0, c.Db.Commield.Count())
         Assert.Equal(7, c.Db.Grompleaf.Count())
         Assert.Equal(5, c.Db.LatestGrompleaf.Count())

@@ -85,8 +85,8 @@ module LeafEntity =
         bitArray.CopyTo(bytes, 0)
         bytes
     let hash (gromplateHash: BitArray) (hasher: SHA512) (e: LeafEntity) =
-        e.CommieldInstance_Leafs
-            .Select(fun x -> x.CommieldInstance.Value)
+        e.Commeaf_Leafs
+            .Select(fun x -> x.Commeaf.Value)
             .OrderBy(fun x -> x)
         |> Seq.toList
         |> List.append
@@ -301,11 +301,11 @@ type LeafView with
         LeafView.toView
             entity.Grompleaf
             entity.FieldValues
-    member this.CopyToX (entity: LeafEntity) (commields: CommieldInstanceEntity seq) =
+    member this.CopyToX (entity: LeafEntity) (commields: CommeafEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
-        entity.CommieldInstance_Leafs <-
-            commields.Select(fun x -> CommieldInstance_LeafEntity(CommieldInstance = x))
-            |> entity.CommieldInstance_Leafs.Concat
+        entity.Commeaf_Leafs <-
+            commields.Select(fun x -> Commeaf_LeafEntity(Commeaf = x))
+            |> entity.Commeaf_Leafs.Concat
             |> toResizeArray
         entity.GrompleafId <- this.Grompleaf.Id
     member this.CopyToNew commields =
@@ -327,8 +327,8 @@ type LeafView with
         e.MaxIndexInclusive <- this.MaxIndexInclusive
         e
 
-type CommieldInstance with
-    static member load (entity: CommieldInstanceEntity) = {   
+type Commeaf with
+    static member load (entity: CommeafEntity) = {   
         Id = entity.Id
         FieldName = entity.FieldName
         Value = entity.Value }
@@ -347,7 +347,7 @@ type LeafMeta with
             IsCollected = isCollected
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            Commields = entity.CommieldInstance_Leafs.Select(fun x -> CommieldInstance.load x.CommieldInstance).ToList()
+            Commields = entity.Commeaf_Leafs.Select(fun x -> Commeaf.load x.Commeaf).ToList()
             Users = entity.Users
             EditSummary = entity.EditSummary
         }

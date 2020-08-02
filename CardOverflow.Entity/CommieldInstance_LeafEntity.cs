@@ -5,19 +5,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    [Table("commield_instance0leaf")]
-    public partial class CommieldInstance_LeafEntity
+    [Table("commeaf0leaf")]
+    public partial class Commeaf_LeafEntity
     {
         [Key]
         public int LeafId { get; set; }
         [Key]
-        public int CommieldInstanceId { get; set; }
+        public int CommeafId { get; set; }
 
         [ForeignKey("LeafId")]
-        [InverseProperty("CommieldInstance_Leafs")]
+        [InverseProperty("Commeaf_Leafs")]
         public virtual LeafEntity Leaf { get; set; }
-        [ForeignKey("CommieldInstanceId")]
-        [InverseProperty("CommieldInstance_Leafs")]
-        public virtual CommieldInstanceEntity CommieldInstance { get; set; }
+        [ForeignKey("CommeafId")]
+        [InverseProperty("Commeaf_Leafs")]
+        public virtual CommeafEntity Commeaf { get; set; }
     }
 }

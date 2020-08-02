@@ -71,7 +71,7 @@ type AnkiGrompleaf = {
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
-    Commields: CommieldInstanceEntity list
+    Commields: CommeafEntity list
     Gromplate: GrompleafEntity
     FieldValues: string
     Created: DateTime
@@ -84,9 +84,9 @@ type AnkiCardWrite = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.Grompleaf <- this.Gromplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
-        entity.CommieldInstance_Leafs <-
+        entity.Commeaf_Leafs <-
             this.Commields
-            |> List.map (fun cf -> CommieldInstance_LeafEntity(Leaf = entity, CommieldInstance = cf))
+            |> List.map (fun cf -> Commeaf_LeafEntity(Leaf = entity, Commeaf = cf))
             |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = LeafEntity()
@@ -111,8 +111,8 @@ type AnkiCardWrite = {
         let gromplateHash = this.Gromplate |> GrompleafEntity.hash hasher
         let hash = this.CopyToNew [] |> LeafEntity.hash gromplateHash hasher
         db.Leaf
-            .Include(fun x -> x.CommieldInstance_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: CommieldInstance_LeafEntity) -> x.CommieldInstance)
+            .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
+                .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
