@@ -9,7 +9,7 @@ namespace CardOverflow.Entity
     {
         public GromplateEntity()
         {
-            GromplateInstances = new HashSet<GromplateInstanceEntity>();
+            Grompleafs = new HashSet<GrompleafEntity>();
             CommentGromplates = new HashSet<CommentGromplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
         }
@@ -25,9 +25,9 @@ namespace CardOverflow.Entity
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestInstanceId")]
         [InverseProperty("Gromplates")]
-        public virtual GromplateInstanceEntity LatestInstance { get; set; }
+        public virtual GrompleafEntity LatestInstance { get; set; }
         [InverseProperty("Gromplate")]
-        public virtual ICollection<GromplateInstanceEntity> GromplateInstances { get; set; }
+        public virtual ICollection<GrompleafEntity> Grompleafs { get; set; }
         [InverseProperty("Gromplate")]
         public virtual ICollection<CommentGromplateEntity> CommentGromplates { get; set; }
         [InverseProperty("Gromplate")]

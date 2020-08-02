@@ -21,7 +21,7 @@ namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
     FSharpFunc<(LeafEntity, BitArray, SHA512), BitArray> LeafHasher { get; }
-    FSharpFunc<(GromplateInstanceEntity, SHA512), BitArray> GromplateInstanceHasher { get; }
+    FSharpFunc<(GrompleafEntity, SHA512), BitArray> GrompleafHasher { get; }
     FSharpFunc<LeafEntity, short> GetMaxIndexInclusive { get; }
     FSharpFunc<string, string> SanitizeTag { get; }
   }
@@ -115,19 +115,19 @@ namespace CardOverflow.Entity {
     private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var gromplate in _filter<GromplateInstanceEntity>(entries)) {
-        gromplate.Hash = _entityHasher.GromplateInstanceHasher.Invoke((gromplate, sha512));
+      foreach (var gromplate in _filter<GrompleafEntity>(entries)) {
+        gromplate.Hash = _entityHasher.GrompleafHasher.Invoke((gromplate, sha512));
         gromplate.CWeightTsVectorHelper =
           Fields.fromString.Invoke(gromplate.Fields).Select(x => x.Name)
             .Append(MappingTools.stripHtmlTags(gromplate.Templates))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var leaf in _filter<LeafEntity>(entries)) {
-        if (leaf.GromplateInstance == null) {
-          leaf.GromplateInstance = await GromplateInstance.FindAsync(leaf.GromplateInstanceId);
+        if (leaf.Grompleaf == null) {
+          leaf.Grompleaf = await Grompleaf.FindAsync(leaf.GrompleafId);
         }
         leaf.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(leaf);
-        var gromplateHash = leaf.GromplateInstance?.Hash ?? GromplateInstance.Find(leaf.GromplateInstanceId).Hash;
+        var gromplateHash = leaf.Grompleaf?.Hash ?? Grompleaf.Find(leaf.GrompleafId).Hash;
         leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, gromplateHash, sha512));
         leaf.TsVectorHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
       }
@@ -164,7 +164,7 @@ namespace CardOverflow.Entity {
     public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Branch.LatestInstanceId == x.Id).AsNoTracking();
     public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Branch.Stack.DefaultBranchId == x.BranchId).AsNoTracking();
     public IQueryable<CommunalFieldInstanceEntity> LatestCommunalFieldInstance => CommunalFieldInstance.Where(x => x.CommunalField.LatestInstanceId == x.Id).AsNoTracking();
-    public IQueryable<GromplateInstanceEntity> LatestGromplateInstance => GromplateInstance.Where(x => x.Gromplate.LatestInstanceId == x.Id).AsNoTracking();
+    public IQueryable<GrompleafEntity> LatestGrompleaf => Grompleaf.Where(x => x.Gromplate.LatestInstanceId == x.Id).AsNoTracking();
 
   }
 }

@@ -7,14 +7,14 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    public partial class GromplateInstanceEntity
+    public partial class GrompleafEntity
     {
-        public GromplateInstanceEntity()
+        public GrompleafEntity()
         {
             Leafs = new HashSet<LeafEntity>();
             Gromplates = new HashSet<GromplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
-            User_GromplateInstances = new HashSet<User_GromplateInstanceEntity>();
+            User_Grompleafs = new HashSet<User_GrompleafEntity>();
         }
 
         [Key]
@@ -94,15 +94,15 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector TsVector { get; set; }
 
         [ForeignKey("GromplateId")]
-        [InverseProperty("GromplateInstances")]
+        [InverseProperty("Grompleafs")]
         public virtual GromplateEntity Gromplate { get; set; }
-        [InverseProperty("GromplateInstance")]
+        [InverseProperty("Grompleaf")]
         public virtual ICollection<LeafEntity> Leafs { get; set; }
         [InverseProperty("LatestInstance")]
         public virtual ICollection<GromplateEntity> Gromplates { get; set; }
-        [InverseProperty("GromplateInstance")]
+        [InverseProperty("Grompleaf")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
-        [InverseProperty("GromplateInstance")]
-        public virtual ICollection<User_GromplateInstanceEntity> User_GromplateInstances { get; set; }
+        [InverseProperty("Grompleaf")]
+        public virtual ICollection<User_GrompleafEntity> User_Grompleafs { get; set; }
     }
 }

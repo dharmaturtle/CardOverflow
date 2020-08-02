@@ -18,7 +18,7 @@ open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
-    let gromplateInstanceIdByHash = // lowTODO could make this a byte array
+    let grompleafIdByHash = // lowTODO could make this a byte array
         [("WX831/PqYECBDQaRxa7nceZWfvK27SNOudsTuAajr7tDTo25RDWsjXiaotM8OgBtFthzKcmiAgB0ihSM06e0Mw==", 1001)
          ("OfVUXbEwX3TYmYE4dp1lmVEuViCrST9in+wdGi9IM/lubv7kOUwIqS9EVQxGe6sMV7lqtoHnSC3A/P4NC4R/bQ==", 1002)
          ("q1nY+8Gro/Nx9Cjbjlqwqcl6wDxqSNMFfO8WSwVjieLBVC1lYIgGt/qH8lAn1lf9UxMjK0KsqAHdVmQMx7Wwhg==", 1003)
@@ -122,7 +122,7 @@ module AnkiImporter =
                     |?? lazy (DeckEntity(UserId = userId, Name = deckName))
                 )
             let! gromplatesByModelId =
-                let toEntity gromplateEntity (gromplate: AnkiGromplateInstance) =
+                let toEntity gromplateEntity (gromplate: AnkiGrompleaf) =
                     let defaultCardSetting =
                         cardSettingAndDeckByDeckId.TryFind gromplate.DeckId
                         |> function
@@ -130,16 +130,16 @@ module AnkiImporter =
                         | None -> defaultCardSetting // veryLowTODO some anki models have invalid deck ids. Perhaps log this
                     getGromplates gromplate
                     |> function
-                    | Some (e: GromplateInstanceEntity) ->
-                        if e.User_GromplateInstances.Any(fun x -> x.UserId = userId) |> not then
-                            User_GromplateInstanceEntity(
+                    | Some (e: GrompleafEntity) ->
+                        if e.User_Grompleafs.Any(fun x -> x.UserId = userId) |> not then
+                            User_GrompleafEntity(
                                 UserId = userId,
-                                Tag_User_GromplateInstances =
+                                Tag_User_Grompleafs =
                                     (gromplate.DefaultTags.ToList()
-                                    |> Seq.map (fun x -> Tag_User_GromplateInstanceEntity(UserId = userId, DefaultTagId = x))
+                                    |> Seq.map (fun x -> Tag_User_GrompleafEntity(UserId = userId, DefaultTagId = x))
                                     |> fun x -> x.ToList()),
                                 DefaultCardSetting = defaultCardSetting)
-                            |> e.User_GromplateInstances.Add
+                            |> e.User_Grompleafs.Add
                         e
                     | None -> gromplate.CopyToNewWithGromplate userId gromplateEntity defaultCardSetting
                     |> fun x -> {| Entity = x; Gromplate = gromplate |}
@@ -175,18 +175,18 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()
         let defaultCardSetting = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.Id = userId).DefaultCardSetting
-        let getGromplateInstance (gromplateInstance: AnkiGromplateInstance) =
-            let ti = gromplateInstance.CopyToNew userId defaultCardSetting
-            let hash = GromplateInstanceEntity.hashBase64 hasher ti
-            AnkiDefaults.gromplateInstanceIdByHash.TryFind hash
+        let getGrompleaf (grompleaf: AnkiGrompleaf) =
+            let ti = grompleaf.CopyToNew userId defaultCardSetting
+            let hash = GrompleafEntity.hashBase64 hasher ti
+            AnkiDefaults.grompleafIdByHash.TryFind hash
             |> function
             | Some id ->
-                db.GromplateInstance
-                    .Include(fun x -> x.User_GromplateInstances)
+                db.Grompleaf
+                    .Include(fun x -> x.User_Grompleafs)
                     .Single(fun x -> x.Id = id)
             | None ->
-                db.GromplateInstance
-                    .Include(fun x -> x.User_GromplateInstances)
+                db.Grompleaf
+                    .Include(fun x -> x.User_Grompleafs)
                     .OrderBy(fun x -> x.Created)
                     .FirstOrDefault(fun x -> x.Hash = ti.Hash)
             |> Option.ofObj
@@ -208,7 +208,7 @@ module AnkiImporter =
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
                     <| defaultCardSetting
-                    <| getGromplateInstance
+                    <| getGrompleaf
                     <| getCard
                     <| getCollectedCard
                     <| getHistory

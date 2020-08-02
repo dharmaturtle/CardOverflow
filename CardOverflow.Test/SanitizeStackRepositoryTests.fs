@@ -60,7 +60,7 @@ let ``SanitizeStackRepository.Update with EditCollectedCardCommands``(stdGen: Ra
         let stackCommand gromplate =
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
-                GromplateInstance = gromplate
+                Grompleaf = gromplate
                 Kind = NewOriginal_TagIds []
                 Title = null
             }

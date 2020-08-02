@@ -254,7 +254,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     let! _ =
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
-            GromplateInstance = gromplate |> ViewGromplateInstance.copyTo
+            Grompleaf = gromplate |> ViewGrompleaf.copyTo
             Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
         } |> UpdateRepository.stack c.Db authorId
 
@@ -645,7 +645,7 @@ let ``New user has TheCollective's card gromplates`` (): Task<unit> = task {
 let ``Updating card gromplate with duplicate field names yields error`` (): Task<unit> = task {
     let userId = 3
     let fieldName = Guid.NewGuid().ToString()
-    let gromplate = GromplateInstance.initialize |> ViewGromplateInstance.load
+    let gromplate = Grompleaf.initialize |> ViewGrompleaf.load
     let gromplate = { gromplate with Fields = gromplate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
     let! error = SanitizeGromplate.Update null userId gromplate
@@ -731,13 +731,13 @@ let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     let initialGromplate = ViewGromplateWithAllInstances.initialize userId
     use sha512 = SHA512.Create()
     do! SanitizeGromplate.Update c.Db userId initialGromplate.Editable
-    let! (dbGromplate: GromplateInstanceEntity) = c.Db.GromplateInstance.SingleAsync(fun x -> x.Gromplate.AuthorId = userId)
+    let! (dbGromplate: GrompleafEntity) = c.Db.Grompleaf.SingleAsync(fun x -> x.Gromplate.AuthorId = userId)
     
     let computedHash =
         initialGromplate.Editable
-        |> ViewGromplateInstance.copyTo
+        |> ViewGrompleaf.copyTo
         |> fun x -> GromplateEntity() |> IdOrEntity.Entity |> x.CopyToNewInstance
-        |> GromplateInstanceEntity.hash sha512
+        |> GrompleafEntity.hash sha512
     
     Assert.Equal<BitArray>(dbGromplate.Hash, computedHash)
     } |> TaskResult.getOk)

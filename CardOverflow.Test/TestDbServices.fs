@@ -64,18 +64,18 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
 module TestGromplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.LatestGromplateInstance
+            db.LatestGrompleaf
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (GromplateInstance.load >> ViewGromplateInstance.load) |> toResizeArray
+        return x |> Seq.map (Grompleaf.load >> ViewGrompleaf.load) |> toResizeArray
         }
     let SearchEarliest (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.GromplateInstance
+            db.Grompleaf
                 .Where(fun x -> x.Name = query)
                 .OrderBy(fun x -> x.Created)
                 .FirstAsync()
-        return x |> GromplateInstance.load |> ViewGromplateInstance.load
+        return x |> Grompleaf.load |> ViewGrompleaf.load
         }
 
 // Sqlite

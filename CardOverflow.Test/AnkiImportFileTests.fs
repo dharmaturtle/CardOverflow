@@ -38,8 +38,8 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.Equal(3, c.Db.File_Leaf.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
-    Assert.Equal(7, c.Db.GromplateInstance.Count())
-    Assert.Equal(5, c.Db.LatestGromplateInstance.Count())
+    Assert.Equal(7, c.Db.Grompleaf.Count())
+    Assert.Equal(5, c.Db.LatestGrompleaf.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]
@@ -112,8 +112,8 @@ let ``AnkiImporter import cards that have the same collectHash as distinct cards
     Assert.SingleI(c.Db.Deck.Where(fun x -> x.Name = "duplicate cards"))
     Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(8, c.Db.GromplateInstance.Count())
-    Assert.Equal(6, c.Db.LatestGromplateInstance.Count())
+    Assert.Equal(8, c.Db.Grompleaf.Count())
+    Assert.Equal(6, c.Db.LatestGrompleaf.Count())
     } |> TaskResult.getOk)
 
 let testCommunalFields (c: TestContainer) userId stackId expected = task {
@@ -137,7 +137,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Null x.Value
     let allLeafViews =
         c.Db.Leaf
-            .Include(fun x -> x.GromplateInstance)
+            .Include(fun x -> x.Grompleaf)
             .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -314,7 +314,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
         c.Db.Leaf
-            .Include(fun x -> x.GromplateInstance)
+            .Include(fun x -> x.Grompleaf)
             .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
                 .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
             .ToList()
@@ -460,7 +460,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     Value = value
                                 })
                             .ToList()
-                    GromplateInstance = gromplate
+                    Grompleaf = gromplate
                     Kind = NewOriginal_TagIds []
                     Title = null
                 }
@@ -492,24 +492,24 @@ let ``AnkiDefaults.gromplateIdByHash is same as initial database`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()
     let dbGromplates =
-        c.Db.GromplateInstance
+        c.Db.Grompleaf
             .OrderBy(fun x -> x.Id)
             .ToList()
     
     // test that the calculated hash is the same as the one stored in the db
     for gromplate in dbGromplates do
-        let calculated = GromplateInstanceEntity.hashBase64 hasher gromplate
+        let calculated = GrompleafEntity.hashBase64 hasher gromplate
         let dbValue = LeafEntity.bitArrayToByteArray gromplate.Hash |> Convert.ToBase64String
-        //for x in GromplateInstanceEntity.hash hasher gromplate do
+        //for x in GrompleafEntity.hash hasher gromplate do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
         Assert.Equal(calculated, dbValue)
 
     // test that AnkiDefaults.gromplateIdByHash is up to date
     for dbGromplate in dbGromplates do
-        let calculated = GromplateInstanceEntity.hashBase64 hasher dbGromplate
+        let calculated = GrompleafEntity.hashBase64 hasher dbGromplate
         //calculated.D(string dbGromplate.Id)
-        Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.[calculated], dbGromplate.Id)
+        Assert.Equal(AnkiDefaults.grompleafIdByHash.[calculated], dbGromplate.Id)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {

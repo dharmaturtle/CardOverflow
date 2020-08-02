@@ -44,11 +44,11 @@
       <a href="leaf/@A_LeafId">
         @(ATitle ?? "Old Stack")
       </a>
-      @if (_a.GromplateInstance.Id != _b.GromplateInstance.Id) {
+      @if (_a.Grompleaf.Id != _b.Grompleaf.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="gromplateinstance/@_a.GromplateInstance.Id">
+        <a href="gromplateinstance/@_a.Grompleaf.Id">
           Old Template
         </a>
       }
@@ -65,15 +65,15 @@
       <a href="leaf/@B_LeafId">
         @(BTitle ?? "New Stack")
       </a>
-      @if (_a.GromplateInstance.Id != _b.GromplateInstance.Id) {
+      @if (_a.Grompleaf.Id != _b.Grompleaf.Id) {
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="gromplateinstance/@_b.GromplateInstance.Id">
+        <a href="gromplateinstance/@_b.Grompleaf.Id">
           New Template
         </a>
       } else {
-        <a href="gromplateinstance/@_a.GromplateInstance.Id" class="float-right">
+        <a href="gromplateinstance/@_a.Grompleaf.Id" class="float-right">
           Template
         </a>
       }
@@ -187,7 +187,7 @@
           @if (
        _gromplateFields(_a) != _gromplateFields(_b) ||
        _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
-       _a.GromplateInstance.Css != _b.GromplateInstance.Css) {
+       _a.Grompleaf.Css != _b.Grompleaf.Css) {
       <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
     }
         </BSTabLabel>
@@ -224,7 +224,7 @@
               </Header>
             </TextDiff>
           }
-          <TextDiff OldText=@_a.GromplateInstance.Css NewText=@_b.GromplateInstance.Css CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_a.Grompleaf.Css NewText=@_b.Grompleaf.Css CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 CSS
@@ -253,7 +253,7 @@
   private LeafView _b;
   private bool _aIsCollected;
   private bool _bIsCollected;
-  private string _gromplateFields(LeafView view) => view.GromplateInstance.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
+  private string _gromplateFields(LeafView view) => view.Grompleaf.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(LeafView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
   private List<(string AFront, string ABack, string BFront, string BBack)> _stackZips() =>
@@ -270,7 +270,7 @@
       ).ToList();
   private string _fieldDiff(string name) => ViewLogic.diff(_value(_a, name), _value(_b, name));
   private List<(string Front, string Back)> _XemplateHolistic() =>
-    _a.GromplateInstance.FrontBackFrontSynthBackSynth().ZipLongest(_b.GromplateInstance.FrontBackFrontSynthBackSynth(), (a, b) =>
+    _a.Grompleaf.FrontBackFrontSynthBackSynth().ZipLongest(_b.Grompleaf.FrontBackFrontSynthBackSynth(), (a, b) =>
      (AFront: a?.Item1 ?? "",
        ABack: a?.Item2 ?? "",
        BFront: b?.Item1 ?? "",
@@ -280,7 +280,7 @@
         ViewLogic.diff(x.ABack, x.BBack))
       ).ToList();
   private List<(string AFront, string ABack, string BFront, string BBack)> _XemplateDetailed() =>
-    _a.GromplateInstance.JustTemplates.ZipLongest(_b.GromplateInstance.JustTemplates, (a, b) =>
+    _a.Grompleaf.JustTemplates.ZipLongest(_b.Grompleaf.JustTemplates, (a, b) =>
      (AFront: a?.Front ?? "",
        ABack: a?.Back ?? "",
        BFront: b?.Front ?? "",

@@ -14,8 +14,8 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 open System.Collections
 
-module GromplateInstanceEntity =
-    let byteArrayHash (hasher: SHA512) (e: GromplateInstanceEntity) =
+module GrompleafEntity =
+    let byteArrayHash (hasher: SHA512) (e: GrompleafEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -93,7 +93,7 @@ module LeafEntity =
             [   e.FieldValues
                 e.AnkiNoteId.ToString()
                 //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by gromplateHash and e.FieldValues
-                e.GromplateInstance.AnkiId.ToString()]
+                e.Grompleaf.AnkiId.ToString()]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
@@ -212,8 +212,8 @@ type Template with
         List.map Template.copyTo
         >> MappingTools.joinByRecordSeparator
 
-type GromplateInstance with
-    static member load (entity: GromplateInstanceEntity) =
+type Grompleaf with
+    static member load (entity: GrompleafEntity) =
         {   Id = entity.Id
             Name = entity.Name
             GromplateId = entity.GromplateId
@@ -259,7 +259,7 @@ type GromplateInstance with
         LatexPost = """\end{document}"""
         Templates = GromplateType.initStandard
         EditSummary = "Initial creation" }
-    member this.CopyTo (entity: GromplateInstanceEntity) =
+    member this.CopyTo (entity: GrompleafEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -274,7 +274,7 @@ type GromplateInstance with
             | Standard _ -> 0s
             | Cloze _ -> 1s
     member this.CopyToNewInstance gromplate =
-        let e = GromplateInstanceEntity()
+        let e = GrompleafEntity()
         this.CopyTo e
         e.Created <- DateTime.UtcNow
         e.Modified <- Nullable()
@@ -283,23 +283,23 @@ type GromplateInstance with
         | Entity entity -> e.Gromplate <- entity
         e
 
-type CollectedGromplateInstance with
-    static member load(entity: GromplateInstanceEntity) =
-        { DefaultTags = entity.User_GromplateInstances.Single().Tag_User_GromplateInstances.Select(fun x -> x.DefaultTagId)
-          DefaultCardSettingId = entity.User_GromplateInstances.Single().DefaultCardSettingId
-          GromplateInstance = GromplateInstance.load entity }
+type CollectedGrompleaf with
+    static member load(entity: GrompleafEntity) =
+        { DefaultTags = entity.User_Grompleafs.Single().Tag_User_Grompleafs.Select(fun x -> x.DefaultTagId)
+          DefaultCardSettingId = entity.User_Grompleafs.Single().DefaultCardSettingId
+          Grompleaf = Grompleaf.load entity }
 
 type LeafView with
-    static member private toView (gromplateInstance: GromplateInstanceEntity) (fieldValues: string)=
-        {   FieldValues = FieldAndValue.load (Fields.fromString gromplateInstance.Fields) fieldValues
-            GromplateInstance = GromplateInstance.load gromplateInstance }
+    static member private toView (grompleaf: GrompleafEntity) (fieldValues: string)=
+        {   FieldValues = FieldAndValue.load (Fields.fromString grompleaf.Fields) fieldValues
+            Grompleaf = Grompleaf.load grompleaf }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.GromplateInstance.Templates)
+            (this.Grompleaf.Templates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     static member load (entity: LeafEntity) =
         LeafView.toView
-            entity.GromplateInstance
+            entity.Grompleaf
             entity.FieldValues
     member this.CopyToX (entity: LeafEntity) (communalFields: CommunalFieldInstanceEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
@@ -307,7 +307,7 @@ type LeafView with
             communalFields.Select(fun x -> CommunalFieldInstance_LeafEntity(CommunalFieldInstance = x))
             |> entity.CommunalFieldInstance_Leafs.Concat
             |> toResizeArray
-        entity.GromplateInstanceId <- this.GromplateInstance.Id
+        entity.GrompleafId <- this.Grompleaf.Id
     member this.CopyToNew communalFields =
         let entity = LeafEntity()
         this.CopyToX entity communalFields

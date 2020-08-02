@@ -78,12 +78,12 @@ module Generators =
     let fields =
         List.map (fun fieldName -> Gen.genMap<Field> (fun field -> { field with Name = fieldName }))
         >> Gen.sequence
-    let gromplateInstance gromplateType fieldNames =
+    let grompleaf gromplateType fieldNames =
         gen {
             let! fields = fields fieldNames
             return!
-                Gen.genMap<GromplateInstance> (fun gromplateInstance -> {
-                    gromplateInstance with
+                Gen.genMap<Grompleaf> (fun grompleaf -> {
+                    grompleaf with
                         Fields = fields
                         Templates = gromplateType
                 })
@@ -100,7 +100,7 @@ module Generators =
         gen {
             let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
             let! gromplateType = gromplateType fieldNames
-            let! gromplateInstance = gromplateInstance gromplateType fieldNames
+            let! grompleaf = grompleaf gromplateType fieldNames
             let values =
                 match gromplateType with
                 | Standard _ -> alphanumericString
@@ -114,7 +114,7 @@ module Generators =
                 Gen.genMap<EditStackCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
-                            GromplateInstance = gromplateInstance
+                            Grompleaf = grompleaf
                     })
         }
     let notificationEntity = gen {

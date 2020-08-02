@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
         public bool IsDmca { get; set; }
         [Required]
         public string FieldValues { get; set; }
-        public int GromplateInstanceId { get; set; }
+        public int GrompleafId { get; set; }
         public int Users { get; set; }
         [Required]
         [StringLength(200)]
@@ -54,9 +54,9 @@ namespace CardOverflow.Entity
         [ForeignKey("BranchId")]
         [InverseProperty("Leafs")]
         public virtual BranchEntity Branch { get; set; }
-        [ForeignKey("GromplateInstanceId")]
+        [ForeignKey("GrompleafId")]
         [InverseProperty("Leafs")]
-        public virtual GromplateInstanceEntity GromplateInstance { get; set; }
+        public virtual GrompleafEntity Grompleaf { get; set; }
         [InverseProperty("Leaf")]
         public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("Leaf")]

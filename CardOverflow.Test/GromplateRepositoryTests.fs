@@ -22,7 +22,7 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
     let userId = 3
     use c = new TestContainer()
     
-    let gromplateId = c.Db.Gromplate.Single(fun x -> x.GromplateInstances.Any(fun x -> x.Name = "Basic")).Id
+    let gromplateId = c.Db.Gromplate.Single(fun x -> x.Grompleafs.Any(fun x -> x.Name = "Basic")).Id
     let! gromplate = SanitizeGromplate.AllInstances c.Db gromplateId
     let latestInstance = gromplate.Value.Instances |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
@@ -35,7 +35,7 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
     Assert.Equal(
         "{{Front}}",
         latestInstance.FirstTemplate.Front)
-    Assert.Equal(1, c.Db.GromplateInstance.Count(fun x -> x.GromplateId = gromplateId))
+    Assert.Equal(1, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
 
     // Testing UpdateFieldsToNewInstance
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
@@ -49,7 +49,7 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
                         Front = newQuestionXemplate
                 } |> List.singleton |> Standard
             Fields = latestInstance.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
-        } |> ViewGromplateInstance.copyTo
+        } |> ViewGrompleaf.copyTo
     
     do! GromplateRepository.UpdateFieldsToNewInstance c.Db userId updated
 
@@ -68,12 +68,12 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
     Assert.Equal(1002, c.Db.CollectedCard.Single().LeafId)
     Assert.Equal(
         latestInstance.Id,
-        c.Db.CollectedCard.Include(fun x -> x.Leaf).Single().Leaf.GromplateInstanceId)
-    Assert.Equal(2, c.Db.GromplateInstance.Count(fun x -> x.GromplateId = gromplateId))
+        c.Db.CollectedCard.Include(fun x -> x.Leaf).Single().Leaf.GrompleafId)
+    Assert.Equal(2, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.Leaf.Count())
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.StackId = 1))
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.StackId = 1))
-    let createds = c.Db.GromplateInstance.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
+    let createds = c.Db.Grompleaf.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = StackViewRepository.get c.Db 1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth.[0]
@@ -122,7 +122,7 @@ let ``GromplateRepository.UpdateFieldsToNewInstance works``(): Task<unit> = task
 
     // test existing
     let testView getView id expectedFront expectedBack = task {
-        let! (actual: Result<GromplateInstance, string>) = getView c.Db id
+        let! (actual: Result<Grompleaf, string>) = getView c.Db id
         let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
         BusinessLogicTests.assertStripped expectedFront front
         BusinessLogicTests.assertStripped expectedBack back

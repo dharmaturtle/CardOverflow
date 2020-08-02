@@ -25,7 +25,7 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiGromplateInstance = {
+type AnkiGrompleaf = {
     AnkiId: int64
     AuthorId: int
     Name: string
@@ -41,7 +41,7 @@ type AnkiGromplateInstance = {
     DeckId: int64
     IsCloze: bool
 } with
-    member this.CopyTo (entity: GromplateInstanceEntity) =
+    member this.CopyTo (entity: GrompleafEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -53,13 +53,13 @@ type AnkiGromplateInstance = {
         entity.EditSummary <- "Imported from Anki"
         entity.Type <- if this.IsCloze then 1s else 0s
     member this.CopyToNewWithGromplate userId gromplate defaultCardSetting =
-        let entity = GromplateInstanceEntity()
-        entity.User_GromplateInstances <-
-            [User_GromplateInstanceEntity(
+        let entity = GrompleafEntity()
+        entity.User_Grompleafs <-
+            [User_GrompleafEntity(
                 UserId = userId,
-                Tag_User_GromplateInstances =
+                Tag_User_Grompleafs =
                     (this.DefaultTags
-                        .Select(fun x -> Tag_User_GromplateInstanceEntity(UserId = userId, DefaultTagId = x))
+                        .Select(fun x -> Tag_User_GrompleafEntity(UserId = userId, DefaultTagId = x))
                         .ToList()),
                 DefaultCardSetting = defaultCardSetting)].ToList()
         entity.Gromplate <- gromplate
@@ -72,7 +72,7 @@ type AnkiGromplateInstance = {
 type AnkiCardWrite = {
     AnkiNoteId: int64
     CommunalFields: CommunalFieldInstanceEntity list
-    Gromplate: GromplateInstanceEntity
+    Gromplate: GrompleafEntity
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
@@ -82,7 +82,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.GromplateInstance <- this.Gromplate
+        entity.Grompleaf <- this.Gromplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.CommunalFieldInstance_Leafs <-
             this.CommunalFields
@@ -108,7 +108,7 @@ type AnkiCardWrite = {
         this.CopyTo entity
         entity
     member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let gromplateHash = this.Gromplate |> GromplateInstanceEntity.hash hasher
+        let gromplateHash = this.Gromplate |> GrompleafEntity.hash hasher
         let hash = this.CopyToNew [] |> LeafEntity.hash gromplateHash hasher
         db.Leaf
             .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
@@ -120,7 +120,7 @@ type AnkiCardWrite = {
 type AnkiCollectedCard = {
     UserId: int
     Leaf: LeafEntity
-    GromplateInstance: GromplateInstanceEntity
+    Grompleaf: GrompleafEntity
     Index: int16
     CardState: CardState
     IsLapsed: bool
@@ -354,7 +354,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (gromplateByModelId: Map<string, {| Entity: GromplateInstanceEntity; Gromplate: AnkiGromplateInstance |}>)
+        (gromplateByModelId: Map<string, {| Entity: GrompleafEntity; Gromplate: AnkiGrompleaf |}>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -419,7 +419,7 @@ module Anki =
         (ankiCard: Anki.CardEntity) =
         let cardSetting, deck = cardSettingAndDeckByDeckId.[ankiCard.Did]
         let card, _ = cardAndTagsByNoteId.[ankiCard.Nid]
-        let cti = card.GromplateInstance
+        let cti = card.Grompleaf
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
@@ -431,7 +431,7 @@ module Anki =
                 let c: AnkiCollectedCard =
                     { UserId = userId
                       Leaf = card
-                      GromplateInstance = cti
+                      Grompleaf = cti
                       Index = ankiCard.Ord |> int16
                       CardState =
                         match ankiCard.Queue with

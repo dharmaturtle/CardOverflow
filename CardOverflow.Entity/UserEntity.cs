@@ -25,7 +25,7 @@ namespace CardOverflow.Entity
             SentNotifications = new HashSet<NotificationEntity>();
             ReceivedNotifications = new HashSet<ReceivedNotificationEntity>();
             Stacks = new HashSet<StackEntity>();
-            User_GromplateInstances = new HashSet<User_GromplateInstanceEntity>();
+            User_Grompleafs = new HashSet<User_GrompleafEntity>();
             Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
             Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
@@ -88,7 +88,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Author")]
         public virtual ICollection<StackEntity> Stacks { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<User_GromplateInstanceEntity> User_GromplateInstances { get; set; }
+        public virtual ICollection<User_GrompleafEntity> User_Grompleafs { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
         [InverseProperty("User")]

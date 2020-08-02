@@ -640,13 +640,13 @@ type ViewEditStackCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    GromplateInstance: ViewGromplateInstance
+    Grompleaf: ViewGrompleaf
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-        match this.GromplateInstance.Templates with
+        match this.Grompleaf.Templates with
         | Cloze t ->
              result {
                 let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (valueByFieldName |> Map.ofSeq) t.Front
@@ -655,7 +655,7 @@ type ViewEditStackCommand = {
                         <| valueByFieldName
                         <| t.Front
                         <| t.Back
-                        <| this.GromplateInstance.Css
+                        <| this.Grompleaf.Css
                         <| CardHtml.Cloze clozeIndex
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
@@ -666,7 +666,7 @@ type ViewEditStackCommand = {
                     <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
                     <| t.Front
                     <| t.Back
-                    <| this.GromplateInstance.Css
+                    <| this.Grompleaf.Css
                     <| CardHtml.Standard
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
@@ -683,7 +683,7 @@ type ViewEditStackCommand = {
                 | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
         {   EditStackCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            GromplateInstance = this.GromplateInstance |> ViewGromplateInstance.copyTo
+            Grompleaf = this.Grompleaf |> ViewGrompleaf.copyTo
             Kind = kind
         }
 
@@ -738,9 +738,9 @@ module SanitizeStackRepository =
             {   EditSummary = ""
                 FieldValues =
                     EditFieldAndValue.load
-                        <| Fields.fromString branch.GromplateInstance.Fields
+                        <| Fields.fromString branch.Grompleaf.Fields
                         <| branch.FieldValues
-                GromplateInstance = branch.GromplateInstance |> GromplateInstance.load |> ViewGromplateInstance.load
+                Grompleaf = branch.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
                 Kind = kind
                 Title =
                     match kind with
@@ -751,29 +751,29 @@ module SanitizeStackRepository =
             }
         match source with
         | VNewOriginalUserId userId ->
-            db.User_GromplateInstance.Include(fun x -> x.GromplateInstance).FirstOrDefaultAsync(fun x -> x.UserId = userId)
+            db.User_Grompleaf.Include(fun x -> x.Grompleaf).FirstOrDefaultAsync(fun x -> x.UserId = userId)
             |>% (Result.requireNotNull (sprintf "User #%i doesn't have any templates" userId))
             |>%% (fun j ->
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString j.GromplateInstance.Fields
+                            <| Fields.fromString j.Grompleaf.Fields
                             <| ""
-                    GromplateInstance = j.GromplateInstance |> GromplateInstance.load |> ViewGromplateInstance.load
+                    Grompleaf = j.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
                     Kind = NewOriginal_TagIds []
                     Title = null
                 }
             )
         | VNewBranchSourceStackId stackId ->
-            db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.GromplateInstance).SingleOrDefaultAsync(fun x -> x.Id = stackId)
+            db.Stack.Include(fun x -> x.DefaultBranch.LatestInstance.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%i not found." stackId)
             |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.LatestInstance
         | VNewCopySourceInstanceId leafId ->
-            db.Leaf.Include(fun x -> x.GromplateInstance).SingleOrDefaultAsync(fun x -> x.Id = leafId)
+            db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Branch Instance #%i not found." leafId)
             |>%% toCommand (NewCopy_SourceInstanceId_TagIds (leafId, []))
         | VUpdateBranchId branchId ->
-            db.Branch.Include(fun x -> x.LatestInstance.GromplateInstance).SingleOrDefaultAsync(fun x -> x.Id = branchId)
+            db.Branch.Include(fun x -> x.LatestInstance.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.LatestInstance
     let Update (db: CardOverflowDb) userId (acCommands: EditCollectedCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {

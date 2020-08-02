@@ -76,39 +76,39 @@ module CommentRepository =
 
 module GromplateRepository =
     let latest (db: CardOverflowDb) gromplateId =
-        db.LatestGromplateInstance
+        db.LatestGrompleaf
             .SingleOrDefaultAsync(fun x -> x.GromplateId = gromplateId)
         |> Task.map (Result.requireNotNull <| sprintf "Gromplate #%i not found" gromplateId)
-        |> TaskResult.map GromplateInstance.load
+        |> TaskResult.map Grompleaf.load
     let instance (db: CardOverflowDb) instanceId =
-        db.GromplateInstance
+        db.Grompleaf
             .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
         |> Task.map (Result.requireNotNull <| sprintf "Gromplate Instance #%i not found" instanceId)
-        |> TaskResult.map GromplateInstance.load
-    let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: GromplateInstance) = task {
+        |> TaskResult.map Grompleaf.load
+    let UpdateFieldsToNewInstance (db: CardOverflowDb) userId (instance: Grompleaf) = task {
         let gromplate =
             if instance.GromplateId = 0 then
                 IdOrEntity.Entity <| GromplateEntity(AuthorId = userId)
             else    
                 Id <| instance.GromplateId
-        let newGromplateInstance = instance.CopyToNewInstance gromplate
-        db.GromplateInstance.AddI newGromplateInstance
+        let newGrompleaf = instance.CopyToNewInstance gromplate
+        db.Grompleaf.AddI newGrompleaf
         db  
             .CollectedCard
             .Include(fun x -> x.Leaf)
-            .Where(fun x -> x.Leaf.GromplateInstanceId = instance.Id)
+            .Where(fun x -> x.Leaf.GrompleafId = instance.Id)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
                 cc.Leaf.Id <- cc.Leaf.GetHashCode()
                 db.Entry(cc.Leaf).Property(nameofInstance <@ any<LeafEntity>.Id @>).IsTemporary <- true
                 cc.Leaf.Created <- DateTime.UtcNow
                 cc.Leaf.Modified <- Nullable()
-                cc.Leaf.GromplateInstance <- newGromplateInstance
+                cc.Leaf.Grompleaf <- newGrompleaf
             )
-        let! existing = db.User_GromplateInstance.Where(fun x -> x.UserId = userId && x.GromplateInstance.GromplateId = newGromplateInstance.GromplateId).ToListAsync()
-        db.User_GromplateInstance.RemoveRange existing
-        User_GromplateInstanceEntity(UserId = userId, GromplateInstance = newGromplateInstance, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
-        |> db.User_GromplateInstance.AddI
+        let! existing = db.User_Grompleaf.Where(fun x -> x.UserId = userId && x.Grompleaf.GromplateId = newGrompleaf.GromplateId).ToListAsync()
+        db.User_Grompleaf.RemoveRange existing
+        User_GrompleafEntity(UserId = userId, Grompleaf = newGrompleaf, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
+        |> db.User_Grompleaf.AddI
         return! db.SaveChangesAsyncI()
         }
 
@@ -141,14 +141,14 @@ module ExploreStackRepository =
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Stack.Author)
                 .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.GromplateInstance)
+                    .ThenInclude(fun (x: BranchEntity) -> x.LatestInstance.Grompleaf)
                 .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
                     .ThenInclude(fun (x: BranchEntity) -> x.Author)
                 .Include(fun x -> x.Stack.CommentStacks :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentStackEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
-                .Include(fun x -> x.GromplateInstance)
+                .Include(fun x -> x.Grompleaf)
                 .Where(fun x -> x.StackId = stackId)
                 .Select(fun x ->
                     x.Stack,
@@ -170,7 +170,7 @@ module ExploreStackRepository =
                     .ThenInclude(fun (x: CommentStackEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
-                .Include(fun x -> x.GromplateInstance)
+                .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = instanceId)
             |> Task.map (Result.requireNotNull (sprintf "Branch Instance #%i not found" instanceId))
         let! isCollected = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.LeafId = instanceId)
@@ -185,7 +185,7 @@ module ExploreStackRepository =
                     .ThenInclude(fun (x: CommentStackEntity) -> x.User)
                 .Include(fun x -> x.CommunalFieldInstance_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
-                .Include(fun x -> x.GromplateInstance)
+                .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.BranchId = branchId)
             |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found" branchId))
         let! isCollected = db.CollectedCard.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
@@ -213,12 +213,12 @@ module StackViewRepository =
     let instanceWithLatest (db: CardOverflowDb) a_leafId userId = taskResult {
         let! (a: LeafEntity) =
             db.Leaf
-                .Include(fun x -> x.GromplateInstance)
+                .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = a_leafId)
             |> Task.map (Result.requireNotNull (sprintf "Branch instance #%i not found" a_leafId))
         let! (b: LeafEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestDefaultLeaf
-                .Include(fun x -> x.GromplateInstance)
+                .Include(fun x -> x.Grompleaf)
                 .SingleAsync(fun x -> x.StackId = a.StackId)
         let! (collectedInstanceIds: int ResizeArray) = getCollectedInstanceIds db userId a_leafId b.Id
         return
@@ -231,7 +231,7 @@ module StackViewRepository =
     let instancePair (db: CardOverflowDb) a_leafId b_leafId userId = taskResult {
         let! (instances: LeafEntity ResizeArray) =
             db.Leaf
-                .Include(fun x -> x.GromplateInstance)
+                .Include(fun x -> x.Grompleaf)
                 .Where(fun x -> x.Id = a_leafId || x.Id = b_leafId)
                 .ToListAsync()
         let! a = Result.requireNotNull (sprintf "Branch instance #%i not found" a_leafId) <| instances.SingleOrDefault(fun x -> x.Id = a_leafId)
@@ -246,14 +246,14 @@ module StackViewRepository =
     let instance (db: CardOverflowDb) instanceId = task {
         match!
             db.Leaf
-            .Include(fun x -> x.GromplateInstance)
+            .Include(fun x -> x.Grompleaf)
             .SingleOrDefaultAsync(fun x -> x.Id = instanceId) with
         | null -> return Error <| sprintf "Branch instance %i not found" instanceId
         | x -> return Ok <| LeafView.load x
     }
     let get (db: CardOverflowDb) stackId =
         db.LatestDefaultLeaf
-            .Include(fun x -> x.GromplateInstance)
+            .Include(fun x -> x.Grompleaf)
             .SingleOrDefaultAsync(fun x -> x.StackId = stackId)
         |> Task.map Ok
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Stack #%i not found" stackId) x |> Task.FromResult)
@@ -293,7 +293,7 @@ module StackRepository =
             db.Branch
                 .Include(fun x -> x.Author)
                 .Include(fun x -> x.Leafs :> IEnumerable<_>)
-                    .ThenInclude(fun (x: LeafEntity) -> x.GromplateInstance)
+                    .ThenInclude(fun (x: LeafEntity) -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |> Task.map (Result.requireNotNull <| sprintf "BranchId #%i not found" branchId)
         let! collectedInstanceId =
@@ -369,7 +369,7 @@ module StackRepository =
     let GetCollected (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
         let! (e: _ ResizeArray) =
             db.CollectedCardIsLatest
-                .Include(fun x -> x.Leaf.GromplateInstance)
+                .Include(fun x -> x.Leaf.Grompleaf)
                 .Include(fun x -> x.Leaf.CommunalFieldInstance_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommunalFieldInstance_LeafEntity) -> x.CommunalFieldInstance)
                 .Include(fun x -> x.Leaf.CollectedCards :> IEnumerable<_>)
@@ -393,7 +393,7 @@ module StackRepository =
     let private searchCollected (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.CollectedCard
-            .Include(fun x -> x.Leaf.GromplateInstance)
+            .Include(fun x -> x.Leaf.Grompleaf)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
@@ -404,7 +404,7 @@ module StackRepository =
     let private searchCollectedIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.CollectedCardIsLatest
-            .Include(fun x -> x.Leaf.GromplateInstance)
+            .Include(fun x -> x.Leaf.Grompleaf)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
@@ -414,7 +414,7 @@ module StackRepository =
             )
     let private collectedByDeck (db: CardOverflowDb) deckId =
         db.CollectedCard
-            .Include(fun x -> x.Leaf.GromplateInstance)
+            .Include(fun x -> x.Leaf.Grompleaf)
             .Where(fun x -> x.DeckId = deckId)
     let GetCollectedPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
         task {
@@ -468,7 +468,7 @@ module StackRepository =
                 filteredInstances.Select(fun x ->
                     x,
                     x.CollectedCards.Any(fun x -> x.UserId = userId),
-                    x.GromplateInstance, // .Include fails for some reason, so we have to manually select
+                    x.Grompleaf, // .Include fails for some reason, so we have to manually select
                     x.Stack,
                     x.Stack.Author
                 ).ToPagedListAsync(pageNumber, 15)
@@ -476,7 +476,7 @@ module StackRepository =
                 r |> List.ofSeq |> List.map (fun (c, isCollected, gromplate, stack, author) ->
                     c.Stack <- stack
                     c.Stack.Author <- author
-                    c.GromplateInstance <- gromplate
+                    c.Grompleaf <- gromplate
                     c, isCollected
                 )
             return {
@@ -639,12 +639,12 @@ module UserRepository =
         DeckEntity(Name = "Default Deck") |> db.Deck.AddI
         
         let! (nonClozeIds: int list) =
-            db.LatestGromplateInstance
+            db.LatestGrompleaf
                 .Where(fun x -> x.Name <> defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
                 .Select(fun x -> x.Id)
                 .ToListAsync() |> Task.map List.ofSeq
         let! oldestClozeId =
-            db.GromplateInstance
+            db.Grompleaf
                 .Where(fun x -> x.Name = defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
                 .OrderBy(fun x -> x.Created)
                 .Select(fun x -> x.Id)
@@ -653,9 +653,9 @@ module UserRepository =
             Id = id,
             DisplayName = displayName,
             //Filters = [ FilterEntity ( Name = "All", Query = "" )].ToList(),
-            User_GromplateInstances =
+            User_Grompleafs =
                 (oldestClozeId :: nonClozeIds)
-                .Select(fun id -> User_GromplateInstanceEntity (GromplateInstanceId = id, DefaultCardSetting = defaultSetting ))
+                .Select(fun id -> User_GrompleafEntity (GrompleafId = id, DefaultCardSetting = defaultSetting ))
                 .ToList()) |> db.User.AddI
         return! db.SaveChangesAsyncI () }
     let profile (db: CardOverflowDb) userId =

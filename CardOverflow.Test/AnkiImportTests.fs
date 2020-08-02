@@ -109,7 +109,7 @@ let ``Import relationships has reduced Gromplates, also fieldvalue tests`` (): u
         |> Result.getOk
     let getFieldValues (gromplateName: string) =
         cards
-            .Where(fun x -> x.Leaf.GromplateInstance.Name.Contains gromplateName)
+            .Where(fun x -> x.Leaf.Grompleaf.Name.Contains gromplateName)
             .Select(fun x -> (LeafView.load x.Leaf).FieldValues.Select(fun x -> x.Value) |> List.ofSeq |> List.distinct) |> List.ofSeq |> List.distinct |> List.exactlyOne
 
     Assert.Equal<string list>(
@@ -175,13 +175,13 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     Assert.Equal(3, c.Db.Stack.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count + 1, c.Db.Gromplate.Count())
-    Assert.Equal(10, c.Db.GromplateInstance.Count())
+    Assert.Equal(AnkiDefaults.grompleafIdByHash.Count + 1, c.Db.Gromplate.Count())
+    Assert.Equal(10, c.Db.Grompleaf.Count())
 
     let getInstances (gromplateName: string) =
-        c.Db.GromplateInstance
+        c.Db.Grompleaf
             .Include(fun x -> x.Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: LeafEntity) -> x.GromplateInstance)
+                .ThenInclude(fun (x: LeafEntity) -> x.Grompleaf)
             .Where(fun x -> x.Name.Contains gromplateName)
             .SelectMany(fun x -> x.Leafs :> IEnumerable<_>)
             .ToListAsync()
@@ -229,7 +229,7 @@ let ``Can import myHighPriority, but really testing duplicate card gromplates`` 
     Assert.Equal(2, c.Db.Stack.Count())
     Assert.Equal(2, c.Db.Leaf.Count())
     Assert.Equal(6, c.Db.Gromplate.Count())
-    Assert.Equal(8, c.Db.GromplateInstance.Count())
+    Assert.Equal(8, c.Db.Grompleaf.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
     } |> TaskResult.getOk)
 
@@ -249,7 +249,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
         ].ToList(),
-        c.Db.GromplateInstance.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.Grompleaf.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/23/2020 19:40:46"
@@ -260,7 +260,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "6/16/2019 00:51:55"
             "6/16/2019 00:53:30"
         ].ToList(),
-        c.Db.GromplateInstance.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.Grompleaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32"
@@ -314,7 +314,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             .Deck.Name)
 
     let getInstances (gromplateName: string) =
-        c.Db.GromplateInstance
+        c.Db.Grompleaf
             .Include(fun x -> x.Leafs)
             .Where(fun x -> x.Name.Contains gromplateName)
             .SelectMany(fun x -> x.Leafs :> IEnumerable<_>)
@@ -335,9 +335,9 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         Assert.Empty stack.Default.Instance.CommunalFields
 
     Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
-    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count - 1, c.Db.User_GromplateInstance.Count(fun x -> x.UserId = userId))
-    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count, c.Db.GromplateInstance.Count())
-    Assert.Equal(AnkiDefaults.gromplateInstanceIdByHash.Count - 2, c.Db.LatestGromplateInstance.Count())
+    Assert.Equal(AnkiDefaults.grompleafIdByHash.Count - 1, c.Db.User_Grompleaf.Count(fun x -> x.UserId = userId))
+    Assert.Equal(AnkiDefaults.grompleafIdByHash.Count, c.Db.Grompleaf.Count())
+    Assert.Equal(AnkiDefaults.grompleafIdByHash.Count - 2, c.Db.LatestGrompleaf.Count())
     }
 
 let assertHasHistory db ankiDb: Task<unit> = (taskResult {
@@ -406,9 +406,9 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` anki
         Assert.Equal(2, c.Db.CardSetting.Count(fun x -> x.UserId = userId))
         Assert.Equal(3, c.Db.Tag.Count())
         Assert.Equal(5, c.Db.Gromplate.Count(fun x -> x.AuthorId = theCollectiveId))
-        Assert.Equal(7, c.Db.GromplateInstance.Count(fun x -> x.Gromplate.AuthorId = theCollectiveId))
+        Assert.Equal(7, c.Db.Grompleaf.Count(fun x -> x.Gromplate.AuthorId = theCollectiveId))
         Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(0, c.Db.GromplateInstance.Count(fun x -> x.Gromplate.AuthorId = userId))
+        Assert.Equal(0, c.Db.Grompleaf.Count(fun x -> x.Gromplate.AuthorId = userId))
         Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(8, c.Db.Stack.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(8, c.Db.Stack.Count())
@@ -422,8 +422,8 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` anki
         Assert.NotEmpty(c.Db.CollectedCard.Where(fun x -> x.Index = 1s))
         Assert.Equal(0, c.Db.CommunalFieldInstance.Count())
         Assert.Equal(0, c.Db.CommunalField.Count())
-        Assert.Equal(7, c.Db.GromplateInstance.Count())
-        Assert.Equal(5, c.Db.LatestGromplateInstance.Count())
+        Assert.Equal(7, c.Db.Grompleaf.Count())
+        Assert.Equal(5, c.Db.LatestGrompleaf.Count())
         Assert.Equal(4, c.Db.Deck.Count())
     } |> TaskResult.getOk)
 

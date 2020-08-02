@@ -16,7 +16,7 @@ namespace CardOverflow.Entity
         private DbSet<LeafTagCountEntity> _LeafTagCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
         public virtual DbSet<GromplateEntity> Gromplate { get; set; }
-        public virtual DbSet<GromplateInstanceEntity> GromplateInstance { get; set; }
+        public virtual DbSet<GrompleafEntity> Grompleaf { get; set; }
         public virtual DbSet<CommentGromplateEntity> CommentGromplate { get; set; }
         public virtual DbSet<CommentStackEntity> CommentStack { get; set; }
         public virtual DbSet<CommunalFieldEntity> CommunalField { get; set; }
@@ -39,9 +39,9 @@ namespace CardOverflow.Entity
         private DbSet<StackTagCountEntity> _StackTagCountTracked { get; set; }
         public virtual DbSet<TagEntity> Tag { get; set; }
         public virtual DbSet<Tag_CollectedCardEntity> Tag_CollectedCard { get; set; }
-        public virtual DbSet<Tag_User_GromplateInstanceEntity> Tag_User_GromplateInstance { get; set; }
+        public virtual DbSet<Tag_User_GrompleafEntity> Tag_User_Grompleaf { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
-        public virtual DbSet<User_GromplateInstanceEntity> User_GromplateInstance { get; set; }
+        public virtual DbSet<User_GrompleafEntity> User_Grompleaf { get; set; }
         public virtual DbSet<Vote_CommentGromplateEntity> Vote_CommentGromplate { get; set; }
         public virtual DbSet<Vote_CommentStackEntity> Vote_CommentStack { get; set; }
         public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
@@ -180,7 +180,7 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.BranchId);
 
-                entity.HasIndex(e => e.GromplateInstanceId);
+                entity.HasIndex(e => e.GrompleafId);
 
                 IfNpg(() => entity.HasIndex(e => e.Hash),
                     () => entity.Ignore(e => e.Hash));
@@ -199,9 +199,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.BranchId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.GromplateInstance)
+                entity.HasOne(d => d.Grompleaf)
                     .WithMany(p => p.Leafs)
-                    .HasForeignKey(d => d.GromplateInstanceId)
+                    .HasForeignKey(d => d.GrompleafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasMany(x => x.StackTagCounts)
@@ -265,7 +265,7 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<GromplateInstanceEntity>(entity =>
+            modelBuilder.Entity<GrompleafEntity>(entity =>
             {
                 entity.HasIndex(e => e.GromplateId);
 
@@ -279,7 +279,7 @@ namespace CardOverflow.Entity
                     .IsUnique();
 
                 entity.HasOne(d => d.Gromplate)
-                    .WithMany(p => p.GromplateInstances)
+                    .WithMany(p => p.Grompleafs)
                     .HasForeignKey(d => d.GromplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -556,20 +556,20 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Tag_User_GromplateInstanceEntity>(entity =>
+            modelBuilder.Entity<Tag_User_GrompleafEntity>(entity =>
             {
-                entity.HasKey(e => new { e.DefaultTagId, e.GromplateInstanceId, e.UserId });
+                entity.HasKey(e => new { e.DefaultTagId, e.GrompleafId, e.UserId });
 
                 entity.HasIndex(e => e.DefaultTagId);
 
                 entity.HasOne(d => d.DefaultTag)
-                    .WithMany(p => p.Tag_User_GromplateInstances)
+                    .WithMany(p => p.Tag_User_Grompleafs)
                     .HasForeignKey(d => d.DefaultTagId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.User_GromplateInstance)
-                    .WithMany(p => p.Tag_User_GromplateInstances)
-                    .HasForeignKey(d => new { d.UserId, d.GromplateInstanceId })
+                entity.HasOne(d => d.User_Grompleaf)
+                    .WithMany(p => p.Tag_User_Grompleafs)
+                    .HasForeignKey(d => new { d.UserId, d.GrompleafId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Tag_User_TemplatInst_User_TemplatInst_UserId_TemplatInstId");
             });
@@ -583,26 +583,26 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.DefaultDeck);
             });
 
-            modelBuilder.Entity<User_GromplateInstanceEntity>(entity =>
+            modelBuilder.Entity<User_GrompleafEntity>(entity =>
             {
-                entity.HasKey(e => new { e.GromplateInstanceId, e.UserId });
+                entity.HasKey(e => new { e.GrompleafId, e.UserId });
 
-                entity.HasIndex(e => e.GromplateInstanceId);
+                entity.HasIndex(e => e.GrompleafId);
 
                 entity.HasIndex(e => e.DefaultCardSettingId);
 
-                entity.HasOne(d => d.GromplateInstance)
-                    .WithMany(p => p.User_GromplateInstances)
-                    .HasForeignKey(d => d.GromplateInstanceId)
+                entity.HasOne(d => d.Grompleaf)
+                    .WithMany(p => p.User_Grompleafs)
+                    .HasForeignKey(d => d.GrompleafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.DefaultCardSetting)
-                    .WithMany(p => p.User_GromplateInstances)
+                    .WithMany(p => p.User_Grompleafs)
                     .HasForeignKey(d => d.DefaultCardSettingId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.User_GromplateInstances)
+                    .WithMany(p => p.User_Grompleafs)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });

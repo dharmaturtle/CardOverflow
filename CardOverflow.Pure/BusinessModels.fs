@@ -141,7 +141,7 @@ type GromplateType =
     static member initStandard =
         Template.initStandard |> List.singleton |> Standard
 
-type GromplateInstance = {
+type Grompleaf = {
     Id: int
     Name: string
     GromplateId: int
@@ -176,16 +176,16 @@ type GromplateInstance = {
         |> Seq.tryItem i
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
-type CollectedGromplateInstance = {
+type CollectedGrompleaf = {
     DefaultTags: int seq
     DefaultCardSettingId: int
-    GromplateInstance: GromplateInstance
+    Grompleaf: Grompleaf
 }
 
 type Gromplate = {
     Id: int
     AuthorId: int
-    LatestInstance: GromplateInstance
+    LatestInstance: Grompleaf
 }
 
 type IntervalOrStepsIndex =
@@ -304,22 +304,22 @@ module Helper =
 
 type LeafView = {
     FieldValues: FieldAndValue ResizeArray
-    GromplateInstance: GromplateInstance
+    Grompleaf: Grompleaf
 } with
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.GromplateInstance.Templates)
+            (this.Grompleaf.Templates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     member this.Indexes = [0s .. this.MaxIndexInclusive]
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
-        match this.GromplateInstance.Templates with
+        match this.Grompleaf.Templates with
         | Standard ts -> 
             ts.Select(fun t ->
                 CardHtml.generate
                 <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
                 <| t.Front
                 <| t.Back
-                <| this.GromplateInstance.Css
+                <| this.Grompleaf.Css
                 <| CardHtml.Standard
             ).ToList()
         | Cloze t ->
@@ -328,7 +328,7 @@ type LeafView = {
                 <| this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "").ToFList()
                 <| t.Front
                 <| t.Back
-                <| this.GromplateInstance.Css
+                <| this.Grompleaf.Css
                 <| CardHtml.Cloze i
             ) |> toResizeArray
     member this.FrontBackFrontSynthBackSynthIndex i =
@@ -516,7 +516,7 @@ with
 type EditStackCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    GromplateInstance: GromplateInstance
+    Grompleaf: Grompleaf
     Kind: UpsertKind
 } with
     member this.CardView = {   
@@ -525,8 +525,8 @@ type EditStackCommand = {
                 {   Field = x.EditField
                     Value =  x.Value
                 }).ToList()
-        GromplateInstance = this.GromplateInstance }
+        Grompleaf = this.Grompleaf }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.GromplateInstance.Templates)
+            (this.Grompleaf.Templates)
             (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls

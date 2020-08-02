@@ -27,7 +27,7 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@instance.IsCollected>
-              <ResizingIframe GromplateInstanceId=@instance.Id Back />
+              <ResizingIframe GrompleafId=@instance.Id Back />
             </HoverPreview>
           </td>
           <td>
@@ -51,7 +51,7 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public int? SelectedId { get; set; }
-  private IList<ViewSearchGromplateInstance> _instances;
+  private IList<ViewSearchGrompleaf> _instances;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 

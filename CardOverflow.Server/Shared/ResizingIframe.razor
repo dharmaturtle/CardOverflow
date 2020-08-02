@@ -18,7 +18,7 @@
   [Parameter] public int StackId { get; set; }
   [Parameter] public (int LeafId, short Index) Leaf { get; set; }
   [Parameter] public int GromplateId { get; set; }
-  [Parameter] public int GromplateInstanceId { get; set; }
+  [Parameter] public int GrompleafId { get; set; }
   [Parameter] public int CommunalFieldId { get; set; }
   [Parameter] public int CommunalFieldInstanceId { get; set; }
   [Parameter] public bool Front { get; set; }
@@ -35,8 +35,8 @@
       middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
     } else if (GromplateId != 0) {
       middle = "gromplate/" + GromplateId;
-    } else if (GromplateInstanceId != 0) {
-      middle = "gromplateinstance/" + GromplateInstanceId;
+    } else if (GrompleafId != 0) {
+      middle = "gromplateinstance/" + GrompleafId;
     } else if (CommunalFieldId != 0) {
       middle = "communalfield/" + CommunalFieldId;
     } else if (CommunalFieldInstanceId != 0) {
