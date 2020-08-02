@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CardOverflow.Entity
 {
-    public partial class DeckFollowersEntity
+    public partial class DeckFollowerEntity
     {
         [Key]
         public int DeckId { get; set; }

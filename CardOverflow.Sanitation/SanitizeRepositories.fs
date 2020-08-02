@@ -353,9 +353,9 @@ module SanitizeDeckRepository =
     let follow (db: CardOverflowDb) userId deckId followType notifyOfAnyNewChanges editExisting = taskResult {
         do! requireIsPublic db deckId |>% Result.mapError RealError
         if notifyOfAnyNewChanges then
-            do! db.DeckFollowers.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
+            do! db.DeckFollower.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
                 |>% Result.requireFalse (sprintf "You're already following Deck #%i" deckId |> RealError)
-            DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.AddI
+            DeckFollowerEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollower.AddI
         match followType with
             | NoDeck -> ()
             | NewDeck _ | OldDeck _ ->
@@ -444,11 +444,11 @@ module SanitizeDeckRepository =
         return! db.SaveChangesAsyncI()
     }
     let unfollow (db: CardOverflowDb) userId deckId = taskResult {
-        do! db.DeckFollowers.AnyAsync(fun df ->
+        do! db.DeckFollower.AnyAsync(fun df ->
                 df.DeckId = deckId
                 && df.FollowerId = userId)
             |>% Result.requireTrue (sprintf "Either the deck doesn't exist or you are not following it.")
-        DeckFollowersEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollowers.RemoveI
+        DeckFollowerEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollower.RemoveI
         do! db.SaveChangesAsyncI()
     }
     let diff (db: CardOverflowDb) userId theirDeckId myDeckId = taskResult {
@@ -524,7 +524,7 @@ module SanitizeDeckRepository =
         	, p.display_name as "AuthorName"
         	, EXISTS (
                 SELECT 1
-                FROM   public.deck_followers df
+                FROM   public.deck_follower df
                 WHERE  df.deck_id = d.id
                 AND    df.follower_id = @userid
             ) as "IsFollowed"

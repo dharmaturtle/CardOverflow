@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
         public DeckEntity()
         {
             CollectedCards = new HashSet<CollectedCardEntity>();
-            DeckFollowers = new HashSet<DeckFollowersEntity>();
+            DeckFollowers = new HashSet<DeckFollowerEntity>();
             DerivedDecks = new HashSet<DeckEntity>();
             Notifications = new HashSet<NotificationEntity>();
         }
@@ -43,7 +43,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Deck")]
         public virtual ICollection<CollectedCardEntity> CollectedCards { get; set; }
         [InverseProperty("Deck")]
-        public virtual ICollection<DeckFollowersEntity> DeckFollowers { get; set; }
+        public virtual ICollection<DeckFollowerEntity> DeckFollowers { get; set; }
         [InverseProperty("Source")]
         public virtual ICollection<DeckEntity> DerivedDecks { get; set; }
         [InverseProperty("Deck")]

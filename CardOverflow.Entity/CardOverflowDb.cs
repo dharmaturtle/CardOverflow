@@ -23,7 +23,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommeafEntity> Commeaf { get; set; }
         public virtual DbSet<Commeaf_LeafEntity> Commeaf_Leaf { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
-        public virtual DbSet<DeckFollowersEntity> DeckFollowers { get; set; }
+        public virtual DbSet<DeckFollowerEntity> DeckFollower { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
         public virtual DbSet<File_LeafEntity> File_Leaf { get; set; }
@@ -389,7 +389,7 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<DeckFollowersEntity>(entity =>
+            modelBuilder.Entity<DeckFollowerEntity>(entity =>
             {
                 entity.HasKey(e => new { e.DeckId, e.FollowerId });
 

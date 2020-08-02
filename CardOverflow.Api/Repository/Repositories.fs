@@ -744,7 +744,7 @@ module DeckRepository =
         let input = input |> List.map (fun x -> x.ToLower())
         db.Deck.Where(fun t -> input.Contains(t.Name.ToLower()) && t.UserId = userId)
     let getFollowers (db: CardOverflowDb) deckId =
-        db.DeckFollowers.Where(fun x -> x.DeckId = deckId && x.Deck.IsPublic).Select(fun x ->
+        db.DeckFollower.Where(fun x -> x.DeckId = deckId && x.Deck.IsPublic).Select(fun x ->
             x.FollowerId,
             x.Follower.DisplayName
         ).ToListAsync()
