@@ -521,7 +521,7 @@ module SanitizeDeckRepository =
         	d.id as "Id"
         	, d.name as "Name"
         	, d.user_id as "AuthorId"
-        	, u.display_name as "AuthorName"
+        	, p.display_name as "AuthorName"
         	, EXISTS (
                 SELECT 1
                 FROM   public.deck_followers df
@@ -530,7 +530,7 @@ module SanitizeDeckRepository =
             ) as "IsFollowed"
         	, ts_rank_cd(d.ts_vector, query) AS rank
         FROM public.deck d
-        JOIN public.user u ON u.id = d.user_id
+        JOIN public.padawan p ON p.id = d.user_id
         , websearch_to_tsquery(@query) query
         WHERE (d.is_public OR d.user_id = @userid) %s
         ORDER BY rank DESC
