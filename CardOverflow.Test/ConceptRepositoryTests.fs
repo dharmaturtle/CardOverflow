@@ -596,7 +596,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId ["tag1"]
     let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId ["tag2"]
     let! hits = search term
-    Assert.Equal(more.Trim(), hits.Results.First().Instance.StrippedFront)
+    Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
 
     // testing relevance sans tags
     let term = "nightwish "
@@ -605,7 +605,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId []
     let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId []
     let! hits = search term
-    Assert.Equal(more.Trim(), hits.Results.First().Instance.StrippedFront)
+    Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
     
     // tags outweigh fields
     let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
@@ -613,7 +613,7 @@ let ``Card search works`` (): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicCustomStack [lorem      ; ""] c.Db userId [tag]
     let! _ = FacetRepositoryTests.addBasicCustomStack [lorem + tag; ""] c.Db userId []
     let! hits = search tag
-    Assert.Equal(lorem, hits.Results.First().Instance.StrippedFront)
+    Assert.Equal(lorem, hits.Results.First().Leaf.StrippedFront)
 
     // testing gromplate search
     let search = SanitizeGromplate.Search c.Db userId 1

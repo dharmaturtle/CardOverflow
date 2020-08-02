@@ -34,7 +34,7 @@
   </h3>
 }
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?leaf={x}") Ids=@_stacks?.Select(x => x.Instance.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedInstanceId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?leaf={x}") Ids=@_stacks?.Select(x => x.Leaf.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedInstanceId.ToString() />
 </div>
 @if (_selectedInstanceId == default) {
   @if (_stacks == null) {
@@ -50,15 +50,15 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@stack.IsCollected>
-              <ResizingIframeBranch LeafId=@stack.Instance.Id Front />
+              <ResizingIframeBranch LeafId=@stack.Leaf.Id Front />
             </HoverPreview>
           </td>
           <td>
             @stack.Users
           </td>
           <td>
-            <a href="/deck/@DeckId?leaf=@stack.Instance.Id">
-              @stack.Instance.StrippedFront
+            <a href="/deck/@DeckId?leaf=@stack.Leaf.Id">
+              @stack.Leaf.StrippedFront
             </a>
           </td>
         </tr>

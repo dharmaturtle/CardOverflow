@@ -25,7 +25,7 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@stack.IsCollected>
-              <ResizingIframeBranch LeafId=@stack.Instance.Id Front />
+              <ResizingIframeBranch LeafId=@stack.Leaf.Id Front />
             </HoverPreview>
           </td>
           <td>
@@ -33,7 +33,7 @@
           </td>
           <td>
             <a href="/stack/@stack.Id">
-              @stack.Instance.StrippedFront
+              @stack.Leaf.StrippedFront
             </a>
           </td>
         </tr>

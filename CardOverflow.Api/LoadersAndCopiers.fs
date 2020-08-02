@@ -465,12 +465,12 @@ type Comment with
     }
 
 type ExploreBranchSummary with
-    static member load instance (entity: BranchEntity) = {
+    static member load leaf (entity: BranchEntity) = {
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
         Users = entity.Users
-        Instance = instance
+        Leaf = leaf
     }
 
 type Branch with

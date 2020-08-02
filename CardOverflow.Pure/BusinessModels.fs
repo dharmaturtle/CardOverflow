@@ -433,9 +433,9 @@ type ExploreStackSummary = {
     Users: int
     Author: string
     AuthorId: int
-    Instance: LeafMeta
+    Leaf: LeafMeta
 } with
-    member this.IsCollected = this.Instance.IsCollected
+    member this.IsCollected = this.Leaf.IsCollected
 
 [<CLIMutable>]
 type ExploreBranchSummary = {
@@ -443,9 +443,9 @@ type ExploreBranchSummary = {
     Users: int
     Author: string
     AuthorId: int
-    Instance: LeafMeta
+    Leaf: LeafMeta
 } with
-    member this.IsCollected = this.Instance.IsCollected
+    member this.IsCollected = this.Leaf.IsCollected
 
 type Branch = {
     Name: string
@@ -455,7 +455,7 @@ type Branch = {
     member this.Users = this.Summary.Users
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
-    member this.Instance = this.Summary.Instance
+    member this.Instance = this.Summary.Leaf
 
 type CollectedIds = StackLeafIds Option
 

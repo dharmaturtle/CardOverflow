@@ -486,7 +486,7 @@ module StackRepository =
                             Author = c.Stack.Author.DisplayName
                             AuthorId = c.Stack.AuthorId
                             Users = c.Stack.Users
-                            Instance = LeafMeta.load isCollected true c
+                            Leaf = LeafMeta.load isCollected true c
                         }
                     )
                 Details = {
