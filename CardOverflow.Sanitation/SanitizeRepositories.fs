@@ -513,28 +513,34 @@ module SanitizeDeckRepository =
                 LeafChanged = leafChanged @ (diffs.LeafChanged |> List.filterOut (fun (x, _) -> stackIds.Contains x.StackId))
             }
     }
-    let search (conn: NpgsqlConnection) userId query =
+    type searchOrder = | Relevance | Popularity
+    let search (conn: NpgsqlConnection) userId query order =
+        let order =
+            match order with
+            | Relevance  -> "rank"
+            | Popularity -> "FollowCount"
         let additionalWhere =
             if String.IsNullOrWhiteSpace query then ""
             else """AND query @@ d.ts_vector"""
         conn.QueryAsync<DeckWithFollowMeta>(sprintf """SELECT
         	d.id
         	, d.name
-        	, d.user_id as AuthorId
-        	, p.display_name as AuthorName
+        	, d.user_id AS AuthorId
+        	, p.display_name AS AuthorName
         	, EXISTS (
                 SELECT 1
                 FROM   public.deck_follower df
                 WHERE  df.deck_id = d.id
                 AND    df.follower_id = @userid
-            ) as IsFollowed
+            ) AS IsFollowed
+            , d.followers AS FollowCount
         	, ts_rank_cd(d.ts_vector, query) AS rank
         FROM public.deck d
         JOIN public.padawan p ON p.id = d.user_id
         , websearch_to_tsquery(@query) query
         WHERE (d.is_public OR d.user_id = @userid) %s
-        ORDER BY rank DESC
-        LIMIT 10;""" additionalWhere, {| query = query; userid = userId |})
+        ORDER BY %s DESC
+        LIMIT 10;""" additionalWhere order, {| query = query; userid = userId |})
         |>% Seq.toList
 
 module SanitizeHistoryRepository =

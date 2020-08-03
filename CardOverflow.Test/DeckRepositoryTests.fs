@@ -78,7 +78,7 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     let userId = 3
     use! conn = c.Conn()
     let searchAssert query expected =
-        SanitizeDeckRepository.search conn userId query
+        SanitizeDeckRepository.search conn userId query Relevance
         |>% Assert.areEquivalent expected
         
     let deck1 =
@@ -127,8 +127,8 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     do! searchAssert "'" []
 
     // sort by relevance works
-    let searchAssert query expected =
-        SanitizeDeckRepository.search conn userId query
+    let searchAssert query order expected =
+        SanitizeDeckRepository.search conn userId query order
         |>% Assert.equal expected
     let x, y, z = Generators.differentPositives 3 |> Gen.sample1Gen |> fun x -> x.[0], x.[1], x.[2]
     let nameX = "batman "
@@ -138,7 +138,20 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.rename c.Db 1 1 deck1.Name
     do! SanitizeDeckRepository.rename c.Db 2 2 deck2.Name
     do! SanitizeDeckRepository.rename c.Db 3 3 deck3.Name
-    do! [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.Name.Length) |> searchAssert nameX
+    do! [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.Name.Length) |> searchAssert nameX Relevance
+
+    // sort by popularity works
+    let x, y, z = Generators.differentPositives 3 |> Gen.sample1Gen |> fun x -> x.[0], x.[1], x.[2]
+    use db = c.Db
+    db.Deck.Single(fun x -> x.Id = 1).Followers <- x
+    db.Deck.Single(fun x -> x.Id = 2).Followers <- y
+    db.Deck.Single(fun x -> x.Id = 3).Followers <- z
+    do! db.SaveChangesAsyncI()
+    let deck1 = { deck1 with FollowCount = x }
+    let deck2 = { deck2 with FollowCount = y }
+    let deck3 = { deck3 with FollowCount = z }
+
+    do! [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.FollowCount) |> searchAssert "" Popularity
     } |> TaskResult.getOk)
 
 [<Fact>]
