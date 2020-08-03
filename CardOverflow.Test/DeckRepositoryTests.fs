@@ -152,6 +152,14 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     let deck3 = { deck3 with FollowCount = z }
 
     do! [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.FollowCount) |> searchAssert "" Popularity
+
+    // search by username works
+    do! [deck1] |> searchAssert deck1.AuthorName Popularity
+    do! [deck2] |> searchAssert deck2.AuthorName Popularity
+    do! [deck3] |> searchAssert deck3.AuthorName Popularity
+    do! [deck1] |> searchAssert deck1.AuthorName Relevance
+    do! [deck2] |> searchAssert deck2.AuthorName Relevance
+    do! [deck3] |> searchAssert deck3.AuthorName Relevance
     } |> TaskResult.getOk)
 
 [<Fact>]
