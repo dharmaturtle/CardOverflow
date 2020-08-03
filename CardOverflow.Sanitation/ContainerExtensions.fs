@@ -82,7 +82,7 @@ type Container with
             .AddSingleton<ILoggerFactory>(loggerFactory)
             .AddSingleton<IEntityHasher, EntityHasher>()
             .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
-                //loggerFactory.AddSerilog(container.GetLeaf<ILogger>()) |> ignore
+                //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
                     .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
                     .UseSnakeCaseNamingConvention()

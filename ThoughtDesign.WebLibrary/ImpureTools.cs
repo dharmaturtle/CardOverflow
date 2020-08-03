@@ -27,6 +27,7 @@ namespace ThoughtDesign.WebLibrary {
         optionsBuilder
         //.UseLoggerFactory(loggerFactory)
         //.EnableSensitiveDataLogging()
+        .UseSnakeCaseNamingConvention()
         .UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
       });
       Log.Logger = serilogLogger;
