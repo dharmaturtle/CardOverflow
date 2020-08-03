@@ -518,16 +518,16 @@ module SanitizeDeckRepository =
             if String.IsNullOrWhiteSpace query then ""
             else """AND query @@ d.ts_vector"""
         conn.QueryAsync<DeckWithFollowMeta>(sprintf """SELECT
-        	d.id as "Id"
-        	, d.name as "Name"
-        	, d.user_id as "AuthorId"
-        	, p.display_name as "AuthorName"
+        	d.id
+        	, d.name
+        	, d.user_id as AuthorId
+        	, p.display_name as AuthorName
         	, EXISTS (
                 SELECT 1
                 FROM   public.deck_follower df
                 WHERE  df.deck_id = d.id
                 AND    df.follower_id = @userid
-            ) as "IsFollowed"
+            ) as IsFollowed
         	, ts_rank_cd(d.ts_vector, query) AS rank
         FROM public.deck d
         JOIN public.padawan p ON p.id = d.user_id

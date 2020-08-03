@@ -125,6 +125,20 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
 
     // injection attack fails
     do! searchAssert "'" []
+
+    // sort by relevance works
+    let searchAssert query expected =
+        SanitizeDeckRepository.search conn userId query
+        |>% Assert.equal expected
+    let x, y, z = Generators.differentPositives 3 |> Gen.sample1Gen |> fun x -> x.[0], x.[1], x.[2]
+    let nameX = "batman "
+    let deck1 = { deck1 with Name = String.replicate x nameX }
+    let deck2 = { deck2 with Name = String.replicate y nameX }
+    let deck3 = { deck3 with Name = String.replicate z nameX }
+    do! SanitizeDeckRepository.rename c.Db 1 1 deck1.Name
+    do! SanitizeDeckRepository.rename c.Db 2 2 deck2.Name
+    do! SanitizeDeckRepository.rename c.Db 3 3 deck3.Name
+    do! [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.Name.Length) |> searchAssert nameX
     } |> TaskResult.getOk)
 
 [<Fact>]

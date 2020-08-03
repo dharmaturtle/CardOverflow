@@ -39,6 +39,11 @@ module Generators =
         Arb.generate<char>
         |> seqOfLength lengthInterval
         |> Gen.map String.Concat
+    let differentPositives n =
+        Arb.Default.PositiveInt().Generator
+        |> Gen.map (fun x -> x.Get)
+        |> Gen.listOfLength n
+        |> Gen.filter (fun x -> x.Distinct().Count() = n)
     let standardTemplate fields =
         gen {
             let templateGen =
