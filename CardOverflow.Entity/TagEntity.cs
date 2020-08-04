@@ -26,7 +26,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public NpgsqlTsVector TsVector { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
 
         [InverseProperty("Tag")]
         public virtual ICollection<Tag_CardEntity> Tag_Cards { get; set; }

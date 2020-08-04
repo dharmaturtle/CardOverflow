@@ -34,8 +34,8 @@ namespace CardOverflow.Entity
         public string FrontPersonalField { get; set; } = "";
         [Required]
         public string BackPersonalField { get; set; } = "";
-        public string TsVectorHelper { get; set; }
-        public NpgsqlTsVector TsVector { get; set; }
+        public string TsvHelper { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
 
         [ForeignKey("BranchId")]
         [InverseProperty("CardBranches")]

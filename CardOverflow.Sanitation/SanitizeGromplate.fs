@@ -191,7 +191,7 @@ module SanitizeGromplate =
             db.LatestGrompleaf
                 .Where(fun x ->
                     String.IsNullOrWhiteSpace searchTerm ||
-                    x.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
+                    x.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
                 ).Select(fun x ->
                     x.Gromplate.Grompleafs.Select(fun x -> x.User_Grompleafs.Count).ToList(), // lowTODO sum here
                     x.User_Grompleafs.Any(fun x -> x.UserId = userId),

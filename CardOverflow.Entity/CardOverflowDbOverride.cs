@@ -48,19 +48,19 @@ namespace CardOverflow.Entity {
         string.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x =>
-          x.Cards.Any(x => x.Tag_Cards.Any(x => x.Tag.TsVector.Matches(
+          x.Cards.Any(x => x.Tag_Cards.Any(x => x.Tag.Tsv.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)))))
-            || x.TsVector.Matches(
+            || x.Tsv.Matches(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
 
       IOrderedQueryable<LeafEntity> order(IQueryable<LeafEntity> query) =>
         searchOrder == SearchOrder.Popularity
         ? query.OrderByDescending(x => x.Branch.Users)
         : query.OrderByDescending(x =>
-          x.TsVector.RankCoverDensity(
+          x.Tsv.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
           + (((float?)x.Cards.Sum(x => x.Tag_Cards.Sum(x =>
-            x.Tag.TsVector.RankCoverDensity(
+            x.Tag.Tsv.RankCoverDensity(
               Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization)
             )) ?? 0) / 3)); // the division by 3 is utterly arbitrary, lowTODO find a better way to combine two TsVector's Ranks;
 
@@ -117,7 +117,7 @@ namespace CardOverflow.Entity {
       using var sha512 = SHA512.Create();
       foreach (var gromplate in _filter<GrompleafEntity>(entries)) {
         gromplate.Hash = _entityHasher.GrompleafHasher.Invoke((gromplate, sha512));
-        gromplate.CWeightTsVectorHelper =
+        gromplate.CWeightTsvHelper =
           Fields.fromString.Invoke(gromplate.Fields).Select(x => x.Name)
             .Append(MappingTools.stripHtmlTags(gromplate.Templates))
             .Apply(x => string.Join(' ', x));
@@ -129,13 +129,13 @@ namespace CardOverflow.Entity {
         leaf.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(leaf);
         var gromplateHash = leaf.Grompleaf?.Hash ?? Grompleaf.Find(leaf.GrompleafId).Hash;
         leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, gromplateHash, sha512));
-        leaf.TsVectorHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
+        leaf.TsvHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
       }
       foreach (var commeaf in _filter<CommeafEntity>(entries)) {
-        commeaf.BWeightTsVectorHelper = MappingTools.stripHtmlTags(commeaf.Value);
+        commeaf.BWeightTsvHelper = MappingTools.stripHtmlTags(commeaf.Value);
       }
       foreach (var card in _filter<CardEntity>(entries)) {
-        card.TsVectorHelper = MappingTools.stripHtmlTags(card.FrontPersonalField) + " " + MappingTools.stripHtmlTags(card.BackPersonalField);
+        card.TsvHelper = MappingTools.stripHtmlTags(card.FrontPersonalField) + " " + MappingTools.stripHtmlTags(card.BackPersonalField);
       }
       foreach (var tag in _filter<TagEntity>(entries)) {
         tag.Name = _entityHasher.SanitizeTag.Invoke(tag.Name);

@@ -30,7 +30,7 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public bool IsPublic { get; set; }
-        public NpgsqlTsVector TsVector { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
         public int? SourceId { get; set; }
         public int Followers { get; set; }
 

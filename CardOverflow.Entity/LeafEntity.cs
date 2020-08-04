@@ -44,8 +44,8 @@ namespace CardOverflow.Entity
         [Required]
         [Column(TypeName = "bit(512)")]
         public BitArray Hash { get; set; }
-        public string TsVectorHelper { get; set; }
-        public NpgsqlTsVector TsVector { get; set; }
+        public string TsvHelper { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
         public short MaxIndexInclusive { get; set; }
 
         [ForeignKey("StackId")]

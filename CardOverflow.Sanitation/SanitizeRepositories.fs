@@ -521,8 +521,8 @@ module SanitizeDeckRepository =
             | Popularity -> "FollowCount"
         let additionalWhere =
             if String.IsNullOrWhiteSpace query then ""
-            else """AND (    qweb @@ d.ts_vector
-                          OR qsim @@ p.ts_vector )"""
+            else """AND (    qweb @@ d.tsv
+                          OR qsim @@ p.tsv )"""
         conn.QueryAsync<DeckWithFollowMeta>(sprintf """SELECT
         	d.id
         	, d.name
@@ -535,8 +535,8 @@ module SanitizeDeckRepository =
                 AND    df.follower_id = @userid
             ) AS IsFollowed
             , d.followers AS FollowCount
-        	, ts_rank_cd(d.ts_vector, qweb) +
-              ts_rank_cd(p.ts_vector, qsim) AS rank
+        	, ts_rank_cd(d.tsv, qweb) +
+              ts_rank_cd(p.tsv, qsim) AS rank
         FROM public.deck d
         JOIN public.padawan p ON p.id = d.user_id
         , websearch_to_tsquery(@query) qweb

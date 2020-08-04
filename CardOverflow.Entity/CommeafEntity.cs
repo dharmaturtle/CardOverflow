@@ -41,8 +41,8 @@ namespace CardOverflow.Entity
             }
         }
         private string _EditSummary;
-        public string BWeightTsVectorHelper { get; set; }
-        public NpgsqlTsVector TsVector { get; set; }
+        public string BWeightTsvHelper { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
 
         [ForeignKey("CommieldId")]
         [InverseProperty("Commeafs")]

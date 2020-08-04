@@ -398,8 +398,8 @@ module StackRepository =
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
                 x.Tag_Cards.Any(fun x ->
-                    x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
-                x.Leaf.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
+                    x.Tag.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
+                x.Leaf.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private searchCollectedIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
@@ -409,8 +409,8 @@ module StackRepository =
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
                 x.Tag_Cards.Any(fun x ->
-                    x.Tag.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
-                x.Leaf.TsVector.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
+                    x.Tag.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
+                x.Leaf.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private collectedByDeck (db: CardOverflowDb) deckId =
         db.Card

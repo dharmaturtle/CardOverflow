@@ -74,8 +74,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardEntity>(entity =>
             {
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
 
                 entity.HasIndex(e => e.LeafId);
 
@@ -185,8 +185,8 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.Hash),
                     () => entity.Ignore(e => e.Hash));
 
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
 
                 entity.HasIndex(e => new { e.Id, e.BranchId })
                     .IsUnique();
@@ -272,8 +272,8 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.Hash),
                     () => entity.Ignore(e => e.Hash));
 
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
 
                 entity.HasIndex(e => new { e.Id, e.GromplateId })
                     .IsUnique();
@@ -339,8 +339,8 @@ namespace CardOverflow.Entity
             {
                 entity.HasIndex(e => e.CommieldId);
 
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
 
                 entity.HasIndex(e => new { e.Id, e.CommieldId })
                     .IsUnique();
@@ -372,8 +372,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<DeckEntity>(entity =>
             {
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
 
                 entity.HasIndex(e => new { e.Id, e.UserId })
                     .IsUnique();
@@ -484,8 +484,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<RelationshipEntity>(entity =>
             {
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
             });
 
             modelBuilder.Entity<Relationship_CardEntity>(entity =>
@@ -537,8 +537,8 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<TagEntity>(entity =>
             {
-                IfNpg(() => entity.HasIndex(e => e.TsVector).HasMethod("gin"),
-                    () => entity.Ignore(e => e.TsVector));
+                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
+                    () => entity.Ignore(e => e.Tsv));
             });
 
             modelBuilder.Entity<Tag_CardEntity>(entity =>

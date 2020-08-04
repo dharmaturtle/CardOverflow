@@ -90,8 +90,8 @@ namespace CardOverflow.Entity
         [Required]
         [Column(TypeName = "bit(512)")]
         public BitArray Hash { get; set; }
-        public string CWeightTsVectorHelper { get; set; }
-        public NpgsqlTsVector TsVector { get; set; }
+        public string CWeightTsvHelper { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
 
         [ForeignKey("GromplateId")]
         [InverseProperty("Grompleafs")]
