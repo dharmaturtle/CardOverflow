@@ -1550,160 +1550,160 @@ ALTER TABLE ONLY public.vote_2_feedback
     ADD CONSTRAINT vote_2_feedback_pkey PRIMARY KEY (feedback_id, user_id);
 
 
-CREATE UNIQUE INDEX alpha_beta_key_key_idx ON public.alpha_beta_key USING btree (key);
+CREATE UNIQUE INDEX "alpha_beta_key. key. uq idx" ON public.alpha_beta_key USING btree (key);
 
 
-CREATE UNIQUE INDEX branch_stack_id_upper_idx ON public.branch USING btree (stack_id, upper((name)::text));
+CREATE UNIQUE INDEX "branch. stack_id, upper(name). uq idx" ON public.branch USING btree (stack_id, upper((name)::text));
 
 
-CREATE INDEX card_card_setting_id_idx ON public.card USING btree (card_setting_id);
+CREATE INDEX "card. card_setting_id. idx" ON public.card USING btree (card_setting_id);
 
 
-CREATE INDEX card_card_state_idx ON public.card USING btree (card_state);
+CREATE INDEX "card. card_state. idx" ON public.card USING btree (card_state);
 
 
-CREATE INDEX card_leaf_id_idx ON public.card USING btree (leaf_id);
+CREATE INDEX "card. leaf_id. idx" ON public.card USING btree (leaf_id);
 
 
-CREATE INDEX card_setting_user_id_idx ON public.card_setting USING btree (user_id);
+CREATE INDEX "card_setting. user_id. idx" ON public.card_setting USING btree (user_id);
 
 
-CREATE INDEX card_tsv_idx ON public.card USING gin (tsv);
+CREATE INDEX "card. tsv. idx" ON public.card USING gin (tsv);
 
 
-CREATE INDEX card_user_id_branch_id_idx ON public.card USING btree (user_id, branch_id);
+CREATE INDEX "card. user_id, branch_id. idx" ON public.card USING btree (user_id, branch_id);
 
 
-CREATE INDEX card_user_id_idx ON public.card USING btree (user_id);
+CREATE INDEX "card. user_id. idx" ON public.card USING btree (user_id);
 
 
-CREATE UNIQUE INDEX card_user_id_leaf_id_index_idx ON public.card USING btree (user_id, leaf_id, index);
+CREATE UNIQUE INDEX "card. user_id, leaf_id, index. uq idx" ON public.card USING btree (user_id, leaf_id, index);
 
 
-CREATE INDEX card_user_id_stack_id_idx ON public.card USING btree (user_id, stack_id);
+CREATE INDEX "card. user_id, stack_id. idx" ON public.card USING btree (user_id, stack_id);
 
 
-CREATE INDEX commeaf_2_leaf_leaf_id_idx ON public.commeaf_2_leaf USING btree (leaf_id);
+CREATE INDEX "commeaf_2_leaf. leaf_id. idx" ON public.commeaf_2_leaf USING btree (leaf_id);
 
 
-CREATE INDEX commeaf_commield_id_idx ON public.commeaf USING btree (commield_id);
+CREATE INDEX "commeaf. commield_id. idx" ON public.commeaf USING btree (commield_id);
 
 
-CREATE INDEX commeaf_tsv_idx ON public.commeaf USING gin (tsv);
+CREATE INDEX "commeaf. tsv. idx" ON public.commeaf USING gin (tsv);
 
 
-CREATE INDEX comment_gromplate_gromplate_id_idx ON public.comment_gromplate USING btree (gromplate_id);
+CREATE INDEX "comment_gromplate. gromplate_id. idx" ON public.comment_gromplate USING btree (gromplate_id);
 
 
-CREATE INDEX comment_gromplate_user_id_idx ON public.comment_gromplate USING btree (user_id);
+CREATE INDEX "comment_gromplate. user_id. idx" ON public.comment_gromplate USING btree (user_id);
 
 
-CREATE INDEX comment_stack_stack_id_idx ON public.comment_stack USING btree (stack_id);
+CREATE INDEX "comment_stack. stack_id. idx" ON public.comment_stack USING btree (stack_id);
 
 
-CREATE INDEX comment_stack_user_id_idx ON public.comment_stack USING btree (user_id);
+CREATE INDEX "comment_stack. user_id. idx" ON public.comment_stack USING btree (user_id);
 
 
-CREATE INDEX commield_author_id_idx ON public.commield USING btree (author_id);
+CREATE INDEX "commield. author_id. idx" ON public.commield USING btree (author_id);
 
 
-CREATE INDEX deck_tsv_idx ON public.deck USING gin (tsv);
+CREATE INDEX "deck. tsv. idx" ON public.deck USING gin (tsv);
 
 
-CREATE UNIQUE INDEX deck_user_id_upper_idx ON public.deck USING btree (user_id, upper((name)::text));
+CREATE UNIQUE INDEX "deck. user_id, upper(name). uq idx" ON public.deck USING btree (user_id, upper((name)::text));
 
 
-CREATE INDEX feedback_parent_id_idx ON public.feedback USING btree (parent_id);
+CREATE INDEX "feedback. parent_id. idx" ON public.feedback USING btree (parent_id);
 
 
-CREATE INDEX feedback_user_id_idx ON public.feedback USING btree (user_id);
+CREATE INDEX "feedback. user_id. idx" ON public.feedback USING btree (user_id);
 
 
-CREATE INDEX file_2_leaf_file_id_idx ON public.file_2_leaf USING btree (file_id);
+CREATE INDEX "file_2_leaf. file_id. idx" ON public.file_2_leaf USING btree (file_id);
 
 
-CREATE UNIQUE INDEX file_sha256_idx ON public.file USING btree (sha256);
+CREATE UNIQUE INDEX "file. sha256. uq idx" ON public.file USING btree (sha256);
 
 
-CREATE INDEX filter_user_id_idx ON public.filter USING btree (user_id);
+CREATE INDEX "filter. user_id. idx" ON public.filter USING btree (user_id);
 
 
-CREATE INDEX gromplate_author_id_idx ON public.gromplate USING btree (author_id);
+CREATE INDEX "gromplate. author_id. idx" ON public.gromplate USING btree (author_id);
 
 
-CREATE INDEX grompleaf_gromplate_id_idx ON public.grompleaf USING btree (gromplate_id);
+CREATE INDEX "grompleaf. gromplate_id. idx" ON public.grompleaf USING btree (gromplate_id);
 
 
-CREATE INDEX grompleaf_hash_idx ON public.grompleaf USING btree (hash);
+CREATE INDEX "grompleaf. hash. idx" ON public.grompleaf USING btree (hash);
 
 
-CREATE INDEX grompleaf_tsv_idx ON public.grompleaf USING gin (tsv);
+CREATE INDEX "grompleaf. tsv. idx" ON public.grompleaf USING gin (tsv);
 
 
-CREATE INDEX history_card_id_idx ON public.history USING btree (card_id);
+CREATE INDEX "history. card_id. idx" ON public.history USING btree (card_id);
 
 
-CREATE INDEX leaf_branch_id_idx ON public.leaf USING btree (branch_id);
+CREATE INDEX "leaf. branch_id. idx" ON public.leaf USING btree (branch_id);
 
 
-CREATE INDEX leaf_grompleaf_id_idx ON public.leaf USING btree (grompleaf_id);
+CREATE INDEX "leaf. grompleaf_id. idx" ON public.leaf USING btree (grompleaf_id);
 
 
-CREATE INDEX leaf_hash_idx ON public.leaf USING btree (hash);
+CREATE INDEX "leaf. hash. idx" ON public.leaf USING btree (hash);
 
 
-CREATE INDEX leaf_tsv_idx ON public.leaf USING gin (tsv);
+CREATE INDEX "leaf. tsv. idx" ON public.leaf USING gin (tsv);
 
 
-CREATE INDEX padawan_tsv_idx ON public.padawan USING gin (tsv);
+CREATE INDEX "user. tsv. idx" ON public.padawan USING gin (tsv);
 
 
-CREATE INDEX relationship_2_card_relationship_id_idx ON public.relationship_2_card USING btree (relationship_id);
+CREATE INDEX "relationship_2_card. relationship_id. idx" ON public.relationship_2_card USING btree (relationship_id);
 
 
-CREATE INDEX relationship_2_card_source_card_id_idx ON public.relationship_2_card USING btree (source_card_id);
+CREATE INDEX "relationship_2_card. source_card_id. idx" ON public.relationship_2_card USING btree (source_card_id);
 
 
-CREATE INDEX relationship_2_card_target_card_id_idx ON public.relationship_2_card USING btree (target_card_id);
+CREATE INDEX "relationship_2_card. target_card_id. idx" ON public.relationship_2_card USING btree (target_card_id);
 
 
-CREATE INDEX relationship_tsv_idx ON public.relationship USING gin (tsv);
+CREATE INDEX "relationship. tsv. idx" ON public.relationship USING gin (tsv);
 
 
-CREATE UNIQUE INDEX relationship_upper_idx ON public.relationship USING btree (upper((name)::text));
+CREATE UNIQUE INDEX "relationship. upper(name). uq idx" ON public.relationship USING btree (upper((name)::text));
 
 
-CREATE INDEX stack_author_id_idx ON public.stack USING btree (author_id);
+CREATE INDEX "stack. author_id. idx" ON public.stack USING btree (author_id);
 
 
-CREATE INDEX tag_2_card_card_id_idx ON public.tag_2_card USING btree (card_id);
+CREATE INDEX "tag_2_card. card_id. idx" ON public.tag_2_card USING btree (card_id);
 
 
-CREATE UNIQUE INDEX tag_2_card_tag_id_stack_id_user_id_idx ON public.tag_2_card USING btree (tag_id, stack_id, user_id);
+CREATE UNIQUE INDEX "tag_2_card. tag_id, stack_id, user_id. uq idx" ON public.tag_2_card USING btree (tag_id, stack_id, user_id);
 
 
-CREATE INDEX tag_2_user_2_grompleaf_default_tag_id_idx ON public.tag_2_user_2_grompleaf USING btree (default_tag_id);
+CREATE INDEX "tag_2_user_2_grompleaf. default_tag_id. idx" ON public.tag_2_user_2_grompleaf USING btree (default_tag_id);
 
 
-CREATE INDEX tag_tsv_idx ON public.tag USING gin (tsv);
+CREATE INDEX "tag. tsv. idx" ON public.tag USING gin (tsv);
 
 
-CREATE UNIQUE INDEX tag_upper_idx ON public.tag USING btree (upper((name)::text));
+CREATE UNIQUE INDEX "tag. upper(name). uq idx" ON public.tag USING btree (upper((name)::text));
 
 
-CREATE INDEX user_2_grompleaf_default_card_setting_id_idx ON public.user_2_grompleaf USING btree (default_card_setting_id);
+CREATE INDEX "user_2_grompleaf. default_card_setting_id. idx" ON public.user_2_grompleaf USING btree (default_card_setting_id);
 
 
-CREATE INDEX user_2_grompleaf_grompleaf_id_idx ON public.user_2_grompleaf USING btree (grompleaf_id);
+CREATE INDEX "user_2_grompleaf. grompleaf_id. idx" ON public.user_2_grompleaf USING btree (grompleaf_id);
 
 
-CREATE INDEX vote_2_comment_gromplate_user_id_idx ON public.vote_2_comment_gromplate USING btree (user_id);
+CREATE INDEX "vote_2_comment_gromplate. user_id. idx" ON public.vote_2_comment_gromplate USING btree (user_id);
 
 
-CREATE INDEX vote_2_comment_stack_user_id_idx ON public.vote_2_comment_stack USING btree (user_id);
+CREATE INDEX "vote_2_comment_stack. user_id. idx" ON public.vote_2_comment_stack USING btree (user_id);
 
 
-CREATE INDEX vote_2_feedback_user_id_idx ON public.vote_2_feedback USING btree (user_id);
+CREATE INDEX "vote_2_feedback. user_id. idx" ON public.vote_2_feedback USING btree (user_id);
 
 
 CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public.branch DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
