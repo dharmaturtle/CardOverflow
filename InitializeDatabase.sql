@@ -419,7 +419,7 @@ CREATE TABLE public.card (
     back_personal_field text NOT NULL,
     tsv_helper text,
     tsv tsvector,
-    CONSTRAINT card_tsv_helper_check CHECK ((tsv_helper IS NULL))
+    CONSTRAINT "card, tsv_helper, is null check" CHECK ((tsv_helper IS NULL))
 );
 
 
@@ -506,7 +506,7 @@ CREATE TABLE public.commeaf (
     edit_summary character varying(200) NOT NULL,
     b_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT commeaf_b_weight_tsv_helper_check CHECK ((b_weight_tsv_helper IS NULL))
+    CONSTRAINT "commeaf, b_weight_tsv_helper, is null check" CHECK ((b_weight_tsv_helper IS NULL))
 );
 
 
@@ -734,7 +734,7 @@ CREATE TABLE public.grompleaf (
     hash bit(512) NOT NULL,
     c_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT grompleaf_c_weight_tsv_helper_check CHECK ((c_weight_tsv_helper IS NULL))
+    CONSTRAINT "grompleaf, c_weight_tsv_helper, is null check" CHECK ((c_weight_tsv_helper IS NULL))
 );
 
 
@@ -792,7 +792,7 @@ CREATE TABLE public.leaf (
     tsv_helper text,
     tsv tsvector,
     max_index_inclusive smallint NOT NULL,
-    CONSTRAINT leaf_tsv_helper_check CHECK ((tsv_helper IS NULL))
+    CONSTRAINT "leaf, tsv_helper, is null check" CHECK ((tsv_helper IS NULL))
 );
 
 
