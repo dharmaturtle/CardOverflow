@@ -1953,23 +1953,23 @@ ALTER TABLE ONLY public.received_notification
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT relationship_2_card_relationship_id_fkey FOREIGN KEY (relationship_id) REFERENCES public.relationship(id);
+    ADD CONSTRAINT "relationship_2_card to card. source_card_id, user_id, source_st" FOREIGN KEY (source_card_id, user_id, source_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT relationship_2_card_source_card_id_fkey FOREIGN KEY (source_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "relationship_2_card to card. source_card_id. fkey" FOREIGN KEY (source_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT relationship_2_card_source_card_id_user_id_source_stack_id_fkey FOREIGN KEY (source_card_id, user_id, source_stack_id) REFERENCES public.card(id, user_id, stack_id);
+    ADD CONSTRAINT "relationship_2_card to card. target_card_id, user_id, target_st" FOREIGN KEY (target_card_id, user_id, target_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT relationship_2_card_target_card_id_fkey FOREIGN KEY (target_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "relationship_2_card to card. target_card_id. fkey" FOREIGN KEY (target_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT relationship_2_card_target_card_id_user_id_target_stack_id_fkey FOREIGN KEY (target_card_id, user_id, target_stack_id) REFERENCES public.card(id, user_id, stack_id);
+    ADD CONSTRAINT "relationship_2_card to relationship. relationship_id. fkey" FOREIGN KEY (relationship_id) REFERENCES public.relationship(id);
 
 
 ALTER TABLE ONLY public.stack
