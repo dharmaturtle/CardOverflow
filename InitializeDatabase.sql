@@ -1,4 +1,4 @@
-﻿SET statement_timeout = 0;
+SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -1749,215 +1749,215 @@ CREATE TRIGGER tr_user_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.pada
 
 
 ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT branch_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "branch to user. author_id. fkey" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT branch_latest_id_id_fkey FOREIGN KEY (latest_id, id) REFERENCES public.leaf(id, branch_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "branch to leaf. latest_id, id. fkey" FOREIGN KEY (latest_id, id) REFERENCES public.leaf(id, branch_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT branch_stack_id_fkey FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "branch to stack. stack_id. fkey" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_branch_id_fkey FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+    ADD CONSTRAINT "card to branch. branch_id. fkey" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_branch_id_leaf_id_fkey FOREIGN KEY (branch_id, leaf_id) REFERENCES public.leaf(branch_id, id);
+    ADD CONSTRAINT "card to leaf. branch_id, leaf_id. fkey" FOREIGN KEY (branch_id, leaf_id) REFERENCES public.leaf(branch_id, id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_card_setting_id_fkey FOREIGN KEY (card_setting_id) REFERENCES public.card_setting(id);
+    ADD CONSTRAINT "card to card_setting. card_setting_id. fkey" FOREIGN KEY (card_setting_id) REFERENCES public.card_setting(id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_deck_id_fkey FOREIGN KEY (deck_id) REFERENCES public.deck(id);
+    ADD CONSTRAINT "card to deck. deck_id. fkey" FOREIGN KEY (deck_id) REFERENCES public.deck(id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_leaf_id_fkey FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "card to leaf. leaf_id. fkey" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.card_setting
-    ADD CONSTRAINT card_setting_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "card_setting to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_stack_id_branch_id_fkey FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id);
+    ADD CONSTRAINT "card to branch. stack_id, branch_id. fkey" FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_stack_id_fkey FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "card to stack. stack_id. fkey" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "card to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.commeaf_2_leaf
-    ADD CONSTRAINT commeaf_2_leaf_commeaf_id_fkey FOREIGN KEY (commeaf_id) REFERENCES public.commeaf(id);
+    ADD CONSTRAINT "commeaf_2_leaf to commeaf. commeaf_id. fkey" FOREIGN KEY (commeaf_id) REFERENCES public.commeaf(id);
 
 
 ALTER TABLE ONLY public.commeaf_2_leaf
-    ADD CONSTRAINT commeaf_2_leaf_leaf_id_fkey FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "commeaf_2_leaf to leaf. leaf_id. fkey" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.commeaf
-    ADD CONSTRAINT commeaf_commield_id_fkey FOREIGN KEY (commield_id) REFERENCES public.commield(id);
+    ADD CONSTRAINT "commeaf to commield. commield_id. fkey" FOREIGN KEY (commield_id) REFERENCES public.commield(id);
 
 
 ALTER TABLE ONLY public.comment_gromplate
-    ADD CONSTRAINT comment_gromplate_gromplate_id_fkey FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
+    ADD CONSTRAINT "comment_gromplate to gromplate. gromplate_id. fkey" FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
 
 
 ALTER TABLE ONLY public.comment_gromplate
-    ADD CONSTRAINT comment_gromplate_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "comment_gromplate to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.comment_stack
-    ADD CONSTRAINT comment_stack_stack_id_fkey FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "comment_stack to stack. stack_id. fkey" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
 
 
 ALTER TABLE ONLY public.comment_stack
-    ADD CONSTRAINT comment_stack_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "comment_stack to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.commield
-    ADD CONSTRAINT commield_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "commield to user. author_id. fkey" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.commield
-    ADD CONSTRAINT commield_latest_id_id_fkey FOREIGN KEY (latest_id, id) REFERENCES public.commeaf(id, commield_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "commield to commeaf. latest_id, id. fkey" FOREIGN KEY (latest_id, id) REFERENCES public.commeaf(id, commield_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.deck_follower
-    ADD CONSTRAINT deck_follower_deck_id_fkey FOREIGN KEY (deck_id) REFERENCES public.deck(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "deck_follower to deck. deck_id. fkey" FOREIGN KEY (deck_id) REFERENCES public.deck(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.deck_follower
-    ADD CONSTRAINT deck_follower_follower_id_fkey FOREIGN KEY (follower_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "deck_follower to user. follower_id. fkey" FOREIGN KEY (follower_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.deck
-    ADD CONSTRAINT deck_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.deck(id) ON DELETE SET NULL;
+    ADD CONSTRAINT "deck to deck. source_id. fkey" FOREIGN KEY (source_id) REFERENCES public.deck(id) ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public.deck
-    ADD CONSTRAINT deck_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "deck to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.feedback
-    ADD CONSTRAINT feedback_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.feedback(id);
+    ADD CONSTRAINT "feedback to feedback. parent_id. fkey" FOREIGN KEY (parent_id) REFERENCES public.feedback(id);
 
 
 ALTER TABLE ONLY public.feedback
-    ADD CONSTRAINT feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "feedback to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.file_2_leaf
-    ADD CONSTRAINT file_2_leaf_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.file(id);
+    ADD CONSTRAINT "file_2_leaf to file. file_id. fkey" FOREIGN KEY (file_id) REFERENCES public.file(id);
 
 
 ALTER TABLE ONLY public.file_2_leaf
-    ADD CONSTRAINT file_2_leaf_leaf_id_fkey FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "file_2_leaf to leaf. leaf_id. fkey" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.filter
-    ADD CONSTRAINT filter_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "filter to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.gromplate
-    ADD CONSTRAINT gromplate_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "gromplate to user. author_id. fkey" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.gromplate
-    ADD CONSTRAINT gromplate_latest_id_id_fkey FOREIGN KEY (latest_id, id) REFERENCES public.grompleaf(id, gromplate_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "gromplate to grompleaf. latest_id, id. fkey" FOREIGN KEY (latest_id, id) REFERENCES public.grompleaf(id, gromplate_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.grompleaf
-    ADD CONSTRAINT grompleaf_gromplate_id_fkey FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
+    ADD CONSTRAINT "grompleaf to gromplate. gromplate_id. fkey" FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
 
 
 ALTER TABLE ONLY public.history
-    ADD CONSTRAINT history_card_id_fkey FOREIGN KEY (card_id) REFERENCES public.card(id) ON DELETE SET NULL;
+    ADD CONSTRAINT "history to card. card_id. fkey" FOREIGN KEY (card_id) REFERENCES public.card(id) ON DELETE SET NULL;
 
 
 ALTER TABLE ONLY public.history
-    ADD CONSTRAINT history_leaf_id_fkey FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "history to leaf. leaf_id. fkey" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.history
-    ADD CONSTRAINT history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "history to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_branch_id_fkey FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+    ADD CONSTRAINT "leaf to branch. branch_id. fkey" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_grompleaf_id_fkey FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
+    ADD CONSTRAINT "leaf to grompleaf. grompleaf_id. fkey" FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_stack_id_branch_id_fkey FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "leaf to branch. stack_id, branch_id. fkey" FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_branch_id_fkey FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+    ADD CONSTRAINT "notification to branch. branch_id. fkey" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_branch_id_stack_id_fkey FOREIGN KEY (branch_id, stack_id) REFERENCES public.branch(id, stack_id);
+    ADD CONSTRAINT "notification to branch. branch_id, stack_id. fkey" FOREIGN KEY (branch_id, stack_id) REFERENCES public.branch(id, stack_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_deck_id_fkey FOREIGN KEY (deck_id) REFERENCES public.deck(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "notification to deck. deck_id. fkey" FOREIGN KEY (deck_id) REFERENCES public.deck(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_gromplate_id_fkey FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
+    ADD CONSTRAINT "notification to gromplate. gromplate_id. fkey" FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_grompleaf_id_fkey FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
+    ADD CONSTRAINT "notification to grompleaf. grompleaf_id. fkey" FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_leaf_id_branch_id_fkey FOREIGN KEY (leaf_id, branch_id) REFERENCES public.leaf(id, branch_id);
+    ADD CONSTRAINT "notification to leaf. leaf_id, branch_id. fkey" FOREIGN KEY (leaf_id, branch_id) REFERENCES public.leaf(id, branch_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_leaf_id_fkey FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "notification to leaf. leaf_id. fkey" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_leaf_id_stack_id_fkey FOREIGN KEY (leaf_id, stack_id) REFERENCES public.leaf(id, stack_id);
+    ADD CONSTRAINT "notification to leaf. leaf_id, stack_id. fkey" FOREIGN KEY (leaf_id, stack_id) REFERENCES public.leaf(id, stack_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "notification to user. sender_id. fkey" FOREIGN KEY (sender_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_stack_id_fkey FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "notification to stack. stack_id. fkey" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
 
 
 ALTER TABLE ONLY public.padawan
-    ADD CONSTRAINT padawan_default_card_setting_id_id_fkey FOREIGN KEY (default_card_setting_id, id) REFERENCES public.card_setting(id, user_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "user to card_setting. default_card_setting_id, id. fkey" FOREIGN KEY (default_card_setting_id, id) REFERENCES public.card_setting(id, user_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.padawan
-    ADD CONSTRAINT padawan_default_deck_id_id_fkey FOREIGN KEY (default_deck_id, id) REFERENCES public.deck(id, user_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "user to deck. default_deck_id, id. fkey" FOREIGN KEY (default_deck_id, id) REFERENCES public.deck(id, user_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.received_notification
-    ADD CONSTRAINT received_notification_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notification(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "received_notification to notification. notification_id. fkey" FOREIGN KEY (notification_id) REFERENCES public.notification(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.received_notification
-    ADD CONSTRAINT received_notification_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "received_notification to user. receiver_id. fkey" FOREIGN KEY (receiver_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.relationship_2_card
@@ -1981,71 +1981,71 @@ ALTER TABLE ONLY public.relationship_2_card
 
 
 ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT stack_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "stack to user. author_id. fkey" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT stack_copy_source_id_fkey FOREIGN KEY (copy_source_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "stack to leaf. copy_source_id. fkey" FOREIGN KEY (copy_source_id) REFERENCES public.leaf(id);
 
 
 ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT stack_default_branch_id_id_fkey FOREIGN KEY (default_branch_id, id) REFERENCES public.branch(id, stack_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "stack to branch. default_branch_id, id. fkey" FOREIGN KEY (default_branch_id, id) REFERENCES public.branch(id, stack_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT tag_2_card_card_id_fkey FOREIGN KEY (card_id) REFERENCES public.card(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "tag_2_card to card. card_id. fkey" FOREIGN KEY (card_id) REFERENCES public.card(id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT tag_2_card_card_id_user_id_stack_id_fkey FOREIGN KEY (card_id, user_id, stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
+    ADD CONSTRAINT "tag_2_card to card. card_id, user_id, stack_id. fkey" FOREIGN KEY (card_id, user_id, stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT tag_2_card_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tag(id);
+    ADD CONSTRAINT "tag_2_card to tag. tag_id. fkey" FOREIGN KEY (tag_id) REFERENCES public.tag(id);
 
 
 ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT tag_2_user_2_grompleaf_default_tag_id_fkey FOREIGN KEY (default_tag_id) REFERENCES public.tag(id);
+    ADD CONSTRAINT "tag_2_user_2_grompleaf to tag. default_tag_id. fkey" FOREIGN KEY (default_tag_id) REFERENCES public.tag(id);
 
 
 ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT tag_2_user_2_grompleaf_user_id_grompleaf_id_fkey FOREIGN KEY (user_id, grompleaf_id) REFERENCES public.user_2_grompleaf(user_id, grompleaf_id);
+    ADD CONSTRAINT "tag_2_user_2_grompleaf to user_2_grompleaf. user_id, grompleaf_id. fkey" FOREIGN KEY (user_id, grompleaf_id) REFERENCES public.user_2_grompleaf(user_id, grompleaf_id);
 
 
 ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT user_2_grompleaf_default_card_setting_id_fkey FOREIGN KEY (default_card_setting_id) REFERENCES public.card_setting(id);
+    ADD CONSTRAINT "user_2_grompleaf to card_setting. default_card_setting_id. fkey" FOREIGN KEY (default_card_setting_id) REFERENCES public.card_setting(id);
 
 
 ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT user_2_grompleaf_grompleaf_id_fkey FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
+    ADD CONSTRAINT "user_2_grompleaf to grompleaf. grompleaf_id. fkey" FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
 
 
 ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT user_2_grompleaf_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "user_2_grompleaf to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.vote_2_comment_gromplate
-    ADD CONSTRAINT vote_2_comment_gromplate_comment_gromplate_id_fkey FOREIGN KEY (comment_gromplate_id) REFERENCES public.comment_gromplate(id);
+    ADD CONSTRAINT "vote_2_comment_gromplate to comment_gromplate. comment_gromplate_id. fkey" FOREIGN KEY (comment_gromplate_id) REFERENCES public.comment_gromplate(id);
 
 
 ALTER TABLE ONLY public.vote_2_comment_gromplate
-    ADD CONSTRAINT vote_2_comment_gromplate_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "vote_2_comment_gromplate to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.vote_2_comment_stack
-    ADD CONSTRAINT vote_2_comment_stack_comment_stack_id_fkey FOREIGN KEY (comment_stack_id) REFERENCES public.comment_stack(id);
+    ADD CONSTRAINT "vote_2_comment_stack to comment_stack. comment_stack_id. fkey" FOREIGN KEY (comment_stack_id) REFERENCES public.comment_stack(id);
 
 
 ALTER TABLE ONLY public.vote_2_comment_stack
-    ADD CONSTRAINT vote_2_comment_stack_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "vote_2_comment_stack to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.vote_2_feedback
-    ADD CONSTRAINT vote_2_feedback_feedback_id_fkey FOREIGN KEY (feedback_id) REFERENCES public.feedback(id);
+    ADD CONSTRAINT "vote_2_feedback to feedback. feedback_id. fkey" FOREIGN KEY (feedback_id) REFERENCES public.feedback(id);
 
 
 ALTER TABLE ONLY public.vote_2_feedback
-    ADD CONSTRAINT vote_2_feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+    ADD CONSTRAINT "vote_2_feedback to user. user_id. fkey" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 
