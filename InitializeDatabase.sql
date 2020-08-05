@@ -1565,16 +1565,10 @@ CREATE INDEX "card. card_state. idx" ON public.card USING btree (card_state);
 CREATE INDEX "card. leaf_id. idx" ON public.card USING btree (leaf_id);
 
 
-CREATE INDEX "card_setting. user_id. idx" ON public.card_setting USING btree (user_id);
-
-
 CREATE INDEX "card. tsv. idx" ON public.card USING gin (tsv);
 
 
 CREATE INDEX "card. user_id, branch_id. idx" ON public.card USING btree (user_id, branch_id);
-
-
-CREATE INDEX "card. user_id. idx" ON public.card USING btree (user_id);
 
 
 CREATE UNIQUE INDEX "card. user_id, leaf_id, index. uq idx" ON public.card USING btree (user_id, leaf_id, index);
@@ -1583,13 +1577,19 @@ CREATE UNIQUE INDEX "card. user_id, leaf_id, index. uq idx" ON public.card USING
 CREATE INDEX "card. user_id, stack_id. idx" ON public.card USING btree (user_id, stack_id);
 
 
-CREATE INDEX "commeaf_2_leaf. leaf_id. idx" ON public.commeaf_2_leaf USING btree (leaf_id);
+CREATE INDEX "card. user_id. idx" ON public.card USING btree (user_id);
+
+
+CREATE INDEX "card_setting. user_id. idx" ON public.card_setting USING btree (user_id);
 
 
 CREATE INDEX "commeaf. commield_id. idx" ON public.commeaf USING btree (commield_id);
 
 
 CREATE INDEX "commeaf. tsv. idx" ON public.commeaf USING gin (tsv);
+
+
+CREATE INDEX "commeaf_2_leaf. leaf_id. idx" ON public.commeaf_2_leaf USING btree (leaf_id);
 
 
 CREATE INDEX "comment_gromplate. gromplate_id. idx" ON public.comment_gromplate USING btree (gromplate_id);
@@ -1619,10 +1619,10 @@ CREATE INDEX "feedback. parent_id. idx" ON public.feedback USING btree (parent_i
 CREATE INDEX "feedback. user_id. idx" ON public.feedback USING btree (user_id);
 
 
-CREATE INDEX "file_2_leaf. file_id. idx" ON public.file_2_leaf USING btree (file_id);
-
-
 CREATE UNIQUE INDEX "file. sha256. uq idx" ON public.file USING btree (sha256);
+
+
+CREATE INDEX "file_2_leaf. file_id. idx" ON public.file_2_leaf USING btree (file_id);
 
 
 CREATE INDEX "filter. user_id. idx" ON public.filter USING btree (user_id);
@@ -1655,7 +1655,10 @@ CREATE INDEX "leaf. hash. idx" ON public.leaf USING btree (hash);
 CREATE INDEX "leaf. tsv. idx" ON public.leaf USING gin (tsv);
 
 
-CREATE INDEX "user. tsv. idx" ON public.padawan USING gin (tsv);
+CREATE INDEX "relationship. tsv. idx" ON public.relationship USING gin (tsv);
+
+
+CREATE UNIQUE INDEX "relationship. upper(name). uq idx" ON public.relationship USING btree (upper((name)::text));
 
 
 CREATE INDEX "relationship_2_card. relationship_id. idx" ON public.relationship_2_card USING btree (relationship_id);
@@ -1667,13 +1670,13 @@ CREATE INDEX "relationship_2_card. source_card_id. idx" ON public.relationship_2
 CREATE INDEX "relationship_2_card. target_card_id. idx" ON public.relationship_2_card USING btree (target_card_id);
 
 
-CREATE INDEX "relationship. tsv. idx" ON public.relationship USING gin (tsv);
-
-
-CREATE UNIQUE INDEX "relationship. upper(name). uq idx" ON public.relationship USING btree (upper((name)::text));
-
-
 CREATE INDEX "stack. author_id. idx" ON public.stack USING btree (author_id);
+
+
+CREATE INDEX "tag. tsv. idx" ON public.tag USING gin (tsv);
+
+
+CREATE UNIQUE INDEX "tag. upper(name). uq idx" ON public.tag USING btree (upper((name)::text));
 
 
 CREATE INDEX "tag_2_card. card_id. idx" ON public.tag_2_card USING btree (card_id);
@@ -1685,10 +1688,7 @@ CREATE UNIQUE INDEX "tag_2_card. tag_id, stack_id, user_id. uq idx" ON public.ta
 CREATE INDEX "tag_2_user_2_grompleaf. default_tag_id. idx" ON public.tag_2_user_2_grompleaf USING btree (default_tag_id);
 
 
-CREATE INDEX "tag. tsv. idx" ON public.tag USING gin (tsv);
-
-
-CREATE UNIQUE INDEX "tag. upper(name). uq idx" ON public.tag USING btree (upper((name)::text));
+CREATE INDEX "user. tsv. idx" ON public.padawan USING gin (tsv);
 
 
 CREATE INDEX "user_2_grompleaf. default_card_setting_id. idx" ON public.user_2_grompleaf USING btree (default_card_setting_id);
