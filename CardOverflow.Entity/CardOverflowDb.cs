@@ -360,14 +360,12 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.Leaf)
                     .WithMany(p => p.Commeaf_Leafs)
                     .HasForeignKey(d => d.LeafId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Commeaf_Leaf_LeafId");
+                    .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Commeaf)
                     .WithMany(p => p.Commeaf_Leafs)
                     .HasForeignKey(d => d.CommeafId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Commeaf_Leaf_CommeafId");
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<DeckEntity>(entity =>
@@ -570,8 +568,7 @@ namespace CardOverflow.Entity
                 entity.HasOne(d => d.User_Grompleaf)
                     .WithMany(p => p.Tag_User_Grompleafs)
                     .HasForeignKey(d => new { d.UserId, d.GrompleafId })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Tag_User_TemplatInst_User_TemplatInst_UserId_TemplatInstId");
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<UserEntity>(entity =>
