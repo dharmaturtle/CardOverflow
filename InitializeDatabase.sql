@@ -1,4 +1,6 @@
-﻿SET statement_timeout = 0;
+﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+
+SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -320,7 +322,7 @@ CREATE FUNCTION public.fn_tr_user_afterinsert() RETURNS trigger
         outer_default_deck_id         integer NOT NULL := 0;
     BEGIN
         outer_default_card_setting_id := (SELECT id FROM card_setting cs WHERE cs.user_id = 0 LIMIT 1);
-        outer_default_deck_id         := (SELECT id FROM deck         d WHERE  d.user_id = 0 LIMIT 1);
+        outer_default_deck_id         := (SELECT id FROM deck          d WHERE  d.user_id = 0 LIMIT 1);
 
         UPDATE card_setting cs
         SET    user_id = NEW.id
@@ -419,7 +421,7 @@ CREATE TABLE public.card (
     back_personal_field text NOT NULL,
     tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "card, tsv_helper, is null check" CHECK ((tsv_helper IS NULL))
+    CONSTRAINT "card. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
 
@@ -506,7 +508,7 @@ CREATE TABLE public.commeaf (
     edit_summary character varying(200) NOT NULL,
     b_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "commeaf, b_weight_tsv_helper, is null check" CHECK ((b_weight_tsv_helper IS NULL))
+    CONSTRAINT "commeaf. b_weight_tsv_helper. is null check" CHECK ((b_weight_tsv_helper IS NULL))
 );
 
 
@@ -734,7 +736,7 @@ CREATE TABLE public.grompleaf (
     hash bit(512) NOT NULL,
     c_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "grompleaf, c_weight_tsv_helper, is null check" CHECK ((c_weight_tsv_helper IS NULL))
+    CONSTRAINT "grompleaf. c_weight_tsv_helper. is null check" CHECK ((c_weight_tsv_helper IS NULL))
 );
 
 
@@ -792,7 +794,7 @@ CREATE TABLE public.leaf (
     tsv_helper text,
     tsv tsvector,
     max_index_inclusive smallint NOT NULL,
-    CONSTRAINT "leaf, tsv_helper, is null check" CHECK ((tsv_helper IS NULL))
+    CONSTRAINT "leaf. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
 

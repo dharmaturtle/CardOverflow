@@ -11,16 +11,16 @@ INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, 
 INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer) VALUES (12, 33, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
 INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer) VALUES (13, 34, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
 
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (25, 25, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (26, 26, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (27, 27, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (28, 28, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (29, 29, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (30, 30, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (31, 31, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (32, 32, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (33, 33, 'Default Deck', false, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, followers, ts_vector) VALUES (34, 34, 'Default Deck', false, 0, NULL);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (25, 25, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (26, 26, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (27, 27, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (28, 28, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (29, 29, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (30, 30, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (31, 31, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (32, 32, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (33, 33, 'Default Deck', false, 0);
+INSERT INTO public.deck (id, user_id, name, is_public, followers) VALUES (34, 34, 'Default Deck', false, 0);
 
 INSERT INTO public.padawan (id, display_name, default_deck_id, default_card_setting_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode) VALUES (25, 'Alex', 25, 4, false, false, 0, 0, 0, 0, false);
 INSERT INTO public.padawan (id, display_name, default_deck_id, default_card_setting_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode) VALUES (26, 'Alison', 26, 5, false, false, 0, 0, 0, 0, false);
@@ -84,10 +84,10 @@ INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting
 INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (34, 1006, 13);
 INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (34, 1005, 13);
 
-SELECT pg_catalog.setval('public.card_setting$id$seq', 40, false);
-SELECT pg_catalog.setval('public.user$id$seq', 40, false);
-SELECT pg_catalog.setval('public.filter$id$seq', 40, false);
-SELECT pg_catalog.setval('public.deck$id$seq', 40, false);
+SELECT pg_catalog.setval('public.card_setting_id_seq', 40, false);
+SELECT pg_catalog.setval('public.user_id_seq', 40, false);
+SELECT pg_catalog.setval('public.filter_id_seq', 40, false);
+SELECT pg_catalog.setval('public.deck_id_seq', 40, false);
 
 SET session_replication_role = 'origin';
 

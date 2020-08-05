@@ -136,7 +136,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "23505: duplicate key value violates unique constraint \"card_user_id_leaf_id_index_idx\"",
+        "23505: duplicate key value violates unique constraint \"card. user_id, leaf_id, index. uq idx\"",
         ex.InnerException.Message)
 
     let i1 = 1001
