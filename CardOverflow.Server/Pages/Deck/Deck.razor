@@ -31,9 +31,7 @@
     @foreach (var deck in _decks) {
       <tr>
         <td>
-          <button @onclick=@(() => _selectedDeck = deck) class="btn btn-link">
-            @deck.Name
-          </button>
+          @deck.Name
         </td>
         <td>
           @if (deck.IsDefault) {
@@ -72,7 +70,6 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
-  private ViewDeck _selectedDeck;
 
   protected override async Task OnInitializedAsync() {
     var user = await UserTask;
