@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1955,15 +1955,7 @@ ALTER TABLE ONLY public.received_notification
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT "rlnship_2_card to card. sourceCardId, userId, sourceStackId. FK" FOREIGN KEY (source_card_id, user_id, source_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
-
-
-ALTER TABLE ONLY public.relationship_2_card
     ADD CONSTRAINT "relationship_2_card to card. source_card_id. FK" FOREIGN KEY (source_card_id) REFERENCES public.card(id) ON DELETE CASCADE;
-
-
-ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT "rlnship_2_card to card. targetCardId, userId, targetStackId. FK" FOREIGN KEY (target_card_id, user_id, target_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
@@ -1972,6 +1964,14 @@ ALTER TABLE ONLY public.relationship_2_card
 
 ALTER TABLE ONLY public.relationship_2_card
     ADD CONSTRAINT "relationship_2_card to relationship. relationship_id. FK" FOREIGN KEY (relationship_id) REFERENCES public.relationship(id);
+
+
+ALTER TABLE ONLY public.relationship_2_card
+    ADD CONSTRAINT "rlnship_2_card to card. sourceCardId, userId, sourceStackId. FK" FOREIGN KEY (source_card_id, user_id, source_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.relationship_2_card
+    ADD CONSTRAINT "rlnship_2_card to card. targetCardId, userId, targetStackId. FK" FOREIGN KEY (target_card_id, user_id, target_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.stack
@@ -1999,11 +1999,11 @@ ALTER TABLE ONLY public.tag_2_card
 
 
 ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT "tag_2_user_2_grompleaf to tag. default_tag_id. FK" FOREIGN KEY (default_tag_id) REFERENCES public.tag(id);
+    ADD CONSTRAINT "tag_2_user_2_gLeaf to user_2_gLeaf. user_id, grompleaf_id. FK" FOREIGN KEY (user_id, grompleaf_id) REFERENCES public.user_2_grompleaf(user_id, grompleaf_id);
 
 
 ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT "tag_2_user_2_gLeaf to user_2_gLeaf. user_id, grompleaf_id. FK" FOREIGN KEY (user_id, grompleaf_id) REFERENCES public.user_2_grompleaf(user_id, grompleaf_id);
+    ADD CONSTRAINT "tag_2_user_2_grompleaf to tag. default_tag_id. FK" FOREIGN KEY (default_tag_id) REFERENCES public.tag(id);
 
 
 ALTER TABLE ONLY public.padawan
