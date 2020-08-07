@@ -19,6 +19,7 @@ type NotificationType = // the indexes currently have no semantic meaning - they
     | DeckUpdatedStack = 1
     | DeckDeletedStack = 2
 
+[<CLIMutable>]
 type IdName = {
     Id: int
     Name: string

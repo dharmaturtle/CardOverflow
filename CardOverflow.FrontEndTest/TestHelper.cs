@@ -1,6 +1,7 @@
 using Blazored.Toast;
 using BlazorStrap;
 using Bunit;
+using CardOverflow.Api;
 using CardOverflow.Debug;
 using CardOverflow.Entity;
 using CardOverflow.Server;
@@ -32,6 +33,9 @@ namespace CardOverflow.FrontEndTest {
         services.AddBootstrapCss();
         services.AddTransient<IValidator<FollowCommandViewModel>, FollowCommandViewModelValidator>();
         services.AddSingleton<DbExecutor>();
+        services.AddSingleton<TimeProvider>();
+        services.AddSingleton<Scheduler>();
+        services.AddSingleton<RandomProvider>();
         services.AddDbContextPool<CardOverflowDb>(x => x.UseInMemoryDatabase(Guid.NewGuid().ToString()));
       }
 

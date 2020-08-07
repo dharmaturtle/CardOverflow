@@ -14,13 +14,7 @@
 @inject IJSRuntime Js
 @inject IToastService ToastService
 
-<BSDropdown>
-  <BSDropdownToggle Color="Color.Secondary"></BSDropdownToggle>
-  <BSDropdownMenu>
-    <BSDropdownItem OnClick=_DeleteClicked><span class="oi oi-trash"></span> Delete</BSDropdownItem>
-    <BSDropdownItem OnClick=_CreateOrRenameModal.Show><span class="oi oi-pencil"></span> Rename</BSDropdownItem>
-  </BSDropdownMenu>
-</BSDropdown>
+<span class="oi oi-trash" @onclick=@(_DeleteClicked)></span>
 
 <BSModal @ref=_DeleteModal>
   <BSModalHeader OnClick=_DeleteModal.Hide>
@@ -57,52 +51,12 @@
   </BSModalFooter>
 </BSModal>
 
-<BSModal @ref=_CreateOrRenameModal ShowEvent=@(() => _CreateOrRenameIsSaved = false) HideEvent=_CreateOrRenameModalHide>
-  <EditForm Model=Deck OnValidSubmit=_CreateOrRenameSave>
-    <BSModalHeader OnClick=_CreateOrRenameModal.Hide>
-      @if (Deck.Id == default) {
-        <span>Create Deck</span>
-      } else {
-        <span>Rename Deck</span>
-      }
-    </BSModalHeader>
-    <BSModalBody>
-      <div class="form-group">
-        <label for="newDeckNameInput">Name</label>
-        <InputText @bind-Value=Deck.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
-        <ValidationMessage For=@(() => Deck.Name) />
-      </div>
-      <DataAnnotationsValidator />
-    </BSModalBody>
-    <BSModalFooter>
-      <BSButton Color="Color.Secondary" OnClick=_CreateOrRenameCancel type="button">
-        Cancel
-      </BSButton>
-      <BSButton Color="Color.Primary" type="submit">
-        Save
-      </BSButton>
-    </BSModalFooter>
-  </EditForm>
-</BSModal>
-
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public ViewDeck Deck { get; set; }
   [Parameter] public EventCallback<BSModal> Delete { get; set; }
-  [Parameter] public EventCallback<(string, BSModal)> Create { get; set; }
-  [Parameter] public EventCallback CancelCreate { get; set; }
-  [Parameter] public EventCallback<string> Rename { get; set; }
   private BSModal _DeleteDefaultModal;
   private BSModal _DeleteModal;
-  private BSModal _CreateOrRenameModal;
-  private bool _CreateOrRenameIsSaved;
-
-  protected override async Task OnAfterRenderAsync(bool firstRender) {
-    if (Deck.Id == default && firstRender) {
-      await Task.Delay(1); // necessary for some reason to get _CreateOrRenameModal to display when creating a deck
-      _CreateOrRenameModal.Show();
-    }
-  }
 
   private void _DeleteClicked() {
     if (Deck.IsDefault) {
@@ -114,40 +68,5 @@
 
   private async Task _DeleteSave() =>
     await Delete.InvokeAsync(_DeleteModal);
-
-  private async Task _CreateOrRenameSave() {
-    _CreateOrRenameIsSaved = true;
-    if (Deck.Id == default) {
-      await Create.InvokeAsync((Deck.Name, _CreateOrRenameModal));
-    } else {
-      await _Rename();
-    }
-  }
-
-  private async Task _CreateOrRenameCancel() {
-    if (Deck.Id == default) {
-      await CancelCreate.InvokeAsync(null);
-    }
-    if (_CreateOrRenameModal.IsOpen == true) {
-    _CreateOrRenameModal.Hide();
-    }
-  }
-
-  private async Task _Rename() {
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.rename(db, user.Id, Deck.Id, Deck.Name));
-    if (x.IsOk) {
-      await Rename.InvokeAsync(Deck.Name);
-      _CreateOrRenameModal.Hide();
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
-  }
-
-  private async Task _CreateOrRenameModalHide() {
-    if (!_CreateOrRenameIsSaved) {
-      await _CreateOrRenameCancel();
-    }
-  }
 
 }

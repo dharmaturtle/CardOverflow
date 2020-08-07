@@ -35,13 +35,13 @@
     </BSModalHeader>
     <BSModalBody>
       <div class="form-group">
-        <label for="newDeckNameInput">Name</label>
-        <InputText @bind-Value=_activeFilter.Name class="form-control" id="newDeckNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <label for="newFilterNameInput">Name</label>
+        <InputText @bind-Value=_activeFilter.Name class="form-control" id="newFilterNameInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
         <ValidationMessage For=@(() => _activeFilter.Name) />
       </div>
       <div class="form-group">
-        <label for="newDeckQueryInput">Query</label>
-        <InputText @bind-Value=_activeFilter.Query class="form-control" id="newDeckQueryInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+        <label for="newFilterQueryInput">Query</label>
+        <InputText @bind-Value=_activeFilter.Query class="form-control" id="newFilterQueryInput" /> @*this seems to break validation: @bind-Value:event="oninput"*@
         <ValidationMessage For=@(() => _activeFilter.Query) />
       </div>
       <DataAnnotationsValidator />
