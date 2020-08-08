@@ -502,7 +502,7 @@ module StackRepository =
     let searchDeck (db: CardOverflowDb) userId (pageNumber: int) order (searchTerm: string) deckId =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.Deck
-            .Where(fun x -> x.Id = deckId && x.IsPublic)
+            .Where(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
             .SelectMany(fun x -> x.Cards.Select(fun x -> x.Leaf))
             .Search(searchTerm, plain, wildcard, order)
         |> searchExplore userId pageNumber

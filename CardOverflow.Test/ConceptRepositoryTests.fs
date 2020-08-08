@@ -567,8 +567,32 @@ let ``Card search works`` (): Task<unit> = task {
     Assert.Equal(3, cards.Results.Single().Id)
 
     // testing deckSearch
-    do! SanitizeDeckRepository.setIsPublic c.Db userId userId true |> TaskResult.getOk
     let search searchTerm = StackRepository.searchDeck c.Db userId 1 SearchOrder.Popularity searchTerm userId
+    let! cards = search ""
+    Assert.Equal(3, cards.Results.Count())
+    let! cards = search basicTag
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "Front"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "\"Front"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search "Fro*"
+    Assert.Equal(1, cards.Results.Single().Id)
+    let! cards = search <| Guid.NewGuid().ToString()
+    Assert.Empty(cards.Results)
+    let! cards = search front
+    Assert.Equal(2, cards.Results.Single().Id)
+    let! cards = search back
+    Assert.Equal(2, cards.Results.Single().Id)
+    let! cards = search clozeText
+    Assert.Equal(3, cards.Results.Single().Id)
+    
+    // testing deckSearch from other user
+    let otherUserId = 1
+    let search searchTerm = StackRepository.searchDeck c.Db otherUserId 1 SearchOrder.Popularity searchTerm userId
+    let! cards = search ""
+    Assert.Equal(0, cards.Results.Count())
+    do! SanitizeDeckRepository.setIsPublic c.Db userId userId true |> TaskResult.getOk
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
