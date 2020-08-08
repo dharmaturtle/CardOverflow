@@ -37,32 +37,14 @@
             <span class="oi oi-pencil"></span>
           </button>
         </td>
-        <td>
-          @if (deck.IsDefault) {
-            <button type="button" class="btn bg-transparent" @onclick=@(() => ToastService.ShowInfo("This is the default deck."))>
-              <i class="text-warning fas fa-star" title="The default deck"></i>
-            </button>
-          } else {
-            <button type="button" class="btn bg-transparent" @onclick=@(() =>_SetDefault(deck.Id))>
-              <i class="text-muted far fa-star"></i>
-            </button>
-          }
-        </td>
-        <td>
-          @if (deck.IsPublic) {
-            <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, false))>
-              <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
-            </button>
-          } else {
-            <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(deck.Id, true))>
-              <i class="text-muted fas fa-eye-slash" title="Is not displayed on your user profile."></i>
-            </button>
-          }
-        </td>
-        <td>
-          <DeckMenu Deck=deck
-                    Delete=@(modal => _DeleteDeck(deck.Id, modal)) />
-        </td>
+        <DeckRow Deck=deck
+                 SetIsDefault=@(() => {
+                                  foreach (var d in _decks) {
+                                    d.IsDefault = d.Id == deck.Id;
+                                  }
+                                })
+                 SetPublic=@(x => _decks.Single(x => x.Id == deck.Id).IsPublic = x)
+                 Delete=@(modal => _DeleteDeck(deck.Id, modal)) />
       </tr>
     }
   </table>
@@ -129,25 +111,6 @@
       _decks = _decks.ToList().Append(new ViewDeck(newId, false, false, _activeDeck.Name, 0, 0, FSharpOption<IdName>.None)).ToFList();
       _CreateOrRenameModal.Hide();
     });
-  }
-
-  private async Task _SetDefault(int deckId) {
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setDefault(db, user.Id, deckId));
-    if (x.IsOk) {
-      foreach (var deck in _decks) {
-        deck.IsDefault = deck.Id == deckId;
-      }
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
-  }
-
-  private async Task _setPublic(int deckId, bool isPublic) {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setIsPublic(db, user.Id, deckId, isPublic)).Match(ToastService, _ =>
-      _decks.Single(x => x.Id == deckId).IsPublic = isPublic
-    );
   }
 
   private async Task _Submit() =>

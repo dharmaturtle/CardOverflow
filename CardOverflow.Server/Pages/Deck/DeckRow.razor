@@ -13,8 +13,33 @@
 @inject TimeProvider TimeProvider
 @inject IJSRuntime Js
 @inject IToastService ToastService
-
-<span class="oi oi-trash" @onclick=@(_DeleteClicked)></span>
+<td>
+  @if (Deck.IsDefault) {
+    <button type="button" class="btn bg-transparent" @onclick=@(() => ToastService.ShowInfo("This is the default deck."))>
+      <i class="text-warning fas fa-star" title="The default deck"></i>
+    </button>
+  } else {
+    <button type="button" class="btn bg-transparent" @onclick=@(() =>_SetDefault(Deck.Id))>
+      <i class="text-muted far fa-star"></i>
+    </button>
+  }
+</td>
+<td>
+  @if (Deck.IsPublic) {
+    <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(false))>
+      <i class="text-success fas fa-eye" title="Is displayed on your user profile."></i>
+    </button>
+  } else {
+    <button type="button" class="btn bg-transparent" @onclick=@(() => _setPublic(true))>
+      <i class="text-muted fas fa-eye-slash" title="Is not displayed on your user profile."></i>
+    </button>
+  }
+</td>
+<td>
+  <button type="button" class="btn bg-transparent" @onclick=@_DeleteClicked>
+    <span class="oi oi-trash"></span>
+  </button>
+</td>
 
 <BSModal @ref=_DeleteModal>
   <BSModalHeader OnClick=_DeleteModal.Hide>
@@ -55,6 +80,8 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   [Parameter] public ViewDeck Deck { get; set; }
   [Parameter] public EventCallback<BSModal> Delete { get; set; }
+  [Parameter] public EventCallback SetIsDefault { get; set; }
+  [Parameter] public EventCallback<bool> SetPublic { get; set; }
   private BSModal _DeleteDefaultModal;
   private BSModal _DeleteModal;
 
@@ -68,5 +95,17 @@
 
   private async Task _DeleteSave() =>
     await Delete.InvokeAsync(_DeleteModal);
+
+  private async Task _SetDefault(int deckId) {
+    var user = await UserTask;
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setDefault(db, user.Id, deckId)).Match(ToastService, async _ => await SetIsDefault.InvokeAsync(null));
+  }
+
+  private async Task _setPublic(bool isPublic) {
+    var user = await UserTask;
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setIsPublic(db, user.Id, Deck.Id, isPublic)).Match(ToastService, async _ =>
+      await SetPublic.InvokeAsync(isPublic)
+    );
+  }
 
 }
