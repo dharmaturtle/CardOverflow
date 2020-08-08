@@ -32,7 +32,9 @@
     @foreach (var deck in _decks) {
       <tr>
         <td>
-          @deck.Name
+          <a href="deck/@deck.Id">
+            @deck.Name
+          </a>
           <button type="button" class="btn bg-transparent" @onclick=@(() => _ShowModal(new IdName(deck.Id, deck.Name)))>
             <span class="oi oi-pencil"></span>
           </button>
