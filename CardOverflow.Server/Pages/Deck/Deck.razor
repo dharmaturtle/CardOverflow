@@ -80,50 +80,42 @@
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user;
   private FSharpList<ViewDeck> _decks = FSharpList<ViewDeck>.Empty;
   private BSModal _CreateOrRenameModal;
   private IdName _activeDeck = new IdName(default, "New Deck");
-
-  protected override async Task OnInitializedAsync() {
-    var user = await UserTask;
-    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.get(db, user.Id, TimeProvider.utcNow));
-  }
 
   private void _ShowModal(IdName idName) {
     _activeDeck = idName;
     _CreateOrRenameModal.Show();
   }
 
-  private async Task _DeleteDeck(int deckId, BSModal modal) {
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.delete(db, user.Id, deckId));
-    if (x.IsOk) {
+  protected override async Task OnInitializedAsync() => _user = await UserTask;
+
+  protected override async Task OnParametersSetAsync() =>
+    _decks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.get(db, _user.Id, TimeProvider.utcNow));
+
+  private async Task _DeleteDeck(int deckId, BSModal modal) =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.delete(db, _user.Id, deckId)).Match(ToastService, _ => {
       _decks = _decks.Where(x => x.Id != deckId).ToFList();
       modal.Hide();
-    } else {
-      ToastService.ShowError(x.ErrorValue);
-    }
-  }
+    });
 
-  private async Task _Create() {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.create(db, user.Id, _activeDeck.Name)).Match(ToastService, newId => {
+  private async Task _Create() =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.create(db, _user.Id, _activeDeck.Name)).Match(ToastService, newId => {
       _decks = _decks.ToList().Append(new ViewDeck(newId, false, false, _activeDeck.Name, 0, 0, FSharpOption<IdName>.None)).ToFList();
       _CreateOrRenameModal.Hide();
     });
-  }
 
   private async Task _Submit() =>
     await (_activeDeck.Id == default
       ? _Create()
       : _Rename());
 
-  private async Task _Rename() {
-    var user = await UserTask;
-    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.rename(db, user.Id, _activeDeck.Id, _activeDeck.Name)).Match(ToastService, _ => {
+  private async Task _Rename() =>
+    await DbExecutor.QueryAsync(db => SanitizeDeckRepository.rename(db, _user.Id, _activeDeck.Id, _activeDeck.Name)).Match(ToastService, _ => {
       _decks.Single(x => x.Id == _activeDeck.Id).Name = _activeDeck.Name;
       _CreateOrRenameModal.Hide();
     });
-  }
 
 }
