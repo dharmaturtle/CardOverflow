@@ -1,6 +1,6 @@
 @using Microsoft.FSharp.Core
 @using Microsoft.FSharp.Collections
-@using FSharpx
+@using static FSharpx.FSharpOption;
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
@@ -139,7 +139,7 @@
     ? FSharpOption<int>.None
     : fallbackDeck.Select(x => x.Id);
 
-  public override async System.Threading.Tasks.Task SetParametersAsync(ParameterView parameters) {
+  public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     _collectedState =
