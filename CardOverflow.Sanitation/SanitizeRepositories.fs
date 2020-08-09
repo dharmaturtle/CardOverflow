@@ -513,12 +513,19 @@ module SanitizeDeckRepository =
                 LeafChanged = leafChanged @ (diffs.LeafChanged |> List.filterOut (fun (x, _) -> stackIds.Contains x.StackId))
             }
     }
-    type searchOrder = | Relevance | Popularity
+    type SearchParams =
+        | Relevance
+        | Popularity of (int * int) Option // id, followers
     let search (conn: NpgsqlConnection) userId query order =
+        let keyset =
+            match order with
+            | Popularity (Some (id, followers)) ->
+                sprintf "AND (d.id < %i AND d.followers <= %i)" id followers
+            | _ -> ""
         let order =
             match order with
-            | Relevance  -> "rank"
-            | Popularity -> "FollowCount"
+            | Relevance  _ -> "rank"
+            | Popularity _ -> "FollowCount"
         let additionalWhere =
             if String.IsNullOrWhiteSpace query then ""
             else """AND (    qweb @@ d.tsv
@@ -541,9 +548,9 @@ module SanitizeDeckRepository =
         JOIN public.padawan p ON p.id = d.user_id
         , websearch_to_tsquery(@query) qweb
         , plainto_tsquery('simple', @query) qsim
-        WHERE (d.is_public OR d.user_id = @userid) %s
-        ORDER BY %s DESC
-        LIMIT 10;""" additionalWhere order, {| query = query; userid = userId |})
+        WHERE ((d.is_public OR d.user_id = @userid) %s %s)
+        ORDER BY %s DESC, d.id DESC
+        LIMIT 20;""" additionalWhere keyset order, {| query = query; userid = userId |})
         |>% Seq.toList
 
 module SanitizeHistoryRepository =

@@ -78,7 +78,7 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     let userId = 3
     use! conn = c.Conn()
     let searchAssert query expected =
-        SanitizeDeckRepository.search conn userId query Relevance
+        SanitizeDeckRepository.search conn userId query (Relevance None)
         |>% Assert.areEquivalent expected
         
     let deck1 =
@@ -128,7 +128,7 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
 
     // sort by relevance works
     let searchAssert query order expected =
-        SanitizeDeckRepository.search conn userId query order
+        SanitizeDeckRepository.search conn userId query (order None)
         |>% Assert.equal expected
     let x, y, z = Generators.differentPositives 3 |> Gen.sample1Gen |> fun x -> x.[0], x.[1], x.[2]
     let nameX = "batman "
@@ -160,6 +160,36 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     do! [deck1] |> searchAssert deck1.AuthorName Relevance
     do! [deck2] |> searchAssert deck2.AuthorName Relevance
     do! [deck3] |> searchAssert deck3.AuthorName Relevance
+
+    // keyset works
+    let newMax= 40
+    for _ in [1..newMax] do
+        do! SanitizeDeckRepository.create c.Db userId (Guid.NewGuid().ToString())
+    let ids = [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.FollowCount) |> List.map (fun x -> x.Id)
+    let expectedIds = ids @ [for i in 0 .. (19 - ids.Length) do yield (newMax + 3 - i)]
+    
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity None)
+
+    Assert.equal expectedIds (decks |> List.map (fun x -> x.Id))
+    
+    // page 2
+    let expectedIds = [for i in 1 .. 20 do yield (expectedIds.Last() - i)]
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
+    
+    Assert.equal expectedIds (decks |> List.map (fun x -> x.Id))
+
+    // page 3
+    let expectedIds = [expectedIds.Last() - 1 .. -1 .. ids.Max() + 1]
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
+    
+    Assert.equal expectedIds (decks |> List.map (fun x -> x.Id))
+    
+    // page 4
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
+
+    Assert.Empty decks
     } |> TaskResult.getOk)
 
 [<Fact>]
