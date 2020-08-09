@@ -19,6 +19,7 @@ open FsToolkit.ErrorHandling.Operator.Task
 open FacetRepositoryTests
 open CardOverflow.Sanitation.SanitizeDeckRepository
 open CardOverflow.Entity
+open FsCheck
 
 let emptyDiffStateSummary =
     {   Unchanged = []
@@ -189,6 +190,33 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     // page 4
     let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
 
+    Assert.Empty decks
+
+    // keyset works with more followers
+    use db = c.Db
+    let! (followedDecks: DeckEntity ResizeArray) = db.Deck.OrderBy(fun x -> x.Id).ToListAsync()
+
+    for i, followers in Arb.Default.PositiveInt() |> Arb.toGen |> Gen.map (fun x -> x.Get) |> Gen.listOfLength followedDecks.Count |> Gen.sample1Gen |> List.mapi (fun i x -> i, x) do
+        followedDecks.[i].Followers <- followers
+    do! db.SaveChangesAsyncI()
+    let followedSorted = followedDecks |> Seq.sortByDescending (fun x -> x.Followers, x.Id) |> Seq.map (fun x -> x.Id) |> Seq.toList
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity None)
+    Assert.equal
+        (followedSorted |> List.take 20)
+        (decks |> List.map (fun x -> x.Id))
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
+    Assert.equal
+        (followedSorted |> List.skip 20 |> List.take 20)
+        (decks |> List.map (fun x -> x.Id))
+    
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
+    Assert.equal
+        (followedSorted |> List.skip 40)
+        (decks |> List.map (fun x -> x.Id))
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
     Assert.Empty decks
     } |> TaskResult.getOk)
 

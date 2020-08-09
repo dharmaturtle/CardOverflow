@@ -520,7 +520,7 @@ module SanitizeDeckRepository =
         let keyset =
             match order with
             | Popularity (Some (id, followers)) ->
-                sprintf "AND (d.id < %i AND d.followers <= %i)" id followers
+                sprintf "AND ((d.followers, d.id) < (%i, %i))" followers id
             | _ -> ""
         let order =
             match order with

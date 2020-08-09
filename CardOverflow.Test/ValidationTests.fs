@@ -24,7 +24,7 @@ module internal Gen =
     let sample1 x =
         x |> Gen.elements |> Gen.sample 0 1 |> List.head
     let sample1Gen x =
-        x |> Gen.sample 0 1 |> List.head
+        x |> Gen.sample 10 1 |> List.head
 
 module Generators =
     let alphanumericChar = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] |> Gen.elements
