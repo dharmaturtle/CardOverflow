@@ -72,15 +72,28 @@ let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
     
     do! getEquals { expectedDeck with SourceDeck = None }
     } |> TaskResult.getOk)
+    
+type SansTsvRank() = 
+    interface IEqualityComparer<DeckWithFollowMeta> with
+        member _.GetHashCode x = x.GetHashCode()
+        member _.Equals(x, y) =
+            x.Id = y.Id &&
+            x.Name = y.Name &&
+            x.AuthorId = y.AuthorId &&
+            x.AuthorName = y.AuthorName &&
+            x.IsFollowed = y.IsFollowed &&
+            x.FollowCount = y.FollowCount
 
 [<Fact>]
 let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = 3
     use! conn = c.Conn()
+    let areEquivalent = SansTsvRank () |> Assert.areEquivalentCustom
+    let equals        = SansTsvRank () |> Assert.equalsCustom
     let searchAssert query expected =
         SanitizeDeckRepository.search conn userId query (Relevance None)
-        |>% Assert.areEquivalent expected
+        |>% areEquivalent expected
         
     let deck1 =
         {   Id = 1
@@ -88,7 +101,8 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
             AuthorId = 1
             AuthorName = "Admin"
             IsFollowed = false
-            FollowCount = 0 }
+            FollowCount = 0
+            TsvRank = 0. }
     let deck2 =
         {   deck1 with
                 Id = 2
@@ -130,9 +144,9 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     // sort by relevance works
     let searchAssert query order expected =
         SanitizeDeckRepository.search conn userId query (order None)
-        |>% Assert.equal expected
+        |>% equals expected
     let x, y, z = Generators.differentPositives 3 |> Gen.sample1Gen |> fun x -> x.[0], x.[1], x.[2]
-    let nameX = "batman "
+    let nameX = "jam "
     let deck1 = { deck1 with Name = String.replicate x nameX }
     let deck2 = { deck2 with Name = String.replicate y nameX }
     let deck3 = { deck3 with Name = String.replicate z nameX }
@@ -163,9 +177,10 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     do! [deck3] |> searchAssert deck3.AuthorName Relevance
 
     // keyset works
-    let newMax= 40
-    for _ in [1..newMax] do
-        do! SanitizeDeckRepository.create c.Db userId (Guid.NewGuid().ToString())
+    let newMax = 40
+    let intsGen = Arb.Default.PositiveInt() |> Arb.toGen |> Gen.map (fun x -> x.Get) |> Gen.listOfLength newMax
+    for i in intsGen |> Gen.sample1Gen do
+        do! SanitizeDeckRepository.create c.Db userId ((String.replicate i nameX) + Guid.NewGuid().ToString())
     let ids = [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.FollowCount) |> List.map (fun x -> x.Id)
     let expectedIds = ids @ [for i in 0 .. (19 - ids.Length) do yield (newMax + 3 - i)]
     
@@ -196,7 +211,7 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     use db = c.Db
     let! (followedDecks: DeckEntity ResizeArray) = db.Deck.OrderBy(fun x -> x.Id).ToListAsync()
 
-    for i, followers in Arb.Default.PositiveInt() |> Arb.toGen |> Gen.map (fun x -> x.Get) |> Gen.listOfLength followedDecks.Count |> Gen.sample1Gen |> List.mapi (fun i x -> i, x) do
+    for i, followers in intsGen |> Gen.sample1Gen |> List.mapi (fun i x -> i, x) do
         followedDecks.[i].Followers <- followers
     do! db.SaveChangesAsyncI()
     let followedSorted = followedDecks |> Seq.sortByDescending (fun x -> x.Followers, x.Id) |> Seq.map (fun x -> x.Id) |> Seq.toList
@@ -218,7 +233,36 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
 
     let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId "" (Popularity (Some (decks |> List.last |> fun x -> x.Id, x.FollowCount)))
     Assert.Empty decks
+
+    // keyset works with Relevance
+    use db = c.Db
+    let psuedoRank = String.split ' ' >> Array.filter (fun x -> x = nameX.Trim()) >> Array.length
+    let followedSorted = followedDecks |> Seq.sortByDescending (fun x -> psuedoRank x.Name, x.Id) |> Seq.map (fun x -> x.Id) |> Seq.toList
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId nameX (Relevance None)
+    Assert.equal
+        (followedSorted |> List.take 20)
+        (decks |> List.map (fun x -> x.Id))
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId nameX (Relevance (Some (decks |> List.last |> fun x -> x.Id, x.TsvRank)))
+    Assert.equal
+        (followedSorted |> List.skip 20 |> List.take 20)
+        (decks |> List.map (fun x -> x.Id))
+    
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId nameX (Relevance (Some (decks |> List.last |> fun x -> x.Id, x.TsvRank)))
+    Assert.equal
+        (followedSorted |> List.skip 40)
+        (decks |> List.map (fun x -> x.Id))
+
+    let! (decks: DeckWithFollowMeta list) = SanitizeDeckRepository.search conn userId nameX (Relevance (Some (decks |> List.last |> fun x -> x.Id, x.TsvRank)))
+    Assert.Empty decks
     } |> TaskResult.getOk)
+
+//[<Fact>]
+let ``SanitizeDeckRepository.search works x50``(): Task<unit> = task {
+    for _ in [1..50] do
+        do! ``SanitizeDeckRepository.search works``()
+    }
 
 [<Fact>]
 let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
@@ -461,7 +505,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             AuthorName = "RoboTurtle"
             IsFollowed = false
             FollowCount = 0
-        }
+            TsvRank = 0. }
     let theirDeck = { Id = publicDeck.Id
                       Name = publicDeck.Name }
     do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |>%% Assert.equal publicDeck.Id

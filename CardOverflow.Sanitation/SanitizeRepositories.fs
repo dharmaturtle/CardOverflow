@@ -2,6 +2,7 @@ namespace CardOverflow.Sanitation
 
 open System
 open CardOverflow.Pure.Extensions
+open CardOverflow.Pure
 open System.Threading.Tasks
 open LoadersAndCopiers
 open FSharp.Control.Tasks
@@ -323,6 +324,7 @@ module SanitizeDeckRepository =
                 AuthorName = authorName
                 IsFollowed = isFollowed
                 FollowCount = count
+                TsvRank = 0.
             }
     type FollowDeckType =
         | NewDeck of string
@@ -503,8 +505,8 @@ module SanitizeDeckRepository =
             )
         let stackIds =
             added
-                @ (leafChanged |> List.map snd)
-                @ (branchChanged         |> List.map snd)
+                @ (leafChanged   |> List.map snd)
+                @ (branchChanged |> List.map snd)
             |> List.map (fun x -> x.StackId)
         return
             { diffs with
@@ -514,17 +516,20 @@ module SanitizeDeckRepository =
             }
     }
     type SearchParams =
-        | Relevance
-        | Popularity of (int * int) Option // id, followers
+        | Relevance  of (int * float) Option // id, rank
+        | Popularity of (int * int)   Option // id, followers
     let search (conn: NpgsqlConnection) userId query order =
+        let rank = "ts_rank_cd(d.tsv, qweb)::float8 + ts_rank_cd(p.tsv, qsim)::float8"
         let keyset =
             match order with
+            | Relevance  (Some (id, rankValue)) -> // https://dba.stackexchange.com/questions/209272/ and https://dba.stackexchange.com/questions/273544 and https://dba.stackexchange.com/questions/209272/
+                sprintf "AND ((%s, d.id) < (%s, %i))" rank (rankValue.ToString()) id // the ToString is because %f rounds and I can't figure out how to make it stop
             | Popularity (Some (id, followers)) ->
                 sprintf "AND ((d.followers, d.id) < (%i, %i))" followers id
             | _ -> ""
         let order =
             match order with
-            | Relevance  _ -> "rank"
+            | Relevance  _ -> "TsvRank"
             | Popularity _ -> "FollowCount"
         let additionalWhere =
             if String.IsNullOrWhiteSpace query then ""
@@ -542,15 +547,14 @@ module SanitizeDeckRepository =
                 AND    df.follower_id = @userid
             ) AS IsFollowed
             , d.followers AS FollowCount
-        	, ts_rank_cd(d.tsv, qweb) +
-              ts_rank_cd(p.tsv, qsim) AS rank
+        	, %s AS TsvRank
         FROM public.deck d
         JOIN public.padawan p ON p.id = d.user_id
         , websearch_to_tsquery(@query) qweb
         , plainto_tsquery('simple', @query) qsim
         WHERE ((d.is_public OR d.user_id = @userid) %s %s)
         ORDER BY %s DESC, d.id DESC
-        LIMIT 20;""" additionalWhere keyset order, {| query = query; userid = userId |})
+        LIMIT 20;""" rank additionalWhere keyset order, {| query = query; userid = userId |})
         |>% Seq.toList
 
 module SanitizeHistoryRepository =

@@ -1,5 +1,6 @@
 namespace CardOverflow.Api
 
+open CardOverflow.Pure
 open System.Threading.Tasks
 open FsToolkit.ErrorHandling
 open System.Security.Cryptography
@@ -727,14 +728,14 @@ module TagRepository =
         db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
 
 [<CLIMutable>]
-type DeckWithFollowMeta = {
-    Id: int
-    Name: string
-    AuthorId: int
-    AuthorName: string
-    IsFollowed: bool
-    FollowCount: int
-}
+type DeckWithFollowMeta =
+    {   Id: int
+        Name: string
+        AuthorId: int
+        AuthorName: string
+        IsFollowed: bool
+        FollowCount: int
+        TsvRank: double }
 type Follower = {
     Id: int
     DisplayName: string
@@ -773,6 +774,7 @@ module DeckRepository =
                 AuthorName = authorName
                 IsFollowed = isFollowed
                 FollowCount = count
+                TsvRank = 0.
             }).ToList()
     }
 

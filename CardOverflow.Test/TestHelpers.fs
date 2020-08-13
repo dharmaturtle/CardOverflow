@@ -17,6 +17,7 @@ open SimpleInjector.Lifestyles
 open FsToolkit.ErrorHandling
 open FSharp.Control.Tasks
 open CardOverflow.Debug
+open System.Collections
 
 module internal Assert =
     let SingleI x =
@@ -25,9 +26,32 @@ module internal Assert =
         Assert.Equal<'T>
             (x |> Seq.sort |> List.ofSeq
             ,y |> Seq.sort |> List.ofSeq)
+    let areEquivalentCustom equalityComparer (x: 'T seq) (y: 'T seq) =
+        Assert.Equal<'T>
+            (x |> Seq.sort |> toResizeArray // toResizeArray needed because otherwise the equalityComparer isn't used for some reason
+            ,y |> Seq.sort |> toResizeArray
+            , equalityComparer)
     let equal (x: 'T) (y: 'T) =
         try
             Assert.Equal<'T>(x, y)
+        with
+            | _ ->
+                printfn "\r\n   ===   Equality check failed!   ==="
+                Diff.ToConsole(sprintf "%A" x,
+                               sprintf "%A" y)
+                reraise()
+    let equalCustom<'T> equalityComparer (x: 'T) y =
+        try
+            Assert.Equal(x, y, equalityComparer)
+        with
+            | _ ->
+                printfn "\r\n   ===   Equality check failed!   ==="
+                Diff.ToConsole(sprintf "%A" x,
+                               sprintf "%A" y)
+                reraise()
+    let equalsCustom<'T> equalityComparer (x: 'T seq) (y: 'T seq) =
+        try
+            Assert.Equal<'T>(x.ToList(), y.ToList(), equalityComparer) // .ToList() needed because otherwise the equalityComparer isn't used for some reason
         with
             | _ ->
                 printfn "\r\n   ===   Equality check failed!   ==="
