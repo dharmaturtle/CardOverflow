@@ -1107,9 +1107,9 @@ INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, 
 
 
 
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (1, 1, 'Default Deck', false, NULL, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (2, 2, 'Default Deck', false, NULL, 0, NULL);
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (3, 3, 'Default Deck', false, NULL, 0, NULL);
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (1, 1, 'Default Deck', false, NULL, 0, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (2, 2, 'Default Deck', false, NULL, 0, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (3, 3, 'Default Deck', false, NULL, 0, '''deck'':2 ''default'':1');
 
 
 
