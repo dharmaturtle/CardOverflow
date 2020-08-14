@@ -30,9 +30,11 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public bool IsPublic { get; set; }
-        public NpgsqlTsVector Tsv { get; set; }
         public int? SourceId { get; set; }
         public int Followers { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
+        public NpgsqlTsVector Tsv { get; set; }
 
         [ForeignKey("SourceId")]
         [InverseProperty("DerivedDecks")]

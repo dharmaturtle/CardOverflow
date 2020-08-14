@@ -603,6 +603,8 @@ CREATE TABLE public.deck (
     is_public boolean NOT NULL,
     source_id integer,
     followers integer NOT NULL,
+    created timestamp without time zone NOT NULL,
+    modified timestamp without time zone,
     tsv tsvector
 );
 
@@ -1107,9 +1109,9 @@ INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, 
 
 
 
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (1, 1, 'Default Deck', false, NULL, 0, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (2, 2, 'Default Deck', false, NULL, 0, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, tsv) VALUES (3, 3, 'Default Deck', false, NULL, 0, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (1, 1, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (2, 2, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (3, 3, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
 
 
 
@@ -1607,6 +1609,12 @@ CREATE INDEX "comment_stack. user_id. idx" ON public.comment_stack USING btree (
 
 
 CREATE INDEX "commield. author_id. idx" ON public.commield USING btree (author_id);
+
+
+CREATE INDEX "deck. followers. idx" ON public.deck USING btree (followers);
+
+
+CREATE INDEX "deck. is_public. idx" ON public.deck USING btree (is_public);
 
 
 CREATE INDEX "deck. tsv. idx" ON public.deck USING gin (tsv);
