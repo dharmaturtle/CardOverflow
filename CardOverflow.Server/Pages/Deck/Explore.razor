@@ -1,0 +1,103 @@
+@page "/deck/explore"
+
+@using static FSharpx.FSharpOption
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using System.Collections.Generic
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using static CardOverflow.Sanitation.SanitizeDeckRepository
+@inject DbExecutor DbExecutor
+
+<div class="d-flex justify-content-between align-items-center">
+  <EditForm OnValidSubmit=@_SearchClicked Model=@_searchCommand class="form-inline input-group">
+    <InputText class="form-control" placeholder="Search" aria-label="Search" @bind-Value=@_searchCommand.Query />
+    <button class="btn btn-primary" type="submit">
+      <span class="oi oi-magnifying-glass" />
+    </button>
+    <span class="m-2">Sort by:</span>
+    <select class="form-control col-2" @onchange=@(x => x.Value.ToString().Pipe(int.Parse).Do(id => _searchCommand.Order = (SearchOrder)id))>
+      @foreach (var order in Enum.GetNames(typeof(SearchOrder))) {
+        <option value=@((int) Enum.Parse(typeof(SearchOrder), order))>@order</option>
+      }
+    </select>
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+  </EditForm>
+</div>
+@if (_decks == null) {
+  <p><em>Loading...</em></p>
+} else if (_decks.Count == 0) {
+  <p>No results.</p>
+} else {
+  <table class="table">
+    <tr>
+      <th>Followers</th>
+      <th></th>
+      <th>Author</th>
+    </tr>
+    @foreach (var deck in _decks) {
+      <tr>
+        <td>
+          @deck.FollowCount
+        </td>
+        <td>
+          <a href="deck/@deck.Id">
+            @deck.Name
+          </a>
+        </td>
+        <td>
+          <a href="user/@deck.AuthorId">
+            @deck.AuthorName
+          </a>
+        </td>
+      </tr>
+    }
+  </table>
+  <div class="text-center">
+    <button type="button" class="btn btn-primary" disabled=@(!_canLoadMore) @onclick=@_LoadMore>
+      @if (_canLoadMore) {
+        <span>Load more</span>
+      } else {
+        <span>That's it!</span>
+      }
+    </button>
+  </div>
+}
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  private List<DeckWithFollowMeta> _decks = new List<DeckWithFollowMeta>();
+  private SearchCommand _searchCommand = new SearchCommand { Query = "" };
+  private bool _canLoadMore;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    _user = await UserTask;
+    await _LoadMore();
+    StateHasChanged();
+  }
+
+  private async Task _LoadMore() {
+    var buildSearchParams = _searchCommand.Order switch
+    {
+      SearchOrder.Popularity => FSharpx.FSharpOption.ToFSharpOption(_decks.LastOrDefault()).Select(x => Tuple.Create(x.Id, x.FollowCount)).Pipe(SearchParams.NewPopularity),
+      SearchOrder.Relevance => FSharpx.FSharpOption.ToFSharpOption(_decks.LastOrDefault()).Select(x => Tuple.Create(x.Id, x.TsvRank)).Pipe(SearchParams.NewRelevance),
+      _ => throw new Exception("CardOverflow.Entity.SearchOrder case not covered")
+    };
+    var newDecks = await DbExecutor.QueryAsync(db => SanitizeDeckRepository.search(db, _user.Id, _searchCommand.Query, buildSearchParams));
+    _decks.AddRange(newDecks);
+    _canLoadMore = newDecks.Length == SanitizeDeckRepository.searchLimit;
+  }
+
+  private Task _SearchClicked() {
+    _decks = new List<DeckWithFollowMeta>();
+    return _LoadMore();
+  }
+
+}

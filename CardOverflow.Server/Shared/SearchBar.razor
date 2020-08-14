@@ -60,5 +60,6 @@
     ?.SkipWhile(x => x != SelectedId)?.Skip(1)?.FirstOrDefault();
   string AfterId => Ids
     ?.SkipWhile(x => x != SelectedId)?.Skip(1)?.FirstOrDefault();
+  
   SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
 }

@@ -518,6 +518,7 @@ module SanitizeDeckRepository =
     type SearchParams =
         | Relevance  of (int * float) Option // id, rank
         | Popularity of (int * int)   Option // id, followers
+    let searchLimit = 20
     let search (conn: NpgsqlConnection) userId searchString order =
         let additionalWhere, order =
             if searchString |> String.IsNullOrWhiteSpace then
@@ -567,13 +568,13 @@ module SanitizeDeckRepository =
                 ) _
                 %s
                 ORDER BY TsvRank DESC, id DESC
-                LIMIT 20;""" rank (baseQuery ", d.tsv as dtsv, u.tsv as utsv, qweb, qsim") additionalWhere keyset
+                LIMIT %i;""" rank (baseQuery ", d.tsv as dtsv, u.tsv as utsv, qweb, qsim") additionalWhere keyset searchLimit
             | Popularity _ ->
                 sprintf """
                 %s
                 WHERE ((d.is_public OR d.user_id = @userid) %s %s)
                 ORDER BY FollowCount DESC, d.id DESC
-                LIMIT 20;""" (baseQuery "") additionalWhere keyset
+                LIMIT %i;""" (baseQuery "") additionalWhere keyset searchLimit
         conn.QueryAsync<DeckWithFollowMeta>(query, {| searchString = searchString; userid = userId |})
         |>% Seq.toList
 
