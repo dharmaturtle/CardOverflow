@@ -131,7 +131,7 @@ module Generators =
             NotificationEntity(
                 Id = id,
                 SenderId = Gen.sample1 [1; 2; 3],
-                TimeStamp = DateTime.SpecifyKind(timestamp, DateTimeKind.Unspecified),
+                Created = DateTime.SpecifyKind(timestamp, DateTimeKind.Unspecified),
                 Type = notificationType,
                 Message = message
             )}

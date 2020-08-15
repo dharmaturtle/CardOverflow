@@ -71,10 +71,10 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single
-        n.TimeStamp |> Assert.dateTimeEqual 60. DateTime.UtcNow
+        n.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
         n |> Assert.equal
             {   expected with
-                    TimeStamp = n.TimeStamp // cheating, but whatever
+                    Created = n.Created // cheating, but whatever
             }
         do! NotificationRepository.remove c.Db followerId n.Id
         Assert.Empty c.Db.Notification
@@ -89,7 +89,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
             {   Id = 1
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
-                TimeStamp = DateTime.MinValue
+                Created = DateTime.MinValue
                 Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                            MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                            Collected = None
@@ -102,7 +102,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
             {   Id = nid
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
-                TimeStamp = DateTime.MinValue
+                Created = DateTime.MinValue
                 Message = DeckUpdatedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
@@ -130,7 +130,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
             {   Id = 4
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
-                TimeStamp = DateTime.MinValue
+                Created = DateTime.MinValue
                 Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected

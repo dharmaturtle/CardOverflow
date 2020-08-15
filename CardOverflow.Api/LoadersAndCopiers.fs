@@ -75,7 +75,7 @@ module Notification =
         {   Id = n.Id
             SenderId = n.SenderId
             SenderDisplayName = senderName
-            TimeStamp = n.TimeStamp
+            Created = n.Created
             Message = message
         }
 

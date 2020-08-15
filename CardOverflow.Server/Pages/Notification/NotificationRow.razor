@@ -119,8 +119,8 @@
     </button>
   </td>
   <td>
-    <span title=@(Notification.TimeStamp + " UTC")>
-      @ViewLogic.timestampToPretty(Notification.TimeStamp, TimeProvider.utcNow)
+    <span title=@(Notification.Created + " UTC")>
+      @ViewLogic.timestampToPretty(Notification.Created, TimeProvider.utcNow)
     </span>
   </td>
 </tr>

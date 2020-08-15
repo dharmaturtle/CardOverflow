@@ -68,6 +68,6 @@ type Notification = {
     Id: int
     SenderId: int
     SenderDisplayName: string
-    TimeStamp: DateTime
+    Created: DateTime
     Message: Message
 }

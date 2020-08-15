@@ -143,8 +143,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id, time_stamp,              type,          message,     stack_id,     branch_id,     leaf_id,     deck_id, gromplate_id, grompleaf_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id,  NULL,       NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  stack_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -154,8 +154,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'UPDATE' AND OLD.leaf_id <> NEW.leaf_id) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id, time_stamp,              type,          message,     stack_id,     branch_id,     leaf_id,     deck_id, gromplate_id, grompleaf_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedStack', NULL,   NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id,  NULL,       NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  stack_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedStack', NULL,     NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -165,8 +165,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id, time_stamp,              type,          message,     stack_id,     branch_id,     leaf_id,     deck_id, gromplate_id, grompleaf_id)
-                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedStack', NULL,   OLD.stack_id, OLD.branch_id, OLD.leaf_id, OLD.deck_id,  NULL,       NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  stack_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedStack', NULL,     OLD.stack_id, OLD.branch_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -891,7 +891,7 @@ ALTER TABLE public.leaf_tag_count OWNER TO postgres;
 CREATE TABLE public.notification (
     id integer NOT NULL,
     sender_id integer NOT NULL,
-    time_stamp timestamp without time zone NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     type public.notification_type NOT NULL,
     message character varying(4000),
     stack_id integer,
