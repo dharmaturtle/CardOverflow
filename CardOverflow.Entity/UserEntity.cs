@@ -52,6 +52,9 @@ namespace CardOverflow.Entity
         public short LearnAheadLimitInMinutes { get; set; }
         public short TimeboxTimeLimitInMinutes { get; set; }
         public bool IsNightMode { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
 
         [ForeignKey("DefaultCardSettingId")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }

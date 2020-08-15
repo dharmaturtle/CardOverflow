@@ -11,6 +11,8 @@ namespace CardOverflow.Entity
         public int DeckId { get; set; }
         [Key]
         public int FollowerId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("DeckId")]
         [InverseProperty("DeckFollowers")]

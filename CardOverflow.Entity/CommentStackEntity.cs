@@ -28,6 +28,7 @@ namespace CardOverflow.Entity
         private string _Text;
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
         public bool IsDmca { get; set; }
 
         [ForeignKey("StackId")]

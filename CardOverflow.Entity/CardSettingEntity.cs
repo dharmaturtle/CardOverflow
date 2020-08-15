@@ -63,6 +63,9 @@ namespace CardOverflow.Entity
         public bool ShowAnswerTimer { get; set; }
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAudioOnAnswer { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
 
         [ForeignKey("UserId")]
         [InverseProperty("CardSettings")]

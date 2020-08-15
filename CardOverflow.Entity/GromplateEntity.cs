@@ -19,6 +19,9 @@ namespace CardOverflow.Entity
         public int AuthorId { get; set; }
         public int LatestId { get; set; }
         public bool IsListed { get; set; } = true;
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Gromplates")]

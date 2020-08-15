@@ -12,6 +12,8 @@ namespace CardOverflow.Entity
         public int FeedbackId { get; set; }
         [Key]
         public int UserId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("FeedbackId")]
         [InverseProperty("Vote_Feedbacks")]

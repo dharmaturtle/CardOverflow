@@ -18,6 +18,8 @@ namespace CardOverflow.Entity
         [Key]
         public int GrompleafId { get; set; }
         public int DefaultCardSettingId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("GrompleafId")]
         [InverseProperty("User_Grompleafs")]

@@ -15,6 +15,8 @@ namespace CardOverflow.Entity
         [Key]
         public int StackId { get; set; }
         public int CardId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("CardId")]
         [InverseProperty("Tag_Cards")]

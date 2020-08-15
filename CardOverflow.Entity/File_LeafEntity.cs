@@ -12,6 +12,8 @@ namespace CardOverflow.Entity
         public int LeafId { get; set; }
         [Key]
         public int FileId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("LeafId")]
         [InverseProperty("File_Leafs")]

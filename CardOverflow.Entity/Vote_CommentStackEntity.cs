@@ -12,6 +12,8 @@ namespace CardOverflow.Entity
         public int CommentStackId { get; set; }
         [Key]
         public int UserId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("CommentStackId")]
         [InverseProperty("Vote_CommentStacks")]

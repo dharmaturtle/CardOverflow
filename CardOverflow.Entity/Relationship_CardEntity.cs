@@ -18,6 +18,8 @@ namespace CardOverflow.Entity
         public int TargetStackId { get; set; }
         public int SourceCardId { get; set; }
         public int TargetCardId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("RelationshipId")]
         [InverseProperty("Relationship_Cards")]

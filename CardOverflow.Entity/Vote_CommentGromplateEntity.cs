@@ -12,6 +12,8 @@ namespace CardOverflow.Entity
         public int CommentGromplateId { get; set; }
         [Key]
         public int UserId { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
 
         [ForeignKey("CommentGromplateId")]
         [InverseProperty("Vote_CommentGromplates")]

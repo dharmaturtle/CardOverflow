@@ -26,6 +26,8 @@ namespace CardOverflow.Entity
         private string _FileName;
         [Required]
         public byte[] Data { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
         [Required]
         public byte[] Sha256 { get; set; }
 

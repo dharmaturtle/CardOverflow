@@ -25,6 +25,8 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
 
         [InverseProperty("Relationship")]

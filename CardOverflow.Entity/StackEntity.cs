@@ -22,6 +22,9 @@ namespace CardOverflow.Entity
         public int? CopySourceId { get; set; }
         public int DefaultBranchId { get; set; }
         public bool IsListed { get; set; } = true;
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Stacks")]

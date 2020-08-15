@@ -38,6 +38,7 @@ namespace CardOverflow.Entity
         public int UserId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
         public int? ParentId { get; set; }
         public short? Priority { get; set; }
 
