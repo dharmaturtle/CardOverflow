@@ -2,13 +2,16 @@
 using System.Threading.Tasks;
 using CardOverflow.Entity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CardOverflow.Server {
   public class DbExecutor {
     private readonly DbContextOptions<CardOverflowDb> _options;
+    private readonly Func<Task<NpgsqlConnection>> _npgsqlConnectionFunc;
 
-    public DbExecutor(DbContextOptions<CardOverflowDb> options) {
+    public DbExecutor(DbContextOptions<CardOverflowDb> options, Func<Task<NpgsqlConnection>> npgsqlConnectionFunc) {
       _options = options;
+      _npgsqlConnectionFunc = npgsqlConnectionFunc;
     }
 
     public void Command(Action<CardOverflowDb> command) {
@@ -29,6 +32,11 @@ namespace CardOverflow.Server {
     public async Task<T> QueryAsync<T>(Func<CardOverflowDb, Task<T>> query) {
       using var db = new CardOverflowDb(_options);
       return await query(db);
+    }
+
+    public async Task<T> QueryAsync<T>(Func<NpgsqlConnection, Task<T>> query) {
+      var conn = await _npgsqlConnectionFunc.Invoke();
+      return await query(conn);
     }
 
   }

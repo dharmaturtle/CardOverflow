@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,11 @@ namespace ThoughtDesign.WebLibrary {
         //.EnableSensitiveDataLogging()
         .UseSnakeCaseNamingConvention()
         .UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+      });
+      services.AddSingleton<Func<Task<NpgsqlConnection>>>(_ => async () => {
+        var conn = new NpgsqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        await conn.OpenAsync();
+        return conn;
       });
       Log.Logger = serilogLogger;
       services.AddLogging(x => x
