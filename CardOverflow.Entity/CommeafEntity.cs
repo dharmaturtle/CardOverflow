@@ -29,6 +29,7 @@ namespace CardOverflow.Entity
         private string _FieldName;
         [Required]
         public string Value { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
         [Required]

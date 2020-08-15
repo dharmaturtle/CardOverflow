@@ -43,7 +43,7 @@
   }
 
   async Task SaveComment() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, Time, WriteComment.Text, StackId, _user.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, WriteComment.Text, StackId, _user.Id));
     if (x.IsOk) {
       isSaved = true;
       await AddComment.InvokeAsync(WriteComment.Text);

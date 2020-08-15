@@ -21,6 +21,7 @@ namespace CardOverflow.Entity
 
         [Key]
         public int Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
         public int StackId { get; set; }

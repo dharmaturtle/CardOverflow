@@ -32,6 +32,7 @@ namespace CardOverflow.Entity
         public bool IsPublic { get; set; }
         public int? SourceId { get; set; }
         public int Followers { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
         public NpgsqlTsVector Tsv { get; set; }

@@ -14,6 +14,7 @@ namespace CardOverflow.Entity
         public int? LeafId { get; set; }
         public short Index { get; set; }
         public short Score { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public short IntervalWithUnusedStepsIndex { get; set; }
         public short EaseFactorInPermille { get; set; }

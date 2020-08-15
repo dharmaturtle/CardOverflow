@@ -109,15 +109,14 @@ type CommentText = {
 }
 
 module SanitizeCommentRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) (time: TimeProvider) (comment: string) stackId userId = taskResult { // lowTODO add idempotency key
+    let AddAndSaveAsync (db: CardOverflowDb) (comment: string) stackId userId = taskResult { // lowTODO add idempotency key
         let text = comment |> MappingTools.standardizeWhitespace
         do! if text.Length >= 15 then Ok () else Error "Comment must be 15 or more characters."
         return!
             CommentStackEntity(
                 StackId = stackId,
                 UserId = userId,
-                Text = text,
-                Created = time.utcNow
+                Text = text
             ) |> CommentRepository.addAndSaveAsync db
         }
 
@@ -869,8 +868,7 @@ module SanitizeLandingPage =
         PotentialSignupsEntity(
             Email = signUpForm.Email,
             Message = signUpForm.Message,
-            OneIsAlpha2Beta3Ga = signUpForm.OneIsAlpha2Beta3Ga,
-            TimeStamp = DateTime.UtcNow
+            OneIsAlpha2Beta3Ga = signUpForm.OneIsAlpha2Beta3Ga
         ) |> db.PotentialSignups.AddI
         db.SaveChangesAsyncI()
 

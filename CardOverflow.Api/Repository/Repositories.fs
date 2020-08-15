@@ -46,7 +46,6 @@ module FeedbackRepository =
             Title = title,
             Description = description,
             UserId = userId,
-            Created = DateTime.UtcNow,
             Priority = priority
         ) |> db.Feedback.AddI
         db.SaveChangesAsyncI()
@@ -102,8 +101,6 @@ module GromplateRepository =
                 db.Entry(cc.Leaf).State <- EntityState.Added
                 cc.Leaf.Id <- cc.Leaf.GetHashCode()
                 db.Entry(cc.Leaf).Property(nameofLeaf <@ any<LeafEntity>.Id @>).IsTemporary <- true
-                cc.Leaf.Created <- DateTime.UtcNow
-                cc.Leaf.Modified <- Nullable()
                 cc.Leaf.Grompleaf <- newGrompleaf
             )
         let! existing = db.User_Grompleaf.Where(fun x -> x.UserId = userId && x.Grompleaf.GromplateId = newGrompleaf.GromplateId).ToListAsync()

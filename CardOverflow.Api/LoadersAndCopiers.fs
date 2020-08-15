@@ -263,7 +263,6 @@ type Grompleaf with
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
-        entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
@@ -276,8 +275,6 @@ type Grompleaf with
     member this.CopyToNewLeaf gromplate =
         let e = GrompleafEntity()
         this.CopyTo e
-        e.Created <- DateTime.UtcNow
-        e.Modified <- Nullable()
         match gromplate with
         | Id id -> e.GromplateId <- id
         | Entity entity -> e.Gromplate <- entity
@@ -314,8 +311,6 @@ type LeafView with
         entity
     member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields =
         let e = this.CopyToNew commields
-        e.Created <- DateTime.UtcNow
-        e.Modified <- Nullable()
         if branch.Stack = null then
             if branch.StackId = 0 then failwith "StackId is 0, you gotta .Include it"
             e.StackId <- branch.StackId
@@ -372,7 +367,6 @@ type LeafMeta with
             EditSummary = ""
         }
     member this.copyTo (entity: LeafEntity) =
-        entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.IsDmca <- this.IsDmca
     member this.copyToNew =
