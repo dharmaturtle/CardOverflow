@@ -365,7 +365,7 @@ CREATE TABLE public.alpha_beta_key (
     id integer NOT NULL,
     key character varying(50) NOT NULL,
     is_used boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -389,8 +389,8 @@ CREATE TABLE public.branch (
     latest_id integer NOT NULL,
     users integer NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone
 );
 
 
@@ -416,9 +416,9 @@ CREATE TABLE public.card (
     card_state smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
     interval_or_steps_index smallint NOT NULL,
-    due timestamp without time zone NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    due timestamp with time zone NOT NULL,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     card_setting_id integer NOT NULL,
     deck_id integer NOT NULL,
     is_lapsed boolean NOT NULL,
@@ -488,8 +488,8 @@ CREATE TABLE public.card_setting (
     show_answer_timer boolean NOT NULL,
     automatically_play_audio boolean NOT NULL,
     replay_question_audio_on_answer boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone
 );
 
 
@@ -510,8 +510,8 @@ CREATE TABLE public.commeaf (
     commield_id integer NOT NULL,
     field_name character varying(200) NOT NULL,
     value text NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     edit_summary character varying(200) NOT NULL,
     b_weight_tsv_helper text,
     tsv tsvector,
@@ -524,7 +524,7 @@ ALTER TABLE public.commeaf OWNER TO postgres;
 CREATE TABLE public.commeaf_2_leaf (
     leaf_id integer NOT NULL,
     commeaf_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -545,8 +545,8 @@ CREATE TABLE public.comment_gromplate (
     gromplate_id integer NOT NULL,
     user_id integer NOT NULL,
     text character varying(500) NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     is_dmca boolean NOT NULL
 );
 
@@ -568,8 +568,8 @@ CREATE TABLE public.comment_stack (
     stack_id integer NOT NULL,
     user_id integer NOT NULL,
     text character varying(500) NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     is_dmca boolean NOT NULL
 );
 
@@ -591,8 +591,8 @@ CREATE TABLE public.commield (
     author_id integer NOT NULL,
     latest_id integer NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone
 );
 
 
@@ -615,8 +615,8 @@ CREATE TABLE public.deck (
     is_public boolean NOT NULL,
     source_id integer,
     followers integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     tsv tsvector
 );
 
@@ -626,7 +626,7 @@ ALTER TABLE public.deck OWNER TO postgres;
 CREATE TABLE public.deck_follower (
     deck_id integer NOT NULL,
     follower_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -647,8 +647,8 @@ CREATE TABLE public.feedback (
     title character varying(50) NOT NULL,
     description character varying(1000) NOT NULL,
     user_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     parent_id integer,
     priority smallint
 );
@@ -670,7 +670,7 @@ CREATE TABLE public.file (
     id integer NOT NULL,
     file_name character varying(200) NOT NULL,
     data bytea NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     sha256 bytea NOT NULL
 );
 
@@ -680,7 +680,7 @@ ALTER TABLE public.file OWNER TO postgres;
 CREATE TABLE public.file_2_leaf (
     leaf_id integer NOT NULL,
     file_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -701,8 +701,8 @@ CREATE TABLE public.filter (
     name character varying(128) NOT NULL,
     user_id integer NOT NULL,
     query character varying(256) NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone
 );
 
 
@@ -723,8 +723,8 @@ CREATE TABLE public.gromplate (
     author_id integer NOT NULL,
     latest_id integer NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone
 );
 
 
@@ -745,8 +745,8 @@ CREATE TABLE public.grompleaf (
     name character varying(100) NOT NULL,
     gromplate_id integer NOT NULL,
     css character varying(4000) NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     latex_pre character varying(500) NOT NULL,
     latex_post character varying(500) NOT NULL,
     is_dmca boolean NOT NULL,
@@ -781,7 +781,7 @@ CREATE TABLE public.history (
     leaf_id integer,
     index smallint NOT NULL,
     score smallint NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     interval_with_unused_steps_index smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
     time_from_seeing_question_to_score_in_seconds_plus32768 smallint NOT NULL
@@ -802,8 +802,8 @@ ALTER TABLE public.history ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY 
 
 CREATE TABLE public.leaf (
     id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     stack_id integer NOT NULL,
     branch_id integer NOT NULL,
     is_dmca boolean NOT NULL,
@@ -835,7 +835,7 @@ ALTER TABLE public.leaf ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
 CREATE TABLE public.relationship (
     id integer NOT NULL,
     name character varying(250) NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     tsv tsvector
 );
 
@@ -849,7 +849,7 @@ CREATE TABLE public.relationship_2_card (
     target_stack_id integer NOT NULL,
     source_card_id integer NOT NULL,
     target_card_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -876,7 +876,7 @@ ALTER TABLE public.leaf_relationship_count OWNER TO postgres;
 CREATE TABLE public.tag (
     id integer NOT NULL,
     name character varying(250) NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     tsv tsvector
 );
 
@@ -888,7 +888,7 @@ CREATE TABLE public.tag_2_card (
     user_id integer NOT NULL,
     stack_id integer NOT NULL,
     card_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -913,7 +913,7 @@ ALTER TABLE public.leaf_tag_count OWNER TO postgres;
 CREATE TABLE public.notification (
     id integer NOT NULL,
     sender_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     type public.notification_type NOT NULL,
     message character varying(4000),
     stack_id integer,
@@ -949,8 +949,8 @@ CREATE TABLE public.padawan (
     learn_ahead_limit_in_minutes smallint NOT NULL,
     timebox_time_limit_in_minutes smallint NOT NULL,
     is_night_mode boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone,
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone,
     tsv tsvector
 );
 
@@ -962,7 +962,7 @@ CREATE TABLE public.potential_signups (
     email character varying(500) NOT NULL,
     message character varying(1000) NOT NULL,
     one_is_alpha2_beta3_ga smallint NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -1003,8 +1003,8 @@ CREATE TABLE public.stack (
     copy_source_id integer,
     default_branch_id integer NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp with time zone
 );
 
 
@@ -1058,7 +1058,7 @@ CREATE TABLE public.tag_2_user_2_grompleaf (
     user_id integer NOT NULL,
     grompleaf_id integer NOT NULL,
     default_tag_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -1078,7 +1078,7 @@ CREATE TABLE public.user_2_grompleaf (
     user_id integer NOT NULL,
     grompleaf_id integer NOT NULL,
     default_card_setting_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -1097,7 +1097,7 @@ ALTER TABLE public.padawan ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY 
 CREATE TABLE public.vote_2_comment_gromplate (
     comment_gromplate_id integer NOT NULL,
     user_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -1106,7 +1106,7 @@ ALTER TABLE public.vote_2_comment_gromplate OWNER TO postgres;
 CREATE TABLE public.vote_2_comment_stack (
     comment_stack_id integer NOT NULL,
     user_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -1115,7 +1115,7 @@ ALTER TABLE public.vote_2_comment_stack OWNER TO postgres;
 CREATE TABLE public.vote_2_feedback (
     feedback_id integer NOT NULL,
     user_id integer NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -1127,9 +1127,9 @@ ALTER TABLE public.vote_2_feedback OWNER TO postgres;
 
 
 
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer) VALUES (1, 1, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer) VALUES (2, 2, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer) VALUES (3, 3, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES (1, 1, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES (2, 2, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES (3, 3, 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
 
 
 
@@ -1142,9 +1142,9 @@ INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, 
 
 
 
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (1, 1, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (2, 2, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (3, 3, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (1, 1, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (2, 2, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES (3, 3, 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
 
 
 
@@ -1157,11 +1157,11 @@ INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, cre
 
 
 
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed) VALUES (1, 2, 1001, true);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed) VALUES (2, 2, 1002, true);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed) VALUES (3, 2, 1003, true);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed) VALUES (4, 2, 1006, true);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed) VALUES (5, 2, 1007, true);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES (1, 2, 1001, true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES (2, 2, 1002, true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES (3, 2, 1003, true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES (4, 2, 1006, true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES (5, 2, 1007, true, '2020-08-15 21:40:11.66992+00', NULL);
 
 
 INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES (1001, 'Basic', 1, '.card {
@@ -1171,7 +1171,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.581', '2019-06-16 00:53:30', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.581+00', '2019-06-16 00:53:30+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1190,7 +1190,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577+00', '2019-06-16 00:51:28+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1213,7 +1213,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577+00', '2019-06-16 00:51:28+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1236,7 +1236,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.571', '2019-06-16 00:51:46', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.571+00', '2019-06-16 00:51:46+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1263,7 +1263,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 }
 .nightMode .cloze {
  color: lightblue;
-}', '2019-04-08 02:14:29.57', '2019-06-16 00:51:55', '\documentclass[12pt]{article}
+}', '2019-04-08 02:14:29.57+00', '2019-06-16 00:51:55+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1279,7 +1279,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+', '2020-04-23 19:40:46.82+00', '2020-04-23 19:40:46+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1307,7 +1307,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 }
 .nightMode .cloze {
  color: lightblue;
-}', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+}', '2020-04-23 19:40:46.82+00', '2020-04-23 19:40:46+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1323,9 +1323,9 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 
 
 
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, tsv) VALUES (1, 'Admin', 1, 1, true, true, 0, 4, 20, 0, false, '''admin'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, tsv) VALUES (2, 'The Collective', 2, 2, true, true, 0, 4, 20, 0, false, '''collective'':2 ''the'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, tsv) VALUES (3, 'RoboTurtle', 3, 3, true, true, 0, 4, 20, 0, false, '''roboturtle'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES (1, 'Admin', 1, 1, true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, '''admin'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES (2, 'The Collective', 2, 2, true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, '''collective'':2 ''the'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES (3, 'RoboTurtle', 3, 3, true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, '''roboturtle'':1');
 
 
 
@@ -1344,11 +1344,11 @@ INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_d
 
 
 
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (3, 1001, 3);
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (3, 1002, 3);
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (3, 1003, 3);
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (3, 1006, 3);
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id) VALUES (3, 1005, 3);
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES (3, 1001, 3, '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES (3, 1002, 3, '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES (3, 1003, 3, '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES (3, 1006, 3, '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES (3, 1005, 3, '2020-08-15 21:40:11.66992+00');
 
 
 
