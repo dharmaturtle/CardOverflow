@@ -27,6 +27,9 @@ namespace CardOverflow.Entity
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
         public DateTime Due { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
+        public DateTime? Modified { get; set; }
         public int CardSettingId { get; set; }
         public int DeckId { get; set; }
         public bool IsLapsed { get; set; }

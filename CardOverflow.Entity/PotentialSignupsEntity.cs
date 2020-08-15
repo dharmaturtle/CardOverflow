@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,6 +30,7 @@ namespace CardOverflow.Entity
         }
         private string _Message;
         public short OneIsAlpha2Beta3Ga { get; set; }
-        public DateTime TimeStamp { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public DateTime Created { get; set; }
     }
 }

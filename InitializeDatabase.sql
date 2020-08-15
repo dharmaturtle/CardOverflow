@@ -414,6 +414,8 @@ CREATE TABLE public.card (
     ease_factor_in_permille smallint NOT NULL,
     interval_or_steps_index smallint NOT NULL,
     due timestamp without time zone NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     card_setting_id integer NOT NULL,
     deck_id integer NOT NULL,
     is_lapsed boolean NOT NULL,
@@ -936,7 +938,7 @@ CREATE TABLE public.potential_signups (
     email character varying(500) NOT NULL,
     message character varying(1000) NOT NULL,
     one_is_alpha2_beta3_ga smallint NOT NULL,
-    time_stamp timestamp without time zone NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
