@@ -28,7 +28,17 @@ namespace CardOverflow.Entity
         }
         private string _FieldName;
         [Required]
-        public string Value { get; set; }
+        [StringLength(4000)]
+        public string Value
+        {
+            get => _Value;
+            set
+            {
+                if (value.Length > 4000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Value has a maximum length of 4000. Attempted value: {value}");
+                _Value = value;
+            }
+        }
+        private string _Value;
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }

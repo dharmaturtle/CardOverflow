@@ -65,7 +65,17 @@ namespace CardOverflow.Entity
         private string _LatexPost;
         public bool IsDmca { get; set; }
         [Required]
-        public string Templates { get; set; }
+        [StringLength(10000)]
+        public string Templates
+        {
+            get => _Templates;
+            set
+            {
+                if (value.Length > 10000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Templates has a maximum length of 10000. Attempted value: {value}");
+                _Templates = value;
+            }
+        }
+        private string _Templates;
         public short Type { get; set; }
         [Required]
         [StringLength(4000)]

@@ -34,9 +34,29 @@ namespace CardOverflow.Entity
         public int DeckId { get; set; }
         public bool IsLapsed { get; set; }
         [Required]
-        public string FrontPersonalField { get; set; } = "";
+        [StringLength(5000)]
+        public string FrontPersonalField
+        {
+            get => _FrontPersonalField;
+            set
+            {
+                if (value.Length > 5000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and FrontPersonalField has a maximum length of 5000. Attempted value: {value}");
+                _FrontPersonalField = value;
+            }
+        }
+        private string _FrontPersonalField = "";
         [Required]
-        public string BackPersonalField { get; set; } = "";
+        [StringLength(5000)]
+        public string BackPersonalField
+        {
+            get => _BackPersonalField;
+            set
+            {
+                if (value.Length > 5000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and BackPersonalField has a maximum length of 5000. Attempted value: {value}");
+                _BackPersonalField = value;
+            }
+        }
+        private string _BackPersonalField = "";
         public string TsvHelper { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
 

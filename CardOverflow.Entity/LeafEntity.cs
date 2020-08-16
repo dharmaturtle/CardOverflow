@@ -28,7 +28,17 @@ namespace CardOverflow.Entity
         public int BranchId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
-        public string FieldValues { get; set; }
+        [StringLength(10000)]
+        public string FieldValues
+        {
+            get => _FieldValues;
+            set
+            {
+                if (value.Length > 10000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and FieldValues has a maximum length of 10000. Attempted value: {value}");
+                _FieldValues = value;
+            }
+        }
+        private string _FieldValues;
         public int GrompleafId { get; set; }
         public int Users { get; set; }
         [Required]
