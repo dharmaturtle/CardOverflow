@@ -13,7 +13,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(200)]
         public string FileName {

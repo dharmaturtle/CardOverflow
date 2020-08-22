@@ -8,7 +8,7 @@ namespace CardOverflow.Entity
     public partial class FilterEntity
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(128)]
         public string Name {
@@ -19,7 +19,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [Required]
         [StringLength(256)]
         public string Query {

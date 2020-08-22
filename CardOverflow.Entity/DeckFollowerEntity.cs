@@ -8,9 +8,9 @@ namespace CardOverflow.Entity
     public partial class DeckFollowerEntity
     {
         [Key]
-        public int DeckId { get; set; }
+        public Guid DeckId { get; set; }
         [Key]
-        public int FollowerId { get; set; }
+        public Guid FollowerId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

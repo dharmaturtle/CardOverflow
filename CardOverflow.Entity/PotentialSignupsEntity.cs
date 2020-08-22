@@ -8,7 +8,7 @@ namespace CardOverflow.Entity
     public partial class PotentialSignupsEntity
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(500)]
         public string Email {

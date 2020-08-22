@@ -32,7 +32,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(32)]
         public string DisplayName {
@@ -43,8 +43,8 @@ namespace CardOverflow.Entity
             }
         }
         private string _DisplayName;
-        public int DefaultCardSettingId { get; set; }
-        public int DefaultDeckId { get; set; }
+        public Guid DefaultCardSettingId { get; set; }
+        public Guid DefaultDeckId { get; set; }
         public bool ShowNextReviewTime { get; set; }
         public bool ShowRemainingCardCount { get; set; }
         public short MixNewAndReview { get; set; }

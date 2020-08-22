@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +7,7 @@ namespace CardOverflow.Entity
 {
     public partial class StackTagCountEntity
     {
-        public int StackId { get; set; }
+        public Guid StackId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;

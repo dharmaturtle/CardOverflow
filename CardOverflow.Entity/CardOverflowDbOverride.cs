@@ -96,7 +96,7 @@ namespace CardOverflow.Entity {
         && (x.State == EntityState.Added || x.State == EntityState.Modified)
       ).Select(x => x.Entity).Cast<T>();
 
-    public void Remove<TEntity>(int id) where TEntity : class, IId, new() { // https://stackoverflow.com/a/55853315
+    public void Remove<TEntity>(Guid id) where TEntity : class, IId, new() { // https://stackoverflow.com/a/55853315
       var dbSet = Set<TEntity>();
       var entity = dbSet.Local.FirstOrDefault(c => c.Id == id);
       if (entity == null) {
@@ -106,7 +106,7 @@ namespace CardOverflow.Entity {
       dbSet.Remove(entity);
     }
 
-    public void Remove<TEntity>(IList<int> ids) where TEntity : class, IId, new() {
+    public void Remove<TEntity>(IList<Guid> ids) where TEntity : class, IId, new() {
       foreach (var id in ids) {
         Remove<TEntity>(id);
       }
@@ -141,9 +141,9 @@ namespace CardOverflow.Entity {
         tag.Name = _entityHasher.SanitizeTag.Invoke(tag.Name);
       }
       foreach (var j in _filter<Tag_CardEntity>(entries)) {
-        if (j.Card.StackId == 0) {
+        if (j.Card.StackId == Guid.Empty) {
           if (j.Card.Stack == null) {
-            throw new NullReferenceException("j.Card.Stack is null and its j.Card.StackId is 0. In other words, the Stack wasn't set.");
+            throw new NullReferenceException("j.Card.Stack is null and its j.Card.StackId is Guid.Empty. In other words, the Stack wasn't set.");
           }
           j.Stack = j.Card.Stack;
         } else {

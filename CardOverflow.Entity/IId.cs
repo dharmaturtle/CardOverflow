@@ -1,5 +1,7 @@
+﻿using System;
+
 namespace CardOverflow.Entity {
   public interface IId {
-    int Id { get; set; }
+    Guid Id { get; set; }
   }
 }

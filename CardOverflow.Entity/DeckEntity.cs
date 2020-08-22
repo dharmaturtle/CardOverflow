@@ -17,8 +17,8 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
-        public int UserId { get; set; }
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
         [Required]
         [StringLength(250)]
         public string Name {
@@ -30,7 +30,7 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public bool IsPublic { get; set; }
-        public int? SourceId { get; set; }
+        public Guid? SourceId { get; set; }
         public int Followers { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }

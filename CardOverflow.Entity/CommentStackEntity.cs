@@ -13,9 +13,9 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
-        public int StackId { get; set; }
-        public int UserId { get; set; }
+        public Guid Id { get; set; }
+        public Guid StackId { get; set; }
+        public Guid UserId { get; set; }
         [Required]
         [StringLength(500)]
         public string Text {

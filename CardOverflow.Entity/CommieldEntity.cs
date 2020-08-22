@@ -13,9 +13,9 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
-        public int AuthorId { get; set; }
-        public int LatestId { get; set; }
+        public Guid Id { get; set; }
+        public Guid AuthorId { get; set; }
+        public Guid LatestId { get; set; }
         public bool IsListed { get; set; } = true;
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }

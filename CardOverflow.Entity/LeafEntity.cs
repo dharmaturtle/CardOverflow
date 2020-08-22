@@ -20,12 +20,12 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        public int StackId { get; set; }
-        public int BranchId { get; set; }
+        public Guid StackId { get; set; }
+        public Guid BranchId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
         [StringLength(10000)]
@@ -39,7 +39,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _FieldValues;
-        public int GrompleafId { get; set; }
+        public Guid GrompleafId { get; set; }
         public int Users { get; set; }
         [Required]
         [StringLength(200)]

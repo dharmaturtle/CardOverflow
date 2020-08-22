@@ -16,7 +16,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [StringLength(64)]
         public string Name {
             get => _Name;
@@ -26,9 +26,9 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public int AuthorId { get; set; }
-        public int StackId { get; set; }
-        public int LatestId { get; set; }
+        public Guid AuthorId { get; set; }
+        public Guid StackId { get; set; }
+        public Guid LatestId { get; set; }
         public int Users { get; set; }
         public bool IsListed { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

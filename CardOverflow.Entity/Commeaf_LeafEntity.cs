@@ -9,9 +9,9 @@ namespace CardOverflow.Entity
     public partial class Commeaf_LeafEntity
     {
         [Key]
-        public int LeafId { get; set; }
+        public Guid LeafId { get; set; }
         [Key]
-        public int CommeafId { get; set; }
+        public Guid CommeafId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

@@ -9,12 +9,12 @@ namespace CardOverflow.Entity
     public partial class Tag_CardEntity
     {
         [Key]
-        public int TagId { get; set; }
+        public Guid TagId { get; set; }
         [Key]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [Key]
-        public int StackId { get; set; }
-        public int CardId { get; set; }
+        public Guid StackId { get; set; }
+        public Guid CardId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

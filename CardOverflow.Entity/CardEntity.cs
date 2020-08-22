@@ -17,11 +17,11 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public int StackId { get; set; }
-        public int BranchId { get; set; }
-        public int LeafId { get; set; }
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid StackId { get; set; }
+        public Guid BranchId { get; set; }
+        public Guid LeafId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
@@ -30,8 +30,8 @@ namespace CardOverflow.Entity
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        public int CardSettingId { get; set; }
-        public int DeckId { get; set; }
+        public Guid CardSettingId { get; set; }
+        public Guid DeckId { get; set; }
         public bool IsLapsed { get; set; }
         [Required]
         [StringLength(5000)]

@@ -9,9 +9,9 @@ namespace CardOverflow.Entity
     public partial class File_LeafEntity
     {
         [Key]
-        public int LeafId { get; set; }
+        public Guid LeafId { get; set; }
         [Key]
-        public int FileId { get; set; }
+        public Guid FileId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

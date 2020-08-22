@@ -8,10 +8,10 @@ namespace CardOverflow.Entity
     public partial class HistoryEntity
     {
         [Key]
-        public long Id { get; set; }
-        public int? CardId { get; set; }
-        public int UserId { get; set; }
-        public int? LeafId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? CardId { get; set; }
+        public Guid UserId { get; set; }
+        public Guid? LeafId { get; set; }
         public short Index { get; set; }
         public short Score { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

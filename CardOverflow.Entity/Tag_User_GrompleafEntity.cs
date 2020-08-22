@@ -9,11 +9,11 @@ namespace CardOverflow.Entity
     public partial class Tag_User_GrompleafEntity
     {
         [Key]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [Key]
-        public int GrompleafId { get; set; }
+        public Guid GrompleafId { get; set; }
         [Key]
-        public int DefaultTagId { get; set; }
+        public Guid DefaultTagId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

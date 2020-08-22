@@ -9,9 +9,9 @@ namespace CardOverflow.Entity
     public partial class Vote_CommentStackEntity
     {
         [Key]
-        public int CommentStackId { get; set; }
+        public Guid CommentStackId { get; set; }
         [Key]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

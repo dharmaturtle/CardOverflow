@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(50)]
         public string Title {
@@ -35,11 +35,11 @@ namespace CardOverflow.Entity
             }
         }
         private string _Description;
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public DateTime? Modified { get; set; }
-        public int? ParentId { get; set; }
+        public Guid? ParentId { get; set; }
         public short? Priority { get; set; }
 
         [ForeignKey("ParentId")]

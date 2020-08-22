@@ -9,15 +9,15 @@ namespace CardOverflow.Entity
     public partial class Relationship_CardEntity
     {
         [Key]
-        public int RelationshipId { get; set; }
+        public Guid RelationshipId { get; set; }
         [Key]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [Key]
-        public int SourceStackId { get; set; }
+        public Guid SourceStackId { get; set; }
         [Key]
-        public int TargetStackId { get; set; }
-        public int SourceCardId { get; set; }
-        public int TargetCardId { get; set; }
+        public Guid TargetStackId { get; set; }
+        public Guid SourceCardId { get; set; }
+        public Guid TargetCardId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 

@@ -14,8 +14,8 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
-        public int SenderId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SenderId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
         public NotificationType Type { get; set; }
@@ -28,12 +28,12 @@ namespace CardOverflow.Entity
             }
         }
         private string _Message;
-        public int? StackId { get; set; }
-        public int? BranchId { get; set; }
-        public int? LeafId { get; set; }
-        public int? DeckId { get; set; }
-        public int? GromplateId { get; set; }
-        public int? GrompleafId { get; set; }
+        public Guid? StackId { get; set; }
+        public Guid? BranchId { get; set; }
+        public Guid? LeafId { get; set; }
+        public Guid? DeckId { get; set; }
+        public Guid? GromplateId { get; set; }
+        public Guid? GrompleafId { get; set; }
 
         [ForeignKey("BranchId")]
         [InverseProperty("NotificationBranches")]

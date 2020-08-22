@@ -15,8 +15,8 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
-        public int CommieldId { get; set; }
+        public Guid Id { get; set; }
+        public Guid CommieldId { get; set; }
         [Required]
         [StringLength(200)]
         public string FieldName {

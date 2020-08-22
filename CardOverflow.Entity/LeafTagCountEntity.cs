@@ -7,7 +7,7 @@ namespace CardOverflow.Entity
 {
     public partial class LeafTagCountEntity
     {
-        public int LeafId { get; set; }
+        public Guid LeafId { get; set; }
         [StringLength(250)]
         public string Name {
             get => _Name;

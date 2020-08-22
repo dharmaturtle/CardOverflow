@@ -18,7 +18,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [StringLength(100)]
         public string Name {
@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public int GromplateId { get; set; }
+        public Guid GromplateId { get; set; }
         [Required]
         [StringLength(4000)]
         public string Css {

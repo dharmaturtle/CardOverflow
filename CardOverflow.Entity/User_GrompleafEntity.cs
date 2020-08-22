@@ -14,10 +14,10 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         [Key]
-        public int GrompleafId { get; set; }
-        public int DefaultCardSettingId { get; set; }
+        public Guid GrompleafId { get; set; }
+        public Guid DefaultCardSettingId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime Created { get; set; }
 
