@@ -19,12 +19,12 @@ open System.ComponentModel.DataAnnotations
 open LoadersAndCopiers
 
 type UserClaims = {
-    Id: int
+    Id: Guid
     DisplayName: string
     Email: string
 } with
     static member init = {
-        Id = 0
+        Id = Guid.Empty
         DisplayName = ""
         Email = ""
     }
@@ -53,11 +53,11 @@ module ViewField =
 
 [<CLIMutable>]
 type ViewGrompleaf = {
-    Id: int
+    Id: Guid
     [<Required>]
     [<StringLength(100, MinimumLength = 3, ErrorMessage = "Name must be 3-100 characters long.")>]
     Name: string
-    GromplateId: int
+    GromplateId: Guid
     Css: string
     Fields: ViewField ResizeArray
     Created: DateTime
@@ -110,9 +110,9 @@ module ViewGrompleaf =
     }
 
 type ViewSearchGrompleaf = {
-    Id: int
+    Id: Guid
     Name: string
-    GromplateId: int
+    GromplateId: Guid
     Css: string
     Fields: ViewField ResizeArray
     Created: DateTime
@@ -144,8 +144,8 @@ module ViewSearchGrompleaf =
 
 [<CLIMutable>]
 type ViewGromplateWithAllLeafs = {
-    Id: int
-    AuthorId: int
+    Id: Guid
+    AuthorId: Guid
     Leafs: ViewGrompleaf ResizeArray
     Editable: ViewGrompleaf
 } with
@@ -160,11 +160,11 @@ type ViewGromplateWithAllLeafs = {
             Leafs = leafs
             Editable = {
                 leafs.First() with
-                    Id = 0
+                    Id = Guid.Empty
                     EditSummary = "" }}
     static member initialize userId =
         let leaf = Grompleaf.initialize |> ViewGrompleaf.load
-        {   Id = 0
+        {   Id = Guid.Empty
             AuthorId = userId
             Leafs = [leaf].ToList()
             Editable = leaf
@@ -182,10 +182,10 @@ module SanitizeGromplate =
                 .SingleOrDefaultAsync(fun x -> gromplateId = x.Id)
         return
             match gromplate with
-            | null -> sprintf "Gromplate #%i doesn't exist" gromplateId |> Error
+            | null -> sprintf "Gromplate #%A doesn't exist" gromplateId |> Error
             | x -> Ok <| ViewGromplateWithAllLeafs.load x
         }
-    let Search (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) = task {
+    let Search (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
         let! r =
             db.LatestGrompleaf

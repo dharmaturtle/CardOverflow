@@ -25,8 +25,8 @@ open Dapper
 
 [<CLIMutable>]
 type ViewFilter = {
-    Id: int
-    UserId: int
+    Id: Guid
+    UserId: Guid
     [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string
     [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
@@ -50,8 +50,8 @@ module ViewFilter =
     }
 
 type ViewFilterWithDue = {
-    Id: int
-    UserId: int
+    Id: Guid
+    UserId: Guid
     [<StringLength(128, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 128 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
     Name: string
     [<StringLength(256, ErrorMessage = "Query must be less than 256 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
@@ -157,14 +157,14 @@ module SanitizeTagRepository =
         }
     let private getFirstCollected (db: CardOverflowDb) userId stackId =
         db.Card.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
-        |>% (Result.requireNotNull <| sprintf "User #%i doesn't have Stack #%i." userId stackId)
+        |>% (Result.requireNotNull <| sprintf "User #%A doesn't have Stack #%A." userId stackId)
     let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
         let newTag = sanitize newTag
         let! (cc: CardEntity) = getFirstCollected db userId stackId
         let! (tag: TagEntity) = upsertNoSave db newTag
         do! db.Tag_Card
                 .AnyAsync(fun x -> x.StackId = stackId && x.UserId = userId && x.TagId = tag.Id)
-            |>% (Result.requireFalse <| sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId newTag)
+            |>% (Result.requireFalse <| sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId newTag)
         Tag_CardEntity(Card = cc, Tag = tag)
         |> db.Tag_Card.AddI
         return! db.SaveChangesAsyncI ()
@@ -175,7 +175,7 @@ module SanitizeTagRepository =
         let! join =
             db.Tag_Card
                 .SingleOrDefaultAsync(fun x -> x.CardId = cc.Id && x.Tag.Name = tag)
-            |>% (Result.requireNotNull <| sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tag)
+            |>% (Result.requireNotNull <| sprintf "Stack #%A for User #%A doesn't have the tag \"%s\"" stackId userId tag)
         db.Tag_Card.RemoveI join
         return! db.SaveChangesAsyncI()
     }
@@ -183,23 +183,23 @@ module SanitizeTagRepository =
 module SanitizeDeckRepository =
     let private deckBelongsTo (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-        |>% (Result.requireTrue <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        |>% (Result.requireTrue <| sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" deckId)
     let private tryGet (db: CardOverflowDb) userId deckId =
         db.Deck.SingleOrDefaultAsync(fun x -> x.Id = deckId && x.UserId = userId)
-        |>% (Result.requireNotNull <| sprintf "Either Deck #%i doesn't belong to you or it doesn't exist" deckId)
+        |>% (Result.requireNotNull <| sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" deckId)
     let private requireIsPublic (db: CardOverflowDb) deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && x.IsPublic)
-        |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId)
+        |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist or it isn't public." deckId)
     let private verifyVisible (db: CardOverflowDb) userId deckId =
         db.Deck.AnyAsync(fun x -> x.Id = deckId && (x.IsPublic || x.UserId = userId))
-        |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist, or it isn't public, or you don't own it." deckId)
+        |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." deckId)
     let private validateName (db: CardOverflowDb) userId (deckName: string) = taskResult {
         let! deckName = deckName |> Result.requireNotNull "Deck name can't be empty"
         let deckName = deckName.Trim()
         do! if deckName.Length > 250 then Error <| sprintf "Deck name '%s' is too long. It must be less than 250 characters." deckName else Ok ()
         do! if deckName.Length < 1 then Error <| sprintf "Deck name '%s' is too short. It must be at least 1 character long." deckName else Ok ()
         do! db.Deck.AnyAsync(fun x -> x.Name = deckName && x.UserId = userId)
-            |>% (Result.requireFalse <| sprintf "User #%i already has a Deck named '%s'" userId deckName)
+            |>% (Result.requireFalse <| sprintf "User #%A already has a Deck named '%s'" userId deckName)
     }
     let create (db: CardOverflowDb) userId (newDeck: string) = taskResult {
         do! validateName db userId newDeck
@@ -247,7 +247,7 @@ module SanitizeDeckRepository =
         do! deckBelongsTo db userId deckId
         let! (cc: CardEntity) =
             db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
-            |>% (Result.requireNotNull <| sprintf "Either Card #%i doesn't belong to you or it doesn't exist" cardId)
+            |>% (Result.requireNotNull <| sprintf "Either Card #%A doesn't belong to you or it doesn't exist" cardId)
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
@@ -255,7 +255,7 @@ module SanitizeDeckRepository =
         do! deckBelongsTo db userId deckId
         let! (cc: CardEntity) =
             db.Card.SingleOrDefaultAsync(fun x -> x.LeafId = leafId && x.Index = index && x.UserId = userId)
-            |>% (Result.requireNotNull <| sprintf "Either Leaf #%i with Index #%i doesn't belong to you or it doesn't exist" leafId index)
+            |>% (Result.requireNotNull <| sprintf "Either Leaf #%A with Index #%i doesn't belong to you or it doesn't exist" leafId index)
         cc.DeckId <- deckId
         return! db.SaveChangesAsyncI ()
     }
@@ -315,7 +315,7 @@ module SanitizeDeckRepository =
                 x.User.DisplayName
             )
             .SingleOrDefaultAsync()
-        |>% Result.ofNullable (sprintf "Either Deck #%i doesn't exist or it isn't public." deckId)
+        |>% Result.ofNullable (sprintf "Either Deck #%A doesn't exist or it isn't public." deckId)
         |>%% fun (deck, isFollowed, count, authorId, authorName) -> {
                 Id = deck.Id
                 Name = deck.Name
@@ -327,11 +327,11 @@ module SanitizeDeckRepository =
             }
     type FollowDeckType =
         | NewDeck of string
-        | OldDeck of int
+        | OldDeck of Guid
         | NoDeck
     type FollowError =
         | RealError of string
-        | EditExistingIsNull_LeafIdsByDeckId of (int * ResizeArray<int>) ResizeArray
+        | EditExistingIsNull_LeafIdsByDeckId of (Guid * ResizeArray<Guid>) ResizeArray
         with
             member this.TryRealError([<Out>] out: _ byref) =
                 match this with
@@ -346,16 +346,16 @@ module SanitizeDeckRepository =
                 | EditExistingIsNull_LeafIdsByDeckId x -> out <- x; true
                 | _ -> false
     type StackLeafIndex = {
-        StackId: int
-        BranchId: int
-        LeafId: int
+        StackId: Guid
+        BranchId: Guid
+        LeafId: Guid
         Index: int16
     }
     let follow (db: CardOverflowDb) userId deckId followType notifyOfAnyNewChanges editExisting = taskResult {
         do! requireIsPublic db deckId |>% Result.mapError RealError
         if notifyOfAnyNewChanges then
             do! db.DeckFollower.AnyAsync(fun df -> df.DeckId = deckId && df.FollowerId = userId)
-                |>% Result.requireFalse (sprintf "You're already following Deck #%i" deckId |> RealError)
+                |>% Result.requireFalse (sprintf "You're already following Deck #%A" deckId |> RealError)
             DeckFollowerEntity(DeckId = deckId, FollowerId = userId) |> db.DeckFollower.AddI
         match followType with
             | NoDeck -> ()
@@ -410,7 +410,7 @@ module SanitizeDeckRepository =
                         } |>% Result.mapError RealError)
                     | OldDeck id -> taskResult {
                         do! db.Deck.AnyAsync(fun d -> d.Id = id && d.UserId = userId)
-                            |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." id |> RealError)
+                            |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." id |> RealError)
                         return id
                         }
                     | _ -> failwith "impossible"
@@ -466,7 +466,7 @@ module SanitizeDeckRepository =
         let! mine   = get myDeckId
         let diffs = Diff.ids theirs mine |> Diff.toSummary
         let addedStackIds = diffs.AddedStack.Select(fun x -> x.StackId).ToList()
-        let! (inOtherDeckIds: (int * int * int * int16 * int) ResizeArray) =
+        let! (inOtherDeckIds: (Guid * Guid * Guid * int16 * Guid) ResizeArray) =
             db.Card
                 .Where(fun x -> x.UserId = userId && addedStackIds.Contains x.StackId)
                 .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId)
@@ -515,8 +515,8 @@ module SanitizeDeckRepository =
             }
     }
     type SearchParams =
-        | Relevance  of (int * float) Option // id, rank
-        | Popularity of (int * int)   Option // id, followers
+        | Relevance  of (Guid * float) Option // id, rank
+        | Popularity of (Guid * int)   Option // id, followers
     let searchLimit = 20
     let search (conn: NpgsqlConnection) userId searchString order =
         let additionalWhere, order =
@@ -533,9 +533,9 @@ module SanitizeDeckRepository =
         let keyset =
             match order with
             | Relevance  (Some (id, rankValue)) -> // https://dba.stackexchange.com/questions/209272/ and https://dba.stackexchange.com/questions/273544 and https://dba.stackexchange.com/questions/209272/
-                sprintf "WHERE ((%s, id) < (%s, %i))" rank (rankValue.ToString()) id // the ToString is because %f rounds and I can't figure out how to make it stop
+                sprintf "WHERE ((%s, id) < (%s, %A))" rank (rankValue.ToString()) id // the ToString is because %f rounds and I can't figure out how to make it stop
             | Popularity (Some (id, followers)) ->
-                sprintf "AND ((d.followers, d.id) < (%i, %i))" followers id
+                sprintf "AND ((d.followers, d.id) < (%i, %A))" followers id
             | _ -> ""
         let baseQuery additionalSelect =
             sprintf """
@@ -607,25 +607,25 @@ type AddRelationshipCommand = {
     [<StringLength(250, ErrorMessage = "Name must be less than 250 characters.")>]
     Name: string
     [<Required>]
-    SourceStackId: int
+    SourceStackId: Guid
     [<Required>]
     TargetStackLink: string
 }
 module SanitizeRelationshipRepository =
-    type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>\d+)$""" >
+    type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>[a-zA-Z0-9_-]{22})$""" > // highTODO add test
     let stackIdRegex =
         Regex.compiledIgnoreCase |> StackIdRegex
     let GetStackId input =
         let x = stackIdRegex.TypedMatch input // lowTODO make this a custom `ValidationAttribute` on TargetLink
         if x.Success 
-        then Ok <| int x.Value
+        then Ok <| Guid.Parse x.Value // highTODO add test
         else Error <| sprintf "Couldn't find the Stack Id in '%s'" input
     let Add (db: CardOverflowDb) userId command = taskResult {
         let! targetStackId = GetStackId command.TargetStackLink
         do! if targetStackId = command.SourceStackId then Error "A stack can't be related to itself" else Ok ()
         let! (ccs: CardEntity ResizeArray) = db.Card.Include(fun x -> x.Leaf).Where(fun x -> x.UserId = userId && (x.StackId = targetStackId || x.StackId = command.SourceStackId)).ToListAsync()
-        let! t = ccs.FirstOrDefault(fun x -> x.StackId = targetStackId) |> Result.ofNullable (sprintf "You haven't collected the linked stack (Stack #%i)." targetStackId)
-        let! s = ccs.FirstOrDefault(fun x -> x.StackId = command.SourceStackId) |> Result.ofNullable (sprintf "You haven't collected the source stack (Stack #%i)." command.SourceStackId)
+        let! t = ccs.FirstOrDefault(fun x -> x.StackId = targetStackId) |> Result.ofNullable (sprintf "You haven't collected the linked stack (Stack #%A)." targetStackId)
+        let! s = ccs.FirstOrDefault(fun x -> x.StackId = command.SourceStackId) |> Result.ofNullable (sprintf "You haven't collected the source stack (Stack #%A)." command.SourceStackId)
         let! r = db.Relationship.SingleOrDefaultAsync(fun x -> x.Name = command.Name)
         let r = r |> Option.ofObj |> Option.defaultValue (RelationshipEntity(Name = command.Name))
         let sid, tid, sStackId, tStackId =
@@ -659,8 +659,8 @@ type SearchCommand = {
 [<CLIMutable>]
 type EditCardCommand = {
     CardState: CardState
-    CardSettingId: int
-    DeckId: int
+    CardSettingId: Guid
+    DeckId: Guid
     [<StringLength(2000, ErrorMessage = "The Front Personal Field must be less than 2000 characters")>]
     FrontPersonalField: string
     [<StringLength(2000, ErrorMessage = "The Back Personal Field must be less than 2000 characters")>]
@@ -668,8 +668,8 @@ type EditCardCommand = {
 } with
     static member init = {
         CardState = Normal
-        CardSettingId = 0
-        DeckId = 0
+        CardSettingId = Guid.Empty
+        DeckId = Guid.Empty
         FrontPersonalField = ""
         BackPersonalField = ""
     }
@@ -728,16 +728,16 @@ type ViewEditStackCommand = {
         }
 
 type UpsertCardSource =
-    | VNewOriginalUserId of int
-    | VNewCopySourceLeafId of int
-    | VNewBranchSourceStackId of int
-    | VUpdateBranchId of int
+    | VNewOriginalUserId of Guid
+    | VNewCopySourceLeafId of Guid
+    | VNewBranchSourceStackId of Guid
+    | VUpdateBranchId of Guid
 
 module SanitizeCardRepository =
     let validateCommands (db: CardOverflowDb) userId (commands: EditCardCommand ResizeArray) = taskResult {
         let! defaultDeckId, defaultCardSettingId, areValidDeckIds, areValidCardSettingIds =
-            let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> 0).ToList()
-            let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> 0).ToList()
+            let deckIds    = commands.Select(fun x -> x.DeckId       ).Distinct().Where(fun x -> x <> Guid.Empty).ToList()
+            let settingIds = commands.Select(fun x -> x.CardSettingId).Distinct().Where(fun x -> x <> Guid.Empty).ToList()
             db.User
                 .Where(fun x -> x.Id = userId)
                 .Select(fun x ->
@@ -752,13 +752,15 @@ module SanitizeCardRepository =
             commands.Select(fun c ->
                 {   c with
                         DeckId =
-                            match c.DeckId with
-                            | 0 -> defaultDeckId
-                            | x -> x
+                            if c.DeckId = Guid.Empty then
+                                defaultDeckId
+                            else
+                                c.DeckId
                         CardSettingId =
-                            match c.CardSettingId with
-                            | 0 -> defaultCardSettingId
-                            | x -> x
+                            if c.CardSettingId = Guid.Empty then
+                                defaultCardSettingId
+                            else
+                                c.CardSettingId
                 }
             ).ToList()
     }
@@ -766,7 +768,7 @@ module SanitizeCardRepository =
         let! command = command |> ResizeArray.singleton |> validateCommands db userId |>%% Seq.exactlyOne
         let! (cc: CardEntity) =
             db.Card.SingleOrDefaultAsync(fun x -> x.Id = cardId && x.UserId = userId)
-            |>% Result.requireNotNull (sprintf "Card #%i doesn't belong to you." cardId)
+            |>% Result.requireNotNull (sprintf "Card #%A doesn't belong to you." cardId)
         cc.DeckId <- command.DeckId
         cc.CardSettingId <- command.CardSettingId
         return! db.SaveChangesAsyncI()
@@ -792,7 +794,7 @@ module SanitizeStackRepository =
         match source with
         | VNewOriginalUserId userId ->
             db.User_Grompleaf.Include(fun x -> x.Grompleaf).FirstOrDefaultAsync(fun x -> x.UserId = userId)
-            |>% (Result.requireNotNull (sprintf "User #%i doesn't have any templates" userId))
+            |>% (Result.requireNotNull (sprintf "User #%A doesn't have any templates" userId))
             |>%% (fun j ->
                 {   EditSummary = ""
                     FieldValues =
@@ -806,15 +808,15 @@ module SanitizeStackRepository =
             )
         | VNewBranchSourceStackId stackId ->
             db.Stack.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
-            |>% Result.requireNotNull (sprintf "Stack #%i not found." stackId)
+            |>% Result.requireNotNull (sprintf "Stack #%A not found." stackId)
             |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.Latest
         | VNewCopySourceLeafId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |>% Result.requireNotNull (sprintf "Branch Leaf #%i not found." leafId)
+            |>% Result.requireNotNull (sprintf "Branch Leaf #%A not found." leafId)
             |>%% toCommand (NewCopy_SourceLeafId_TagIds (leafId, []))
         | VUpdateBranchId branchId ->
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
-            |>% Result.requireNotNull (sprintf "Branch #%i not found." branchId)
+            |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
             |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.Latest
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! leaf = UpdateRepository.stack db userId stackCommand.load
@@ -906,7 +908,7 @@ module Convert =
 
 [<CLIMutable>]
 type ViewCardSetting = {
-    Id: int
+    Id: Guid
     Name: string
     IsDefault: bool
     [<RegularExpression(@"[\d ]+", ErrorMessage = "Steps must be digits separated by spaces")>]
@@ -999,7 +1001,7 @@ module SanitizeCardSettingRepository =
         return x |> Seq.map ViewCardSetting.load |> toResizeArray }
     let upsertMany (db: CardOverflowDb) userId (options: ViewCardSetting ResizeArray) = task {
         let options = options.Select(fun x -> x.copyTo) |> List.ofSeq
-        let oldOptionIds = options.Select(fun x -> x.Id).Where(fun x -> x <> 0).ToList()
+        let oldOptionIds = options.Select(fun x -> x.Id).Where(fun x -> x <> Guid.Empty).ToList()
         let! oldOptions = db.CardSetting.Where(fun x -> oldOptionIds.Contains x.Id && x.UserId = userId).ToListAsync()
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
         return!
@@ -1007,7 +1009,7 @@ module SanitizeCardSettingRepository =
                 let maybeSetDefault e =
                     if option.IsDefault then
                         user.DefaultCardSetting <- e
-                if option.Id = 0 then
+                if option.Id = Guid.Empty then
                     let e = option.CopyToNew userId
                     db.CardSetting.AddI e
                     maybeSetDefault e
