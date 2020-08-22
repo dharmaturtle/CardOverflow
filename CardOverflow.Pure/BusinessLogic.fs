@@ -209,17 +209,17 @@ module Heatmap =
         }
 
 type StackLeafIds = {
-    StackId: int
-    BranchId: int
-    LeafId: int
+    StackId: Guid
+    BranchId: Guid
+    LeafId: Guid
 }
 
 type StackLeafIndex = {
-    StackId: int
-    BranchId: int
-    LeafId: int
+    StackId: Guid
+    BranchId: Guid
+    LeafId: Guid
     Index: int16
-    DeckId: int
+    DeckId: Guid
 }
 
 module StackLeafIds =

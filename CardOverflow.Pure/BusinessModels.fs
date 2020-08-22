@@ -50,7 +50,7 @@ module TimeSpanInt16 =
     let totalDays t = (value t).TotalDays |> int16
 
 type CardSetting = {
-    Id: int
+    Id: Guid
     Name: string
     IsDefault: bool
     NewCardsSteps: TimeSpan list
@@ -142,9 +142,9 @@ type GromplateType =
         Template.initStandard |> List.singleton |> Standard
 
 type Grompleaf = {
-    Id: int
+    Id: Guid
     Name: string
-    GromplateId: int
+    GromplateId: Guid
     Css: string
     Fields: Field list
     Created: DateTime
@@ -177,14 +177,14 @@ type Grompleaf = {
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
 type CollectedGrompleaf = {
-    DefaultTags: int seq
-    DefaultCardSettingId: int
+    DefaultTags: Guid seq
+    DefaultCardSettingId: Guid
     Grompleaf: Grompleaf
 }
 
 type Gromplate = {
-    Id: int
-    AuthorId: int
+    Id: Guid
+    AuthorId: Guid
     Latest: Grompleaf
 }
 
@@ -194,8 +194,8 @@ type IntervalOrStepsIndex =
     | Interval of TimeSpan
 
 type QuizCard = {
-    CardId: int
-    LeafId: int
+    CardId: Guid
+    LeafId: Guid
     Due: DateTime
     Front: string
     Back: string
@@ -209,7 +209,7 @@ type QuizCard = {
 }
 
 //type Leaf = {
-//    Id: int
+//    Id: Guid
 //    Created: DateTime
 //    Modified: DateTime option
 //    Fields: string seq
@@ -262,10 +262,10 @@ module IntervalOrStepsIndex =
 
 //[<CLIMutable>]
 //type CollectedConcept = {
-//    Id: int
+//    Id: Guid
 //    // medTODO 100 needs to be tied to the DB max somehow
 //    [<StringLength(100, ErrorMessage = "Name must be less than 100 characters.")>] Name: string
-//    AuthorId: int
+//    AuthorId: Guid
 //    Cards: Card ResizeArray
 //}
 
@@ -281,7 +281,7 @@ type PagedList<'T> = {
 
 [<CLIMutable>]
 type CommieldValue = {
-    LeafId: int option
+    LeafId: Guid option
     CommunalLeafIds: int ResizeArray
 }
 
@@ -338,21 +338,21 @@ type LeafView = {
         
 
 type Commeaf = {
-    Id: int
+    Id: Guid
     FieldName: string
     Value: string
 }
 
 [<CLIMutable>]
 type SimpleDeck = {
-    Id: int
+    Id: Guid
     IsDefault: bool
     Name: string
 }
 
 [<CLIMutable>]
 type ViewDeck = {
-    Id: int
+    Id: Guid
     IsPublic: bool
     IsDefault: bool
     [<StringLength(250, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 250 characters.")>] // medTODO 500 needs to be tied to the DB max somehow
@@ -372,8 +372,8 @@ type ViewTag = {
 [<CLIMutable>]
 type ViewRelationship = {
     Name: string
-    SourceStackId: int
-    TargetStackId: int
+    SourceStackId: Guid
+    TargetStackId: Guid
     IsCollected: bool
     Users: int
 } with
@@ -384,9 +384,9 @@ type ViewRelationship = {
 
 [<CLIMutable>]
 type LeafMeta = {
-    Id: int
-    StackId: int
-    BranchId: int
+    Id: Guid
+    StackId: Guid
+    BranchId: Guid
     MaxIndexInclusive: int16
     Created: DateTime
     Modified: DateTime option
@@ -403,10 +403,10 @@ type LeafMeta = {
 
 [<CLIMutable>]
 type Card = {
-    CardId: int
-    UserId: int
-    StackId: int
-    BranchId: int
+    CardId: Guid
+    UserId: Guid
+    StackId: Guid
+    BranchId: Guid
     LeafMeta: LeafMeta
     Index: int16
     CardState: CardState
@@ -414,14 +414,14 @@ type Card = {
     EaseFactorInPermille: int16
     IntervalOrStepsIndex: IntervalOrStepsIndex
     Due: DateTime
-    CardSettingId: int
+    CardSettingId: Guid
     Tags: string list
-    DeckId: int
+    DeckId: Guid
 }
 
 type Comment = {
     User: string
-    UserId: int
+    UserId: Guid
     Text: string
     Created: DateTime
     IsDmca: bool
@@ -429,20 +429,20 @@ type Comment = {
 
 [<CLIMutable>]
 type ExploreStackSummary = {
-    Id: int
+    Id: Guid
     Users: int
     Author: string
-    AuthorId: int
+    AuthorId: Guid
     Leaf: LeafMeta
 } with
     member this.IsCollected = this.Leaf.IsCollected
 
 [<CLIMutable>]
 type ExploreBranchSummary = {
-    Id: int
+    Id: Guid
     Users: int
     Author: string
-    AuthorId: int
+    AuthorId: Guid
     Leaf: LeafMeta
 } with
     member this.IsCollected = this.Leaf.IsCollected
@@ -463,19 +463,19 @@ module CollectedIds =
     let leafId =
         function
         | Some (x: StackLeafIds) -> x.LeafId
-        | None -> 0
+        | None -> Guid.Empty
     let branchId =
         function
         | Some x -> x.BranchId
-        | None -> 0
+        | None -> Guid.Empty
     let stackId =
         function
         | Some x -> x.StackId
-        | None -> 0
+        | None -> Guid.Empty
 
 [<CLIMutable>]
 type ExploreStack = {
-    Id: int
+    Id: Guid
     Users: int
     Tags: ViewTag ResizeArray
     Relationships: ViewRelationship ResizeArray
@@ -491,18 +491,18 @@ type ExploreStack = {
         this.CollectedIds |> Option.isSome
 
 type BranchRevision = {
-    Id: int
+    Id: Guid
     Author: string
-    AuthorId: int
+    AuthorId: Guid
     Name: string
     SortedMeta: LeafMeta list
 }
 
 type UpsertKind =
-    | NewOriginal_TagIds of int list
-    | NewCopy_SourceLeafId_TagIds of int * int list
-    | NewBranch_SourceStackId_Title of int * string
-    | Update_BranchId_Title of int * string
+    | NewOriginal_TagIds of Guid list
+    | NewCopy_SourceLeafId_TagIds of Guid * Guid list
+    | NewBranch_SourceStackId_Title of Guid * string
+    | Update_BranchId_Title of Guid * string
 with
     member this.TryGetCopySourceLeafId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with

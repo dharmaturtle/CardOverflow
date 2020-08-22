@@ -21,7 +21,7 @@ type NotificationType = // the indexes currently have no semantic meaning - they
 
 [<CLIMutable>]
 type IdName = {
-    Id: int
+    Id: Guid
     Name: string
 }
 
@@ -65,8 +65,8 @@ with
         | _ -> false
 
 type Notification = {
-    Id: int
-    SenderId: int
+    Id: Guid
+    SenderId: Guid
     SenderDisplayName: string
     Created: DateTime
     Message: Message
