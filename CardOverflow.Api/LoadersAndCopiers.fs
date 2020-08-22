@@ -191,7 +191,7 @@ type EditFieldAndValue with
         ) |> toResizeArray
 
 type IdOrEntity<'a> =
-    | Id of int
+    | Id of Guid
     | Entity of 'a
 
 type Template with
@@ -227,9 +227,9 @@ type Grompleaf with
             EditSummary = entity.EditSummary
         }
     static member initialize = {
-        Id = 0
+        Id = Guid.Empty
         Name = "New Template"
-        GromplateId = 0
+        GromplateId = Guid.Empty
         Css = """.card {
      font-family: arial;
      font-size: 20px;
@@ -312,7 +312,7 @@ type LeafView with
     member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields =
         let e = this.CopyToNew commields
         if branch.Stack = null then
-            if branch.StackId = 0 then failwith "StackId is 0, you gotta .Include it"
+            if branch.StackId = Guid.Empty then failwith "StackId is Guid.Empty, you gotta .Include it"
             e.StackId <- branch.StackId
         else
             e.Stack <- branch.Stack
@@ -351,9 +351,9 @@ type LeafMeta with
         [0s .. entity.MaxIndexInclusive]
         |> List.map(fun i -> LeafMeta.loadIndex i isCollected isLatest entity)
     static member initialize =
-        {   Id = 0
-            StackId = 0
-            BranchId = 0
+        {   Id = Guid.Empty
+            StackId = Guid.Empty
+            BranchId = Guid.Empty
             MaxIndexInclusive = 0s
             Created = DateTime.UtcNow
             Modified = None
@@ -396,7 +396,7 @@ type QuizCard with
         }
 
 type Card with
-    member this.copyTo (entity: CardEntity) (tagIds: int seq) index =
+    member this.copyTo (entity: CardEntity) (tagIds: Guid seq) index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
         entity.StackId <- this.StackId
@@ -414,9 +414,9 @@ type Card with
         this.copyTo e tagIds i
         e
     static member initialize userId cardSettingId deckId tags =
-        {   StackId = 0
-            BranchId = 0
-            CardId = 0
+        {   StackId = Guid.Empty
+            BranchId = Guid.Empty
+            CardId = Guid.Empty
             LeafMeta = LeafMeta.initialize
             Index = 0s
             UserId = userId

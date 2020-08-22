@@ -63,7 +63,7 @@ module RelationshipRepository =
             x.Relationship.Name = name
         ) |> function
         | null ->
-            sprintf "Relationship not found between source Stack #%i and target Stack #%i with name \"%s\"." sourceStackId targetStackId name |> Error |> Task.FromResult
+            sprintf "Relationship not found between source Stack #%A and target Stack #%A with name \"%s\"." sourceStackId targetStackId name |> Error |> Task.FromResult
         | x ->
             db.Relationship_Card.RemoveI x
             db.SaveChangesAsyncI ()
@@ -78,16 +78,16 @@ module GromplateRepository =
     let latest (db: CardOverflowDb) gromplateId =
         db.LatestGrompleaf
             .SingleOrDefaultAsync(fun x -> x.GromplateId = gromplateId)
-        |> Task.map (Result.requireNotNull <| sprintf "Gromplate #%i not found" gromplateId)
+        |> Task.map (Result.requireNotNull <| sprintf "Gromplate #%A not found" gromplateId)
         |> TaskResult.map Grompleaf.load
     let leaf (db: CardOverflowDb) leafId =
         db.Grompleaf
             .SingleOrDefaultAsync(fun x -> x.Id = leafId)
-        |> Task.map (Result.requireNotNull <| sprintf "Gromplate Leaf #%i not found" leafId)
+        |> Task.map (Result.requireNotNull <| sprintf "Gromplate Leaf #%A not found" leafId)
         |> TaskResult.map Grompleaf.load
     let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId (leaf: Grompleaf) = task {
         let gromplate =
-            if leaf.GromplateId = 0 then
+            if leaf.GromplateId = Guid.Empty then
                 IdOrEntity.Entity <| GromplateEntity(AuthorId = userId)
             else    
                 Id <| leaf.GromplateId
@@ -99,13 +99,13 @@ module GromplateRepository =
             .Where(fun x -> x.Leaf.GrompleafId = leaf.Id)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
-                cc.Leaf.Id <- cc.Leaf.GetHashCode()
+                cc.Leaf.Id <- Guid.NewGuid() // is a temporary value, as set by the line below. See commit cbb967ea6353d65199dec02efdb6573f0a02b55a
                 db.Entry(cc.Leaf).Property(nameofLeaf <@ any<LeafEntity>.Id @>).IsTemporary <- true
                 cc.Leaf.Grompleaf <- newGrompleaf
             )
         let! existing = db.User_Grompleaf.Where(fun x -> x.UserId = userId && x.Grompleaf.GromplateId = newGrompleaf.GromplateId).ToListAsync()
         db.User_Grompleaf.RemoveRange existing
-        User_GrompleafEntity(UserId = userId, Grompleaf = newGrompleaf, DefaultCardSettingId = 1) // lowTODO do we ever use the card setting here?
+        User_GrompleafEntity(UserId = userId, Grompleaf = newGrompleaf, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-000000000002")) // lowTODO do we ever use the card setting here?
         |> db.User_Grompleaf.AddI
         return! db.SaveChangesAsyncI()
         }
@@ -154,7 +154,7 @@ module ExploreStackRepository =
                     x.Stack.Cards.Single(fun x -> x.UserId = userId).Relationship_CardSourceCards.Select(fun x -> x.Relationship.Name).ToList(),
                     x.Stack.Cards.Single(fun x -> x.UserId = userId).Relationship_CardTargetCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
-        let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%i not found" stackId)
+        let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%A not found" stackId)
         let! (tc: List<StackTagCountEntity>) = db.StackTagCount.Where(fun x -> x.StackId = stackId).ToListAsync()
         let! (rc: List<StackRelationshipCountEntity>) = db.StackRelationshipCount.Where(fun x -> x.StackId = stackId).ToListAsync()
         let! collectedIds = getCollectedIds db userId stackId
@@ -170,7 +170,7 @@ module ExploreStackRepository =
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
                 .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch Leaf #%i not found" leafId))
+            |> Task.map (Result.requireNotNull (sprintf "Branch Leaf #%A not found" leafId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.LeafId = leafId)
         let! latest = get db userId e.StackId
         return LeafMeta.load isCollected (e.Branch.LatestId = e.Id) e, latest // lowTODO optimization, only send the old leaf - the latest leaf isn't used
@@ -185,7 +185,7 @@ module ExploreStackRepository =
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
                 .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.BranchId = branchId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch #%i not found" branchId))
+            |> Task.map (Result.requireNotNull (sprintf "Branch #%A not found" branchId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
         let! latest = get db userId e.StackId
         return LeafMeta.load isCollected (e.Branch.LatestId = e.Id) e, latest // lowTODO optimization, only send the old leaf - the latest leaf isn't used
@@ -200,7 +200,7 @@ module FileRepository =
 
 module StackViewRepository =
     let private getCollectedLeafIds (db: CardOverflowDb) userId aId bId =
-        if userId = 0 then
+        if userId = Guid.Empty then
             [].ToListAsync()
         else 
             db.Card
@@ -213,12 +213,12 @@ module StackViewRepository =
             db.Leaf
                 .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = a_leafId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch leaf #%i not found" a_leafId))
+            |> Task.map (Result.requireNotNull (sprintf "Branch leaf #%A not found" a_leafId))
         let! (b: LeafEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Grompleaf)
                 .SingleAsync(fun x -> x.StackId = a.StackId)
-        let! (collectedLeafIds: int ResizeArray) = getCollectedLeafIds db userId a_leafId b.Id
+        let! (collectedLeafIds: Guid ResizeArray) = getCollectedLeafIds db userId a_leafId b.Id
         return
             LeafView.load a,
             collectedLeafIds.Contains a.Id,
@@ -232,9 +232,9 @@ module StackViewRepository =
                 .Include(fun x -> x.Grompleaf)
                 .Where(fun x -> x.Id = a_leafId || x.Id = b_leafId)
                 .ToListAsync()
-        let! a = Result.requireNotNull (sprintf "Branch leaf #%i not found" a_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = a_leafId)
-        let! b = Result.requireNotNull (sprintf "Branch leaf #%i not found" b_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = b_leafId)
-        let! (collectedLeafIds: int ResizeArray) = getCollectedLeafIds db userId a_leafId b_leafId
+        let! a = Result.requireNotNull (sprintf "Branch leaf #%A not found" a_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = a_leafId)
+        let! b = Result.requireNotNull (sprintf "Branch leaf #%A not found" b_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = b_leafId)
+        let! (collectedLeafIds: Guid ResizeArray) = getCollectedLeafIds db userId a_leafId b_leafId
         return
             LeafView.load a,
             collectedLeafIds.Contains a.Id,
@@ -246,7 +246,7 @@ module StackViewRepository =
             db.Leaf
             .Include(fun x -> x.Grompleaf)
             .SingleOrDefaultAsync(fun x -> x.Id = leafId) with
-        | null -> return Error <| sprintf "Branch leaf %i not found" leafId
+        | null -> return Error <| sprintf "Branch leaf %A not found" leafId
         | x -> return Ok <| LeafView.load x
     }
     let get (db: CardOverflowDb) stackId =
@@ -254,13 +254,13 @@ module StackViewRepository =
             .Include(fun x -> x.Grompleaf)
             .SingleOrDefaultAsync(fun x -> x.StackId = stackId)
         |> Task.map Ok
-        |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Stack #%i not found" stackId) x |> Task.FromResult)
+        |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Stack #%A not found" stackId) x |> Task.FromResult)
         |> TaskResult.map LeafView.load
 
 module CardRepository =
-    let getCollected (db: CardOverflowDb) userId (testLeafIds: int ResizeArray) =
+    let getCollected (db: CardOverflowDb) userId (testLeafIds: Guid ResizeArray) =
         db.Card.Where(fun x -> testLeafIds.Contains(x.LeafId) && x.UserId = userId).Select(fun x -> x.LeafId).ToListAsync()
-    let getCollectedLeafFromLeaf (db: CardOverflowDb) userId (leafId: int) =
+    let getCollectedLeafFromLeaf (db: CardOverflowDb) userId (leafId: Guid) =
         db.Card
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
@@ -270,12 +270,12 @@ module CardRepository =
             .Select(fun x -> x.LeafId)
             .Distinct()
             .SingleOrDefaultAsync()
-        |> Task.map (Result.requireNotEqualTo 0 <| sprintf "You don't have any cards with Branch Leaf #%i" leafId)
+        |> Task.map (Result.requireNotEqualTo Guid.Empty <| sprintf "You don't have any cards with Branch Leaf #%A" leafId)
 
 module StackRepository =
     let uncollectStack (db: CardOverflowDb) userId stackId = taskResult {
         do! db.Card.Where(fun x -> x.StackId = stackId && x.UserId = userId).ToListAsync()
-            |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Stack #%i" stackId)
+            |> Task.map (Result.requireNotEmptyX <| sprintf "You don't have any cards with Stack #%A" stackId)
             |> TaskResult.map db.Card.RemoveRange
         return! db.SaveChangesAsyncI()
     }
@@ -293,7 +293,7 @@ module StackRepository =
                 .Include(fun x -> x.Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: LeafEntity) -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = branchId)
-            |> Task.map (Result.requireNotNull <| sprintf "BranchId #%i not found" branchId)
+            |> Task.map (Result.requireNotNull <| sprintf "BranchId #%A not found" branchId)
         let! collectedLeafId =
             db.Card
                 .Where(fun x -> x.UserId = userId && x.BranchId = branchId)
@@ -303,7 +303,7 @@ module StackRepository =
         return BranchRevision.load collectedLeafId r
     }
     let collectStackNoSave (db: CardOverflowDb) userId (leaf: LeafEntity) mayUpdate = task {
-        let! ((defaultCardSettingId, defaultDeckId): int * int) =
+        let! ((defaultCardSettingId, defaultDeckId): Guid * Guid) =
             db.User.Where(fun x -> x.Id = userId).Select(fun x ->
                 x.DefaultCardSettingId,
                 x.DefaultDeckId
@@ -351,12 +351,12 @@ module StackRepository =
             db.Leaf
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |> Task.map (Result.requireNotNull <| sprintf "Branch Leaf #%i not found" leafId)
+            |> Task.map (Result.requireNotNull <| sprintf "Branch Leaf #%A not found" leafId)
         let! (ccs: CardEntity list) = collectStackNoSave db userId leaf true
         match deckId with
         | Some deckId ->
             do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
-                |>% Result.requireTrue (sprintf "Either Deck #%i doesn't exist or it doesn't belong to you." deckId)
+                |>% Result.requireTrue (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." deckId)
             ccs |> List.iter (fun cc -> cc.DeckId <- deckId)
         | None -> ()
         do! db.SaveChangesAsyncI ()
@@ -364,7 +364,7 @@ module StackRepository =
         }
     let CollectCard (db: CardOverflowDb) userId leafId =
         collect db userId leafId None
-    let GetCollected (db: CardOverflowDb) (userId: int) (stackId: int) = taskResult {
+    let GetCollected (db: CardOverflowDb) (userId: Guid) (stackId: Guid) = taskResult {
         let! (e: _ ResizeArray) =
             db.CardIsLatest
                 .Include(fun x -> x.Leaf.Grompleaf)
@@ -414,7 +414,7 @@ module StackRepository =
         db.Card
             .Include(fun x -> x.Leaf.Grompleaf)
             .Where(fun x -> x.DeckId = deckId)
-    let GetCollectedPages (db: CardOverflowDb) (userId: int) (pageNumber: int) (searchTerm: string) =
+    let GetCollectedPages (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) =
         task {
             let! r =
                 (searchCollectedIsLatest db userId searchTerm)
@@ -509,10 +509,10 @@ module UpdateRepository =
     let stack (db: CardOverflowDb) userId (command: EditStackCommand) =
         let branchNameCheck branchId name =
             db.Branch.AnyAsync(fun b -> b.Id = branchId && b.Stack.Branches.Any(fun b -> b.Name = name && b.Id <> branchId)) // veryLowTODO make case insensitive
-            |> Task.map (Result.requireFalse <| sprintf "The stack with Branch #%i already has a Branch named '%s'." branchId name)
+            |> Task.map (Result.requireFalse <| sprintf "The stack with Branch #%A already has a Branch named '%s'." branchId name)
         let branchNameCheckStackId stackId name =
             db.Stack.AnyAsync(fun s -> s.Id = stackId && s.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
-            |> Task.map (Result.requireFalse <| sprintf "Stack #%i already has a Branch named '%s'." stackId name)
+            |> Task.map (Result.requireFalse <| sprintf "Stack #%A already has a Branch named '%s'." stackId name)
         taskResult {
             let! (branch: BranchEntity) =
                 match command.Kind with
@@ -520,7 +520,7 @@ module UpdateRepository =
                         branchNameCheck branchId name
                         |> TaskResult.bind (fun () ->
                             db.Branch.Include(fun x -> x.Stack).SingleOrDefaultAsync(fun x -> x.Id = branchId && x.AuthorId = userId)
-                            |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%i doesn't exist or you aren't its author" branchId)
+                            |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%A doesn't exist or you aren't its author" branchId)
                         )
                     | NewCopy_SourceLeafId_TagIds (leafId, _) ->
                         BranchEntity(
@@ -574,7 +574,7 @@ module NotificationRepository =
 
 module CardSettingsRepository =
     let defaultCardSettings =
-        { Id = 0
+        { Id = Guid.Empty
           Name = "Default"
           IsDefault = true
           NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
@@ -629,14 +629,14 @@ type Profile = {
 }
 
 module UserRepository =
-    let theCollectiveId = 2
+    let theCollectiveId = Guid.Parse("00000000-0000-0000-0000-000000000002")
     let defaultCloze = "Cloze"
     let create (db: CardOverflowDb) id displayName = task {
-        let defaultSetting = CardSettingsRepository.defaultCardSettings.CopyToNew 0
+        let defaultSetting = CardSettingsRepository.defaultCardSettings.CopyToNew Guid.Empty
         defaultSetting |> db.CardSetting.AddI
         DeckEntity(Name = "Default Deck") |> db.Deck.AddI
         
-        let! (nonClozeIds: int list) =
+        let! (nonClozeIds: Guid list) =
             db.LatestGrompleaf
                 .Where(fun x -> x.Name <> defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
                 .Select(fun x -> x.Id)
@@ -661,7 +661,7 @@ module UserRepository =
             .Where(fun x -> x.Id = userId)
             .Select(fun x -> x.DisplayName)
             .SingleOrDefaultAsync()
-        |>% Result.requireNotNull (sprintf "User %i doesn't exist" userId)
+        |>% Result.requireNotNull (sprintf "User %A doesn't exist" userId)
         |>%% fun x -> { DisplayName = x }
 
 type TreeTag = {
@@ -726,15 +726,15 @@ module TagRepository =
 
 [<CLIMutable>]
 type DeckWithFollowMeta =
-    {   Id: int
+    {   Id: Guid
         Name: string
-        AuthorId: int
+        AuthorId: Guid
         AuthorName: string
         IsFollowed: bool
         FollowCount: int
         TsvRank: double }
 type Follower = {
-    Id: int
+    Id: Guid
     DisplayName: string
 }
 module DeckRepository =

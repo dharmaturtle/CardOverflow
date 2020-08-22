@@ -19,13 +19,13 @@ open Microsoft.EntityFrameworkCore
 
 module AnkiDefaults =
     let grompleafIdByHash = // lowTODO could make this a byte array
-        [("WX831/PqYECBDQaRxa7nceZWfvK27SNOudsTuAajr7tDTo25RDWsjXiaotM8OgBtFthzKcmiAgB0ihSM06e0Mw==", 1001)
-         ("OfVUXbEwX3TYmYE4dp1lmVEuViCrST9in+wdGi9IM/lubv7kOUwIqS9EVQxGe6sMV7lqtoHnSC3A/P4NC4R/bQ==", 1002)
-         ("q1nY+8Gro/Nx9Cjbjlqwqcl6wDxqSNMFfO8WSwVjieLBVC1lYIgGt/qH8lAn1lf9UxMjK0KsqAHdVmQMx7Wwhg==", 1003)
-         ("WVgngW1UJ+W0USp34g8tYeYfeOvwXF7ZwJ6H+aOtmsW8TRnGpdQ+xpyc3xtE1ENESGIPGN9oJrXyGQDOSfn5DA==", 1004)
-         ("RMAn+9uvBSUdW23Je/E0zQ4pnFneI4pbP09Tp9uG4AemtPa7BtFBNbruHCRXMNNoaCT2RfwfWxOs2GuUZFzstg==", 1005)
-         ("v/2dG9mP9QWN+Ma38znwF7lsRN00INrNX956YZ469ANfqCoYy/NnUaEXTEY8PM0MH/2bXQbJULGKzzBVIjtdUQ==", 1006)
-         ("k7J/5gY/caDTolz/10508Xttnw/MkS1GOzb3KDksyfvw4MfSHQ4AsegNtIYRUZmNypdJCfmrwCtNN/UT9ueXEw==", 1007)] |> Map.ofSeq
+        [("WX831/PqYECBDQaRxa7nceZWfvK27SNOudsTuAajr7tDTo25RDWsjXiaotM8OgBtFthzKcmiAgB0ihSM06e0Mw==", Guid.Parse("00000000-0000-0000-0000-7e3900001001"))
+         ("OfVUXbEwX3TYmYE4dp1lmVEuViCrST9in+wdGi9IM/lubv7kOUwIqS9EVQxGe6sMV7lqtoHnSC3A/P4NC4R/bQ==", Guid.Parse("00000000-0000-0000-0000-7e3900001002"))
+         ("q1nY+8Gro/Nx9Cjbjlqwqcl6wDxqSNMFfO8WSwVjieLBVC1lYIgGt/qH8lAn1lf9UxMjK0KsqAHdVmQMx7Wwhg==", Guid.Parse("00000000-0000-0000-0000-7e3900001003"))
+         ("WVgngW1UJ+W0USp34g8tYeYfeOvwXF7ZwJ6H+aOtmsW8TRnGpdQ+xpyc3xtE1ENESGIPGN9oJrXyGQDOSfn5DA==", Guid.Parse("00000000-0000-0000-0000-7e3900001004"))
+         ("RMAn+9uvBSUdW23Je/E0zQ4pnFneI4pbP09Tp9uG4AemtPa7BtFBNbruHCRXMNNoaCT2RfwfWxOs2GuUZFzstg==", Guid.Parse("00000000-0000-0000-0000-7e3900001005"))
+         ("v/2dG9mP9QWN+Ma38znwF7lsRN00INrNX956YZ469ANfqCoYy/NnUaEXTEY8PM0MH/2bXQbJULGKzzBVIjtdUQ==", Guid.Parse("00000000-0000-0000-0000-7e3900001006"))
+         ("k7J/5gY/caDTolz/10508Xttnw/MkS1GOzb3KDksyfvw4MfSHQ4AsegNtIYRUZmNypdJCfmrwCtNN/UT9ueXEw==", Guid.Parse("00000000-0000-0000-0000-7e3900001007"))] |> Map.ofSeq
 
 module AnkiImporter =
     let getSimpleAnkiDb (db: AnkiDb) =
@@ -213,11 +213,11 @@ module AnkiImporter =
                     <| getCard
                     <| getHistory
             ccs |> Seq.iter (fun x ->
-                if x.Leaf <> null && x.LeafId = 0
+                if x.Leaf <> null && x.LeafId = Guid.Empty
                 then db.Card.AddI x
             )
             histories |> Seq.iter (fun x ->
-                if x.Id = 0L
+                if x.Id = Guid.Empty
                 then db.History.AddI x
             )
             return! db.SaveChangesAsyncI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231

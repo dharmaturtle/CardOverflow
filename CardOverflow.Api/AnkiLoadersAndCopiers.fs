@@ -27,14 +27,14 @@ type SimpleAnkiDb = {
 
 type AnkiGrompleaf = {
     AnkiId: int64
-    AuthorId: int
+    AuthorId: Guid
     Name: string
     Css: string
     Fields: Field list
     Created: DateTime
     Modified: DateTime option
-    DefaultTags: int list
-    DefaultCardSettingId: int
+    DefaultTags: Guid list
+    DefaultCardSettingId: Guid
     LatexPre: string
     LatexPost: string
     Templates: Template list
@@ -76,7 +76,7 @@ type AnkiCardWrite = {
     FieldValues: string
     Created: DateTime
     Modified: DateTime option
-    AuthorId: int
+    AuthorId: Guid
 } with
     member this.CopyTo (entity: LeafEntity) =
         entity.FieldValues <- this.FieldValues
@@ -118,7 +118,7 @@ type AnkiCardWrite = {
         |> Option.ofObj
 
 type AnkiCard = {
-    UserId: int
+    UserId: Guid
     Leaf: LeafEntity
     Grompleaf: GrompleafEntity
     Index: int16
@@ -158,7 +158,7 @@ type AnkiCard = {
             )
 
 type AnkiHistory = {
-    UserId: int
+    UserId: Guid
     Card: CardEntity option
     Score: int16
     Timestamp: DateTime
@@ -246,7 +246,7 @@ module Anki =
             | _ -> "Unexpected number when parsing Anki value: " + string i |> Decode.fail )
     let parseCardSettings =
         Decode.object(fun get ->
-            { Id = 0 // lowTODO this entire record needs to be validated for out of range values
+            { Id = Guid.Empty // lowTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
               IsDefault = false
               NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
@@ -306,7 +306,7 @@ module Anki =
                 Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
                 Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
                 DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
-                DefaultCardSettingId = 0
+                DefaultCardSettingId = Guid.Empty
                 LatexPre = get.Required.Field "latexPre" Decode.string
                 LatexPost = get.Required.Field "latexPost" Decode.string
                 DeckId = get.Required.Field "did" Decode.int64
