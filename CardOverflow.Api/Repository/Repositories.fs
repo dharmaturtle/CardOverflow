@@ -22,6 +22,7 @@ open System.IO
 open System
 open System.Runtime.ExceptionServices
 open System.Runtime.CompilerServices
+open NUlid
 
 module CommieldRepository =
     let get (db: CardOverflowDb) fieldId = task {
@@ -99,13 +100,12 @@ module GromplateRepository =
             .Where(fun x -> x.Leaf.GrompleafId = leaf.Id)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
-                cc.Leaf.Id <- Guid.NewGuid() // is a temporary value, as set by the line below. See commit cbb967ea6353d65199dec02efdb6573f0a02b55a
-                db.Entry(cc.Leaf).Property(nameofLeaf <@ any<LeafEntity>.Id @>).IsTemporary <- true
+                cc.Leaf.Id <- Ulid.NewUlid().ToGuid()
                 cc.Leaf.Grompleaf <- newGrompleaf
             )
         let! existing = db.User_Grompleaf.Where(fun x -> x.UserId = userId && x.Grompleaf.GromplateId = newGrompleaf.GromplateId).ToListAsync()
         db.User_Grompleaf.RemoveRange existing
-        User_GrompleafEntity(UserId = userId, Grompleaf = newGrompleaf, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-000000000002")) // lowTODO do we ever use the card setting here?
+        User_GrompleafEntity(UserId = userId, Grompleaf = newGrompleaf, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-5e7700000002")) // lowTODO do we ever use the card setting here?
         |> db.User_Grompleaf.AddI
         return! db.SaveChangesAsyncI()
         }

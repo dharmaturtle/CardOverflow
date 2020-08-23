@@ -41,6 +41,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
     let newQuestionXemplate = "modified {{Front mutated}}"
     let newGromplateName = "new name"
+    let oldLeafId = c.Db.Card.Single().LeafId
     let updated =
         { latestLeaf with
             Name = newGromplateName
@@ -65,12 +66,13 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
         ["Front mutated"; "Back mutated"],
         latestLeaf.Fields.Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.Card.Single().UserId)
-    Assert.Equal(leaf_2, c.Db.Card.Single().LeafId)
+    Assert.NotEqual(oldLeafId, c.Db.Card.Single().LeafId)
     Assert.Equal(
         latestLeaf.Id,
         c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.GrompleafId)
     Assert.Equal(2, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.Leaf.Count())
+    let stack_1 = c.Db.Stack.Single().Id
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.StackId = stack_1))
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.StackId = stack_1))
     let createds = c.Db.Grompleaf.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
@@ -137,6 +139,8 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
-    do! testViewError GromplateRepository.latest newGuid "Gromplate #0 not found"
-    do! testViewError GromplateRepository.leaf newGuid "Gromplate Leaf #0 not found"
+    let gromplateMissingId = newGuid
+    do! testViewError GromplateRepository.latest gromplateMissingId <| sprintf "Gromplate #%A not found" gromplateMissingId // TODO base64
+    let grompleafMissingId = newGuid
+    do! testViewError GromplateRepository.leaf   grompleafMissingId <| sprintf "Gromplate Leaf #%A not found" grompleafMissingId // TODO base64
     }
