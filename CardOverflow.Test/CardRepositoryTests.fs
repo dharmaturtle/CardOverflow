@@ -23,7 +23,7 @@ open FsToolkit.ErrorHandling
 let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
     let getCollected () = StackRepository.GetCollected c.Db userId stack_1
@@ -50,7 +50,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.StackId |> TaskResult.getOk
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_2, branch_2, leaf_2, [card_2])
     let newCardBranchId = branch_2
     Assert.Equal(newCardBranchId, actualBranchId)
     let! (stack2: StackEntity) = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> cc.StackId)
@@ -84,7 +84,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
 let ``StackRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
     let! cc = StackRepository.GetCollected c.Db userId stack_1
@@ -112,7 +112,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
 let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
@@ -160,7 +160,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
 let ``collect works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
-    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let branchId = branch_1
     let leafId = leaf_1
     let stackId = stack_1
@@ -223,7 +223,7 @@ let ``CollectCards works``(): Task<unit> = task {
     let s1 = stack_1
     let b1 = branch_1
     let ci1_1 = leaf_1
-    let! _ = FacetRepositoryTests.addBasicStack c.Db authorId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     Assert.Equal(1, c.Db.Stack.Single().Users)
     Assert.Equal(1, c.Db.Leaf.Single().Users)
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
@@ -232,7 +232,7 @@ let ``CollectCards works``(): Task<unit> = task {
     
     let s2 = stack_2
     let ci2_1 = leaf_2
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId []
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId [] (stack_2, branch_2, leaf_2, [card_2])
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.Card.Count())
@@ -294,7 +294,7 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
 
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
 
     let! a = StackRepository.GetQuizBatch c.Db userId ""
     let getId (x: Result<QuizCard, string> seq) = x.First().Value.CardId

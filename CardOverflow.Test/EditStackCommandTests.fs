@@ -27,7 +27,7 @@ let clozeFields =
     | Cloze t -> Cloze.templateRegex.TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
     | _ -> failwith "impossible"
 
-let test text expected grompleaf =
+let test text expected grompleaf ids =
     let view =
         {   EditSummary = ""
             FieldValues =
@@ -40,7 +40,7 @@ let test text expected grompleaf =
                             f.Name
                 }).ToList()
             Grompleaf = grompleaf
-            Kind = NewOriginal_TagIds []
+            Kind = NewOriginal_TagIds (ids, [])
             Title = null
         }
     if grompleaf.FirstTemplate.Name = "Cloze" then
@@ -62,6 +62,7 @@ let ``EditStackCommand's back works with basic`` (): unit =
                     ShortBack = ""
                 } |> List.singleton |>Standard
             } |> ViewGrompleaf.load)
+            UpsertIds.create
     testOrdinary
         "The front"
         [ "The front Back" ]
@@ -107,7 +108,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
                     } |> ViewGrompleaf.load
-                Kind = NewOriginal_TagIds []
+                Kind = NewOriginal_TagIds (UpsertIds.create, [])
                 Title = null
             }
         Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.Grompleaf.Templates)

@@ -190,7 +190,7 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
     let! view = StackViewRepository.leaf c.Db leaf_1
@@ -210,7 +210,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
         |> Task.map (fun x -> x.StackId)
         |> Task.bind (fun stackId -> StackRepository.GetCollected c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
     let branchId = branch_1
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     Assert.equal branchId actualBranchId
     let ccId = card_1
     
@@ -294,7 +294,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
     let getLeafs clozeText = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
-        let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
+        let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
             Assert.SingleI <| c.Db.LatestLeaf.Where(fun x -> x.FieldValues.Contains clozeText)
             Assert.Equal(0, c.Db.LatestLeaf.Count(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText)))
@@ -394,7 +394,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId_og = branch_1
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
@@ -461,7 +461,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                 })
                             .ToList()
                     Grompleaf = gromplate
-                    Kind = NewOriginal_TagIds []
+                    Kind = NewOriginal_TagIds (UpsertIds.create, [])
                     Title = null
                 }
             |> Task.map Result.getOk

@@ -19,7 +19,7 @@ open FsToolkit.ErrorHandling
 let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let tagName = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
 
@@ -68,7 +68,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     
     // Can't delete a tag from a card that ain't yours
     let otherUser = user_2
-    let! _ = FacetRepositoryTests.addBasicStack c.Db otherUser [tagName]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db otherUser [tagName] (stack_2, branch_2, leaf_2, [card_2])
     let stackId = stack_2
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName stackId |> TaskResult.getError
     Assert.Equal(sprintf "User #%A doesn't have Stack #%A." userId stackId, error)
@@ -90,7 +90,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
 
     // initial tag has 1 user
     let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
-    let! _ = FacetRepositoryTests.addBasicStack c.Db author [tagName]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db author [tagName] (stack_1, branch_1, leaf_1, [card_1])
     do! assertTagUserCount 1
 
     // initial tag has 2 users after collecting
@@ -192,7 +192,7 @@ let ``Tag "a/b/c" parses``(): unit =
 let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["ax" +/+ "by" +/+ "cz"]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["ax" +/+ "by" +/+ "cz"] (stack_1, branch_1, leaf_1, [card_1])
     
     let! actual = TagRepository.getAll c.Db userId
 

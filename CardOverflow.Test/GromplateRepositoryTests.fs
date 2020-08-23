@@ -38,7 +38,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
 
     // Testing UpdateFieldsToNewLeaf
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let newQuestionXemplate = "modified {{Front mutated}}"
     let newGromplateName = "new name"
     let oldLeafId = c.Db.Card.Single().LeafId

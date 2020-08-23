@@ -345,7 +345,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.areEquivalent [ newDeck; defaultDeck] actualDecks
 
     // new cards are in the "Default" deck
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let cardId = card_1
     let assertDeckId expectedDeckId = taskResult {
@@ -468,7 +468,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId cardId
     Assert.Equal(sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
-    let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db nonauthor [] (stack_1, branch_1, leaf_1, [card_1])
     let nonauthorCardId = user_2
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId nonauthorCardId
     Assert.Equal(sprintf "Either Card #%A doesn't belong to you or it doesn't exist" nonauthorCardId, x.error)
@@ -545,7 +545,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
 
     //adding a card notifies
     do! SanitizeDeckRepository.setDefault c.Db authorId publicDeck.Id
-    let! _ = addBasicStack c.Db authorId []
+    let! _ = addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let notificationId = notification_1
     let stackId = stack_1
     let branchId = branch_1
@@ -792,7 +792,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let leafId = leaf_1
@@ -886,7 +886,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addReversedBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addReversedBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let ccId1 = card_1
     let stackId = stack_1
     let branchId = branch_1
@@ -999,7 +999,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let leafId = leaf_1
@@ -1095,7 +1095,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     let publicDeckId = deck_3
     use c = new TestContainer()
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let leafId = leaf_1
@@ -1173,7 +1173,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
 
     do! StackRepository.uncollectStack c.Db authorId stackId
     // Unchanged with two clozes
-    let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId []
+    let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let! (ccs: CardEntity ResizeArray) = c.Db.Card.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
     do! StackRepository.CollectCard c.Db followerId <| ccs.First().LeafId
     let ids =
@@ -1225,7 +1225,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
     let publicDeckId = deck_3
     use c = new TestContainer()
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let leafId = leaf_1

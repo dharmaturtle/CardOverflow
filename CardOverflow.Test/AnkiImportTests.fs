@@ -387,7 +387,7 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [ "Tag"; "Deck:Default" ]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [ "Tag"; "Deck:Default" ] (stack_1, branch_1, leaf_1, [card_1])
     Assert.Equal(2, c.Db.Tag.Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty

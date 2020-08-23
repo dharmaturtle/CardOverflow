@@ -17,7 +17,7 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 
-let normalCommand fieldValues grompleaf tagIds =
+let normalCommand fieldValues grompleaf tagIds ids =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
@@ -30,11 +30,11 @@ let normalCommand fieldValues grompleaf tagIds =
                 Value = fieldValues.[i]
             }) |> toResizeArray
         EditSummary = "Initial creation"
-        Kind = NewOriginal_TagIds tagIds
+        Kind = NewOriginal_TagIds (UpsertIds.fromTuple ids, tagIds)
         Title = null
     }
 
-let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds = {
+let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds ids = {
     EditSummary = "Initial creation"
     FieldValues =
         clozeGromplate.Fields.Select(fun f -> {
@@ -46,22 +46,22 @@ let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds = {
                     "extra"
         }).ToList()
     Grompleaf = clozeGromplate
-    Kind = NewOriginal_TagIds tagIds
+    Kind = NewOriginal_TagIds (UpsertIds.fromTuple ids, tagIds)
     Title = null }
 
-let add gromplateName createCommand (db: CardOverflowDb) userId tags = task {
+let add gromplateName createCommand (db: CardOverflowDb) userId tags ids = task {
     let tagIds = ResizeArray.empty
     for tag in tags do
         let! tagId = SanitizeTagRepository.upsert db tag |> TaskResult.getOk
         tagIds.Add tagId
     let! gromplate = TestGromplateRepo.SearchEarliest db gromplateName
     let! r =
-        createCommand gromplate (tagIds |> List.ofSeq)
+        createCommand gromplate (tagIds |> List.ofSeq) ids
         |> SanitizeStackRepository.Update db userId []
     return r.Value
     }
 
-let addReversedBasicStack: CardOverflowDb -> Guid -> string list -> Task<Guid> =
+let addReversedBasicStack: CardOverflowDb -> Guid -> string list -> (Guid * Guid * Guid * (Guid list)) -> Task<Guid> =
     add "Basic (and reversed card)" <| normalCommand []
 
 let addBasicStack =
@@ -95,7 +95,7 @@ let ``StackRepository.CreateCard on a basic facet collects 1 card/facet``(): Tas
     let aTag = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
     let bTag = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
     
-    let! _ = addBasicStack c.Db userId [aTag; bTag]
+    let! _ = addBasicStack c.Db userId [aTag; bTag] (stack_1, branch_1, leaf_1, [card_1])
 
     Assert.SingleI <| c.Db.Stack
     Assert.SingleI <| c.Db.Stack
@@ -227,7 +227,7 @@ Back
 let ``ExploreStackRepository.leaf works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = addBasicStack c.Db userId []
+    let! _ = addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let cardId = card_1
     let stackId = stack_1
     let branchId = branch_1
@@ -277,7 +277,7 @@ let ``ExploreStackRepository.leaf works``() : Task<unit> = (taskResult {
 let ``ExploreStackRepository.branch works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = addBasicStack c.Db userId []
+    let! _ = addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let oldLeafId = leaf_1
@@ -316,8 +316,8 @@ let ``StackViewRepository.leafPair works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
     let otherUserId = user_2
-    let! _ = addBasicStack c.Db userId []
-    let! _ = addBasicStack c.Db otherUserId []
+    let! _ = addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = addBasicStack c.Db otherUserId [] (stack_2, branch_2, leaf_2, [card_2])
     
     let! a, (a_: bool), b, (b_:bool) = StackViewRepository.leafPair c.Db leaf_1 leaf_2 userId
     
@@ -339,7 +339,7 @@ let ``StackViewRepository.leafPair works``() : Task<unit> = (taskResult {
 let ``StackViewRepository.leafWithLatest works``() : Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = addBasicStack c.Db userId []
+    let! _ = addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
@@ -435,7 +435,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             //"XXXXXX".D(sprintf "Branch leaf #%i should have count #%i" id count)
             do! c.Db.Leaf.SingleAsync(fun x -> x.Id = id)
                 |> Task.map (fun c -> Assert.Equal(count, c.Users))}
-    let! _ = addBasicStack c.Db user_1 ["A"; "B"]
+    let! _ = addBasicStack c.Db user_1 ["A"; "B"] (stack_1, branch_1, leaf_1, [card_1])
     do! assertCount
             [og_s, 1]
             [og_b, 1]
@@ -499,7 +499,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             
     // copy by user2
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceLeafId ogEdit_i
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySource_LeafId (UpsertIds.create, ogEdit_i)
     let old = old.Value
     let updated = {
         old with
@@ -522,7 +522,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let missingLeafId = newGuid
     let missingCardId = newGuid
     
-    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceLeafId missingLeafId
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySource_LeafId (UpsertIds.create, missingLeafId)
     
     Assert.Equal(sprintf "Branch Leaf #%A not found." missingLeafId, old.error)
     do! assertCount
@@ -572,7 +572,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 copies their copy
-    let! x = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceLeafId copy_i
+    let! x = SanitizeStackRepository.getUpsert c.Db <| VNewCopySource_LeafId (UpsertIds.create, copy_i)
     let old = x.Value
     let updated = {
         old with
@@ -595,7 +595,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
     
     // user2 copies their branch
-    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySourceLeafId branch_i
+    let! old = SanitizeStackRepository.getUpsert c.Db <| VNewCopySource_LeafId (UpsertIds.create, branch_i)
     let old = old.Value
     let updated = {
         old with
@@ -822,7 +822,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
         StackRepository.GetCollected c.Db userId stackId
         |> TaskResult.map (fun cc -> Assert.Equal(leafId, cc.Single().LeafMeta.Id))
 
-    let! _ = addBasicStack c.Db userId []
+    let! _ = addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let og_s = stack_1
     let og_b = branch_1
     let og_i = leaf_1

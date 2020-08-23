@@ -47,7 +47,7 @@ let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<u
 let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
@@ -100,7 +100,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
 let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
@@ -153,7 +153,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["A"; "B"]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["A"; "B"] (stack_1, branch_1, leaf_1, [card_1])
     do! CommentStackEntity (
             StackId = stack_1,
             UserId = userId,
@@ -187,7 +187,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["A"; "B"]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["A"; "B"] (stack_1, branch_1, leaf_1, [card_1])
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
@@ -219,7 +219,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = user_1 // this user creates the card
-    let! (_: int) = addCard c.Db authorId ["A"]
+    let! (_: int) = addCard c.Db authorId ["A"] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let leafId = leaf_1
@@ -314,8 +314,8 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
         addRelationshipCommand2, addRelationshipCommand1 ]
 
     let userId = user_1 // this user creates the card
-    for (addStack: CardOverflowDb -> Guid -> string list -> Task<Guid>) in [ FacetRepositoryTests.addBasicStack; FacetRepositoryTests.addReversedBasicStack ] do
-        let! _ = addStack c.Db userId []
+    for (addStack: CardOverflowDb -> Guid -> string list -> (Guid * Guid * Guid * (Guid list)) -> Task<Guid>) in [ FacetRepositoryTests.addBasicStack; FacetRepositoryTests.addReversedBasicStack ] do
+        let! _ = addStack c.Db userId [] (newGuid, newGuid, newGuid, [newGuid])
         ()
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
@@ -350,7 +350,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 let ``Relationships can't be self related``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     Assert.Equal(branch_ 1, actualBranchId)
     let addRelationshipCommand =
         {   Name = ""
@@ -538,12 +538,12 @@ let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
     let basicTag = "basic"
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [basicTag]
+    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [basicTag] (stack_1, branch_1, leaf_1, [card_1])
     let front = Guid.NewGuid().ToString()
     let back = Guid.NewGuid().ToString()
-    let! _ = FacetRepositoryTests.addBasicCustomStack [front; back] c.Db userId ["custom"]
+    let! _ = FacetRepositoryTests.addBasicCustomStack [front; back] c.Db userId ["custom"] (stack_2, branch_2, leaf_2, [card_2])
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_3, branch_3, leaf_3, [card_3])
     
     // testing search
     let search = StackRepository.search c.Db userId 1 SearchOrder.Popularity
@@ -617,8 +617,8 @@ let ``Card search works`` (): Task<unit> = task {
     let term = "relevant "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId ["tag1"]
-    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId ["tag2"]
+    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId ["tag1"] (stack_ 4, branch_ 4, leaf_ 4, [card_1])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId ["tag2"] (stack_ 5, branch_ 5, leaf_ 5, [card_1])
     let! hits = search term
     Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
 
@@ -626,16 +626,16 @@ let ``Card search works`` (): Task<unit> = task {
     let term = "nightwish "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId []
-    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId [] (stack_ 6, branch_ 6, leaf_ 6, [card_1])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId [] (stack_ 7, branch_ 7, leaf_ 7, [card_1])
     let! hits = search term
     Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
     
     // tags outweigh fields
     let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
     let tag = " batman"
-    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem      ; ""] c.Db userId [tag]
-    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem + tag; ""] c.Db userId []
+    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem      ; ""] c.Db userId [tag] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem + tag; ""] c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let! hits = search tag
     Assert.Equal(lorem, hits.Results.First().Leaf.StrippedFront)
 

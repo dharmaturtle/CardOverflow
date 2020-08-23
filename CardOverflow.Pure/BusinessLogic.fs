@@ -214,6 +214,13 @@ type StackLeafIds = {
     LeafId: Guid
 }
 
+type UpsertIds = {
+    StackId: Guid
+    BranchId: Guid
+    LeafId: Guid
+    CardIds: Guid list // should be ordered by index
+}
+
 type StackLeafIndex = {
     StackId: Guid
     BranchId: Guid
@@ -227,6 +234,14 @@ module StackLeafIds =
         {   StackId = stackId
             BranchId = branchId
             LeafId = leafId
+        }
+
+module UpsertIds =
+    let fromTuple (stackId, branchId, leafId, cardIds) =
+        {   StackId = stackId
+            BranchId = branchId
+            LeafId = leafId
+            CardIds = cardIds
         }
 
 module StackLeafIndex =

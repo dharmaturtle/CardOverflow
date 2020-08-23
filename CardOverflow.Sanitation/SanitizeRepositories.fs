@@ -728,8 +728,8 @@ type ViewEditStackCommand = {
         }
 
 type UpsertCardSource =
-    | VNewOriginalUserId of Guid
-    | VNewCopySourceLeafId of Guid
+    | VNewOriginal_UserId of UpsertIds * Guid
+    | VNewCopySource_LeafId of UpsertIds * Guid
     | VNewBranchSourceStackId of Guid
     | VUpdateBranchId of Guid
 
@@ -792,7 +792,7 @@ module SanitizeStackRepository =
                     | Update_BranchId_Title (_, title) -> title
             }
         match source with
-        | VNewOriginalUserId userId ->
+        | VNewOriginal_UserId (ids, userId) ->
             db.User_Grompleaf.Include(fun x -> x.Grompleaf).FirstOrDefaultAsync(fun x -> x.UserId = userId)
             |>% (Result.requireNotNull (sprintf "User #%A doesn't have any templates" userId))
             |>%% (fun j ->
@@ -802,7 +802,7 @@ module SanitizeStackRepository =
                             <| Fields.fromString j.Grompleaf.Fields
                             <| ""
                     Grompleaf = j.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
-                    Kind = NewOriginal_TagIds []
+                    Kind = NewOriginal_TagIds (ids, [])
                     Title = null
                 }
             )
@@ -810,10 +810,10 @@ module SanitizeStackRepository =
             db.Stack.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%A not found." stackId)
             |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.Latest
-        | VNewCopySourceLeafId leafId ->
+        | VNewCopySource_LeafId (ids, leafId) ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Branch Leaf #%A not found." leafId)
-            |>%% toCommand (NewCopy_SourceLeafId_TagIds (leafId, []))
+            |>%% toCommand (NewCopy_SourceLeafId_TagIds (ids, leafId, []))
         | VUpdateBranchId branchId ->
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
@@ -827,11 +827,13 @@ module SanitizeStackRepository =
                 StackRepository.collectStackNoSave db userId leaf false |>% Ok
             | NewBranch_SourceStackId_Title _ ->
                 StackRepository.collectStackNoSave db userId leaf true |>% Ok
-            | NewOriginal_TagIds tagIds
-            | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
+            | NewOriginal_TagIds (cardIds, tagIds)
+            | NewCopy_SourceLeafId_TagIds (cardIds, _, tagIds) -> taskResult {
                 let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true
                 for tagId in tagIds do
                     ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))
+                for cc in ccs do
+                    cc.Id <- cardIds.CardIds.[int cc.Index]
                 return ccs
                 }
             |>%% List.sortBy (fun x -> x.Index)

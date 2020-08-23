@@ -67,7 +67,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let newDeckId = deck_ 4
     let newDeckName = Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck newDeckName) true None
-    do! FacetRepositoryTests.addBasicStack c.Db authorId []
+    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single

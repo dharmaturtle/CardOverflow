@@ -499,14 +499,14 @@ type BranchRevision = {
 }
 
 type UpsertKind =
-    | NewOriginal_TagIds of Guid list
-    | NewCopy_SourceLeafId_TagIds of Guid * Guid list
+    | NewOriginal_TagIds of UpsertIds * Guid list
+    | NewCopy_SourceLeafId_TagIds of UpsertIds * Guid * Guid list
     | NewBranch_SourceStackId_Title of Guid * string
     | Update_BranchId_Title of Guid * string
 with
     member this.TryGetCopySourceLeafId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with
-        | NewCopy_SourceLeafId_TagIds (leafId, _) -> x <- leafId; true
+        | NewCopy_SourceLeafId_TagIds (_, leafId, _) -> x <- leafId; true
         | _ -> false
     member this.TryGetBranchSourceStackId([<Out>] x:byref<_>) =
         match this with

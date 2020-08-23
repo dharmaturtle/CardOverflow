@@ -522,7 +522,7 @@ module UpdateRepository =
                             db.Branch.Include(fun x -> x.Stack).SingleOrDefaultAsync(fun x -> x.Id = branchId && x.AuthorId = userId)
                             |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%A doesn't exist or you aren't its author" branchId)
                         )
-                    | NewCopy_SourceLeafId_TagIds (leafId, _) ->
+                    | NewCopy_SourceLeafId_TagIds (_, leafId, _) ->
                         BranchEntity(
                             AuthorId = userId,
                             Stack =
@@ -537,11 +537,13 @@ module UpdateRepository =
                                 AuthorId = userId,
                                 Name = name,
                                 StackId = stackId))
-                    | NewOriginal_TagIds _ ->
+                    | NewOriginal_TagIds (ids, _) ->
                         BranchEntity(
+                            Id = ids.BranchId,
                             AuthorId = userId,
                             Stack =
                                 StackEntity(
+                                    Id = ids.StackId,
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
             return command.CardView.CopyFieldsToNewLeaf branch command.EditSummary []
