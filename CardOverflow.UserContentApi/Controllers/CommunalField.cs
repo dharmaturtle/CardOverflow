@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CardOverflow.Api;
 using CardOverflow.Entity;
 using CardOverflow.Pure;
@@ -14,10 +15,10 @@ namespace CardOverflow.UserContentApi.Controllers {
     public Commield(CardOverflowDb db) => _db = db;
 
     [HttpGet("communalfield/{id}")]
-    public async Task<IActionResult> Get(int id) => (await CommieldRepository.get(_db, id)).ToTextHtmlContent(this);
+    public async Task<IActionResult> Get(Guid id) => (await CommieldRepository.get(_db, id)).ToTextHtmlContent(this);
 
     [HttpGet("communalfieldleaf/{id}")]
-    public async Task<IActionResult> GetLeaf(int id) => (await CommieldRepository.getLeaf(_db, id)).ToTextHtmlContent(this);
+    public async Task<IActionResult> GetLeaf(Guid id) => (await CommieldRepository.getLeaf(_db, id)).ToTextHtmlContent(this);
 
   }
 }

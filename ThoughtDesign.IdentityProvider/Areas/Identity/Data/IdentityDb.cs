@@ -9,7 +9,7 @@ using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 
 namespace ThoughtDesign.IdentityProvider.Data
 {
-    public class IdentityDb : IdentityDbContext<ThoughtDesignUser, IdentityRole<int>, int> {
+    public class IdentityDb : IdentityDbContext<ThoughtDesignUser, IdentityRole<Guid>, Guid> {
         public IdentityDb(DbContextOptions<IdentityDb> options)
             : base(options)
         {

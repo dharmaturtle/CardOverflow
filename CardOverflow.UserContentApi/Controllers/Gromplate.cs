@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using CardOverflow.Api;
 using CardOverflow.Entity;
@@ -15,16 +16,16 @@ namespace CardOverflow.UserContentApi.Controllers {
     public Gromplate(CardOverflowDb db) => _db = db;
 
     [HttpGet("gromplate/{id}/{index}/front")]
-    public async Task<IActionResult> Front(int id, int index) => _front(index, await GromplateRepository.latest(_db, id));
+    public async Task<IActionResult> Front(Guid id, int index) => _front(index, await GromplateRepository.latest(_db, id));
 
     [HttpGet("gromplate/{id}/{index}/back")]
-    public async Task<IActionResult> Back(int id, int index) => _back(index, await GromplateRepository.latest(_db, id));
+    public async Task<IActionResult> Back(Guid id, int index) => _back(index, await GromplateRepository.latest(_db, id));
 
     [HttpGet("gromplateleaf/{id}/{index}/front")]
-    public async Task<IActionResult> LeafFront(int id, int index) => _front(index, await GromplateRepository.leaf(_db, id));
+    public async Task<IActionResult> LeafFront(Guid id, int index) => _front(index, await GromplateRepository.leaf(_db, id));
 
     [HttpGet("gromplateleaf/{id}/{index}/back")]
-    public async Task<IActionResult> LeafBack(int id, int index) => _back(index, await GromplateRepository.leaf(_db, id));
+    public async Task<IActionResult> LeafBack(Guid id, int index) => _back(index, await GromplateRepository.leaf(_db, id));
 
     private ContentResult _front(int index, FSharpResult<Grompleaf, string> view) =>
       ( view.IsError
