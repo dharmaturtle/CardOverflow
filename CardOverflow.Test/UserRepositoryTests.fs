@@ -20,12 +20,12 @@ let ``UserRepository works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let displayName = Guid.NewGuid().ToString().[0..31]
     Assert.equal 32 displayName.Length
-    let userId = 4
+    let userId = user_ 4
 
     do! UserRepository.create c.Db userId displayName
     
     Assert.equal userId <| c.Db.User.Single(fun x -> x.DisplayName = displayName).Id
     let! (ucs: User_GrompleafEntity ResizeArray) = c.Db.User_Grompleaf.Where(fun x -> x.UserId = userId).ToListAsync()
-    Assert.areEquivalent [1001; 1002; 1003; 1006; 1005] <| ucs.Select(fun x -> x.GrompleafId)
-    Assert.equal 4 <| ucs.Select(fun x -> x.DefaultCardSettingId).Distinct().Single()
+    Assert.areEquivalent ([1; 2; 3; 6; 5] |> List.map grompleaf_) <| ucs.Select(fun x -> x.GrompleafId)
+    Assert.equal (setting_ 4) <| ucs.Select(fun x -> x.DefaultCardSettingId).Distinct().Single()
     } |> TaskResult.getOk)

@@ -18,9 +18,9 @@ open FsToolkit.ErrorHandling
 [<Fact>]
 let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
-    let stackId = 1
+    let stackId = stack_1
     let tagName = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
 
     do! SanitizeTagRepository.AddTo c.Db userId tagName stackId
@@ -30,7 +30,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
         c.Db.Card
             .Include(fun x -> x.Tag_Cards :> IEnumerable<_>)
                 .ThenInclude(fun (x: Tag_CardEntity) -> x.Tag)
-            .Single(fun x -> x.Id = 1)
+            .Single(fun x -> x.Id = card_1)
             .Tag_Cards
     Assert.Equal(
         tagName,
@@ -47,35 +47,35 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
         joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
     )
     let! error = SanitizeTagRepository.AddTo c.Db userId tagName stackId |> TaskResult.getError
-    Assert.Equal(sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId tagName, error)
+    Assert.Equal(sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId tagName, error)
 
     // Can't add tag to a card twice, even if different casing
     let caps = tagName.ToUpper()
     let! error = SanitizeTagRepository.AddTo c.Db userId caps stackId |> TaskResult.getError
-    Assert.Equal(sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId (caps |> MappingTools.toTitleCase), error)
+    Assert.Equal(sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId (caps |> MappingTools.toTitleCase), error)
     let lows = tagName.ToLower()
     let! error = SanitizeTagRepository.AddTo c.Db userId lows stackId |> TaskResult.getError
-    Assert.Equal(sprintf "Stack #%i for User #%i already has tag \"%s\"" stackId userId (lows |> MappingTools.toTitleCase), error)
+    Assert.Equal(sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId (lows |> MappingTools.toTitleCase), error)
     
     // Can't delete a tag that doesn't exist
     do! SanitizeTagRepository.DeleteFrom c.Db userId tagName stackId
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName stackId |> TaskResult.getError
-    Assert.Equal(sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tagName, error)
+    Assert.Equal(sprintf "Stack #%A for User #%A doesn't have the tag \"%s\"" stackId userId tagName, error)
     // again
     let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName stackId |> TaskResult.getError
-    Assert.Equal(sprintf "Stack #%i for User #%i doesn't have the tag \"%s\"" stackId userId tagName, error)
+    Assert.Equal(sprintf "Stack #%A for User #%A doesn't have the tag \"%s\"" stackId userId tagName, error)
     
     // Can't delete a tag from a card that ain't yours
-    let otherUser = 2
+    let otherUser = user_2
     let! _ = FacetRepositoryTests.addBasicStack c.Db otherUser [tagName]
-    let stackId = 2
+    let stackId = stack_2
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName stackId |> TaskResult.getError
-    Assert.Equal(sprintf "User #%i doesn't have Stack #%i." userId stackId, error)
+    Assert.Equal(sprintf "User #%A doesn't have Stack #%A." userId stackId, error)
 
     // Can't add a tag to a card that ain't yours
     let! error = SanitizeTagRepository.AddTo c.Db userId tagName stackId |> TaskResult.getError
-    Assert.Equal(sprintf "User #%i doesn't have Stack #%i." userId stackId, error)
+    Assert.Equal(sprintf "User #%A doesn't have Stack #%A." userId stackId, error)
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -83,10 +83,10 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let assertTagUserCount expected =
         c.Db.StackTagCount.SingleAsync() |> Task.map (fun x -> Assert.Equal(expected, x.Count))
-    let author = 1
-    let collector = 2
-    let stackId = 1
-    let leafId = 1001
+    let author = user_1
+    let collector = user_2
+    let stackId = stack_1
+    let leafId = leaf_1
 
     // initial tag has 1 user
     let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
@@ -191,7 +191,7 @@ let ``Tag "a/b/c" parses``(): unit =
 [<Fact>]
 let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["ax" +/+ "by" +/+ "cz"]
     
     let! actual = TagRepository.getAll c.Db userId

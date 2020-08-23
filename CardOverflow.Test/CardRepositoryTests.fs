@@ -22,11 +22,11 @@ open FsToolkit.ErrorHandling
 [<Fact>]
 let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let branchId = 1
+    let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
-    let getCollected () = StackRepository.GetCollected c.Db userId 1
+    let getCollected () = StackRepository.GetCollected c.Db userId stack_1
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
 
@@ -43,7 +43,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card // still empty after editing then deleting
 
-    let userId = 3
+    let userId = user_3
     do! recollect ()
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
@@ -51,13 +51,13 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.StackId |> TaskResult.getOk
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let newCardBranchId = 2
+    let newCardBranchId = branch_2
     Assert.Equal(newCardBranchId, actualBranchId)
     let! (stack2: StackEntity) = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> cc.StackId)
     let stack2 = stack2.Id
     let addRelationshipCommand =
         {   Name = "my relationship"
-            SourceStackId = 1
+            SourceStackId = stack_1
             TargetStackLink = string stack2
         }
     do! SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
@@ -75,7 +75,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     
     // Error when deleting something you don't own
     do! recollect ()
-    let otherUserId = 2
+    let otherUserId = user_2
     let! (x: Result<_, _>) = StackRepository.uncollectStack c.Db otherUserId cc.StackId
     Assert.Equal("You don't have any cards with Stack #1", x.error)
     } |> TaskResult.getOk)
@@ -83,11 +83,11 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
 [<Fact>]
 let ``StackRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let branchId = 1
+    let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
-    let! cc = StackRepository.GetCollected c.Db userId 1
+    let! cc = StackRepository.GetCollected c.Db userId stack_1
     let cc = cc.Value.Single()
     
     let! x = StackRepository.editState c.Db userId cc.CardId CardState.Suspended
@@ -103,7 +103,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let cc = cc.Value.Single()
     Assert.Equal(cc.CardState, CardState.Suspended) // still suspended after edit
 
-    let otherUserId = 2 // other users can't edit card state
+    let otherUserId = user_2 // other users can't edit card state
     let! x = StackRepository.editState c.Db otherUserId cc.CardId CardState.Suspended
     Assert.Equal("You don't own that card.", x.error)
     }
@@ -111,15 +111,15 @@ let ``StackRepository.editState works``(): Task<unit> = task {
 [<Fact>]
 let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    let stackId = 1
-    let branchId = 1
+    let stackId = stack_1
+    let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) id branchId
         |> TaskResult.getOk
-    let i2 = 1002
+    let i2 = leaf_2
     let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
     Assert.Equal(i2, c.Db.Card.Single().LeafId)
     Assert.Equal(branchId, c.Db.Card.Single().BranchId)
@@ -139,7 +139,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
         "23505: duplicate key value violates unique constraint \"card. user_id, leaf_id, index. uq idx\"",
         ex.InnerException.Message)
 
-    let i1 = 1001
+    let i1 = leaf_1
     use db = c.Db
     db.Card.AddI <|
         CardEntity(
@@ -159,13 +159,13 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
 [<Fact>]
 let ``collect works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let authorId = 3
+    let authorId = user_3
     do! FacetRepositoryTests.addBasicStack c.Db authorId []
-    let branchId = 1
-    let leafId = 1001
-    let stackId = 1
-    let collectorId = 1
-    let collectorDefaultDeckId = 1
+    let branchId = branch_1
+    let leafId = leaf_1
+    let stackId = stack_1
+    let collectorId = user_1
+    let collectorDefaultDeckId = deck_1
     let collect = StackRepository.collect c.Db collectorId leafId
     let assertDeck deckId =
         StackRepository.GetCollected c.Db collectorId stackId
@@ -175,7 +175,7 @@ let ``collect works``(): Task<unit> = (taskResult {
 
     let! ccId = collect None
     
-    Assert.areEquivalent [2] ccId
+    Assert.areEquivalent [card_2] ccId
     do! assertDeck collectorDefaultDeckId
 
     // fails for author's deck
@@ -186,7 +186,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     Assert.equal "Either Deck #3 doesn't exist or it doesn't belong to you." error.error
     
     // fails for nonexisting deck
-    let! (error: Result<_,_>) = collect <| Some 1337
+    let! (error: Result<_,_>) = collect <| Some newGuid
     
     Assert.equal "Either Deck #1337 doesn't exist or it doesn't belong to you." error.error
     
@@ -195,22 +195,22 @@ let ``collect works``(): Task<unit> = (taskResult {
 
     let! ccId = collect <| Some newDeckId
     
-    Assert.areEquivalent [3] ccId
+    Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId
 
     // collecting/updating to *new* leaf doesn't change deckId or ccId
     let! stackCommand = VUpdateBranchId branchId |> SanitizeStackRepository.getUpsert c.Db
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
 
-    let! ccId = StackRepository.collect c.Db collectorId 1002 None
+    let! ccId = StackRepository.collect c.Db collectorId leaf_2 None
 
-    Assert.areEquivalent [3] ccId
+    Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId
 
     // collecting/updating to *old* leaf doesn't change deckId or ccId
-    let! ccId = StackRepository.collect c.Db collectorId 1001 None
+    let! ccId = StackRepository.collect c.Db collectorId leaf_1 None
 
-    Assert.areEquivalent [3] ccId
+    Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId
     } |> TaskResult.getOk)
 
@@ -218,11 +218,11 @@ let ``collect works``(): Task<unit> = (taskResult {
 let ``CollectCards works``(): Task<unit> = task {
     use c = new TestContainer()
     
-    let authorId = 3
+    let authorId = user_3
     
-    let s1 = 1
-    let b1 = 1
-    let ci1_1 = 1001
+    let s1 = stack_1
+    let b1 = branch_1
+    let ci1_1 = leaf_1
     let! _ = FacetRepositoryTests.addBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single().Users)
     Assert.Equal(1, c.Db.Leaf.Single().Users)
@@ -230,14 +230,14 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(1, c.Db.Card.Count())
     
-    let s2 = 2
-    let ci2_1 = 1002
+    let s2 = stack_2
+    let ci2_1 = leaf_2
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId []
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.Card.Count())
     
-    let collectorId = 1
+    let collectorId = user_1
     let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
@@ -258,7 +258,7 @@ let ``CollectCards works``(): Task<unit> = task {
             Kind = Update_BranchId_Title (b1, null)
         }
     let! branchId = SanitizeStackRepository.Update c.Db authorId [] command |> TaskResult.getOk
-    let ci1_2 = 1003
+    let ci1_2 = leaf_3
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
@@ -292,7 +292,7 @@ let ``CollectCards works``(): Task<unit> = task {
 [<Fact>]
 let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
 
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
 

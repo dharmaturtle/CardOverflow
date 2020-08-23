@@ -15,7 +15,7 @@ open MappingTools
 [<Fact>]
 let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expected`` (): unit =
     let expected =
-        {   Id = 0
+        {   Id = setting_ 0
             Name = "Default"
             IsDefault = false
             NewCardsSteps = [TimeSpan.FromMinutes 1. ; TimeSpan.FromMinutes 10.]

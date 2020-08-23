@@ -34,7 +34,7 @@ let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<u
     c.RegisterStandardConnectionString
     use __ = AsyncScopedLifestyle.BeginScope c
     let db = c.GetInstance<CardOverflowDb>()
-    let userId = 3
+    let userId = user_3
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
@@ -46,14 +46,14 @@ let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<u
 [<Fact>]
 let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId []
-    let branchId = 1
+    let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
-    let oldLeafId = 1001
-    let updatedLeafId = 1002
+    let oldLeafId = leaf_1
+    let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
@@ -75,7 +75,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     Assert.Equal(updatedLeafId, actual)
 
     // getCollectedLeafFromLeaf fails gracefully on invalid leafId
-    let invalidLeafId = 1337
+    let invalidLeafId = newGuid
 
     let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
@@ -99,14 +99,14 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
 [<Fact>]
 let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
-    let branchId = 1
+    let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
             (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
-    let oldLeafId = 1001
-    let updatedLeafId = 1002
+    let oldLeafId = leaf_1
+    let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
@@ -128,7 +128,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     Assert.Equal(updatedLeafId, actual)
 
     // getCollectedLeafFromLeaf fails gracefully on invalid leafId
-    let invalidLeafId = 1337
+    let invalidLeafId = newGuid
 
     let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
@@ -152,15 +152,15 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
 [<Fact>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["A"; "B"]
     do! CommentStackEntity (
-            StackId = 1,
+            StackId = stack_1,
             UserId = userId,
             Text = "text",
             Created = DateTime.UtcNow
         ) |> CommentRepository.addAndSaveAsync c.Db
-    let stackId = 1
+    let stackId = stack_1
         
     let! stack = ExploreStackRepository.get c.Db userId stackId
     let stack = stack.Value
@@ -180,13 +180,13 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
         stack.Tags
     )
     
-    let! stack = ExploreStackRepository.get c.Db userId 9999
+    let! stack = ExploreStackRepository.get c.Db userId newGuid
     Assert.Equal("Stack #9999 not found", stack.error) }
 
 [<Fact>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId ["A"; "B"]
 
     let stopwatch = Stopwatch.StartNew()
@@ -195,7 +195,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
         ()
     Assert.True(stopwatch.Elapsed <= TimeSpan.FromMinutes 1.)
     
-    let! stack = ExploreStackRepository.get c.Db userId 1
+    let! stack = ExploreStackRepository.get c.Db userId stack_1
     let stack = stack.Value
     Assert.Equal(1, stack.Default.Summary.Users)
     Assert.Equal<ViewTag seq>(
@@ -211,25 +211,25 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     let cc = cc.Value.Single()
     let! x = StackRepository.editState c.Db userId cc.CardId CardState.Suspended
     Assert.Null x.Value
-    let! stack = ExploreStackRepository.get c.Db userId 1
+    let! stack = ExploreStackRepository.get c.Db userId stack_1
     Assert.Equal(0, stack.Value.Default.Leaf.Users) // suspended cards don't count to User count
     }
 
 let testGetCollected (acCount: int) addCard getGromplate name = task {
     use c = new TestContainer(false, name)
     
-    let authorId = 1 // this user creates the card
+    let authorId = user_1 // this user creates the card
     let! (_: int) = addCard c.Db authorId ["A"]
-    let stackId = 1
-    let branchId = 1
-    let leafId = 1001
+    let stackId = stack_1
+    let branchId = branch_1
+    let leafId = leaf_1
     let! cards = StackRepository.GetCollectedPages c.Db authorId 1 ""
     Assert.Equal(acCount, cards.Results.Count())
     let! cc = StackRepository.GetCollected c.Db authorId stackId
     let cc = cc.Value
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
-    let collectorId = 2  // this user collects the card
+    let collectorId = user_2  // this user collects the card
     let! _ = StackRepository.CollectCard c.Db collectorId leafId |> TaskResult.getOk
     let! stack = ExploreStackRepository.get c.Db collectorId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
@@ -271,8 +271,8 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     let! stacks = StackRepository.search c.Db collectorId 1 SearchOrder.Popularity ""
     Assert.Equal(1, stacks.Results.Count())
 
-    let nonCollectorId = 3 // this user never collects the card
-    let! stack = ExploreStackRepository.get c.Db nonCollectorId 1 |> TaskResult.getOk
+    let nonCollectorId = user_3 // this user never collects the card
+    let! stack = ExploreStackRepository.get c.Db nonCollectorId stack_1 |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
             Count = 2
@@ -299,12 +299,12 @@ let rec ``GetCollected works when collecting a pair``(): Task<unit> =
 let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
         {   Name = relationshipName
-            SourceStackId = 1
+            SourceStackId = stack_1
             TargetStackLink = "2"
         }
     let addRelationshipCommand2 =
         {   Name = relationshipName
-            SourceStackId = 2
+            SourceStackId = stack_2
             TargetStackLink = "1"
         }
     let commands = [
@@ -313,34 +313,34 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
         addRelationshipCommand1, addRelationshipCommand2
         addRelationshipCommand2, addRelationshipCommand1 ]
 
-    let userId = 1 // this user creates the card
-    for (addStack: CardOverflowDb -> int -> string list -> Task<int>) in [ FacetRepositoryTests.addBasicStack; FacetRepositoryTests.addReversedBasicStack ] do
+    let userId = user_1 // this user creates the card
+    for (addStack: CardOverflowDb -> Guid -> string list -> Task<Guid>) in [ FacetRepositoryTests.addBasicStack; FacetRepositoryTests.addReversedBasicStack ] do
         let! _ = addStack c.Db userId []
         ()
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
-    let! stack = ExploreStackRepository.get c.Db userId 1
+    let! stack = ExploreStackRepository.get c.Db userId stack_1
     Assert.Equal(1, stack.Value.Relationships.Single().Users)
-    let! stack = ExploreStackRepository.get c.Db userId 2
+    let! stack = ExploreStackRepository.get c.Db userId stack_2
     Assert.Equal(1, stack.Value.Relationships.Single().Users)
 
     let successfulRemove () = task {
-        let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
+        let! r = SanitizeRelationshipRepository.Remove c.Db leaf_1 stack_2 userId relationshipName
         Assert.Null r.Value
-        let! stack = ExploreStackRepository.get c.Db userId 1
+        let! stack = ExploreStackRepository.get c.Db userId stack_1
         Assert.Equal(0, stack.Value.Relationships.Count)
-        let! stack = ExploreStackRepository.get c.Db userId 2
+        let! stack = ExploreStackRepository.get c.Db userId stack_2
         Assert.Equal(0, stack.Value.Relationships.Count) }
     do! successfulRemove ()
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
-    let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
+    let! r = SanitizeRelationshipRepository.Remove c.Db leaf_2 stack_1 userId relationshipName
     Assert.Equal(sprintf "Relationship not found between source Stack #2 and target Stack #1 with name \"%s\"." relationshipName, r.error)
-    let! stack = ExploreStackRepository.get c.Db userId 1
+    let! stack = ExploreStackRepository.get c.Db userId stack_1
     Assert.Equal(1, stack.Value.Relationships.Count)
-    let! stack = ExploreStackRepository.get c.Db userId 2
+    let! stack = ExploreStackRepository.get c.Db userId stack_2
     Assert.Equal(1, stack.Value.Relationships.Count)
     do! successfulRemove ()
 
@@ -349,12 +349,12 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 [<Fact>]
 let ``Relationships can't be self related``(): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
-    Assert.Equal(1, actualBranchId)
+    Assert.Equal(branch_ 1, actualBranchId)
     let addRelationshipCommand =
         {   Name = ""
-            SourceStackId = 1
+            SourceStackId = stack_1
             TargetStackLink = string 1
         }
 
@@ -364,34 +364,34 @@ let ``Relationships can't be self related``(): Task<unit> = task {
 
 [<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
-    let leafIds = [1001; 1002]
+    let leafIds = [leaf_1; leaf_2]
     use c = new TestContainer()
     let relationshipName = "Test/Relationship"
     
     let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, collector) = task {
-        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also collects the relationship; .Single() below refers this this
+        let! x = SanitizeRelationshipRepository.Add c.Db user_1 creator // card creator also collects the relationship; .Single() below refers this this
         Assert.Null x.Value
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
-        let! stack = ExploreStackRepository.get c.Db userId 1
+        let! stack = ExploreStackRepository.get c.Db userId user_1
         let stack = stack.Value
         Assert.Equal(2, stack.Relationships.Single().Users)
         Assert.True(stack.Relationships.Single().IsCollected)
-        let! stack = ExploreStackRepository.get c.Db userId 2
+        let! stack = ExploreStackRepository.get c.Db userId user_2
         let stack = stack.Value
         Assert.Equal(2, stack.Relationships.Single().Users)
         Assert.True(stack.Relationships.Single().IsCollected)
 
         let successfulRemove () = task {
-            let! r = SanitizeRelationshipRepository.Remove c.Db collector.SourceStackId (int collector.TargetStackLink) userId relationshipName
+            let! r = SanitizeRelationshipRepository.Remove c.Db collector.SourceStackId (Guid.Parse collector.TargetStackLink) userId relationshipName
             Assert.Null r.Value
-            let! stack = ExploreStackRepository.get c.Db userId 1
+            let! stack = ExploreStackRepository.get c.Db userId stack_1
             let stack = stack.Value
             Assert.Equal(1, stack.Relationships.Count)
             Assert.False(stack.Relationships.Single().IsCollected)
-            let! stack = ExploreStackRepository.get c.Db userId 2
+            let! stack = ExploreStackRepository.get c.Db userId stack_2
             let stack = stack.Value
             Assert.Equal(1, stack.Relationships.Count)
             Assert.False(stack.Relationships.Single().IsCollected) }
@@ -399,22 +399,22 @@ let ``Directional relationship tests``(): Task<unit> = task {
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
-        let! r = SanitizeRelationshipRepository.Remove c.Db (int collector.TargetStackLink) collector.SourceStackId userId relationshipName
-        Assert.Equal(sprintf "Relationship not found between source Stack #%i and target Stack #%i with name \"%s\"." (int collector.TargetStackLink) collector.SourceStackId relationshipName, r.error)
-        let! stack = ExploreStackRepository.get c.Db userId 1
+        let! r = SanitizeRelationshipRepository.Remove c.Db (Guid.Parse collector.TargetStackLink) collector.SourceStackId userId relationshipName
+        Assert.Equal(sprintf "Relationship not found between source Stack #%i and target Stack #%A with name \"%s\"." (int collector.TargetStackLink) collector.SourceStackId relationshipName, r.error)
+        let! stack = ExploreStackRepository.get c.Db userId stack_1
         let stack = stack.Value
         Assert.Equal(1, stack.Relationships.Count)
         Assert.True(stack.Relationships.Single().IsCollected)
-        let! stack = ExploreStackRepository.get c.Db userId 2
+        let! stack = ExploreStackRepository.get c.Db userId stack_2
         let stack = stack.Value
         Assert.Equal(1, stack.Relationships.Count)
         Assert.True(stack.Relationships.Single().IsCollected)
             
         do! successfulRemove ()
-        let! r = SanitizeRelationshipRepository.Remove c.Db collector.SourceStackId (int collector.TargetStackLink) 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
+        let! r = SanitizeRelationshipRepository.Remove c.Db collector.SourceStackId (Guid.Parse collector.TargetStackLink) user_1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
         Assert.Null r.Value }
 
-    let userId = 2 // this user collects the card
+    let userId = user_2 // this user collects the card
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -422,7 +422,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
-    let userId = 3 // this user collects card in opposite order from user2
+    let userId = user_3 // this user collects card in opposite order from user2
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -433,51 +433,51 @@ let ``Directional relationship tests``(): Task<unit> = task {
 
 [<Fact>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
-    let leafIds = [1001; 1002]
+    let leafIds = [leaf_1; leaf_2]
     use c = new TestContainer()
     let relationshipName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
     let! commands = relationshipTestInit c relationshipName
     let testRelationships userId (creator, collector) = task {
-        let! x = SanitizeRelationshipRepository.Add c.Db 1 creator // card creator also collects the relationship; .Single() below refers this this
+        let! x = SanitizeRelationshipRepository.Add c.Db user_1 creator // card creator also collects the relationship; .Single() below refers this this
         Assert.Null x.Value
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
-        let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+        let! stack = ExploreStackRepository.get c.Db userId stack_1 |> TaskResult.getOk
         Assert.Equal(2, stack.Relationships.Single().Users)
         Assert.True(stack.Relationships.Single().IsCollected)
-        let! stack = ExploreStackRepository.get c.Db userId 2 |> TaskResult.getOk
+        let! stack = ExploreStackRepository.get c.Db userId stack_2 |> TaskResult.getOk
         Assert.Equal(2, stack.Relationships.Single().Users)
         Assert.True(stack.Relationships.Single().IsCollected)
 
         let successfulRemove () = task {
-            let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 userId relationshipName
+            let! r = SanitizeRelationshipRepository.Remove c.Db leaf_1 stack_2 userId relationshipName
             Assert.Null r.Value
-            let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+            let! stack = ExploreStackRepository.get c.Db userId stack_1 |> TaskResult.getOk
             Assert.Equal(1, stack.Relationships.Count)
             Assert.False(stack.Relationships.Single().IsCollected)
-            let! stack = ExploreStackRepository.get c.Db userId 2 |> TaskResult.getOk
+            let! stack = ExploreStackRepository.get c.Db userId stack_2 |> TaskResult.getOk
             Assert.Equal(1, stack.Relationships.Count)
             Assert.False(stack.Relationships.Single().IsCollected) }
         do! successfulRemove ()
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
-        let! r = SanitizeRelationshipRepository.Remove c.Db 2 1 userId relationshipName
+        let! r = SanitizeRelationshipRepository.Remove c.Db leaf_2 stack_1 userId relationshipName
         Assert.Equal(sprintf "Relationship not found between source Stack #2 and target Stack #1 with name \"%s\"." relationshipName, r.error)
-        let! stack = ExploreStackRepository.get c.Db userId 1 |> TaskResult.getOk
+        let! stack = ExploreStackRepository.get c.Db userId stack_1 |> TaskResult.getOk
         Assert.Equal(1, stack.Relationships.Count)
         Assert.True(stack.Relationships.Single().IsCollected)
-        let! stack = ExploreStackRepository.get c.Db userId 2 |> TaskResult.getOk
+        let! stack = ExploreStackRepository.get c.Db userId stack_2 |> TaskResult.getOk
         Assert.Equal(1, stack.Relationships.Count)
         Assert.True(stack.Relationships.Single().IsCollected)
             
         do! successfulRemove ()
-        let! r = SanitizeRelationshipRepository.Remove c.Db 1 2 1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
+        let! r = SanitizeRelationshipRepository.Remove c.Db leaf_1 stack_2 user_1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
         Assert.Null r.Value }
 
-    let userId = 2 // this user collects the card
+    let userId = user_2 // this user collects the card
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -485,7 +485,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
-    let userId = 3 // this user collects card in opposite order from user2
+    let userId = user_3 // this user collects card in opposite order from user2
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
@@ -536,7 +536,7 @@ let ``Sanitize search`` (input: string, expectedPlain: string, expectedWildcards
 [<Fact>]
 let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let basicTag = "basic"
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId [basicTag]
     let front = Guid.NewGuid().ToString()
@@ -550,45 +550,45 @@ let ``Card search works`` (): Task<unit> = task {
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "Front"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "\"Front"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "Fro*"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search <| Guid.NewGuid().ToString()
     Assert.Empty(cards.Results)
     let! cards = search front
-    Assert.Equal(2, cards.Results.Single().Id)
+    Assert.Equal(stack_2, cards.Results.Single().Id)
     let! cards = search back
-    Assert.Equal(2, cards.Results.Single().Id)
+    Assert.Equal(stack_2, cards.Results.Single().Id)
     let! cards = search clozeText
-    Assert.Equal(3, cards.Results.Single().Id)
+    Assert.Equal(stack_3, cards.Results.Single().Id)
 
     // testing deckSearch
     let search searchTerm = StackRepository.searchDeck c.Db userId 1 SearchOrder.Popularity searchTerm userId
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "Front"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "\"Front"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "Fro*"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search <| Guid.NewGuid().ToString()
     Assert.Empty(cards.Results)
     let! cards = search front
-    Assert.Equal(2, cards.Results.Single().Id)
+    Assert.Equal(stack_2, cards.Results.Single().Id)
     let! cards = search back
-    Assert.Equal(2, cards.Results.Single().Id)
+    Assert.Equal(stack_2, cards.Results.Single().Id)
     let! cards = search clozeText
-    Assert.Equal(3, cards.Results.Single().Id)
+    Assert.Equal(stack_3, cards.Results.Single().Id)
     
     // testing deckSearch from other user
-    let otherUserId = 1
+    let otherUserId = user_1
     let search searchTerm = StackRepository.searchDeck c.Db otherUserId 1 SearchOrder.Popularity searchTerm userId
     let! cards = search ""
     Assert.Equal(0, cards.Results.Count())
@@ -596,21 +596,21 @@ let ``Card search works`` (): Task<unit> = task {
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "Front"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "\"Front"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search "Fro*"
-    Assert.Equal(1, cards.Results.Single().Id)
+    Assert.Equal(stack_1, cards.Results.Single().Id)
     let! cards = search <| Guid.NewGuid().ToString()
     Assert.Empty(cards.Results)
     let! cards = search front
-    Assert.Equal(2, cards.Results.Single().Id)
+    Assert.Equal(stack_2, cards.Results.Single().Id)
     let! cards = search back
-    Assert.Equal(2, cards.Results.Single().Id)
+    Assert.Equal(stack_2, cards.Results.Single().Id)
     let! cards = search clozeText
-    Assert.Equal(3, cards.Results.Single().Id)
+    Assert.Equal(stack_3, cards.Results.Single().Id)
 
     let search = StackRepository.search c.Db userId 1 SearchOrder.Relevance
     // testing relevance
@@ -658,7 +658,7 @@ let ``Card search works`` (): Task<unit> = task {
 [<Fact>]
 let ``New user has TheCollective's card gromplates`` (): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! myGromplates = SanitizeGromplate.GetMine c.Db userId
     let theCollectiveId = c.Db.User.Single(fun x -> x.DisplayName = "The Collective").Id
     for gromplate in myGromplates do
@@ -667,7 +667,7 @@ let ``New user has TheCollective's card gromplates`` (): Task<unit> = task {
 
 [<Fact>]
 let ``Updating card gromplate with duplicate field names yields error`` (): Task<unit> = task {
-    let userId = 3
+    let userId = user_3
     let fieldName = Guid.NewGuid().ToString()
     let gromplate = Grompleaf.initialize |> ViewGrompleaf.load
     let gromplate = { gromplate with Fields = gromplate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
@@ -680,7 +680,7 @@ let ``Updating card gromplate with duplicate field names yields error`` (): Task
 [<Fact>]
 let ``Can create card gromplate and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let name = Guid.NewGuid().ToString()
     let initialGromplate = ViewGromplateWithAllLeafs.initialize userId
 
@@ -751,7 +751,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
 [<Fact>]
 let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let initialGromplate = ViewGromplateWithAllLeafs.initialize userId
     use sha512 = SHA512.Create()
     do! SanitizeGromplate.Update c.Db userId initialGromplate.Editable

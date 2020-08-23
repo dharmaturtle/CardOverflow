@@ -19,7 +19,7 @@ open CardOverflow.Sanitation
 
 [<Fact>]
 let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     
     let gromplateId = c.Db.Gromplate.Single(fun x -> x.Grompleafs.Any(fun x -> x.Name = "Basic")).Id
@@ -65,17 +65,17 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
         ["Front mutated"; "Back mutated"],
         latestLeaf.Fields.Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.Card.Single().UserId)
-    Assert.Equal(1002, c.Db.Card.Single().LeafId)
+    Assert.Equal(leaf_2, c.Db.Card.Single().LeafId)
     Assert.Equal(
         latestLeaf.Id,
         c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.GrompleafId)
     Assert.Equal(2, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.Leaf.Count())
-    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.StackId = 1))
-    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.StackId = 1))
+    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.StackId = stack_1))
+    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.StackId = stack_1))
     let createds = c.Db.Grompleaf.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
-    let! x = StackViewRepository.get c.Db 1
+    let! x = StackViewRepository.get c.Db stack_1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth.[0]
     Assert.Equal(
         """<!DOCTYPE html>
@@ -137,6 +137,6 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
-    do! testViewError GromplateRepository.latest 0 "Gromplate #0 not found"
-    do! testViewError GromplateRepository.leaf 0 "Gromplate Leaf #0 not found"
+    do! testViewError GromplateRepository.latest newGuid "Gromplate #0 not found"
+    do! testViewError GromplateRepository.leaf newGuid "Gromplate Leaf #0 not found"
     }

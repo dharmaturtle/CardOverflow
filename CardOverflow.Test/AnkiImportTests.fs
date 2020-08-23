@@ -24,7 +24,7 @@ open SimpleInjector.Lifestyles
 
 [<Fact>]
 let ``Import relationships has reduced Gromplates, also fieldvalue tests`` (): unit =
-    let userId = 3
+    let userId = user_3
     let gromplates =
         AnkiImportTestData.relationships.Cols.Single().Models
         |> Anki.parseModels userId
@@ -169,7 +169,7 @@ let ``Import relationships has reduced Gromplates, also fieldvalue tests`` (): u
 [<Fact>]
 let ``Import relationships has relationships`` (): Task<unit> = task {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     let! r = AnkiImporter.save c.Db AnkiImportTestData.relationships userId Map.empty
     Assert.Null r.Value
     
@@ -223,7 +223,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
 [<Fact>]
 let ``Can import myHighPriority, but really testing duplicate card gromplates`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let userId = 3
+    let userId = user_3
     do! AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     
     Assert.Equal(2, c.Db.Stack.Count())
@@ -237,7 +237,7 @@ let ``Can import myHighPriority, but really testing duplicate card gromplates`` 
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task<unit> = task {
     use c = new TestContainer(false, ankiFileName)
-    let userId = 3
+    let userId = user_3
     let! x = AnkiImporter.save c.Db ankiDb userId Map.empty
     Assert.Null x.Value
     Assert.Equal<IEnumerable<string>>(
@@ -341,7 +341,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     }
 
 let assertHasHistory db ankiDb: Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     do! AnkiImporter.save db ankiDb userId Map.empty
     Assert.Equal(110, db.History.Count(fun x -> x.UserId = userId))
     } |> TaskResult.getOk)
@@ -386,7 +386,7 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
-    let userId = 3
+    let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId [ "Tag"; "Deck:Default" ]
     Assert.Equal(2, c.Db.Tag.Count())
 
@@ -399,8 +399,8 @@ let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> =
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
-    let theCollectiveId = 2
-    let userId = 3
+    let theCollectiveId = user_2
+    let userId = user_3
     for _ in [1..5] do
         do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
         Assert.Equal(2, c.Db.CardSetting.Count(fun x -> x.UserId = userId))
@@ -433,7 +433,7 @@ let ``Importing AnkiDb, then again with different card lapses, updates db`` anki
     let easeFactorA = 13s
     let easeFactorB = 45s
     use c = new TestContainer(false, ankiFileName)
-    let userId = 3
+    let userId = user_3
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
     Assert.Equal(10, c.Db.Card.Count(fun x -> x.EaseFactorInPermille = 0s))
     simpleAnkiDb.Cards |> List.iter (fun x -> x.Factor <- int64 easeFactorA)

@@ -123,14 +123,14 @@ module Generators =
                     })
         }
     let notificationEntity = gen {
-        let! id = Arb.generate<int>
+        let! id = Arb.generate<Guid>
         let! timestamp = Arb.generate<DateTime>
         let! message = Arb.generate<string>
         let! notificationType = Gen.gen<NotificationType>
         return
             NotificationEntity(
                 Id = id,
-                SenderId = Gen.sample1 [1; 2; 3],
+                SenderId = Gen.sample1 [ user_1; user_2; user_3 ],
                 Created = DateTime.SpecifyKind(timestamp, DateTimeKind.Unspecified),
                 Type = notificationType,
                 Message = message
@@ -145,10 +145,12 @@ module Generators =
             if not <| array.Contains id then
                 array.[Array.IndexOf(array, initialValue)] <- id
         return array }
+    let uniqueGuids length =
+        Arb.generate<Guid> |> Gen.listOfLength length
     let StackLeafIds length = gen {
-        let! stacks = uniqueInts length
-        let! branches = uniqueInts length
-        let! leafs = uniqueInts length
+        let! stacks = uniqueGuids length
+        let! branches = uniqueGuids length
+        let! leafs = uniqueGuids length
         return
             Seq.zip3 stacks branches leafs
             |> Seq.map StackLeafIds.fromTuple
@@ -157,11 +159,11 @@ module Generators =
     let StackLeafIds3 =
         StackLeafIds 3
     let StackLeafIndex length = gen {
-        let! stacks = uniqueInts length
-        let! branches = uniqueInts length
-        let! leafs = uniqueInts length
+        let! stacks = uniqueGuids length
+        let! branches = uniqueGuids length
+        let! leafs = uniqueGuids length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
-        let! deckId = Arb.generate<int> |> Gen.listOfLength length
+        let! deckId = Arb.generate<Guid> |> Gen.listOfLength length
         return
             Seq.zip5 stacks branches leafs indexes deckId
             |> Seq.map StackLeafIndex.fromTuple

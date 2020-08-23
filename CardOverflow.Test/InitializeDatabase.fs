@@ -6,6 +6,7 @@ open CardOverflow.Api
 open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
+open CardOverflow.Test
 open ContainerExtensions
 open System
 open Xunit
@@ -28,9 +29,9 @@ let ankiModels = "{\"1554689669581\": {\"sortf\": 0, \"did\": 1, \"latexPre\": \
 let deleteAndRecreateDatabase(db: CardOverflowDb) = task {
     db.Database.EnsureDeleted() |> ignore
     db.Database.EnsureCreated() |> ignore
-    do! UserRepository.create db 1 "Admin"
-    do! UserRepository.create db 2 "The Collective"
-    do! UserRepository.create db 3 "RoboTurtle"
+    do! UserRepository.create db user_1 "Admin"
+    do! UserRepository.create db user_2 "The Collective"
+    do! UserRepository.create db user_3 "RoboTurtle"
     let theCollective = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.DisplayName = "The Collective")
     let toEntity (gromplate: AnkiGrompleaf) =
         gromplate.CopyToNew theCollective.Id <| theCollective.DefaultCardSetting

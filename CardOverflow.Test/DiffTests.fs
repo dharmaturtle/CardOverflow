@@ -50,7 +50,7 @@ let ``Diff LeafChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
     let theirs = stackLeafIndexes
     let mine =
         {   stackLeafIndexes.[0] with
-                LeafId = Int32.MinValue
+                LeafId = newGuid
         }   |> List.singleton
     
     Diff.ids theirs mine
@@ -67,8 +67,8 @@ let ``Diff BranchChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
     let theirs = stackLeafIndexes
     let mine =
         {   stackLeafIndexes.[0] with
-                BranchId = Int32.MinValue
-                LeafId = Int32.MinValue
+                BranchId = newGuid
+                LeafId = newGuid
         }   |> List.singleton
     
     Diff.ids theirs mine

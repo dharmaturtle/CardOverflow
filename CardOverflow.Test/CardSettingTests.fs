@@ -19,17 +19,17 @@ open CardOverflow.Sanitation
 
 [<Fact>]
 let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> = task {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
-    let! options = SanitizeCardSettingRepository.getAll c.Db userId
-    let oldId = 3
-    Assert.Equal(oldId, options.Single().Id)
+    let! settings = SanitizeCardSettingRepository.getAll c.Db userId
+    let oldId = setting_3
+    Assert.Equal(oldId, settings.Single().Id)
     let options =
-        options.Append
+        settings.Append
             { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
                 IsDefault = false }
         |> toResizeArray
-    let newId = oldId + 1
+    let newId = setting_ 4
 
     let! ids = SanitizeCardSettingRepository.upsertMany c.Db userId options
     
@@ -66,7 +66,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     do! canUpdateIsDefault newId
 
     // Insert new card
-    let branchId = 1
+    let branchId = branch_1
     let! gromplate = FacetRepositoryTests.basicGromplate c.Db
     let! r =
         SanitizeStackRepository.Update c.Db userId []

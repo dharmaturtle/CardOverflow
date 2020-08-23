@@ -59,12 +59,12 @@ type NotificationTests () =
 [<Fact>]
 let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult {
     use c = new TestContainer()
-    let authorId = 3
-    let publicDeckId = 3
+    let authorId = user_3
+    let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    let followerId = 1
-    let followerDefaultDeckId = 1
-    let newDeckId = 4
+    let followerId = user_1
+    let followerDefaultDeckId = deck_1
+    let newDeckId = deck_ 4
     let newDeckName = Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck newDeckName) true None
     do! FacetRepositoryTests.addBasicStack c.Db authorId []
@@ -81,12 +81,12 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
         Assert.Empty c.Db.ReceivedNotification
     }
     let ids =
-        {   StackId = 1
-            BranchId = 1
-            LeafId = 1001 }
+        {   StackId = stack_1
+            BranchId = branch_1
+            LeafId = leaf_1 }
 
     do! assertNotificationThenDelete
-            {   Id = 1
+            {   Id = notification_1
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
                 Created = DateTime.MinValue
@@ -108,7 +108,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                                              Collected = collected
                                              New = { ids with LeafId = newLeafId } } }
 
-    do! expectedDeckUpdatedStackNotification 2 1002 None |> assertNotificationThenDelete
+    do! expectedDeckUpdatedStackNotification notification_2 leaf_2 None |> assertNotificationThenDelete
 
     // works with DeckUpdatedStack, collected
     let collectedLeaf = ids.LeafId
@@ -120,19 +120,19 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
             BranchId = ids.BranchId
             LeafId = collectedLeaf } |> Some
     
-    do! expectedDeckUpdatedStackNotification 3 1003 collected
+    do! expectedDeckUpdatedStackNotification notification_3 leaf_3 collected
         |> assertNotificationThenDelete
     
     // works with DeckDeletedStack
     do! StackRepository.uncollectStack c.Db authorId ids.StackId
 
     do! assertNotificationThenDelete
-            {   Id = 4
+            {   Id = notification_ 4
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
                 Created = DateTime.MinValue
                 Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
-                                             Deleted = { ids with LeafId = 1003 } } }
+                                             Deleted = { ids with LeafId = leaf_3 } } }
     } |> TaskResult.getOk)

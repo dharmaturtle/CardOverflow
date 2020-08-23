@@ -26,7 +26,7 @@ open FsToolkit.ErrorHandling
 [<Theory>]
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer(false, ankiFileName)
     
     do!
@@ -45,7 +45,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
 [<Theory>]
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer(false, ankiFileName)
 
     for _ in [1..3] do
@@ -101,7 +101,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
 
 [<Fact>]
 let ``AnkiImporter import cards that have the same collectHash as distinct cards`` (): Task<unit> = (taskResult { // lowTODO, perhaps they should be the same card
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     
     do! AnkiImporter.save c.Db duplicatesFromLightyear userId Map.empty
@@ -125,7 +125,7 @@ let testCommields (c: TestContainer) userId stackId expected = task {
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     let testCommields = testCommields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
@@ -171,12 +171,12 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         <| c.Db.Leaf
             .Where(fun x -> x.FieldValues.Contains("acute"))
     Assert.True(c.Db.Leaf.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
-    let! stack = ExploreStackRepository.get c.Db userId 1
+    let! stack = ExploreStackRepository.get c.Db userId stack_1
     let stack = stack.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
         stack.Default.Leaf.StrippedFront)
-    let! stack = ExploreStackRepository.get c.Db userId 1
+    let! stack = ExploreStackRepository.get c.Db userId stack_1
     Assert.Empty stack.Value.Relationships
     Assert.Empty c.Db.Relationship
 
@@ -187,13 +187,13 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
 
 [<Fact>]
 let ``LeafView.load works on cloze`` (): Task<unit> = task {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
     let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId []
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
-    let! view = StackViewRepository.leaf c.Db 1001
+    let! view = StackViewRepository.leaf c.Db leaf_1
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
     Assert.Equal<string seq>(
@@ -203,19 +203,19 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
 
 [<Fact>]
 let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     let getCard branchId =
         c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
         |> Task.map (fun x -> x.StackId)
         |> Task.bind (fun stackId -> StackRepository.GetCollected c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
-    let branchId = 1
+    let branchId = branch_1
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId []
     Assert.equal branchId actualBranchId
-    let ccId = 1
+    let ccId = card_1
     
     // insert new stack with invalid settingsId
-    let invalidCardId = 1337
+    let invalidCardId = newGuid
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
                 CardSettingId = invalidCardId }
@@ -223,7 +223,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
     // insert new stack with someone else's settingId
-    let someoneElse'sSettingId = userId - 1
+    let someoneElse'sSettingId = setting_2
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
                 CardSettingId = someoneElse'sSettingId }
@@ -231,7 +231,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
     // insert new stack with invalid deckId
-    let invalidDeckId = 1337
+    let invalidDeckId = newGuid
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
                 DeckId = invalidDeckId }
@@ -239,7 +239,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
     // insert new stack with someone else's deckId
-    let someoneElse'sDeckId = userId - 1
+    let someoneElse'sDeckId = deck_2
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
                 DeckId = someoneElse'sDeckId }
@@ -288,7 +288,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
 
 [<Fact>]
 let ``Create cloze card works`` (): Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     let testCommields = testCommields c userId
 
@@ -344,7 +344,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
 
     // go from 1 cloze to 2 clozes
-    let branchId = 1
+    let branchId = branch_1
     let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
     let command =
         { command with
@@ -392,17 +392,17 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
 [<Fact>]
 let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId []
-    let stackId = 1
-    let branchId_og = 1
+    let stackId = stack_1
+    let branchId_og = branch_1
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     let! revisions = StackRepository.Revisions c.Db userId branchId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
     // branching a stack collects it
-    let branchId_alt = 2
+    let branchId_alt = branch_2
     do! FacetRepositoryTests.update c userId
             (VNewBranchSourceStackId stackId) id branchId_alt
 
@@ -422,23 +422,23 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     Assert.equal 2 revisions.SortedMeta.Length
 
     // invalid branchId
-    let invalidBranchId = 1337
+    let invalidBranchId = newGuid
     let! (revisions: Result<_, _>) = StackRepository.Revisions c.Db userId invalidBranchId
 
-    Assert.equal (sprintf "BranchId #%i not found" invalidBranchId) revisions.error
+    Assert.equal (sprintf "BranchId #%A not found" invalidBranchId) revisions.error
     } |> TaskResult.getOk)
 
 //[<Fact>] // medTODO uncomment when you bring back communals
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
-    let userId = 3
+    let userId = user_3
     use c = new TestContainer()
     let! gromplate =
         TestGromplateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
-    let stackId = 1
-    let leafId = 1001
+    let stackId = stack_1
+    let leafId = leaf_1
 
     let test customTest = task {
         let! _ =
@@ -467,10 +467,10 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
             |> Task.map Result.getOk
         let! field = c.Db.Commield.SingleAsync()
         Assert.Equal(stackId, field.Id)
-        Assert.Equal(3, field.AuthorId)
+        Assert.Equal(user_3, field.AuthorId)
         let! leaf = c.Db.Commeaf.Include(fun x -> x.Commeaf_Leafs).SingleAsync(fun x -> x.Value = communalValue)
         Assert.Equal(leafId, leaf.Id)
-        Assert.Equal(1, leaf.CommieldId)
+        Assert.Equal(commield_1, leaf.CommieldId)
         Assert.Equal("Back", leaf.FieldName)
         Assert.Equal(communalValue, leaf.Value)
         Assert.Null leaf.Modified
@@ -478,11 +478,11 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         customTest leaf }
     do! test <| fun i ->
             Assert.Equal(leafId, i.Commeaf_Leafs.Single().LeafId)
-            Assert.Equal(1001, i.Commeaf_Leafs.Single().CommeafId)
+            Assert.Equal(commeaf_1, i.Commeaf_Leafs.Single().CommeafId)
             Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
     do! test <| fun i ->
-            Assert.Equal([1001; 1002], i.Commeaf_Leafs.Select(fun x -> x.LeafId))
-            Assert.Equal([1001; 1001], i.Commeaf_Leafs.Select(fun x -> x.CommeafId))
+            Assert.Equal([leaf_1   ; leaf_2   ], i.Commeaf_Leafs.Select(fun x -> x.LeafId))
+            Assert.Equal([commeaf_1; commeaf_1], i.Commeaf_Leafs.Select(fun x -> x.CommeafId))
             Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
     Assert.SingleI c.Db.Commield
     Assert.SingleI c.Db.Commeaf }
@@ -513,7 +513,7 @@ let ``AnkiDefaults.gromplateIdByHash is same as initial database`` (): unit =
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {
-    let userId = 3
+    let userId = user_3
     let pathToCollection = @""
     
     use c = new TestContainer()

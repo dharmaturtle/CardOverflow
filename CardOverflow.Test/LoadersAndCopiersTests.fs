@@ -3,6 +3,7 @@ module LoadersAndCopiersTests
 open LoadersAndCopiers
 open Helpers
 open CardOverflow.Api
+open CardOverflow.Test
 open CardOverflow.Debug
 open CardOverflow.Entity
 open CardOverflow.Pure
@@ -17,7 +18,7 @@ open SimpleInjector.Lifestyles
 
 [<Fact>]
 let ``CardSettings load and copy defaultCardSettings are equal`` (): unit =
-    let record = CardSettingsRepository.defaultCardSettings.CopyToNew 3 |> CardSetting.load true
+    let record = CardSettingsRepository.defaultCardSettings.CopyToNew user_3 |> CardSetting.load true
 
     Assert.Equal(CardSettingsRepository.defaultCardSettings, record)
 

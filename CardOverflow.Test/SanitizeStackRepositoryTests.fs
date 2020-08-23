@@ -23,7 +23,7 @@ open FsCheck.Xunit
 [<Property(MaxTest = 1)>]
 let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdGen): unit =
     (taskResult {
-        let userId = 3
+        let userId = user_3
         use c = new TestContainer()
         let! options =
             SanitizeCardSettingRepository.getAll c.Db userId
@@ -66,8 +66,8 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             }
 
         let! gromplate = FacetRepositoryTests.basicGromplate c.Db
-        let stackId = 1
-        let branchId = 1
+        let stackId = stack_1
+        let branchId = branch_1
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ basicCommand ]
@@ -78,7 +78,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             StackRepository.GetCollected c.Db userId stackId
             |>%% Assert.Single
         Assert.equal
-            {   CardId = 1
+            {   CardId = card_1
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -97,8 +97,8 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
     
         // works on multiple collected cards, e.g. reversedBasicGromplate
         let! gromplate = FacetRepositoryTests.reversedBasicGromplate c.Db
-        let stackId = 2
-        let branchId = 2
+        let stackId = stack_2
+        let branchId = branch_2
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
@@ -107,7 +107,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
 
         let! (ccs: Card ResizeArray) = StackRepository.GetCollected c.Db userId stackId
         Assert.equal
-            {   CardId = 2
+            {   CardId = card_2
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -124,7 +124,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             }
             ccs.[0]
         Assert.equal
-            {   CardId = 3
+            {   CardId = card_3
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -142,7 +142,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             ccs.[1]
     
         // doesn't work with someone else's deckId
-        let failDeckCommand = { failDeckCommand with DeckId = 1 }
+        let failDeckCommand = { failDeckCommand with DeckId = deck_1 }
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
@@ -150,7 +150,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with someone else's cardSettingId
-        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = 1 }
+        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = setting_1 }
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
@@ -158,7 +158,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
         // doesn't work with invalid deckId
-        let failDeckCommand = { failDeckCommand with DeckId = 1337 }
+        let failDeckCommand = { failDeckCommand with DeckId = newGuid }
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
@@ -166,7 +166,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with invalid cardSettingId
-        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = 1337 }
+        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = newGuid }
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
