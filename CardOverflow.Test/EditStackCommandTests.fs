@@ -40,8 +40,9 @@ let test text expected grompleaf ids =
                             f.Name
                 }).ToList()
             Grompleaf = grompleaf
-            Kind = NewOriginal_TagIds (ids, [])
+            Kind = NewOriginal_TagIds []
             Title = null
+            Ids = ids_1
         }
     if grompleaf.FirstTemplate.Name = "Cloze" then
         Assert.Equal<string seq>(["Front"], clozeFields view.Grompleaf.Templates)
@@ -62,7 +63,7 @@ let ``EditStackCommand's back works with basic`` (): unit =
                     ShortBack = ""
                 } |> List.singleton |>Standard
             } |> ViewGrompleaf.load)
-            UpsertIds.create
+            ids_1
     testOrdinary
         "The front"
         [ "The front Back" ]
@@ -108,8 +109,9 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
                     } |> ViewGrompleaf.load
-                Kind = NewOriginal_TagIds (UpsertIds.create, [])
+                Kind = NewOriginal_TagIds []
                 Title = null
+                Ids = ids_1
             }
         Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.Grompleaf.Templates)
         view.Backs.Value

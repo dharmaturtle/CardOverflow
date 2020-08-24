@@ -345,7 +345,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
     // go from 1 cloze to 2 clozes
     let branchId = branch_1
-    let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -360,7 +360,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 5
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -375,7 +375,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
     
     // multiple c1's works
-    let! command = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId branchId
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -404,14 +404,14 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     // branching a stack collects it
     let branchId_alt = branch_2
     do! FacetRepositoryTests.update c userId
-            (VNewBranchSourceStackId stackId) id branchId_alt
+            (VNewBranch_SourceStackId stackId) id branchId_alt
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // updating an uncollected branch doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdateBranchId branchId_og) id branchId_og
+            (VUpdate_BranchId branchId_og) id branchId_og
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
@@ -461,8 +461,9 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                 })
                             .ToList()
                     Grompleaf = gromplate
-                    Kind = NewOriginal_TagIds (UpsertIds.create, [])
+                    Kind = NewOriginal_TagIds []
                     Title = null
+                    Ids = ids_1
                 }
             |> Task.map Result.getOk
         let! field = c.Db.Commield.SingleAsync()

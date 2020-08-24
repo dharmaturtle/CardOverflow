@@ -139,3 +139,6 @@ module Constants =
     let commeaf_1      = commeaf_ 1
     let commeaf_2      = commeaf_ 2
     let commeaf_3      = commeaf_ 3
+    let ids_1          = UpsertIds.fromTuple(stack_1, branch_1, leaf_1, [card_1])
+    let ids_2          = UpsertIds.fromTuple(stack_2, branch_2, leaf_2, [card_2])
+    let ids_3          = UpsertIds.fromTuple(stack_3, branch_3, leaf_3, [card_3])

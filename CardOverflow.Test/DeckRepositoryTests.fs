@@ -578,7 +578,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     // edit card notifies follower
     let leaf2 = { leaf1 with LeafId = leaf_2 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -610,7 +610,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! StackRepository.CollectCard c.Db followerId leaf2.LeafId
     let leaf3 = { leaf2 with LeafId = leaf_3 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId branchId)
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -847,7 +847,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdateBranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id branchId
     let newLeafId = leaf_2
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
@@ -944,7 +944,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdateBranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id branchId
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
@@ -1054,7 +1054,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdateBranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id branchId
     let newLeafId = leaf_2
     
     do! follow (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
@@ -1248,7 +1248,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
                 Unchanged = [ standardIds ] }
 
     // author switches to new branch
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranchSourceStackId standardIds.StackId)
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId standardIds.StackId) ids_1
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let newBranchIds =
         { standardIds with
@@ -1277,7 +1277,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     do! StackRepository.CollectCard c.Db followerId newBranchIds.LeafId
     // author switches to new leaf
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdateBranchId newBranchIds.BranchId)
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId newBranchIds.BranchId) ids_1
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let newLeafIds =
         { newBranchIds with

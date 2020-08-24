@@ -77,8 +77,9 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                         Value = Guid.NewGuid().ToString()
                     }).ToList()
                 Grompleaf = gromplate
-                Kind = NewOriginal_TagIds (UpsertIds.create, [])
+                Kind = NewOriginal_TagIds []
                 Title = null
+                Ids = ids_1
             }
     Assert.Equal(branchId, r.Value)
 

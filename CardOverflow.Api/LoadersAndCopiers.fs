@@ -321,7 +321,7 @@ type LeafView with
         let entity = LeafEntity()
         this.CopyToX entity commields
         entity
-    member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields =
+    member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields leafId =
         let e = this.CopyToNew commields
         if branch.Stack = null then
             if branch.StackId = Guid.Empty then failwith "StackId is Guid.Empty, you gotta .Include it"
@@ -329,6 +329,7 @@ type LeafView with
         else
             e.Stack <- branch.Stack
             e.StackId <- branch.Stack.Id
+        e.Id <- leafId
         e.Branch <- branch
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive

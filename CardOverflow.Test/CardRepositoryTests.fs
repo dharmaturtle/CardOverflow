@@ -39,7 +39,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
-            (VUpdateBranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id branchId
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card // still empty after editing then deleting
 
@@ -97,7 +97,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     Assert.Equal(cc.CardState, CardState.Suspended)
 
     do! FacetRepositoryTests.update c userId
-            (VUpdateBranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id branchId
         |> TaskResult.getOk
     let! cc = StackRepository.GetCollected c.Db userId cc.StackId
     let cc = cc.Value.Single()
@@ -117,7 +117,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
     do! FacetRepositoryTests.update c userId
-            (VUpdateBranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = leaf_2
     let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
@@ -199,7 +199,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     do! assertDeck newDeckId
 
     // collecting/updating to *new* leaf doesn't change deckId or ccId
-    let! stackCommand = VUpdateBranchId branchId |> SanitizeStackRepository.getUpsert c.Db
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
 
     let! ccId = StackRepository.collect c.Db collectorId leaf_2 None
@@ -251,11 +251,11 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.LeafId = ci1_1));
 
     // update branch
-    let! r = SanitizeStackRepository.getUpsert c.Db <| VUpdateBranchId b1
+    let! r = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId b1) ids_1
     let command =
         { r.Value with
             FieldValues = [].ToList()
-            Kind = Update_BranchId_Title (b1, null)
+            Kind = NewLeaf_Title null
         }
     let! branchId = SanitizeStackRepository.Update c.Db authorId [] command |> TaskResult.getOk
     let ci1_2 = leaf_3

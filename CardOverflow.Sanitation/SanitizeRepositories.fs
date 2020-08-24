@@ -683,6 +683,7 @@ type ViewEditStackCommand = {
     Grompleaf: ViewGrompleaf
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
+    Ids: UpsertIds
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
@@ -719,19 +720,20 @@ type ViewEditStackCommand = {
                 match this.Kind with
                 | NewOriginal_TagIds _
                 | NewCopy_SourceLeafId_TagIds _ -> this.Kind
-                | NewBranch_SourceStackId_Title (id, _) -> NewBranch_SourceStackId_Title (id, title)
-                | Update_BranchId_Title (id, _) -> Update_BranchId_Title(id, title)
+                | NewBranch_Title _ -> NewBranch_Title title
+                | NewLeaf_Title _ -> NewLeaf_Title title
         {   EditStackCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
             Grompleaf = this.Grompleaf |> ViewGrompleaf.copyTo
             Kind = kind
+            Ids = this.Ids
         }
 
 type UpsertCardSource =
-    | VNewOriginal_UserId of UpsertIds * Guid
-    | VNewCopySource_LeafId of UpsertIds * Guid
-    | VNewBranchSourceStackId of Guid
-    | VUpdateBranchId of Guid
+    | VNewOriginal_UserId of Guid
+    | VNewCopySource_LeafId of Guid
+    | VNewBranch_SourceStackId of Guid
+    | VUpdate_BranchId of Guid
 
 module SanitizeCardRepository =
     let validateCommands (db: CardOverflowDb) userId (commands: EditCardCommand ResizeArray) = taskResult {
@@ -775,7 +777,7 @@ module SanitizeCardRepository =
     }
 
 module SanitizeStackRepository =
-    let getUpsert (db: CardOverflowDb) source =
+    let getUpsert (db: CardOverflowDb) source ids =
         let toCommand kind (branch: LeafEntity) =
             {   EditSummary = ""
                 FieldValues =
@@ -788,11 +790,12 @@ module SanitizeStackRepository =
                     match kind with
                     | NewOriginal_TagIds _
                     | NewCopy_SourceLeafId_TagIds _ -> null
-                    | NewBranch_SourceStackId_Title (_, title)
-                    | Update_BranchId_Title (_, title) -> title
+                    | NewBranch_Title title
+                    | NewLeaf_Title title -> title
+                Ids = ids
             }
         match source with
-        | VNewOriginal_UserId (ids, userId) ->
+        | VNewOriginal_UserId userId ->
             db.User_Grompleaf.Include(fun x -> x.Grompleaf).FirstOrDefaultAsync(fun x -> x.UserId = userId)
             |>% (Result.requireNotNull (sprintf "User #%A doesn't have any templates" userId))
             |>%% (fun j ->
@@ -802,38 +805,39 @@ module SanitizeStackRepository =
                             <| Fields.fromString j.Grompleaf.Fields
                             <| ""
                     Grompleaf = j.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
-                    Kind = NewOriginal_TagIds (ids, [])
+                    Kind = NewOriginal_TagIds []
                     Title = null
+                    Ids = ids
                 }
             )
-        | VNewBranchSourceStackId stackId ->
+        | VNewBranch_SourceStackId stackId ->
             db.Stack.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%A not found." stackId)
-            |>%% fun stack -> toCommand (NewBranch_SourceStackId_Title (stackId, "New Branch")) stack.DefaultBranch.Latest
-        | VNewCopySource_LeafId (ids, leafId) ->
+            |>%% fun stack -> toCommand (NewBranch_Title "New Branch") stack.DefaultBranch.Latest
+        | VNewCopySource_LeafId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Branch Leaf #%A not found." leafId)
-            |>%% toCommand (NewCopy_SourceLeafId_TagIds (ids, leafId, []))
-        | VUpdateBranchId branchId ->
+            |>%% toCommand (NewCopy_SourceLeafId_TagIds (leafId, []))
+        | VUpdate_BranchId branchId ->
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
-            |>%% fun branch -> toCommand (Update_BranchId_Title (branchId, branch.Name)) branch.Latest
+            |>%% fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! leaf = UpdateRepository.stack db userId stackCommand.load
         let! (ccs: CardEntity list) =
             match stackCommand.Kind with
-            | Update_BranchId_Title _ ->
+            | NewLeaf_Title _ ->
                 db.Leaf.AddI leaf
                 StackRepository.collectStackNoSave db userId leaf false |>% Ok
-            | NewBranch_SourceStackId_Title _ ->
+            | NewBranch_Title _ ->
                 StackRepository.collectStackNoSave db userId leaf true |>% Ok
-            | NewOriginal_TagIds (cardIds, tagIds)
-            | NewCopy_SourceLeafId_TagIds (cardIds, _, tagIds) -> taskResult {
+            | NewOriginal_TagIds tagIds
+            | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
                 let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true
                 for tagId in tagIds do
                     ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))
                 for cc in ccs do
-                    cc.Id <- cardIds.CardIds.[int cc.Index]
+                    cc.Id <- stackCommand.Ids.CardIds.[int cc.Index]
                 return ccs
                 }
             |>%% List.sortBy (fun x -> x.Index)

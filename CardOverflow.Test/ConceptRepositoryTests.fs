@@ -51,7 +51,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
     let oldLeafId = leaf_1
     let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
@@ -104,7 +104,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdateBranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
     let oldLeafId = leaf_1
     let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
@@ -255,7 +255,8 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
         {   EditStackCommand.EditSummary = ""
             FieldValues = [].ToList()
             Grompleaf = gromplate |> ViewGrompleaf.copyTo
-            Kind = NewBranch_SourceStackId_Title(stackId, "New Branch")
+            Kind = NewBranch_Title "New Branch"
+            Ids = ids_1
         } |> UpdateRepository.stack c.Db authorId
 
     let! stack = ExploreStackRepository.get c.Db authorId stackId |> TaskResult.getOk

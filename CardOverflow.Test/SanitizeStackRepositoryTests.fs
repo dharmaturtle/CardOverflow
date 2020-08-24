@@ -61,8 +61,9 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
                 Grompleaf = gromplate
-                Kind = NewOriginal_TagIds (UpsertIds.create, [])
+                Kind = NewOriginal_TagIds []
                 Title = null
+                Ids = ids_1
             }
 
         let! gromplate = FacetRepositoryTests.basicGromplate c.Db

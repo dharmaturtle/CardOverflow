@@ -516,13 +516,13 @@ module UpdateRepository =
         taskResult {
             let! (branch: BranchEntity) =
                 match command.Kind with
-                    | Update_BranchId_Title (branchId, name) ->
-                        branchNameCheck branchId name
+                    | NewLeaf_Title name ->
+                        branchNameCheck command.Ids.BranchId name
                         |> TaskResult.bind (fun () ->
-                            db.Branch.Include(fun x -> x.Stack).SingleOrDefaultAsync(fun x -> x.Id = branchId && x.AuthorId = userId)
-                            |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%A doesn't exist or you aren't its author" branchId)
+                            db.Branch.Include(fun x -> x.Stack).SingleOrDefaultAsync(fun x -> x.Id = command.Ids.BranchId && x.AuthorId = userId)
+                            |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%A doesn't exist or you aren't its author" command.Ids.BranchId)
                         )
-                    | NewCopy_SourceLeafId_TagIds (_, leafId, _) ->
+                    | NewCopy_SourceLeafId_TagIds (leafId, _) ->
                         BranchEntity(
                             AuthorId = userId,
                             Stack =
@@ -530,23 +530,24 @@ module UpdateRepository =
                                     AuthorId = userId,
                                     CopySourceId = Nullable leafId
                                 )) |> Ok |> Task.FromResult
-                    | NewBranch_SourceStackId_Title (stackId, name) ->
-                        branchNameCheckStackId stackId name
+                    | NewBranch_Title name ->
+                        branchNameCheckStackId command.Ids.StackId name
                         |> TaskResult.map(fun () ->
                             BranchEntity(
+                                Id = command.Ids.BranchId,
                                 AuthorId = userId,
                                 Name = name,
-                                StackId = stackId))
-                    | NewOriginal_TagIds (ids, _) ->
+                                StackId = command.Ids.StackId))
+                    | NewOriginal_TagIds _ ->
                         BranchEntity(
-                            Id = ids.BranchId,
+                            Id = command.Ids.BranchId,
                             AuthorId = userId,
                             Stack =
                                 StackEntity(
-                                    Id = ids.StackId,
+                                    Id = command.Ids.StackId,
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            return command.CardView.CopyFieldsToNewLeaf branch command.EditSummary []
+            return command.CardView.CopyFieldsToNewLeaf branch command.EditSummary [] command.Ids.LeafId
         }
 
 module NotificationRepository =
