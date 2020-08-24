@@ -102,9 +102,9 @@ let ``Delete and Recreate localhost's CardOverflow Database via SqlScript`` (): 
 
 let fastResetScript =
     let insertMasterData =
-        Regex("""^INSERT INTO.*SELECT pg_catalog\.setval\('public\..*?;""", RegexOptions.Singleline + RegexOptions.Multiline)
+        Regex("""(^INSERT INTO.*?;.*?)ALTER""", RegexOptions.Singleline + RegexOptions.Multiline)
             .Match(File.ReadAllText @"..\netcoreapp3.1\Stuff\InitializeDatabase.sql")
-            .Value
+            .Groups.[1].Value
     sprintf // https://stackoverflow.com/a/12082038
         """SET session_replication_role = 'replica';
         DO
