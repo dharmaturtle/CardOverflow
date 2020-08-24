@@ -321,8 +321,8 @@ CREATE FUNCTION public.fn_tr_user_afterinsert() RETURNS trigger
         outer_default_card_setting_id uuid NOT NULL := '00000000-0000-0000-0000-000000000000';
         outer_default_deck_id         uuid NOT NULL := '00000000-0000-0000-0000-000000000000';
     BEGIN
-        outer_default_card_setting_id := (SELECT id FROM card_setting cs WHERE cs.user_id = 0 LIMIT 1);
-        outer_default_deck_id         := (SELECT id FROM deck          d WHERE  d.user_id = 0 LIMIT 1);
+        outer_default_card_setting_id := (SELECT id FROM card_setting cs WHERE cs.user_id = '00000000-0000-0000-0000-000000000000' LIMIT 1);
+        outer_default_deck_id         := (SELECT id FROM deck          d WHERE  d.user_id = '00000000-0000-0000-0000-000000000000' LIMIT 1);
 
         UPDATE card_setting cs
         SET    user_id = NEW.id
