@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NUlid;
 
 namespace CardOverflow.Entity
 {
@@ -12,7 +13,7 @@ namespace CardOverflow.Entity
             Tag_Cards = new HashSet<Tag_CardEntity>();
         }    
     
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid UserId { get; set; }
         public Guid StackId { get; set; }
         public Guid BranchId { get; set; }

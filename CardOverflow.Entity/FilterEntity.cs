@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NUlid;
 
 namespace CardOverflow.Entity
 {
     public partial class FilterEntity
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         [Required]
         [StringLength(128)]
         public string Name {

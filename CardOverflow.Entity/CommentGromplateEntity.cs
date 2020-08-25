@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NUlid;
 
 namespace CardOverflow.Entity
 {
@@ -13,7 +14,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid GromplateId { get; set; }
         public Guid UserId { get; set; }
         [Required]
