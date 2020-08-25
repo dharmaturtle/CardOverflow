@@ -66,13 +66,13 @@ namespace CardOverflow.Entity
         private string _LatexPost;
         public bool IsDmca { get; set; }
         [Required]
-        [StringLength(10000)]
+        [StringLength(15000)]
         public string Templates
         {
             get => _Templates;
             set
             {
-                if (value.Length > 10000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Templates has a maximum length of 10000. Attempted value: {value}");
+                if (value.Length > 15000) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and Templates has a maximum length of 15000. Attempted value: {value}");
                 _Templates = value;
             }
         }

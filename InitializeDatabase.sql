@@ -646,7 +646,7 @@ CREATE TABLE public.grompleaf (
     latex_pre character varying(500) NOT NULL,
     latex_post character varying(500) NOT NULL,
     is_dmca boolean NOT NULL,
-    templates character varying(10000) NOT NULL,
+    templates character varying(15000) NOT NULL,
     type smallint NOT NULL,
     fields character varying(4000) NOT NULL,
     edit_summary character varying(200) NOT NULL,
