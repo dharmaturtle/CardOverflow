@@ -54,11 +54,12 @@ let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
     
     // nonpublic fails
     let! (error: Result<unit, string>) = setSource <| Some sourceDeckId
-    Assert.equal "Either Deck #1 doesn't exist or it isn't public." error.error
+    Assert.equal "Either Deck #00000000-0000-0000-0000-decc00000001 doesn't exist or it isn't public." error.error
     
     // nonexistant fails
-    let! (error: Result<unit, string>) = setSource <| Some newGuid
-    Assert.equal "Either Deck #1337 doesn't exist or it isn't public." error.error
+    let nonexistant = newGuid
+    let! (error: Result<unit, string>) = setSource <| Some nonexistant
+    Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." nonexistant) error.error
 
     // public works
     do! SanitizeDeckRepository.setIsPublic c.Db authorId sourceDeckId true
