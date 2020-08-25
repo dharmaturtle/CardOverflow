@@ -533,9 +533,9 @@ module SanitizeDeckRepository =
         let keyset =
             match order with
             | Relevance  (Some (id, rankValue)) -> // https://dba.stackexchange.com/questions/209272/ and https://dba.stackexchange.com/questions/273544 and https://dba.stackexchange.com/questions/209272/
-                sprintf "WHERE ((%s, id) < (%s, %A))" rank (rankValue.ToString()) id // the ToString is because %f rounds and I can't figure out how to make it stop
+                sprintf "WHERE ((%s, id) < (%s, '%A'))" rank (rankValue.ToString()) id // the ToString is because %f rounds and I can't figure out how to make it stop
             | Popularity (Some (id, followers)) ->
-                sprintf "AND ((d.followers, d.id) < (%i, %A))" followers id
+                sprintf "AND ((d.followers, d.id) < (%i, '%A'))" followers id
             | _ -> ""
         let baseQuery additionalSelect =
             sprintf """
