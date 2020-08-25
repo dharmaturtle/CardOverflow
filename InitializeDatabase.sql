@@ -365,7 +365,7 @@ CREATE TABLE public.alpha_beta_key (
     id uuid NOT NULL,
     key character varying(50) NOT NULL,
     is_used boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -381,8 +381,8 @@ CREATE TABLE public.branch (
     latest_id uuid NOT NULL,
     users integer NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone
 );
 
 
@@ -400,9 +400,9 @@ CREATE TABLE public.card (
     card_state smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
     interval_or_steps_index smallint NOT NULL,
-    due timestamp with time zone NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    due timestamp without time zone NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     card_setting_id uuid NOT NULL,
     deck_id uuid NOT NULL,
     is_lapsed boolean NOT NULL,
@@ -464,8 +464,8 @@ CREATE TABLE public.card_setting (
     show_answer_timer boolean NOT NULL,
     automatically_play_audio boolean NOT NULL,
     replay_question_audio_on_answer boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone
 );
 
 
@@ -478,8 +478,8 @@ CREATE TABLE public.commeaf (
     commield_id uuid NOT NULL,
     field_name character varying(200) NOT NULL,
     value character varying(4000) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     edit_summary character varying(200) NOT NULL,
     b_weight_tsv_helper text,
     tsv tsvector,
@@ -492,7 +492,7 @@ ALTER TABLE public.commeaf OWNER TO postgres;
 CREATE TABLE public.commeaf_2_leaf (
     leaf_id uuid NOT NULL,
     commeaf_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -505,8 +505,8 @@ CREATE TABLE public.comment_gromplate (
     gromplate_id uuid NOT NULL,
     user_id uuid NOT NULL,
     text character varying(500) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     is_dmca boolean NOT NULL
 );
 
@@ -520,8 +520,8 @@ CREATE TABLE public.comment_stack (
     stack_id uuid NOT NULL,
     user_id uuid NOT NULL,
     text character varying(500) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     is_dmca boolean NOT NULL
 );
 
@@ -535,8 +535,8 @@ CREATE TABLE public.commield (
     author_id uuid NOT NULL,
     latest_id uuid NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone
 );
 
 
@@ -551,8 +551,8 @@ CREATE TABLE public.deck (
     is_public boolean NOT NULL,
     source_id uuid,
     followers integer NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     tsv tsvector
 );
 
@@ -562,7 +562,7 @@ ALTER TABLE public.deck OWNER TO postgres;
 CREATE TABLE public.deck_follower (
     deck_id uuid NOT NULL,
     follower_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -575,8 +575,8 @@ CREATE TABLE public.feedback (
     title character varying(50) NOT NULL,
     description character varying(1000) NOT NULL,
     user_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     parent_id uuid,
     priority smallint
 );
@@ -590,7 +590,7 @@ CREATE TABLE public.file (
     id uuid NOT NULL,
     file_name character varying(200) NOT NULL,
     data bytea NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     sha256 bytea NOT NULL
 );
 
@@ -600,7 +600,7 @@ ALTER TABLE public.file OWNER TO postgres;
 CREATE TABLE public.file_2_leaf (
     leaf_id uuid NOT NULL,
     file_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -613,8 +613,8 @@ CREATE TABLE public.filter (
     name character varying(128) NOT NULL,
     user_id uuid NOT NULL,
     query character varying(256) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone
 );
 
 
@@ -627,8 +627,8 @@ CREATE TABLE public.gromplate (
     author_id uuid NOT NULL,
     latest_id uuid NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone
 );
 
 
@@ -641,8 +641,8 @@ CREATE TABLE public.grompleaf (
     name character varying(100) NOT NULL,
     gromplate_id uuid NOT NULL,
     css character varying(4000) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     latex_pre character varying(500) NOT NULL,
     latex_post character varying(500) NOT NULL,
     is_dmca boolean NOT NULL,
@@ -669,7 +669,7 @@ CREATE TABLE public.history (
     leaf_id uuid,
     index smallint NOT NULL,
     score smallint NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     interval_with_unused_steps_index smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
     time_from_seeing_question_to_score_in_seconds_plus32768 smallint NOT NULL
@@ -682,8 +682,8 @@ ALTER TABLE public.history OWNER TO postgres;
 
 CREATE TABLE public.leaf (
     id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     stack_id uuid NOT NULL,
     branch_id uuid NOT NULL,
     is_dmca boolean NOT NULL,
@@ -707,7 +707,7 @@ ALTER TABLE public.leaf OWNER TO postgres;
 CREATE TABLE public.relationship (
     id uuid NOT NULL,
     name character varying(250) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     tsv tsvector
 );
 
@@ -721,7 +721,7 @@ CREATE TABLE public.relationship_2_card (
     target_stack_id uuid NOT NULL,
     source_card_id uuid NOT NULL,
     target_card_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -748,7 +748,7 @@ ALTER TABLE public.leaf_relationship_count OWNER TO postgres;
 CREATE TABLE public.tag (
     id uuid NOT NULL,
     name character varying(250) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     tsv tsvector
 );
 
@@ -760,7 +760,7 @@ CREATE TABLE public.tag_2_card (
     user_id uuid NOT NULL,
     stack_id uuid NOT NULL,
     card_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -785,7 +785,7 @@ ALTER TABLE public.leaf_tag_count OWNER TO postgres;
 CREATE TABLE public.notification (
     id uuid NOT NULL,
     sender_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     type public.notification_type NOT NULL,
     message character varying(4000),
     stack_id uuid,
@@ -813,8 +813,8 @@ CREATE TABLE public.padawan (
     learn_ahead_limit_in_minutes smallint NOT NULL,
     timebox_time_limit_in_minutes smallint NOT NULL,
     is_night_mode boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone,
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone,
     tsv tsvector
 );
 
@@ -826,7 +826,7 @@ CREATE TABLE public.potential_signups (
     email character varying(500) NOT NULL,
     message character varying(1000) NOT NULL,
     one_is_alpha2_beta3_ga smallint NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -851,8 +851,8 @@ CREATE TABLE public.stack (
     copy_source_id uuid,
     default_branch_id uuid NOT NULL,
     is_listed boolean NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp with time zone
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    modified timestamp without time zone
 );
 
 
@@ -898,7 +898,7 @@ CREATE TABLE public.tag_2_user_2_grompleaf (
     user_id uuid NOT NULL,
     grompleaf_id uuid NOT NULL,
     default_tag_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -910,7 +910,7 @@ CREATE TABLE public.user_2_grompleaf (
     user_id uuid NOT NULL,
     grompleaf_id uuid NOT NULL,
     default_card_setting_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -921,7 +921,7 @@ ALTER TABLE public.user_2_grompleaf OWNER TO postgres;
 CREATE TABLE public.vote_2_comment_gromplate (
     comment_gromplate_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -930,7 +930,7 @@ ALTER TABLE public.vote_2_comment_gromplate OWNER TO postgres;
 CREATE TABLE public.vote_2_comment_stack (
     comment_stack_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
@@ -939,7 +939,7 @@ ALTER TABLE public.vote_2_comment_stack OWNER TO postgres;
 CREATE TABLE public.vote_2_feedback (
     feedback_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
