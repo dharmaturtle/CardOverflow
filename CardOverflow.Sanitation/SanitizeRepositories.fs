@@ -580,8 +580,8 @@ module SanitizeDeckRepository =
 module SanitizeHistoryRepository =
     let AddAndSaveAsync (db: CardOverflowDb) cardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
         let! card = db.Card.SingleAsync(fun x -> x.Id = cardId)
-        card.Histories.Add
-        <|  HistoryEntity(
+        let history =
+            HistoryEntity(
                 Score = Score.toDb score,
                 Created = timestamp,
                 IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
@@ -591,6 +591,8 @@ module SanitizeHistoryRepository =
                 UserId = card.UserId,
                 Index = card.Index
             )
+        card.Histories.Add history
+        db.Entry(history).State <- EntityState.Added
         card.IntervalOrStepsIndex <- intervalOrSteps |> IntervalOrStepsIndex.intervalToDb
         card.Due <- DateTime.UtcNow + interval
         card.EaseFactorInPermille <- easeFactor * 1000. |> Math.Round |> int16

@@ -294,7 +294,7 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
 
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
 
     let! a = StackRepository.GetQuizBatch c.Db userId ""
     let getId (x: Result<QuizCard, string> seq) = x.First().Value.CardId
