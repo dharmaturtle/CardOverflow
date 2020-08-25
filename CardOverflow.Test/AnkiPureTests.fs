@@ -15,7 +15,7 @@ open MappingTools
 [<Fact>]
 let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expected`` (): unit =
     let expected =
-        {   Id = setting_ 0
+        {   Id = Guid.Empty
             Name = "Default"
             IsDefault = false
             NewCardsSteps = [TimeSpan.FromMinutes 1. ; TimeSpan.FromMinutes 10.]
@@ -43,6 +43,6 @@ let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expe
     let cardSettings = Anki.parseCardSettings col.Dconf
     
     cardSettings |> Result.isOk |> Assert.True
-    let id, actual = Result.getOk cardSettings |> Assert.Single
-    Assert.Equal("1", id)
-    Assert.Equal(expected, actual)
+    let id, actual = cardSettings |> Result.getOk |> Assert.Single
+    Assert.equal "1" id
+    Assert.equal expected actual
