@@ -166,14 +166,14 @@ let ``collect works``(): Task<unit> = (taskResult {
     let stackId = stack_1
     let collectorId = user_1
     let collectorDefaultDeckId = deck_1
-    let collect x = StackRepository.collect c.Db collectorId leafId x [ card_2 ]
+    let collect x ccId = StackRepository.collect c.Db collectorId leafId x [ ccId ]
     let assertDeck deckId =
         StackRepository.GetCollected c.Db collectorId stackId
         |>%% Assert.Single
         |>%% fun x -> x.DeckId
         |>%% Assert.equal deckId
 
-    let! ccId = collect None
+    let! ccId = collect None card_2
     
     Assert.areEquivalent [card_2] ccId
     do! assertDeck collectorDefaultDeckId
@@ -181,13 +181,13 @@ let ``collect works``(): Task<unit> = (taskResult {
     // fails for author's deck
     do! StackRepository.uncollectStack c.Db collectorId stackId
     
-    let! (error: Result<_,_>) = collect <| Some deck_3
+    let! (error: Result<_,_>) = collect (Some deck_3) Ulid.create
     
     Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." deck_3) error.error
     
     // fails for nonexisting deck
     let nonexistant = newGuid
-    let! (error: Result<_,_>) = collect <| Some nonexistant
+    let! (error: Result<_,_>) = collect (Some nonexistant) Ulid.create
     
     Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." nonexistant) error.error
     
@@ -195,22 +195,27 @@ let ``collect works``(): Task<unit> = (taskResult {
     let newDeckId = Ulid.create
     do! SanitizeDeckRepository.create c.Db collectorId (Guid.NewGuid().ToString()) newDeckId
 
-    let! ccId = collect <| Some newDeckId
+    let! ccId = collect (Some newDeckId) card_3
     
     Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId
 
-    // collecting/updating to *new* leaf doesn't change deckId or ccId
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
-    do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
+    // collecting/updating to *new* leaf doesn't change deckId or cardId
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) {
+        StackId = stack_1
+        BranchId = branch_1
+        LeafId = leaf_2
+        CardIds = []
+    }
+    do! SanitizeStackRepository.Update c.Db authorId [] [] stackCommand
 
-    let! ccId = StackRepository.collect c.Db collectorId leaf_2 None [ Ulid.create ]
+    let! cardId = StackRepository.collect c.Db collectorId leaf_2 None []
 
-    Assert.areEquivalent [card_3] ccId
+    Assert.areEquivalent [card_3] cardId
     do! assertDeck newDeckId
 
     // collecting/updating to *old* leaf doesn't change deckId or ccId
-    let! ccId = StackRepository.collect c.Db collectorId leaf_1 None [ Ulid.create ]
+    let! ccId = StackRepository.collect c.Db collectorId leaf_1 None []
 
     Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId

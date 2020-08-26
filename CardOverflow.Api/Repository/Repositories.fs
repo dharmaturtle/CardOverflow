@@ -310,7 +310,7 @@ module StackRepository =
             ).SingleAsync()
         let cardSansIndex index =
             Card.initialize
-                cardIds.[int index]
+                (cardIds |> List.tryItem (int index) |> Option.defaultValue Guid.Empty) // the Guid.Empty is just to make the code compile. Eventually refactor
                 userId
                 defaultCardSettingId
                 defaultDeckId
