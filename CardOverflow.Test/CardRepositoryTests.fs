@@ -117,7 +117,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id ids_1 branchId
+            (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
         |> TaskResult.getOk
     let i2 = leaf_2
     let! _ = StackRepository.CollectCard c.Db userId i2 [ Ulid.create ] |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
@@ -143,16 +143,17 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     use db = c.Db
     db.Card.AddI <|
         CardEntity(
+            Id = card_3,
             StackId = stackId,
             BranchId = branchId,
             LeafId = i1,
             Due = DateTime.UtcNow,
             UserId = userId,
-            CardSettingId = userId,
-            DeckId = userId)
+            CardSettingId = setting_3,
+            DeckId = deck_3)
     let ex = Assert.Throws<Npgsql.PostgresException>(fun () -> db.SaveChanges() |> ignore)
     Assert.Equal(
-        "P0001: UserId #3 with Card #3 and Stack #1 tried to have LeafId #1001, but they already have LeafId #1002",
+        (sprintf "P0001: UserId #%A with Card #%A and Stack #%A tried to have LeafId #%A, but they already have LeafId #%A" user_3 card_3 stack_1 leaf_1 leaf_2),
         ex.Message)
     }
 
