@@ -182,7 +182,7 @@ let ``SanitizeDeckRepository.search works``(): Task<unit> = (taskResult {
     let newMax = 40
     let intsGen = Arb.Default.PositiveInt() |> Arb.toGen |> Gen.map (fun x -> x.Get) |> Gen.listOfLength newMax
     for i in intsGen |> Gen.sample1Gen do
-        do! SanitizeDeckRepository.create c.Db userId ((String.replicate i nameX) + Guid.NewGuid().ToString())
+        do! SanitizeDeckRepository.create c.Db userId ((String.replicate i nameX) + Guid.NewGuid().ToString()) Ulid.create
     //let ids = [deck1; deck2; deck3] |> List.sortByDescending (fun x -> x.FollowCount) |> List.map (fun x -> x.Id)
     //let expectedIds = ids @ [for i in 0 .. (19 - ids.Length) do yield (newMax + 3 - i)]
     
@@ -319,12 +319,11 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 
     // adding a new deck
     let newDeckName = Guid.NewGuid().ToString()
+    let newDeckId = Ulid.create
 
-    let! actualDeckId = SanitizeDeckRepository.create c.Db userId newDeckName
+    do! SanitizeDeckRepository.create c.Db userId newDeckName newDeckId
 
-    let newDeckId = deck_ 4
-    Assert.equal newDeckId actualDeckId
-    Assert.SingleI <| c.Db.Deck.Where(fun x -> x.Name = newDeckName)
+    Assert.equal newDeckId <| c.Db.Deck.Single(fun x -> x.Name = newDeckName).Id
 
     // get yields 2 decks
     let newDeck =
@@ -395,11 +394,10 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     do! assertDeckId defaultDeckId
 
     // can add new deck with same name
-    let! actualDeckId = SanitizeDeckRepository.create c.Db userId newDeckName
+    let newDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db userId newDeckName newDeckId
     
-    let newDeckId = deck_ 5
-    Assert.equal newDeckId actualDeckId
-    Assert.SingleI <| c.Db.Deck.Where(fun x -> x.Name = newDeckName)
+    Assert.equal newDeckId <| c.Db.Deck.Single(fun x -> x.Name = newDeckName).Id
 
     // get yields 2 decks
     let newDeck = { newDeck with Id = newDeckId }
@@ -436,14 +434,14 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
         actualDecks
 
     // errors
-    let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName
+    let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId newDeckName Ulid.create
     Assert.Equal(sprintf "User #%A already has a Deck named '%s'" userId newDeckName, x.error)
     
     let! (x: Result<_,_>) = SanitizeDeckRepository.rename c.Db userId newDeckId newDeckName
     Assert.Equal(sprintf "User #%A already has a Deck named '%s'" userId newDeckName, x.error)
 
     let invalidDeckName = Random.cryptographicString 251
-    let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId invalidDeckName
+    let! (x: Result<_,_>) = SanitizeDeckRepository.create c.Db userId invalidDeckName Ulid.create
     Assert.Equal(sprintf "Deck name '%s' is too long. It must be less than 250 characters." invalidDeckName, x.error)
 
     let! (x: Result<_,_>) = SanitizeDeckRepository.rename c.Db userId newDeckId invalidDeckName
@@ -510,7 +508,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             TsvRank = 0. }
     let theirDeck = { Id = publicDeck.Id
                       Name = publicDeck.Name }
-    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name |>%% Assert.equal publicDeck.Id
+    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name Ulid.create //|>%% Assert.equal publicDeck.Id
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single
@@ -800,7 +798,8 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     let leafId = leaf_1
     let followerId = user_1
     let followerDeckId = deck_1
-    let! newFollowerDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
+    let newFollowerDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db followerId (Guid.NewGuid().ToString()) newFollowerDeckId
     let follow oldDeckId editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false editExisting // mind the test name
 
     // follow targeting newFollowerDeckId with extant card in default deck fails
@@ -929,7 +928,8 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     // follow with "OldDeck false None" and one of a pair works
     do! StackRepository.uncollectStack c.Db followerId stackId
-    let! newDeckId = SanitizeDeckRepository.create c.Db authorId <| Guid.NewGuid().ToString()
+    let newDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db authorId (Guid.NewGuid().ToString()) newDeckId
     do! SanitizeDeckRepository.switch c.Db authorId newDeckId ccId1
     
     do! follow followerDeckId None |> TaskResult.getOk
@@ -1007,7 +1007,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let leafId = leaf_1
     let followerId = user_1
     let followerDeckId = deck_1
-    let follow deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck deckName) false editExisting // mind the test name
+    let follow deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (Ulid.create, deckName)) false editExisting // mind the test name
 
     // follow with extant card fails and doesn't add a deck
     Assert.equal 3 <| c.Db.Deck.Count()
@@ -1153,7 +1153,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     |>% Assert.equal "Either Deck #1337 doesn't exist, or it isn't public, or you don't own it."
 
     // moving card to newDeck _ is reflected in the diff
-    let! newDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
+    let newDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db followerId (Guid.NewGuid().ToString()) newDeckId
     let! (ccs: Card ResizeArray) = StackRepository.GetCollected c.Db followerId stackId
     let ccId = ccs.Single().CardId
     do! SanitizeDeckRepository.switch c.Db followerId newDeckId ccId
@@ -1264,7 +1265,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
                 BranchChanged = [ ({ newBranchIds with DeckId = publicDeckId }, standardIds) ] }
 
     // author switches to new branch, and follower's old card is in different deck
-    let! newFollowerDeckId = SanitizeDeckRepository.create c.Db followerId <| Guid.NewGuid().ToString()
+    let newFollowerDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db followerId (Guid.NewGuid().ToString()) newFollowerDeckId
     let! (cc: CardEntity) = c.Db.Card.SingleAsync(fun x -> x.StackId = stackId && x.UserId = followerId)
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId cc.Id
     

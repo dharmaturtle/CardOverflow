@@ -201,12 +201,11 @@ module SanitizeDeckRepository =
         do! db.Deck.AnyAsync(fun x -> x.Name = deckName && x.UserId = userId)
             |>% (Result.requireFalse <| sprintf "User #%A already has a Deck named '%s'" userId deckName)
     }
-    let create (db: CardOverflowDb) userId (newDeck: string) = taskResult {
+    let create (db: CardOverflowDb) userId (newDeck: string) deckId = taskResult {
         do! validateName db userId newDeck
-        let deck = DeckEntity(Name = newDeck, UserId = userId)
+        let deck = DeckEntity(Id = deckId, Name = newDeck, UserId = userId)
         db.Deck.AddI deck
         do! db.SaveChangesAsyncI()
-        return deck.Id
     }
     let setSource (db: CardOverflowDb) userId deckId sourceDeckId = taskResult {
         match sourceDeckId with
@@ -326,7 +325,7 @@ module SanitizeDeckRepository =
                 TsvRank = 0.
             }
     type FollowDeckType =
-        | NewDeck of string
+        | NewDeck of Guid * string
         | OldDeck of Guid
         | NoDeck
     type FollowError =
@@ -403,8 +402,8 @@ module SanitizeDeckRepository =
                 let! defaultCardSettingId = db.User.Where(fun x -> x.Id = userId).Select(fun x -> x.DefaultCardSettingId).SingleAsync()
                 let! newDeckId =
                     match followType with
-                    | NewDeck name -> (taskResult {
-                            let! newDeckId = create db userId name
+                    | NewDeck (newDeckId, name) -> (taskResult {
+                            do! create db userId name newDeckId
                             do! setSource db userId newDeckId (Some deckId)
                             return newDeckId
                         } |>% Result.mapError RealError)

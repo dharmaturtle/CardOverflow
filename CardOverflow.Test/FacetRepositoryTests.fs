@@ -265,7 +265,8 @@ let ``ExploreStackRepository.leaf works``() : Task<unit> = (taskResult {
     Assert.Equal(sprintf "Branch Leaf #%A not found" nonexistant, missingCard.error)
 
     // update on branch that's in a nondefault deck with 0 editCardCommands doesn't change the deck
-    let! newDeckId = SanitizeDeckRepository.create c.Db userId <| Guid.NewGuid().ToString()
+    let newDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db userId (Guid.NewGuid().ToString()) newDeckId
     do! SanitizeDeckRepository.switch c.Db userId newDeckId cardId
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_2
     

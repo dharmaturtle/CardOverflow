@@ -166,7 +166,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     let stackId = stack_1
     let collectorId = user_1
     let collectorDefaultDeckId = deck_1
-    let collect x = StackRepository.collect c.Db collectorId leafId x [ Ulid.create ]
+    let collect x = StackRepository.collect c.Db collectorId leafId x [ card_2 ]
     let assertDeck deckId =
         StackRepository.GetCollected c.Db collectorId stackId
         |>%% Assert.Single
@@ -181,17 +181,19 @@ let ``collect works``(): Task<unit> = (taskResult {
     // fails for author's deck
     do! StackRepository.uncollectStack c.Db collectorId stackId
     
-    let! (error: Result<_,_>) = collect <| Some authorId
+    let! (error: Result<_,_>) = collect <| Some deck_3
     
-    Assert.equal "Either Deck #3 doesn't exist or it doesn't belong to you." error.error
+    Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." deck_3) error.error
     
     // fails for nonexisting deck
-    let! (error: Result<_,_>) = collect <| Some newGuid
+    let nonexistant = newGuid
+    let! (error: Result<_,_>) = collect <| Some nonexistant
     
-    Assert.equal "Either Deck #1337 doesn't exist or it doesn't belong to you." error.error
+    Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." nonexistant) error.error
     
     // works for nondefault deck
-    let! newDeckId = SanitizeDeckRepository.create c.Db collectorId <| Guid.NewGuid().ToString()
+    let newDeckId = Ulid.create
+    do! SanitizeDeckRepository.create c.Db collectorId (Guid.NewGuid().ToString()) newDeckId
 
     let! ccId = collect <| Some newDeckId
     

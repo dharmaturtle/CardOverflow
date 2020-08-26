@@ -36,9 +36,9 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             SanitizeCardSettingRepository.upsertMany c.Db userId options
             |>%% Gen.elements
         let! deckIdGen =
-            Guid.NewGuid().ToString()
-            |> SanitizeDeckRepository.create c.Db userId
-            |>%% fun newDeckId -> [ userId; newDeckId ]
+            let newDeckId = Ulid.create
+            SanitizeDeckRepository.create c.Db userId (Guid.NewGuid().ToString()) newDeckId
+            |>%% fun () -> [ deck_3; newDeckId ]
             |>%% Gen.elements
         let basicCommand, aRevCommand, bRevCommand, failDeckCommand, failCardSettingCommand =
             gen {

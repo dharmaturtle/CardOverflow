@@ -424,6 +424,7 @@ type Card with
         entity.DeckId <- this.DeckId
     member this.copyToNew tagIds i =
         let e = CardEntity()
+        e.Id <- this.CardId
         this.copyTo e tagIds i
         e
     static member initialize cardId userId cardSettingId deckId tags =
