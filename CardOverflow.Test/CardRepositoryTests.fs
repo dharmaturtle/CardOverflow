@@ -33,13 +33,13 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card
 
-    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [ Ulid.create ] |> TaskResult.getOk
+    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [] |> TaskResult.getOk
     
     do! recollect ()
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id ids_1 branchId
+            (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card // still empty after editing then deleting
 
@@ -50,8 +50,8 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.StackId |> TaskResult.getOk
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_2, branch_2, leaf_2, [card_2])
-    let newCardBranchId = branch_2
+    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_3, branch_3, leaf_3, [card_3])
+    let newCardBranchId = branch_3
     Assert.Equal(newCardBranchId, actualBranchId)
     let! (stack2: StackEntity) = c.Db.Stack.SingleOrDefaultAsync(fun x -> x.Id <> cc.StackId)
     let stack2 = stack2.Id
@@ -77,7 +77,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! recollect ()
     let otherUserId = user_2
     let! (x: Result<_, _>) = StackRepository.uncollectStack c.Db otherUserId cc.StackId
-    Assert.Equal("You don't have any cards with Stack #1", x.error)
+    Assert.equal (sprintf "You don't have any cards with Stack #%A" stack_1) x.error
     } |> TaskResult.getOk)
 
 [<Fact>]

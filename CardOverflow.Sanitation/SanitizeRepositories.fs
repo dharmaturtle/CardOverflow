@@ -614,7 +614,8 @@ type AddRelationshipCommand = {
     TargetStackLink: string
 }
 module SanitizeRelationshipRepository =
-    type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>[a-zA-Z0-9_-]{22})$""" > // highTODO add test
+    //type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>[a-zA-Z0-9_-]{22})$""" > // highTODO add test
+    type StackIdRegex = FSharp.Text.RegexProvider.Regex< """(?<stackId>[a-zA-Z0-9-]{36})$""" > // highTODO add test
     let stackIdRegex =
         Regex.compiledIgnoreCase |> StackIdRegex
     let GetStackId input =
