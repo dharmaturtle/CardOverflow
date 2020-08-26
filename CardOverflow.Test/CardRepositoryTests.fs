@@ -239,17 +239,17 @@ let ``CollectCards works``(): Task<unit> = task {
     
     let s2 = stack_2
     let ci2_1 = leaf_2
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId [] (stack_2, branch_2, leaf_2, [card_2])
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId [] (stack_2, branch_2, leaf_2, [card_2; card_3])
     Assert.Equal(1, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.Card.Count())
     
     let collectorId = user_1
-    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.Card.Count())
-    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 [] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     // misc
@@ -259,13 +259,17 @@ let ``CollectCards works``(): Task<unit> = task {
 
     // update branch
     let! r = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId b1) ids_1
+    let ci1_2 = leaf_3
     let command =
         { r.Value with
             FieldValues = [].ToList()
             Kind = NewLeaf_Title null
+            Ids = {
+                r.Value.Ids with
+                    LeafId = ci1_2
+            }
         }
-    let! branchId = SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] command |> TaskResult.getOk
-    let ci1_2 = leaf_3
+    let! branchId = SanitizeStackRepository.Update c.Db authorId [] [] command |> TaskResult.getOk
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
