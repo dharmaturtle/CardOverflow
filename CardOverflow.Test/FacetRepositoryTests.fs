@@ -81,8 +81,8 @@ let reversedBasicGromplate db =
 let basicGromplate db =
     TestGromplateRepo.SearchEarliest db "Basic"
 
-let update (c: TestContainer) authorId kind commandTransformer expectedBranchId = taskResult {
-    let! (upsert: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db kind UpsertIds.create // using |>!! is *extremely* inconsistent and unstable for some reason
+let update (c: TestContainer) authorId kind commandTransformer updateIds expectedBranchId = taskResult {
+    let! (upsert: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db kind updateIds // using |>!! is *extremely* inconsistent and unstable for some reason
     return!
         upsert
         |> commandTransformer
@@ -347,7 +347,7 @@ let ``StackViewRepository.leafWithLatest works``() : Task<unit> = (taskResult {
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! update c userId
-            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion; FieldValues = [].ToList() }) branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion; FieldValues = [].ToList() }) ids_1 branchId
     let oldLeafId = leaf_1
     let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
@@ -366,7 +366,7 @@ let ``StackViewRepository.leafWithLatest works``() : Task<unit> = (taskResult {
     let newBranchId = branch_2
     let branchVersion = Guid.NewGuid().ToString()
     do! update c userId
-            (VNewBranch_SourceStackId stackId) (fun x -> { x with EditSummary = branchVersion }) newBranchId
+            (VNewBranch_SourceStackId stackId) (fun x -> { x with EditSummary = branchVersion }) ids_1 newBranchId
     let leafId = leaf_3
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = leafId)
         |> Task.map (fun x -> Assert.Equal(branchVersion, x.EditSummary))

@@ -848,7 +848,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id ids_1 branchId
     let newLeafId = leaf_2
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
@@ -946,7 +946,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id ids_1 branchId
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
@@ -1056,7 +1056,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id ids_1 branchId
     let newLeafId = leaf_2
     
     do! follow (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk

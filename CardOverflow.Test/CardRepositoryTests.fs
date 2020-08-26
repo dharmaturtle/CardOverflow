@@ -39,7 +39,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id ids_1 branchId
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card // still empty after editing then deleting
 
@@ -97,7 +97,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     Assert.Equal(cc.CardState, CardState.Suspended)
 
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
         |> TaskResult.getOk
     let! cc = StackRepository.GetCollected c.Db userId cc.StackId
     let cc = cc.Value.Single()
@@ -117,7 +117,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     let branchId = branch_1
     Assert.Equal(branchId, actualBranchId)
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id branchId
+            (VUpdate_BranchId branchId) id ids_1 branchId
         |> TaskResult.getOk
     let i2 = leaf_2
     let! _ = StackRepository.CollectCard c.Db userId i2 [ Ulid.create ] |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId

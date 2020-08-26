@@ -51,7 +51,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) ids_1 branchId
     let oldLeafId = leaf_1
     let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
@@ -104,7 +104,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) ids_1 branchId
     let oldLeafId = leaf_1
     let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
