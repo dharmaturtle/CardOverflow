@@ -416,6 +416,7 @@ module SanitizeDeckRepository =
                     | _ -> failwith "impossible"
                 let cardSansIndex =
                     Card.initialize
+                        Ulid.create
                         userId
                         defaultCardSettingId
                         newDeckId
@@ -824,18 +825,18 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
             |>%% fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest
-    let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
+    let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) cardIds (stackCommand: ViewEditStackCommand) = taskResult {
         let! leaf = UpdateRepository.stack db userId stackCommand.load
         let! (ccs: CardEntity list) =
             match stackCommand.Kind with
             | NewLeaf_Title _ ->
                 db.Leaf.AddI leaf
-                StackRepository.collectStackNoSave db userId leaf false |>% Ok
+                StackRepository.collectStackNoSave db userId leaf false cardIds |>% Ok
             | NewBranch_Title _ ->
-                StackRepository.collectStackNoSave db userId leaf true |>% Ok
+                StackRepository.collectStackNoSave db userId leaf true cardIds |>% Ok
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
-                let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true
+                let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true cardIds
                 for tagId in tagIds do
                     ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))
                 for cc in ccs do

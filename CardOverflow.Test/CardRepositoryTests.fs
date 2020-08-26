@@ -33,7 +33,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card
 
-    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id |> TaskResult.getOk
+    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [ Ulid.create ] |> TaskResult.getOk
     
     do! recollect ()
     let! (cc: Card ResizeArray) = getCollected ()
@@ -120,7 +120,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
             (VUpdate_BranchId branchId) id branchId
         |> TaskResult.getOk
     let i2 = leaf_2
-    let! _ = StackRepository.CollectCard c.Db userId i2 |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
+    let! _ = StackRepository.CollectCard c.Db userId i2 [ Ulid.create ] |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
     Assert.Equal(i2, c.Db.Card.Single().LeafId)
     Assert.Equal(branchId, c.Db.Card.Single().BranchId)
     Assert.Equal(stackId, c.Db.Card.Single().StackId)
@@ -166,7 +166,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     let stackId = stack_1
     let collectorId = user_1
     let collectorDefaultDeckId = deck_1
-    let collect = StackRepository.collect c.Db collectorId leafId
+    let collect x = StackRepository.collect c.Db collectorId leafId x [ Ulid.create ]
     let assertDeck deckId =
         StackRepository.GetCollected c.Db collectorId stackId
         |>%% Assert.Single
@@ -200,15 +200,15 @@ let ``collect works``(): Task<unit> = (taskResult {
 
     // collecting/updating to *new* leaf doesn't change deckId or ccId
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
-    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
 
-    let! ccId = StackRepository.collect c.Db collectorId leaf_2 None
+    let! ccId = StackRepository.collect c.Db collectorId leaf_2 None [ Ulid.create ]
 
     Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId
 
     // collecting/updating to *old* leaf doesn't change deckId or ccId
-    let! ccId = StackRepository.collect c.Db collectorId leaf_1 None
+    let! ccId = StackRepository.collect c.Db collectorId leaf_1 None [ Ulid.create ]
 
     Assert.areEquivalent [card_3] ccId
     do! assertDeck newDeckId
@@ -238,11 +238,11 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(3, c.Db.Card.Count())
     
     let collectorId = user_1
-    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [ Ulid.create ] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.Card.Count())
-    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 [ Ulid.create ] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     // misc
@@ -257,7 +257,7 @@ let ``CollectCards works``(): Task<unit> = task {
             FieldValues = [].ToList()
             Kind = NewLeaf_Title null
         }
-    let! branchId = SanitizeStackRepository.Update c.Db authorId [] command |> TaskResult.getOk
+    let! branchId = SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] command |> TaskResult.getOk
     let ci1_2 = leaf_3
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
@@ -267,7 +267,7 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(6, c.Db.Card.Count())
     Assert.Equal(1, c.Db.Card.Count(fun x -> x.LeafId = ci1_2))
     
-    let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 [ Ulid.create ] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc

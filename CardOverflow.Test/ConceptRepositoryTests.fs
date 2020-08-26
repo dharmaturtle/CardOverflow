@@ -88,7 +88,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
 
     // collect oldest leaf, then StackRepository.Revisions says we collected the oldest leaf
-    do! StackRepository.CollectCard c.Db userId oldLeafId
+    do! StackRepository.CollectCard c.Db userId oldLeafId [ Ulid.create ]
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
@@ -141,7 +141,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
 
     // collect oldest leaf, then StackRepository.Revisions says we collected the oldest leaf
-    do! StackRepository.CollectCard c.Db userId oldLeafId
+    do! StackRepository.CollectCard c.Db userId oldLeafId [ Ulid.create ]
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
@@ -230,7 +230,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
     let collectorId = user_2  // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db collectorId leafId |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId leafId [ Ulid.create ] |> TaskResult.getOk
     let! stack = ExploreStackRepository.get c.Db collectorId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -416,16 +416,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = user_2 // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = user_3 // this user collects card in opposite order from user2
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -479,16 +479,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = user_2 // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = user_3 // this user collects card in opposite order from user2
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]

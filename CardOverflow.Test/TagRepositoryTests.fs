@@ -14,6 +14,7 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
+open LoadersAndCopiers
 
 [<Fact>]
 let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult {
@@ -94,7 +95,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     do! assertTagUserCount 1
 
     // initial tag has 2 users after collecting
-    do! StackRepository.CollectCard c.Db collector leafId
+    do! StackRepository.CollectCard c.Db collector leafId [ Ulid.create ]
     do! SanitizeTagRepository.AddTo c.Db collector tagName stackId
     do! assertTagUserCount 2
 

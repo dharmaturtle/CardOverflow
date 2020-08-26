@@ -302,19 +302,20 @@ module StackRepository =
                 .SingleOrDefaultAsync()
         return BranchRevision.load collectedLeafId r
     }
-    let collectStackNoSave (db: CardOverflowDb) userId (leaf: LeafEntity) mayUpdate = task {
+    let collectStackNoSave (db: CardOverflowDb) userId (leaf: LeafEntity) mayUpdate (cardIds: Guid list) = task {
         let! ((defaultCardSettingId, defaultDeckId): Guid * Guid) =
             db.User.Where(fun x -> x.Id = userId).Select(fun x ->
                 x.DefaultCardSettingId,
                 x.DefaultDeckId
             ).SingleAsync()
-        let cardSansIndex =
+        let cardSansIndex index =
             Card.initialize
+                cardIds.[int index]
                 userId
                 defaultCardSettingId
                 defaultDeckId
                 []
-            |> fun x -> x.copyToNew [] // medTODO get tags from gromplate
+            |> fun x -> x.copyToNew [] index // medTODO get tags from gromplate
         let new' =
             [0s .. leaf.MaxIndexInclusive]
             |> List.map cardSansIndex
@@ -346,13 +347,13 @@ module StackRepository =
                 | None, None -> failwith "impossible"
             ) |> ListOption.somes
     }
-    let collect (db: CardOverflowDb) userId leafId deckId = taskResult {
+    let collect (db: CardOverflowDb) userId leafId deckId cardIds = taskResult {
         let! (leaf: LeafEntity) =
             db.Leaf
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Leaf #%A not found" leafId)
-        let! (ccs: CardEntity list) = collectStackNoSave db userId leaf true
+        let! (ccs: CardEntity list) = collectStackNoSave db userId leaf true cardIds
         match deckId with
         | Some deckId ->
             do! db.Deck.AnyAsync(fun x -> x.Id = deckId && x.UserId = userId)
@@ -362,8 +363,8 @@ module StackRepository =
         do! db.SaveChangesAsyncI ()
         return ccs |> List.map (fun x -> x.Id)
         }
-    let CollectCard (db: CardOverflowDb) userId leafId =
-        collect db userId leafId None
+    let CollectCard (db: CardOverflowDb) userId leafId cardIds =
+        collect db userId leafId None cardIds
     let GetCollected (db: CardOverflowDb) (userId: Guid) (stackId: Guid) = taskResult {
         let! (e: _ ResizeArray) =
             db.CardIsLatest
@@ -386,7 +387,7 @@ module StackRepository =
         }
     let getNew (db: CardOverflowDb) userId = task {
         let! user = db.User.SingleAsync(fun x -> x.Id = userId)
-        return Card.initialize userId user.DefaultCardSettingId user.DefaultDeckId []
+        return Card.initialize Ulid.create userId user.DefaultCardSettingId user.DefaultDeckId []
         }
     let private searchCollected (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm

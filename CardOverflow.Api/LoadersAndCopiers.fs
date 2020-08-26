@@ -426,10 +426,10 @@ type Card with
         let e = CardEntity()
         this.copyTo e tagIds i
         e
-    static member initialize userId cardSettingId deckId tags =
+    static member initialize cardId userId cardSettingId deckId tags =
         {   StackId = Guid.Empty
             BranchId = Guid.Empty
-            CardId = Guid.Empty
+            CardId = cardId
             LeafMeta = LeafMeta.initialize
             Index = 0s
             UserId = userId
