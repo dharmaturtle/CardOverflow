@@ -280,11 +280,10 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     Assert.Equal(latestDeckId, card.DeckId)
 
     // insert new stack with default deckId
-    let defaultDeckId = userId
     do! EditCardCommand.init
         |> SanitizeCardRepository.update c.Db userId ccId
     let! (card: Card) = getCard branchId
-    Assert.Equal(defaultDeckId, card.DeckId)
+    Assert.Equal(deck_3, card.DeckId)
     } |> TaskResult.getOk)
 
 [<Fact>]
