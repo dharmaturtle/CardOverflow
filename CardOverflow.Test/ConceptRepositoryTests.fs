@@ -170,18 +170,18 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| stack.Comments
     Assert.True stack.Default.Leaf.IsCollected
-    Assert.Equal<ViewTag seq>(
+    Assert.areEquivalent
         [{  Name = "A"
             Count = 1
             IsCollected = true }
          {  Name = "B"
             Count = 1
-            IsCollected = true }],
+            IsCollected = true }]
         stack.Tags
-    )
     
-    let! stack = ExploreStackRepository.get c.Db userId newGuid
-    Assert.Equal("Stack #9999 not found", stack.error) }
+    let missingStack = newGuid
+    let! stack = ExploreStackRepository.get c.Db userId missingStack
+    Assert.equal (sprintf "Stack #%A not found" missingStack) stack.error }
 
 [<Fact>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
