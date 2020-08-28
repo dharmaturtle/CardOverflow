@@ -190,7 +190,7 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
     let! view = StackViewRepository.leaf c.Db leaf_1
