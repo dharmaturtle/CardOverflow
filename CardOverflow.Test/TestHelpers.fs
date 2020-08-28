@@ -84,7 +84,6 @@ module TaskResult =
 
 [<AutoOpen>]
 module Constants =
-    let newGuid        = Guid.NewGuid()
     let user_          = sprintf    "00000000-0000-0000-0000-00000000000%i" >> Guid.Parse
     let gromplate_     = sprintf    "00000000-0000-0000-0000-7e390000000%i" >> Guid.Parse
     let grompleaf_     = sprintf    "00000000-0000-0000-0000-7e390000100%i" >> Guid.Parse

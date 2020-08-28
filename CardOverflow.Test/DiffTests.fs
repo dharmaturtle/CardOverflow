@@ -1,6 +1,7 @@
 module DiffTests
 
 open CardOverflow.Api
+open LoadersAndCopiers
 open CardOverflow.Pure
 open CardOverflow.Debug
 open Xunit
@@ -50,7 +51,7 @@ let ``Diff LeafChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
     let theirs = stackLeafIndexes
     let mine =
         {   stackLeafIndexes.[0] with
-                LeafId = newGuid
+                LeafId = Ulid.create
         }   |> List.singleton
     
     Diff.ids theirs mine
@@ -67,8 +68,8 @@ let ``Diff BranchChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
     let theirs = stackLeafIndexes
     let mine =
         {   stackLeafIndexes.[0] with
-                BranchId = newGuid
-                LeafId = newGuid
+                BranchId = Ulid.create
+                LeafId = Ulid.create
         }   |> List.singleton
     
     Diff.ids theirs mine

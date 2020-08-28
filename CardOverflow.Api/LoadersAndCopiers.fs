@@ -15,8 +15,8 @@ open System.Text.RegularExpressions
 open System.Collections
 open NUlid
 
-module Ulid =
-    let create = Ulid.NewUlid().ToGuid()
+type Ulid =
+    static member create with get () = Ulid.NewUlid().ToGuid()
 
 module UpsertIds =
     let create = {

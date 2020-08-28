@@ -58,7 +58,7 @@ let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
     Assert.equal "Either Deck #00000000-0000-0000-0000-decc00000001 doesn't exist or it isn't public." error.error
     
     // nonexistant fails
-    let nonexistant = newGuid
+    let nonexistant = Ulid.create
     let! (error: Result<unit, string>) = setSource <| Some nonexistant
     Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." nonexistant) error.error
 
@@ -447,7 +447,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.rename c.Db userId newDeckId invalidDeckName
     Assert.Equal(sprintf "Deck name '%s' is too long. It must be less than 250 characters." invalidDeckName, x.error)
     
-    let invalidDeckId = newGuid
+    let invalidDeckId = Ulid.create
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId invalidDeckId cardId
     Assert.Equal(sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
 
@@ -460,7 +460,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.setIsPublic c.Db userId invalidDeckId true
     Assert.Equal(sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" invalidDeckId, x.error)
     
-    let invalidCardId = newGuid
+    let invalidCardId = Ulid.create
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId invalidCardId
     Assert.Equal(sprintf "Either Card #%A doesn't belong to you or it doesn't exist" invalidCardId, x.error)
     
@@ -741,7 +741,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
         |>% Assert.equal "Either the deck doesn't exist or you are not following it."
     
     // unfollow nonexisting deck fails
-    do! SanitizeDeckRepository.unfollow c.Db followerId newGuid
+    do! SanitizeDeckRepository.unfollow c.Db followerId Ulid.create
         |> TaskResult.getError
         |>% Assert.equal "Either the deck doesn't exist or you are not following it."
 
@@ -753,7 +753,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
         |>% Assert.equal (sprintf "You're already following Deck #%A" publicDeck.Id)
 
     // nonexistant deck fails
-    do! follow newGuid
+    do! follow Ulid.create
         |> TaskResult.getError
         |>% getRealError
         |>% Assert.equal "Either Deck #1337 doesn't exist or it isn't public."
@@ -1134,7 +1134,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     |>% Assert.equal "Either Deck #2 doesn't exist, or it isn't public, or you don't own it."
 
     // diffing with a deck that doesn't exist fails
-    let nonexistantDeckId = newGuid
+    let nonexistantDeckId = Ulid.create
     do! SanitizeDeckRepository.diff c.Db followerId nonexistantDeckId followerDeckId
     
     |>% Result.getError

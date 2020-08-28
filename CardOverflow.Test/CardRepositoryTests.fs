@@ -187,7 +187,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." deck_3) error.error
     
     // fails for nonexisting deck
-    let nonexistant = newGuid
+    let nonexistant = Ulid.create
     let! (error: Result<_,_>) = collect (Some nonexistant) Ulid.create
     
     Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." nonexistant) error.error

@@ -258,7 +258,7 @@ let ``ExploreStackRepository.leaf works``() : Task<unit> = (taskResult {
     Assert.Equal("Front Back", card3.StrippedBack)
 
     // nonexistant id
-    let nonexistant = newGuid
+    let nonexistant = Ulid.create
     
     let! (missingCard: Result<_, _>) = ExploreStackRepository.leaf c.Db userId nonexistant
     
@@ -307,7 +307,7 @@ let ``ExploreStackRepository.branch works``() : Task<unit> = (taskResult {
     Assert.Equal(newLeafId, branch2.Id)
 
     // nonexistant id
-    let nonexistant = newGuid
+    let nonexistant = Ulid.create
     
     let! (missingCard: Result<_, _>) = ExploreStackRepository.branch c.Db userId nonexistant
     
@@ -329,11 +329,11 @@ let ``StackViewRepository.leafPair works``() : Task<unit> = (taskResult {
     Assert.False(b_)
 
     // missing leafId
-    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db leaf_1 newGuid userId
+    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db leaf_1 Ulid.create userId
     
     Assert.Equal("Branch leaf #-1 not found", x.error)
     
-    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db newGuid leaf_1 userId
+    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db Ulid.create leaf_1 userId
     
     Assert.Equal("Branch leaf #-1 not found", x.error)
     } |> TaskResult.getOk)
@@ -522,8 +522,8 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     do! asserts user_2 copy_s copy_b copy_i newValue 1 1 []
 
     // missing copy
-    let missingLeafId = newGuid
-    let missingCardId = newGuid
+    let missingLeafId = Ulid.create
+    let missingCardId = Ulid.create
     
     let! old = SanitizeStackRepository.getUpsert c.Db (VNewCopySource_LeafId missingLeafId) ids_1
     
@@ -934,7 +934,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
 
     // can't collect missing id
-    let missingId = newGuid
+    let missingId = Ulid.create
     let! (error: Result<_,_>) = StackRepository.CollectCard c.Db userId missingId [ Ulid.create ]
     Assert.Equal(sprintf "Branch Leaf #%A not found" missingId, error.error)
 

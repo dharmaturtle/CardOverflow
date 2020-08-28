@@ -215,7 +215,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     let ccId = card_1
     
     // insert new stack with invalid settingsId
-    let invalidCardId = newGuid
+    let invalidCardId = Ulid.create
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
                 CardSettingId = invalidCardId }
@@ -231,7 +231,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
     // insert new stack with invalid deckId
-    let invalidDeckId = newGuid
+    let invalidDeckId = Ulid.create
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
                 DeckId = invalidDeckId }
@@ -422,7 +422,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     Assert.equal 2 revisions.SortedMeta.Length
 
     // invalid branchId
-    let invalidBranchId = newGuid
+    let invalidBranchId = Ulid.create
     let! (revisions: Result<_, _>) = StackRepository.Revisions c.Db userId invalidBranchId
 
     Assert.equal (sprintf "BranchId #%A not found" invalidBranchId) revisions.error

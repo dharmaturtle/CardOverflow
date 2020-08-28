@@ -75,7 +75,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     Assert.Equal(updatedLeafId, actual)
 
     // getCollectedLeafFromLeaf fails gracefully on invalid leafId
-    let invalidLeafId = newGuid
+    let invalidLeafId = Ulid.create
 
     let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
@@ -128,7 +128,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     Assert.Equal(updatedLeafId, actual)
 
     // getCollectedLeafFromLeaf fails gracefully on invalid leafId
-    let invalidLeafId = newGuid
+    let invalidLeafId = Ulid.create
 
     let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
@@ -179,7 +179,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
             IsCollected = true }]
         stack.Tags
     
-    let missingStack = newGuid
+    let missingStack = Ulid.create
     let! stack = ExploreStackRepository.get c.Db userId missingStack
     Assert.equal (sprintf "Stack #%A not found" missingStack) stack.error }
 
@@ -316,7 +316,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 
     let userId = user_1 // this user creates the card
     for (addStack: CardOverflowDb -> Guid -> string list -> (Guid * Guid * Guid * (Guid list)) -> Task<Guid>) in [ FacetRepositoryTests.addBasicStack; FacetRepositoryTests.addReversedBasicStack ] do
-        let! _ = addStack c.Db userId [] (newGuid, newGuid, newGuid, [newGuid])
+        let! _ = addStack c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [Ulid.create])
         ()
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1

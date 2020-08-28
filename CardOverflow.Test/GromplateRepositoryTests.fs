@@ -139,8 +139,8 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
-    let gromplateMissingId = newGuid
+    let gromplateMissingId = Ulid.create
     do! testViewError GromplateRepository.latest gromplateMissingId <| sprintf "Gromplate #%A not found" gromplateMissingId // TODO base64
-    let grompleafMissingId = newGuid
+    let grompleafMissingId = Ulid.create
     do! testViewError GromplateRepository.leaf   grompleafMissingId <| sprintf "Gromplate Leaf #%A not found" grompleafMissingId // TODO base64
     }

@@ -163,7 +163,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
         // doesn't work with invalid deckId
-        let failDeckCommand = { failDeckCommand with DeckId = newGuid }
+        let failDeckCommand = { failDeckCommand with DeckId = Ulid.create }
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
@@ -172,7 +172,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with invalid cardSettingId
-        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = newGuid }
+        let failCardSettingCommand = { failCardSettingCommand with CardSettingId = Ulid.create }
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
