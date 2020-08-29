@@ -1,4 +1,4 @@
--- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -10,6 +10,12 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
 
 CREATE TYPE public.notification_type AS ENUM (
     'DeckAddedStack',
@@ -356,6 +362,30 @@ $$;
 
 
 ALTER FUNCTION public.fn_tr_user_beforeinsertupdate() OWNER TO postgres;
+
+CREATE FUNCTION public.generate_ulid() RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  timestamp  BYTEA = E'\\000\\000\\000\\000\\000\\000';
+  unix_time  BIGINT;
+BEGIN
+    unix_time = (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT;
+    timestamp = SET_BYTE(timestamp, 3, (unix_time >> 40)::BIT(8)::INTEGER);
+    timestamp = SET_BYTE(timestamp, 2, (unix_time >> 32)::BIT(8)::INTEGER);
+    timestamp = SET_BYTE(timestamp, 1, (unix_time >> 24)::BIT(8)::INTEGER);
+    timestamp = SET_BYTE(timestamp, 0, (unix_time >> 16)::BIT(8)::INTEGER);
+    timestamp = SET_BYTE(timestamp, 5, (unix_time >> 8)::BIT(8)::INTEGER);
+    timestamp = SET_BYTE(timestamp, 4, unix_time::BIT(8)::INTEGER);
+    RETURN CAST(substring(CAST((timestamp || gen_random_bytes(10)) AS text) from 3) AS uuid);
+END
+$$;
+
+
+ALTER FUNCTION public.generate_ulid() OWNER TO postgres;
+
+COMMENT ON FUNCTION public.generate_ulid() IS 'https://github.com/geckoboard/pgulid/issues/3';
+
 
 SET default_tablespace = '';
 
@@ -751,7 +781,7 @@ CREATE VIEW public.leaf_tag_count AS
 ALTER TABLE public.leaf_tag_count OWNER TO postgres;
 
 CREATE TABLE public.notification (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT public.generate_ulid(),
     sender_id uuid NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     type public.notification_type NOT NULL,

@@ -568,7 +568,7 @@ let ``Card search works`` (): Task<unit> = task {
     Assert.Equal(stack_3, cards.Results.Single().Id)
 
     // testing deckSearch
-    let search searchTerm = StackRepository.searchDeck c.Db userId 1 SearchOrder.Popularity searchTerm userId
+    let search searchTerm = StackRepository.searchDeck c.Db userId 1 SearchOrder.Popularity searchTerm deck_3
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
@@ -590,10 +590,10 @@ let ``Card search works`` (): Task<unit> = task {
     
     // testing deckSearch from other user
     let otherUserId = user_1
-    let search searchTerm = StackRepository.searchDeck c.Db otherUserId 1 SearchOrder.Popularity searchTerm userId
+    let search searchTerm = StackRepository.searchDeck c.Db otherUserId 1 SearchOrder.Popularity searchTerm deck_3
     let! cards = search ""
     Assert.Equal(0, cards.Results.Count())
-    do! SanitizeDeckRepository.setIsPublic c.Db userId userId true |> TaskResult.getOk
+    do! SanitizeDeckRepository.setIsPublic c.Db userId deck_3 true |> TaskResult.getOk
     let! cards = search ""
     Assert.Equal(3, cards.Results.Count())
     let! cards = search basicTag
@@ -618,8 +618,8 @@ let ``Card search works`` (): Task<unit> = task {
     let term = "relevant "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId ["tag1"] (stack_ 4, branch_ 4, leaf_ 4, [card_1])
-    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId ["tag2"] (stack_ 5, branch_ 5, leaf_ 5, [card_1])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId ["tag1"] (stack_ 4, branch_ 4, leaf_ 4, [card_ 4])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId ["tag2"] (stack_ 5, branch_ 5, leaf_ 5, [card_ 5])
     let! hits = search term
     Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
 
@@ -627,16 +627,16 @@ let ``Card search works`` (): Task<unit> = task {
     let term = "nightwish "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId [] (stack_ 6, branch_ 6, leaf_ 6, [card_1])
-    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId [] (stack_ 7, branch_ 7, leaf_ 7, [card_1])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [less; less] c.Db userId [] (stack_ 6, branch_ 6, leaf_ 6, [card_ 6])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [more; more] c.Db userId [] (stack_ 7, branch_ 7, leaf_ 7, [card_ 7])
     let! hits = search term
     Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
     
     // tags outweigh fields
     let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
     let tag = " batman"
-    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem      ; ""] c.Db userId [tag] (stack_1, branch_1, leaf_1, [card_1])
-    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem + tag; ""] c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem      ; ""] c.Db userId [tag] (stack_ 8, branch_ 8, leaf_ 8, [card_ 8])
+    let! _ = FacetRepositoryTests.addBasicCustomStack [lorem + tag; ""] c.Db userId []    (stack_ 9, branch_ 9, leaf_ 9, [card_ 9])
     let! hits = search tag
     Assert.Equal(lorem, hits.Results.First().Leaf.StrippedFront)
 
