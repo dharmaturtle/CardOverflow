@@ -371,8 +371,6 @@ CREATE TABLE public.alpha_beta_key (
 
 ALTER TABLE public.alpha_beta_key OWNER TO postgres;
 
-
-
 CREATE TABLE public.branch (
     id uuid NOT NULL,
     name character varying(64),
@@ -387,8 +385,6 @@ CREATE TABLE public.branch (
 
 
 ALTER TABLE public.branch OWNER TO postgres;
-
-
 
 CREATE TABLE public.card (
     id uuid NOT NULL,
@@ -415,8 +411,6 @@ CREATE TABLE public.card (
 
 
 ALTER TABLE public.card OWNER TO postgres;
-
-
 
 CREATE VIEW public.card_is_latest AS
  SELECT a.id,
@@ -471,8 +465,6 @@ CREATE TABLE public.card_setting (
 
 ALTER TABLE public.card_setting OWNER TO postgres;
 
-
-
 CREATE TABLE public.commeaf (
     id uuid NOT NULL,
     commield_id uuid NOT NULL,
@@ -498,8 +490,6 @@ CREATE TABLE public.commeaf_2_leaf (
 
 ALTER TABLE public.commeaf_2_leaf OWNER TO postgres;
 
-
-
 CREATE TABLE public.comment_gromplate (
     id uuid NOT NULL,
     gromplate_id uuid NOT NULL,
@@ -512,8 +502,6 @@ CREATE TABLE public.comment_gromplate (
 
 
 ALTER TABLE public.comment_gromplate OWNER TO postgres;
-
-
 
 CREATE TABLE public.comment_stack (
     id uuid NOT NULL,
@@ -528,8 +516,6 @@ CREATE TABLE public.comment_stack (
 
 ALTER TABLE public.comment_stack OWNER TO postgres;
 
-
-
 CREATE TABLE public.commield (
     id uuid NOT NULL,
     author_id uuid NOT NULL,
@@ -541,8 +527,6 @@ CREATE TABLE public.commield (
 
 
 ALTER TABLE public.commield OWNER TO postgres;
-
-
 
 CREATE TABLE public.deck (
     id uuid NOT NULL,
@@ -568,8 +552,6 @@ CREATE TABLE public.deck_follower (
 
 ALTER TABLE public.deck_follower OWNER TO postgres;
 
-
-
 CREATE TABLE public.feedback (
     id uuid NOT NULL,
     title character varying(50) NOT NULL,
@@ -583,8 +565,6 @@ CREATE TABLE public.feedback (
 
 
 ALTER TABLE public.feedback OWNER TO postgres;
-
-
 
 CREATE TABLE public.file (
     id uuid NOT NULL,
@@ -606,8 +586,6 @@ CREATE TABLE public.file_2_leaf (
 
 ALTER TABLE public.file_2_leaf OWNER TO postgres;
 
-
-
 CREATE TABLE public.filter (
     id uuid NOT NULL,
     name character varying(128) NOT NULL,
@@ -620,8 +598,6 @@ CREATE TABLE public.filter (
 
 ALTER TABLE public.filter OWNER TO postgres;
 
-
-
 CREATE TABLE public.gromplate (
     id uuid NOT NULL,
     author_id uuid NOT NULL,
@@ -633,8 +609,6 @@ CREATE TABLE public.gromplate (
 
 
 ALTER TABLE public.gromplate OWNER TO postgres;
-
-
 
 CREATE TABLE public.grompleaf (
     id uuid NOT NULL,
@@ -660,8 +634,6 @@ CREATE TABLE public.grompleaf (
 
 ALTER TABLE public.grompleaf OWNER TO postgres;
 
-
-
 CREATE TABLE public.history (
     id uuid NOT NULL,
     card_id uuid,
@@ -677,8 +649,6 @@ CREATE TABLE public.history (
 
 
 ALTER TABLE public.history OWNER TO postgres;
-
-
 
 CREATE TABLE public.leaf (
     id uuid NOT NULL,
@@ -701,8 +671,6 @@ CREATE TABLE public.leaf (
 
 
 ALTER TABLE public.leaf OWNER TO postgres;
-
-
 
 CREATE TABLE public.relationship (
     id uuid NOT NULL,
@@ -799,8 +767,6 @@ CREATE TABLE public.notification (
 
 ALTER TABLE public.notification OWNER TO postgres;
 
-
-
 CREATE TABLE public.padawan (
     id uuid NOT NULL,
     display_name character varying(32) NOT NULL,
@@ -832,8 +798,6 @@ CREATE TABLE public.potential_signups (
 
 ALTER TABLE public.potential_signups OWNER TO postgres;
 
-
-
 CREATE TABLE public.received_notification (
     receiver_id uuid NOT NULL,
     notification_id uuid NOT NULL
@@ -841,8 +805,6 @@ CREATE TABLE public.received_notification (
 
 
 ALTER TABLE public.received_notification OWNER TO postgres;
-
-
 
 CREATE TABLE public.stack (
     id uuid NOT NULL,
@@ -857,8 +819,6 @@ CREATE TABLE public.stack (
 
 
 ALTER TABLE public.stack OWNER TO postgres;
-
-
 
 CREATE VIEW public.stack_relationship_count AS
  SELECT sac.stack_id AS source_stack_id,
@@ -904,8 +864,6 @@ CREATE TABLE public.tag_2_user_2_grompleaf (
 
 ALTER TABLE public.tag_2_user_2_grompleaf OWNER TO postgres;
 
-
-
 CREATE TABLE public.user_2_grompleaf (
     user_id uuid NOT NULL,
     grompleaf_id uuid NOT NULL,
@@ -915,8 +873,6 @@ CREATE TABLE public.user_2_grompleaf (
 
 
 ALTER TABLE public.user_2_grompleaf OWNER TO postgres;
-
-
 
 CREATE TABLE public.vote_2_comment_gromplate (
     comment_gromplate_id uuid NOT NULL,
@@ -951,9 +907,9 @@ ALTER TABLE public.vote_2_feedback OWNER TO postgres;
 
 
 
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-000000000001', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-000000000002', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-000000000003', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-000000000001', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-000000000002', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-000000000003', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992', NULL);
 
 
 
@@ -966,9 +922,9 @@ INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, 
 
 
 
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000001', '00000000-0000-0000-0000-000000000001', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000002', '00000000-0000-0000-0000-000000000002', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000003', '00000000-0000-0000-0000-000000000003', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000001', '00000000-0000-0000-0000-000000000001', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000002', '00000000-0000-0000-0000-000000000002', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000003', '00000000-0000-0000-0000-000000000003', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
 
 
 
@@ -981,11 +937,11 @@ INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, cre
 
 
 
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000001', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001001', true, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001002', true, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000003', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001003', true, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000004', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001006', true, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000005', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001007', true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000001', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001001', true, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001002', true, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000003', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001003', true, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000004', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001006', true, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000005', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001007', true, '2020-08-15 21:40:11.66992', NULL);
 
 
 INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001001', 'Basic', '00000000-0000-0000-0000-7e3900000001', '.card {
@@ -995,7 +951,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.581+00', '2019-06-16 00:53:30+00', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.581', '2019-06-16 00:53:30', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1014,7 +970,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.577+00', '2019-06-16 00:51:28+00', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1037,7 +993,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.577+00', '2019-06-16 00:51:28+00', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1060,7 +1016,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.571+00', '2019-06-16 00:51:46+00', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.571', '2019-06-16 00:51:46', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1087,7 +1043,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 }
 .nightMode .cloze {
  color: lightblue;
-}', '2019-04-08 02:14:29.57+00', '2019-06-16 00:51:55+00', '\documentclass[12pt]{article}
+}', '2019-04-08 02:14:29.57', '2019-06-16 00:51:55', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1103,7 +1059,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2020-04-23 19:40:46.82+00', '2020-04-23 19:40:46+00', '\documentclass[12pt]{article}
+', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1131,7 +1087,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 }
 .nightMode .cloze {
  color: lightblue;
-}', '2020-04-23 19:40:46.82+00', '2020-04-23 19:40:46+00', '\documentclass[12pt]{article}
+}', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1147,9 +1103,9 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 
 
 
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, '''admin'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, '''collective'':2 ''the'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, '''roboturtle'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992', NULL, '''admin'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992', NULL, '''collective'':2 ''the'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992', NULL, '''roboturtle'':1');
 
 
 
@@ -1168,14 +1124,11 @@ INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_d
 
 
 
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-
-
-
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
 
 
 
