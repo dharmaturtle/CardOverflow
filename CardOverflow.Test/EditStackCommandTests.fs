@@ -31,7 +31,7 @@ let test text expected grompleaf ids =
     let view =
         {   EditSummary = ""
             FieldValues =
-                Grompleaf.initialize.Fields.Select(fun f -> {
+                (Grompleaf.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
                     EditField = f
                     Value =
                         if f.Name = "Front" then
@@ -54,7 +54,7 @@ let test text expected grompleaf ids =
 let ``EditStackCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
-            ({ Grompleaf.initialize with
+            ({ (Grompleaf.initialize Ulid.create Ulid.create) with
                 Templates =
                 {   Name = "Basic"
                     Front = "{{Front}}"
@@ -72,7 +72,7 @@ let ``EditStackCommand's back works with basic`` (): unit =
 let ``EditStackCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
-            ({ Grompleaf.initialize with
+            ({ (Grompleaf.initialize Ulid.create Ulid.create) with
                 Templates =
                     {   Name = "Cloze"
                         Front = "{{cloze:Front}}"
@@ -93,7 +93,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    Grompleaf.initialize.Fields.Select(fun f -> {
+                    (Grompleaf.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             match f.Name with
@@ -102,9 +102,9 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                             | _ -> "Source goes here"
                     }).ToList()
                 Grompleaf =
-                    {   Grompleaf.initialize with
+                    {   (Grompleaf.initialize Ulid.create Ulid.create) with
                             Templates =
-                                {   Grompleaf.initialize.JustTemplates.[0] with
+                                {   (Grompleaf.initialize Ulid.create Ulid.create).JustTemplates.[0] with
                                         Front = "{{cloze:Front}}{{cloze:Back}}"
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze

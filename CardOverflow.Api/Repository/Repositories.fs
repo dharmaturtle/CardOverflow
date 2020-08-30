@@ -86,13 +86,9 @@ module GromplateRepository =
             .SingleOrDefaultAsync(fun x -> x.Id = leafId)
         |> Task.map (Result.requireNotNull <| sprintf "Gromplate Leaf #%A not found" leafId)
         |> TaskResult.map Grompleaf.load
-    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId (leaf: Grompleaf) = task {
-        let gromplate =
-            if leaf.GromplateId = Guid.Empty then
-                IdOrEntity.Entity <| GromplateEntity(AuthorId = userId)
-            else    
-                Id <| leaf.GromplateId
-        let newGrompleaf = leaf.CopyToNewLeaf gromplate
+    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId gromplate (leaf: Grompleaf) = task {
+        let newGrompleaf = leaf.CopyToNewLeaf
+        newGrompleaf.Gromplate <- gromplate
         db.Grompleaf.AddI newGrompleaf
         db  
             .Card
@@ -100,7 +96,7 @@ module GromplateRepository =
             .Where(fun x -> x.Leaf.GrompleafId = leaf.Id)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
-                cc.Leaf.Id <- Ulid.NewUlid().ToGuid()
+                cc.Leaf.Id <- Ulid.create
                 cc.Leaf.Grompleaf <- newGrompleaf
             )
         let! existing = db.User_Grompleaf.Where(fun x -> x.UserId = userId && x.Grompleaf.GromplateId = newGrompleaf.GromplateId).ToListAsync()

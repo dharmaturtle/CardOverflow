@@ -670,7 +670,7 @@ let ``New user has TheCollective's card gromplates`` (): Task<unit> = task {
 let ``Updating card gromplate with duplicate field names yields error`` (): Task<unit> = task {
     let userId = user_3
     let fieldName = Guid.NewGuid().ToString()
-    let gromplate = Grompleaf.initialize |> ViewGrompleaf.load
+    let gromplate = (Grompleaf.initialize Ulid.create Ulid.create) |> ViewGrompleaf.load
     let gromplate = { gromplate with Fields = gromplate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
     let! error = SanitizeGromplate.Update null userId gromplate
@@ -683,13 +683,15 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
     use c = new TestContainer()
     let userId = user_3
     let name = Guid.NewGuid().ToString()
-    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId
+    let grompleafId1 = grompleaf_ 8
+    let gromplateId1 = gromplate_ 8
+    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId grompleafId1 gromplateId1
 
     let! x = SanitizeGromplate.Update c.Db userId { initialGromplate.Editable with Name = name }
     Assert.Null x.Value
-    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
+    let! myGromplates1 = SanitizeGromplate.GetMine c.Db userId
 
-    Assert.SingleI(myGromplates.Where(fun x -> x.Editable.Name = name))
+    Assert.equal name <| myGromplates1.Single(fun x -> x.Id = gromplateId1).Editable.Name
     
     // testing a brand new gromplate, but slightly different
     let fieldName = Guid.NewGuid().ToString()
@@ -700,19 +702,23 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
                 IsSticky = false
             }
         {   initialGromplate.Editable with
+                Id = grompleaf_ 9
+                GromplateId = gromplate_ 9
                 Fields = initialGromplate.Editable.Fields.Append newField |> Core.toResizeArray
         }
     let! x = SanitizeGromplate.Update c.Db userId newEditable
     Assert.Null x.Value
     
     Assert.Equal(2, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
-    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    let latestGromplate = myGromplates.OrderBy(fun x -> x.Id).Last().Editable
+    let! myGromplates2 = SanitizeGromplate.GetMine c.Db userId
+    let latestId = myGromplates2.Select(fun x -> x.Id).Except(myGromplates1.Select(fun x -> x.Id)).Single()
+    Assert.equal (gromplate_ 9) latestId
+    let latestGromplate = myGromplates2.Single(fun x -> x.Id = latestId).Editable
     Assert.True(latestGromplate.Fields.Any(fun x -> x.Name = fieldName))
 
     // updating the slightly different gromplate
     let name = Guid.NewGuid().ToString()
-    let! x = SanitizeGromplate.Update c.Db userId { latestGromplate with Name = name }
+    let! x = SanitizeGromplate.Update c.Db userId { latestGromplate with Name = name; Id = Ulid.create }
     Assert.Null x.Value
 
     let! myGromplates = SanitizeGromplate.GetMine c.Db userId
@@ -724,6 +730,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
         SanitizeGromplate.Update c.Db userId
             { latestGromplate
                 with
+                    Id = Ulid.create
                     Name = name
                     Templates = Cloze <| latestGromplate.JustTemplates.First()
             }
@@ -739,6 +746,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
         SanitizeGromplate.Update c.Db userId
             { latestGromplate
                 with
+                    Id = Ulid.create
                     Name = name
                     Templates = Standard [ latestGromplate.JustTemplates.First() ; latestGromplate.JustTemplates.First() ]
             }
@@ -753,7 +761,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
 let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId
+    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId Ulid.create Ulid.create
     use sha512 = SHA512.Create()
     do! SanitizeGromplate.Update c.Db userId initialGromplate.Editable
     let! (dbGromplate: GrompleafEntity) = c.Db.Grompleaf.SingleAsync(fun x -> x.Gromplate.AuthorId = userId)
@@ -761,7 +769,7 @@ let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
     let computedHash =
         initialGromplate.Editable
         |> ViewGrompleaf.copyTo
-        |> fun x -> GromplateEntity() |> IdOrEntity.Entity |> x.CopyToNewLeaf
+        |> fun x -> x.CopyToNewLeaf
         |> GrompleafEntity.hash sha512
     
     Assert.Equal<BitArray>(dbGromplate.Hash, computedHash)

@@ -162,9 +162,9 @@ type ViewGromplateWithAllLeafs = {
                 leafs.First() with
                     Id = Guid.Empty
                     EditSummary = "" }}
-    static member initialize userId =
-        let leaf = Grompleaf.initialize |> ViewGrompleaf.load
-        {   Id = Guid.Empty
+    static member initialize userId grompleafId gromplateId =
+        let leaf = Grompleaf.initialize grompleafId gromplateId |> ViewGrompleaf.load
+        {   Id = gromplateId
             AuthorId = userId
             Leafs = [leaf].ToList()
             Editable = leaf
@@ -226,17 +226,17 @@ module SanitizeGromplate =
         return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
         }
     let Update (db: CardOverflowDb) userId (leaf: ViewGrompleaf) =
-        let update () = task {
-            let! r = ViewGrompleaf.copyTo leaf |> GromplateRepository.UpdateFieldsToNewLeaf db userId
+        let update gromplate = task {
+            let! r = ViewGrompleaf.copyTo leaf |> GromplateRepository.UpdateFieldsToNewLeaf db userId gromplate
             return r |> Ok
         }
         if leaf.Fields.Count = leaf.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
             db.Gromplate.SingleOrDefault(fun x -> x.Id = leaf.GromplateId)
             |> function
-            | null -> update ()
+            | null -> update (GromplateEntity(Id = leaf.GromplateId, AuthorId = userId))
             | gromplate ->
                 if gromplate.AuthorId = userId then 
-                    update ()
+                    update gromplate
                 else Error "You aren't that this gromplate's author." |> Task.FromResult
         else
             Error "Field names must differ" |> Task.FromResult

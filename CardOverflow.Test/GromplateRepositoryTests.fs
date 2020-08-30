@@ -50,9 +50,10 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
                         Front = newQuestionXemplate
                 } |> List.singleton |> Standard
             Fields = latestLeaf.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
-        } |> ViewGrompleaf.copyTo
+        }
     
-    do! GromplateRepository.UpdateFieldsToNewLeaf c.Db userId updated
+    let! r = SanitizeGromplate.Update c.Db userId updated
+    Assert.Null r
 
     let! gromplate = SanitizeGromplate.AllLeafs c.Db gromplateId
     let latestLeaf = gromplate.Value.Leafs |> Seq.maxBy (fun x -> x.Created)

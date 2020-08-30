@@ -238,10 +238,10 @@ type Grompleaf with
             Templates = entity.Type |> GromplateType.fromDb (entity.Templates |> Template.loadMany)
             EditSummary = entity.EditSummary
         }
-    static member initialize = {
-        Id = Guid.Empty
+    static member initialize grompleafId gromplateId = {
+        Id = grompleafId
         Name = "New Template"
-        GromplateId = Guid.Empty
+        GromplateId = gromplateId
         Css = """.card {
      font-family: arial;
      font-size: 20px;
@@ -284,12 +284,11 @@ type Grompleaf with
             match this.Templates with
             | Standard _ -> 0s
             | Cloze _ -> 1s
-    member this.CopyToNewLeaf gromplate =
+    member this.CopyToNewLeaf =
         let e = GrompleafEntity()
         this.CopyTo e
-        match gromplate with
-        | Id id -> e.GromplateId <- id
-        | Entity entity -> e.Gromplate <- entity
+        e.Id <- this.Id
+        e.GromplateId <- this.GromplateId
         e
 
 type CollectedGrompleaf with
