@@ -155,28 +155,25 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             longThingUs],
         c.Db.Leaf.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
-    Assert.Equal<string seq>(
+    Assert.areEquivalent
         [   "<b><br /></b>"
-            "<br /><div><br /></div><div>Image here</div>" ],
-        allLeafViews
-            .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value))
-    )
-    Assert.Equal<string seq>(
+            "<br /><div><br /></div><div>Image here</div>" ]
+        (allLeafViews.SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value)))
+    Assert.areEquivalent
         [   longThing
-            "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ],
-        allLeafViews
-            .SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value))
-    )
+            "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ]
+        (allLeafViews.SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value)))
     Assert.SingleI
         <| c.Db.Leaf
             .Where(fun x -> x.FieldValues.Contains("acute"))
     Assert.True(c.Db.Leaf.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
-    let! stack = ExploreStackRepository.get c.Db userId stack_1
+    let leaf = Assert.Single <| c.Db.Leaf.Where(fun x -> x.FieldValues.Contains("microtubules"))
+    let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
     let stack = stack.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
         stack.Default.Leaf.StrippedFront)
-    let! stack = ExploreStackRepository.get c.Db userId stack_1
+    let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
     Assert.Empty stack.Value.Relationships
     Assert.Empty c.Db.Relationship
 
