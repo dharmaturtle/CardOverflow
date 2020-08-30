@@ -51,19 +51,20 @@ let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds ids = {
     Title = null
     Ids = UpsertIds.fromTuple ids }
 
-let add gromplateName createCommand (db: CardOverflowDb) userId tags ids = task {
+let add gromplateName createCommand (db: CardOverflowDb) userId tags (ids: Guid * Guid * Guid * Guid list) = task {
     let tagIds = ResizeArray.empty
     for tag in tags do
         let! tagId = SanitizeTagRepository.upsert db tag |> TaskResult.getOk
         tagIds.Add tagId
     let! gromplate = TestGromplateRepo.SearchEarliest db gromplateName
+    let (_, _, _, cardIds) = ids
     let! r =
         createCommand gromplate (tagIds |> List.ofSeq) ids
-        |> SanitizeStackRepository.Update db userId [] [ Ulid.create ]
+        |> SanitizeStackRepository.Update db userId [] cardIds
     return r.Value
     }
 
-let addReversedBasicStack: CardOverflowDb -> Guid -> string list -> (Guid * Guid * Guid * (Guid list)) -> Task<Guid> =
+let addReversedBasicStack: CardOverflowDb -> Guid -> string list -> (Guid * Guid * Guid * Guid list) -> Task<Guid> =
     add "Basic (and reversed card)" <| normalCommand []
 
 let addBasicStack =
