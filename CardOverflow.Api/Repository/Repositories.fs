@@ -519,20 +519,26 @@ module UpdateRepository =
                         )
                     | NewCopy_SourceLeafId_TagIds (leafId, _) ->
                         BranchEntity(
+                            Id = command.Ids.BranchId,
                             AuthorId = userId,
                             Stack =
                                 StackEntity(
+                                    Id = command.Ids.StackId,
                                     AuthorId = userId,
                                     CopySourceId = Nullable leafId
                                 )) |> Ok |> Task.FromResult
                     | NewBranch_Title name ->
                         branchNameCheckStackId command.Ids.StackId name
                         |> TaskResult.map(fun () ->
-                            BranchEntity(
-                                Id = command.Ids.BranchId,
-                                AuthorId = userId,
-                                Name = name,
-                                StackId = command.Ids.StackId))
+                            let branch =
+                                BranchEntity(
+                                    Id = command.Ids.BranchId,
+                                    AuthorId = userId,
+                                    Name = name,
+                                    StackId = command.Ids.StackId)
+                            db.Entry(branch).State <- EntityState.Added
+                            branch
+                        )
                     | NewOriginal_TagIds _ ->
                         BranchEntity(
                             Id = command.Ids.BranchId,

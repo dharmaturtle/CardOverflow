@@ -330,6 +330,7 @@ type LeafView with
             e.StackId <- branch.Stack.Id
         e.Id <- leafId
         e.Branch <- branch
+        e.BranchId <- branch.Id
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive
         e

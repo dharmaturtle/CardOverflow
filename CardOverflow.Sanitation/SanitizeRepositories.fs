@@ -833,6 +833,7 @@ module SanitizeStackRepository =
                 db.Leaf.AddI leaf
                 StackRepository.collectStackNoSave db userId leaf false cardIds |>% Ok
             | NewBranch_Title _ ->
+                db.Leaf.AddI leaf
                 StackRepository.collectStackNoSave db userId leaf true cardIds |>% Ok
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
