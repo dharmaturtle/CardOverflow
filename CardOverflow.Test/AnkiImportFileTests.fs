@@ -294,7 +294,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
     let getLeafs clozeText = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
-        let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+        let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [])
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
             Assert.SingleI <| c.Db.LatestLeaf.Where(fun x -> x.FieldValues.Contains clozeText)
             Assert.Equal(0, c.Db.LatestLeaf.Count(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText)))
@@ -340,12 +340,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
             "[ city ] was founded in 1845.", "[ Portland ] was founded in 1845. extra"
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
-    Assert.Equal(expected, e.Results.Select(fun x -> x.Value.LeafMeta.StrippedFront, x.Value.LeafMeta.StrippedBack))
+    Assert.areEquivalent expected <| e.Results.Select(fun x -> x.Value.LeafMeta.StrippedFront, x.Value.LeafMeta.StrippedBack)
     do! assertUserHasNormalCardCount 4
 
     // go from 1 cloze to 2 clozes
-    let branchId = branch_1
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
+    let branch = c.Db.Branch.First() // the specific branch shouldn't matter
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -355,12 +355,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
-    Assert.Equal(branchId, actualBranchId)
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [] command
+    Assert.Equal(branch.Id, actualBranchId)
     do! assertUserHasNormalCardCount 5
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -370,12 +370,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
-    Assert.Equal(branchId, actualBranchId)
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [] command
+    Assert.Equal(branch.Id, actualBranchId)
     do! assertUserHasNormalCardCount 4
     
     // multiple c1's works
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -385,8 +385,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
-    Assert.Equal(branchId, actualBranchId)
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [] command
+    Assert.Equal(branch.Id, actualBranchId)
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
 

@@ -839,8 +839,6 @@ module SanitizeStackRepository =
                 let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true cardIds
                 for tagId in tagIds do
                     ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))
-                for cc in ccs do
-                    cc.Id <- stackCommand.Ids.CardIds.[int cc.Index]
                 return ccs
                 }
             |>%% List.sortBy (fun x -> x.Index)

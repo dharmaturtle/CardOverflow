@@ -333,10 +333,8 @@ module StackRepository =
                     Some new'
                 | Some _, Some old' ->
                     if leaf.BranchId = old'.BranchId || mayUpdate then
-                        old'.Leaf <- leaf
-                        old'.Branch <- leaf.Branch
-                        old'.Stack <- leaf.Stack
                         old'.StackId <- leaf.StackId
+                        old'.BranchId <- leaf.BranchId
                         old'.LeafId <- leaf.Id
                         Some old'
                     else None
