@@ -235,7 +235,7 @@ module SanitizeGromplate =
             |> function
             | null -> update (GromplateEntity(Id = leaf.GromplateId, AuthorId = userId))
             | gromplate ->
-                if gromplate.AuthorId = userId then 
+                if gromplate.AuthorId = userId then
                     update gromplate
                 else Error "You aren't that this gromplate's author." |> Task.FromResult
         else

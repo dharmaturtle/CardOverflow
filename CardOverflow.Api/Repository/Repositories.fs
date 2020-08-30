@@ -93,7 +93,7 @@ module GromplateRepository =
         db  
             .Card
             .Include(fun x -> x.Leaf)
-            .Where(fun x -> x.Leaf.GrompleafId = leaf.Id)
+            .Where(fun x -> x.Leaf.Grompleaf.GromplateId = leaf.GromplateId)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
                 cc.Leaf.Id <- Ulid.create

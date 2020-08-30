@@ -19,7 +19,7 @@ open CardOverflow.Sanitation
 
 [<Fact>]
 let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
-    let userId = user_3
+    let userId = user_2
     use c = new TestContainer()
     
     let gromplateId = c.Db.Gromplate.Single(fun x -> x.Grompleafs.Any(fun x -> x.Name = "Basic")).Id
@@ -42,8 +42,11 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let newQuestionXemplate = "modified {{Front mutated}}"
     let newGromplateName = "new name"
     let oldLeafId = c.Db.Card.Single().LeafId
+    let newLeafId = Ulid.create
     let updated =
         { latestLeaf with
+            Id = newLeafId
+            GromplateId = gromplateId
             Name = newGromplateName
             Templates =
                 {   latestLeaf.FirstTemplate with
@@ -53,10 +56,10 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
         }
     
     let! r = SanitizeGromplate.Update c.Db userId updated
-    Assert.Null r
+    Assert.Null r.Value
 
     let! gromplate = SanitizeGromplate.AllLeafs c.Db gromplateId
-    let latestLeaf = gromplate.Value.Leafs |> Seq.maxBy (fun x -> x.Created)
+    let latestLeaf = gromplate.Value.Leafs.Single(fun x -> x.Id = newLeafId)
     Assert.Equal(
         newQuestionXemplate,
         latestLeaf.FirstTemplate.Front)
