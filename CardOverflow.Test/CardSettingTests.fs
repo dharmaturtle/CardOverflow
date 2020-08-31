@@ -29,10 +29,10 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
             { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
                 IsDefault = false }
         |> toResizeArray
-    let newId = setting_ 4
 
     let! ids = SanitizeCardSettingRepository.upsertMany c.Db userId options
     
+    let newId = c.Db.CardSetting.OrderByDescending(fun x -> x.Created).First().Id
     Assert.Equal(newId, ids.Value.Single(fun x -> x <> oldId))
     let! user = c.Db.User.SingleAsync(fun x -> x.Id = userId)
     Assert.Equal(oldId, user.DefaultCardSettingId)

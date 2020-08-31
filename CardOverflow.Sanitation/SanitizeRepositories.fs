@@ -649,8 +649,8 @@ module SanitizeRelationshipRepository =
                 TargetCardId = tid
             ) |> RelationshipRepository.addAndSaveAsync db
         }
-    let Remove db sourceLeafId targetStackId userId name =
-        RelationshipRepository.removeAndSaveAsync db sourceLeafId targetStackId userId name // don't eta reduce - consumed by C#
+    let Remove db sourceStackId targetStackId userId name = // highTODO make sure the client calls this properly - there was an error in naming sourceStackId and targetStackId
+        RelationshipRepository.removeAndSaveAsync db sourceStackId targetStackId userId name // don't eta reduce - consumed by C#
 
 [<CLIMutable>]
 type SearchCommand = {

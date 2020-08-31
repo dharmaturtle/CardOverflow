@@ -301,12 +301,12 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
     let addRelationshipCommand1 =
         {   Name = relationshipName
             SourceStackId = stack_1
-            TargetStackLink = "2"
+            TargetStackLink = stack_2.ToString()
         }
     let addRelationshipCommand2 =
         {   Name = relationshipName
             SourceStackId = stack_2
-            TargetStackLink = "1"
+            TargetStackLink = stack_1.ToString()
         }
     let commands = [
         addRelationshipCommand1, addRelationshipCommand1
@@ -315,9 +315,8 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
         addRelationshipCommand2, addRelationshipCommand1 ]
 
     let userId = user_1 // this user creates the card
-    for (addStack: CardOverflowDb -> Guid -> string list -> (Guid * Guid * Guid * (Guid list)) -> Task<Guid>) in [ FacetRepositoryTests.addBasicStack; FacetRepositoryTests.addReversedBasicStack ] do
-        let! _ = addStack c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [Ulid.create])
-        ()
+    let! _ = FacetRepositoryTests.addBasicStack          c.Db userId [] (stack_1, branch_1, leaf_1, [Ulid.create])
+    let! _ = FacetRepositoryTests.addReversedBasicStack  c.Db userId [] (stack_2, branch_2, leaf_2, [Ulid.create])
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
@@ -327,7 +326,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
     Assert.Equal(1, stack.Value.Relationships.Single().Users)
 
     let successfulRemove () = task {
-        let! r = SanitizeRelationshipRepository.Remove c.Db leaf_1 stack_2 userId relationshipName
+        let! r = SanitizeRelationshipRepository.Remove c.Db stack_1 stack_2 userId relationshipName
         Assert.Null r.Value
         let! stack = ExploreStackRepository.get c.Db userId stack_1
         Assert.Equal(0, stack.Value.Relationships.Count)
@@ -337,8 +336,8 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
-    let! r = SanitizeRelationshipRepository.Remove c.Db leaf_2 stack_1 userId relationshipName
-    Assert.Equal(sprintf "Relationship not found between source Stack #2 and target Stack #1 with name \"%s\"." relationshipName, r.error)
+    let! r = SanitizeRelationshipRepository.Remove c.Db stack_2 stack_1 userId relationshipName
+    Assert.Equal(sprintf "Relationship not found between source Stack #%A and target Stack #%A with name \"%s\"." stack_2 stack_1 relationshipName, r.error)
     let! stack = ExploreStackRepository.get c.Db userId stack_1
     Assert.Equal(1, stack.Value.Relationships.Count)
     let! stack = ExploreStackRepository.get c.Db userId stack_2
@@ -376,11 +375,11 @@ let ``Directional relationship tests``(): Task<unit> = task {
         
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
-        let! stack = ExploreStackRepository.get c.Db userId user_1
+        let! stack = ExploreStackRepository.get c.Db userId stack_1
         let stack = stack.Value
         Assert.Equal(2, stack.Relationships.Single().Users)
         Assert.True(stack.Relationships.Single().IsCollected)
-        let! stack = ExploreStackRepository.get c.Db userId user_2
+        let! stack = ExploreStackRepository.get c.Db userId stack_2
         let stack = stack.Value
         Assert.Equal(2, stack.Relationships.Single().Users)
         Assert.True(stack.Relationships.Single().IsCollected)
@@ -401,7 +400,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
         let! r = SanitizeRelationshipRepository.Remove c.Db (Guid.Parse collector.TargetStackLink) collector.SourceStackId userId relationshipName
-        Assert.Equal(sprintf "Relationship not found between source Stack #%i and target Stack #%A with name \"%s\"." (int collector.TargetStackLink) collector.SourceStackId relationshipName, r.error)
+        Assert.Equal(sprintf "Relationship not found between source Stack #%s and target Stack #%A with name \"%s\"." collector.TargetStackLink collector.SourceStackId relationshipName, r.error)
         let! stack = ExploreStackRepository.get c.Db userId stack_1
         let stack = stack.Value
         Assert.Equal(1, stack.Relationships.Count)
