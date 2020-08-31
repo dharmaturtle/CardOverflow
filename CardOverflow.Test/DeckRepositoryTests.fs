@@ -1007,13 +1007,13 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let leafId = leaf_1
     let followerId = user_1
     let followerDeckId = deck_1
-    let follow deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (Ulid.create, deckName)) false editExisting // mind the test name
+    let follow newDeckId deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (newDeckId, deckName)) false editExisting // mind the test name
 
     // follow with extant card fails and doesn't add a deck
     Assert.equal 3 <| c.Db.Deck.Count()
     do! StackRepository.CollectCard c.Db followerId leafId [ Ulid.create ]
 
-    do! follow (Guid.NewGuid().ToString()) None
+    do! follow Ulid.create (Guid.NewGuid().ToString()) None
         
         |> TaskResult.getError
         |>% getEditExistingIsNull_LeafIdsByDeckId
@@ -1024,21 +1024,20 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     // follow with huge name fails
     do! StackRepository.uncollectStack c.Db followerId stackId
     let longDeckName = Random.cryptographicString 251
-    do! follow longDeckName None
+    do! follow Ulid.create longDeckName None
         |> TaskResult.getError
         |>% getRealError
         |>% Assert.equal (sprintf "Deck name '%s' is too long. It must be less than 250 characters." longDeckName)
     
     // follow with "NewDeck false None" works
     let newDeckId = deck_ 4
-    
-    do! follow (Guid.NewGuid().ToString()) None |> TaskResult.getOk
+    do! follow newDeckId (Guid.NewGuid().ToString()) None |> TaskResult.getOk
     
     let! cc =
         StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
-        { CardId = card_3
+        { CardId = cc.CardId // untested
           UserId = followerId
           StackId = stackId
           BranchId = branchId
@@ -1049,17 +1048,17 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
           EaseFactorInPermille = 0s
           IntervalOrStepsIndex = NewStepsIndex 0uy
           Due = cc.Due // untested
-          CardSettingId = followerId
+          CardSettingId = setting_1
           Tags = []
           DeckId = newDeckId }
         cc
     
     // follow with "editExisting false" after update, doesn't update
-    do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id ids_1 branchId
     let newLeafId = leaf_2
+    do! FacetRepositoryTests.update c authorId
+            (VUpdate_BranchId branchId) id (((stackId, branchId, newLeafId, [Ulid.create]) |> UpsertIds.fromTuple)) branchId
     
-    do! follow (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
+    do! follow Ulid.create (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
 
     let! ac2 =
         StackRepository.GetCollected c.Db followerId stackId
@@ -1074,8 +1073,8 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         ac2.LeafMeta.Id
     
     // follow with "editExisting true" after update, updates
-    do! follow (Guid.NewGuid().ToString()) (Some true) |> TaskResult.getOk
     let newestDeckId = deck_ 6
+    do! follow newestDeckId (Guid.NewGuid().ToString()) (Some true) |> TaskResult.getOk
 
     let! ac3 =
         StackRepository.GetCollected c.Db followerId stackId
