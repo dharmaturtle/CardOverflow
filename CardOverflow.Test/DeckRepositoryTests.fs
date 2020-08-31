@@ -1251,7 +1251,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
                 Unchanged = [ standardIds ] }
 
     // author switches to new branch
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId standardIds.StackId) ids_1
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId standardIds.StackId) ((stack_1, branch_2, leaf_2, [card_2]) |> UpsertIds.fromTuple)
     do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
     let newBranchIds =
         { standardIds with
@@ -1281,7 +1281,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     do! StackRepository.CollectCard c.Db followerId newBranchIds.LeafId [ Ulid.create ]
     // author switches to new leaf
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId newBranchIds.BranchId) ids_1
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId newBranchIds.BranchId) ((stack_1, branch_2, leaf_3, [card_3]) |> UpsertIds.fromTuple)
     do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
     let newLeafIds =
         { newBranchIds with
