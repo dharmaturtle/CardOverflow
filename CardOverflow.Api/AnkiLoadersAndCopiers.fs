@@ -200,6 +200,7 @@ type AnkiHistory = {
         entity.Index <- this.Card |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
     member this.CopyToNew =
         let history = HistoryEntity()
+        history.Id <- Guid.Empty
         this.CopyTo history
         history
 

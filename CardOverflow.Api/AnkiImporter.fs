@@ -218,7 +218,9 @@ module AnkiImporter =
             )
             histories |> Seq.iter (fun x ->
                 if x.Id = Guid.Empty
-                then db.History.AddI x
+                then
+                    x.Id <- Ulid.create
+                    db.History.AddI x
             )
             return! db.SaveChangesAsyncI () // medTODO optimization when EFCore 3 GA lands https://github.com/borisdj/EFCore.BulkExtensions this may help if the guy isn't fast enough https://github.com/thepirat000/Audit.NET/issues/231
         }
