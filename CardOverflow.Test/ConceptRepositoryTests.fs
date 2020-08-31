@@ -355,12 +355,12 @@ let ``Relationships can't be self related``(): Task<unit> = task {
     let addRelationshipCommand =
         {   Name = ""
             SourceStackId = stack_1
-            TargetStackLink = string 1
+            TargetStackLink = stack_1.ToString()
         }
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand
     
-    Assert.Equal("A stack can't be related to itself", x.error) }
+    Assert.equal "A stack can't be related to itself" x.error }
 
 [<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
