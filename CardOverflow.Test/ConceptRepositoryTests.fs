@@ -51,7 +51,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     let branchId = branch_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) ids_1 branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion }) ((stack_1, branch_1, leaf_2, [card_2]) |> UpsertIds.fromTuple) branchId
     let oldLeafId = leaf_1
     let updatedLeafId = leaf_2
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
@@ -79,7 +79,7 @@ let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
 
     let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
 
-    Assert.Equal("You don't have any cards with Branch Leaf #1337", actual.error)
+    Assert.equal (sprintf "You don't have any cards with Branch Leaf #%A" invalidLeafId) actual.error
 
     // StackRepository.Revisions says we collected the most recent leaf
     let! revision = StackRepository.Revisions c.Db userId branchId
