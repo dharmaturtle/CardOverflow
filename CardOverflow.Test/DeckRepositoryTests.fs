@@ -1131,26 +1131,26 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     do! SanitizeDeckRepository.diff c.Db followerId nonpublicDeckId followerDeckId
     
     |>% Result.getError
-    |>% Assert.equal "Either Deck #2 doesn't exist, or it isn't public, or you don't own it."
+    |>% Assert.equal (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." deck_2)
 
     // diffing with a deck that doesn't exist fails
     let nonexistantDeckId = Ulid.create
     do! SanitizeDeckRepository.diff c.Db followerId nonexistantDeckId followerDeckId
     
     |>% Result.getError
-    |>% Assert.equal "Either Deck #1337 doesn't exist, or it isn't public, or you don't own it."
+    |>% Assert.equal (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." nonexistantDeckId)
 
     // diffing with a deck that isn't public fails
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId nonpublicDeckId
     
     |>% Result.getError
-    |>% Assert.equal "Either Deck #2 doesn't exist, or it isn't public, or you don't own it."
+    |>% Assert.equal (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." deck_2)
 
     // diffing with a deck that doesn't exist fails
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId nonexistantDeckId
     
     |>% Result.getError
-    |>% Assert.equal "Either Deck #1337 doesn't exist, or it isn't public, or you don't own it."
+    |>% Assert.equal (sprintf "Either Deck #%A doesn't exist, or it isn't public, or you don't own it." nonexistantDeckId)
 
     // moving card to newDeck _ is reflected in the diff
     let newDeckId = Ulid.create
@@ -1176,7 +1176,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
 
     do! StackRepository.uncollectStack c.Db authorId stackId
     // Unchanged with two clozes
-    let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (stack_2, branch_2, leaf_2, [card_2; card_3])
     let! (ccs: CardEntity ResizeArray) = c.Db.Card.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
     do! StackRepository.CollectCard c.Db followerId (ccs.First().LeafId) [ Ulid.create ]
     let ids =
