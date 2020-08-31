@@ -219,7 +219,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = user_1 // this user creates the card
-    let! (_: int) = addCard c.Db authorId ["A"] (stack_1, branch_1, leaf_1, [card_1])
+    let! (_: Guid) = addCard c.Db authorId ["A"] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
     let leafId = leaf_1
