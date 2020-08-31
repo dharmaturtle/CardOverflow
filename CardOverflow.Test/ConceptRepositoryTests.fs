@@ -452,7 +452,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.True(stack.Relationships.Single().IsCollected)
 
         let successfulRemove () = task {
-            let! r = SanitizeRelationshipRepository.Remove c.Db leaf_1 stack_2 userId relationshipName
+            let! r = SanitizeRelationshipRepository.Remove c.Db stack_1 stack_2 userId relationshipName
             Assert.Null r.Value
             let! stack = ExploreStackRepository.get c.Db userId stack_1 |> TaskResult.getOk
             Assert.Equal(1, stack.Relationships.Count)
@@ -464,8 +464,8 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
 
         let! x = SanitizeRelationshipRepository.Add c.Db userId collector
         Assert.Null x.Value
-        let! r = SanitizeRelationshipRepository.Remove c.Db leaf_2 stack_1 userId relationshipName
-        Assert.Equal(sprintf "Relationship not found between source Stack #2 and target Stack #1 with name \"%s\"." relationshipName, r.error)
+        let! r = SanitizeRelationshipRepository.Remove c.Db setting_1 stack_1 userId relationshipName
+        Assert.Equal(sprintf "Relationship not found between source Stack #%A and target Stack #%A with name \"%s\"." setting_1 stack_1 relationshipName, r.error)
         let! stack = ExploreStackRepository.get c.Db userId stack_1 |> TaskResult.getOk
         Assert.Equal(1, stack.Relationships.Count)
         Assert.True(stack.Relationships.Single().IsCollected)
@@ -474,7 +474,7 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.True(stack.Relationships.Single().IsCollected)
             
         do! successfulRemove ()
-        let! r = SanitizeRelationshipRepository.Remove c.Db leaf_1 stack_2 user_1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
+        let! r = SanitizeRelationshipRepository.Remove c.Db stack_1 stack_2 user_1 relationshipName // cleanup from do! SanitizeRelationshipRepository.Add c.Db 1 a |> Result.getOk
         Assert.Null r.Value }
 
     let userId = user_2 // this user collects the card
