@@ -839,7 +839,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     
     // update card
     let update_i = leaf_2
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId og_b) ids_1
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId og_b) ((og_s, og_b, update_i, [Ulid.create]) |> UpsertIds.fromTuple)
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
     Assert.Equal(og_b, actualBranchId)
 
@@ -863,7 +863,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // branch card
     let branch_i = leaf_3
     let branch_b = branch_2
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ids_1
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ((og_s, branch_b, branch_i, [Ulid.create]) |> UpsertIds.fromTuple)
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
     Assert.Equal(branch_b, actualBranchId)
     
@@ -876,7 +876,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // update branch
     let updateBranch_i = leaf_ 4
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_b) ids_1
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_b) ((og_s, branch_2, updateBranch_i, [Ulid.create]) |> UpsertIds.fromTuple)
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
     Assert.Equal(branch_b, actualBranchId)
 
@@ -904,12 +904,12 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // try to branch card again, but fail
     let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ids_1
     let! (error: Result<_,_>) = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
-    Assert.Equal(sprintf "Stack #1 already has a Branch named 'New Branch'.", error.error);
+    Assert.equal (sprintf "Stack #%A already has a Branch named 'New Branch'." og_s) error.error
 
     // branch card again
     let branch_i2 = leaf_ 5
     let branch_b2 = branch_3
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ids_1
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ((og_s, branch_b2, branch_i2, [Ulid.create]) |> UpsertIds.fromTuple)
     let command = { command with Title = Guid.NewGuid().ToString() }
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] [ Ulid.create ] command
     Assert.Equal(branch_b2, actualBranchId)
