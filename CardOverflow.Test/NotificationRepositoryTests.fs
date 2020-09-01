@@ -66,7 +66,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let followerDefaultDeckId = deck_1
     let newDeckId = deck_ 4
     let newDeckName = Guid.NewGuid().ToString()
-    do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (Ulid.create, newDeckName)) true None
+    do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (newDeckId, newDeckName)) true None
     do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
@@ -74,6 +74,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
         n.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
         n |> Assert.equal
             {   expected with
+                    Id = n.Id
                     Created = n.Created // cheating, but whatever
             }
         do! NotificationRepository.remove c.Db followerId n.Id
@@ -96,7 +97,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                                            New = ids } }
     
     // works with DeckUpdatedStack, uncollected
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ids_1
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_2, [Ulid.create]) |> UpsertIds.fromTuple)
     do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
     let expectedDeckUpdatedStackNotification nid newLeafId collected =
             {   Id = nid
@@ -113,7 +114,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     // works with DeckUpdatedStack, collected
     let collectedLeaf = ids.LeafId
     do! StackRepository.CollectCard c.Db followerId collectedLeaf [ Ulid.create ]
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ids_1
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_3, [Ulid.create]) |> UpsertIds.fromTuple)
     do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
     let collected =
         {   StackId = ids.StackId
