@@ -508,13 +508,15 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             TsvRank = 0. }
     let theirDeck = { Id = publicDeck.Id
                       Name = publicDeck.Name }
-    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name Ulid.create //|>%% Assert.equal publicDeck.Id
+    do! SanitizeDeckRepository.create c.Db authorId publicDeck.Name (deck_ 4)
+    Assert.equal publicDeck.Id <| c.Db.Deck.Single(fun x -> x.Id = deck_ 4).Id
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single
         n.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
         n |> Assert.equal
             {   expected with
+                    Id = n.Id
                     Created = n.Created // cheating, but whatever
             }
         do! NotificationRepository.remove c.Db followerId n.Id
@@ -525,7 +527,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! DeckRepository.getPublic                     c.Db authorId   authorId |>% Assert.Empty
     do! DeckRepository.getPublic                     c.Db followerId authorId |>% Assert.Empty
     do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db authorId   publicDeck.Id             |>%% Assert.equal publicDeck
-    do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db followerId publicDeck.Id             |>% (fun x -> Assert.equal "Either Deck #4 doesn't exist or it isn't public." x.error)
+    do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db followerId publicDeck.Id             |>% (fun x -> Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." (deck_ 4)) x.error)
 
     // getPublic and getDeckWithFollowMeta yield expected deck
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeck.Id true
@@ -546,7 +548,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     //adding a card notifies
     do! SanitizeDeckRepository.setDefault c.Db authorId publicDeck.Id
     let! _ = addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
-    let notificationId = notification_1
+    let notificationId = c.Db.Notification.Single().Id
     let stackId = stack_1
     let branchId = branch_1
     let authorCollectedId = card_1
@@ -575,10 +577,10 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     Assert.Empty c.Db.ReceivedNotification
     Assert.Empty c.Db.Notification
 
-    // edit card notifies follower
+    // branch update notifies follower
     let leaf2 = { leaf1 with LeafId = leaf_2 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_2, [Ulid.create]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -610,7 +612,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! StackRepository.CollectCard c.Db followerId leaf2.LeafId [ Ulid.create ]
     let leaf3 = { leaf2 with LeafId = leaf_3 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ids_1
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_3, [Ulid.create]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -673,7 +675,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     a.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
     b.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
     a |> Assert.equal
-        { Id = notification_ 6
+        { Id = a.Id
           SenderId = user_3
           SenderDisplayName = "RoboTurtle"
           Created = a.Created
@@ -684,7 +686,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                      New = leaf3
                                      Collected = collected } }
     b |> Assert.equal
-        { Id = notification_ 7
+        { Id = b.Id
           SenderId = user_3
           SenderDisplayName = "RoboTurtle"
           Created = b.Created
@@ -698,15 +700,15 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! NotificationRepository.remove c.Db followerId a.Id
     do! NotificationRepository.remove c.Db followerId b.Id
     do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorCollectedId
-    do! NotificationRepository.remove c.Db followerId 8
-    do! NotificationRepository.remove c.Db followerId 9
+    do! NotificationRepository.remove c.Db followerId (c.Db.Notification.First()).Id
+    do! NotificationRepository.remove c.Db followerId (c.Db.Notification.Single()).Id
     do! SanitizeDeckRepository.setIsPublic c.Db authorId authorDefaultDeckId false
 
     // deleting card from deck has notification
     do! StackRepository.uncollectStack c.Db authorId stackId
 
     do! assertNotificationThenDelete
-            { Id = notification_ 10
+            { Id = Ulid.create
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
               Created = DateTime.MinValue
@@ -716,7 +718,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                            Deleted = leaf3 } }
 
     // diff says a stack was removed
-    do! SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerId
+    do! SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerDefaultDeckId
 
     |>%% Assert.equal
         {   emptyDiffStateSummary with
@@ -725,7 +727,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                         BranchId = branchId
                         LeafId = leaf2.LeafId
                         Index = 0s
-                        DeckId = followerId }] }
+                        DeckId = followerDefaultDeckId }] }
 
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
@@ -753,16 +755,17 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
         |>% Assert.equal (sprintf "You're already following Deck #%A" publicDeck.Id)
 
     // nonexistant deck fails
-    do! follow Ulid.create
+    let nonexistant = Ulid.create
+    do! follow nonexistant
         |> TaskResult.getError
         |>% getRealError
-        |>% Assert.equal "Either Deck #1337 doesn't exist or it isn't public."
+        |>% Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." nonexistant)
 
     // private deck fails
     do! follow authorDefaultDeckId
         |> TaskResult.getError
         |>% getRealError
-        |>% Assert.equal "Either Deck #3 doesn't exist or it isn't public."
+        |>% Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." authorDefaultDeckId)
     
     // someone else following the deck bumps count to 2
     do! SanitizeDeckRepository.follow c.Db otherDudeId publicDeck.Id NoDeck true None
@@ -775,15 +778,15 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     // can delete followed deck that is the source of another deck
     do! SanitizeDeckRepository.setSource c.Db followerId followerDefaultDeckId (Some publicDeck.Id)
     Assert.equal (Some publicDeck.Id |> Option.toNullable) (c.Db.Deck.Single(fun x -> x.Id = followerDefaultDeckId).SourceId)
-    do! SanitizeDeckRepository.setDefault c.Db authorId authorId
+    do! SanitizeDeckRepository.setDefault c.Db authorId authorDefaultDeckId
 
     do! SanitizeDeckRepository.delete c.Db authorId publicDeck.Id
 
     Assert.equal (Nullable()) (c.Db.Deck.Single(fun x -> x.Id = followerDefaultDeckId).SourceId)
     do! DeckRepository.getPublic                     c.Db authorId   authorId |>% Assert.Empty
     do! DeckRepository.getPublic                     c.Db followerId authorId |>% Assert.Empty
-    do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db authorId   publicDeck.Id             |>% (fun x -> Assert.equal "Either Deck #4 doesn't exist or it isn't public." x.error)
-    do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db followerId publicDeck.Id             |>% (fun x -> Assert.equal "Either Deck #4 doesn't exist or it isn't public." x.error)
+    do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db authorId   publicDeck.Id             |>% (fun x -> Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." (deck_ 4)) x.error)
+    do! SanitizeDeckRepository.getDeckWithFollowMeta c.Db followerId publicDeck.Id             |>% (fun x -> Assert.equal (sprintf "Either Deck #%A doesn't exist or it isn't public." (deck_ 4)) x.error)
     } |> TaskResult.getOk)
 
 [<Fact>]

@@ -571,7 +571,7 @@ module NotificationRepository =
             }
         }
     }
-    let remove (db: CardOverflowDb) userId notificationId =
+    let remove (db: CardOverflowDb) (userId: Guid) (notificationId: Guid) =
         FormattableStringFactory.Create("""SELECT public.fn_delete_received_notification({0},{1});""", notificationId, userId)
         |> db.Database.ExecuteSqlInterpolatedAsync
         |>% ignore
