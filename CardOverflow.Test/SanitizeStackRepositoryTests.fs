@@ -57,13 +57,13 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             } |> Gen.listOfLength 5
             |> Gen.eval 100 stdGen
             |> fun x -> x.[0], x.[1], x.[2], x.[3], x.[4]
-        let stackCommand gromplate =
+        let stackCommand gromplate ids =
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
                 Grompleaf = gromplate
                 Kind = NewOriginal_TagIds []
                 Title = null
-                Ids = ids_1
+                Ids = ids
             }
 
         let! gromplate = FacetRepositoryTests.basicGromplate c.Db
@@ -73,14 +73,14 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         do! SanitizeStackRepository.Update c.Db userId
                 [ basicCommand ]
                 [ Ulid.create ]
-                (stackCommand gromplate)
+                (stackCommand gromplate ids_1)
             |>%% Assert.equal branchId
 
         let! cc =
             StackRepository.GetCollected c.Db userId stackId
             |>%% Assert.Single
         Assert.equal
-            {   CardId = card_1
+            {   CardId = cc.CardId
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
@@ -105,44 +105,46 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         do! SanitizeStackRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
                 [ Ulid.create ]
-                (stackCommand gromplate)
+                (stackCommand gromplate ids_2)
             |>%% Assert.equal branchId
 
         let! (ccs: Card ResizeArray) = StackRepository.GetCollected c.Db userId stackId
+        let a = ccs.First(fun x -> x.Index = 0s)
+        let b = ccs.First(fun x -> x.Index = 1s)
         Assert.equal
-            {   CardId = card_2
+            {   CardId = a.CardId
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                LeafMeta = ccs.[0].LeafMeta // untested
+                LeafMeta = a.LeafMeta // untested
                 Index = 0s
                 CardState = aRevCommand.CardState
                 IsLapsed = false
                 EaseFactorInPermille = 0s
                 IntervalOrStepsIndex = NewStepsIndex 0uy
-                Due = ccs.[0].Due // untested
+                Due = a.Due // untested
                 CardSettingId = aRevCommand.CardSettingId
                 Tags = []
                 DeckId = aRevCommand.DeckId
             }
-            ccs.[0]
+            a
         Assert.equal
-            {   CardId = card_3
+            {   CardId = b.CardId
                 UserId = userId
                 StackId = stackId
                 BranchId = branchId
-                LeafMeta = ccs.[1].LeafMeta // untested
+                LeafMeta = b.LeafMeta // untested
                 Index = 1s
                 CardState = bRevCommand.CardState
                 IsLapsed = false
                 EaseFactorInPermille = 0s
                 IntervalOrStepsIndex = NewStepsIndex 0uy
-                Due = ccs.[1].Due // untested
+                Due = b.Due // untested
                 CardSettingId = bRevCommand.CardSettingId
                 Tags = []
                 DeckId = bRevCommand.DeckId
             }
-            ccs.[1]
+            b
     
         // doesn't work with someone else's deckId
         let failDeckCommand = { failDeckCommand with DeckId = deck_1 }
@@ -150,7 +152,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
                 [ Ulid.create ]
-                (stackCommand gromplate)
+                (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with someone else's cardSettingId
@@ -159,7 +161,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
                 [ Ulid.create ]
-                (stackCommand gromplate)
+                (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
         // doesn't work with invalid deckId
@@ -168,7 +170,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
                 [ Ulid.create ]
-                (stackCommand gromplate)
+                (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with invalid cardSettingId
@@ -177,6 +179,6 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
                 [ Ulid.create ]
-                (stackCommand gromplate)
+                (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     } |> TaskResult.getOk).GetAwaiter().GetResult()
