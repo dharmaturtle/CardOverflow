@@ -330,13 +330,14 @@ let ``StackViewRepository.leafPair works``() : Task<unit> = (taskResult {
     Assert.False(b_)
 
     // missing leafId
-    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db leaf_1 Ulid.create userId
+    let nonexistant = Ulid.create
+    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db leaf_1 nonexistant userId
     
-    Assert.Equal("Branch leaf #-1 not found", x.error)
+    Assert.equal (sprintf "Branch leaf #%A not found" nonexistant) x.error
     
-    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db Ulid.create leaf_1 userId
+    let! (x: Result<_, _>) = StackViewRepository.leafPair c.Db nonexistant leaf_1 userId
     
-    Assert.Equal("Branch leaf #-1 not found", x.error)
+    Assert.equal (sprintf "Branch leaf #%A not found" nonexistant) x.error
     } |> TaskResult.getOk)
 
 [<Fact>]
