@@ -413,14 +413,14 @@ module SanitizeDeckRepository =
                         return id
                         }
                     | _ -> failwith "impossible"
-                let cardSansIndex =
+                let cardSansIndex index =
                     Card.initialize
                         Ulid.create
                         userId
                         defaultCardSettingId
                         newDeckId
                         []
-                    |> fun x -> x.copyToNew []
+                    |> fun x -> x.copyToNew [] index
                 List.zipOn
                     (theirs |> Seq.toList)
                     (mine |> Seq.toList)

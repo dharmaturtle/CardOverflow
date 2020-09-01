@@ -907,7 +907,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     Assert.equal 2 ccs.Count
     let a, b = ccs.[0], ccs.[1]
     Assert.equal
-        { CardId = card_3
+        { CardId = ccs.[0].CardId
           UserId = followerId
           StackId = stackId
           BranchId = branch_1
@@ -918,13 +918,14 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
           EaseFactorInPermille = 0s
           IntervalOrStepsIndex = NewStepsIndex 0uy
           Due = a.Due // untested
-          CardSettingId = followerId
+          CardSettingId = setting_1
           Tags = []
           DeckId = followerDeckId }
         a
     Assert.equal
         { a with
-            CardId = card_ 4
+            Due = b.Due
+            CardId = ccs.[1].CardId
             LeafMeta = b.LeafMeta // untested
             Index = 1s }
         b
@@ -944,12 +945,12 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         { b with
             LeafMeta = cc.LeafMeta // untested
             Due = cc.Due // untested
-            CardId = card_ 5 }
+            CardId = cc.CardId }
         cc
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id ids_1 branchId
+            (VUpdate_BranchId branchId) id ((stack_1, branch_1, leaf_2, [Ulid.create]) |> UpsertIds.fromTuple) branchId
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
@@ -960,7 +961,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         { b with
             LeafMeta = cc.LeafMeta // untested
             Due = cc.Due // untested
-            CardId = card_ 5 }
+            CardId = cc.CardId }
         cc
     
     // follow with "editExisting true" after update, updates
@@ -975,7 +976,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     Assert.equal 2 ccs.Count
     let a, b = ccs.[0], ccs.[1]
     Assert.equal
-        { CardId = card_ 7
+        { CardId = a.CardId
           UserId = followerId
           StackId = stackId
           BranchId = branch_1
@@ -986,13 +987,14 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
           EaseFactorInPermille = 0s
           IntervalOrStepsIndex = NewStepsIndex 0uy
           Due = a.Due // untested
-          CardSettingId = followerId
+          CardSettingId = setting_1
           Tags = []
           DeckId = followerDeckId }
         a
     Assert.equal
         { a with
-            CardId = card_ 6
+            Due = b.Due
+            CardId = b.CardId
             LeafMeta = b.LeafMeta // untested
             Index = 1s }
         b
