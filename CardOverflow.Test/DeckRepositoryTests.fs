@@ -823,7 +823,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     do! follow deck_2 None
         |> TaskResult.getError
         |>% getRealError
-        |>% Assert.equal "Either Deck #2 doesn't exist or it doesn't belong to you."
+        |>% Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." deck_2)
     
     // follow with "OldDeck false None" works
     
@@ -833,7 +833,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
-        { CardId = card_3
+        { CardId = cc.CardId
           UserId = followerId
           StackId = stackId
           BranchId = branchId
@@ -844,14 +844,14 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
           EaseFactorInPermille = 0s
           IntervalOrStepsIndex = NewStepsIndex 0uy
           Due = cc.Due // untested
-          CardSettingId = followerId
+          CardSettingId = setting_1
           Tags = []
           DeckId = followerDeckId }
         cc
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id ids_1 branchId
+            (VUpdate_BranchId branchId) id ((stackId, branchId, leaf_2, [Ulid.create]) |> UpsertIds.fromTuple) branchId
     let newLeafId = leaf_2
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
