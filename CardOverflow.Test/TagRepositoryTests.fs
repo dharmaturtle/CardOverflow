@@ -100,7 +100,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     do! assertTagUserCount 2
 
     // suspending a card decrements the tag count
-    let! (cc: _ ResizeArray) = StackRepository.GetCollected c.Db collector stackId
+    let! (cc: Card ResizeArray) = StackRepository.GetCollected c.Db collector stackId
     let cc = cc.Single()
     do! StackRepository.editState c.Db collector cc.CardId Suspended
     do! assertTagUserCount 1

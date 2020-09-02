@@ -208,7 +208,7 @@ let ``collect works``(): Task<unit> = (taskResult {
         LeafId = leaf_2
         CardIds = []
     }
-    do! SanitizeStackRepository.Update c.Db authorId [] [] stackCommand
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
 
     let! cardId = StackRepository.collect c.Db collectorId leaf_2 None []
 
@@ -270,7 +270,7 @@ let ``CollectCards works``(): Task<unit> = task {
                     LeafId = ci1_2
             }
         }
-    let! branchId = SanitizeStackRepository.Update c.Db authorId [] [] command |> TaskResult.getOk
+    let! branchId = SanitizeStackRepository.Update c.Db authorId [] command |> TaskResult.getOk
     Assert.Equal(b1, branchId)
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)

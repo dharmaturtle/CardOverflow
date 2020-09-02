@@ -198,14 +198,14 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     let! stack = ExploreStackRepository.get c.Db userId stack_1
     let stack = stack.Value
     Assert.Equal(1, stack.Default.Summary.Users)
-    Assert.Equal<ViewTag seq>(
+    Assert.areEquivalent
         [{  Name = "A"
             Count = 1
             IsCollected = true }
          {  Name = "B"
             Count = 1
-            IsCollected = true }],
-        stack.Tags)
+            IsCollected = true }]
+        stack.Tags
     
     let! cc = StackRepository.GetCollected c.Db userId stack.Id
     let cc = cc.Value.Single()

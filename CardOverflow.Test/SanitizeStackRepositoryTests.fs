@@ -72,11 +72,10 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ basicCommand ]
-                [ Ulid.create ]
                 (stackCommand gromplate ids_1)
             |>%% Assert.equal branchId
 
-        let! cc =
+        let! (cc: Card) =
             StackRepository.GetCollected c.Db userId stackId
             |>%% Assert.Single
         Assert.equal
@@ -104,7 +103,6 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
-                [ Ulid.create ]
                 (stackCommand gromplate ids_2)
             |>%% Assert.equal branchId
 
@@ -151,7 +149,6 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
-                [ Ulid.create ]
                 (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
@@ -160,7 +157,6 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                [ Ulid.create ]
                 (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
@@ -169,7 +165,6 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failDeckCommand ]
-                [ Ulid.create ]
                 (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
@@ -178,7 +173,6 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         let! (error: Result<_, _>) =
             SanitizeStackRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                [ Ulid.create ]
                 (stackCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     } |> TaskResult.getOk).GetAwaiter().GetResult()

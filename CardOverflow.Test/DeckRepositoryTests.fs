@@ -589,7 +589,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 ).ToList()
     }
     
-    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] updated
+    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
     do! assertNotificationThenDelete
             { Id = notification_2
@@ -621,7 +621,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 ).ToList()
     }
     
-    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] updated
+    let! actualBranchId = SanitizeStackRepository.Update c.Db authorId [] updated
     Assert.Equal(branchId, actualBranchId)
     let collected =
         {   StackId = leaf2.StackId
@@ -829,7 +829,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     
     do! follow followerDeckId None |> TaskResult.getOk
     
-    let! cc =
+    let! (cc: Card) =
         StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
@@ -871,7 +871,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     // follow with "editExisting true" after update, updates
     do! follow followerDeckId (Some true) |> TaskResult.getOk
 
-    let! ac3 =
+    let! (ac3: Card) =
         StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
@@ -1038,7 +1038,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let newDeckId = deck_ 4
     do! follow newDeckId (Guid.NewGuid().ToString()) None |> TaskResult.getOk
     
-    let! cc =
+    let! (cc: Card) =
         StackRepository.GetCollected c.Db followerId stackId
         |>%% Assert.Single
     Assert.equal
@@ -1256,7 +1256,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
 
     // author switches to new branch
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId standardIds.StackId) ((stack_1, branch_2, leaf_2, [card_2]) |> UpsertIds.fromTuple)
-    do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let newBranchIds =
         { standardIds with
               BranchId = branch_2
@@ -1286,7 +1286,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
     do! StackRepository.CollectCard c.Db followerId newBranchIds.LeafId [ Ulid.create ]
     // author switches to new leaf
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId newBranchIds.BranchId) ((stack_1, branch_2, leaf_3, [card_3]) |> UpsertIds.fromTuple)
-    do! SanitizeStackRepository.Update c.Db authorId [] [ Ulid.create ] stackCommand
+    do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let newLeafIds =
         { newBranchIds with
               LeafId = leaf_3 }

@@ -825,9 +825,10 @@ module SanitizeStackRepository =
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
             |>%% fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest
-    let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) cardIds (stackCommand: ViewEditStackCommand) = taskResult {
+    let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! leaf = UpdateRepository.stack db userId stackCommand.load
         let! (ccs: CardEntity list) =
+            let cardIds = stackCommand.Ids.CardIds
             match stackCommand.Kind with
             | NewLeaf_Title _ ->
                 db.Leaf.AddI leaf
