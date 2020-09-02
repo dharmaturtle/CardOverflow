@@ -57,9 +57,9 @@ let ``ViewCardSetting.load and copyTo reverse each other``(): unit =
 
 type GetCardIdIsOkData () =
     inherit XunitClassDataBase
-        ([  [| 123; "123" |]
-            [| 12 ; "www.cardoverflow.com/card/12" |]
-            [| 11 ; "www.cardoverflow.com:19/curate/card/11" |] ])
+        ([  [| Guid.Parse("05A4E537-FF49-49A5-827E-77F9280D7D54") ; "05A4E537-FF49-49A5-827E-77F9280D7D54" |]
+            [| Guid.Parse("3360F6FF-C342-4575-A1FA-C5A43BE111EB") ; "www.cardoverflow.com/card/3360F6FF-C342-4575-A1FA-C5A43BE111EB" |]
+            [| Guid.Parse("D9AD6A65-C645-4E50-9374-749C4BF213EA") ; "www.cardoverflow.com:19/curate/card/D9AD6A65-C645-4E50-9374-749C4BF213EA" |] ])
 
 [<Theory>]
 [<ClassData(typeof<GetCardIdIsOkData>)>]
