@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using System;
 using System.Threading.Tasks;
 
@@ -37,6 +38,7 @@ namespace CardOverflow.FrontEndTest {
         services.AddSingleton<Scheduler>();
         services.AddSingleton<RandomProvider>();
         services.AddDbContextPool<CardOverflowDb>(x => x.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddSingleton<Func<Task<NpgsqlConnection>>>(_ => () => null);
       }
 
       using var databaseContext = services.GetService<CardOverflowDb>();

@@ -28,11 +28,11 @@ namespace CardOverflow.FrontEndTest {
       public static Arbitrary<UserClaims> UserClaims() =>
         (from name in Arb.Generate<string>()
          from email in Arb.Generate<string>()
-         from id in Arb.Generate<int>().Where(x => x != 0)
+         from id in Arb.Generate<Guid>()
          select new UserClaims(id, name, email)
         ).Pipe(Arb.From);
       public static Arbitrary<DeckEntity> DeckEntity() =>
-        Arb.Generate<int>()
+        Arb.Generate<Guid>()
         .Select(id => new DeckEntity { Id = id })
         .Pipe(Arb.From);
     }
