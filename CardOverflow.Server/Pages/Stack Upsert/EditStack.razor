@@ -1,6 +1,6 @@
-@page "/stack/editbranch/{BranchId:int}"
-@page "/stack/copyleaf/{CopySourceLeafId:int}"
-@page "/stack/branchstack/{BranchSourceStackId:int}"
+@page "/stack/editbranch/{BranchId:guid}"
+@page "/stack/copyleaf/{CopySourceLeafId:guid}"
+@page "/stack/branchstack/{BranchSourceStackId:guid}"
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
