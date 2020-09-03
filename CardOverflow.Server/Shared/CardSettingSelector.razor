@@ -11,7 +11,7 @@
 @inject IToastService ToastService
 
 <AuthorizeView>
-  <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
+  <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(_SetSelected))>
     @foreach (var setting in _settings) {
       <option value=@setting.Id selected=@(SelectedId == setting.Id)>@setting.Name</option>
     }
@@ -20,8 +20,8 @@
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  [Parameter] public int SelectedId { get; set; }
-  [Parameter] public EventCallback<int> SettingSelected { get; set; }
+  [Parameter] public Guid SelectedId { get; set; }
+  [Parameter] public EventCallback<Guid> SettingSelected { get; set; }
   private List<ViewCardSetting> _settings = new List<ViewCardSetting>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -34,7 +34,7 @@
     StateHasChanged();
   }
 
-  private async Task _SetSelected(int newId) {
+  private async Task _SetSelected(Guid newId) {
     SelectedId = newId;
     await SettingSelected.InvokeAsync(newId);
   }

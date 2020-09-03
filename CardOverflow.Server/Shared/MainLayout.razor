@@ -38,7 +38,7 @@
           x.Type == "sub" &&
           x.OriginalIssuer == UrlProvider.IdentityProvider.TrimEnd('/') &&
           x.Issuer == UrlProvider.IdentityProvider.TrimEnd('/')
-        ).Value.Apply(int.Parse);
+        ).Value.Apply(Guid.Parse);
       var email = state.User.Claims.Single(x =>
           x.Type == "name" &&
           x.OriginalIssuer == "OpenIdConnect" &&

@@ -47,7 +47,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> CallerUserTask { get; set; }
   private UserClaims _callerUser = UserClaims.init;
-  [Parameter] public int OtherUserId { get; set; }
+  [Parameter] public Guid OtherUserId { get; set; }
   private List<DeckWithFollowMeta> _othersDecks;
   private List<SimpleDeck> _callersDecks;
   private Profile _profile;

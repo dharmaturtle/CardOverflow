@@ -73,11 +73,11 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int DeckId { get; set; }
+  [Parameter] public Guid DeckId { get; set; }
   private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
-  private int? _selectedLeafId;
+  private Guid? _selectedLeafId;
   private DeckWithFollowMeta _deck;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -103,6 +103,6 @@
   }
 
   protected override void GetQueryStringValues() =>
-    NavigationManager.TryGetQueryString<int?>("leaf", out _selectedLeafId);
+    NavigationManager.TryGetQueryString<Guid?>("leaf", out _selectedLeafId);
 
 }

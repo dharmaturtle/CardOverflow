@@ -15,12 +15,12 @@
         style="width: 1px; min-width: 100%; height:100px;" />
 
 @code {
-  [Parameter] public int StackId { get; set; }
-  [Parameter] public (int LeafId, short Index) Leaf { get; set; }
-  [Parameter] public int GromplateId { get; set; }
-  [Parameter] public int GrompleafId { get; set; }
-  [Parameter] public int CommieldId { get; set; }
-  [Parameter] public int CommeafId { get; set; }
+  [Parameter] public Guid StackId { get; set; }
+  [Parameter] public (Guid LeafId, short Index) Leaf { get; set; }
+  [Parameter] public Guid GromplateId { get; set; }
+  [Parameter] public Guid GrompleafId { get; set; }
+  [Parameter] public Guid CommieldId { get; set; }
+  [Parameter] public Guid CommeafId { get; set; }
   [Parameter] public bool Front { get; set; }
   [Parameter] public bool Back { get; set; }
   private ElementReference iframe;
@@ -29,17 +29,17 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     var middle = "";
-    if (StackId != 0) {
+    if (StackId != Guid.Empty) {
       middle = "stack/" + StackId;
     } else if (!Leaf.Equals(default)) {
       middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
-    } else if (GromplateId != 0) {
+    } else if (GromplateId != Guid.Empty) {
       middle = "gromplate/" + GromplateId;
-    } else if (GrompleafId != 0) {
+    } else if (GrompleafId != Guid.Empty) {
       middle = "gromplateleaf/" + GrompleafId;
-    } else if (CommieldId != 0) {
+    } else if (CommieldId != Guid.Empty) {
       middle = "communalfield/" + CommieldId;
-    } else if (CommeafId != 0) {
+    } else if (CommeafId != Guid.Empty) {
       middle = "communalfieldleaf/" + CommeafId;
     } else {
       throw new Exception("You done goofed.");

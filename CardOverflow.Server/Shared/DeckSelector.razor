@@ -14,7 +14,7 @@
   <p><em>Loading...</em></p>
 } else {
   <AuthorizeView>
-    <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(_SetSelected))>
+    <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(_SetSelected))>
       @foreach (var deck in Decks) {
         <option value=@deck.Id selected=@(SelectedId == deck.Id)>@deck.Name</option>
       }
@@ -24,8 +24,8 @@
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  [Parameter] public int SelectedId { get; set; }
-  [Parameter] public EventCallback<int> DeckSelected { get; set; }
+  [Parameter] public Guid SelectedId { get; set; }
+  [Parameter] public EventCallback<Guid> DeckSelected { get; set; }
   [Parameter] public List<SimpleDeck> Decks { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -38,7 +38,7 @@
     StateHasChanged();
   }
 
-  private async Task _SetSelected(int newId) {
+  private async Task _SetSelected(Guid newId) {
     SelectedId = newId;
     await DeckSelected.InvokeAsync(newId);
   }

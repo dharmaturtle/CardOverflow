@@ -244,8 +244,8 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int A_LeafId { get; set; }
-  [Parameter] public int B_LeafId { get; set; }
+  [Parameter] public Guid A_LeafId { get; set; }
+  [Parameter] public Guid B_LeafId { get; set; }
   [Parameter] public string ATitle { get; set; }
   [Parameter] public string BTitle { get; set; }
   private string _loadingMessage = "Loading...";
@@ -302,7 +302,7 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    if (B_LeafId == 0) {
+    if (B_LeafId == Guid.Empty) {
       var x = await DbExecutor.QueryAsync(db => StackViewRepository.leafWithLatest(db, A_LeafId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected, B_LeafId) = x.ResultValue;
@@ -322,8 +322,8 @@
   }
 
   private async Task _GetNewStack() {
-    await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_LeafId));
-    var collectedIds = await DbExecutor.QueryAsync(db => CardRepository.getCollected(db, _user.Id, new List<int> { A_LeafId, B_LeafId }));
+    await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_LeafId, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
+    var collectedIds = await DbExecutor.QueryAsync(db => CardRepository.getCollected(db, _user.Id, new List<Guid> { A_LeafId, B_LeafId }));
     _aIsCollected = collectedIds.Contains(A_LeafId);
     _bIsCollected = collectedIds.Contains(B_LeafId);
   }

@@ -27,7 +27,7 @@
 <BSModal @ref=Modal>
   <EditForm Model=_activeFilter OnValidSubmit=Save>
     <BSModalHeader OnClick=Modal.Hide>
-      @if (_activeFilter.Id == 0) {
+      @if (_activeFilter.Id == Guid.Empty) {
         <span>Create a new deck</span>
       } else {
         <span>Edit deck</span>
@@ -78,7 +78,7 @@
 
   async Task Save() {
     var newId = await DbExecutor.QueryAsync(db => SanitizeFilterRepository.UpsertAsync(db, _activeFilter));
-    if (_activeFilter.Id == 0) {
+    if (_activeFilter.Id == Guid.Empty) {
       _activeFilter.Id = newId;
       _filters.Add(_activeFilter);
     }
@@ -97,7 +97,7 @@
   }
 
   void Create() {
-    _activeFilter = new ViewFilter(0, _user.Id, "New Filter", Query);
+    _activeFilter = new ViewFilter(Gulid.Create(), _user.Id, "New Filter", Query);
     Modal.Show();
   }
 

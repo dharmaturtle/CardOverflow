@@ -1,0 +1,27 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using ThoughtDesign.WebLibrary
+@using Microsoft.FSharp.Collections
+
+<a href="stack?leaf=@LeafId">
+  <HoverPreview Padding="0">
+    <ResizingIframe Leaf=@((LeafId, Index)) Back />
+  </HoverPreview>
+  @if (ShowId) {
+    @LeafId
+  }
+</a>
+
+@code {
+  [Parameter] public Guid LeafId { get; set; }
+  [Parameter] public short Index { get; set; }
+  [Parameter] public bool ShowId { get; set; } = true;
+
+}

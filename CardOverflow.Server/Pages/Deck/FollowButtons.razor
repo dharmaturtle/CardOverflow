@@ -55,7 +55,7 @@
           </div>
           break;
         case FollowType.OldDeck:
-          <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => _followCommandViewModel.OldDeckId = id))>
+          <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(id => _followCommandViewModel.OldDeckId = id))>
             @foreach (var deck in CallersDecks) {
               <option value=@deck.Id selected=@(_followCommandViewModel.OldDeckId == deck.Id)>
                 @deck.Name
@@ -132,7 +132,7 @@
   [Parameter] public DeckWithFollowMeta Deck { get; set; }
   [Parameter] public List<SimpleDeck> CallersDecks { get; set; }
   private FollowCommandViewModel _followCommandViewModel = new FollowCommandViewModel();
-  private List<Tuple<int, List<int>>> _conflictingLeafIdsByDeckId = new List<Tuple<int, List<int>>>();
+  private List<Tuple<Guid, List<Guid>>> _conflictingLeafIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
@@ -142,7 +142,7 @@
   }
 
   private void _followClicked() {
-    _conflictingLeafIdsByDeckId = new List<Tuple<int, List<int>>>();
+    _conflictingLeafIdsByDeckId = new List<Tuple<Guid, List<Guid>>>();
     _followCommandViewModel = new FollowCommandViewModel {
       OldDeckId = CallersDecks.Single(x => x.IsDefault).Id
     };

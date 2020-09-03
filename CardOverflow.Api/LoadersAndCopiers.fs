@@ -13,18 +13,6 @@ open System.Text
 open System.Collections.Generic
 open System.Text.RegularExpressions
 open System.Collections
-open NUlid
-
-type Ulid =
-    static member create with get () = Ulid.NewUlid().ToGuid()
-
-module UpsertIds =
-    let create = {
-        StackId = Ulid.create
-        BranchId = Ulid.create
-        LeafId = Ulid.create
-        CardIds = [ Ulid.create ]
-    }
 
 module GrompleafEntity =
     let byteArrayHash (hasher: SHA512) (e: GrompleafEntity) =

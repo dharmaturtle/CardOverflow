@@ -48,9 +48,9 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int? SelectedStackId { get; set; }
-  [Parameter] public int? BranchId { get; set; }
-  [Parameter] public int? LeafId { get; set; }
+  [Parameter] public Guid? SelectedStackId { get; set; }
+  [Parameter] public Guid? BranchId { get; set; }
+  [Parameter] public Guid? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   private IList<CardOverflow.Pure.ExploreStackSummary> _stacks;
   private PagedListDetails _details;

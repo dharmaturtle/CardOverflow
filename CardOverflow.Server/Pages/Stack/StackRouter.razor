@@ -22,9 +22,9 @@
 }
 
 @code {
-  [Parameter] public int? StackId { get; set; }
-  private int? _leafId;
-  private int? _branchId;
+  [Parameter] public Guid? StackId { get; set; }
+  private Guid? _leafId;
+  private Guid? _branchId;
   private short? _index;
   private bool _isCurate => _path.StartsWith("my/", StringComparison.OrdinalIgnoreCase);
   private string _path = "";
@@ -32,8 +32,8 @@
   protected override void GetQueryStringValues() {
     _path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
     if (StackId == null) {
-      NavigationManager.TryGetQueryString<int?>("branch", out _branchId);
-      NavigationManager.TryGetQueryString<int?>("leaf", out _leafId);
+      NavigationManager.TryGetQueryString<Guid?>("branch", out _branchId);
+      NavigationManager.TryGetQueryString<Guid?>("leaf", out _leafId);
       NavigationManager.TryGetQueryString<short?>("index", out _index);
     }
   }

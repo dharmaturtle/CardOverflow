@@ -62,9 +62,9 @@
 }
 
 @code {
-  [Parameter] public int? StackId { get; set; }
-  [Parameter] public int? BranchId { get; set; }
-  [Parameter] public int? LeafId { get; set; }
+  [Parameter] public Guid? StackId { get; set; }
+  [Parameter] public Guid? BranchId { get; set; }
+  [Parameter] public Guid? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }

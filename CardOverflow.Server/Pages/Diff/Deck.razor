@@ -50,14 +50,14 @@
             @foreach (var ids in _diffState.AddedStack) {
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(ids.StackId, ids.BranchId, ids.LeafId))
-                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
                                                       .ToFList();
                                                     _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
                                                   }) />
-                @CardPreview(ids.LeafId, ids.Index)
+                <Deck_CardPreview LeafId=@ids.LeafId Index=@ids.Index />
                 @OtherDeckCheck(ids.DeckId, "Collecting")
               </div>
             }
@@ -80,10 +80,10 @@
               var ids2 = new StackLeafIds(ids.StackId, ids.BranchId, ids.LeafId);
               <div>
                 <CollectToggles Ids=@ids2
-                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<StackLeafIds>.Some(ids2))
                                 UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
-                @CardPreview(ids.LeafId, ids.Index)
+                <Deck_CardPreview LeafId=@ids.LeafId Index=@ids.Index />
                 @OtherDeckCheck(ids.DeckId, "Discarding")
               </div>
             }
@@ -104,7 +104,7 @@
             @foreach (var (theirs, mine) in _diffState.BranchChanged) {
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
-                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<StackLeafIds>.Some(new StackLeafIds(mine.StackId, mine.BranchId, mine.LeafId)))
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
@@ -113,9 +113,9 @@
                                                     _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
                 Switch from
-                @CardPreview(mine.LeafId, mine.Index, false)
+                <Deck_CardPreview LeafId=@mine.LeafId Index=@mine.Index ShowId=false />
                 to
-                @CardPreview(theirs.LeafId, theirs.Index, false)
+                <Deck_CardPreview LeafId=@theirs.LeafId Index=@theirs.Index ShowId=false />
                 <a href="stackdiff/@mine.LeafId/@theirs.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
                   &Delta;
                 </a>
@@ -140,7 +140,7 @@
             @foreach (var (theirs, mine) in _diffState.LeafChanged) {
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
-                                DeckId=@(FSharpOption<int>.Some(MyDeckId))
+                                DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<StackLeafIds>.Some(new StackLeafIds(mine.StackId, mine.BranchId, mine.LeafId)))
                                 IsBranch=@true
                                 UpdateCollectedIds=@(async _ => {
@@ -150,9 +150,9 @@
                                                     _diffState.LeafChanged = _diffState.LeafChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
                                                   }) />
                 Update from
-                @CardPreview(mine.LeafId, mine.Index, false)
+                <Deck_CardPreview LeafId=@mine.LeafId Index=@mine.Index ShowId=@false />
                 to
-                @CardPreview(theirs.LeafId, theirs.Index, false)
+                <Deck_CardPreview LeafId=@theirs.LeafId Index=@theirs.Index ShowId=@false />
                 <a href="stackdiff/@mine.LeafId/@theirs.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
                   &Delta;
                 </a>
@@ -193,7 +193,7 @@
           </h4>
           <div class="card-body">
             @foreach (var unchanged in _diffState.Unchanged) {
-              @CardPreview(unchanged.LeafId, unchanged.Index)
+              <Deck_CardPreview LeafId=@unchanged.LeafId Index=@unchanged.Index />
             }
           </div>
         </div>
@@ -206,9 +206,9 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int TheirDeckId { get; set; }
+  [Parameter] public Guid TheirDeckId { get; set; }
   private DeckWithFollowMeta _theirDeck;
-  [Parameter] public int MyDeckId { get; set; }
+  [Parameter] public Guid MyDeckId { get; set; }
   private DeckWithFollowMeta _myDeck;
   private DiffStateSummary _diffState;
   private List<SimpleDeck> _decks;
@@ -227,17 +227,7 @@
     StateHasChanged();
   }
 
-  private RenderFragment CardPreview(int leafId, short index, bool showId = true) =>
-    @<a href="stack?leaf=@leafId">
-      <HoverPreview Padding="0">
-        <ResizingIframe Leaf=@((leafId, index)) Back />
-      </HoverPreview>
-      @if (showId) {
-        @leafId
-      }
-    </a>;
-
-  private RenderFragment OtherDeckCheck(int cardsDeckId, string verb) =>
+  private RenderFragment OtherDeckCheck(Guid cardsDeckId, string verb) =>
     cardsDeckId == MyDeckId || cardsDeckId == TheirDeckId
     ? (RenderFragment)null
     : @<span>

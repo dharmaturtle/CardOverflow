@@ -134,9 +134,9 @@
   private CollectToggles _addedStackCollectToggles;
   private CollectToggles _updatedStackCollectToggles;
   private CollectToggles _deletedStackCollectToggles;
-  private FSharpOption<int> _getDeckId(FSharpOption<IdName> fallbackDeck) =>
+  private FSharpOption<Guid> _getDeckId(FSharpOption<IdName> fallbackDeck) =>
     _collectedState.HasValue()
-    ? FSharpOption<int>.None
+    ? FSharpOption<Guid>.None
     : fallbackDeck.Select(x => x.Id);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -161,12 +161,12 @@
   private RenderFragment Sender() =>
   @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
 
-private RenderFragment Stack(int leafId) =>
+private RenderFragment Stack(Guid leafId) =>
 @<a href="stack?leaf=@leafId">
   Stack
 </a>;
 
-private RenderFragment Deck(int deckId, string deckName) =>
+private RenderFragment Deck(Guid deckId, string deckName) =>
 @<span>&quot;<a href="deck/@deckId">@deckName</a>&quot;</span>;
 
 }

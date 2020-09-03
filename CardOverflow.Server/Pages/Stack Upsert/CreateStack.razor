@@ -29,7 +29,7 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewOriginalUserId(user.Id)));
+    var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewOriginal_UserId(user.Id), Api.UpsertIds.create)); // lowTODO just pass the userId normally, not as part of a DU // highTODO this only makes 1 card id
     if (x.IsOk) {
       _command = x.ResultValue;
     } else {

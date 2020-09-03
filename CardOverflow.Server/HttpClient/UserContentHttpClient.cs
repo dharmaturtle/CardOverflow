@@ -15,7 +15,7 @@ namespace CardOverflow.Server {
       _client = httpClient;
     }
 
-    public Task<string> GetStrippedFront(int stackId) =>
+    public Task<string> GetStrippedFront(Guid stackId) =>
       _client.GetStringAsync("stack/" + stackId + "/front/")
         .ContinueWith(x => x.Result.Apply(MappingTools.stripHtmlTagsForDisplay));
 

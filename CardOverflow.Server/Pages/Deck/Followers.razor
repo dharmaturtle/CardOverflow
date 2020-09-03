@@ -46,7 +46,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int DeckId { get; set; }
+  [Parameter] public Guid DeckId { get; set; }
   private DeckWithFollowMeta _deck;
   private List<Follower> _followers;
 

@@ -82,7 +82,7 @@
   [Parameter] public int? LeafUsers { get; set; }
   [Parameter] public bool IsBranch { get; set; }
   [Parameter] public bool IsStack { get; set; }
-  [Parameter] public FSharpOption<int> DeckId { get; set; } = FSharpOption<int>.None;
+  [Parameter] public FSharpOption<Guid> DeckId { get; set; } = FSharpOption<Guid>.None;
   private BSModal _modal;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
@@ -94,11 +94,11 @@
   public Task Collect() => Collect(() => { });
 
   public Task Collect(Action onSuccess) {
-    if (_user.Id == 0) {
+    if (_user.Id == Guid.Empty) {
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
-      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.LeafId, DeckId)).Match(ToastService, async ccIds => {
+      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.LeafId, DeckId, Gulid.Create(1).ToFList())).Match(ToastService, async ccIds => { // highTODO should be more than 1
         onSuccess();
         await UpdateCollectedIds.InvokeAsync(FSharpOption<StackLeafIds>.Some(Ids));
       });

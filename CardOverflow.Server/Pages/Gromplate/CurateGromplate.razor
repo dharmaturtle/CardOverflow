@@ -39,7 +39,7 @@
 }
 
 @code {
-  [Parameter] public int GromplateId { get; set; }
+  [Parameter] public Guid GromplateId { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   private List<ViewGromplateWithAllLeafs> _gromplates;
@@ -55,7 +55,7 @@
   }
 
   private void _Add() {
-    var t = ViewGromplateWithAllLeafs.initialize(_user.Id);
+    var t = ViewGromplateWithAllLeafs.initialize(_user.Id, Gulid.Create(), Gulid.Create());
     _gromplates = _gromplates.Prepend(t).ToList();
     _selectedIndex = _gromplates.IndexOf(t);
   }

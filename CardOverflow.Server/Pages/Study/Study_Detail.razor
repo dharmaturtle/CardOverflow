@@ -76,7 +76,7 @@
   bool isFront;
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int DeckId { get; set; }
+  [Parameter] public Guid DeckId { get; set; }
   List<FSharpResult<QuizCard, string>> batch;
   DateTime frontVisible;
   string transcript;

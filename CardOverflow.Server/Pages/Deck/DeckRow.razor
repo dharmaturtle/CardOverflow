@@ -96,7 +96,7 @@
   private async Task _DeleteSave() =>
     await Delete.InvokeAsync(_DeleteModal);
 
-  private async Task _SetDefault(int deckId) {
+  private async Task _SetDefault(Guid deckId) {
     var user = await UserTask;
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.setDefault(db, user.Id, deckId)).Match(ToastService, async _ => await SetIsDefault.InvokeAsync(null));
   }

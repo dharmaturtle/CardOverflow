@@ -31,6 +31,10 @@ namespace ThoughtDesign.WebLibrary {
           value = (T)(object)valueAsDecimal;
           return true;
         }
+        if ((typeof(T) == typeof(Guid) || typeof(T) == typeof(Guid?)) && Guid.TryParse(valueFromQueryString, out var valueAsGuid)) {
+          value = (T)(object)valueAsGuid;
+          return true;
+        }
       }
       value = default;
       return false;
@@ -44,6 +48,15 @@ namespace ThoughtDesign.WebLibrary {
         int.TryParse(token[0], out int possibleId)
         ? possibleId
         : fallbackValue;
+
+    public static Guid GetQueryGuid(this NavigationManager navigationManager, string key) =>
+      navigationManager.Uri
+        .Apply(navigationManager.ToAbsoluteUri).Query
+        .Apply(QueryHelpers.ParseQuery)
+        .TryGetValue(key, out var token) &&
+        Guid.TryParse(token[0], out Guid possibleId)
+        ? possibleId
+        : Guid.Empty;
 
     public static UrlProvider UrlProvider(this IConfiguration configuration) =>
       new UrlProvider(

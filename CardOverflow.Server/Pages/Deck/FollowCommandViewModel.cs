@@ -21,10 +21,10 @@ namespace CardOverflow.Server.Pages.Deck {
     public bool NotifyOfAnyNewChanges { get; set; } = true;
     public string NewDeckName { get; set; }
     public FSharpOption<bool> EditExisting { get; set; } = FSharpOption<bool>.None;
-    public int OldDeckId { get; set; }
+    public Guid OldDeckId { get; set; }
     public SanitizeDeckRepository.FollowDeckType FollowTypeDU() => FollowType switch
     {
-      FollowType.NewDeck => SanitizeDeckRepository.FollowDeckType.NewNewDeck(NewDeckName),
+      FollowType.NewDeck => SanitizeDeckRepository.FollowDeckType.NewNewDeck(Gulid.Create(), NewDeckName),
       FollowType.OldDeck => SanitizeDeckRepository.FollowDeckType.NewOldDeck(OldDeckId),
       FollowType.NoDeck => SanitizeDeckRepository.FollowDeckType.NoDeck,
       var x => throw new Exception($"Unsupported FollowType: {x}")

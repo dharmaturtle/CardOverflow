@@ -81,7 +81,7 @@
             <div class="col btn-group">
               @if (IsDisabled && Gromplate != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
-                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Apply(id => Leaf = Gromplate.Leafs.Single(x => x.Id == id)))>
+                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(id => Leaf = Gromplate.Leafs.Single(x => x.Id == id)))>
                   @foreach (var leaf in Gromplate.Leafs.OrderByDescending(x => x.Created)) {
                     <option value=@leaf.Id selected=@(Leaf.Id == leaf.Id)>
                       @leaf.EditSummary - @leaf.Created
@@ -109,20 +109,20 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int GromplateId { get; set; }
-  [Parameter] public int LeafId { get; set; }
+  [Parameter] public Guid GromplateId { get; set; }
+  [Parameter] public Guid LeafId { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
   [Parameter] public ViewGrompleaf Leaf { get; set; }
   [Parameter] public ViewGromplateWithAllLeafs Gromplate { get; set; }
   private string _loadingMessage = "Loading...";
 
   private async Task _isChildComponent() {
-    var x = (Gromplate == null || (Gromplate.Id != GromplateId && GromplateId != 0))
+    var x = (Gromplate == null || (Gromplate.Id != GromplateId && GromplateId != Guid.Empty))
       ? await DbExecutor.QueryAsync(db => SanitizeGromplate.AllLeafs(db, GromplateId))
       : FSharpResult<ViewGromplateWithAllLeafs, string>.NewOk(Gromplate);
     if (x.IsOk) {
       Gromplate = x.ResultValue;
-      Leaf = Gromplate.Leafs.SingleOrDefault(x => x.Id == NavigationManager.GetQueryInt("LeafId")) ?? Gromplate.Leafs.First();
+      Leaf = Gromplate.Leafs.SingleOrDefault(x => x.Id == NavigationManager.GetQueryGuid("LeafId")) ?? Gromplate.Leafs.First();
     } else {
       _loadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
@@ -142,7 +142,7 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    await (LeafId == 0
+    await (LeafId == Guid.Empty
       ? _isChildComponent()
       : _isLeafPage());
     IsDisabled = Gromplate.AuthorId != _user.Id;

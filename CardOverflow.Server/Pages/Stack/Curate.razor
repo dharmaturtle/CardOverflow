@@ -58,7 +58,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public int? SelectedLeafId { get; set; }
+  [Parameter] public Guid? SelectedLeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<Card> cards;

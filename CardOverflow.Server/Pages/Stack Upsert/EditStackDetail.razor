@@ -20,7 +20,7 @@
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @if (EditStack.Kind.IsNewBranch_SourceStackId_Title || EditStack.Kind.IsUpdate_BranchId_Title) {
+            @if (EditStack.Kind.IsNewBranch_Title || EditStack.Kind.IsNewLeaf_Title) {
               <div class="input-group">
                 <label for="branchTitleInput" class="col-form-label mr-2">
                   Branch Title:
@@ -37,7 +37,7 @@
               <a href="Gromplate/@_selectedGromplateId" class="col-sm-2 mt-2">
                 Card Template
               </a>
-              <select value=@_selectedGromplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(id => UpdateSelectedGromplate(id)))>
+              <select value=@_selectedGromplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(id => UpdateSelectedGromplate(id)))>
                 @foreach (var gromplate in Gromplates) {
                   <option value=@gromplate.Id>@gromplate.Editable.Name</option>
                 }
@@ -47,7 +47,7 @@
               <a href="Gromplate/@_selectedGromplateId?LeafId=@_selectedGrompleafId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
-              <select value=@_selectedGrompleafId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(int.Parse).Do(UpdateSelectedGrompleaf))>
+              <select value=@_selectedGrompleafId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(UpdateSelectedGrompleaf))>
                 @foreach (var leaf in _selectedGrompleafs) {
                   <option value=@leaf.Id>@leaf.Created - @leaf.EditSummary</option>
                 }
@@ -74,9 +74,9 @@
               Card
             </a>
           }
-          @if (EditStack.Kind.TryGetBranchSourceStackId(out var stackId)) {
+          @if (EditStack.Kind.IsNewBranch_Title) {
             <span>Branched from</span>
-            <a href="stack/@stackId">
+            <a href="stack/@EditStack.Ids.StackId">
               Stack
             </a>
           }
@@ -114,10 +114,10 @@
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private UserClaims _user = UserClaims.init;
   private List<ViewGrompleaf> _selectedGrompleafs;
-  private int _selectedGromplateId;
-  private int _selectedGrompleafId;
+  private Guid _selectedGromplateId;
+  private Guid _selectedGrompleafId;
   private bool _isDisabled;
-  private int _savedBranchId;
+  private Guid _savedBranchId;
 
   private void _updateCardCommand(int i, EditCardCommand command) {
     while (_ccCommands.ElementAtOrDefault(i) == default) {
@@ -133,7 +133,7 @@
       Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditStack.Grompleaf.GromplateId));
     }
     if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<Guid>.Empty), null, Api.UpsertIds.create); // highTODO this only makes 1 card id
     }
     UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
     StateHasChanged();
@@ -151,7 +151,7 @@
       _savedBranchId = result.ResultValue;
       if (NewEditStackOnSave) {
         var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(FSharpList<int>.Empty), null);
+        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(FSharpList<Guid>.Empty), null, Api.UpsertIds.create); // highTODO this only makes 1 card id
         UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
         _isDisabled = false;
       }
@@ -161,13 +161,13 @@
     }
   }
 
-  void UpdateSelectedGromplate(int gromplateId, int? leafId = null) {
+  void UpdateSelectedGromplate(Guid gromplateId, Guid? leafId = null) {
     _selectedGromplateId = gromplateId;
     _selectedGrompleafs = Gromplates.Single(t => t.Id == gromplateId).Leafs;
     UpdateSelectedGrompleaf(leafId ?? _selectedGrompleafs.First().Id);
   }
 
-  void UpdateSelectedGrompleaf(int leafId) {
+  void UpdateSelectedGrompleaf(Guid leafId) {
     _selectedGrompleafId = leafId;
     EditStack.Grompleaf = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
     var valuesByField = EditStack.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);

@@ -42,7 +42,7 @@
 }
 
 @code {
-  [Parameter] public int Id { get; set; }
+  [Parameter] public Guid Id { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   private CardOverflow.Pure.BranchRevision _revision;

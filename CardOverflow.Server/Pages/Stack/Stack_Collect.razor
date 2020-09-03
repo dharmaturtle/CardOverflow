@@ -79,7 +79,7 @@
   [Parameter] public EventCallback<(int, CardState)> CardStateUpdated { get; set; }
   private bool _showAdvanced;
 
-  private async Task _SetSetting(int newId) {
+  private async Task _SetSetting(Guid newId) {
     var user = await UserTask;
     var r = await DbExecutor.QueryAsync(db => SanitizeCardSettingRepository.setCard(db, user.Id, Card.CardId, newId));
     if (r.IsOk) {
@@ -89,7 +89,7 @@
     }
   }
 
-  private async Task _SetDeck(int newId) {
+  private async Task _SetDeck(Guid newId) {
     var user = await UserTask;
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.@switch(db, user.Id, newId, Card.CardId))
       .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
