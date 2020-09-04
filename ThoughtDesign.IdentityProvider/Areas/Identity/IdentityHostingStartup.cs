@@ -19,7 +19,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
         services.AddDbContextPool<IdentityDb>(options =>
             options.UseNpgsql(
                 context.Configuration.GetConnectionString("IdentityDbConnection")));
-        services.AddIdentity<ThoughtDesignUser, IdentityRole<int>>(options => {
+        services.AddIdentity<ThoughtDesignUser, IdentityRole<Guid>>(options => {
           if (context.HostingEnvironment.IsDevelopment()) {
             options.User.RequireUniqueEmail = true;
             options.Password.RequireDigit = false;
