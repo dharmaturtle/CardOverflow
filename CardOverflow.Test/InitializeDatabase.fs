@@ -149,7 +149,10 @@ let ``Delete all rows and reinsert master data into localhost's CardOverflow Dat
     c.GetInstance<ConnectionString>() |> reset "CardOverflow"
 
 (*
+select 'select pg_terminate_backend(pid) from pg_stat_activity where datname='''||datname||''';'
+from pg_database
+where datistemplate=false AND datname like 'Ω_%';
 select 'drop database "'||datname||'";'
 from pg_database
-where datistemplate=false AND datname like 'Ω_%'
+where datistemplate=false AND datname like 'Ω_%';
 *)
