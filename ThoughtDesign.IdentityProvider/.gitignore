@@ -1,0 +1,3 @@
+# https://stackoverflow.com/a/5534865/625919
+wwwroot/*
+!wwwroot/lib/
