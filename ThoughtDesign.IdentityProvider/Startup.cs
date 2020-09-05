@@ -38,13 +38,13 @@ namespace ThoughtDesign.IdentityProvider {
         .AddIdentityServer()
         .AddAspNetIdentity<ThoughtDesignUser>();
 
-      if (Environment.IsDevelopment()) {
-        builder
-          .AddDeveloperSigningCredential()
-          .AddInMemoryIdentityResources(Config.Ids)
-          .AddInMemoryApiResources(Config.Apis)
-          .AddInMemoryClients(Config.Clients);
-      } else {
+      //if (Environment.IsDevelopment()) {
+      //  builder
+      //    .AddDeveloperSigningCredential()
+      //    .AddInMemoryIdentityResources(Config.Ids)
+      //    .AddInMemoryApiResources(Config.Apis)
+      //    .AddInMemoryClients(Config.Clients);
+      //} else {
         var assemblyName = typeof(IdentityHostingStartup).GetTypeInfo().Assembly.GetName().Name;
         var identityDbConnection = Configuration.GetConnectionString("IdentityDbConnection");
         void dbOptionsBuilder(DbContextOptionsBuilder builder) =>
@@ -53,7 +53,7 @@ namespace ThoughtDesign.IdentityProvider {
           .AddSigningCredential(_LoadCertificateFromStore())
           .AddConfigurationStore(options => options.ConfigureDbContext = dbOptionsBuilder)
           .AddOperationalStore(options => options.ConfigureDbContext = dbOptionsBuilder);
-      }
+      //}
     }
 
     public void Configure(IApplicationBuilder app) {
