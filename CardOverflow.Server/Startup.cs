@@ -24,6 +24,7 @@ using System.IdentityModel.Tokens.Jwt;
 using BlazorStrap;
 using FluentValidation;
 using CardOverflow.Server.Pages.Deck;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace CardOverflow.Server {
   public class Startup {
@@ -51,9 +52,9 @@ namespace CardOverflow.Server {
           options.Authority = Configuration.UrlProvider().IdentityProvider;
           options.ClientId = clientId;
           options.ClientSecret = Configuration.GetSection("ClientSecret:" + clientId).Value;
-          options.ResponseType = "code id_token";
-          options.Scope.Add("openid");
-          options.Scope.Add("profile");
+          options.ResponseType = OpenIdConnectResponseType.Code;
+          options.UsePkce = true;
+          options.Scope.Add(OpenIdConnectScope.OpenIdProfile);
           options.Scope.Add("display_name"); // Ref: https://www.pluralsight.com/courses/asp-dotnet-core-oauth2-openid-connect-securing/ Securing ASP.NET Core with OAuth2 and OpenID Connect/Working with Claims in Your Web Application/Demo - Getting Ready for Calling the UserInfo Endpoint
           options.ClaimActions.MapUniqueJsonKey("display_name", "display_name");
           options.ClaimActions.DeleteClaims("sid", "idp", "s_hash", "auth_time", "amr");
@@ -70,7 +71,7 @@ namespace CardOverflow.Server {
       services.AddSingleton<TimeProvider>();
       services.AddSingleton<Scheduler>();
       services.AddSingleton<DbExecutor>();
-      
+
       services.AddFileReaderService(options => options.InitializeOnFirstCall = true); // medTODO what does this do?
       services.AddRazorPages();
       services.AddServerSideBlazor();
