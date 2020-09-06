@@ -17,8 +17,9 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
     public void Configure(IWebHostBuilder builder) {
       builder.ConfigureServices((context, services) => {
         services.AddDbContextPool<IdentityDb>(options =>
-            options.UseNpgsql(
-                context.Configuration.GetConnectionString("IdentityDbConnection")));
+            options
+              .UseSnakeCaseNamingConvention()
+              .UseNpgsql(context.Configuration.GetConnectionString("IdentityDbConnection")));
         services.AddIdentity<ThoughtDesignUser, IdentityRole<Guid>>(options => {
           if (context.HostingEnvironment.IsDevelopment()) {
             options.User.RequireUniqueEmail = true;
