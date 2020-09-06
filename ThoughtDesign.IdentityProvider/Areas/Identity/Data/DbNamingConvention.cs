@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CardOverflow.Entity.DesignTime;
+using CardOverflow.Pure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +13,35 @@ using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 
 namespace ThoughtDesign.IdentityProvider.Data {
 
+  // https://medium.com/@aspram.shadyan.dev/identityserver4-ef-core-naming-conventions-adapted-for-postgresql-29a138bd26bb
+  public static class DbNamingConventionExtensions {
+    public static void CustomizeNames(this ModelBuilder builder) {
+      var snakeCase = new SnakeCaseNameRewriter(CultureInfo.CurrentCulture);
+      foreach (var entity in builder.Model.GetEntityTypes()) {
+        entity
+          .GetTableName()
+          .TrimEnd('s')
+          .Replace("AspNet", "")
+          .Pipe(snakeCase.RewriteName)
+          .Pipe(x => x == "user" ? "padawan" : x)
+          .Do(entity.SetTableName);
+        foreach (var key in entity.GetKeys()) {
+          key
+            .GetName()
+            .TrimEnd('s')
+            .Do(key.SetName);
+        }
+      }
+    }
+  }
+
   // literal copy paste of https://github.com/efcore/EFCore.NamingConventions/blob/master/EFCore.NamingConventions/NamingConventions/Internal/SnakeCaseNameRewriter.cs at commit 290cc330292d60bd1bad8eb28b46ef755de4b0cb
-  public class SnakeCaseNameRewriter  {
+  public class SnakeCaseNameRewriter {
     private readonly CultureInfo _culture;
 
     public SnakeCaseNameRewriter(CultureInfo culture) => _culture = culture;
 
-    protected string RewriteName(string name) {
+    public string RewriteName(string name) {
       if (string.IsNullOrEmpty(name))
         return name;
 
