@@ -40,6 +40,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity {
             options.SignIn.RequireConfirmedAccount = true;
           }
         }).AddEntityFrameworkStores<IdentityDb>()
+          .AddClaimsPrincipalFactory<ThoughtDesignUserClaimsPrincipalFactory>()
           .AddDefaultTokenProviders();
         services.AddSingleton<IEmailSender, EmailSender>();
       });
