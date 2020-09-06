@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ThoughtDesign.IdentityProvider.Data;
@@ -9,9 +10,10 @@ using ThoughtDesign.IdentityProvider.Data;
 namespace ThoughtDesign.IdentityProvider.Migrations
 {
     [DbContext(typeof(IdentityDb))]
-    partial class IdentityDbModelSnapshot : ModelSnapshot
+    [Migration("20200906113010_AddUserDisplayName")]
+    partial class AddUserDisplayName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
