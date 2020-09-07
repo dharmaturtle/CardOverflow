@@ -39,7 +39,7 @@ namespace ThoughtDesign.IdentityProvider {
         .AddIdentityServer()
         .AddAspNetIdentity<ThoughtDesignUser>();
 
-      if (false) {
+      if (Environment.IsDevelopment()) {
         builder
           .AddDeveloperSigningCredential()
           .AddInMemoryIdentityResources(Config.Ids)
