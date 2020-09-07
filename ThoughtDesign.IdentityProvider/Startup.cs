@@ -1,4 +1,4 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using ThoughtDesign.IdentityProvider.Areas.Identity;
 using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
+using ThoughtDesign.IdentityProvider.Data;
 using ThoughtDesign.WebLibrary;
 
 namespace ThoughtDesign.IdentityProvider {
@@ -47,11 +48,12 @@ namespace ThoughtDesign.IdentityProvider {
       } else {
         var assemblyName = typeof(IdentityHostingStartup).GetTypeInfo().Assembly.GetName().Name;
         var identityDbConnection = Configuration.GetConnectionString("IdentityDbConnection");
-        void dbOptionsBuilder(DbContextOptionsBuilder builder) =>
-          builder.UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
+        void dbOptionsBuilder(DbContextOptionsBuilder builder) => builder
+          .UseSnakeCaseNamingConvention()
+          .UseNpgsql(identityDbConnection, options => options.MigrationsAssembly(assemblyName));
         builder
           .AddSigningCredential(_LoadCertificateFromStore())
-          .AddConfigurationStore(options => options.ConfigureDbContext = dbOptionsBuilder)
+          .AddConfigurationStore<IdentityConfigurationDb>(options => options.ConfigureDbContext = dbOptionsBuilder)
           .AddOperationalStore(options => options.ConfigureDbContext = dbOptionsBuilder);
       }
     }
