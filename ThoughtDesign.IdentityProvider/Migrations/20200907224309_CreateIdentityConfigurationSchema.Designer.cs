@@ -10,8 +10,8 @@ using ThoughtDesign.IdentityProvider.Data;
 namespace ThoughtDesign.IdentityProvider.Migrations
 {
     [DbContext(typeof(IdentityDb))]
-    [Migration("20200906212058_CreateIdentitySchema")]
-    partial class CreateIdentitySchema
+    [Migration("20200907224309_CreateIdentityConfigurationSchema")]
+    partial class CreateIdentityConfigurationSchema
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -44,11 +44,11 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasMaxLength(256);
 
                     b.HasKey("Id")
-                        .HasName("pk_role");
+                        .HasName("role_pkey");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasName("role. normalized_name. uq idx");
+                        .HasName("role. normalized_name. uqix");
 
                     b.ToTable("role");
                 });
@@ -74,10 +74,10 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id")
-                        .HasName("pk_role_claim");
+                        .HasName("role_claim_pkey");
 
                     b.HasIndex("RoleId")
-                        .HasName("role_claim. role_id. idx");
+                        .HasName("role_claim. role_id. ix");
 
                     b.ToTable("role_claim");
                 });
@@ -103,10 +103,10 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_claim");
+                        .HasName("user_claim_pkey");
 
                     b.HasIndex("UserId")
-                        .HasName("user_claim. user_id. idx");
+                        .HasName("user_claim. user_id. ix");
 
                     b.ToTable("user_claim");
                 });
@@ -130,10 +130,10 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("LoginProvider", "ProviderKey")
-                        .HasName("pk_user_login");
+                        .HasName("user_login_pkey");
 
                     b.HasIndex("UserId")
-                        .HasName("user_login. user_id. idx");
+                        .HasName("user_login. user_id. ix");
 
                     b.ToTable("user_login");
                 });
@@ -149,10 +149,10 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("UserId", "RoleId")
-                        .HasName("pk_user_role");
+                        .HasName("user_role_pkey");
 
                     b.HasIndex("RoleId")
-                        .HasName("user_role. role_id. idx");
+                        .HasName("user_role. role_id. ix");
 
                     b.ToTable("user_role");
                 });
@@ -176,7 +176,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("UserId", "LoginProvider", "Name")
-                        .HasName("pk_user_token");
+                        .HasName("user_token_pkey");
 
                     b.ToTable("user_token");
                 });
@@ -256,14 +256,14 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                         .HasMaxLength(256);
 
                     b.HasKey("Id")
-                        .HasName("pk_user");
+                        .HasName("user_pkey");
 
                     b.HasIndex("NormalizedEmail")
-                        .HasName("user. normalized_email. idx");
+                        .HasName("user. normalized_email. ix");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasName("user. normalized_user_name. uq idx");
+                        .HasName("user. normalized_user_name. uqix");
 
                     b.ToTable("padawan");
                 });
@@ -273,7 +273,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .HasConstraintName("role_claim to role. role_id. FK")
+                        .HasConstraintName("role_claim FK role. role_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -283,7 +283,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                     b.HasOne("ThoughtDesign.IdentityProvider.Areas.Identity.Data.ThoughtDesignUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .HasConstraintName("user_claim to user. user_id. FK")
+                        .HasConstraintName("user_claim FK user. user_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -293,7 +293,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                     b.HasOne("ThoughtDesign.IdentityProvider.Areas.Identity.Data.ThoughtDesignUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .HasConstraintName("user_login to user. user_id. FK")
+                        .HasConstraintName("user_login FK user. user_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -303,14 +303,14 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .HasConstraintName("user_role to role. role_id. FK")
+                        .HasConstraintName("user_role FK role. role_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ThoughtDesign.IdentityProvider.Areas.Identity.Data.ThoughtDesignUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .HasConstraintName("user_role to user. user_id. FK")
+                        .HasConstraintName("user_role FK user. user_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -320,7 +320,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                     b.HasOne("ThoughtDesign.IdentityProvider.Areas.Identity.Data.ThoughtDesignUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .HasConstraintName("user_token to user. user_id. FK")
+                        .HasConstraintName("user_token FK user. user_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

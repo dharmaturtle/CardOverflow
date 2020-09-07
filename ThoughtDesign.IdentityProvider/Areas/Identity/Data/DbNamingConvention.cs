@@ -17,22 +17,34 @@ namespace ThoughtDesign.IdentityProvider.Data {
   public static class DbNamingConventionExtensions {
     public static void CustomizeNames(this ModelBuilder builder) {
       var snakeCase = new SnakeCaseNameRewriter(CultureInfo.CurrentCulture);
+      builder.Model.GetEntityTypes().ToList().ForEach(entity => entity
+        .GetTableName()
+        .TrimEnd('s')
+        .Replace("AspNet", "")
+        .Pipe(snakeCase.RewriteName)
+        .Pipe(toPadawan)
+        .Pipe(toProperty)
+        .Do(entity.SetTableName));
+
       foreach (var entity in builder.Model.GetEntityTypes()) {
-        entity
-          .GetTableName()
-          .TrimEnd('s')
-          .Replace("AspNet", "")
-          .Pipe(snakeCase.RewriteName)
-          .Pipe(x => x == "user" ? "padawan" : x)
-          .Do(entity.SetTableName);
-        foreach (var key in entity.GetKeys()) {
-          key
-            .GetName()
-            .TrimEnd('s')
-            .Do(key.SetName);
+        var tableName = entity.GetTableName().Pipe(toUser);
+        entity.GetKeys().ToList().ForEach(key => key.SetName($"{tableName}_pkey"));
+        foreach (var fk in entity.GetForeignKeys()) {
+          var otherTable = fk.PrincipalEntityType.GetTableName().Pipe(toUser);
+          var c = fk.Properties[0].GetColumnName();
+          fk.SetConstraintName($"{tableName} FK {otherTable}. {c}");
+        }
+        foreach (var ix in entity.GetIndexes()) {
+          var columns = ix.Properties.Select(x => x.GetColumnName()).Pipe(x => System.String.Join(",", x));
+          var uq = ix.IsUnique ? "uq" : "";
+          ix.SetName($"{tableName}. {columns}. {uq}ix");
         }
       }
     }
+
+    private static string toPadawan(string tableName) => tableName == "user" ? "padawan" : tableName;
+    private static string toUser(string tableName) => tableName == "padawan" ? "user" : tableName;
+    private static string toProperty(string tableName) => tableName.Replace("propertie", "property");
   }
 
   // literal copy paste of https://github.com/efcore/EFCore.NamingConventions/blob/master/EFCore.NamingConventions/NamingConventions/Internal/SnakeCaseNameRewriter.cs at commit 290cc330292d60bd1bad8eb28b46ef755de4b0cb

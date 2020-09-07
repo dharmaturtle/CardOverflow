@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace ThoughtDesign.IdentityProvider.Migrations
 {
-    public partial class CreateIdentitySchema : Migration
+    public partial class CreateIdentityConfigurationSchema : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -31,7 +31,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user", x => x.id);
+                    table.PrimaryKey("user_pkey", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -45,7 +45,7 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_role", x => x.id);
+                    table.PrimaryKey("role_pkey", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -60,9 +60,9 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_claim", x => x.id);
+                    table.PrimaryKey("user_claim_pkey", x => x.id);
                     table.ForeignKey(
-                        name: "user_claim to user. user_id. FK",
+                        name: "user_claim FK user. user_id",
                         column: x => x.user_id,
                         principalTable: "padawan",
                         principalColumn: "id",
@@ -80,9 +80,9 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_login", x => new { x.login_provider, x.provider_key });
+                    table.PrimaryKey("user_login_pkey", x => new { x.login_provider, x.provider_key });
                     table.ForeignKey(
-                        name: "user_login to user. user_id. FK",
+                        name: "user_login FK user. user_id",
                         column: x => x.user_id,
                         principalTable: "padawan",
                         principalColumn: "id",
@@ -100,9 +100,9 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_token", x => new { x.user_id, x.login_provider, x.name });
+                    table.PrimaryKey("user_token_pkey", x => new { x.user_id, x.login_provider, x.name });
                     table.ForeignKey(
-                        name: "user_token to user. user_id. FK",
+                        name: "user_token FK user. user_id",
                         column: x => x.user_id,
                         principalTable: "padawan",
                         principalColumn: "id",
@@ -121,9 +121,9 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_role_claim", x => x.id);
+                    table.PrimaryKey("role_claim_pkey", x => x.id);
                     table.ForeignKey(
-                        name: "role_claim to role. role_id. FK",
+                        name: "role_claim FK role. role_id",
                         column: x => x.role_id,
                         principalTable: "role",
                         principalColumn: "id",
@@ -139,15 +139,15 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_user_role", x => new { x.user_id, x.role_id });
+                    table.PrimaryKey("user_role_pkey", x => new { x.user_id, x.role_id });
                     table.ForeignKey(
-                        name: "user_role to role. role_id. FK",
+                        name: "user_role FK role. role_id",
                         column: x => x.role_id,
                         principalTable: "role",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "user_role to user. user_id. FK",
+                        name: "user_role FK user. user_id",
                         column: x => x.user_id,
                         principalTable: "padawan",
                         principalColumn: "id",
@@ -155,39 +155,39 @@ namespace ThoughtDesign.IdentityProvider.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "user. normalized_email. idx",
+                name: "user. normalized_email. ix",
                 table: "padawan",
                 column: "normalized_email");
 
             migrationBuilder.CreateIndex(
-                name: "user. normalized_user_name. uq idx",
+                name: "user. normalized_user_name. uqix",
                 table: "padawan",
                 column: "normalized_user_name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "role. normalized_name. uq idx",
+                name: "role. normalized_name. uqix",
                 table: "role",
                 column: "normalized_name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "role_claim. role_id. idx",
+                name: "role_claim. role_id. ix",
                 table: "role_claim",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
-                name: "user_claim. user_id. idx",
+                name: "user_claim. user_id. ix",
                 table: "user_claim",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "user_login. user_id. idx",
+                name: "user_login. user_id. ix",
                 table: "user_login",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "user_role. role_id. idx",
+                name: "user_role. role_id. ix",
                 table: "user_role",
                 column: "role_id");
         }
