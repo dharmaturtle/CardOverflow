@@ -54,7 +54,7 @@ namespace ThoughtDesign.IdentityProvider {
         builder
           .AddSigningCredential(_LoadCertificateFromStore())
           .AddConfigurationStore<IdentityConfigurationDb>(options => options.ConfigureDbContext = dbOptionsBuilder)
-          .AddOperationalStore(options => options.ConfigureDbContext = dbOptionsBuilder);
+          .AddOperationalStore<IdentityPersistedGrantDb>(options => options.ConfigureDbContext = dbOptionsBuilder);
       }
     }
 
