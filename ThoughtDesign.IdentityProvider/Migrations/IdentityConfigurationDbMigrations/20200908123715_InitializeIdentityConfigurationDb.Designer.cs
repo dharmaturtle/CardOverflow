@@ -10,8 +10,8 @@ using ThoughtDesign.IdentityProvider.Data;
 namespace ThoughtDesign.IdentityProvider.Migrations.IdentityConfigurationDbMigrations
 {
     [DbContext(typeof(IdentityConfigurationDb))]
-    [Migration("20200908002440_CreateIdentityConfigurationSchema")]
-    partial class CreateIdentityConfigurationSchema
+    [Migration("20200908123715_InitializeIdentityConfigurationDb")]
+    partial class InitializeIdentityConfigurationDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

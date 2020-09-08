@@ -10,8 +10,8 @@ using ThoughtDesign.IdentityProvider.Data;
 namespace ThoughtDesign.IdentityProvider.Migrations.IdentityPersistedGrantDbMigrations
 {
     [DbContext(typeof(IdentityPersistedGrantDb))]
-    [Migration("20200908004506_InitialIdentityServerConfigurationDBMigration")]
-    partial class InitialIdentityServerConfigurationDBMigration
+    [Migration("20200908123734_InitializeIdentityPersistedGrantDb")]
+    partial class InitializeIdentityPersistedGrantDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
