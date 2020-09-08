@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -395,7 +395,8 @@ CREATE TABLE public.alpha_beta_key (
     id uuid NOT NULL,
     key character varying(50) NOT NULL,
     is_used boolean NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT "alpha_beta_key. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -410,7 +411,8 @@ CREATE TABLE public.branch (
     users integer NOT NULL,
     is_listed boolean NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    CONSTRAINT "branch. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -436,6 +438,7 @@ CREATE TABLE public.card (
     back_personal_field character varying(5000) NOT NULL,
     tsv_helper text,
     tsv tsvector,
+    CONSTRAINT "card. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid)),
     CONSTRAINT "card. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
@@ -489,7 +492,8 @@ CREATE TABLE public.card_setting (
     automatically_play_audio boolean NOT NULL,
     replay_question_audio_on_answer boolean NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    CONSTRAINT "card_setting. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -505,7 +509,8 @@ CREATE TABLE public.commeaf (
     edit_summary character varying(200) NOT NULL,
     b_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "commeaf. b_weight_tsv_helper. is null check" CHECK ((b_weight_tsv_helper IS NULL))
+    CONSTRAINT "commeaf. b_weight_tsv_helper. is null check" CHECK ((b_weight_tsv_helper IS NULL)),
+    CONSTRAINT "commeaf. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -527,7 +532,8 @@ CREATE TABLE public.comment_gromplate (
     text character varying(500) NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp without time zone,
-    is_dmca boolean NOT NULL
+    is_dmca boolean NOT NULL,
+    CONSTRAINT "comment_gromplate. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -540,7 +546,8 @@ CREATE TABLE public.comment_stack (
     text character varying(500) NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp without time zone,
-    is_dmca boolean NOT NULL
+    is_dmca boolean NOT NULL,
+    CONSTRAINT "comment_stack. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -552,7 +559,8 @@ CREATE TABLE public.commield (
     latest_id uuid NOT NULL,
     is_listed boolean NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    CONSTRAINT "commield. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -567,7 +575,8 @@ CREATE TABLE public.deck (
     followers integer NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp without time zone,
-    tsv tsvector
+    tsv tsvector,
+    CONSTRAINT "deck. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -590,7 +599,8 @@ CREATE TABLE public.feedback (
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp without time zone,
     parent_id uuid,
-    priority smallint
+    priority smallint,
+    CONSTRAINT "feedback. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -601,7 +611,8 @@ CREATE TABLE public.file (
     file_name character varying(200) NOT NULL,
     data bytea NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    sha256 bytea NOT NULL
+    sha256 bytea NOT NULL,
+    CONSTRAINT "file. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -622,7 +633,8 @@ CREATE TABLE public.filter (
     user_id uuid NOT NULL,
     query character varying(256) NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    CONSTRAINT "filter. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -634,7 +646,8 @@ CREATE TABLE public.gromplate (
     latest_id uuid NOT NULL,
     is_listed boolean NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    CONSTRAINT "gromplate. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -658,7 +671,8 @@ CREATE TABLE public.grompleaf (
     hash bit(512) NOT NULL,
     c_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "grompleaf. c_weight_tsv_helper. is null check" CHECK ((c_weight_tsv_helper IS NULL))
+    CONSTRAINT "grompleaf. c_weight_tsv_helper. is null check" CHECK ((c_weight_tsv_helper IS NULL)),
+    CONSTRAINT "grompleaf. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -674,7 +688,8 @@ CREATE TABLE public.history (
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     interval_with_unused_steps_index smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
-    time_from_seeing_question_to_score_in_seconds_plus32768 smallint NOT NULL
+    time_from_seeing_question_to_score_in_seconds_plus32768 smallint NOT NULL,
+    CONSTRAINT "history. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -696,6 +711,7 @@ CREATE TABLE public.leaf (
     tsv_helper text,
     tsv tsvector,
     max_index_inclusive smallint NOT NULL,
+    CONSTRAINT "leaf. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid)),
     CONSTRAINT "leaf. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
@@ -706,7 +722,8 @@ CREATE TABLE public.relationship (
     id uuid NOT NULL,
     name character varying(250) NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    tsv tsvector
+    tsv tsvector,
+    CONSTRAINT "relationship. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -747,7 +764,8 @@ CREATE TABLE public.tag (
     id uuid NOT NULL,
     name character varying(250) NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    tsv tsvector
+    tsv tsvector,
+    CONSTRAINT "tag. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -781,7 +799,7 @@ CREATE VIEW public.leaf_tag_count AS
 ALTER TABLE public.leaf_tag_count OWNER TO postgres;
 
 CREATE TABLE public.notification (
-    id uuid NOT NULL DEFAULT public.generate_ulid(),
+    id uuid DEFAULT public.generate_ulid() NOT NULL,
     sender_id uuid NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     type public.notification_type NOT NULL,
@@ -791,7 +809,8 @@ CREATE TABLE public.notification (
     leaf_id uuid,
     deck_id uuid,
     gromplate_id uuid,
-    grompleaf_id uuid
+    grompleaf_id uuid,
+    CONSTRAINT "notification. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -811,7 +830,8 @@ CREATE TABLE public.padawan (
     is_night_mode boolean NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp without time zone,
-    tsv tsvector
+    tsv tsvector,
+    CONSTRAINT "user. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -822,7 +842,8 @@ CREATE TABLE public.potential_signups (
     email character varying(500) NOT NULL,
     message character varying(1000) NOT NULL,
     one_is_alpha2_beta3_ga smallint NOT NULL,
-    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT "potential_signups. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
@@ -844,7 +865,8 @@ CREATE TABLE public.stack (
     default_branch_id uuid NOT NULL,
     is_listed boolean NOT NULL,
     created timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    CONSTRAINT "stack. id. is not empty" CHECK ((id <> '00000000-0000-0000-0000-000000000000'::uuid))
 );
 
 
