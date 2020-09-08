@@ -24,6 +24,7 @@ namespace ThoughtDesign.IdentityProvider.Data {
         .Pipe(snakeCase.RewriteName)
         .Pipe(toPadawan)
         .Pipe(toProperty)
+        .Pipe(toIdp)
         .Do(entity.SetTableName));
 
       foreach (var entity in builder.Model.GetEntityTypes()) {
@@ -45,6 +46,7 @@ namespace ThoughtDesign.IdentityProvider.Data {
     private static string toPadawan(string tableName) => tableName == "user" ? "padawan" : tableName;
     private static string toUser(string tableName) => tableName == "padawan" ? "user" : tableName;
     private static string toProperty(string tableName) => tableName.Replace("propertie", "property");
+    private static string toIdp(string tableName) => tableName.Replace("_id_p_", "_idp_");
   }
 
   // literal copy paste of https://github.com/efcore/EFCore.NamingConventions/blob/master/EFCore.NamingConventions/NamingConventions/Internal/SnakeCaseNameRewriter.cs at commit 290cc330292d60bd1bad8eb28b46ef755de4b0cb
