@@ -16,25 +16,27 @@ namespace ThoughtDesign.IdentityProvider.Data {
   // https://medium.com/@aspram.shadyan.dev/identityserver4-ef-core-naming-conventions-adapted-for-postgresql-29a138bd26bb
   public static class DbNamingConventionExtensions {
     public static void CustomizeNames(this ModelBuilder builder) {
-      var snakeCase = new SnakeCaseNameRewriter(CultureInfo.CurrentCulture);
       builder.Model.GetEntityTypes().ToList().ForEach(entity => entity
         .GetTableName()
         .TrimEnd('s')
         .Replace("AspNet", "")
-        .Pipe(snakeCase.RewriteName)
-        .Pipe(toPadawan)
-        .Pipe(toProperty)
-        .Pipe(toIdp)
+        .Pipe(SnakeCaseNameRewriter.RewriteName)
+        .Pipe(_ToPadawan)
+        .Pipe(_ToProperty)
+        .Pipe(_ToIdp)
         .Do(entity.SetTableName));
 
       foreach (var entity in builder.Model.GetEntityTypes()) {
-        var tableName = entity.GetTableName().Pipe(toUser);
+        var tableName = entity.GetTableName().Pipe(_ToUser);
+
         entity.GetKeys().ToList().ForEach(key => key.SetName($"{tableName}_pkey"));
+
         foreach (var fk in entity.GetForeignKeys()) {
-          var otherTable = fk.PrincipalEntityType.GetTableName().Pipe(toUser);
+          var otherTable = fk.PrincipalEntityType.GetTableName().Pipe(_ToUser);
           var c = fk.Properties[0].GetColumnName();
           fk.SetConstraintName($"{tableName} FK {otherTable}. {c}");
         }
+
         foreach (var ix in entity.GetIndexes()) {
           var columns = ix.Properties.Select(x => x.GetColumnName()).Pipe(x => System.String.Join(",", x));
           var uq = ix.IsUnique ? "uq" : "";
@@ -43,19 +45,17 @@ namespace ThoughtDesign.IdentityProvider.Data {
       }
     }
 
-    private static string toPadawan(string tableName) => tableName == "user" ? "padawan" : tableName;
-    private static string toUser(string tableName) => tableName == "padawan" ? "user" : tableName;
-    private static string toProperty(string tableName) => tableName.Replace("propertie", "property");
-    private static string toIdp(string tableName) => tableName.Replace("_id_p_", "_idp_");
+    private static string _ToPadawan(string tableName) => tableName == "user" ? "padawan" : tableName;
+    private static string _ToUser(string tableName) => tableName == "padawan" ? "user" : tableName;
+    private static string _ToProperty(string tableName) => tableName.Replace("propertie", "property");
+    private static string _ToIdp(string tableName) => tableName.Replace("_id_p_", "_idp_");
   }
 
-  // literal copy paste of https://github.com/efcore/EFCore.NamingConventions/blob/master/EFCore.NamingConventions/NamingConventions/Internal/SnakeCaseNameRewriter.cs at commit 290cc330292d60bd1bad8eb28b46ef755de4b0cb
-  public class SnakeCaseNameRewriter {
-    private readonly CultureInfo _culture;
+  // copy paste of https://github.com/efcore/EFCore.NamingConventions/blob/290cc330292d60bd1bad8eb28b46ef755de4b0cb/EFCore.NamingConventions/NamingConventions/Internal/SnakeCaseNameRewriter.cs
+  public static class SnakeCaseNameRewriter {
+    private static readonly CultureInfo _culture = CultureInfo.InvariantCulture;
 
-    public SnakeCaseNameRewriter(CultureInfo culture) => _culture = culture;
-
-    public string RewriteName(string name) {
+    public static string RewriteName(string name) {
       if (string.IsNullOrEmpty(name))
         return name;
 

@@ -10,6 +10,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Data {
 
     [Required]
     [StringLength(32)]
+    [PersonalData]
     public string DisplayName { get; set; }
 
   }
