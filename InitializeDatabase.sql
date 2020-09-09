@@ -1,4 +1,4 @@
--- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -96,12 +96,10 @@ COMMENT ON FUNCTION public.fn_delete_received_notification(outer_notification_id
 CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-    DECLARE
-        default_branch_id uuid NOT NULL := '00000000-0000-0000-0000-000000000000';
     BEGIN
         IF (TG_OP = 'INSERT') THEN
             UPDATE stack s
-            SET    default_branch_id = (NEW.id)
+            SET    default_branch_id = NEW.id
             WHERE (s.id = NEW.stack_id AND s.default_branch_id = '00000000-0000-0000-0000-000000000000');
         END IF;
         RETURN NULL;
