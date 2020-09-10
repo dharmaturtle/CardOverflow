@@ -251,11 +251,11 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(3, c.Db.Card.Count())
     
     let collectorId = user_1
-    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [Ulid.create] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.Card.Count())
-    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 [] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci2_1 [Ulid.create; Ulid.create] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     // misc
