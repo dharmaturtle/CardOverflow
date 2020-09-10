@@ -33,7 +33,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card
 
-    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [] |> TaskResult.getOk
+    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [Ulid.create] |> TaskResult.getOk
     
     do! recollect ()
     let! (cc: Card ResizeArray) = getCollected ()
