@@ -480,14 +480,14 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
 
     let userId = user_2 // this user collects the card
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = user_3 // this user collects card in opposite order from user2
-    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
     let! _ = StackRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
