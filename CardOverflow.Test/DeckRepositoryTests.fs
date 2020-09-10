@@ -1182,7 +1182,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     // Unchanged with two clozes
     let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (stack_2, branch_2, leaf_2, [card_2; card_3])
     let! (ccs: CardEntity ResizeArray) = c.Db.Card.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
-    do! StackRepository.CollectCard c.Db followerId (ccs.First().LeafId) [ Ulid.create ]
+    let! _ = StackRepository.CollectCard c.Db followerId (ccs.First().LeafId) [ Ulid.create; Ulid.create ]
     let ids =
         {   StackId = stack_2
             BranchId = actualBranchId
