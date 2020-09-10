@@ -141,7 +141,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
 
     // collect oldest leaf, then StackRepository.Revisions says we collected the oldest leaf
-    do! StackRepository.CollectCard c.Db userId oldLeafId [ Ulid.create ]
+    let! _ = StackRepository.CollectCard c.Db userId oldLeafId [ Ulid.create; Ulid.create ]
     
     let! revision = StackRepository.Revisions c.Db userId branchId
 
