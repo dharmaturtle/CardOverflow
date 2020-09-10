@@ -230,7 +230,8 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     Assert.Equal(authorId, cc.Select(fun x -> x.UserId).Distinct().Single())
 
     let collectorId = user_2  // this user collects the card
-    let! _ = StackRepository.CollectCard c.Db collectorId leafId [ Ulid.create ] |> TaskResult.getOk
+    let cardIds = [1..acCount] |> List.map (fun _ -> Ulid.create)
+    let! _ = StackRepository.CollectCard c.Db collectorId leafId cardIds |> TaskResult.getOk
     let! stack = ExploreStackRepository.get c.Db collectorId stackId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
