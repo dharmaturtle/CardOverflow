@@ -192,6 +192,11 @@ let ``collect works``(): Task<unit> = (taskResult {
     
     Assert.equal (sprintf "Either Deck #%A doesn't exist or it doesn't belong to you." nonexistant) error.error
     
+    // fails for empty list of cardIds
+    let! (error: Result<_,_>) = StackRepository.collect c.Db collectorId leafId None []
+    
+    Assert.equal (sprintf "Leaf#%A requires 1 card id(s). You provided 0." leafId) error.error
+    
     // works for nondefault deck
     let newDeckId = Ulid.create
     do! SanitizeDeckRepository.create c.Db collectorId (Guid.NewGuid().ToString()) newDeckId
@@ -210,15 +215,15 @@ let ``collect works``(): Task<unit> = (taskResult {
     }
     do! SanitizeStackRepository.Update c.Db authorId [] stackCommand
 
-    let! cardId = StackRepository.collect c.Db collectorId leaf_2 None []
+    let! cardId = StackRepository.collect c.Db collectorId leaf_2 None [card_3]
 
     Assert.areEquivalent [card_3] cardId
     do! assertDeck newDeckId
 
     // collecting/updating to *old* leaf doesn't change deckId or ccId
-    let! ccId = StackRepository.collect c.Db collectorId leaf_1 None []
+    let! cardId = StackRepository.collect c.Db collectorId leaf_1 None [card_3]
 
-    Assert.areEquivalent [card_3] ccId
+    Assert.areEquivalent [card_3] cardId
     do! assertDeck newDeckId
     } |> TaskResult.getOk)
 

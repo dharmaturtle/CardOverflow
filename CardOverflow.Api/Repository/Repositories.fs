@@ -341,12 +341,16 @@ module StackRepository =
                 | None, None -> failwith "impossible"
             ) |> ListOption.somes
     }
-    let collect (db: CardOverflowDb) userId leafId deckId cardIds = taskResult {
+    let collect (db: CardOverflowDb) userId leafId deckId (cardIds: Guid list) = taskResult {
         let! (leaf: LeafEntity) =
             db.Leaf
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Leaf #%A not found" leafId)
+        let requiredLength = int leaf.MaxIndexInclusive + 1
+        do! cardIds.Length
+            |> Result.requireEqualTo requiredLength
+                (sprintf "Leaf#%A requires %i card id(s). You provided %i." leafId requiredLength cardIds.Length)
         let! (ccs: CardEntity list) = collectStackNoSave db userId leaf true cardIds
         match deckId with
         | Some deckId ->
