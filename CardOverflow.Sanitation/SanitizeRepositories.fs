@@ -827,7 +827,12 @@ module SanitizeStackRepository =
             |>%% fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! (leaf: LeafEntity) = UpdateRepository.stack db userId stackCommand.load
-        let requiredLength = int leaf.MaxIndexInclusive + 1
+        let requiredLength =
+            match stackCommand.Kind with
+            | NewLeaf_Title _ -> 0
+            | NewBranch_Title _ 
+            | NewOriginal_TagIds _
+            | NewCopy_SourceLeafId_TagIds _ -> int leaf.MaxIndexInclusive + 1
         do! stackCommand.Ids.CardIds.Count()
             |> Result.requireEqualTo requiredLength
                 (sprintf "Leaf#%A requires %i card id(s). You provided %i." leaf.Id requiredLength <| stackCommand.Ids.CardIds.Count())
