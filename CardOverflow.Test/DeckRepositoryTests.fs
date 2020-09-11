@@ -580,7 +580,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     // branch update notifies follower
     let leaf2 = { leaf1 with LeafId = leaf_2 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_2, [Ulid.create]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -612,7 +612,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! StackRepository.CollectCard c.Db followerId leaf2.LeafId [ Ulid.create ]
     let leaf3 = { leaf2 with LeafId = leaf_3 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_3, []) |> UpsertIds.fromTuple)
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_3, [Ulid.create]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
