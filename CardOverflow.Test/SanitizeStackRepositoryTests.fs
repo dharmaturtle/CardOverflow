@@ -103,7 +103,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
 
         do! SanitizeStackRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
-                (stackCommand gromplate ids_2)
+                (stackCommand gromplate { ids_2 with CardIds = [ card_2; card_3 ] })
             |>%% Assert.equal branchId
 
         let! (ccs: Card ResizeArray) = StackRepository.GetCollected c.Db userId stackId
@@ -144,6 +144,8 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             }
             b
     
+        let ids_3 = { ids_3 with CardIds = [card_ 4; card_ 5] }
+        
         // doesn't work with someone else's deckId
         let failDeckCommand = { failDeckCommand with DeckId = deck_1 }
         let! (error: Result<_, _>) =
