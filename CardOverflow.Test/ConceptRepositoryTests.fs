@@ -352,7 +352,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
-    Assert.Equal(branch_ 1, actualBranchId)
+    Assert.Equal(branch_ 1, actualBranchId.Value)
     let addRelationshipCommand =
         {   Name = ""
             SourceStackId = stack_1

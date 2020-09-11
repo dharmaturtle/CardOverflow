@@ -86,7 +86,7 @@ let ``StackRepository.editState works``(): Task<unit> = task {
     let userId = user_3
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let branchId = branch_1
-    Assert.Equal(branchId, actualBranchId)
+    Assert.Equal(branchId, actualBranchId.Value)
     let! cc = StackRepository.GetCollected c.Db userId stack_1
     let cc = cc.Value.Single()
     
@@ -115,7 +115,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     let stackId = stack_1
     let branchId = branch_1
-    Assert.Equal(branchId, actualBranchId)
+    Assert.Equal(branchId, actualBranchId.Value)
     do! FacetRepositoryTests.update c userId
             (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
         |> TaskResult.getOk
