@@ -316,8 +316,10 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
         addRelationshipCommand2, addRelationshipCommand1 ]
 
     let userId = user_1 // this user creates the card
-    let! _ = FacetRepositoryTests.addBasicStack          c.Db userId [] (stack_1, branch_1, leaf_1, [Ulid.create])
-    let! _ = FacetRepositoryTests.addReversedBasicStack  c.Db userId [] (stack_2, branch_2, leaf_2, [Ulid.create])
+    let! x = FacetRepositoryTests.addBasicStack          c.Db userId [] (stack_1, branch_1, leaf_1, [Ulid.create])
+    Assert.NotNull x.Value
+    let! x = FacetRepositoryTests.addReversedBasicStack  c.Db userId [] (stack_2, branch_2, leaf_2, [Ulid.create; Ulid.create])
+    Assert.NotNull x.Value
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
     Assert.Null x.Value
