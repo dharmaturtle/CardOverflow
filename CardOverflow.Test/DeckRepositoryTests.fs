@@ -890,7 +890,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addReversedBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
     let ccId1 = card_1
     let stackId = stack_1
     let branchId = branch_1
@@ -950,7 +950,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id ((stack_1, branch_1, leaf_2, [Ulid.create]) |> UpsertIds.fromTuple) branchId
+            (VUpdate_BranchId branchId) id ((stack_1, branch_1, leaf_2, [Ulid.create; Ulid.create]) |> UpsertIds.fromTuple) branchId
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
