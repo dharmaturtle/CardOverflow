@@ -235,7 +235,7 @@ let ``ExploreStackRepository.leaf works``() : Task<unit> = (taskResult {
     let oldLeafId = leaf_1
     let newLeafId = leaf_2
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stackId, branchId, newLeafId, []) |> UpsertIds.fromTuple)
+    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stackId, branchId, newLeafId, [card_2]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
