@@ -291,7 +291,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
     let getLeafs clozeText = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
-        let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [])
+        let! r = FacetRepositoryTests.addCloze clozeText c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [1 .. clozeMaxIndex] |> List.map (fun _ -> Ulid.create))
+        Assert.NotNull r.Value
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
             Assert.SingleI <| c.Db.LatestLeaf.Where(fun x -> x.FieldValues.Contains clozeText)
             Assert.Equal(0, c.Db.LatestLeaf.Count(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText)))
@@ -342,7 +343,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 
     // go from 1 cloze to 2 clozes
     let branch = c.Db.Branch.First() // the specific branch shouldn't matter
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, [Ulid.create; Ulid.create]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -357,7 +358,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 5
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, [Ulid.create]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -372,7 +373,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 4
     
     // multiple c1's works
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, [Ulid.create]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
