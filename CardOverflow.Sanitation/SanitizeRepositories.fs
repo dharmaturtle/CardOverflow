@@ -827,24 +827,15 @@ module SanitizeStackRepository =
             |>%% fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! (leaf: LeafEntity) = UpdateRepository.stack db userId stackCommand.load
-        let requiredLength =
-            match stackCommand.Kind with
-            | NewLeaf_Title _ -> 0
-            | NewBranch_Title _ 
-            | NewOriginal_TagIds _
-            | NewCopy_SourceLeafId_TagIds _ -> int leaf.MaxIndexInclusive + 1
-        do! stackCommand.Ids.CardIds.Count()
-            |> Result.requireEqualTo requiredLength
-                (sprintf "Leaf#%A requires %i card id(s). You provided %i." leaf.Id requiredLength <| stackCommand.Ids.CardIds.Count())
         let! (ccs: CardEntity list) =
             let cardIds = stackCommand.Ids.CardIds
             match stackCommand.Kind with
             | NewLeaf_Title _ ->
                 db.Leaf.AddI leaf
-                StackRepository.collectStackNoSave db userId leaf false cardIds |>% Ok
+                StackRepository.collectStackNoSave db userId leaf false cardIds
             | NewBranch_Title _ ->
                 db.Leaf.AddI leaf
-                StackRepository.collectStackNoSave db userId leaf true cardIds |>% Ok
+                StackRepository.collectStackNoSave db userId leaf true cardIds
             | NewOriginal_TagIds tagIds
             | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
                 let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true cardIds

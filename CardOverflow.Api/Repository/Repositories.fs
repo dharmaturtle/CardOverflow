@@ -298,7 +298,11 @@ module StackRepository =
                 .SingleOrDefaultAsync()
         return BranchRevision.load collectedLeafId r
     }
-    let collectStackNoSave (db: CardOverflowDb) userId (leaf: LeafEntity) mayUpdate (cardIds: Guid list) = task {
+    let collectStackNoSave (db: CardOverflowDb) userId (leaf: LeafEntity) mayUpdate (cardIds: Guid list) = taskResult {
+        let requiredLength = int leaf.MaxIndexInclusive + 1
+        do! cardIds.Length
+            |> Result.requireEqualTo requiredLength
+                (sprintf "Leaf#%A requires %i card id(s). You provided %i." leaf.Id requiredLength cardIds.Length)
         let! ((defaultCardSettingId, defaultDeckId): Guid * Guid) =
             db.User.Where(fun x -> x.Id = userId).Select(fun x ->
                 x.DefaultCardSettingId,
@@ -347,10 +351,6 @@ module StackRepository =
                 .Include(fun x -> x.Branch.Stack)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |> Task.map (Result.requireNotNull <| sprintf "Branch Leaf #%A not found" leafId)
-        let requiredLength = int leaf.MaxIndexInclusive + 1
-        do! cardIds.Length
-            |> Result.requireEqualTo requiredLength
-                (sprintf "Leaf#%A requires %i card id(s). You provided %i." leafId requiredLength cardIds.Length)
         let! (ccs: CardEntity list) = collectStackNoSave db userId leaf true cardIds
         match deckId with
         | Some deckId ->
