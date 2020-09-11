@@ -391,7 +391,13 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
 let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+
+    // inserting with just 1 cardId fails
+    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    Assert.equal "Leaf#00000000-0000-0000-0000-1eaf00000001 requires 2 card id(s). You provided 1." x.error
+
+    // setup
+    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
     let stackId = stack_1
     let branchId_og = branch_1
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
@@ -401,14 +407,14 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
     // branching a stack collects it
     let branchId_alt = branch_2
     do! FacetRepositoryTests.update c userId
-            (VNewBranch_SourceStackId stackId) id { ids_2 with StackId = stack_1 } branchId_alt
+            (VNewBranch_SourceStackId stackId) id { ids_2 with StackId = stack_1; CardIds = [card_1; card_2] } branchId_alt
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // updating an uncollected branch doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId_og) id { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [card_3] } branchId_og
+            (VUpdate_BranchId branchId_og) id { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [card_3; card_ 4] } branchId_og
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
