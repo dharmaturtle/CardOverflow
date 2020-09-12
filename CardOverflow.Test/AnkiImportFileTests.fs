@@ -352,6 +352,13 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
     do! assertUserHasNormalCardCount 1
 
+    // updating card fails for mismatching cardIds
+    let mismatching = Ulid.create
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, [mismatching]) |> UpsertIds.fromTuple)
+    let! (r: Result<_, _>) = SanitizeStackRepository.Update c.Db userId [] command
+    Assert.equal (sprintf "Card ids don't match. Was given %A and expected %A" mismatching card_1) r.error
+    do! assertUserHasNormalCardCount 1
+
     // go from 1 cloze to 2 clozes
     let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, [card_1; card_2]) |> UpsertIds.fromTuple)
     let command =
