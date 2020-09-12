@@ -837,7 +837,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     
     // update card
     let update_i = leaf_2
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId og_b) ((og_s, og_b, update_i, [Ulid.create]) |> UpsertIds.fromTuple)
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId og_b) ((og_s, og_b, update_i, [card_1]) |> UpsertIds.fromTuple)
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(og_b, actualBranchId)
 
@@ -848,7 +848,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // collecting old leaf doesn't change LatestId
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestId)
-    do! StackRepository.CollectCard c.Db userId og_i [ Ulid.create ]
+    let! _ = StackRepository.CollectCard c.Db userId og_i [ card_1 ]
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single().DefaultBranch.LatestId)
 
     // tests OtherLeafCollected
@@ -861,7 +861,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // branch card
     let branch_i = leaf_3
     let branch_b = branch_2
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ((og_s, branch_b, branch_i, [Ulid.create]) |> UpsertIds.fromTuple)
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ((og_s, branch_b, branch_i, [card_1]) |> UpsertIds.fromTuple)
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branch_b, actualBranchId)
     
@@ -874,7 +874,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // update branch
     let updateBranch_i = leaf_ 4
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_b) ((og_s, branch_2, updateBranch_i, [Ulid.create]) |> UpsertIds.fromTuple)
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_b) ((og_s, branch_2, updateBranch_i, [card_1]) |> UpsertIds.fromTuple)
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branch_b, actualBranchId)
 
@@ -888,7 +888,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // collecting old leaf doesn't change LatestId
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
-    do! StackRepository.CollectCard c.Db userId branch_i [ Ulid.create ]
+    let! _ = StackRepository.CollectCard c.Db userId branch_i [ card_1 ]
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
 
@@ -907,7 +907,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // branch card again
     let branch_i2 = leaf_ 5
     let branch_b2 = branch_3
-    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ((og_s, branch_b2, branch_i2, [Ulid.create]) |> UpsertIds.fromTuple)
+    let! (command: ViewEditStackCommand) = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId og_s) ((og_s, branch_b2, branch_i2, [card_1]) |> UpsertIds.fromTuple)
     let command = { command with Title = Guid.NewGuid().ToString() }
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
     Assert.Equal(branch_b2, actualBranchId)
@@ -929,13 +929,13 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     // collecting old leaf doesn't change LatestId; can also collect old branch
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
-    do! StackRepository.CollectCard c.Db userId branch_i [ Ulid.create ]
+    let! _ = StackRepository.CollectCard c.Db userId branch_i [ card_1 ]
     Assert.Equal(update_i, c.Db.Stack.Include(fun x -> x.DefaultBranch).Single(fun x -> x.Id = og_s).Branches.Single().LatestId)
     Assert.Equal(updateBranch_i, c.Db.Stack.Include(fun x -> x.Branches).Single(fun x -> x.Id = og_s).Branches.Single(fun x -> x.Id = branch_b).LatestId)
 
     // can't collect missing id
     let missingId = Ulid.create
-    let! (error: Result<_,_>) = StackRepository.CollectCard c.Db userId missingId [ Ulid.create ]
+    let! (error: Result<_,_>) = StackRepository.CollectCard c.Db userId missingId [ card_1 ]
     Assert.Equal(sprintf "Branch Leaf #%A not found" missingId, error.error)
 
     // tests NotCollected
