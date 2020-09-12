@@ -252,7 +252,7 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(3, c.Db.Card.Count())
     
     let collectorId = user_1
-    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [Ulid.create] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_1 [card_ 4] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_1).Users)
     Assert.Equal(4, c.Db.Card.Count())
@@ -285,7 +285,7 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(6, c.Db.Card.Count())
     Assert.Equal(1, c.Db.Card.Count(fun x -> x.LeafId = ci1_2))
     
-    let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db collectorId ci1_2 [ card_ 4 ] |> TaskResult.getOk
     Assert.Equal(2, c.Db.Stack.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(2, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
