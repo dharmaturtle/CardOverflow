@@ -406,6 +406,24 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     } |> TaskResult.getOk)
 
 [<Fact>]
+let ``SanitizeStackRepository.Update checks ids`` (): Task<unit> = (taskResult { // lowTODO add more tests for other ids
+    let userId = user_3
+    use c = new TestContainer()
+
+    let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceStackId stack_1) id ids_1 branch_1
+
+    Assert.equal "Stack #00000000-0000-0000-0000-57ac00000001 not found." x.error
+
+    // https://codereview.stackexchange.com/questions/188948/correct-using-of-try-catch-clause-on-database-execution
+    // https://github.com/StackExchange/Dapper/issues/710
+    // this code is very temp
+    //let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    //let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceStackId stack_1) id ids_1 branch_1
+    
+    //Assert.equal "Stack #00000000-0000-0000-0000-57ac00000001 not found." x.error
+    } |> TaskResult.getOk)
+
+[<Fact>]
 let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()

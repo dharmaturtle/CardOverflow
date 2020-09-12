@@ -536,18 +536,19 @@ module UpdateRepository =
                                     AuthorId = userId,
                                     CopySourceId = Nullable leafId
                                 )) |> Ok |> Task.FromResult
-                    | NewBranch_Title name ->
-                        branchNameCheckStackId command.Ids.StackId name
-                        |> TaskResult.map(fun () ->
-                            let branch =
-                                BranchEntity(
-                                    Id = command.Ids.BranchId,
-                                    AuthorId = userId,
-                                    Name = name,
-                                    StackId = command.Ids.StackId)
-                            db.Entry(branch).State <- EntityState.Added
-                            branch
-                        )
+                    | NewBranch_Title name -> taskResult {
+                        do! db.Stack.AnyAsync(fun x -> x.Id = command.Ids.StackId)
+                            |>% Result.requireTrue (sprintf "Stack %A not found" command.Ids.StackId)
+                        do! branchNameCheckStackId command.Ids.StackId name
+                        let branch =
+                            BranchEntity(
+                                Id = command.Ids.BranchId,
+                                AuthorId = userId,
+                                Name = name,
+                                StackId = command.Ids.StackId)
+                        db.Entry(branch).State <- EntityState.Added
+                        return branch
+                        }
                     | NewOriginal_TagIds _ ->
                         BranchEntity(
                             Id = command.Ids.BranchId,
