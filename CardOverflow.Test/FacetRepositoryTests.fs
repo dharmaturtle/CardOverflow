@@ -446,7 +446,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // updated by user1
     let newValue = Guid.NewGuid().ToString()
-    let! old = (og_s, og_b, ogEdit_i, [Ulid.create]) |> UpsertIds.fromTuple |> SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId og_b)
+    let! old = (og_s, og_b, ogEdit_i, [card_1]) |> UpsertIds.fromTuple |> SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId og_b)
     let updated = {
         old.Value with
             FieldValues =
@@ -501,7 +501,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             
     // copy by user2
     let newValue = Guid.NewGuid().ToString()
-    let! old = (copy_s, copy_b, copy_i, [Ulid.create]) |> UpsertIds.fromTuple |> SanitizeStackRepository.getUpsert c.Db (VNewCopySource_LeafId ogEdit_i)
+    let! old = (copy_s, copy_b, copy_i, [card_2]) |> UpsertIds.fromTuple |> SanitizeStackRepository.getUpsert c.Db (VNewCopySource_LeafId ogEdit_i)
     let old = old.Value
     let updated = {
         old with
@@ -621,7 +621,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              branch_i, 1 ]
 
     // user2 branches their copy
-    let! old = ((copy_s, branchOfCopy_b, branchOfCopy_i, [Ulid.create]) |> UpsertIds.fromTuple) |> SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId copy_s)
+    let! old = ((copy_s, branchOfCopy_b, branchOfCopy_i, [card_2]) |> UpsertIds.fromTuple) |> SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId copy_s)
     let old = old.Value
     let updated = {
         old with
@@ -647,7 +647,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
 
     // adventures in collecting cards
     let adventurerId = user_3
-    let! _ = StackRepository.CollectCard c.Db adventurerId og_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId og_i [ card_3 ] |> TaskResult.getOk
     do! assertCount
             [og_s,     3 ;    copy_s, 1         ; copy2x_s, 1 ;    copyOfBranch_s, 1 ]
             [og_b,     2 ;    copy_b, 0         ; copy2x_b, 1 ;    copyOfBranch_b, 1
@@ -655,7 +655,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     1 ;    copy_i, 0         ; copy2x_i, 1 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    let! _ = StackRepository.CollectCard c.Db adventurerId ogEdit_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId ogEdit_i [ card_3 ] |> TaskResult.getOk
     do! assertCount
             [og_s,     3 ;    copy_s, 1         ; copy2x_s, 1 ;    copyOfBranch_s, 1 ]
             [og_b,     2 ;    copy_b, 0         ; copy2x_b, 1 ;    copyOfBranch_b, 1
@@ -663,7 +663,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 1 ;    copyOfBranch_i, 1 ;
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
-    let! _ = StackRepository.CollectCard c.Db adventurerId copy_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId copy_i [ card_ 4 ] |> TaskResult.getOk
     do! assertCount
             [og_s,     3 ;    copy_s, 2         ; copy2x_s, 1 ;    copyOfBranch_s, 1 ]
             [og_b,     2 ;    copy_b, 1         ; copy2x_b, 1 ;    copyOfBranch_b, 1
@@ -688,7 +688,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 2 ;    branchOfCopy_i, 1
              branch_i, 1 ]
     Assert.Equal(4, c.Db.Card.Count(fun x -> x.UserId = adventurerId))
-    let! _ = StackRepository.CollectCard c.Db adventurerId branch_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId branch_i [ card_3 ] |> TaskResult.getOk
     Assert.Equal(4, c.Db.Card.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
             [og_s,     3 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
@@ -698,7 +698,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
              ogEdit_i, 1 ;    branchOfCopy_i, 1
              branch_i, 2 ]
     Assert.Equal(4, c.Db.Card.Count(fun x -> x.UserId = adventurerId))
-    let! _ = StackRepository.CollectCard c.Db adventurerId branchOfCopy_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId branchOfCopy_i [ card_ 4 ] |> TaskResult.getOk
     Assert.Equal(4, c.Db.Card.Count(fun x -> x.UserId = adventurerId))
     do! assertCount
             [og_s,     3 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
@@ -719,7 +719,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    let! _ = StackRepository.CollectCard c.Db adventurerId ogEdit_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId ogEdit_i [ card_ 5 ] |> TaskResult.getOk
     do! assertCount
             [og_s,     3 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
             [og_b,     1 ;    copy_b, 0         ; copy2x_b, 2 ;    copyOfBranch_b, 2
@@ -727,7 +727,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     0 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 1 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    let! _ = StackRepository.CollectCard c.Db adventurerId og_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId og_i [ card_ 5 ] |> TaskResult.getOk
     do! assertCount
             [og_s,     3 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
             [og_b,     1 ;    copy_b, 0         ; copy2x_b, 2 ;    copyOfBranch_b, 2
@@ -735,7 +735,7 @@ let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
             [og_i,     1 ;    copy_i, 0         ; copy2x_i, 2 ;    copyOfBranch_i, 2 ;
              ogEdit_i, 0 ;    branchOfCopy_i, 2
              branch_i, 2 ]
-    let! _ = StackRepository.CollectCard c.Db adventurerId branch_i [ Ulid.create ] |> TaskResult.getOk
+    let! _ = StackRepository.CollectCard c.Db adventurerId branch_i [ card_ 5 ] |> TaskResult.getOk
     do! assertCount
             [og_s,     3 ;    copy_s, 2         ; copy2x_s, 2 ;    copyOfBranch_s, 2 ]
             [og_b,     0 ;    copy_b, 0         ; copy2x_b, 2 ;    copyOfBranch_b, 2
