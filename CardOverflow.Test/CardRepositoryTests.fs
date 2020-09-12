@@ -33,7 +33,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     do! StackRepository.uncollectStack c.Db userId cc.StackId
     Assert.Empty c.Db.Card
 
-    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [Ulid.create] |> TaskResult.getOk
+    let recollect () = StackRepository.CollectCard c.Db userId cc.LeafMeta.Id [card_1] |> TaskResult.getOk
     
     do! recollect ()
     let! (cc: Card ResizeArray) = getCollected ()
@@ -120,7 +120,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
             (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
         |> TaskResult.getOk
     let i2 = leaf_2
-    let! _ = StackRepository.CollectCard c.Db userId i2 [ Ulid.create ] |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
+    let! _ = StackRepository.CollectCard c.Db userId i2 [ card_1 ] |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
     Assert.Equal(i2, c.Db.Card.Single().LeafId)
     Assert.Equal(branchId, c.Db.Card.Single().BranchId)
     Assert.Equal(stackId, c.Db.Card.Single().StackId)
