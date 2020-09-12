@@ -1061,7 +1061,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     // follow with "editExisting false" after update, doesn't update
     let newLeafId = leaf_2
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id (((stackId, branchId, newLeafId, [Ulid.create]) |> UpsertIds.fromTuple)) branchId
+            (VUpdate_BranchId branchId) id (((stackId, branchId, newLeafId, [card_1]) |> UpsertIds.fromTuple)) branchId
     
     do! follow Ulid.create (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
 
