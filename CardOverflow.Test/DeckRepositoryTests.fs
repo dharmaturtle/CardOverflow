@@ -950,7 +950,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_BranchId branchId) id ((stack_1, branch_1, leaf_2, [Ulid.create; Ulid.create]) |> UpsertIds.fromTuple) branchId
+            (VUpdate_BranchId branchId) id ((stack_1, branch_1, leaf_2, [card_1; card_2]) |> UpsertIds.fromTuple) branchId
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
