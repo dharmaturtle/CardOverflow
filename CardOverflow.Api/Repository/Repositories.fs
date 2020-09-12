@@ -320,6 +320,11 @@ module StackRepository =
             [0s .. leaf.MaxIndexInclusive]
             |> List.map cardSansIndex
         let! (old': CardEntity list) = db.Card.Where(fun x -> x.UserId = userId && x.StackId = leaf.StackId).ToListAsync() |>% Seq.toList
+        for old in old' do
+            match cardIds |> List.tryItem (int old.Index) with
+            | Some given ->
+                do! Result.requireEqual given old.Id (sprintf "Card ids don't match. Was given %A and expected %A" given old.Id)
+            | _ -> ()
         return
             List.zipOn new' old' (fun new' old' -> new'.Index = old'.Index)
             |> List.map(

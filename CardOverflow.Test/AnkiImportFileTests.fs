@@ -340,10 +340,20 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
     Assert.areEquivalent expected <| e.Results.Select(fun x -> x.Value.LeafMeta.StrippedFront, x.Value.LeafMeta.StrippedBack)
     do! assertUserHasNormalCardCount 4
+    } |> TaskResult.getOk)
+
+[<Fact>]
+let ``Create cloze card works with changing card number`` (): Task<unit> = (taskResult {
+    let userId = user_3
+    use c = new TestContainer()
+    let assertUserHasNormalCardCount expected =
+        c.Db.Card.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
+        |> Task.map (fun actual -> Assert.Equal(expected, actual))
+    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    do! assertUserHasNormalCardCount 1
 
     // go from 1 cloze to 2 clozes
-    let branch = c.Db.Branch.First() // the specific branch shouldn't matter
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, [Ulid.create; Ulid.create]) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, [card_1; card_2]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -354,11 +364,11 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 ].ToList()
         }
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
-    Assert.Equal(branch.Id, actualBranchId)
-    do! assertUserHasNormalCardCount 5
+    Assert.Equal(branch_1, actualBranchId)
+    do! assertUserHasNormalCardCount 2
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, [Ulid.create]) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -369,11 +379,11 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 ].ToList()
         }
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
-    Assert.Equal(branch.Id, actualBranchId)
-    do! assertUserHasNormalCardCount 4
+    Assert.Equal(branch_1, actualBranchId)
+    do! assertUserHasNormalCardCount 1
     
     // multiple c1's works
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch.Id) ((branch.StackId, branch.Id, Ulid.create, [Ulid.create]) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -384,8 +394,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                 ].ToList()
         }
     let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
-    Assert.Equal(branch.Id, actualBranchId)
-    do! assertUserHasNormalCardCount 4
+    Assert.Equal(branch_1, actualBranchId)
+    do! assertUserHasNormalCardCount 1
     } |> TaskResult.getOk)
 
 [<Fact>]
