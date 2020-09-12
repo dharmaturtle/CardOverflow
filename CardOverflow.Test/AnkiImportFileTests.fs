@@ -432,7 +432,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
 
     // updating an uncollected branch doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId_og) id { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [card_3; card_ 4] } branchId_og
+            (VUpdate_BranchId branchId_og) id { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [card_1; card_2] } branchId_og
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
