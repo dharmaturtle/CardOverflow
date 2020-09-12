@@ -9,6 +9,7 @@ namespace CardOverflow.Entity
     public partial class HistoryEntity
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid? CardId { get; set; }
         public Guid UserId { get; set; }

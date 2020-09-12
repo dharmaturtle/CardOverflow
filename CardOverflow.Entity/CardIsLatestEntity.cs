@@ -13,7 +13,7 @@ namespace CardOverflow.Entity
             Tag_Cards = new HashSet<Tag_CardEntity>();
         }    
     
-        public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
+        public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public Guid StackId { get; set; }
         public Guid BranchId { get; set; }

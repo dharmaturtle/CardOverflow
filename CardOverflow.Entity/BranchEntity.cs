@@ -17,6 +17,7 @@ namespace CardOverflow.Entity
         }
 
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         [StringLength(64)]
         public string Name {

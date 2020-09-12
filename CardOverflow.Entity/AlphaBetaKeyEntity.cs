@@ -9,6 +9,7 @@ namespace CardOverflow.Entity
     public partial class AlphaBetaKeyEntity
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         [Required]
         [StringLength(50)]
