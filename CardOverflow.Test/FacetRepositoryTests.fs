@@ -348,7 +348,7 @@ let ``StackViewRepository.leafWithLatest works``() : Task<unit> = (taskResult {
     let secondVersion = Guid.NewGuid().ToString()
     let updatedLeafId = leaf_2
     do! update c userId
-            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion; FieldValues = [].ToList() }) ((stackId, branchId, updatedLeafId, [Ulid.create]) |> UpsertIds.fromTuple) branchId
+            (VUpdate_BranchId branchId) (fun x -> { x with EditSummary = secondVersion; FieldValues = [].ToList() }) ((stackId, branchId, updatedLeafId, [card_1]) |> UpsertIds.fromTuple) branchId
     let oldLeafId = leaf_1
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
@@ -367,7 +367,7 @@ let ``StackViewRepository.leafWithLatest works``() : Task<unit> = (taskResult {
     let branchVersion = Guid.NewGuid().ToString()
     let leafId = leaf_3
     do! update c userId
-            (VNewBranch_SourceStackId stackId) (fun x -> { x with EditSummary = branchVersion }) ((stackId, newBranchId, leafId, [Ulid.create]) |> UpsertIds.fromTuple) newBranchId
+            (VNewBranch_SourceStackId stackId) (fun x -> { x with EditSummary = branchVersion }) ((stackId, newBranchId, leafId, [card_1]) |> UpsertIds.fromTuple) newBranchId
     do! c.Db.Leaf.SingleAsync(fun x -> x.Id = leafId)
         |> Task.map (fun x -> Assert.Equal(branchVersion, x.EditSummary))
     
