@@ -211,9 +211,10 @@ let ``collect works``(): Task<unit> = (taskResult {
         StackId = stack_1
         BranchId = branch_1
         LeafId = leaf_2
-        CardIds = [Ulid.create]
+        CardIds = [card_1]
     }
     let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    Assert.equal card_1 <| c.Db.Card.Single(fun x -> x.LeafId = leaf_2).Id
 
     let! cardId = StackRepository.collect c.Db collectorId leaf_2 None [card_3]
 
