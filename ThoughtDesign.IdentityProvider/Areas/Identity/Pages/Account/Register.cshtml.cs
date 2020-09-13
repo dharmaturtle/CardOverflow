@@ -18,11 +18,12 @@ using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
 using CardOverflow.Api;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using ThoughtDesign.WebLibrary;
 
 namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
   [AllowAnonymous]
   public class RegisterModel : PageModel {
-    private readonly CardOverflowDb _db;
+    private readonly DbExecutor _db;
     private readonly SignInManager<ThoughtDesignUser> _signInManager;
     private readonly UserManager<ThoughtDesignUser> _userManager;
     private readonly ILogger<RegisterModel> _logger;
@@ -31,7 +32,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
     public RegisterModel(
         UserManager<ThoughtDesignUser> userManager,
         SignInManager<ThoughtDesignUser> signInManager,
-        CardOverflowDb db,
+        DbExecutor db,
         ILogger<RegisterModel> logger,
         IEmailSender emailSender) {
       _userManager = userManager;
@@ -83,7 +84,8 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
     public async Task<IActionResult> OnPostAsync(string returnUrl = null) {
       returnUrl ??= Url.Content("~/");
       ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-      var key = await _db.AlphaBetaKey.SingleOrDefaultAsync(x => x.Key == Input.InviteCode && !x.IsUsed);
+      using var db = _db.Get();
+      var key = await db.AlphaBetaKey.SingleOrDefaultAsync(x => x.Key == Input.InviteCode && !x.IsUsed);
       if (ModelState.IsValid && key != null) {
         var user = new ThoughtDesignUser {
           Id = Ulid.create,
@@ -95,7 +97,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
         if (result.Succeeded) {
           _logger.LogInformation("User created a new account with password.");
           key.IsUsed = true;
-          await UserRepository.create(_db, user.Id, Input.DisplayName);
+          await UserRepository.create(db, user.Id, Input.DisplayName);
           var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
           code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
           var callbackUrl = Url.Page(

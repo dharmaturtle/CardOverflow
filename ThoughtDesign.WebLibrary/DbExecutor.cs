@@ -39,5 +39,7 @@ namespace ThoughtDesign.WebLibrary {
       return await query(conn);
     }
 
+    public CardOverflowDb Get() => new CardOverflowDb(_options);
+
   }
 }
