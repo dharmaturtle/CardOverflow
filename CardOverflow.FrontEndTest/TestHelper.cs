@@ -4,7 +4,6 @@ using Bunit;
 using CardOverflow.Api;
 using CardOverflow.Debug;
 using CardOverflow.Entity;
-using CardOverflow.Server;
 using CardOverflow.Server.Pages.Deck;
 using FluentValidation;
 using FsToolkit.ErrorHandling;
@@ -15,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
 using System.Threading.Tasks;
+using ThoughtDesign.WebLibrary;
 
 namespace CardOverflow.FrontEndTest {
   public static class TestHelper {

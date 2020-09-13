@@ -4,7 +4,7 @@ using CardOverflow.Entity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace CardOverflow.Server {
+namespace ThoughtDesign.WebLibrary {
   public class DbExecutor {
     private readonly DbContextOptions<CardOverflowDb> _options;
     private readonly Func<Task<NpgsqlConnection>> _npgsqlConnectionFunc;
