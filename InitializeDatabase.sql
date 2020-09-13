@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -384,6 +384,43 @@ ALTER FUNCTION public.generate_ulid() OWNER TO postgres;
 
 COMMENT ON FUNCTION public.generate_ulid() IS 'https://github.com/geckoboard/pgulid/issues/3';
 
+
+CREATE FUNCTION public.ulid_to_epoch_ms(input uuid) RETURNS bigint
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    return
+        (  'x'
+        || '0000'
+        || SUBSTRING(input::text,  7, 2)
+        || SUBSTRING(input::text,  5, 2)
+        || SUBSTRING(input::text,  3, 2)
+        || SUBSTRING(input::text,  1, 2)
+        || SUBSTRING(input::text, 12, 2)
+        || SUBSTRING(input::text, 10, 2)
+        )::bit(64)::bigint AS int8_val;
+END
+$$;
+
+
+ALTER FUNCTION public.ulid_to_epoch_ms(input uuid) OWNER TO postgres;
+
+COMMENT ON FUNCTION public.ulid_to_epoch_ms(input uuid) IS 'This uses undocumented behavior https://stackoverflow.com/a/8335376';
+
+
+CREATE FUNCTION public.validate_ulid(input uuid) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    return
+        ABS(public.ulid_to_epoch_ms(input) / 1000 - EXTRACT(EPOCH FROM NOW()))
+        <
+        EXTRACT(EPOCH FROM '1 week'::interval);
+END
+$$;
+
+
+ALTER FUNCTION public.validate_ulid(input uuid) OWNER TO postgres;
 
 SET default_tablespace = '';
 
