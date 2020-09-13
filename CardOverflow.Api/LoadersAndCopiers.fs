@@ -190,10 +190,6 @@ type EditFieldAndValue with
                 Value = value }
         ) |> toResizeArray
 
-type IdOrEntity<'a> =
-    | Id of Guid
-    | Entity of 'a
-
 type Template with
     static member load template =
         let x = template |> MappingTools.splitByUnitSeparator
