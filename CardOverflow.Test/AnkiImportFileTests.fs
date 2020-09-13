@@ -414,6 +414,15 @@ let ``SanitizeStackRepository.Update checks ids`` (): Task<unit> = (taskResult {
 
     Assert.equal "Stack #00000000-0000-0000-0000-57ac00000001 not found." x.error
 
+    let ex =
+        Assert.Throws<Microsoft.EntityFrameworkCore.DbUpdateException>(fun () -> 
+            (FacetRepositoryTests.addBasicStack c.Db userId [] (Guid.Empty, branch_1, leaf_1, [card_1]))
+                .GetAwaiter().GetResult() |> ignore
+        )
+    Assert.equal
+        "23514: new row for relation \"stack\" violates check constraint \"stack. id. is valid\""
+        ex.InnerException.Message
+
     // https://codereview.stackexchange.com/questions/188948/correct-using-of-try-catch-clause-on-database-execution
     // https://github.com/StackExchange/Dapper/issues/710
     // this code is very temp
