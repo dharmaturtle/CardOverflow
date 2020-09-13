@@ -123,13 +123,12 @@ module Generators =
                     })
         }
     let notificationEntity = gen {
-        let! id = Arb.generate<Guid>
         let! timestamp = Arb.generate<DateTime>
         let! message = Arb.generate<string>
         let! notificationType = Gen.gen<NotificationType>
         return
             NotificationEntity(
-                Id = id,
+                Id = Ulid.create,
                 SenderId = Gen.sample1 [ user_1; user_2; user_3 ],
                 Created = DateTime.SpecifyKind(timestamp, DateTimeKind.Unspecified),
                 Type = notificationType,
