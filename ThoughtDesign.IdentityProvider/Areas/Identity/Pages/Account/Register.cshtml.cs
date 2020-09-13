@@ -49,7 +49,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account {
     public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
     public class InputModel {
-      [Required]
+      [Required] // these attributes should mirror ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage.IndexModel's InputModel's DisplayName
       [StringLength(32, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 3)]
       [Display(Name = "Display Name")]
       public string DisplayName { get; set; }

@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using CardOverflow.Pure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,8 +15,8 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
     private readonly SignInManager<ThoughtDesignUser> _signInManager;
 
     public IndexModel(
-        UserManager<ThoughtDesignUser> userManager,
-        SignInManager<ThoughtDesignUser> signInManager) {
+      UserManager<ThoughtDesignUser> userManager,
+      SignInManager<ThoughtDesignUser> signInManager) {
       _userManager = userManager;
       _signInManager = signInManager;
     }
@@ -29,19 +30,16 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
     public InputModel Input { get; set; }
 
     public class InputModel {
-      [Phone]
-      [Display(Name = "Phone number")]
-      public string PhoneNumber { get; set; }
+      [Required] // these attributes should mirror RegisterModel's InputModel's DisplayName
+      [StringLength(32, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 3)]
+      [Display(Name = "Display Name")]
+      public string DisplayName { get; set; }
     }
 
-    private async Task LoadAsync(ThoughtDesignUser user) {
-      var userName = await _userManager.GetUserNameAsync(user);
-      var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-
-      Username = userName;
-
+    private void Load(ThoughtDesignUser user) {
+      Username = user.UserName;
       Input = new InputModel {
-        PhoneNumber = phoneNumber
+        DisplayName = user.DisplayName
       };
     }
 
@@ -51,7 +49,7 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
         return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
       }
 
-      await LoadAsync(user);
+      Load(user);
       return Page();
     }
 
@@ -62,16 +60,16 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
       }
 
       if (!ModelState.IsValid) {
-        await LoadAsync(user);
+        Load(user);
         return Page();
       }
 
-      var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-      if (Input.PhoneNumber != phoneNumber) {
+      if (Input.DisplayName != user.DisplayName) {
 
-        var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-        if (!setPhoneResult.Succeeded) {
-          StatusMessage = "Unexpected error when trying to set phone number.";
+        user.DisplayName = Input.DisplayName;
+        var setDisplayNameResult = await _userManager.UpdateAsync(user);
+        if (!setDisplayNameResult.Succeeded) {
+          StatusMessage = setDisplayNameResult.Errors.Select(x => $"{x.Code} - {x.Description}.").Pipe(x => string.Join("\r\n", x)).Pipe(x => $"An error occured while updating the Display Name: \r\n{x}");
           return RedirectToPage();
         }
       }
