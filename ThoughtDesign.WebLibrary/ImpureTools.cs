@@ -31,6 +31,7 @@ namespace ThoughtDesign.WebLibrary {
         .UseSnakeCaseNamingConvention()
         .UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
       });
+      services.AddSingleton<DbExecutor>();
       services.AddSingleton<Func<Task<NpgsqlConnection>>>(_ => async () => {
         var conn = new NpgsqlConnection(configuration.GetConnectionString("DefaultConnection"));
         await conn.OpenAsync();

@@ -7,18 +7,23 @@ using CardOverflow.Pure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using ThoughtDesign.IdentityProvider.Areas.Identity.Data;
+using ThoughtDesign.WebLibrary;
 
 namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
   public partial class IndexModel : PageModel {
     private readonly UserManager<ThoughtDesignUser> _userManager;
     private readonly SignInManager<ThoughtDesignUser> _signInManager;
+    private readonly DbExecutor _db;
 
     public IndexModel(
       UserManager<ThoughtDesignUser> userManager,
-      SignInManager<ThoughtDesignUser> signInManager) {
+      SignInManager<ThoughtDesignUser> signInManager,
+      DbExecutor db) {
       _userManager = userManager;
       _signInManager = signInManager;
+      _db = db;
     }
 
     public string Username { get; set; }
@@ -30,10 +35,15 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
     public InputModel Input { get; set; }
 
     public class InputModel {
+      private string _displayName;
+
       [Required] // these attributes should mirror RegisterModel's InputModel's DisplayName
       [StringLength(32, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 3)]
       [Display(Name = "Display Name")]
-      public string DisplayName { get; set; }
+      public string DisplayName {
+        get => _displayName;
+        set => _displayName = value.Trim().Pipe(MappingTools.standardizeWhitespace);
+      }
     }
 
     private void Load(ThoughtDesignUser user) {
@@ -71,6 +81,17 @@ namespace ThoughtDesign.IdentityProvider.Areas.Identity.Pages.Account.Manage {
         if (!setDisplayNameResult.Succeeded) {
           StatusMessage = setDisplayNameResult.Errors.Select(x => $"{x.Code} - {x.Description}.").Pipe(x => string.Join("\r\n", x)).Pipe(x => $"An error occured while updating the Display Name: \r\n{x}");
           return RedirectToPage();
+        } else {
+          try {
+            await _db.CommandAsync(async db => {
+              var userEntity = await db.User.SingleAsync(x => x.Id == user.Id);
+              userEntity.DisplayName = Input.DisplayName;
+              await db.SaveChangesAsync();
+            });
+          } catch {
+            StatusMessage = "An error occured while updating the Display Name. Please try again or contact support."; // lowTODO add logging
+            return RedirectToPage();
+          }
         }
       }
 
