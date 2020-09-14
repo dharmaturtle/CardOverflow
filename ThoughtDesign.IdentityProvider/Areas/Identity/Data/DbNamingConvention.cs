@@ -33,7 +33,7 @@ namespace ThoughtDesign.IdentityProvider.Data {
 
         foreach (var fk in entity.GetForeignKeys()) {
           var otherTable = fk.PrincipalEntityType.GetTableName().Pipe(_ToUser);
-          var c = fk.Properties[0].GetColumnName();
+          var c = fk.Properties.Select(x => x.GetColumnName()).Pipe(x => System.String.Join(",", x));
           fk.SetConstraintName($"{tableName} FK {otherTable}. {c}");
         }
 
