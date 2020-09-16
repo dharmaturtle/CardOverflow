@@ -18,6 +18,7 @@ open NUlid
 type Ulid =
     static member create with get () = Ulid.NewUlid().ToGuid()
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UpsertIds =
     let create = {
         StackId = Ulid.create

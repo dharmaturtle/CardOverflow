@@ -40,11 +40,11 @@
 
   private Task<FSharpResult<ViewEditStackCommand, string>> _GetCommandAndCard() {
     if (BranchId != Guid.Empty) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdate_BranchId(BranchId), Api.UpsertIds.create)); // highTODO this only makes 1 card id
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdate_BranchId(BranchId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
     } else if (CopySourceLeafId != Guid.Empty) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), Api.UpsertIds.create)); // highTODO this only makes 1 card id
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
     } else if (BranchSourceStackId != Guid.Empty) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), Api.UpsertIds.create)); // highTODO this only makes 1 card id
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
     } else {
       return FSharpResult<ViewEditStackCommand, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
     }
