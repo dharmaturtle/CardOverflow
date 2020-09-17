@@ -832,7 +832,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests ExactLeafCollected
     do! ExploreStackRepository.get c.Db userId og_s
-        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = og_i }, card.CollectedIds.Value))
+        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = og_i; CardIds = [card_1] }, card.CollectedIds.Value))
     do! testGetCollected og_s og_i
     
     // update card
@@ -843,7 +843,7 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests ExactLeafCollected
     do! ExploreStackRepository.get c.Db userId og_s
-        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = update_i }, card.CollectedIds.Value))
+        |> TaskResult.map (fun card -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = update_i; CardIds = [card_1] }, card.CollectedIds.Value))
     do! testGetCollected og_s update_i
 
     // collecting old leaf doesn't change LatestId
@@ -853,9 +853,9 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests OtherLeafCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = og_b; LeafId = og_i }, x)
-    | _ -> failwith "impossible"
+    Assert.equal
+        stack.CollectedIds.Value
+        { StackId = og_s; BranchId = og_b; LeafId = og_i; CardIds = [card_1] }
     do! testGetCollected og_s og_i
 
     // branch card
@@ -867,9 +867,9 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
     
     // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; LeafId = branch_i }, x)
-    | _ -> failwith "impossible"
+    Assert.equal
+        stack.CollectedIds.Value
+        { StackId = og_s; BranchId = branch_b; LeafId = branch_i; CardIds = [card_1] }
     do! testGetCollected og_s branch_i
 
     // update branch
@@ -880,9 +880,9 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; LeafId = updateBranch_i }, x)
-    | _ -> failwith "impossible"
+    Assert.equal
+        stack.CollectedIds.Value
+        { StackId = og_s; BranchId = branch_b; LeafId = updateBranch_i; CardIds = [card_1] }
     do! testGetCollected og_s updateBranch_i
 
     // collecting old leaf doesn't change LatestId
@@ -894,9 +894,9 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests OtherBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b; LeafId = branch_i }, x)
-    | _ -> failwith "impossible"
+    Assert.equal
+        stack.CollectedIds.Value
+        { StackId = og_s; BranchId = branch_b; LeafId = branch_i; CardIds = [card_1] }
     do! testGetCollected og_s branch_i
 
     // try to branch card again, but fail
@@ -914,16 +914,16 @@ let ``ExploreStackRepository.get works for all ExploreStackCollectedStatus``() :
 
     // tests LatestBranchCollected
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; LeafId = branch_i2 }, x)
-    | _ -> failwith "impossible"
+    Assert.equal
+        stack.CollectedIds.Value
+        { StackId = og_s; BranchId = branch_b2; LeafId = branch_i2; CardIds = [card_1] }
     do! testGetCollected og_s branch_i2
 
     // tests LatestBranchCollected with og_s
     let! stack = ExploreStackRepository.get c.Db userId og_s
-    match stack.CollectedIds with
-    | Some x -> Assert.Equal({ StackId = og_s; BranchId = branch_b2; LeafId = branch_i2 }, x)
-    | _ -> failwith "impossible"
+    Assert.equal
+        stack.CollectedIds.Value
+        { StackId = og_s; BranchId = branch_b2; LeafId = branch_i2; CardIds = [card_1] }
     do! testGetCollected og_s branch_i2
 
     // collecting old leaf doesn't change LatestId; can also collect old branch

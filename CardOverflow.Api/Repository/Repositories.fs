@@ -120,16 +120,17 @@ module HistoryRepository =
 
 module ExploreStackRepository =
     let getCollectedIds (db: CardOverflowDb) userId stackId =
-        db.Card
-            .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
-                .ThenInclude(fun (x: BranchEntity) -> x.Latest)
-            .Where(fun x -> x.UserId = userId && x.StackId = stackId)
-            .Select(fun x -> x.StackId, x.BranchId, x.LeafId)
-            .Distinct()
-            .SingleOrDefaultAsync()
-            |> Task.map Core.toOption
-        |> TaskOption.map (fun (stackId, branchId, leafId) ->
-            { StackId = stackId; BranchId = branchId; LeafId = leafId})
+            db.Card
+                .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
+                    .ThenInclude(fun (x: BranchEntity) -> x.Latest)
+                .Where(fun x -> x.UserId = userId && x.StackId = stackId)
+                .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Id)
+                .ToListAsync()
+            |>% Seq.toOption
+            |>% Option.map (fun ids ->
+                let stackId, branchId, leafId = ids.Select(fun (a, b, c, _) -> (a, b, c)).Distinct().Single()
+                let cardIds = ids.Select(fun (_, _, _, c) -> c) |> Seq.toList
+                { StackId = stackId; BranchId = branchId; LeafId = leafId; CardIds = cardIds})
     let get (db: CardOverflowDb) userId stackId = taskResult {
         let! (r: StackEntity * List<string> * List<string> * List<string>) =
             db.LatestDefaultLeaf

@@ -197,6 +197,10 @@ module Core =
     let inline round x = x $ WriteAnyOverloads
 
 module List =
+    let toOption xs =
+        xs
+        |> List.tryHead
+        |> Option.map (fun _ -> xs)
     let filterOut p =
         List.filter (p >> not)
     let ifEmptyThen x xs =
@@ -233,6 +237,10 @@ module Dispose =
     let ofFunc f = new DelegatedDisposable (f) :> IDisposable
 
 module Seq =
+    let toOption xs =
+        xs
+        |> Seq.tryHead
+        |> Option.map (fun _ -> xs)
     let skipAtMost n (ma: 'a seq) =
         seq {
             use en = ma.GetEnumerator()

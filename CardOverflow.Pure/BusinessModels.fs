@@ -457,12 +457,12 @@ type Branch = {
     member this.AuthorId = this.Summary.AuthorId
     member this.Leaf = this.Summary.Leaf
 
-type CollectedIds = StackLeafIds Option
+type CollectedIds = UpsertIds Option
 
 module CollectedIds =
     let leafId =
         function
-        | Some (x: StackLeafIds) -> x.LeafId
+        | Some (x: UpsertIds) -> x.LeafId
         | None -> Guid.Empty
     let branchId =
         function
