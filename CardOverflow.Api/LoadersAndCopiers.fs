@@ -32,7 +32,7 @@ module GrompleafEntity =
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module Notification =
-    let load ((n: NotificationEntity), senderName, (cc: CardEntity), deckName, (myDeck: DeckEntity)) =
+    let load ((n: NotificationEntity), senderName, (cc: CardEntity ResizeArray), deckName, (myDeck: DeckEntity)) =
         let theirDeck =
             lazy{ Id = n.DeckId.Value
                   Name = deckName }
@@ -46,11 +46,15 @@ module Notification =
                   LeafId = n.LeafId.Value
                 }
         let collected =
-            lazy(cc |> Option.ofObj |> Option.map (fun card ->
-                {   StackId = card.StackId
-                    BranchId = card.BranchId
-                    LeafId = card.LeafId
-                }))
+            lazy(cc |> List.ofSeq |> function
+                | [] -> None
+                | card ->
+                    {   StackId = card.First().StackId
+                        BranchId = card.First().BranchId
+                        LeafId = card.First().LeafId
+                        CardIds = card.Select(fun x -> x.Id) |> Seq.toList
+                    } |> Some
+                )
         let message =
             match n.Type with
             | NotificationType.DeckAddedStack ->

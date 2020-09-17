@@ -609,7 +609,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     ns.Results |> Assert.Empty
 
     // Update notifies with follower's collected card
-    do! StackRepository.CollectCard c.Db followerId leaf2.LeafId [ Ulid.create ]
+    do! StackRepository.CollectCard c.Db followerId leaf2.LeafId [ card_2 ]
     let leaf3 = { leaf2 with LeafId = leaf_3 }
     let newValue = Guid.NewGuid().ToString()
     let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
@@ -626,7 +626,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let collected =
         {   StackId = leaf2.StackId
             BranchId = leaf2.BranchId
-            LeafId = leaf2.LeafId } |> Some
+            LeafId = leaf2.LeafId
+            CardIds = [card_2] } |> Some
     do! assertNotificationThenDelete
             { Id = notification_3
               SenderId = authorId
