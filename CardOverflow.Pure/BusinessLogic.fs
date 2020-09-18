@@ -208,12 +208,6 @@ module Heatmap =
             CurrentStreakDays = counts |> Seq.rev |> Seq.takeWhile (fun x -> x <> 0) |> Seq.length
         }
 
-type StackLeafIds = {
-    StackId: Guid
-    BranchId: Guid
-    LeafId: Guid
-}
-
 type UpsertIds = {
     StackId: Guid
     BranchId: Guid
@@ -228,12 +222,25 @@ module UpsertIds =
             CardIds = cardIds
         }
 
+type StackLeafIds = {
+    StackId: Guid
+    BranchId: Guid
+    LeafId: Guid
+} with
+    member this.ToUpsertIds cardIds =
+        {   StackId = this.StackId
+            BranchId = this.BranchId
+            LeafId = this.LeafId
+            CardIds = cardIds
+        }
+
 type StackLeafIndex = {
     StackId: Guid
     BranchId: Guid
     LeafId: Guid
     Index: int16
     DeckId: Guid
+    CardId: Guid
 }
 
 module StackLeafIds =
@@ -244,12 +251,13 @@ module StackLeafIds =
         }
 
 module StackLeafIndex =
-    let fromTuple (stackId, branchId, leafId, index, deckId) =
+    let fromTuple (stackId, branchId, leafId, index, deckId, cardId) =
         {   StackId = stackId
             BranchId = branchId
             LeafId = leafId
             Index = index
             DeckId = deckId
+            CardId = cardId
         }
 
 type DiffState =

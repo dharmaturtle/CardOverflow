@@ -17,6 +17,7 @@ open NUlid
 
 type Ulid =
     static member create with get () = Ulid.NewUlid().ToGuid()
+    static member createMany i = [1..i] |> List.map (fun _ -> Ulid.create)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UpsertIds =

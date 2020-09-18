@@ -671,8 +671,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! SanitizeDeckRepository.switch c.Db authorId authorDefaultDeckId authorCollectedId
 
     let! (ns: Notification PagedList) = NotificationRepository.get c.Db followerId 1
-    let a = ns.Results.ToList().[0]
-    let b = ns.Results.ToList().[1]
+    let a = ns.Results.OrderBy(fun x -> x.Message).ToList().[0]
+    let b = ns.Results.OrderBy(fun x -> x.Message).ToList().[1]
     a.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
     b.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
     a |> Assert.equal
@@ -728,7 +728,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                         BranchId = branchId
                         LeafId = leaf2.LeafId
                         Index = 0s
-                        DeckId = followerDefaultDeckId }] }
+                        DeckId = followerDefaultDeckId
+                        CardId = Guid.Empty }] }
 
     // unfollow works
     do! SanitizeDeckRepository.unfollow c.Db followerId publicDeck.Id
@@ -1113,10 +1114,11 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
           BranchId = branchId
           LeafId = leafId
           Index = 0s
-          DeckId = followerDeckId }
+          DeckId = followerDeckId
+          CardId = Guid.Empty }
 
     // diffing two decks with the same card yields Unchanged
-    do! StackRepository.CollectCard c.Db followerId leafId [ Ulid.create ]
+    do! StackRepository.CollectCard c.Db followerId leafId [ card_2 ]
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -1168,7 +1170,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     
     |>%% Assert.equal
         {   emptyDiffStateSummary with
-                AddedStack = [{ standardIds with DeckId = newDeckId }] }
+                AddedStack = [{ standardIds with DeckId = newDeckId; CardId = card_2 }] }
 
     // Testing simple adding (by uncollecting a stack)
     do! StackRepository.uncollectStack c.Db followerId stackId
@@ -1183,13 +1185,14 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     // Unchanged with two clozes
     let! actualBranchId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (stack_2, branch_2, leaf_2, [card_2; card_3])
     let! (ccs: CardEntity ResizeArray) = c.Db.Card.Where(fun x -> x.BranchId = actualBranchId).ToListAsync()
-    let! _ = StackRepository.CollectCard c.Db followerId (ccs.First().LeafId) [ Ulid.create; Ulid.create ]
+    let! _ = StackRepository.CollectCard c.Db followerId (ccs.First().LeafId) [ card_ 4; card_ 5 ]
     let ids =
         {   StackId = stack_2
             BranchId = actualBranchId
             LeafId = leaf_2
             Index = 0s
-            DeckId = followerDeckId }
+            DeckId = followerDeckId
+            CardId = Guid.Empty }
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -1212,8 +1215,8 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     
     |>%% Assert.equal
         {   emptyDiffStateSummary with
-                Unchanged = [ { ids with Index = 1s } ]
-                AddedStack = [ { ids with DeckId = newDeckId } ] }
+                Unchanged  = [ { ids with Index = 1s } ]
+                AddedStack = [ { ids with DeckId = newDeckId; CardId = card_ 4 } ] }
 
     // two clozes, but different decks, index 2
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId ccs.[0].Id
@@ -1224,7 +1227,7 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     |>%% Assert.equal
         {   emptyDiffStateSummary with
                 Unchanged = [ ids ]
-                AddedStack = [ { ids with Index = 1s; DeckId = newDeckId } ] }
+                AddedStack = [ { ids with Index = 1s; DeckId = newDeckId; CardId = card_ 5 } ] }
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -1244,7 +1247,8 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
           BranchId = branchId
           LeafId = leafId
           Index = 0s
-          DeckId = followerDeckId }
+          DeckId = followerDeckId
+          CardId = Guid.Empty }
 
     // diffing two decks with the same card yields Unchanged
     let! _ = StackRepository.CollectCard c.Db followerId leafId [ card_2 ]
@@ -1281,7 +1285,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
         {   emptyDiffStateSummary with
                 BranchChanged = 
                     [ ({ newBranchIds with DeckId = publicDeckId },
-                       { standardIds with DeckId = newFollowerDeckId }) ] }
+                       { standardIds with DeckId = newFollowerDeckId; CardId = card_2 }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     let! _ = StackRepository.CollectCard c.Db followerId newBranchIds.LeafId [ card_2 ]
@@ -1307,7 +1311,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
         {   emptyDiffStateSummary with
                 LeafChanged =
                     [ ({ newLeafIds with DeckId = publicDeckId },
-                       { newBranchIds with DeckId = newFollowerDeckId }) ] }
+                       { newBranchIds with DeckId = newFollowerDeckId; CardId = card_2 }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     // author on new branch with new leaf, follower on old branch & leaf
@@ -1328,5 +1332,5 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
         {   emptyDiffStateSummary with
                 BranchChanged =
                     [ ({ newLeafIds with DeckId = publicDeckId },
-                       { standardIds with DeckId = newFollowerDeckId }) ] }
+                       { standardIds with DeckId = newFollowerDeckId; CardId = card_2 }) ] }
     } |> TaskResult.getOk)

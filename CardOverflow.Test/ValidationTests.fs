@@ -163,8 +163,9 @@ module Generators =
         let! leafs = uniqueGuids length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
         let! deckId = Arb.generate<Guid> |> Gen.listOfLength length
+        let! cardId = uniqueGuids length
         return
-            Seq.zip5 stacks branches leafs indexes deckId
+            Seq.zip6 stacks branches leafs indexes deckId cardId
             |> Seq.map StackLeafIndex.fromTuple
             |> List.ofSeq
         }

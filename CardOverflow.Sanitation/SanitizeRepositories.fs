@@ -458,7 +458,7 @@ module SanitizeDeckRepository =
         let get deckId =
             db.Card
                 .Where(fun x -> x.DeckId = deckId)
-                .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId)
+                .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId, Guid.Empty)
                 .ToListAsync()
             |>% Seq.map StackLeafIndex.fromTuple
             |>% List.ofSeq
@@ -466,10 +466,10 @@ module SanitizeDeckRepository =
         let! mine   = get myDeckId
         let diffs = Diff.ids theirs mine |> Diff.toSummary
         let addedStackIds = diffs.AddedStack.Select(fun x -> x.StackId).ToList()
-        let! (inOtherDeckIds: (Guid * Guid * Guid * int16 * Guid) ResizeArray) =
+        let! (inOtherDeckIds: (Guid * Guid * Guid * int16 * Guid * Guid) ResizeArray) =
             db.Card
                 .Where(fun x -> x.UserId = userId && addedStackIds.Contains x.StackId)
-                .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId)
+                .Select(fun x -> x.StackId, x.BranchId, x.LeafId, x.Index, x.DeckId, x.Id)
                 .ToListAsync() // using Task.map over StackLeafIndex.fromTuple doesn't work here for some reason
         let added =
             List.zipOn
