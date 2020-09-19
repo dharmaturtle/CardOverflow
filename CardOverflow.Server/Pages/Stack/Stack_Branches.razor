@@ -22,7 +22,8 @@
         <th scope="col" style="text-align:center;">
           <CollectToggles IsStack=true
                           CollectedIds=@CollectedIds
-                          Ids=@(new StackLeafIds(Stack.Id, Stack.Default.Leaf.BranchId, Stack.Default.Leaf.Id))
+                          Ids=@(new StackLeafIds(Stack.Id, Stack.Default.Id, Stack.Default.Leaf.Id))
+                          CardCount=@Stack.Default.Leaf.Indexes.Count()
                           BranchUsers=@Stack.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>

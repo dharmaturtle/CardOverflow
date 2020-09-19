@@ -34,6 +34,7 @@
       <div class="float-right">
         <CollectToggles @ref="_addedStackCollectToggles"
                         Ids=@deckAddedStack.New
+                        CardCount=@deckAddedStack.NewCardCount
                         DeckId=@_getDeckId(deckAddedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
@@ -76,6 +77,7 @@
       <div class="float-right">
         <CollectToggles @ref="_updatedStackCollectToggles"
                         Ids=@deckUpdatedStack.New
+                        CardCount=@deckUpdatedStack.NewCardCount
                         DeckId=@_getDeckId(deckUpdatedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
@@ -99,6 +101,7 @@
       <div class="float-right">
         <CollectToggles @ref="_deletedStackCollectToggles"
                         Ids=@deckDeletedStack.Deleted
+                        CardCount=@deckDeletedStack.DeletedCardCount
                         DeckId=@_getDeckId(deckDeletedStack.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState

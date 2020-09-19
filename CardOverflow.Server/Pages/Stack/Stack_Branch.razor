@@ -19,6 +19,7 @@
     <CollectToggles IsBranch=true
                     CollectedIds=@CollectedIds
                     Ids=@(new StackLeafIds(Branch.Leaf.StackId, Branch.Id, Branch.Leaf.Id))
+                    CardCount=@Branch.Leaf.Indexes.Count()
                     BranchUsers=@Branch.Users
                     LeafUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                     UpdateCollectedIds=@UpdateCollectedIds />
@@ -70,6 +71,7 @@
         <div class="col-auto">
           <CollectToggles CollectedIds=@CollectedIds
                           Ids=@(new StackLeafIds(revision.StackId, revision.BranchId, revision.Id))
+                          CardCount=@revision.Indexes.Count()
                           LeafUsers=@revision.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </div>

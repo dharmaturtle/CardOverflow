@@ -50,6 +50,7 @@
             @foreach (var ids in _diffState.AddedStack) {
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(ids.StackId, ids.BranchId, ids.LeafId))
+                                CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
@@ -80,6 +81,7 @@
               var ids2 = new StackLeafIds(ids.StackId, ids.BranchId, ids.LeafId);
               <div>
                 <CollectToggles Ids=@ids2
+                                CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<UpsertIds>.Some(ids2.ToUpsertIds(FList.Singleton(ids.CardId))))
                                 UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
@@ -104,6 +106,7 @@
             @foreach (var (theirs, mine) in _diffState.BranchChanged) {
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
+                                CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.StackId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
                                 UpdateCollectedIds=@(async _ => {
@@ -140,6 +143,7 @@
             @foreach (var (theirs, mine) in _diffState.LeafChanged) {
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
+                                CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.StackId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
                                 IsBranch=@true

@@ -77,6 +77,7 @@
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<UpsertIds>>();
   [Parameter] public StackLeafIds Ids { get; set; }
+  [Parameter] public int CardCount { get; set; }
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? LeafUsers { get; set; }
@@ -89,6 +90,9 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     StateHasChanged();
+    if (CardCount <= 0) {
+      throw new ArgumentOutOfRangeException("Card Count should be larger than 0.");
+    }
   }
 
   public Task Collect() => Collect(() => { });
@@ -98,7 +102,7 @@
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
-      var cardIds = Gulid.Create(1).ToFList(); // highTODO should be more than 1
+      var cardIds = Gulid.Create(CardCount).ToFList();
       return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.LeafId, DeckId, cardIds)).Match(ToastService, async ccIds => {
         onSuccess();
         await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.Some(Ids.ToUpsertIds(cardIds)));
