@@ -39,14 +39,14 @@
   }
 
   private Task<FSharpResult<ViewEditStackCommand, string>> _GetCommandAndCard() {
-    if (BranchId != Guid.Empty) {
+    if (BranchId != default) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdate_BranchId(BranchId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
-    } else if (CopySourceLeafId != Guid.Empty) {
+    } else if (CopySourceLeafId != default) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
-    } else if (BranchSourceStackId != Guid.Empty) {
+    } else if (BranchSourceStackId != default) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
     } else {
-      return FSharpResult<ViewEditStackCommand, string>.NewError("0 is an invalid card.").Apply(Task.FromResult);
+      return FSharpResult<ViewEditStackCommand, string>.NewError("Invalid id provided.").Apply(Task.FromResult);
     }
   }
 
