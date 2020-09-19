@@ -144,19 +144,25 @@
   //}
 
   async Task UpdateCard() {
-    _isDisabled = true;
-    var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditStack));
-    if (result.IsOk) {
-      ToastService.ShowInfo("Saved!");
-      _savedBranchId = result.ResultValue;
-      if (NewEditStackOnSave) {
-        var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-        EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(FSharpList<Guid>.Empty), null, UpsertIdsC.Create());
-        UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
+    if (EditStack.Backs.IsOk) {
+      EditStack.Ids.CardIds = Ulid.createMany(EditStack.Backs.ResultValue.Count());
+      _isDisabled = true;
+      var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditStack));
+      if (result.IsOk) {
+        ToastService.ShowInfo("Saved!");
+        _savedBranchId = result.ResultValue;
+        if (NewEditStackOnSave) {
+          var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
+          EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(FSharpList<Guid>.Empty), null, UpsertIdsC.Create());
+          UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
+          _isDisabled = false;
+        }
+      } else {
+        ToastService.ShowError(result.ErrorValue);
         _isDisabled = false;
       }
     } else {
-      ToastService.ShowError(result.ErrorValue);
+      ToastService.ShowError("Card is in an invalid state. Your cloze syntax is probably screwy.");
       _isDisabled = false;
     }
   }

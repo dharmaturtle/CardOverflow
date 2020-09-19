@@ -208,6 +208,7 @@ module Heatmap =
             CurrentStreakDays = counts |> Seq.rev |> Seq.takeWhile (fun x -> x <> 0) |> Seq.length
         }
 
+[<CLIMutable>]
 type UpsertIds = {
     StackId: Guid
     BranchId: Guid

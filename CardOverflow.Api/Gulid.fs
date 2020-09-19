@@ -19,11 +19,9 @@ type Ulid =
     static member create with get () = Ulid.NewUlid().ToGuid()
     static member createMany i = [1..i] |> List.map (fun _ -> Ulid.create)
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module UpsertIds =
-    let create = {
-        StackId = Ulid.create
-        BranchId = Ulid.create
-        LeafId = Ulid.create
-        CardIds = [ Ulid.create ]
-    }
+type UpsertIdsModule =
+    static member create with get () =
+        {   StackId = Ulid.create
+            BranchId = Ulid.create
+            LeafId = Ulid.create
+            CardIds = [ Ulid.create ] }
