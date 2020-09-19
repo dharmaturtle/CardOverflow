@@ -12,6 +12,7 @@
 @using CardOverflow.Sanitation
 @using Syncfusion.EJ2.Blazor
 @using Syncfusion.EJ2.Blazor.RichTextEditor
+@using Microsoft.FSharp.Collections
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
@@ -40,11 +41,11 @@
 
   private Task<FSharpResult<ViewEditStackCommand, string>> _GetCommandAndCard() {
     if (BranchId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdate_BranchId(BranchId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdate_BranchId(BranchId), new UpsertIds(Guid.Empty, BranchId, Guid.Empty, FSharpList<Guid>.Empty)));
     } else if (CopySourceLeafId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), new UpsertIds(Guid.Empty, Guid.Empty, CopySourceLeafId, FSharpList<Guid>.Empty)));
     } else if (BranchSourceStackId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), UpsertIdsC.Create())); // highTODO this only makes 1 card id
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), new UpsertIds(BranchSourceStackId, Guid.Empty, Guid.Empty, FSharpList<Guid>.Empty)));
     } else {
       return FSharpResult<ViewEditStackCommand, string>.NewError("Invalid id provided.").Apply(Task.FromResult);
     }
