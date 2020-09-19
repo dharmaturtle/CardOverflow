@@ -130,7 +130,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
-  private FSharpOption<StackLeafIds> _collectedState;
+  private FSharpOption<UpsertIds> _collectedState;
   private CollectToggles _addedStackCollectToggles;
   private CollectToggles _updatedStackCollectToggles;
   private CollectToggles _deletedStackCollectToggles;
@@ -149,7 +149,7 @@
       ? deckUpdatedStack.Collected
       : Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)
       ? deckDeletedStack.Collected
-      : FSharpOption<StackLeafIds>.None;
+      : FSharpOption<UpsertIds>.None;
     StateHasChanged();
   }
 

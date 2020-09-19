@@ -74,8 +74,8 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public FSharpOption<StackLeafIds> CollectedIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackLeafIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<StackLeafIds>>();
+  [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<UpsertIds>>();
   [Parameter] public StackLeafIds Ids { get; set; }
 
   [Parameter] public int? BranchUsers { get; set; }
@@ -98,9 +98,10 @@
       ToastService.ShowError("You need to log in to collect this card.");
       return Task.CompletedTask;
     } else {
-      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.LeafId, DeckId, Gulid.Create(1).ToFList())).Match(ToastService, async ccIds => { // highTODO should be more than 1
+      var cardIds = Gulid.Create(1).ToFList(); // highTODO should be more than 1
+      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.LeafId, DeckId, cardIds)).Match(ToastService, async ccIds => {
         onSuccess();
-        await UpdateCollectedIds.InvokeAsync(FSharpOption<StackLeafIds>.Some(Ids));
+        await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.Some(Ids.ToUpsertIds(cardIds)));
       });
     }
   }
@@ -114,7 +115,7 @@
   private Task _Discard() =>
     DbExecutor.QueryAsync(db => StackRepository.uncollectStack(db, _user.Id, Ids.StackId)).Match(ToastService, async _ => {
       _onDiscardSuccess?.Invoke();
-      await UpdateCollectedIds.InvokeAsync(FSharpOption<StackLeafIds>.None);
+      await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.None);
       _modal.Hide();
     });
 

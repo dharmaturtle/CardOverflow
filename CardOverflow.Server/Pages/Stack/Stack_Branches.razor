@@ -69,8 +69,8 @@
   [Parameter] public ExploreStack Stack { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
-  [Parameter] public FSharpOption<StackLeafIds> CollectedIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackLeafIds>> UpdateCollectedIds { get; set; }
+  [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }
   [Parameter] public LeafMeta Selected { get; set; }
   [Parameter] public bool IsExplore { get; set; }
 

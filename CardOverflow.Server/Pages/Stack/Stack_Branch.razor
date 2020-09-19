@@ -101,8 +101,8 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Branch Branch { get; set; }
   [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
-  [Parameter] public FSharpOption<StackLeafIds> CollectedIds { get; set; }
-  [Parameter] public EventCallback<FSharpOption<StackLeafIds>> UpdateCollectedIds { get; set; }
+  [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
+  [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }
   [Parameter] public LeafMeta Selected { get; set; }
   private bool _displayAllRevisions;
   private BranchRevision _revisions;

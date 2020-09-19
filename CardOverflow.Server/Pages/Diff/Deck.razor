@@ -81,7 +81,7 @@
               <div>
                 <CollectToggles Ids=@ids2
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
-                                CollectedIds=@(FSharpOption<StackLeafIds>.Some(ids2))
+                                CollectedIds=@(FSharpOption<UpsertIds>.Some(ids2.ToUpsertIds(FList.Singleton(ids.CardId))))
                                 UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
                 <Deck_CardPreview LeafId=@ids.LeafId Index=@ids.Index />
                 @OtherDeckCheck(ids.DeckId, "Discarding")
@@ -105,7 +105,7 @@
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
-                                CollectedIds=@(FSharpOption<StackLeafIds>.Some(new StackLeafIds(mine.StackId, mine.BranchId, mine.LeafId)))
+                                CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.StackId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
                                                       .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
@@ -141,7 +141,7 @@
               <div>
                 <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
-                                CollectedIds=@(FSharpOption<StackLeafIds>.Some(new StackLeafIds(mine.StackId, mine.BranchId, mine.LeafId)))
+                                CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.StackId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
                                 IsBranch=@true
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
