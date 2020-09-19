@@ -565,6 +565,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 Message = DeckAddedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = leaf1
+                                           NewCardCount = 1
                                            Collected = None } }
 
     // *both* notifications deleted
@@ -599,6 +600,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = leaf2
+                                           NewCardCount = 1
                                            Collected = None } }
 
     // editing card's state doesn't notify follower
@@ -636,6 +638,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = leaf3
+                                           NewCardCount = 1
                                            Collected = collected } }
 
     // changing to private deck has notification
@@ -649,7 +652,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            Collected = collected
-                                           Deleted = leaf3 } }
+                                           Deleted = leaf3
+                                           DeletedCardCount = 1 } }
 
     // changing back to public deck has notification
     do! SanitizeDeckRepository.switch c.Db authorId publicDeck.Id authorCollectedId
@@ -662,6 +666,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckAddedStack { TheirDeck = theirDeck
                                          MyDeck = None
                                          New = leaf3
+                                         NewCardCount = 1
                                          Collected = collected } }
 
     // changing to another public deck that's also followed generates 2 notifications
@@ -685,6 +690,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                           Name = "Default Deck" }
                                      MyDeck = None
                                      New = leaf3
+                                     NewCardCount = 1
                                      Collected = collected } }
     b |> Assert.equal
         { Id = b.Id
@@ -695,7 +701,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                      { TheirDeck = theirDeck
                        MyDeck = None
                        Collected = collected
-                       Deleted = leaf3 } }
+                       Deleted = leaf3
+                       DeletedCardCount = 1 } }
     
     // back to public deck and some cleanup
     do! NotificationRepository.remove c.Db followerId a.Id
@@ -716,7 +723,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            Collected = collected
-                                           Deleted = leaf3 } }
+                                           Deleted = leaf3
+                                           DeletedCardCount = 1 } }
 
     // diff says a stack was removed
     do! SanitizeDeckRepository.diff c.Db followerId publicDeck.Id followerDefaultDeckId

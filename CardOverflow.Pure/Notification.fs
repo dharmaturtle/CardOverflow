@@ -29,6 +29,7 @@ type DeckAddedStack = {
     TheirDeck: IdName
     MyDeck: IdName Option
     New: StackLeafIds
+    NewCardCount: int
     Collected: UpsertIds Option
 }
 
@@ -36,6 +37,7 @@ type DeckUpdatedStack = {
     TheirDeck: IdName
     MyDeck: IdName Option
     New: StackLeafIds
+    NewCardCount: int
     Collected: UpsertIds Option
 }
 
@@ -43,6 +45,7 @@ type DeckDeletedStack = {
     TheirDeck: IdName
     MyDeck: IdName Option
     Deleted: StackLeafIds
+    DeletedCardCount: int
     Collected: UpsertIds Option
 }
 

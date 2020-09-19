@@ -572,7 +572,8 @@ module NotificationRepository =
                     x.Notification.Sender.DisplayName,
                     x.Notification.Stack.Cards.Where(fun x -> x.UserId = userId).ToList(),
                     x.Notification.Deck.Name,
-                    x.Notification.Deck.DerivedDecks.SingleOrDefault(fun x -> x.UserId = userId)
+                    x.Notification.Deck.DerivedDecks.SingleOrDefault(fun x -> x.UserId = userId),
+                    x.Notification.Leaf.MaxIndexInclusive
                 ).ToPagedListAsync(pageNumber, 30)
         return {
             Results = ns |> Seq.map Notification.load

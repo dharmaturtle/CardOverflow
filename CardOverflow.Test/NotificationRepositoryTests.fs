@@ -94,7 +94,8 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                            MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                            Collected = None
-                                           New = ids } }
+                                           New = ids
+                                           NewCardCount = 1 } }
     
     // works with DeckUpdatedStack, uncollected
     let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
@@ -107,7 +108,8 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckUpdatedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
-                                             New = { ids with LeafId = newLeafId } } }
+                                             New = { ids with LeafId = newLeafId }
+                                             NewCardCount = 1 } }
 
     do! expectedDeckUpdatedStackNotification notification_2 leaf_2 None |> assertNotificationThenDelete
 
@@ -136,5 +138,6 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
                                              MyDeck = Some { Id = newDeckId; Name = newDeckName }
                                              Collected = collected
-                                             Deleted = { ids with LeafId = leaf_3 } } }
+                                             Deleted = { ids with LeafId = leaf_3 }
+                                             DeletedCardCount = 1 } }
     } |> TaskResult.getOk)

@@ -32,7 +32,7 @@ module GrompleafEntity =
     let hashBase64 hasher entity = byteArrayHash hasher entity |> Convert.ToBase64String
 
 module Notification =
-    let load ((n: NotificationEntity), senderName, (cc: CardEntity ResizeArray), deckName, (myDeck: DeckEntity)) =
+    let load ((n: NotificationEntity), senderName, (cc: CardEntity ResizeArray), deckName, (myDeck: DeckEntity), (newCardCount: int16)) =
         let theirDeck =
             lazy{ Id = n.DeckId.Value
                   Name = deckName }
@@ -45,6 +45,7 @@ module Notification =
                   BranchId = n.BranchId.Value
                   LeafId = n.LeafId.Value
                 }
+        let cardCount = newCardCount |> int |> (+) 1
         let collected =
             lazy(cc |> List.ofSeq |> function
                 | [] -> None
@@ -61,18 +62,21 @@ module Notification =
                 {   DeckAddedStack.TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
                     New = stackLeafIds.Value
+                    NewCardCount = cardCount
                     Collected = collected.Value
                 } |> DeckAddedStack
             | NotificationType.DeckUpdatedStack ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
                     New = stackLeafIds.Value
+                    NewCardCount = cardCount
                     Collected = collected.Value
                 } |> DeckUpdatedStack
             | NotificationType.DeckDeletedStack ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
                     Deleted = stackLeafIds.Value
+                    DeletedCardCount = cardCount
                     Collected = collected.Value
                 } |> DeckDeletedStack
             | x -> failwith <| sprintf "Invalid enum value: %A" x
