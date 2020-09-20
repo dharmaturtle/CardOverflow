@@ -581,7 +581,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     // branch update notifies follower
     let leaf2 = { leaf1 with LeafId = leaf_2 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! old = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -614,7 +614,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     do! StackRepository.CollectCard c.Db followerId leaf2.LeafId [ card_2 ]
     let leaf3 = { leaf2 with LeafId = leaf_3 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! old = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId branchId) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditStackCommand.FieldValues =
@@ -1268,7 +1268,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
                 Unchanged = [ standardIds ] }
 
     // author switches to new branch
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VNewBranch_SourceStackId standardIds.StackId) ((stack_1, branch_2, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VNewBranch_SourceStackId standardIds.StackId) ((stack_1, branch_2, leaf_2, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let newBranchIds =
         { standardIds with
@@ -1298,7 +1298,7 @@ let ``SanitizeDeckRepository.diff works on Branch(Leaf)Changed and deckchanges``
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
     let! _ = StackRepository.CollectCard c.Db followerId newBranchIds.LeafId [ card_2 ]
     // author switches to new leaf
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId newBranchIds.BranchId) ((stack_1, branch_2, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId newBranchIds.BranchId) ((stack_1, branch_2, leaf_3, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let newLeafIds =
         { newBranchIds with

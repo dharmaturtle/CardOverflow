@@ -23,6 +23,8 @@
 }
 
 @code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
   [Parameter] public Guid BranchId { get; set; }
   [Parameter] public Guid CopySourceLeafId { get; set; }
   [Parameter] public Guid BranchSourceStackId { get; set; }
@@ -41,11 +43,11 @@
 
   private Task<FSharpResult<ViewEditStackCommand, string>> _GetCommandAndCard() {
     if (BranchId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVUpdate_BranchId(BranchId), new UpsertIds(Guid.Empty, BranchId, Guid.Empty, FSharpList<Guid>.Empty)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVUpdate_BranchId(BranchId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
     } else if (CopySourceLeafId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), new UpsertIds(Guid.Empty, Guid.Empty, CopySourceLeafId, FSharpList<Guid>.Empty)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
     } else if (BranchSourceStackId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), new UpsertIds(BranchSourceStackId, Guid.Empty, Guid.Empty, FSharpList<Guid>.Empty)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), new UpsertIds(BranchSourceStackId, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
     } else {
       return FSharpResult<ViewEditStackCommand, string>.NewError("Invalid id provided.").Apply(Task.FromResult);
     }
@@ -53,6 +55,7 @@
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
+    _user = await UserTask;
     await _GetCommandAndCard().Apply(_TrySetCommandAndCard);
     StateHasChanged();
   }

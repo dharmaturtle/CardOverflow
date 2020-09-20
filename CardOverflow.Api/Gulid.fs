@@ -17,6 +17,9 @@ open NUlid
 
 type Ulid =
     static member create with get () = Ulid.NewUlid().ToGuid()
+    static member infinite with get () = Seq.initInfinite (fun _ -> Ulid.create)
+    static member resizeList i xs = 
+        List.resize i Ulid.infinite xs
     static member createMany i = [1..i] |> List.map (fun _ -> Ulid.create)
 
 type UpsertIdsModule =

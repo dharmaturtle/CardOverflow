@@ -28,14 +28,14 @@
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
-    var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, UpsertCardSource.NewVNewOriginal_UserId(user.Id), UpsertIdsC.Create())); // lowTODO just pass the userId normally, not as part of a DU
+    _user = await UserTask;
+    var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewOriginal_UserId(_user.Id), UpsertIdsC.Create())); // lowTODO just pass the userId normally, not as part of a DU
     if (x.IsOk) {
       _command = x.ResultValue;
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
-    _gromplates = (await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMine(db, user.Id))).ToList();
+    _gromplates = (await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMine(db, _user.Id))).ToList();
     StateHasChanged();
   }
 

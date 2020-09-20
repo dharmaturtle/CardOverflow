@@ -207,7 +207,7 @@ let ``collect works``(): Task<unit> = (taskResult {
     do! assertDeck newDeckId
 
     // collecting/updating to *new* leaf doesn't change deckId or cardId
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branchId) {
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId branchId) {
         StackId = stack_1
         BranchId = branch_1
         LeafId = leaf_2
@@ -265,7 +265,7 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.LeafId = ci1_1));
 
     // update branch
-    let! r = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId b1) ids_1
+    let! r = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId b1) ids_1
     let ci1_2 = leaf_3
     let command =
         { r.Value with

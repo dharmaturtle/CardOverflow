@@ -197,6 +197,11 @@ module Core =
     let inline round x = x $ WriteAnyOverloads
 
 module List =
+    let resize desired gen existing =
+        match existing |> List.length with
+        | x when x > desired -> existing |> List.take desired
+        | x when x < desired -> existing @ (gen |> Seq.take (desired - existing.Length) |> Seq.toList)
+        | _ -> existing
     let toOption xs =
         xs
         |> List.tryHead

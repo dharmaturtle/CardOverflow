@@ -780,22 +780,31 @@ module SanitizeCardRepository =
     }
 
 module SanitizeStackRepository =
-    let getUpsert (db: CardOverflowDb) source ids =
-        let toCommand kind (branch: LeafEntity) =
-            {   EditSummary = ""
-                FieldValues =
-                    EditFieldAndValue.load
-                        <| Fields.fromString branch.Grompleaf.Fields
-                        <| branch.FieldValues
-                Grompleaf = branch.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
-                Kind = kind
-                Title =
-                    match kind with
-                    | NewOriginal_TagIds _
-                    | NewCopy_SourceLeafId_TagIds _ -> null
-                    | NewBranch_Title title
-                    | NewLeaf_Title title -> title
-                Ids = ids
+    let getUpsert (db: CardOverflowDb) userId source ids = // medTODO this system of querying for a ViewEditStackCommand is stupid
+        let toCommand kind (leaf: LeafEntity) = taskResult {
+            let! (cardIds: Guid ResizeArray) = db.Card.Where(fun x -> x.UserId = userId && x.StackId = leaf.StackId).OrderBy(fun x -> x.Index).Select(fun x -> x.Id).ToListAsync()
+            return
+                {   EditSummary = ""
+                    FieldValues =
+                        EditFieldAndValue.load
+                            <| Fields.fromString leaf.Grompleaf.Fields
+                            <| leaf.FieldValues
+                    Grompleaf = leaf.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
+                    Kind = kind
+                    Title =
+                        match kind with
+                        | NewOriginal_TagIds _
+                        | NewCopy_SourceLeafId_TagIds _ -> null
+                        | NewBranch_Title title
+                        | NewLeaf_Title title -> title
+                    Ids =
+                        { ids with
+                            StackId = if ids.StackId = Guid.Empty then leaf.StackId else ids.StackId
+                            BranchId = if ids.BranchId = Guid.Empty then leaf.BranchId else ids.BranchId
+                            LeafId = if ids.LeafId = Guid.Empty then leaf.Id else ids.LeafId
+                            CardIds = cardIds |> Seq.toList
+                        }
+                }
             }
         match source with
         | VNewOriginal_UserId userId ->
@@ -816,15 +825,15 @@ module SanitizeStackRepository =
         | VNewBranch_SourceStackId stackId ->
             db.Stack.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = stackId)
             |>% Result.requireNotNull (sprintf "Stack #%A not found." stackId)
-            |>%% fun stack -> toCommand (NewBranch_Title "New Branch") stack.DefaultBranch.Latest
+            |> TaskResult.bind(fun stack -> toCommand (NewBranch_Title "New Branch") stack.DefaultBranch.Latest)
         | VNewCopySource_LeafId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Branch Leaf #%A not found." leafId)
-            |>%% toCommand (NewCopy_SourceLeafId_TagIds (leafId, []))
+            |> TaskResult.bind(toCommand (NewCopy_SourceLeafId_TagIds (leafId, [])))
         | VUpdate_BranchId branchId ->
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
-            |>%% fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest
+            |> TaskResult.bind(fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest)
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (stackCommand: ViewEditStackCommand) = taskResult {
         let! (leaf: LeafEntity) = UpdateRepository.stack db userId stackCommand.load
         let! (ccs: CardEntity list) =

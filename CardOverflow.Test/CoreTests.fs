@@ -4,6 +4,10 @@ open CardOverflow.Api
 open CardOverflow.Pure
 open Xunit
 open System
+open FsCheck.Xunit
+open FsCheck
+open CardOverflow.Test
+open CardOverflow.Debug
 
 [<Fact>]
 let ``Random.cryptographicString is somewhat random``(): unit =
@@ -34,3 +38,16 @@ let ``Random.cryptographicString produces a string of the specified length``(): 
     let s = Random.cryptographicString l
 
     Assert.Equal(l, s.Length)
+    
+[<Property>]
+let ``Ulid.resizeList works`` (target: PositiveInt) (tail: PositiveInt): unit =
+    let targetLength = target.Get
+    let tailLength = tail.Get - 1
+    let head = Ulid.create
+    let tail = Ulid.createMany tailLength
+
+    let resized = (head :: tail) |> Ulid.resizeList targetLength
+    
+    Assert.equal targetLength resized.Length
+    Assert.equal resized (resized |> List.distinct)
+    Assert.equal head resized.Head

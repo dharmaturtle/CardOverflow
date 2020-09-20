@@ -52,6 +52,7 @@
       _selectedIndex = (_gromplates.SingleOrDefault(x => x.Id == GromplateId) ?? _gromplates.First())
         .Apply(_gromplates.IndexOf);
     }
+    StateHasChanged();
   }
 
   private void _Add() {

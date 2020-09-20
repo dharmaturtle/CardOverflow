@@ -98,7 +98,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                                            NewCardCount = 1 } }
     
     // works with DeckUpdatedStack, uncollected
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let expectedDeckUpdatedStackNotification nid newLeafId collected =
             {   Id = nid
@@ -116,7 +116,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     // works with DeckUpdatedStack, collected
     let collectedLeaf = ids.LeafId
     do! StackRepository.CollectCard c.Db followerId collectedLeaf [ card_2 ]
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
     let collected =
         {   StackId = ids.StackId

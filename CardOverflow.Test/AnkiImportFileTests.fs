@@ -354,13 +354,13 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
 
     // updating card fails for mismatching cardIds
     let mismatching = Ulid.create
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, [mismatching]) |> UpsertIds.fromTuple)
-    let! (r: Result<_, _>) = SanitizeStackRepository.Update c.Db userId [] command
+    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! (r: Result<_, _>) = SanitizeStackRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [mismatching])
     Assert.equal (sprintf "Card ids don't match. Was given %A and expected %A" mismatching card_1) r.error
     do! assertUserHasNormalCardCount 1
 
     // go from 1 cloze to 2 clozes
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, [card_1; card_2]) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -370,12 +370,12 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1; card_2])
     Assert.Equal(branch_1, actualBranchId)
     do! assertUserHasNormalCardCount 2
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_3, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -385,12 +385,12 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
+    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1])
     Assert.Equal(branch_1, actualBranchId)
     do! assertUserHasNormalCardCount 1
     
     // multiple c1's works
-    let! command = SanitizeStackRepository.getUpsert c.Db (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
+    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditStackCommand.FieldValues =
@@ -459,7 +459,7 @@ let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (
 
     // updating an uncollected branch doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId_og) id { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [card_1; card_2] } branchId_og
+            (VUpdate_BranchId branchId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [] } branchId_og
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
