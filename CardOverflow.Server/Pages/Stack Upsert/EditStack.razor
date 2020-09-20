@@ -45,7 +45,7 @@
     if (BranchId != default) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVUpdate_BranchId(BranchId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
     } else if (CopySourceLeafId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
+      return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), new UpsertIds(Ulid.create, Ulid.create, Ulid.create, FSharpList<Guid>.Empty)));
     } else if (BranchSourceStackId != default) {
       return DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewBranch_SourceStackId(BranchSourceStackId), new UpsertIds(BranchSourceStackId, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
     } else {

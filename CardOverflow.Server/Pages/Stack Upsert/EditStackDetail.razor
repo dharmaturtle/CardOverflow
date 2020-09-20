@@ -145,6 +145,9 @@
 
   async Task UpdateCard() {
     if (EditStack.Backs.IsOk) {
+      if (EditStack.Kind.IsNewCopy_SourceLeafId_TagIds) {
+        EditStack.Ids.CardIds = FSharpList<Guid>.Empty;
+      }
       EditStack.Ids.CardIds = Ulid.resizeList(EditStack.Backs.ResultValue.Count(), EditStack.Ids.CardIds);
       _isDisabled = true;
       var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditStack));
