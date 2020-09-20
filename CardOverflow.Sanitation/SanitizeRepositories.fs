@@ -1,7 +1,6 @@
 namespace CardOverflow.Sanitation
 
 open System
-open CardOverflow.Pure.Extensions
 open CardOverflow.Pure
 open System.Threading.Tasks
 open LoadersAndCopiers
@@ -707,7 +706,7 @@ type ViewEditStackCommand = {
         | Standard ts ->
             ts |> List.map (fun t ->
                 CardHtml.generate
-                    <| this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "").ToFList()
+                    <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
                     <| t.Front
                     <| t.Back
                     <| this.Grompleaf.Css

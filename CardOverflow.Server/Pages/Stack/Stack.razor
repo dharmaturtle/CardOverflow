@@ -35,10 +35,11 @@
         <div class="col-xl">
           <Stack_IFrameHeader Stack=@_stack Leaf=@_selected />
           @foreach (var i in _selected.Indexes) {
+            var card = _cards.SingleOrDefault(x => x.LeafMeta.Id == _selected.Id && x.Index == i);
             <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
-              @if (IsCurate) {
-                <div class="col-4 @(_cards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == i).CardState.IsSuspended ? "text-white bg-secondary" : "")">
-                  <Stack_Collect Card=@(_cards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == i)) CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
+              @if (IsCurate && card != default) {
+                <div class="col-4 @(card.CardState.IsSuspended ? "text-white bg-secondary" : "")">
+                  <Stack_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
                 </div>
               }
               <div class="col">

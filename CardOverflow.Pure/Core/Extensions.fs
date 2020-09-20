@@ -42,6 +42,10 @@ module Extensions =
         input |> List.ofSeq
 
     [<Extension>]
+    let None (input: _ seq) =
+        input.Any()
+
+    [<Extension>]
     let Apply(input, (func: Func<'TInput, 'TOutput>)) = 
         func.Invoke input
 
