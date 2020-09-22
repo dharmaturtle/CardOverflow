@@ -78,7 +78,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public Guid DeckId { get; set; }
   List<FSharpResult<QuizCard, string>> batch;
-  DateTime frontVisible;
+  Instant frontVisible;
   string transcript;
   bool isBlindMode;
   ElementReference GoodButton;

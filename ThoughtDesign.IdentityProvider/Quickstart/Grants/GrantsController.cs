@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using IdentityServer4.Events;
 using IdentityServer4.Extensions;
+using NodaTime.Extensions;
+using NodaTime;
 
 namespace ThoughtDesign.IdentityProvider
 {
@@ -78,8 +80,8 @@ namespace ThoughtDesign.IdentityProvider
                         ClientLogoUrl = client.LogoUri,
                         ClientUrl = client.ClientUri,
                         Description = grant.Description,
-                        Created = grant.CreationTime,
-                        Expires = grant.Expiration,
+                        Created = grant.CreationTime.ToInstant(),
+                        Expires = grant.Expiration?.ToInstant(),
                         IdentityGrantNames = resources.IdentityResources.Select(x => x.DisplayName ?? x.Name).ToArray(),
                         ApiGrantNames = resources.ApiScopes.Select(x => x.DisplayName ?? x.Name).ToArray()
                     };

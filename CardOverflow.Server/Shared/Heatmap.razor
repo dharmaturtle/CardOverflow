@@ -202,7 +202,7 @@
       <li data-level="@dateCountLevel.Level" class="calendar-tooltip">
         <div class="calendar-tooltiptext">
           <p class="mb-0">@dateCountLevel.Count reviews</p>
-          <p class="mb-0">@dateCountLevel.Date.ToString("ddd, d MMM")</p>
+          <p class="mb-0">@dateCountLevel.Date.ToString("ddd, d MMM", CultureInfo.InvariantCulture)</p>
         </div>
       </li>
     }

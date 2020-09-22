@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using NodaTime;
 
 namespace ThoughtDesign.IdentityProvider
 {
@@ -19,8 +20,8 @@ namespace ThoughtDesign.IdentityProvider
         public string ClientUrl { get; set; }
         public string ClientLogoUrl { get; set; }
         public string Description { get; set; }
-        public DateTime Created { get; set; }
-        public DateTime? Expires { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Expires { get; set; }
         public IEnumerable<string> IdentityGrantNames { get; set; }
         public IEnumerable<string> ApiGrantNames { get; set; }
     }

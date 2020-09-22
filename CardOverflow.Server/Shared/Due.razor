@@ -1,4 +1,4 @@
-﻿@using Microsoft.FSharp.Core
+@using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
@@ -11,11 +11,11 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-<span class="@(_delta >= TimeSpan.Zero ? "" : "text-danger" )">
+<span class="@(_delta >= Duration.Zero ? "" : "text-danger" )">
   @(ViewLogic.toString(_delta))
 </span>
 
 @code {
-  [Parameter] public DateTime DueDate { get; set; }
-  private TimeSpan _delta => DueDate - TimeProvider.utcNow;
+  [Parameter] public Instant DueDate { get; set; }
+  private Duration _delta => DueDate - TimeProvider.utcNow;
 }
