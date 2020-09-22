@@ -17,6 +17,7 @@ open Helpers
 open FsToolkit.ErrorHandling
 open System.Security.Cryptography
 open Microsoft.EntityFrameworkCore
+open NodaTime
 
 type SimpleAnkiDb = {
     Cards: CardOverflow.Entity.Anki.CardEntity list
@@ -31,8 +32,8 @@ type AnkiGrompleaf = {
     Name: string
     Css: string
     Fields: Field list
-    Created: DateTime
-    Modified: DateTime option
+    Created: Instant
+    Modified: Instant option
     DefaultTags: Guid list
     DefaultCardSettingId: Guid
     LatexPre: string
@@ -74,8 +75,8 @@ type AnkiCardWrite = {
     Commields: CommeafEntity list
     Gromplate: GrompleafEntity
     FieldValues: string
-    Created: DateTime
-    Modified: DateTime option
+    Created: Instant
+    Modified: Instant option
     AuthorId: Guid
 } with
     member this.CopyTo (entity: LeafEntity) =
@@ -127,7 +128,7 @@ type AnkiCard = {
     LapseCount: byte
     EaseFactorInPermille: int16
     IntervalOrStepsIndex: IntervalOrStepsIndex
-    Due: DateTime
+    Due: Instant
     Deck: DeckEntity
     CardSetting: CardSettingEntity
 } with
@@ -161,7 +162,7 @@ type AnkiHistory = {
     UserId: Guid
     Card: CardEntity option
     Score: int16
-    Timestamp: DateTime
+    Timestamp: Instant
     IntervalWithUnusedStepsIndex: IntervalOrStepsIndex
     EaseFactorInPermille: int16
     TimeFromSeeingQuestionToScoreInSecondsMinus32768: int16
@@ -224,14 +225,14 @@ module Anki =
                 EaseFactorInPermille = int16 revLog.Factor
                 IntervalWithUnusedStepsIndex =
                     match revLog.Ivl with
-                    | p when p > 0L -> p |> float |> TimeSpan.FromDays    // In Anki, positive is days
-                    | n             -> n |> float |> TimeSpan.FromSeconds // In Anki, negative is seconds
-                    |> Interval
+                    | p when p > 0L -> p |> float |> Duration.FromDays    // In Anki, positive is days
+                    | n             -> n |> float |> Duration.FromSeconds // In Anki, negative is seconds
+                    |> IntervalXX
                 Score = score |> Score.toDb
                 TimeFromSeeingQuestionToScoreInSecondsMinus32768 =
                     revLog.Time / 1000L - 32768L |> int16
                 Timestamp =
-                    DateTimeOffset.FromUnixTimeMilliseconds(revLog.Id).UtcDateTime
+                    Instant.FromUnixTimeMilliseconds revLog.Id
             }
             return
                 getHistory history
@@ -250,10 +251,10 @@ module Anki =
             { Id = Guid.Empty // lowTODO this entire record needs to be validated for out of range values
               Name = get.Required.Field "name" Decode.string
               IsDefault = false
-              NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
+              NewCardsSteps = get.Required.At ["new"; "delays"] (Decode.array Decode.float) |> Array.map Duration.FromMinutes |> List.ofArray
               NewCardsMaxPerDay = get.Required.At ["new"; "perDay"] Decode.int |> int16
-              NewCardsGraduatingInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 0
-              NewCardsEasyInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map TimeSpan.FromDays |> Seq.item 1
+              NewCardsGraduatingInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map Duration.FromDays |> Seq.item 0
+              NewCardsEasyInterval = get.Required.At ["new"; "ints"] (Decode.array Decode.float) |> Array.map Duration.FromDays |> Seq.item 1
               NewCardsStartingEaseFactor = (get.Required.At ["new"; "initialFactor"] Decode.float) / 1000.
               NewCardsBuryRelated = get.Required.At ["new"; "bury"] Decode.bool
               MatureCardsMaxPerDay = get.Required.At ["rev"; "perDay"] Decode.int |> int16
@@ -262,9 +263,9 @@ module Anki =
               MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> TimeSpanInt16.fromDays
               MatureCardsHardIntervalFactor = get.Optional.At ["rev"; "hardFactor"] Decode.float |? 1.2
               MatureCardsBuryRelated = get.Required.At ["rev"; "bury"] Decode.bool
-              LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map TimeSpan.FromMinutes |> List.ofArray
+              LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map Duration.FromMinutes |> List.ofArray
               LapsedCardsNewIntervalFactor = get.Required.At ["lapse"; "mult"] Decode.float
-              LapsedCardsMinimumInterval = get.Required.At ["lapse"; "minInt"] Decode.float |> TimeSpan.FromDays
+              LapsedCardsMinimumInterval = get.Required.At ["lapse"; "minInt"] Decode.float |> Duration.FromDays
               LapsedCardsLeechThreshold = get.Required.At ["lapse"; "leechFails"] Decode.int |> int16
               ShowAnswerTimer = get.Required.Field "timer" ankiIntToBool
               AutomaticallyPlayAudio = get.Required.Field "autoplay" Decode.bool
@@ -304,8 +305,8 @@ module Anki =
                         |> List.sortBy snd
                         |> List.map fst
                 Templates = gromplates
-                Created = get.Required.Field "id" Decode.int64 |> DateTimeOffset.FromUnixTimeMilliseconds |> fun x -> x.UtcDateTime
-                Modified = get.Required.Field "mod" Decode.int64 |> DateTimeOffset.FromUnixTimeSeconds |> fun x -> x.UtcDateTime |> Some
+                Created = get.Required.Field "id" Decode.int64 |> Instant.FromUnixTimeMilliseconds
+                Modified = get.Required.Field "mod" Decode.int64 |> Instant.FromUnixTimeSeconds |> Some
                 DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
                 DefaultCardSettingId = Guid.Empty
                 LatexPre = get.Required.Field "latexPre" Decode.string
@@ -386,8 +387,8 @@ module Anki =
                         Gromplate = gromplate
                         Commields = []
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
-                        Created = DateTimeOffset.FromUnixTimeMilliseconds(note.Id).UtcDateTime
-                        Modified = DateTimeOffset.FromUnixTimeSeconds(note.Mod).UtcDateTime |> Some
+                        Created = Instant.FromUnixTimeMilliseconds note.Id
+                        Modified = Instant.FromUnixTimeSeconds note.Mod |> Some
                         AuthorId = userId }
                     defaultArg
                         <| getCard c
@@ -414,7 +415,7 @@ module Anki =
     let mapCard
         (cardSettingAndDeckByDeckId: Map<int64, CardSettingEntity * DeckEntity>)
         (cardAndTagsByNoteId: Map<int64, LeafEntity * TagEntity list>)
-        (colCreateDate: DateTime)
+        (colCreateDate: Instant)
         userId
         getCard
         (ankiCard: Anki.CardEntity) =
@@ -453,19 +454,19 @@ module Anki =
                             |> byte |> NewStepsIndex
                         | Due ->
                             if ankiCard.Ivl > 0L
-                            then ankiCard.Ivl |> float |> TimeSpan.FromDays
-                            else float ankiCard.Ivl * -1. / 60. |> Math.Round |> float |> TimeSpan.FromMinutes
-                            |> Interval
+                            then ankiCard.Ivl |> float |> Duration.FromDays
+                            else float ankiCard.Ivl * -1. / 60. |> Math.Round |> float |> Duration.FromMinutes
+                            |> IntervalXX
                       Due =
                         match cardType with
-                        | New -> DateTime.UtcNow.Date
-                        | Learning -> DateTimeOffset.FromUnixTimeSeconds(ankiCard.Due).UtcDateTime
+                        | New -> DateTimeX.UtcNow
+                        | Learning -> Instant.FromUnixTimeSeconds ankiCard.Due
                         | Due ->
                             if ankiCard.Odue = 0L
                             then ankiCard.Due
                             else ankiCard.Odue
                             |> float
-                            |> TimeSpan.FromDays
+                            |> Duration.FromDays
                             |> (+) colCreateDate
                       Deck = deck
                       CardSetting = cardSetting }

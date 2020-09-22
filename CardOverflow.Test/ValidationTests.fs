@@ -13,6 +13,7 @@ open DataAnnotationsValidator
 open FsCheck
 open FsCheck.Xunit
 open CardOverflow.Entity
+open NodaTime
 
 module internal Gen =
     let gen<'a> = // uses the reflection based default generator instead of the registered generator
@@ -25,6 +26,13 @@ module internal Gen =
         x |> Gen.elements |> Gen.sample 0 1 |> List.head
     let sample1Gen x =
         x |> Gen.sample 10 1 |> List.head
+
+type NodaGen =
+    static member instant () =
+        Arb.generate<System.DateTime>
+        |> Gen.map (fun dt -> dt.ToUniversalTime())
+        |> Gen.map (fun dt -> Instant.FromDateTimeUtc dt)
+        |> Arb.fromGen
 
 module Generators =
     let alphanumericChar = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] |> Gen.elements
@@ -102,6 +110,7 @@ module Generators =
             return sprintf "%s{{c1::%s}}%s" a b c
         }
     let editStackCommand =
+        Arb.register<NodaGen>() |> ignore
         gen {
             let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
             let! gromplateType = gromplateType fieldNames
@@ -123,14 +132,14 @@ module Generators =
                     })
         }
     let notificationEntity = gen {
-        let! timestamp = Arb.generate<DateTime>
+        let! timestamp = NodaGen.instant() |> Arb.toGen
         let! message = Arb.generate<string>
         let! notificationType = Gen.gen<NotificationType>
         return
             NotificationEntity(
                 Id = Ulid.create,
                 SenderId = Gen.sample1 [ user_1; user_2; user_3 ],
-                Created = DateTime.SpecifyKind(timestamp, DateTimeKind.Unspecified),
+                Created = timestamp,
                 Type = notificationType,
                 Message = message
             )}
@@ -173,6 +182,8 @@ module Generators =
         StackLeafIndex 3
 
 type Generators =
+    static member instant =
+        NodaGen.instant()
     static member editStackCommand =
         Generators.editStackCommand |> Arb.fromGen
     static member clozeText =

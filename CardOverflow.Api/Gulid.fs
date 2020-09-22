@@ -14,6 +14,7 @@ open System.Collections.Generic
 open System.Text.RegularExpressions
 open System.Collections
 open NUlid
+open NodaTime
 
 type Ulid =
     static member create with get () = Ulid.NewUlid().ToGuid()
@@ -28,3 +29,6 @@ type UpsertIdsModule =
             BranchId = Ulid.create
             LeafId = Ulid.create
             CardIds = [ Ulid.create ] }
+
+type DateTimeX =
+    static member UtcNow with get () = SystemClock.Instance.GetCurrentInstant()

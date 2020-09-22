@@ -7,6 +7,7 @@ open System.Globalization
 open System.Web
 open System.Text.RegularExpressions
 open CardOverflow.Pure
+open NodaTime
 
 let delimiter = ' '
 
@@ -17,9 +18,9 @@ let intsListToStringOfInts (ints: int list) =
     ints |> List.map string |> fun x -> String.Join(delimiter, x)
 
 let stringOfMinutesToTimeSpanList (string: string) =
-    string.Split [| delimiter |] |> Seq.map (Double.Parse >> TimeSpan.FromMinutes) |> Seq.toList
+    string.Split [| delimiter |] |> Seq.map (Double.Parse >> Duration.FromMinutes) |> Seq.toList
 
-let timeSpanListToStringOfMinutes (timeSpans: TimeSpan list) =
+let timeSpanListToStringOfMinutes (timeSpans: Duration list) =
     timeSpans |> List.map (fun x -> x.TotalMinutes.ToString()) |> fun x -> String.Join(delimiter, x)
 
 let stringIntToBool =
@@ -72,11 +73,11 @@ let cutOffInt16 x =
     then Int16.MaxValue
     else int16 x
 
-let round (dt: DateTime) (d: TimeSpan) = // https://stackoverflow.com/a/20046261/
-    let delta = dt.Ticks % d.Ticks
-    let roundUp = delta > d.Ticks / 2L
-    let offset = if roundUp then d.Ticks else 0L
-    DateTime(dt.Ticks + offset - delta, dt.Kind)
+let round (dt: Instant) (d: Duration) = // https://stackoverflow.com/a/20046261/
+    let delta = float (dt.ToUnixTimeTicks()) % d.TotalTicks
+    let roundUp = delta > d.TotalTicks / 2.
+    let offset = (if roundUp then d.TotalTicks else 0.) |> Convert.ToInt64
+    Instant.FromUnixTimeTicks(dt.ToUnixTimeTicks() + offset - (Convert.ToInt64 delta))
 
 let standardizeWhitespace x = // lowTODO use StringBuilder like https://stackoverflow.com/a/58849324
     Regex.Replace(x, @"\s+", " ", Regex.compiled).Trim()

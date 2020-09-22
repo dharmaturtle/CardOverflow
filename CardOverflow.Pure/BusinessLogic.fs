@@ -7,6 +7,7 @@ open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 open CardOverflow.Debug
 open System.Text.RegularExpressions
+open NodaTime
 
 module Relationship =
     type RelationshipRegex = FSharp.Text.RegexProvider.Regex< """(?<source>.+)\/(?<target>.+)""" >
@@ -197,7 +198,7 @@ module Heatmap =
             Count = count
             Level = float count / maxCount * (levelCount - 1.) |> round // -1 to remove 0
         })
-    let get (startDate: DateTime) (endDate: DateTime) (dateCounts: DateCount list) =
+    let get (startDate: Instant) (endDate: Instant) (dateCounts: DateCount list) =
         let dateCounts = allDateCounts startDate.Date endDate.Date dateCounts
         let counts = dateCounts |> List.map (fun x -> x.Count)
         let relevantRange = counts |> List.skipWhile (fun x -> x = 0) |> List.ifEmptyThen 0

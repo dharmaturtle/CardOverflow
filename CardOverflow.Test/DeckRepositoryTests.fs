@@ -21,6 +21,7 @@ open CardOverflow.Sanitation.SanitizeDeckRepository
 open CardOverflow.Entity
 open FsCheck
 open LoadersAndCopiers
+open NodaTime
 
 let emptyDiffStateSummary =
     {   Unchanged = []
@@ -49,7 +50,7 @@ let ``SanitizeDeckRepository.setSource works``(): Task<unit> = (taskResult {
                     Name = "Default Deck" } |> Some }
     let setSource = SanitizeDeckRepository.setSource c.Db followerId expectedDeck.Id
     let getEquals expected =
-        SanitizeDeckRepository.get c.Db followerId DateTime.UtcNow
+        SanitizeDeckRepository.get c.Db followerId DateTimeX.UtcNow
         |>% Seq.exactlyOne
         |>% Assert.equal expected
     
@@ -275,9 +276,9 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
             DueCount = count
             AllCount = count }
     let getTomorrow () =
-        SanitizeDeckRepository.get c.Db userId <| DateTime.UtcNow + TimeSpan.FromDays 1.
+        SanitizeDeckRepository.get c.Db userId <| DateTimeX.UtcNow + Duration.FromDays 1.
     let getYesterday () =
-        SanitizeDeckRepository.get c.Db userId <| DateTime.UtcNow - TimeSpan.FromDays 1.
+        SanitizeDeckRepository.get c.Db userId <| DateTimeX.UtcNow - Duration.FromDays 1.
 
     // get yields default deck
     let defaultDeckId = deck_3
@@ -513,7 +514,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single
-        n.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
+        n.Created |> Assert.dateTimeEqual 60. DateTimeX.UtcNow
         n |> Assert.equal
             {   expected with
                     Id = n.Id
@@ -561,7 +562,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             {   Id = notificationId
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
-                Created = DateTime.MinValue
+                Created = Instant.MinValue
                 Message = DeckAddedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = leaf1
@@ -596,7 +597,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             { Id = notification_2
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
-              Created = DateTime.MinValue
+              Created = Instant.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = leaf2
@@ -634,7 +635,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             { Id = notification_3
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
-              Created = DateTime.MinValue
+              Created = Instant.MinValue
               Message = DeckUpdatedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            New = leaf3
@@ -648,7 +649,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             { Id = notification_ 4
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
-              Created = DateTime.MinValue
+              Created = Instant.MinValue
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            Collected = collected
@@ -662,7 +663,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             { Id = notification_ 5
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
-              Created = DateTime.MinValue
+              Created = Instant.MinValue
               Message = DeckAddedStack { TheirDeck = theirDeck
                                          MyDeck = None
                                          New = leaf3
@@ -678,8 +679,8 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let! (ns: Notification PagedList) = NotificationRepository.get c.Db followerId 1
     let a = ns.Results.OrderBy(fun x -> x.Message).ToList().[0]
     let b = ns.Results.OrderBy(fun x -> x.Message).ToList().[1]
-    a.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
-    b.Created |> Assert.dateTimeEqual 60. DateTime.UtcNow
+    a.Created |> Assert.dateTimeEqual 60. DateTimeX.UtcNow
+    b.Created |> Assert.dateTimeEqual 60. DateTimeX.UtcNow
     a |> Assert.equal
         { Id = a.Id
           SenderId = user_3
@@ -719,7 +720,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
             { Id = Ulid.create
               SenderId = authorId
               SenderDisplayName = "RoboTurtle"
-              Created = DateTime.MinValue
+              Created = Instant.MinValue
               Message = DeckDeletedStack { TheirDeck = theirDeck
                                            MyDeck = None
                                            Collected = collected

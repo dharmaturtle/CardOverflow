@@ -18,6 +18,7 @@ open CardOverflow.Pure
 open CardOverflow.Sanitation
 open FsToolkit
 open FsToolkit.ErrorHandling
+open NodaTime
 
 [<Fact>]
 let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
@@ -48,7 +49,7 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     let! (batch: Result<QuizCard, string> ResizeArray) = StackRepository.GetQuizBatch c.Db userId ""
-    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
+    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy (DateTimeX.UtcNow) (Duration.FromDays(13.)) 0. (Duration.FromSeconds 1.) (IntervalXX <| Duration.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.StackId |> TaskResult.getOk
     let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_3, branch_3, leaf_3, [card_3])
     let newCardBranchId = branch_3
@@ -131,7 +132,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
             StackId = stackId,
             BranchId = branchId,
             LeafId = i2,
-            Due = DateTime.UtcNow,
+            Due = DateTimeX.UtcNow,
             UserId = userId,
             CardSettingId = userId)
     let ex = Assert.Throws<DbUpdateException>(fun () -> db.SaveChanges() |> ignore)
@@ -147,7 +148,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
             StackId = stackId,
             BranchId = branchId,
             LeafId = i1,
-            Due = DateTime.UtcNow,
+            Due = DateTimeX.UtcNow,
             UserId = userId,
             CardSettingId = setting_3,
             DeckId = deck_3)
@@ -316,7 +317,7 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
 
     let! a = StackRepository.GetQuizBatch c.Db userId ""
     let getId (x: Result<QuizCard, string> seq) = x.First().Value.CardId
-    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTime.UtcNow (TimeSpan.FromDays(13.)) 0. (TimeSpan.FromSeconds 1.) (Interval <| TimeSpan.FromDays 13.)
+    do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (getId a) Score.Easy DateTimeX.UtcNow (Duration.FromDays(13.)) 0. (Duration.FromSeconds 1.) (IntervalXX <| Duration.FromDays 13.)
     let! b = StackRepository.GetQuizBatch c.Db userId ""
     Assert.NotEqual(getId a, getId b)
 

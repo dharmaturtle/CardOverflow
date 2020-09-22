@@ -1,32 +1,39 @@
 module ViewLogicTests
 
 open CardOverflow.Debug
+open CardOverflow.Test
 open Xunit
 open System
+open NodaTime
 
 [<Fact>]
 let ``TimeSpan to string looks pretty`` (): unit =
-    TimeSpan.FromSeconds 10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("1 min", x)
-    TimeSpan.FromMinutes 10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("10 min", x)
-    TimeSpan.FromHours   10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("10 h", x)
-    TimeSpan.FromDays    10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("10 d", x)
-    TimeSpan.FromDays   100.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("3.3 mo", x)
-    TimeSpan.FromDays  1000.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("2.7 yr", x)
-    -TimeSpan.FromSeconds 10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("-1 min", x)
-    -TimeSpan.FromMinutes 10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("-10 min", x)
-    -TimeSpan.FromHours   10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("-10 h", x)
-    -TimeSpan.FromDays    10.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("-10 d", x)
-    -TimeSpan.FromDays   100.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("-3.3 mo", x)
-    -TimeSpan.FromDays  1000.123456789 |> ViewLogic.toString |> fun x -> Assert.Equal("-2.7 yr", x)
+    Duration.FromSeconds 10.123456789 |> ViewLogic.toString |> Assert.equal "1 min"
+    Duration.FromMinutes 10.123456789 |> ViewLogic.toString |> Assert.equal "10 min"
+    Duration.FromHours   10.123456789 |> ViewLogic.toString |> Assert.equal "10 h"
+    Duration.FromDays    10.123456789 |> ViewLogic.toString |> Assert.equal "10 d"
+    Duration.FromDays   100.123456789 |> ViewLogic.toString |> Assert.equal "3.3 mo"
+    Duration.FromDays  1000.123456789 |> ViewLogic.toString |> Assert.equal "2.7 yr"
+    -Duration.FromSeconds 10.123456789 |> ViewLogic.toString |> Assert.equal "-1 min"
+    -Duration.FromMinutes 10.123456789 |> ViewLogic.toString |> Assert.equal "-10 min"
+    -Duration.FromHours   10.123456789 |> ViewLogic.toString |> Assert.equal "-10 h"
+    -Duration.FromDays    10.123456789 |> ViewLogic.toString |> Assert.equal "-10 d"
+    -Duration.FromDays   100.123456789 |> ViewLogic.toString |> Assert.equal "-3.3 mo"
+    -Duration.FromDays  1000.123456789 |> ViewLogic.toString |> Assert.equal "-2.7 yr"
     
+let dateTime year month day hour minute second =
+    Instant.FromUtc(year, month, day, hour, minute, second)
+let dateYear year month day =
+    Instant.FromUtc(year, month, day, 0, 0)
+
 [<Fact>]
 let ``timestampToPretty looks pretty`` (): unit =
-    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 1, 2)) |> fun x -> Assert.Equal("1 d ago", x)
-    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 1, 2, 1, 1, 1)) |> fun x -> Assert.Equal("1 d ago", x)
-    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2000, 2, 2)) |> fun x -> Assert.Equal("on Jan 1 '00", x)
-    ViewLogic.timestampToPretty (DateTime(2000,  1,  1)) (DateTime(2001, 2, 2)) |> fun x -> Assert.Equal("on Jan 1 '00", x)
-    ViewLogic.timestampToPretty (DateTime(2001, 12, 31)) (DateTime(2025, 1, 1)) |> fun x -> Assert.Equal("on Dec 31 '01", x)
-    ViewLogic.timestampToPretty (DateTime(2020, 12, 31)) (DateTime(2025, 1, 1)) |> fun x -> Assert.Equal("on Dec 31 '20", x)
+    ViewLogic.timestampToPretty (dateYear 2000  1  1) (dateYear 2000 1 2      ) |> Assert.equal "1 d ago"
+    ViewLogic.timestampToPretty (dateYear 2000  1  1) (dateTime 2000 1 2 1 1 1) |> Assert.equal "1 d ago"
+    ViewLogic.timestampToPretty (dateYear 2000  1  1) (dateYear 2000 2 2      ) |> Assert.equal "on Jan 1 '00"
+    ViewLogic.timestampToPretty (dateYear 2000  1  1) (dateYear 2001 2 2      ) |> Assert.equal "on Jan 1 '00"
+    ViewLogic.timestampToPretty (dateYear 2001 12 31) (dateYear 2025 1 1      ) |> Assert.equal "on Dec 31 '01"
+    ViewLogic.timestampToPretty (dateYear 2020 12 31) (dateYear 2025 1 1      ) |> Assert.equal "on Dec 31 '20"
 
 [<Fact>]
 let ``insertDiffColors`` (): unit =

@@ -8,6 +8,7 @@ open System
 open System.Linq
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
+open NodaTime
 
 type Score = | Again | Hard | Good | Easy
 module Score =
@@ -44,8 +45,8 @@ module CardState =
         >> int16
 
 module TimeSpanInt16 =
-    type TimeSpanInt16 = private TimeSpanInt16 of TimeSpan
-    let fromDays days = min (float Int16.MaxValue) days |> TimeSpan.FromDays |> TimeSpanInt16
+    type TimeSpanInt16 = private TimeSpanInt16 of Duration
+    let fromDays days = min (float Int16.MaxValue) days |> Duration.FromDays |> TimeSpanInt16
     let value (TimeSpanInt16 t) = t
     let totalDays t = (value t).TotalDays |> int16
 
@@ -53,10 +54,10 @@ type CardSetting = {
     Id: Guid
     Name: string
     IsDefault: bool
-    NewCardsSteps: TimeSpan list
+    NewCardsSteps: Duration list
     NewCardsMaxPerDay: int16
-    NewCardsGraduatingInterval: TimeSpan
-    NewCardsEasyInterval: TimeSpan
+    NewCardsGraduatingInterval: Duration
+    NewCardsEasyInterval: Duration
     NewCardsStartingEaseFactor: float
     NewCardsBuryRelated: bool
     MatureCardsMaxPerDay: int16
@@ -65,9 +66,9 @@ type CardSetting = {
     MatureCardsMaximumInterval: TimeSpanInt16.TimeSpanInt16
     MatureCardsHardIntervalFactor: float
     MatureCardsBuryRelated: bool
-    LapsedCardsSteps: TimeSpan list
+    LapsedCardsSteps: Duration list
     LapsedCardsNewIntervalFactor: float // percent by which to multiply the current interval when a card goes has lapsed, called "new interval" in anki gui
-    LapsedCardsMinimumInterval: TimeSpan
+    LapsedCardsMinimumInterval: Duration
     LapsedCardsLeechThreshold: int16
     ShowAnswerTimer: bool
     AutomaticallyPlayAudio: bool
@@ -147,8 +148,8 @@ type Grompleaf = {
     GromplateId: Guid
     Css: string
     Fields: Field list
-    Created: DateTime
-    Modified: DateTime option
+    Created: Instant
+    Modified: Instant option
     LatexPre: string
     LatexPost: string
     Templates: GromplateType
@@ -191,12 +192,12 @@ type Gromplate = {
 type IntervalOrStepsIndex =
     | NewStepsIndex of byte
     | LapsedStepsIndex of byte
-    | Interval of TimeSpan
+    | IntervalXX of Duration
 
 type QuizCard = {
     CardId: Guid
     LeafId: Guid
-    Due: DateTime
+    Due: Instant
     Front: string
     Back: string
     FrontSynthVoice: string
@@ -210,8 +211,8 @@ type QuizCard = {
 
 //type Leaf = {
 //    Id: Guid
-//    Created: DateTime
-//    Modified: DateTime option
+//    Created: Instant
+//    Modified: Instant option
 //    Fields: string seq
 //}
 
@@ -244,17 +245,17 @@ module IntervalOrStepsIndex =
         if x <= n1
         then x - float Int16.MinValue |> byte |> NewStepsIndex
         elif x > d0 // exclusive because we start counting at 1
-        then x - d0 |> float |> TimeSpan.FromDays |> Interval
+        then x - d0 |> float |> Duration.FromDays |> IntervalXX
         elif l0 <= x && x <= l1
         then x - float l0 |> byte |> LapsedStepsIndex
-        else x - m0 |> float |> TimeSpan.FromMinutes |> Interval
+        else x - m0 |> float |> Duration.FromMinutes |> IntervalXX
     let intervalToDb =
         function
         | NewStepsIndex x ->
             int16 x + Int16.MinValue
         | LapsedStepsIndex x ->
             int16 x + int16 l0
-        | Interval x ->
+        | IntervalXX x ->
             if x.TotalMinutes >= minutesInADay
             then x.TotalDays + d0
             else x.TotalMinutes + m0
@@ -388,8 +389,8 @@ type LeafMeta = {
     StackId: Guid
     BranchId: Guid
     MaxIndexInclusive: int16
-    Created: DateTime
-    Modified: DateTime option
+    Created: Instant
+    Modified: Instant option
     IsDmca: bool
     IsCollected: bool
     IsLatest: bool
@@ -413,7 +414,7 @@ type Card = {
     IsLapsed: bool
     EaseFactorInPermille: int16
     IntervalOrStepsIndex: IntervalOrStepsIndex
-    Due: DateTime
+    Due: Instant
     CardSettingId: Guid
     Tags: string list
     DeckId: Guid
@@ -423,7 +424,7 @@ type Comment = {
     User: string
     UserId: Guid
     Text: string
-    Created: DateTime
+    Created: Instant
     IsDmca: bool
 }
 

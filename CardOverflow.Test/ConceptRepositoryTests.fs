@@ -158,7 +158,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
             StackId = stack_1,
             UserId = userId,
             Text = "text",
-            Created = DateTime.UtcNow
+            Created = DateTimeX.UtcNow
         ) |> CommentRepository.addAndSaveAsync c.Db
     let stackId = stack_1
         

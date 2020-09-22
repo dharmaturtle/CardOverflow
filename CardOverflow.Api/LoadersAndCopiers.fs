@@ -13,6 +13,8 @@ open System.Text
 open System.Collections.Generic
 open System.Text.RegularExpressions
 open System.Collections
+open NodaTime
+open CardOverflow.Api
 
 module GrompleafEntity =
     let byteArrayHash (hasher: SHA512) (e: GrompleafEntity) =
@@ -137,8 +139,8 @@ type CardSetting with
           IsDefault = isDefault
           NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
           NewCardsMaxPerDay = entity.NewCardsMaxPerDay
-          NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> TimeSpan.FromDays
-          NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> TimeSpan.FromDays
+          NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> Duration.FromDays
+          NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> Duration.FromDays
           NewCardsStartingEaseFactor = float entity.NewCardsStartingEaseFactorInPermille / 1000.
           NewCardsBuryRelated = entity.NewCardsBuryRelated
           MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
@@ -149,7 +151,7 @@ type CardSetting with
           MatureCardsBuryRelated = entity.MatureCardsBuryRelated
           LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
           LapsedCardsNewIntervalFactor = float entity.LapsedCardsNewIntervalFactorInPermille / 1000.
-          LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> TimeSpan.FromDays
+          LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> Duration.FromDays
           LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
           ShowAnswerTimer = entity.ShowAnswerTimer
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
@@ -250,7 +252,7 @@ type Grompleaf with
             IsRightToLeft = false
             IsSticky = true
         }]
-        Created = DateTime.UtcNow
+        Created = DateTimeX.UtcNow
         Modified = None
         LatexPre = """\documentclass[12pt]{article}
 \special{papersize=3in,5in}
@@ -360,7 +362,7 @@ type LeafMeta with
             StackId = Guid.Empty
             BranchId = Guid.Empty
             MaxIndexInclusive = 0s
-            Created = DateTime.UtcNow
+            Created = DateTimeX.UtcNow
             Modified = None
             IsDmca = false
             IsLatest = true
@@ -430,7 +432,7 @@ type Card with
             IsLapsed = false
             EaseFactorInPermille = 0s
             IntervalOrStepsIndex = NewStepsIndex 0uy
-            Due = DateTime.UtcNow
+            Due = DateTimeX.UtcNow
             CardSettingId = cardSettingId
             Tags = tags
             DeckId = deckId

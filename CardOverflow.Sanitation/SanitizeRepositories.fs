@@ -19,6 +19,7 @@ open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
 open System.Runtime.InteropServices
+open NodaTime
 open Npgsql
 open Dapper
 
@@ -577,13 +578,13 @@ module SanitizeDeckRepository =
         |>% Seq.toList
 
 module SanitizeHistoryRepository =
-    let AddAndSaveAsync (db: CardOverflowDb) cardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: TimeSpan) intervalOrSteps: Task<unit> = task {
+    let AddAndSaveAsync (db: CardOverflowDb) cardId score timestamp interval easeFactor (timeFromSeeingQuestionToScore: Duration) intervalOrSteps: Task<unit> = task {
         let! card = db.Card.SingleAsync(fun x -> x.Id = cardId)
         let history =
             HistoryEntity(
                 Score = Score.toDb score,
                 Created = timestamp,
-                IntervalWithUnusedStepsIndex = (interval |> Interval |> IntervalOrStepsIndex.intervalToDb),
+                IntervalWithUnusedStepsIndex = (interval |> IntervalXX |> IntervalOrStepsIndex.intervalToDb),
                 EaseFactorInPermille = (easeFactor * 1000. |> Math.Round |> int16),
                 TimeFromSeeingQuestionToScoreInSecondsPlus32768 = (timeFromSeeingQuestionToScore.TotalSeconds + float Int16.MinValue |> int16),
                 LeafId = Nullable card.LeafId,
@@ -593,7 +594,7 @@ module SanitizeHistoryRepository =
         card.Histories.Add history
         db.Entry(history).State <- EntityState.Added
         card.IntervalOrStepsIndex <- intervalOrSteps |> IntervalOrStepsIndex.intervalToDb
-        card.Due <- DateTime.UtcNow + interval
+        card.Due <- DateTimeX.UtcNow + interval
         card.EaseFactorInPermille <- easeFactor * 1000. |> Math.Round |> int16
         card.IsLapsed <-
             match intervalOrSteps with
@@ -908,11 +909,11 @@ module SanitizeFeedback =
 
 module Minutes =
     let private intString (f: float) = f |> Convert.ToInt32 |> string
-    let toString (timespan: TimeSpan) =
+    let toString (timespan: Duration) =
         intString timespan.TotalMinutes
     let fromString raw =
-        raw |> int |> float |> TimeSpan.FromMinutes
-    let toStringList (timespans: TimeSpan list) =
+        raw |> int |> float |> Duration.FromMinutes
+    let toStringList (timespans: Duration list) =
         timespans |> List.map toString |> fun x -> String.Join(' ', x)
     let fromStringList (raw: string) =
         raw.Split ' ' |> Seq.map fromString |> List.ofSeq
@@ -980,8 +981,8 @@ type ViewCardSetting = {
         IsDefault = this.IsDefault
         NewCardsSteps = this.NewCardsSteps |> Minutes.fromStringList
         NewCardsMaxPerDay = this.NewCardsMaxPerDay |> int16
-        NewCardsGraduatingInterval = this.NewCardsGraduatingInterval |> float |> TimeSpan.FromDays
-        NewCardsEasyInterval = this.NewCardsEasyInterval |> float |> TimeSpan.FromDays
+        NewCardsGraduatingInterval = this.NewCardsGraduatingInterval |> float |> Duration.FromDays
+        NewCardsEasyInterval = this.NewCardsEasyInterval |> float |> Duration.FromDays
         NewCardsStartingEaseFactor = this.NewCardsStartingEaseFactor |> Convert.fromPercent
         NewCardsBuryRelated = this.NewCardsBuryRelated
         MatureCardsMaxPerDay = this.MatureCardsMaxPerDay |> int16
@@ -992,7 +993,7 @@ type ViewCardSetting = {
         MatureCardsBuryRelated = this.MatureCardsBuryRelated
         LapsedCardsSteps = this.LapsedCardsSteps |> Minutes.fromStringList
         LapsedCardsNewIntervalFactor = this.LapsedCardsNewIntervalFactor |> Convert.fromPercent
-        LapsedCardsMinimumInterval = this.LapsedCardsMinimumInterval |> float |> TimeSpan.FromDays
+        LapsedCardsMinimumInterval = this.LapsedCardsMinimumInterval |> float |> Duration.FromDays
         LapsedCardsLeechThreshold = this.LapsedCardsLeechThreshold |> int16
         ShowAnswerTimer = this.ShowAnswerTimer
         AutomaticallyPlayAudio = this.AutomaticallyPlayAudio

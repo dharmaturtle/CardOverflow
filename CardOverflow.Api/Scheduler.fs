@@ -3,6 +3,7 @@ namespace CardOverflow.Api
 open CardOverflow.Pure
 open System
 open Serilog
+open NodaTime
 
 module Scheduler =
     let max a b = if a > b then a else b
@@ -23,17 +24,17 @@ module Scheduler =
                 let stepIndex = stepIndex + 1uy
                 match stepTimespans |> List.tryItem (int stepIndex) with
                 | Some span -> span, toStep stepIndex
-                | None -> graduatingInterval, Interval graduatingInterval
-            | Easy -> easyInterval, Interval easyInterval
+                | None -> graduatingInterval, IntervalXX graduatingInterval
+            | Easy -> easyInterval, IntervalXX easyInterval
         let calculateInterval previousInterval =
-            let interval (previousInterval: TimeSpan) (rawInterval: TimeSpan) =
+            let interval (previousInterval: Duration) (rawInterval: Duration) =
                 max (rawInterval * card.Settings.MatureCardsIntervalFactor)
-                    (TimeSpan.FromDays 1. |> previousInterval.Add)
+                    (Duration.FromDays 1. |> (+) previousInterval)
                 |> min (TimeSpanInt16.value card.Settings.MatureCardsMaximumInterval)
-            let delta = utcNow - card.Due |> max TimeSpan.Zero
+            let delta = utcNow - card.Due |> max Duration.Zero
             let hard = interval previousInterval <| previousInterval * card.Settings.MatureCardsHardIntervalFactor
-            let good = interval hard (delta * 0.5 |> (+) previousInterval |> (*) card.EaseFactor)
-            let easy = interval good (delta * 1.  |> (+) previousInterval |> (*) card.EaseFactor |> (*) card.Settings.MatureCardsEaseFactorEasyBonusFactor)
+            let good = interval hard (delta * 0.5 |> (+) previousInterval |> fun x -> x * card.EaseFactor)
+            let easy = interval good (delta * 1.  |> (+) previousInterval |> fun x -> x * card.EaseFactor) |> fun x -> x * card.Settings.MatureCardsEaseFactorEasyBonusFactor
             match score with
             | Again -> card.Settings.NewCardsSteps.Head, 0.
             | Hard -> hard, card.EaseFactor - 0.15
@@ -56,13 +57,13 @@ module Scheduler =
                 card.Settings.NewCardsGraduatingInterval // medTODO actually the card settings are all screwed up, refactor the entire scheduler later when you figure out how the hell the Anki one works
                 i,
             card.Settings.LapsedCardsNewIntervalFactor
-        | Interval i ->
+        | IntervalXX i ->
             let interval, ease = calculateInterval i
-            (interval, Interval interval), ease
+            (interval, IntervalXX interval), ease
 
 open Scheduler
 type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
-    let fuzz(interval: TimeSpan) =
+    let fuzz(interval: Duration) =
         let fuzzRangeInDaysInclusive =
             let days = interval.TotalDays
             let atLeastOneDay = max 1.
@@ -73,7 +74,7 @@ type Scheduler(randomProvider: RandomProvider, time: TimeProvider) =
             elif days < 30. then max 2. (days * 0.15) |> buildFuzzierInterval
             else                 max 4. (days * 0.05) |> buildFuzzierInterval
         // lowTODO find an implementation that is max inclusive
-        randomProvider.float fuzzRangeInDaysInclusive |> TimeSpan.FromDays
+        randomProvider.float fuzzRangeInDaysInclusive |> Duration.FromDays
 
     member _.Calculate (card: QuizCard) score =
         rawInterval time.utcNow card score

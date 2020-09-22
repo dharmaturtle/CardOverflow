@@ -11,6 +11,7 @@ open System
 open Xunit
 open CardOverflow.Entity
 open MappingTools
+open NodaTime
 
 [<Fact>]
 let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expected`` (): unit =
@@ -18,10 +19,10 @@ let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expe
         {   Id = Guid.Empty
             Name = "Default"
             IsDefault = false
-            NewCardsSteps = [TimeSpan.FromMinutes 1. ; TimeSpan.FromMinutes 10.]
+            NewCardsSteps = [Duration.FromMinutes 1. ; Duration.FromMinutes 10.]
             NewCardsMaxPerDay = 20s
-            NewCardsGraduatingInterval = TimeSpan.FromDays 1.
-            NewCardsEasyInterval = TimeSpan.FromDays 4.
+            NewCardsGraduatingInterval = Duration.FromDays 1.
+            NewCardsEasyInterval = Duration.FromDays 4.
             NewCardsStartingEaseFactor = 2.5
             NewCardsBuryRelated = false
             MatureCardsMaxPerDay = 200s
@@ -30,9 +31,9 @@ let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expe
             MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
             MatureCardsHardIntervalFactor = 1.2
             MatureCardsBuryRelated = false
-            LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
+            LapsedCardsSteps = [ Duration.FromMinutes 10. ]
             LapsedCardsNewIntervalFactor = 0.
-            LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
+            LapsedCardsMinimumInterval = Duration.FromDays 1.
             LapsedCardsLeechThreshold = 8s
             ShowAnswerTimer = false
             AutomaticallyPlayAudio = true

@@ -23,6 +23,7 @@ open System
 open System.Runtime.ExceptionServices
 open System.Runtime.CompilerServices
 open NUlid
+open NodaTime
 
 module CommieldRepository =
     let get (db: CardOverflowDb) fieldId = task {
@@ -108,7 +109,7 @@ module GromplateRepository =
 
 module HistoryRepository =
     let getHeatmap (db: CardOverflowDb) userId = task {
-        let oneYearishAgo = DateTime.UtcNow - TimeSpan.FromDays (53. * 7. - 1.) // always show full weeks of slightly more than a year; -1 is from allDateCounts being inclusive
+        let oneYearishAgo = DateTimeX.UtcNow - Duration.FromDays (53. * 7. - 1.) // always show full weeks of slightly more than a year; -1 is from allDateCounts being inclusive
         let! dateCounts =
             (query {
                 for h in db.History do
@@ -116,7 +117,7 @@ module HistoryRepository =
                 groupValBy h h.Created.Date into g
                 select { Date = g.Key; Count = g.Count() }
             }).ToListAsync()
-        return Heatmap.get oneYearishAgo DateTime.UtcNow (dateCounts |> List.ofSeq) }
+        return Heatmap.get oneYearishAgo DateTimeX.UtcNow (dateCounts |> List.ofSeq) }
 
 module ExploreStackRepository =
     let getCollectedIds (db: CardOverflowDb) userId stackId =
@@ -435,7 +436,7 @@ module StackRepository =
             }
         }
     let GetQuizBatch (db: CardOverflowDb) userId query =
-        let tomorrow = DateTime.UtcNow.AddDays 1.
+        let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
         task {
             let! cards =
                 (searchCollected db userId query)
@@ -448,7 +449,7 @@ module StackRepository =
                 cards |> Seq.map QuizCard.load |> toResizeArray
         }
     let GetQuizBatchDeck (db: CardOverflowDb) deckId =
-        let tomorrow = DateTime.UtcNow.AddDays 1.
+        let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
         task {
             let! cards =
                 (collectedByDeck db deckId)
@@ -461,7 +462,7 @@ module StackRepository =
                 cards |> Seq.map QuizCard.load |> toResizeArray
         }
     let GetDueCount (db: CardOverflowDb) userId query =
-        let tomorrow = DateTime.UtcNow.AddDays 1.
+        let tomorrow = DateTimeX.UtcNow + Duration.FromDays 1
         (searchCollected db userId query)
             .Where(fun x -> x.Due < tomorrow && x.CardState = CardState.toDb Normal)
             .Count()
@@ -593,10 +594,10 @@ module CardSettingsRepository =
         { Id = Guid.Empty
           Name = "Default"
           IsDefault = true
-          NewCardsSteps = [ TimeSpan.FromMinutes 1.; TimeSpan.FromMinutes 10. ]
+          NewCardsSteps = [ Duration.FromMinutes 1.; Duration.FromMinutes 10. ]
           NewCardsMaxPerDay = int16 20
-          NewCardsGraduatingInterval = TimeSpan.FromDays 1.
-          NewCardsEasyInterval = TimeSpan.FromDays 4.
+          NewCardsGraduatingInterval = Duration.FromDays 1.
+          NewCardsEasyInterval = Duration.FromDays 4.
           NewCardsStartingEaseFactor = 2.5
           NewCardsBuryRelated = true
           MatureCardsMaxPerDay = int16 200
@@ -605,9 +606,9 @@ module CardSettingsRepository =
           MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
           MatureCardsHardIntervalFactor = 1.2
           MatureCardsBuryRelated = true
-          LapsedCardsSteps = [ TimeSpan.FromMinutes 10. ]
+          LapsedCardsSteps = [ Duration.FromMinutes 10. ]
           LapsedCardsNewIntervalFactor = 0.
-          LapsedCardsMinimumInterval = TimeSpan.FromDays 1.
+          LapsedCardsMinimumInterval = Duration.FromDays 1.
           LapsedCardsLeechThreshold = int16 8
           ShowAnswerTimer = false
           AutomaticallyPlayAudio = false

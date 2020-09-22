@@ -6,22 +6,25 @@ open CardOverflow.Debug
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 open System.Text.RegularExpressions
+open NodaTime
+open System.Globalization
 
-let toString (timeSpan: TimeSpan) =
-    match timeSpan.Duration() with
-    | duration when duration < TimeSpan.FromMinutes 1. -> if timeSpan >= TimeSpan.Zero then "1 min" else "-1 min"
-    | duration when duration < TimeSpan.FromHours 1.   -> sprintf "%.0f min"   timeSpan.TotalMinutes
-    | duration when duration < TimeSpan.FromDays 1.    -> sprintf "%.0f h"     timeSpan.TotalHours
-    | duration when duration < TimeSpan.FromDays 30.   -> sprintf "%.0f d"     timeSpan.TotalDays
-    | duration when duration < TimeSpan.FromDays 365.  -> sprintf "%.1f mo" <| timeSpan.TotalDays / 30.
-    | _                                                -> sprintf "%.1f yr" <| timeSpan.TotalDays / 365.
+let toString (timeSpan: Duration) =
+    let abs = if timeSpan >= Duration.Zero then timeSpan else -timeSpan
+    match abs with
+    | abs when abs < Duration.FromMinutes 1L -> if timeSpan >= Duration.Zero then "1 min" else "-1 min"
+    | abs when abs < Duration.FromHours 1.   -> sprintf "%.0f min"   timeSpan.TotalMinutes
+    | abs when abs < Duration.FromDays 1.    -> sprintf "%.0f h"     timeSpan.TotalHours
+    | abs when abs < Duration.FromDays 30.   -> sprintf "%.0f d"     timeSpan.TotalDays
+    | abs when abs < Duration.FromDays 365.  -> sprintf "%.1f mo" <| timeSpan.TotalDays / 30.
+    | _                                      -> sprintf "%.1f yr" <| timeSpan.TotalDays / 365.
 
-let timestampToPretty (timestamp: DateTime) (currentTime: DateTime) =
+let timestampToPretty (timestamp: Instant) (currentTime: Instant) =
     let delta = currentTime - timestamp
-    if delta < TimeSpan.FromDays 31. then
+    if delta < Duration.FromDays 31. then
         toString delta + " ago"
     else
-        "on " + timestamp.ToString("""MMM d 'xsighx' yy""").Replace("xsighx ", "'")
+        "on " + timestamp.ToString("""MMM d 'xsighx' yy""", CultureInfo.InvariantCulture).Replace("xsighx ", "'")
 
 let insertDiffColors (html: string) =
     let style =

@@ -77,6 +77,7 @@ type Container with
         container.Register<Task<NpgsqlConnection>>(npgsqlConnection, Lifestyle.Scoped)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
         let loggerFactory = new LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
+        NpgsqlConnection.GlobalTypeMapper.UseNodaTime() |> ignore
         ServiceCollection() // https://stackoverflow.com/a/60290696
             .AddEntityFrameworkNpgsql()
             .AddSingleton<ILoggerFactory>(loggerFactory)
@@ -84,7 +85,7 @@ type Container with
             .AddDbContextPool<CardOverflowDb>(fun optionsBuilder ->
                 //loggerFactory.AddSerilog(container.GetInstance<ILogger>()) |> ignore
                 optionsBuilder
-                    .UseNpgsql(container.GetInstance<ConnectionString>() |> ConnectionString.value)
+                    .UseNpgsql((container.GetInstance<ConnectionString>() |> ConnectionString.value), fun x -> x.UseNodaTime() |> ignore)
                     .UseSnakeCaseNamingConvention()
                     //.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // lowTODO uncommenting this seems to require adding .Includes() in places, but shouldn't the above line do that?
                     //.EnableSensitiveDataLogging()

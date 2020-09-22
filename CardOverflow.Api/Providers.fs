@@ -1,9 +1,10 @@
 namespace CardOverflow.Api
 
 open System
+open NodaTime
 
 type TimeProvider () =
-    member __.utcNow = DateTime.UtcNow
+    member __.utcNow = SystemClock.Instance.GetCurrentInstant()
 
 type RandomProvider () =
     let r = Random()

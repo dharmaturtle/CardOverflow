@@ -18,6 +18,7 @@ open FsToolkit.ErrorHandling
 open FSharp.Control.Tasks
 open CardOverflow.Debug
 open System.Collections
+open NodaTime
 
 module internal Assert =
     let SingleI x =
@@ -58,7 +59,7 @@ module internal Assert =
                 Diff.ToConsole(sprintf "%A" x,
                                sprintf "%A" y)
                 reraise()
-    let dateTimeEqual delta (x: DateTime) (y: DateTime) =
+    let dateTimeEqual delta (x: Instant) (y: Instant) =
         Math.Abs((x - y).TotalSeconds) < delta
         |> Assert.True
 

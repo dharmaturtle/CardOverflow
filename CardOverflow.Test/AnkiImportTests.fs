@@ -21,6 +21,7 @@ open FSharp.Text.RegexProvider
 open ContainerExtensions
 open SimpleInjector
 open SimpleInjector.Lifestyles
+open System.Globalization
 
 [<Fact>]
 let ``Import relationships has reduced Gromplates, also fieldvalue tests`` (): unit =
@@ -249,7 +250,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:14:29"
             "4/8/2019 02:14:29"
         ].ToList(),
-        c.Db.Grompleaf.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.Grompleaf.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/23/2020 19:40:46"
@@ -260,7 +261,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "6/16/2019 00:51:55"
             "6/16/2019 00:53:30"
         ].ToList(),
-        c.Db.Grompleaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.Grompleaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:32"
@@ -272,7 +273,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
         ].ToList(),
-        c.Db.Leaf.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.Leaf.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53"
@@ -284,7 +285,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
         ].ToList(),
-        c.Db.Leaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss")).OrderBy(fun x -> x)
+        c.Db.Leaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
     Assert.Equal(8, c.Db.Stack.Count())
     Assert.Equal(10, c.Db.Card.Count(fun x -> x.UserId = userId))

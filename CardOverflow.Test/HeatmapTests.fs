@@ -6,6 +6,7 @@ open System.Linq
 open CardOverflow.Pure
 open Xunit
 open System
+open NodaTime
 
 let heatmapMaxConseuctiveData: Object [] [] = [|
         [| 0; [0] |]

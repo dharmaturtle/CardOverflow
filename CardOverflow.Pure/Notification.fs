@@ -9,6 +9,7 @@ open System.Linq
 open Microsoft.FSharp.Core.Operators.Checked
 open System.ComponentModel.DataAnnotations
 open Thoth.Json.Net
+open NodaTime
 
 (*  If you change this file, make sure it is backwards compatible!
 
@@ -71,6 +72,6 @@ type Notification = {
     Id: Guid
     SenderId: Guid
     SenderDisplayName: string
-    Created: DateTime
+    Created: Instant
     Message: Message
 }

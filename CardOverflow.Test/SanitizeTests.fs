@@ -7,6 +7,7 @@ open Xunit
 open System
 open CardOverflow.Sanitation
 open CardOverflow.Test
+open NodaTime
 
 [<Fact>]
 let ``GetStackId fails on bork``(): unit =
@@ -17,24 +18,24 @@ let ``GetStackId fails on bork``(): unit =
 [<Fact>]
 let ``Minutes.fromString 10 = 10m`` (): unit =
     let actual = Minutes.fromString "10"
-    let expected = TimeSpan.FromMinutes 10.
+    let expected = Duration.FromMinutes 10.
     Assert.Equal(expected, actual)
 
 [<Fact>]
 let ``Minutes.fromStringList "1 10" = 10m`` (): unit =
     let actual = Minutes.fromStringList "1 10"
-    let expected = [ 1. ; 10. ] |> List.map TimeSpan.FromMinutes
-    Assert.Equal<TimeSpan seq>(expected, actual)
+    let expected = [ 1. ; 10. ] |> List.map Duration.FromMinutes
+    Assert.Equal<Duration seq>(expected, actual)
     
 [<Fact>]
 let ``Minutes.toString 10 = 10`` (): unit =
-    let actual = 10. |> TimeSpan.FromMinutes |> Minutes.toString
+    let actual = 10. |> Duration.FromMinutes |> Minutes.toString
     let expected = "10"
     Assert.Equal(expected, actual)
 
 [<Fact>]
 let ``Minutes.toStringList [1 10] = "1 10"``(): unit =
-    let actual = [ 1. ; 10. ] |> List.map TimeSpan.FromMinutes |> Minutes.toStringList
+    let actual = [ 1. ; 10. ] |> List.map Duration.FromMinutes |> Minutes.toStringList
     let expected = "1 10"
     Assert.Equal(expected, actual)
 

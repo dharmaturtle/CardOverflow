@@ -17,6 +17,7 @@ open CardOverflow.Api
 open CardOverflow.Entity
 open System.ComponentModel.DataAnnotations
 open LoadersAndCopiers
+open NodaTime
 
 type UserClaims = {
     Id: Guid
@@ -60,8 +61,8 @@ type ViewGrompleaf = {
     GromplateId: Guid
     Css: string
     Fields: ViewField ResizeArray
-    Created: DateTime
-    Modified: DateTime option
+    Created: Instant
+    Modified: Instant option
     LatexPre: string
     LatexPost: string
     Templates: GromplateType
@@ -115,8 +116,8 @@ type ViewSearchGrompleaf = {
     GromplateId: Guid
     Css: string
     Fields: ViewField ResizeArray
-    Created: DateTime
-    Modified: DateTime option
+    Created: Instant
+    Modified: Instant option
     LatexPre: string
     LatexPost: string
     Templates: GromplateType

@@ -16,6 +16,7 @@ open System.IO.Compression
 open System.Security.Cryptography
 open System.Collections.Generic
 open Microsoft.EntityFrameworkCore
+open NodaTime
 
 module AnkiDefaults =
     let grompleafIdByHash = // lowTODO could make this a byte array
@@ -155,7 +156,7 @@ module AnkiImporter =
                     ankiDb.Notes
                 |> Map.ofSeq
             let! cardByNoteId =
-                let collectionCreationTimeStamp = DateTimeOffset.FromUnixTimeSeconds(col.Crt).UtcDateTime
+                let collectionCreationTimeStamp = Instant.FromUnixTimeSeconds col.Crt
                 ankiDb.Cards
                 |> List.map (Anki.mapCard cardSettingAndDeckByDeckId cardsAndTagsByNoteId collectionCreationTimeStamp userId getCCard)
                 |> Result.consolidate
