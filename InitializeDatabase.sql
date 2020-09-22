@@ -1,4 +1,4 @@
--- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -25,6 +25,604 @@ CREATE TYPE public.notification_type AS ENUM (
 
 
 ALTER TYPE public.notification_type OWNER TO postgres;
+
+CREATE TYPE public.timezone_name AS ENUM (
+    'Africa/Abidjan',
+    'Africa/Accra',
+    'Africa/Addis_Ababa',
+    'Africa/Algiers',
+    'Africa/Asmara',
+    'Africa/Asmera',
+    'Africa/Bamako',
+    'Africa/Bangui',
+    'Africa/Banjul',
+    'Africa/Bissau',
+    'Africa/Blantyre',
+    'Africa/Brazzaville',
+    'Africa/Bujumbura',
+    'Africa/Cairo',
+    'Africa/Casablanca',
+    'Africa/Ceuta',
+    'Africa/Conakry',
+    'Africa/Dakar',
+    'Africa/Dar_es_Salaam',
+    'Africa/Djibouti',
+    'Africa/Douala',
+    'Africa/El_Aaiun',
+    'Africa/Freetown',
+    'Africa/Gaborone',
+    'Africa/Harare',
+    'Africa/Johannesburg',
+    'Africa/Juba',
+    'Africa/Kampala',
+    'Africa/Khartoum',
+    'Africa/Kigali',
+    'Africa/Kinshasa',
+    'Africa/Lagos',
+    'Africa/Libreville',
+    'Africa/Lome',
+    'Africa/Luanda',
+    'Africa/Lubumbashi',
+    'Africa/Lusaka',
+    'Africa/Malabo',
+    'Africa/Maputo',
+    'Africa/Maseru',
+    'Africa/Mbabane',
+    'Africa/Mogadishu',
+    'Africa/Monrovia',
+    'Africa/Nairobi',
+    'Africa/Ndjamena',
+    'Africa/Niamey',
+    'Africa/Nouakchott',
+    'Africa/Ouagadougou',
+    'Africa/Porto-Novo',
+    'Africa/Sao_Tome',
+    'Africa/Timbuktu',
+    'Africa/Tripoli',
+    'Africa/Tunis',
+    'Africa/Windhoek',
+    'America/Adak',
+    'America/Anchorage',
+    'America/Anguilla',
+    'America/Antigua',
+    'America/Araguaina',
+    'America/Argentina/Buenos_Aires',
+    'America/Argentina/Catamarca',
+    'America/Argentina/ComodRivadavia',
+    'America/Argentina/Cordoba',
+    'America/Argentina/Jujuy',
+    'America/Argentina/La_Rioja',
+    'America/Argentina/Mendoza',
+    'America/Argentina/Rio_Gallegos',
+    'America/Argentina/Salta',
+    'America/Argentina/San_Juan',
+    'America/Argentina/San_Luis',
+    'America/Argentina/Tucuman',
+    'America/Argentina/Ushuaia',
+    'America/Aruba',
+    'America/Asuncion',
+    'America/Atikokan',
+    'America/Atka',
+    'America/Bahia',
+    'America/Bahia_Banderas',
+    'America/Barbados',
+    'America/Belem',
+    'America/Belize',
+    'America/Blanc-Sablon',
+    'America/Boa_Vista',
+    'America/Bogota',
+    'America/Boise',
+    'America/Buenos_Aires',
+    'America/Cambridge_Bay',
+    'America/Campo_Grande',
+    'America/Cancun',
+    'America/Caracas',
+    'America/Catamarca',
+    'America/Cayenne',
+    'America/Cayman',
+    'America/Chicago',
+    'America/Chihuahua',
+    'America/Coral_Harbour',
+    'America/Cordoba',
+    'America/Costa_Rica',
+    'America/Creston',
+    'America/Cuiaba',
+    'America/Curacao',
+    'America/Danmarkshavn',
+    'America/Dawson',
+    'America/Dawson_Creek',
+    'America/Denver',
+    'America/Detroit',
+    'America/Dominica',
+    'America/Edmonton',
+    'America/Eirunepe',
+    'America/El_Salvador',
+    'America/Ensenada',
+    'America/Fortaleza',
+    'America/Fort_Nelson',
+    'America/Fort_Wayne',
+    'America/Glace_Bay',
+    'America/Godthab',
+    'America/Goose_Bay',
+    'America/Grand_Turk',
+    'America/Grenada',
+    'America/Guadeloupe',
+    'America/Guatemala',
+    'America/Guayaquil',
+    'America/Guyana',
+    'America/Halifax',
+    'America/Havana',
+    'America/Hermosillo',
+    'America/Indiana/Indianapolis',
+    'America/Indiana/Knox',
+    'America/Indiana/Marengo',
+    'America/Indiana/Petersburg',
+    'America/Indiana/Tell_City',
+    'America/Indiana/Vevay',
+    'America/Indiana/Vincennes',
+    'America/Indiana/Winamac',
+    'America/Indianapolis',
+    'America/Inuvik',
+    'America/Iqaluit',
+    'America/Jamaica',
+    'America/Jujuy',
+    'America/Juneau',
+    'America/Kentucky/Louisville',
+    'America/Kentucky/Monticello',
+    'America/Knox_IN',
+    'America/Kralendijk',
+    'America/La_Paz',
+    'America/Lima',
+    'America/Los_Angeles',
+    'America/Louisville',
+    'America/Lower_Princes',
+    'America/Maceio',
+    'America/Managua',
+    'America/Manaus',
+    'America/Marigot',
+    'America/Martinique',
+    'America/Matamoros',
+    'America/Mazatlan',
+    'America/Mendoza',
+    'America/Menominee',
+    'America/Merida',
+    'America/Metlakatla',
+    'America/Mexico_City',
+    'America/Miquelon',
+    'America/Moncton',
+    'America/Monterrey',
+    'America/Montevideo',
+    'America/Montreal',
+    'America/Montserrat',
+    'America/Nassau',
+    'America/New_York',
+    'America/Nipigon',
+    'America/Nome',
+    'America/Noronha',
+    'America/North_Dakota/Beulah',
+    'America/North_Dakota/Center',
+    'America/North_Dakota/New_Salem',
+    'America/Ojinaga',
+    'America/Panama',
+    'America/Pangnirtung',
+    'America/Paramaribo',
+    'America/Phoenix',
+    'America/Port-au-Prince',
+    'America/Porto_Acre',
+    'America/Porto_Velho',
+    'America/Port_of_Spain',
+    'America/Puerto_Rico',
+    'America/Punta_Arenas',
+    'America/Rainy_River',
+    'America/Rankin_Inlet',
+    'America/Recife',
+    'America/Regina',
+    'America/Resolute',
+    'America/Rio_Branco',
+    'America/Rosario',
+    'America/Santarem',
+    'America/Santa_Isabel',
+    'America/Santiago',
+    'America/Santo_Domingo',
+    'America/Sao_Paulo',
+    'America/Scoresbysund',
+    'America/Shiprock',
+    'America/Sitka',
+    'America/St_Barthelemy',
+    'America/St_Johns',
+    'America/St_Kitts',
+    'America/St_Lucia',
+    'America/St_Thomas',
+    'America/St_Vincent',
+    'America/Swift_Current',
+    'America/Tegucigalpa',
+    'America/Thule',
+    'America/Thunder_Bay',
+    'America/Tijuana',
+    'America/Toronto',
+    'America/Tortola',
+    'America/Vancouver',
+    'America/Virgin',
+    'America/Whitehorse',
+    'America/Winnipeg',
+    'America/Yakutat',
+    'America/Yellowknife',
+    'Antarctica/Casey',
+    'Antarctica/Davis',
+    'Antarctica/DumontDUrville',
+    'Antarctica/Macquarie',
+    'Antarctica/Mawson',
+    'Antarctica/McMurdo',
+    'Antarctica/Palmer',
+    'Antarctica/Rothera',
+    'Antarctica/South_Pole',
+    'Antarctica/Syowa',
+    'Antarctica/Troll',
+    'Antarctica/Vostok',
+    'Arctic/Longyearbyen',
+    'Asia/Aden',
+    'Asia/Almaty',
+    'Asia/Amman',
+    'Asia/Anadyr',
+    'Asia/Aqtau',
+    'Asia/Aqtobe',
+    'Asia/Ashgabat',
+    'Asia/Ashkhabad',
+    'Asia/Atyrau',
+    'Asia/Baghdad',
+    'Asia/Bahrain',
+    'Asia/Baku',
+    'Asia/Bangkok',
+    'Asia/Barnaul',
+    'Asia/Beirut',
+    'Asia/Bishkek',
+    'Asia/Brunei',
+    'Asia/Calcutta',
+    'Asia/Chita',
+    'Asia/Choibalsan',
+    'Asia/Chongqing',
+    'Asia/Chungking',
+    'Asia/Colombo',
+    'Asia/Dacca',
+    'Asia/Damascus',
+    'Asia/Dhaka',
+    'Asia/Dili',
+    'Asia/Dubai',
+    'Asia/Dushanbe',
+    'Asia/Famagusta',
+    'Asia/Gaza',
+    'Asia/Harbin',
+    'Asia/Hebron',
+    'Asia/Hong_Kong',
+    'Asia/Hovd',
+    'Asia/Ho_Chi_Minh',
+    'Asia/Irkutsk',
+    'Asia/Istanbul',
+    'Asia/Jakarta',
+    'Asia/Jayapura',
+    'Asia/Jerusalem',
+    'Asia/Kabul',
+    'Asia/Kamchatka',
+    'Asia/Karachi',
+    'Asia/Kashgar',
+    'Asia/Kathmandu',
+    'Asia/Katmandu',
+    'Asia/Khandyga',
+    'Asia/Kolkata',
+    'Asia/Krasnoyarsk',
+    'Asia/Kuala_Lumpur',
+    'Asia/Kuching',
+    'Asia/Kuwait',
+    'Asia/Macao',
+    'Asia/Macau',
+    'Asia/Magadan',
+    'Asia/Makassar',
+    'Asia/Manila',
+    'Asia/Muscat',
+    'Asia/Nicosia',
+    'Asia/Novokuznetsk',
+    'Asia/Novosibirsk',
+    'Asia/Omsk',
+    'Asia/Oral',
+    'Asia/Phnom_Penh',
+    'Asia/Pontianak',
+    'Asia/Pyongyang',
+    'Asia/Qatar',
+    'Asia/Qostanay',
+    'Asia/Qyzylorda',
+    'Asia/Rangoon',
+    'Asia/Riyadh',
+    'Asia/Saigon',
+    'Asia/Sakhalin',
+    'Asia/Samarkand',
+    'Asia/Seoul',
+    'Asia/Shanghai',
+    'Asia/Singapore',
+    'Asia/Srednekolymsk',
+    'Asia/Taipei',
+    'Asia/Tashkent',
+    'Asia/Tbilisi',
+    'Asia/Tehran',
+    'Asia/Tel_Aviv',
+    'Asia/Thimbu',
+    'Asia/Thimphu',
+    'Asia/Tokyo',
+    'Asia/Tomsk',
+    'Asia/Ujung_Pandang',
+    'Asia/Ulaanbaatar',
+    'Asia/Ulan_Bator',
+    'Asia/Urumqi',
+    'Asia/Ust-Nera',
+    'Asia/Vientiane',
+    'Asia/Vladivostok',
+    'Asia/Yakutsk',
+    'Asia/Yangon',
+    'Asia/Yekaterinburg',
+    'Asia/Yerevan',
+    'Atlantic/Azores',
+    'Atlantic/Bermuda',
+    'Atlantic/Canary',
+    'Atlantic/Cape_Verde',
+    'Atlantic/Faeroe',
+    'Atlantic/Faroe',
+    'Atlantic/Jan_Mayen',
+    'Atlantic/Madeira',
+    'Atlantic/Reykjavik',
+    'Atlantic/South_Georgia',
+    'Atlantic/Stanley',
+    'Atlantic/St_Helena',
+    'Australia/ACT',
+    'Australia/Adelaide',
+    'Australia/Brisbane',
+    'Australia/Broken_Hill',
+    'Australia/Canberra',
+    'Australia/Currie',
+    'Australia/Darwin',
+    'Australia/Eucla',
+    'Australia/Hobart',
+    'Australia/LHI',
+    'Australia/Lindeman',
+    'Australia/Lord_Howe',
+    'Australia/Melbourne',
+    'Australia/North',
+    'Australia/NSW',
+    'Australia/Perth',
+    'Australia/Queensland',
+    'Australia/South',
+    'Australia/Sydney',
+    'Australia/Tasmania',
+    'Australia/Victoria',
+    'Australia/West',
+    'Australia/Yancowinna',
+    'Brazil/Acre',
+    'Brazil/DeNoronha',
+    'Brazil/East',
+    'Brazil/West',
+    'Canada/Atlantic',
+    'Canada/Central',
+    'Canada/Eastern',
+    'Canada/Mountain',
+    'Canada/Newfoundland',
+    'Canada/Pacific',
+    'Canada/Saskatchewan',
+    'Canada/Yukon',
+    'CET',
+    'Chile/Continental',
+    'Chile/EasterIsland',
+    'CST6CDT',
+    'Cuba',
+    'EET',
+    'Egypt',
+    'Eire',
+    'EST',
+    'EST5EDT',
+    'Etc/GMT',
+    'Etc/GMT+0',
+    'Etc/GMT+1',
+    'Etc/GMT+10',
+    'Etc/GMT+11',
+    'Etc/GMT+12',
+    'Etc/GMT+2',
+    'Etc/GMT+3',
+    'Etc/GMT+4',
+    'Etc/GMT+5',
+    'Etc/GMT+6',
+    'Etc/GMT+7',
+    'Etc/GMT+8',
+    'Etc/GMT+9',
+    'Etc/GMT-0',
+    'Etc/GMT-1',
+    'Etc/GMT-10',
+    'Etc/GMT-11',
+    'Etc/GMT-12',
+    'Etc/GMT-13',
+    'Etc/GMT-14',
+    'Etc/GMT-2',
+    'Etc/GMT-3',
+    'Etc/GMT-4',
+    'Etc/GMT-5',
+    'Etc/GMT-6',
+    'Etc/GMT-7',
+    'Etc/GMT-8',
+    'Etc/GMT-9',
+    'Etc/GMT0',
+    'Etc/Greenwich',
+    'Etc/UCT',
+    'Etc/Universal',
+    'Etc/UTC',
+    'Etc/Zulu',
+    'Europe/Amsterdam',
+    'Europe/Andorra',
+    'Europe/Astrakhan',
+    'Europe/Athens',
+    'Europe/Belfast',
+    'Europe/Belgrade',
+    'Europe/Berlin',
+    'Europe/Bratislava',
+    'Europe/Brussels',
+    'Europe/Bucharest',
+    'Europe/Budapest',
+    'Europe/Busingen',
+    'Europe/Chisinau',
+    'Europe/Copenhagen',
+    'Europe/Dublin',
+    'Europe/Gibraltar',
+    'Europe/Guernsey',
+    'Europe/Helsinki',
+    'Europe/Isle_of_Man',
+    'Europe/Istanbul',
+    'Europe/Jersey',
+    'Europe/Kaliningrad',
+    'Europe/Kiev',
+    'Europe/Kirov',
+    'Europe/Lisbon',
+    'Europe/Ljubljana',
+    'Europe/London',
+    'Europe/Luxembourg',
+    'Europe/Madrid',
+    'Europe/Malta',
+    'Europe/Mariehamn',
+    'Europe/Minsk',
+    'Europe/Monaco',
+    'Europe/Moscow',
+    'Europe/Nicosia',
+    'Europe/Oslo',
+    'Europe/Paris',
+    'Europe/Podgorica',
+    'Europe/Prague',
+    'Europe/Riga',
+    'Europe/Rome',
+    'Europe/Samara',
+    'Europe/San_Marino',
+    'Europe/Sarajevo',
+    'Europe/Saratov',
+    'Europe/Simferopol',
+    'Europe/Skopje',
+    'Europe/Sofia',
+    'Europe/Stockholm',
+    'Europe/Tallinn',
+    'Europe/Tirane',
+    'Europe/Tiraspol',
+    'Europe/Ulyanovsk',
+    'Europe/Uzhgorod',
+    'Europe/Vaduz',
+    'Europe/Vatican',
+    'Europe/Vienna',
+    'Europe/Vilnius',
+    'Europe/Volgograd',
+    'Europe/Warsaw',
+    'Europe/Zagreb',
+    'Europe/Zaporozhye',
+    'Europe/Zurich',
+    'GB',
+    'GB-Eire',
+    'GMT',
+    'GMT+0',
+    'GMT-0',
+    'GMT0',
+    'Greenwich',
+    'Hongkong',
+    'HST',
+    'Iceland',
+    'Indian/Antananarivo',
+    'Indian/Chagos',
+    'Indian/Christmas',
+    'Indian/Cocos',
+    'Indian/Comoro',
+    'Indian/Kerguelen',
+    'Indian/Mahe',
+    'Indian/Maldives',
+    'Indian/Mauritius',
+    'Indian/Mayotte',
+    'Indian/Reunion',
+    'Iran',
+    'Israel',
+    'Jamaica',
+    'Japan',
+    'Kwajalein',
+    'Libya',
+    'MET',
+    'Mexico/BajaNorte',
+    'Mexico/BajaSur',
+    'Mexico/General',
+    'MST',
+    'MST7MDT',
+    'Navajo',
+    'NZ',
+    'NZ-CHAT',
+    'Pacific/Apia',
+    'Pacific/Auckland',
+    'Pacific/Bougainville',
+    'Pacific/Chatham',
+    'Pacific/Chuuk',
+    'Pacific/Easter',
+    'Pacific/Efate',
+    'Pacific/Enderbury',
+    'Pacific/Fakaofo',
+    'Pacific/Fiji',
+    'Pacific/Funafuti',
+    'Pacific/Galapagos',
+    'Pacific/Gambier',
+    'Pacific/Guadalcanal',
+    'Pacific/Guam',
+    'Pacific/Honolulu',
+    'Pacific/Johnston',
+    'Pacific/Kiritimati',
+    'Pacific/Kosrae',
+    'Pacific/Kwajalein',
+    'Pacific/Majuro',
+    'Pacific/Marquesas',
+    'Pacific/Midway',
+    'Pacific/Nauru',
+    'Pacific/Niue',
+    'Pacific/Norfolk',
+    'Pacific/Noumea',
+    'Pacific/Pago_Pago',
+    'Pacific/Palau',
+    'Pacific/Pitcairn',
+    'Pacific/Pohnpei',
+    'Pacific/Ponape',
+    'Pacific/Port_Moresby',
+    'Pacific/Rarotonga',
+    'Pacific/Saipan',
+    'Pacific/Samoa',
+    'Pacific/Tahiti',
+    'Pacific/Tarawa',
+    'Pacific/Tongatapu',
+    'Pacific/Truk',
+    'Pacific/Wake',
+    'Pacific/Wallis',
+    'Pacific/Yap',
+    'Poland',
+    'Portugal',
+    'PRC',
+    'PST8PDT',
+    'ROC',
+    'ROK',
+    'Singapore',
+    'Turkey',
+    'UCT',
+    'Universal',
+    'US/Alaska',
+    'US/Aleutian',
+    'US/Arizona',
+    'US/Central',
+    'US/East-Indiana',
+    'US/Eastern',
+    'US/Hawaii',
+    'US/Indiana-Starke',
+    'US/Michigan',
+    'US/Mountain',
+    'US/Pacific',
+    'US/Samoa',
+    'UTC',
+    'W-SU',
+    'WET',
+    'Zulu'
+);
+
+
+ALTER TYPE public.timezone_name OWNER TO postgres;
 
 CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -439,7 +1037,7 @@ CREATE TABLE public.alpha_beta_key (
     key character varying(50) NOT NULL,
     is_used boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    CONSTRAINT "alpha_beta_key. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "alpha_beta_key. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -455,7 +1053,7 @@ CREATE TABLE public.branch (
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    CONSTRAINT "branch. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "branch. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -481,7 +1079,7 @@ CREATE TABLE public.card (
     back_personal_field character varying(5000) NOT NULL,
     tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "card. id. is valid" CHECK ((public.validate_ulid(id))),
+    CONSTRAINT "card. id. is valid" CHECK (public.validate_ulid(id)),
     CONSTRAINT "card. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
@@ -536,7 +1134,7 @@ CREATE TABLE public.card_setting (
     replay_question_audio_on_answer boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    CONSTRAINT "card_setting. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "card_setting. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -553,7 +1151,7 @@ CREATE TABLE public.commeaf (
     b_weight_tsv_helper text,
     tsv tsvector,
     CONSTRAINT "commeaf. b_weight_tsv_helper. is null check" CHECK ((b_weight_tsv_helper IS NULL)),
-    CONSTRAINT "commeaf. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "commeaf. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -576,7 +1174,7 @@ CREATE TABLE public.comment_gromplate (
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
     is_dmca boolean NOT NULL,
-    CONSTRAINT "comment_gromplate. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "comment_gromplate. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -590,7 +1188,7 @@ CREATE TABLE public.comment_stack (
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
     is_dmca boolean NOT NULL,
-    CONSTRAINT "comment_stack. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "comment_stack. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -603,7 +1201,7 @@ CREATE TABLE public.commield (
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    CONSTRAINT "commield. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "commield. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -619,7 +1217,7 @@ CREATE TABLE public.deck (
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
     tsv tsvector,
-    CONSTRAINT "deck. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "deck. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -643,7 +1241,7 @@ CREATE TABLE public.feedback (
     modified timestamp with time zone,
     parent_id uuid,
     priority smallint,
-    CONSTRAINT "feedback. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "feedback. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -655,7 +1253,7 @@ CREATE TABLE public.file (
     data bytea NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     sha256 bytea NOT NULL,
-    CONSTRAINT "file. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "file. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -677,7 +1275,7 @@ CREATE TABLE public.filter (
     query character varying(256) NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    CONSTRAINT "filter. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "filter. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -690,7 +1288,7 @@ CREATE TABLE public.gromplate (
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    CONSTRAINT "gromplate. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "gromplate. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -715,7 +1313,7 @@ CREATE TABLE public.grompleaf (
     c_weight_tsv_helper text,
     tsv tsvector,
     CONSTRAINT "grompleaf. c_weight_tsv_helper. is null check" CHECK ((c_weight_tsv_helper IS NULL)),
-    CONSTRAINT "grompleaf. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "grompleaf. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -732,7 +1330,7 @@ CREATE TABLE public.history (
     interval_with_unused_steps_index smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
     time_from_seeing_question_to_score_in_seconds_plus32768 smallint NOT NULL,
-    CONSTRAINT "history. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "history. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -754,7 +1352,7 @@ CREATE TABLE public.leaf (
     tsv_helper text,
     tsv tsvector,
     max_index_inclusive smallint NOT NULL,
-    CONSTRAINT "leaf. id. is valid" CHECK ((public.validate_ulid(id))),
+    CONSTRAINT "leaf. id. is valid" CHECK (public.validate_ulid(id)),
     CONSTRAINT "leaf. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
@@ -766,7 +1364,7 @@ CREATE TABLE public.relationship (
     name character varying(250) NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     tsv tsvector,
-    CONSTRAINT "relationship. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "relationship. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -808,7 +1406,7 @@ CREATE TABLE public.tag (
     name character varying(250) NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     tsv tsvector,
-    CONSTRAINT "tag. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "tag. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -853,7 +1451,7 @@ CREATE TABLE public.notification (
     deck_id uuid,
     gromplate_id uuid,
     grompleaf_id uuid,
-    CONSTRAINT "notification. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "notification. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -873,8 +1471,9 @@ CREATE TABLE public.padawan (
     is_night_mode boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
+    timezone public.timezone_name DEFAULT 'UTC',
     tsv tsvector,
-    CONSTRAINT "user. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "user. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -886,7 +1485,7 @@ CREATE TABLE public.potential_signups (
     message character varying(1000) NOT NULL,
     one_is_alpha2_beta3_ga smallint NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    CONSTRAINT "potential_signups. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "potential_signups. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -909,7 +1508,7 @@ CREATE TABLE public.stack (
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    CONSTRAINT "stack. id. is valid" CHECK ((public.validate_ulid(id)))
+    CONSTRAINT "stack. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
@@ -1002,9 +1601,9 @@ ALTER TABLE public.vote_2_feedback OWNER TO postgres;
 
 
 
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-000000000001', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992', NULL);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-000000000002', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992', NULL);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-000000000003', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-000000000001', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-000000000002', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-000000000003', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
 
 
 
@@ -1017,9 +1616,9 @@ INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, 
 
 
 
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000001', '00000000-0000-0000-0000-000000000001', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000002', '00000000-0000-0000-0000-000000000002', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
-INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000003', '00000000-0000-0000-0000-000000000003', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000001', '00000000-0000-0000-0000-000000000001', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000002', '00000000-0000-0000-0000-000000000002', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
+INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, created, modified, tsv) VALUES ('00000000-0000-0000-0000-decc00000003', '00000000-0000-0000-0000-000000000003', 'Default Deck', false, NULL, 0, '2020-08-14 00:00:00+00', NULL, '''deck'':2 ''default'':1');
 
 
 
@@ -1032,11 +1631,11 @@ INSERT INTO public.deck (id, user_id, name, is_public, source_id, followers, cre
 
 
 
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000001', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001001', true, '2020-08-15 21:40:11.66992', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001002', true, '2020-08-15 21:40:11.66992', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000003', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001003', true, '2020-08-15 21:40:11.66992', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000004', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001006', true, '2020-08-15 21:40:11.66992', NULL);
-INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000005', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001007', true, '2020-08-15 21:40:11.66992', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000001', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001001', true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000002', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001002', true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000003', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001003', true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000004', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001006', true, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000005', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001007', true, '2020-08-15 21:40:11.66992+00', NULL);
 
 
 INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001001', 'Basic', '00000000-0000-0000-0000-7e3900000001', '.card {
@@ -1046,7 +1645,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.581', '2019-06-16 00:53:30', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.581+00', '2019-06-16 00:53:30+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1065,7 +1664,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577+00', '2019-06-16 00:51:28+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1088,7 +1687,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.577', '2019-06-16 00:51:28', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.577+00', '2019-06-16 00:51:28+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1111,7 +1710,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2019-04-08 02:14:29.571', '2019-06-16 00:51:46', '\documentclass[12pt]{article}
+', '2019-04-08 02:14:29.571+00', '2019-06-16 00:51:46+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1138,7 +1737,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 }
 .nightMode .cloze {
  color: lightblue;
-}', '2019-04-08 02:14:29.57', '2019-06-16 00:51:55', '\documentclass[12pt]{article}
+}', '2019-04-08 02:14:29.57+00', '2019-06-16 00:51:55+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1154,7 +1753,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
  color: black;
  background-color: white;
 }
-', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+', '2020-04-23 19:40:46.82+00', '2020-04-23 19:40:46+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1182,7 +1781,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 }
 .nightMode .cloze {
  color: lightblue;
-}', '2020-04-23 19:40:46.82', '2020-04-23 19:40:46', '\documentclass[12pt]{article}
+}', '2020-04-23 19:40:46.82+00', '2020-04-23 19:40:46+00', '\documentclass[12pt]{article}
 \special{papersize=3in,5in}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb,amsmath}
@@ -1198,9 +1797,9 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 
 
 
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992', NULL, '''admin'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992', NULL, '''collective'':2 ''the'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992', NULL, '''roboturtle'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''admin'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''collective'':2 ''the'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''roboturtle'':1');
 
 
 
@@ -1219,11 +1818,11 @@ INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_d
 
 
 
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
 
 
 
