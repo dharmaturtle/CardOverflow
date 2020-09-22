@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections;
 using NpgsqlTypes;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -24,8 +25,8 @@ namespace CardOverflow.Entity
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
-        public DateTime? Modified { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Modified { get; set; }
         public Guid StackId { get; set; }
         public Guid BranchId { get; set; }
         public bool IsDmca { get; set; }

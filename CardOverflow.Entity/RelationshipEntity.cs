@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NpgsqlTypes;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -28,7 +29,7 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
 
         [InverseProperty("Relationship")]

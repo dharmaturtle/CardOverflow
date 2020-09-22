@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -55,8 +56,8 @@ namespace CardOverflow.Entity
         public short TimeboxTimeLimitInMinutes { get; set; }
         public bool IsNightMode { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
-        public DateTime? Modified { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Modified { get; set; }
 
         [ForeignKey("DefaultCardSettingId")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }

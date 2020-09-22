@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CardOverflow.Pure;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -19,7 +20,7 @@ namespace CardOverflow.Entity
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid SenderId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
         public NotificationType Type { get; set; }
         [StringLength(4000)]
         public string Message {

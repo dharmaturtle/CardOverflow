@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -29,7 +30,7 @@ namespace CardOverflow.Entity
         [Required]
         public byte[] Data { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
         [Required]
         public byte[] Sha256 { get; set; }
 

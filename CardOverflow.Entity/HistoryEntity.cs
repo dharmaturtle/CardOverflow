@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -17,7 +18,7 @@ namespace CardOverflow.Entity
         public short Index { get; set; }
         public short Score { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
         public short IntervalWithUnusedStepsIndex { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short TimeFromSeeingQuestionToScoreInSecondsPlus32768 { get; set; }

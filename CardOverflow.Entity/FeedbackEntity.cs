@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -39,8 +40,8 @@ namespace CardOverflow.Entity
         private string _Description;
         public Guid UserId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
-        public DateTime? Modified { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Modified { get; set; }
         public Guid? ParentId { get; set; }
         public short? Priority { get; set; }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -66,8 +67,8 @@ namespace CardOverflow.Entity
         public bool AutomaticallyPlayAudio { get; set; }
         public bool ReplayQuestionAudioOnAnswer { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
-        public DateTime? Modified { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Modified { get; set; }
 
         [ForeignKey("UserId")]
         [InverseProperty("CardSettings")]

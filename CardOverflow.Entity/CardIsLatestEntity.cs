@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -22,7 +23,7 @@ namespace CardOverflow.Entity
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
-        public DateTime Due { get; set; }
+        public Instant Due { get; set; }
         public Guid CardSettingId { get; set; }
         public bool IsLapsed { get; set; }
         public string FrontPersonalField { get; set; }

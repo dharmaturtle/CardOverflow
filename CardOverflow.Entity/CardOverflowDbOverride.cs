@@ -74,7 +74,7 @@ namespace CardOverflow.Entity {
   public partial class CardOverflowDb : DbContext {
     private readonly IEntityHasher _entityHasher;
 
-    static CardOverflowDb() =>  NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("notification_type", new NpgsqlNullNameTranslator());
+    static CardOverflowDb() => NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("notification_type", new NpgsqlNullNameTranslator());
 
     public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
       _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable

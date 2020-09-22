@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -19,7 +20,7 @@ namespace CardOverflow.Entity
         public Guid SourceCardId { get; set; }
         public Guid TargetCardId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
 
         [ForeignKey("RelationshipId")]
         [InverseProperty("Relationship_Cards")]

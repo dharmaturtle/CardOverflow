@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections;
 using NpgsqlTypes;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -43,8 +44,8 @@ namespace CardOverflow.Entity
         }
         private string _Css;
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
-        public DateTime? Modified { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Modified { get; set; }
         [Required]
         [StringLength(500)]
         public string LatexPre {

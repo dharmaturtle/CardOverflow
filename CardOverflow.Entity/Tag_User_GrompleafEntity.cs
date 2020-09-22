@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -15,7 +16,7 @@ namespace CardOverflow.Entity
         [Key]
         public Guid DefaultTagId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
 
         [ForeignKey("DefaultTagId")]
         [InverseProperty("Tag_User_Grompleafs")]

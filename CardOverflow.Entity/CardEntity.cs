@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NpgsqlTypes;
 using NUlid;
+using NodaTime;
 
 namespace CardOverflow.Entity
 {
@@ -28,10 +29,10 @@ namespace CardOverflow.Entity
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
         public short IntervalOrStepsIndex { get; set; }
-        public DateTime Due { get; set; }
+        public Instant Due { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime Created { get; set; }
-        public DateTime? Modified { get; set; }
+        public Instant Created { get; set; }
+        public Instant? Modified { get; set; }
         public Guid CardSettingId { get; set; }
         public Guid DeckId { get; set; }
         public bool IsLapsed { get; set; }
