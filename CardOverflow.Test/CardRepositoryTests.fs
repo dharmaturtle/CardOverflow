@@ -19,6 +19,8 @@ open CardOverflow.Sanitation
 open FsToolkit
 open FsToolkit.ErrorHandling
 open NodaTime
+open Npgsql
+open Dapper.NodaTime
 
 [<Fact>]
 let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
@@ -311,6 +313,7 @@ let ``CollectCards works``(): Task<unit> = task {
 [<Fact>]
 let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     use c = new TestContainer()
+    use! conn = c.Conn()
     let userId = user_3
 
     let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
@@ -325,10 +328,11 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     Assert.Equal(1, count)
 
     // getHeatmap returns one for today
-    let! actual = HistoryRepository.getHeatmap c.Db userId
+    let! actual = HistoryRepository.getHeatmap conn userId
     Assert.Equal(0, actual.DateCountLevels.Length % 7) // returns full weeks; not partial weeks
+    let zone = DateTimeZoneProviders.Tzdb.["America/Chicago"] // highTODO support other timezones
     Assert.Equal(
-        {   Date = DateTime.UtcNow.Date
+        {   Date = DateTimeX.UtcNow.InZone(zone).Date
             Count = 1
             Level = 10 },
         actual.DateCountLevels.Single(fun x -> x.Count <> 0)

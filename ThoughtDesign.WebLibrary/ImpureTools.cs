@@ -1,5 +1,6 @@
 using CardOverflow.Entity;
 using CardOverflow.Pure;
+using Dapper.NodaTime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -18,6 +19,7 @@ namespace ThoughtDesign.WebLibrary {
   public static class ImpureTools {
 
     public static IServiceCollection RegisterCommonStuff(this IServiceCollection services, IConfiguration configuration) {
+      DapperNodaTimeSetup.Register();
       services.AddSingleton(configuration.UrlProvider());
       services.AddSingleton<IEntityHasher, ContainerExtensions.EntityHasher>();
       var serilogLogger = ContainerExtensions.Logger.get(configuration);

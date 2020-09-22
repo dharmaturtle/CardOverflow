@@ -150,12 +150,13 @@ module CardHtml =
         MappingTools.stripHtmlTagsForDisplay <| frontSide,
         MappingTools.stripHtmlTagsForDisplay <| (replaceFields false answerXemplate).Replace("{{FrontSide}}", "")
 
+[<CLIMutable>]
 type DateCount = {
-    Date: DateTime
+    Date: LocalDate
     Count: int
 }
 type DateCountLevel = {
-    Date: DateTime
+    Date: LocalDate
     Count: int
     Level: int
 }
@@ -178,8 +179,8 @@ module Heatmap =
                     maxConseuctive localMax (max localMax globalMax) t
             | [] -> globalMax
         maxConseuctive 0 0
-    let allDateCounts startDate (endDate: DateTime) (dateCounts: DateCount list) =
-        let allDatesSorted = startDate |> List.unfold (fun x -> if x <= endDate then Some(x, x.AddDays 1.) else None) // https://stackoverflow.com/a/20362003
+    let allDateCounts (startDate: LocalDate) (endDate: LocalDate) (dateCounts: DateCount list) =
+        let allDatesSorted = startDate |> List.unfold (fun x -> if x <= endDate then Some(x, x.PlusDays 1) else None) // https://stackoverflow.com/a/20362003
         query { // https://stackoverflow.com/a/26008852
             for date in allDatesSorted do
             leftOuterJoin dateCount in dateCounts
@@ -198,8 +199,8 @@ module Heatmap =
             Count = count
             Level = float count / maxCount * (levelCount - 1.) |> round // -1 to remove 0
         })
-    let get (startDate: Instant) (endDate: Instant) (dateCounts: DateCount list) =
-        let dateCounts = allDateCounts startDate.Date endDate.Date dateCounts
+    let get (startDate: LocalDate) (endDate: LocalDate) (dateCounts: DateCount list) =
+        let dateCounts = allDateCounts startDate endDate dateCounts
         let counts = dateCounts |> List.map (fun x -> x.Count)
         let relevantRange = counts |> List.skipWhile (fun x -> x = 0) |> List.ifEmptyThen 0
         {   DateCountLevels = addLevels dateCounts

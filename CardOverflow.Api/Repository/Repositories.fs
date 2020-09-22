@@ -24,6 +24,9 @@ open System.Runtime.ExceptionServices
 open System.Runtime.CompilerServices
 open NUlid
 open NodaTime
+open Dapper
+open Npgsql
+open NodaTime.Text
 
 module CommieldRepository =
     let get (db: CardOverflowDb) fieldId = task {
@@ -108,16 +111,24 @@ module GromplateRepository =
         }
 
 module HistoryRepository =
-    let getHeatmap (db: CardOverflowDb) userId = task {
+    let getHeatmap (conn: NpgsqlConnection) userId = task {
         let oneYearishAgo = DateTimeX.UtcNow - Duration.FromDays (53. * 7. - 1.) // always show full weeks of slightly more than a year; -1 is from allDateCounts being inclusive
-        let! dateCounts =
-            (query {
-                for h in db.History do
-                where (h.Created >= oneYearishAgo && h.Card.UserId = userId)
-                groupValBy h h.Created.Date into g
-                select { Date = g.Key; Count = g.Count() }
-            }).ToListAsync()
-        return Heatmap.get oneYearishAgo DateTimeX.UtcNow (dateCounts |> List.ofSeq) }
+        let query = """
+            SELECT
+            	date_trunc('day', h.created AT TIME ZONE 'America/Chicago') AS date, -- highTODO support other timezones
+            	COUNT(*)
+            FROM history AS h
+            WHERE
+            	h.created >= @yearishago
+            	AND h.user_id = @userid
+            GROUP BY date
+        """
+        let! dateCounts = conn.QueryAsync<DateCount>(query, {| yearishago = oneYearishAgo; userid = userId |})
+        let zone = DateTimeZoneProviders.Tzdb.["America/Chicago"] // highTODO support other timezones
+        return Heatmap.get
+            (oneYearishAgo.InZone(zone).Date)
+            (DateTimeX.UtcNow.InZone(zone).Date)
+            (dateCounts |> List.ofSeq) }
 
 module ExploreStackRepository =
     let getCollectedIds (db: CardOverflowDb) userId stackId =

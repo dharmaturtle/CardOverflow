@@ -27,6 +27,7 @@ open CardOverflow.Pure
 open Npgsql
 open FSharp.Control.Tasks
 open System.Threading.Tasks
+open Dapper.NodaTime
 
 module Environment =
     let get =
@@ -77,7 +78,7 @@ type Container with
         container.Register<Task<NpgsqlConnection>>(npgsqlConnection, Lifestyle.Scoped)
         container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
         let loggerFactory = new LoggerFactory() // WARNING WARNING WARNING this is never disposed. Use only in tests. Remove TestOnly from the name when you fix this.
-        NpgsqlConnection.GlobalTypeMapper.UseNodaTime() |> ignore
+        DapperNodaTimeSetup.Register()
         ServiceCollection() // https://stackoverflow.com/a/60290696
             .AddEntityFrameworkNpgsql()
             .AddSingleton<ILoggerFactory>(loggerFactory)
