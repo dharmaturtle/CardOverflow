@@ -8,28 +8,6 @@ using NpgsqlTypes;
 
 namespace CardOverflow.Entity
 {
-    /* Timezones that both NodaTime 3.0 and PostgreSQL 12.2 support
-    
-    Generated from:
-    
-    open NodaTime
-    open Npgsql
-    open Dapper
-    
-    use c = new Container()
-    c.RegisterStuffTestOnly
-    c.RegisterStandardConnectionString
-    use __ = AsyncScopedLifestyle.BeginScope c
-    let! conn = c.GetInstance<Task<NpgsqlConnection>>()
-    let! pgtzs = conn.QueryAsync<string>("""SELECT name FROM pg_timezone_names;""")
-
-    pgtzs.Intersect(DateTimeZoneProviders.Tzdb.Ids).D("INTERSECT")
-
-    //pgtzs.Except(DateTimeZoneProviders.Tzdb.Ids).D("EXCEPT")
-    //DateTimeZoneProviders.Tzdb.Ids.Except(pgtzs).D("EXCEPT")
-
-     */
-
     public enum TimezoneName
     {
         [PgName("Africa/Abidjan")]
@@ -1214,7 +1192,7 @@ namespace CardOverflow.Entity
         W_SU,
         [PgName("WET")]
         WET,
-        [PgName("Zul")]
-        Zul
+        [PgName("Zulu")]
+        Zulu
     }
 }
