@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -58,6 +58,7 @@ namespace CardOverflow.Entity
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Instant Created { get; set; }
         public Instant? Modified { get; set; }
+        public TimezoneName Timezone { get; set; }
 
         [ForeignKey("DefaultCardSettingId")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }

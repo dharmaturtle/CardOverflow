@@ -69,6 +69,7 @@ namespace CardOverflow.Entity
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasPostgresEnum<NotificationType>("public", "notification_type");
+            modelBuilder.HasPostgresEnum<TimezoneName>("public", "timezone_name");
 
             base.OnModelCreating(modelBuilder);
 

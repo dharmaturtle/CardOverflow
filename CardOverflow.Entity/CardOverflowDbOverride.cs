@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Security.Cryptography;
@@ -74,7 +74,10 @@ namespace CardOverflow.Entity {
   public partial class CardOverflowDb : DbContext {
     private readonly IEntityHasher _entityHasher;
 
-    static CardOverflowDb() => NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("notification_type", new NpgsqlNullNameTranslator());
+    static CardOverflowDb() {
+      NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("notification_type", new NpgsqlNullNameTranslator());
+      NpgsqlConnection.GlobalTypeMapper.MapEnum<TimezoneName>("timezone_name", new NpgsqlNullNameTranslator());
+    }
 
     public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
       _entityHasher = this.GetService<IEntityHasher>(); // lowTODO consider injecting the SHA512 hasher; it's also IDisposable
