@@ -23,6 +23,7 @@ open SimpleInjector
 open ContainerExtensions
 open SimpleInjector.Lifestyles
 open NpgsqlTypes
+open CardOverflow.Entity
 
 [<Fact>] // Works in NodaTime 3.0 and PostgreSQL 12.2
 let ``TimezoneName enums are both in NodaTime and Postgres``() : Task<unit> = (taskResult {
@@ -34,24 +35,10 @@ let ``TimezoneName enums are both in NodaTime and Postgres``() : Task<unit> = (t
     let! (pgtzs: string seq) = conn.QueryAsync<string> """SELECT name FROM pg_timezone_names;"""
     let intersection = pgtzs.Intersect DateTimeZoneProviders.Tzdb.Ids |> fun x -> x.OrderBy(fun x -> x)
 
-    let timezoneNameType = typeof<TimezoneName>
-    let getPgName name =
-        timezoneNameType.GetMember(name)
-            .Single(fun m -> m.DeclaringType = timezoneNameType)
-            .GetCustomAttributes(true)
-            .First()
-        :?> PgNameAttribute
-        |> fun x -> x.PgName
-
-    let enums =
-        Enum.GetValues(timezoneNameType)
-            .Cast<TimezoneName>()
-            .Select(fun v -> v.ToString() |> getPgName)
-            .OrderBy(fun x -> x)
-            .ToList()
+    let enums = TimezoneName.all |> fun x -> x.OrderBy(fun x -> x)
     
     Assert.equal
-        <| enums.Count
+        <| enums.Count()
         <| intersection.Count()
     for (i, e) in Seq.zip intersection enums do
         Assert.equal i e

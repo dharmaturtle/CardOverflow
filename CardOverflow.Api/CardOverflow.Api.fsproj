@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="Debug.fs" />
+    <Compile Include="TimezoneName.fs" />
     <Compile Include="Gulid.fs" />
     <Compile Include="LoadersAndCopiers.fs" />
     <Compile Include="AnkiLoadersAndCopiers.fs" />
