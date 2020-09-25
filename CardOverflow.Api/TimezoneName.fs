@@ -17,6 +17,9 @@ open NUlid
 open NodaTime
 open NpgsqlTypes
 
+type DateTimeX =
+    static member UtcNow with get () = SystemClock.Instance.GetCurrentInstant()
+
 module TimezoneName =
     let private timezoneNameType = typeof<TimezoneName>
     let private allEnums =
@@ -38,3 +41,8 @@ module TimezoneName =
         allEnums
         |> List.map (fun x -> x, getName x)
         |> Map.ofList
+    let allPretty =
+        all
+        |> List.map (fun x -> DateTimeZoneProviders.Tzdb.Item x)
+        |> List.map (fun x -> sprintf "(UTC%A) %s" (x.GetUtcOffset(DateTimeX.UtcNow)) x.Id)
+        |> List.sort

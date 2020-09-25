@@ -29,6 +29,3 @@ type UpsertIdsModule =
             BranchId = Ulid.create
             LeafId = Ulid.create
             CardIds = [ Ulid.create ] }
-
-type DateTimeX =
-    static member UtcNow with get () = SystemClock.Instance.GetCurrentInstant()
