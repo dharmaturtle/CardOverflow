@@ -16,9 +16,18 @@ open System.Collections
 open NUlid
 open NodaTime
 open NpgsqlTypes
+open CardOverflow.Entity
 
 type DateTimeX =
     static member UtcNow with get () = SystemClock.Instance.GetCurrentInstant()
+
+module Period =
+    let toDuration (p: Period) =
+        p.ToDuration()
+
+module Duration =
+    let toPeriod (d: Duration) =
+        d.TotalMilliseconds |> Math.Round |> int64 |> Period.FromMilliseconds
 
 module TimezoneName =
     let private timezoneNameType = typeof<TimezoneName>

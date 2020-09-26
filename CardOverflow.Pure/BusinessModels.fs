@@ -44,12 +44,6 @@ module CardState =
         | Suspended -> 3
         >> int16
 
-module TimeSpanInt16 =
-    type TimeSpanInt16 = private TimeSpanInt16 of Duration
-    let fromDays days = min (float Int16.MaxValue) days |> Duration.FromDays |> TimeSpanInt16
-    let value (TimeSpanInt16 t) = t
-    let totalDays t = (value t).TotalDays |> int16
-
 type CardSetting = {
     Id: Guid
     Name: string
@@ -63,7 +57,7 @@ type CardSetting = {
     MatureCardsMaxPerDay: int16
     MatureCardsEaseFactorEasyBonusFactor: float
     MatureCardsIntervalFactor: float // medTODO unused
-    MatureCardsMaximumInterval: TimeSpanInt16.TimeSpanInt16
+    MatureCardsMaximumInterval: Duration
     MatureCardsHardIntervalFactor: float
     MatureCardsBuryRelated: bool
     LapsedCardsSteps: Duration list

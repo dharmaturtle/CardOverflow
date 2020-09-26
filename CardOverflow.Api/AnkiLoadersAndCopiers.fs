@@ -260,7 +260,7 @@ module Anki =
               MatureCardsMaxPerDay = get.Required.At ["rev"; "perDay"] Decode.int |> int16
               MatureCardsEaseFactorEasyBonusFactor = get.Required.At ["rev"; "ease4"] Decode.float
               MatureCardsIntervalFactor = get.Required.At ["rev"; "ivlFct"] Decode.float
-              MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> TimeSpanInt16.fromDays
+              MatureCardsMaximumInterval = get.Required.At ["rev"; "maxIvl"] Decode.float |> Duration.FromDays
               MatureCardsHardIntervalFactor = get.Optional.At ["rev"; "hardFactor"] Decode.float |? 1.2
               MatureCardsBuryRelated = get.Required.At ["rev"; "bury"] Decode.bool
               LapsedCardsSteps = get.Required.At ["lapse"; "delays"] (Decode.array Decode.float) |> Array.map Duration.FromMinutes |> List.ofArray
@@ -450,7 +450,7 @@ module Anki =
                         | Learning ->
                             if ankiCard.Left = 0L
                             then 0
-                            else cardSetting.NewCardsStepsInMinutes.Count() - (int ankiCard.Left % 1000)
+                            else cardSetting.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
                             |> byte |> NewStepsIndex
                         | Due ->
                             if ankiCard.Ivl > 0L

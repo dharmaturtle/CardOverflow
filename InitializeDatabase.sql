@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -25,6 +25,15 @@ CREATE TYPE public.notification_type AS ENUM (
 
 
 ALTER TYPE public.notification_type OWNER TO postgres;
+
+CREATE TYPE public.study_order AS ENUM (
+    'Mixed',
+    'NewCardsFirst',
+    'NewCardsLast'
+);
+
+
+ALTER TYPE public.study_order OWNER TO postgres;
 
 CREATE TYPE public.timezone_name AS ENUM (
     'Africa/Abidjan',
@@ -1113,21 +1122,21 @@ CREATE TABLE public.card_setting (
     id uuid NOT NULL,
     user_id uuid NOT NULL,
     name character varying(100) NOT NULL,
-    new_cards_steps_in_minutes character varying(100) NOT NULL,
+    new_cards_steps interval[] NOT NULL,
     new_cards_max_per_day smallint NOT NULL,
-    new_cards_graduating_interval_in_days smallint NOT NULL,
-    new_cards_easy_interval_in_days smallint NOT NULL,
+    new_cards_graduating_interval interval NOT NULL,
+    new_cards_easy_interval interval NOT NULL,
     new_cards_starting_ease_factor_in_permille smallint NOT NULL,
     new_cards_bury_related boolean NOT NULL,
     mature_cards_max_per_day smallint NOT NULL,
     mature_cards_ease_factor_easy_bonus_factor_in_permille smallint NOT NULL,
     mature_cards_interval_factor_in_permille smallint NOT NULL,
-    mature_cards_maximum_interval_in_days smallint NOT NULL,
+    mature_cards_maximum_interval interval NOT NULL,
     mature_cards_hard_interval_factor_in_permille smallint NOT NULL,
     mature_cards_bury_related boolean NOT NULL,
-    lapsed_cards_steps_in_minutes character varying(100) NOT NULL,
+    lapsed_cards_steps interval[] NOT NULL,
     lapsed_cards_new_interval_factor_in_permille smallint NOT NULL,
-    lapsed_cards_minimum_interval_in_days smallint NOT NULL,
+    lapsed_cards_minimum_interval interval NOT NULL,
     lapsed_cards_leech_threshold smallint NOT NULL,
     show_answer_timer boolean NOT NULL,
     automatically_play_audio boolean NOT NULL,
@@ -1464,14 +1473,14 @@ CREATE TABLE public.padawan (
     default_deck_id uuid NOT NULL,
     show_next_review_time boolean NOT NULL,
     show_remaining_card_count boolean NOT NULL,
-    mix_new_and_review smallint NOT NULL,
-    next_day_starts_at_x_hours_past_midnight smallint NOT NULL,
-    learn_ahead_limit_in_minutes smallint NOT NULL,
-    timebox_time_limit_in_minutes smallint NOT NULL,
+    study_order public.study_order DEFAULT 'Mixed'::public.study_order,
+    next_day_starts_at time without time zone NOT NULL,
+    learn_ahead_limit time without time zone NOT NULL,
+    timebox_time_limit time without time zone NOT NULL,
     is_night_mode boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    timezone public.timezone_name DEFAULT 'UTC',
+    timezone public.timezone_name DEFAULT 'UTC'::public.timezone_name,
     tsv tsvector,
     CONSTRAINT "user. id. is valid" CHECK (public.validate_ulid(id))
 );
@@ -1601,9 +1610,9 @@ ALTER TABLE public.vote_2_feedback OWNER TO postgres;
 
 
 
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-000000000001', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-000000000002', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
-INSERT INTO public.card_setting (id, user_id, name, new_cards_steps_in_minutes, new_cards_max_per_day, new_cards_graduating_interval_in_days, new_cards_easy_interval_in_days, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval_in_days, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps_in_minutes, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval_in_days, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-000000000003', 'Default', '1 10', 20, 1, 4, 2500, true, 200, 1300, 1000, 32767, 1200, true, '10', 0, 1, 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps, new_cards_max_per_day, new_cards_graduating_interval, new_cards_easy_interval, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-000000000001', 'Default', '{00:01:00,00:10:00}', 20, '1 day', '4 days', 2500, true, 200, 1300, 1000, '32767 days', 1200, true, '{00:10:00}', 0, '1 day', 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps, new_cards_max_per_day, new_cards_graduating_interval, new_cards_easy_interval, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-000000000002', 'Default', '{00:01:00,00:10:00}', 20, '1 day', '4 days', 2500, true, 200, 1300, 1000, '32767 days', 1200, true, '{00:10:00}', 0, '1 day', 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
+INSERT INTO public.card_setting (id, user_id, name, new_cards_steps, new_cards_max_per_day, new_cards_graduating_interval, new_cards_easy_interval, new_cards_starting_ease_factor_in_permille, new_cards_bury_related, mature_cards_max_per_day, mature_cards_ease_factor_easy_bonus_factor_in_permille, mature_cards_interval_factor_in_permille, mature_cards_maximum_interval, mature_cards_hard_interval_factor_in_permille, mature_cards_bury_related, lapsed_cards_steps, lapsed_cards_new_interval_factor_in_permille, lapsed_cards_minimum_interval, lapsed_cards_leech_threshold, show_answer_timer, automatically_play_audio, replay_question_audio_on_answer, created, modified) VALUES ('00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-000000000003', 'Default', '{00:01:00,00:10:00}', 20, '1 day', '4 days', 2500, true, 200, 1300, 1000, '32767 days', 1200, true, '{00:10:00}', 0, '1 day', 8, false, false, false, '2020-08-15 21:40:11.66992+00', NULL);
 
 
 
@@ -1797,9 +1806,9 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 
 
 
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''admin'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''collective'':2 ''the'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, mix_new_and_review, next_day_starts_at_x_hours_past_midnight, learn_ahead_limit_in_minutes, timebox_time_limit_in_minutes, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 0, 4, 20, 0, false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''roboturtle'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''admin'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''collective'':2 ''the'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''roboturtle'':1');
 
 
 

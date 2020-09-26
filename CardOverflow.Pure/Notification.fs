@@ -15,10 +15,15 @@ open NodaTime
 
     You should probably write a test covering legacy types. *)
 
-type NotificationType = // the indexes currently have no semantic meaning - they're here because F# requires them
+type NotificationType = // the indexes currently have no semantic meaning - they're here because F# requires them to make the "DU" an Enum
     | DeckAddedStack = 0
     | DeckUpdatedStack = 1
     | DeckDeletedStack = 2
+
+type StudyOrder = // the indexes currently have no semantic meaning - they're here because F# requires them to make the "DU" an Enum
+    | Mixed = 0
+    | NewCardsFirst = 1
+    | NewCardsLast = 2
 
 [<CLIMutable>]
 type IdName = {

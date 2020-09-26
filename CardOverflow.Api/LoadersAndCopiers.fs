@@ -137,42 +137,42 @@ type CardSetting with
         { Id = entity.Id
           Name = entity.Name
           IsDefault = isDefault
-          NewCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.NewCardsStepsInMinutes
+          NewCardsSteps = entity.NewCardsSteps |> List.ofArray |> List.map Period.toDuration
           NewCardsMaxPerDay = entity.NewCardsMaxPerDay
-          NewCardsGraduatingInterval = entity.NewCardsGraduatingIntervalInDays |> float |> Duration.FromDays
-          NewCardsEasyInterval = entity.NewCardsEasyIntervalInDays |> float |> Duration.FromDays
+          NewCardsGraduatingInterval = entity.NewCardsGraduatingInterval.ToDuration()
+          NewCardsEasyInterval = entity.NewCardsEasyInterval.ToDuration()
           NewCardsStartingEaseFactor = float entity.NewCardsStartingEaseFactorInPermille / 1000.
           NewCardsBuryRelated = entity.NewCardsBuryRelated
           MatureCardsMaxPerDay = entity.MatureCardsMaxPerDay
           MatureCardsEaseFactorEasyBonusFactor = float entity.MatureCardsEaseFactorEasyBonusFactorInPermille / 1000.
           MatureCardsIntervalFactor = float entity.MatureCardsIntervalFactorInPermille / 1000.
-          MatureCardsMaximumInterval = entity.MatureCardsMaximumIntervalInDays |> float |> TimeSpanInt16.fromDays
+          MatureCardsMaximumInterval = entity.MatureCardsMaximumInterval.ToDuration()
           MatureCardsHardIntervalFactor = float entity.MatureCardsHardIntervalFactorInPermille / 1000.
           MatureCardsBuryRelated = entity.MatureCardsBuryRelated
-          LapsedCardsSteps = MappingTools.stringOfMinutesToTimeSpanList entity.LapsedCardsStepsInMinutes
+          LapsedCardsSteps = entity.LapsedCardsSteps |> List.ofArray |> List.map Period.toDuration
           LapsedCardsNewIntervalFactor = float entity.LapsedCardsNewIntervalFactorInPermille / 1000.
-          LapsedCardsMinimumInterval = entity.LapsedCardsMinimumIntervalInDays |> float |> Duration.FromDays
+          LapsedCardsMinimumInterval = entity.LapsedCardsMinimumInterval.ToDuration()
           LapsedCardsLeechThreshold = entity.LapsedCardsLeechThreshold
           ShowAnswerTimer = entity.ShowAnswerTimer
           AutomaticallyPlayAudio = entity.AutomaticallyPlayAudio
           ReplayQuestionAudioOnAnswer = entity.ReplayQuestionAudioOnAnswer }
     member this.CopyTo(entity: CardSettingEntity) =
         entity.Name <- this.Name
-        entity.NewCardsStepsInMinutes <- this.NewCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
+        entity.NewCardsSteps <- this.NewCardsSteps |> List.map Duration.toPeriod |> Array.ofList
         entity.NewCardsMaxPerDay <- this.NewCardsMaxPerDay
-        entity.NewCardsGraduatingIntervalInDays <- this.NewCardsGraduatingInterval.TotalDays |> Math.Round |> int16
-        entity.NewCardsEasyIntervalInDays <- this.NewCardsEasyInterval.TotalDays |> Math.Round |> int16
+        entity.NewCardsGraduatingInterval <- this.NewCardsGraduatingInterval |> Duration.toPeriod
+        entity.NewCardsEasyInterval <- this.NewCardsEasyInterval |> Duration.toPeriod
         entity.NewCardsStartingEaseFactorInPermille <- this.NewCardsStartingEaseFactor * 1000. |> Math.Round |> int16
         entity.NewCardsBuryRelated <- this.NewCardsBuryRelated
         entity.MatureCardsMaxPerDay <- this.MatureCardsMaxPerDay
         entity.MatureCardsEaseFactorEasyBonusFactorInPermille <- this.MatureCardsEaseFactorEasyBonusFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsIntervalFactorInPermille <- this.MatureCardsIntervalFactor * 1000. |> Math.Round |> int16
-        entity.MatureCardsMaximumIntervalInDays <- TimeSpanInt16.totalDays this.MatureCardsMaximumInterval
+        entity.MatureCardsMaximumInterval <- this.MatureCardsMaximumInterval |> Duration.toPeriod
         entity.MatureCardsHardIntervalFactorInPermille <- this.MatureCardsHardIntervalFactor * 1000. |> Math.Round |> int16
         entity.MatureCardsBuryRelated <- this.MatureCardsBuryRelated
-        entity.LapsedCardsStepsInMinutes <- this.LapsedCardsSteps |> MappingTools.timeSpanListToStringOfMinutes
+        entity.LapsedCardsSteps <- this.LapsedCardsSteps |> List.map Duration.toPeriod |> Array.ofList
         entity.LapsedCardsNewIntervalFactorInPermille <- this.LapsedCardsNewIntervalFactor * 1000. |> Math.Round |> int16
-        entity.LapsedCardsMinimumIntervalInDays <- this.LapsedCardsMinimumInterval.TotalDays |> Math.Round |> int16
+        entity.LapsedCardsMinimumInterval <- this.LapsedCardsMinimumInterval |> Duration.toPeriod
         entity.LapsedCardsLeechThreshold <- this.LapsedCardsLeechThreshold
         entity.ShowAnswerTimer <- this.ShowAnswerTimer
         entity.AutomaticallyPlayAudio <- this.AutomaticallyPlayAudio

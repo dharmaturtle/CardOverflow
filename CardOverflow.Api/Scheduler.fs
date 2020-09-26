@@ -30,7 +30,7 @@ module Scheduler =
             let interval (previousInterval: Duration) (rawInterval: Duration) =
                 max (rawInterval * card.Settings.MatureCardsIntervalFactor)
                     (Duration.FromDays 1. |> (+) previousInterval)
-                |> min (TimeSpanInt16.value card.Settings.MatureCardsMaximumInterval)
+                |> min card.Settings.MatureCardsMaximumInterval
             let delta = utcNow - card.Due |> max Duration.Zero
             let hard = interval previousInterval <| previousInterval * card.Settings.MatureCardsHardIntervalFactor
             let good = interval hard (delta * 0.5 |> (+) previousInterval |> fun x -> x * card.EaseFactor)

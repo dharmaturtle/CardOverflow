@@ -28,7 +28,7 @@ let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expe
             MatureCardsMaxPerDay = 200s
             MatureCardsEaseFactorEasyBonusFactor = 1.3
             MatureCardsIntervalFactor = 1.
-            MatureCardsMaximumInterval = 36500. |> TimeSpanInt16.fromDays
+            MatureCardsMaximumInterval = 36500. |> Duration.FromDays
             MatureCardsHardIntervalFactor = 1.2
             MatureCardsBuryRelated = false
             LapsedCardsSteps = [ Duration.FromMinutes 10. ]

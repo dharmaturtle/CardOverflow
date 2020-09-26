@@ -29,39 +29,21 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        [Required]
-        [StringLength(100)]
-        public string NewCardsStepsInMinutes {
-            get => _NewCardsStepsInMinutes;
-            set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and NewCardsStepsInMinutes has a maximum length of 100. Attempted value: {value}");
-                _NewCardsStepsInMinutes = value;
-            }
-        }
-        private string _NewCardsStepsInMinutes;
+        public Period[] NewCardsSteps { get; set; }
         public short NewCardsMaxPerDay { get; set; }
-        public short NewCardsGraduatingIntervalInDays { get; set; }
-        public short NewCardsEasyIntervalInDays { get; set; }
+        public Period NewCardsGraduatingInterval { get; set; }
+        public Period NewCardsEasyInterval { get; set; }
         public short NewCardsStartingEaseFactorInPermille { get; set; }
         public bool NewCardsBuryRelated { get; set; }
         public short MatureCardsMaxPerDay { get; set; }
         public short MatureCardsEaseFactorEasyBonusFactorInPermille { get; set; }
         public short MatureCardsIntervalFactorInPermille { get; set; }
-        public short MatureCardsMaximumIntervalInDays { get; set; }
+        public Period MatureCardsMaximumInterval { get; set; }
         public short MatureCardsHardIntervalFactorInPermille { get; set; }
         public bool MatureCardsBuryRelated { get; set; }
-        [Required]
-        [StringLength(100)]
-        public string LapsedCardsStepsInMinutes {
-            get => _LapsedCardsStepsInMinutes;
-            set {
-                if (value.Length > 100) throw new ArgumentOutOfRangeException($"String too long! It was {value.Length} long, and LapsedCardsStepsInMinutes has a maximum length of 100. Attempted value: {value}");
-                _LapsedCardsStepsInMinutes = value;
-            }
-        }
-        private string _LapsedCardsStepsInMinutes;
+        public Period[] LapsedCardsSteps { get; set; }
         public short LapsedCardsNewIntervalFactorInPermille { get; set; }
-        public short LapsedCardsMinimumIntervalInDays { get; set; }
+        public Period LapsedCardsMinimumInterval { get; set; }
         public short LapsedCardsLeechThreshold { get; set; }
         public bool ShowAnswerTimer { get; set; }
         public bool AutomaticallyPlayAudio { get; set; }

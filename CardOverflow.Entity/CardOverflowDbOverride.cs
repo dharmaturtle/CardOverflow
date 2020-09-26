@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Security.Cryptography;
@@ -77,6 +77,7 @@ namespace CardOverflow.Entity {
     static CardOverflowDb() {
       NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>("notification_type", new NpgsqlNullNameTranslator());
       NpgsqlConnection.GlobalTypeMapper.MapEnum<TimezoneName>("timezone_name", new NpgsqlNullNameTranslator());
+      NpgsqlConnection.GlobalTypeMapper.MapEnum<StudyOrder>("study_order", new NpgsqlNullNameTranslator());
     }
 
     public CardOverflowDb(DbContextOptions<CardOverflowDb> options) : base(options) {
