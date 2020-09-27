@@ -50,8 +50,8 @@ module TimezoneName =
         allEnums
         |> List.map (fun x -> x, getName x)
         |> Map.ofList
-    let allPretty =
+    let allPretty (clock: IClock) =
         all
         |> List.map (fun x -> DateTimeZoneProviders.Tzdb.Item x)
-        |> List.map (fun x -> sprintf "(UTC%A) %s" (x.GetUtcOffset(DateTimeX.UtcNow)) x.Id)
+        |> List.map (fun x -> sprintf "(UTC%A) %s" (clock.GetCurrentInstant() |> x.GetUtcOffset) x.Id)
         |> List.sort
