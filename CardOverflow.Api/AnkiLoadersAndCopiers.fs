@@ -448,9 +448,10 @@ module Anki =
                         match cardType with
                         | New
                         | Learning ->
-                            if ankiCard.Left = 0L
+                            let diff = cardSetting.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
+                            if ankiCard.Left = 0L || diff < 0
                             then 0
-                            else cardSetting.NewCardsSteps.Count() - (int ankiCard.Left % 1000)
+                            else diff
                             |> byte |> NewStepsIndex
                         | Due ->
                             if ankiCard.Ivl > 0L
