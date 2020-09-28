@@ -1,4 +1,4 @@
--- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -913,18 +913,6 @@ $$;
 
 ALTER FUNCTION public.fn_tr_relationship_beforeinsertupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_tag_beforeinsertupdate() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$  
-begin
-  NEW.tsv = to_tsvector('pg_catalog.english', NEW.name);
-  return NEW;
-end
-$$;
-
-
-ALTER FUNCTION public.fn_tr_tag_beforeinsertupdate() OWNER TO postgres;
-
 CREATE FUNCTION public.fn_tr_user_afterinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1410,44 +1398,6 @@ CREATE VIEW public.leaf_relationship_count AS
 
 ALTER TABLE public.leaf_relationship_count OWNER TO postgres;
 
-CREATE TABLE public.tag (
-    id uuid NOT NULL,
-    name character varying(250) NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-    tsv tsvector,
-    CONSTRAINT "tag. id. is valid" CHECK (public.validate_ulid(id))
-);
-
-
-ALTER TABLE public.tag OWNER TO postgres;
-
-CREATE TABLE public.tag_2_card (
-    tag_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    stack_id uuid NOT NULL,
-    card_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-
-ALTER TABLE public.tag_2_card OWNER TO postgres;
-
-CREATE VIEW public.leaf_tag_count AS
- SELECT i.id AS leaf_id,
-    ( SELECT t.name
-           FROM public.tag t
-          WHERE (t.id = ta.tag_id)
-         LIMIT 1) AS name,
-    count(*) AS count
-   FROM ((public.leaf i
-     JOIN public.card cc ON ((cc.leaf_id = i.id)))
-     JOIN public.tag_2_card ta ON ((ta.card_id = cc.id)))
-  WHERE (cc.card_state <> 3)
-  GROUP BY i.id, ta.tag_id;
-
-
-ALTER TABLE public.leaf_tag_count OWNER TO postgres;
-
 CREATE TABLE public.notification (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
     sender_id uuid NOT NULL,
@@ -1540,32 +1490,6 @@ CREATE VIEW public.stack_relationship_count AS
 
 
 ALTER TABLE public.stack_relationship_count OWNER TO postgres;
-
-CREATE VIEW public.stack_tag_count AS
- SELECT s.id AS stack_id,
-    ( SELECT t.name
-           FROM public.tag t
-          WHERE (t.id = ta.tag_id)
-         LIMIT 1) AS name,
-    count(*) AS count
-   FROM ((public.stack s
-     JOIN public.card cc ON ((cc.stack_id = s.id)))
-     JOIN public.tag_2_card ta ON ((ta.card_id = cc.id)))
-  WHERE (cc.card_state <> 3)
-  GROUP BY s.id, ta.tag_id;
-
-
-ALTER TABLE public.stack_tag_count OWNER TO postgres;
-
-CREATE TABLE public.tag_2_user_2_grompleaf (
-    user_id uuid NOT NULL,
-    grompleaf_id uuid NOT NULL,
-    default_tag_id uuid NOT NULL,
-    created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-
-ALTER TABLE public.tag_2_user_2_grompleaf OWNER TO postgres;
 
 CREATE TABLE public.user_2_grompleaf (
     user_id uuid NOT NULL,
@@ -1976,18 +1900,6 @@ ALTER TABLE ONLY public.stack
     ADD CONSTRAINT stack_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT tag_2_card_pkey PRIMARY KEY (stack_id, tag_id, user_id);
-
-
-ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT tag_2_user_2_grompleaf_pkey PRIMARY KEY (default_tag_id, grompleaf_id, user_id);
-
-
-ALTER TABLE ONLY public.tag
-    ADD CONSTRAINT tag_pkey PRIMARY KEY (id);
-
-
 ALTER TABLE ONLY public.user_2_grompleaf
     ADD CONSTRAINT user_2_grompleaf_pkey PRIMARY KEY (grompleaf_id, user_id);
 
@@ -2133,21 +2045,6 @@ CREATE INDEX "relationship_2_card. target_card_id. idx" ON public.relationship_2
 CREATE INDEX "stack. author_id. idx" ON public.stack USING btree (author_id);
 
 
-CREATE INDEX "tag. tsv. idx" ON public.tag USING gin (tsv);
-
-
-CREATE UNIQUE INDEX "tag. upper(name). uq idx" ON public.tag USING btree (upper((name)::text));
-
-
-CREATE INDEX "tag_2_card. card_id. idx" ON public.tag_2_card USING btree (card_id);
-
-
-CREATE UNIQUE INDEX "tag_2_card. tag_id, stack_id, user_id. uq idx" ON public.tag_2_card USING btree (tag_id, stack_id, user_id);
-
-
-CREATE INDEX "tag_2_user_2_grompleaf. default_tag_id. idx" ON public.tag_2_user_2_grompleaf USING btree (default_tag_id);
-
-
 CREATE INDEX "user. tsv. idx" ON public.padawan USING gin (tsv);
 
 
@@ -2197,9 +2094,6 @@ CREATE TRIGGER tr_leaf_beforeinsert BEFORE INSERT ON public.leaf FOR EACH ROW EX
 
 
 CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.relationship FOR EACH ROW EXECUTE FUNCTION public.fn_tr_relationship_beforeinsertupdate();
-
-
-CREATE TRIGGER tr_tag_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.tag FOR EACH ROW EXECUTE FUNCTION public.fn_tr_tag_beforeinsertupdate();
 
 
 CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public.padawan FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_afterinsert();
@@ -2442,26 +2336,6 @@ ALTER TABLE ONLY public.stack
 
 ALTER TABLE ONLY public.stack
     ADD CONSTRAINT "stack to user. author_id. FK" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
-
-
-ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT "tag_2_card to card. card_id, user_id, stack_id. FK" FOREIGN KEY (card_id, user_id, stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
-
-
-ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT "tag_2_card to card. card_id. FK" FOREIGN KEY (card_id) REFERENCES public.card(id) ON DELETE CASCADE;
-
-
-ALTER TABLE ONLY public.tag_2_card
-    ADD CONSTRAINT "tag_2_card to tag. tag_id. FK" FOREIGN KEY (tag_id) REFERENCES public.tag(id);
-
-
-ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT "tag_2_user_2_gLeaf to user_2_gLeaf. user_id, grompleaf_id. FK" FOREIGN KEY (user_id, grompleaf_id) REFERENCES public.user_2_grompleaf(user_id, grompleaf_id);
-
-
-ALTER TABLE ONLY public.tag_2_user_2_grompleaf
-    ADD CONSTRAINT "tag_2_user_2_grompleaf to tag. default_tag_id. FK" FOREIGN KEY (default_tag_id) REFERENCES public.tag(id);
 
 
 ALTER TABLE ONLY public.padawan
