@@ -14,6 +14,7 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
+open NodaTime
 
 [<Fact>]
 let ``UserRepository works``(): Task<unit> = (taskResult {
@@ -29,4 +30,105 @@ let ``UserRepository works``(): Task<unit> = (taskResult {
     Assert.areEquivalent ([1; 2; 3; 6; 5] |> List.map grompleaf_) <| ucs.Select(fun x -> x.GrompleafId)
     let! (cardSetting: CardSettingEntity) = c.Db.CardSetting.SingleAsync(fun x -> x.UserId = user_ 4)
     Assert.equal cardSetting.Id <| ucs.Select(fun x -> x.DefaultCardSettingId).Distinct().Single()
+    } |> TaskResult.getOk)
+    
+[<Fact>]
+let ``UserRepository settings works``(): Task<unit> = (taskResult {
+    use c = new TestContainer()
+
+    // testing get
+    let! (settings: UserSetting) = UserRepository.getSettings c.Db user_3
+    
+    Assert.equal
+        {   UserId = user_3
+            DisplayName = "RoboTurtle"
+            DefaultCardSettingId = setting_3
+            DefaultDeckId = deck_3
+            ShowNextReviewTime = true
+            ShowRemainingCardCount = true
+            StudyOrder = StudyOrder.Mixed
+            NextDayStartsAt = Duration.FromHours 4
+            LearnAheadLimit = Duration.FromMinutes 20.
+            TimeboxTimeLimit = Duration.Zero
+            IsNightMode = false
+            Created = settings.Created // untested
+            Timezone = TimezoneName.America_Chicago
+        }
+        settings
+
+    // testing set
+    let newSettings =
+        SetUserSetting.create
+            "Zombie Dino"
+            (setting_ 4)
+            (deck_ 4)
+            false
+            false
+            StudyOrder.NewCardsFirst
+            (Duration.FromHours 12)
+            (Duration.FromHours 13)
+            (Duration.FromHours 14)
+            true
+            TimezoneName.Europe_London
+        |> fun x -> x.Value
+
+    // someone else's deck fails
+    let! (x: Result<_, _>) = UserRepository.setSettings c.Db user_3 { newSettings with DefaultDeckId = deck_1 }
+    
+    Assert.equal
+        "Deck 00000000-0000-0000-0000-decc00000001 doesn't belong to User 00000000-0000-0000-0000-000000000003"
+        x.error
+
+    // nonexistant deck fails
+    let! (x: Result<_, _>) = UserRepository.setSettings c.Db user_3 newSettings
+    
+    Assert.equal
+        "Deck 00000000-0000-0000-0000-decc00000004 doesn't exist"
+        x.error
+
+    do! SanitizeDeckRepository.create c.Db user_3 "new deck!" (deck_ 4)
+    // someone else's card setting fails
+    let! (x: Result<_, _>) = UserRepository.setSettings c.Db user_3 { newSettings with DefaultCardSettingId = setting_2 }
+    
+    Assert.equal
+        "Card setting 00000000-0000-0000-0000-5e7700000002 doesn't belong to User 00000000-0000-0000-0000-000000000003"
+        x.error
+
+    // nonexistant card setting fails
+    let! (x: Result<_, _>) = UserRepository.setSettings c.Db user_3 newSettings
+    
+    Assert.equal
+        "Card setting 00000000-0000-0000-0000-5e7700000004 doesn't exist"
+        x.error
+
+    // add card setting
+    let! (settings: ViewCardSetting ResizeArray) = SanitizeCardSettingRepository.getAll c.Db user_3
+    let options =
+        settings.Append
+            { ViewCardSetting.load CardSettingsRepository.defaultCardSettings with
+                IsDefault = false }
+        |> toResizeArray
+    let! (ids: Guid list) = SanitizeCardSettingRepository.upsertMany c.Db user_3 options
+    let newCardSettingId = ids.Single(fun x -> x <> setting_3)
+    
+    // setSettings works
+    do! UserRepository.setSettings c.Db user_3 { newSettings with DefaultCardSettingId = newCardSettingId }
+    
+    let! (settings: UserSetting) = UserRepository.getSettings c.Db user_3
+    Assert.equal
+        {   UserId = user_3
+            DisplayName = newSettings.DisplayName
+            DefaultCardSettingId = newCardSettingId
+            DefaultDeckId = newSettings.DefaultDeckId
+            ShowNextReviewTime = newSettings.ShowNextReviewTime
+            ShowRemainingCardCount = newSettings.ShowRemainingCardCount
+            StudyOrder = newSettings.StudyOrder
+            NextDayStartsAt = newSettings.NextDayStartsAt
+            LearnAheadLimit = newSettings.LearnAheadLimit
+            TimeboxTimeLimit = newSettings.TimeboxTimeLimit
+            IsNightMode = newSettings.IsNightMode
+            Created = settings.Created // untested
+            Timezone = newSettings.Timezone
+        }
+        settings
     } |> TaskResult.getOk)

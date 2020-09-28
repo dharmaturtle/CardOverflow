@@ -28,6 +28,12 @@ module Period =
 module Duration =
     let toPeriod (d: Duration) =
         d.TotalMilliseconds |> Math.Round |> int64 |> Period.FromMilliseconds
+    let toLocalTime (d: Duration) =
+        d.TotalTicks |> Math.Round |> int64 |> LocalTime.FromTicksSinceMidnight
+
+module LocalTime =
+    let toDuration (lt: LocalTime) =
+        lt.TickOfDay |> Duration.FromTicks
 
 module TimezoneName =
     let private timezoneNameType = typeof<TimezoneName>
@@ -55,3 +61,68 @@ module TimezoneName =
         |> List.map (fun x -> DateTimeZoneProviders.Tzdb.Item x)
         |> List.map (fun x -> sprintf "(UTC%A) %s" (clock.GetCurrentInstant() |> x.GetUtcOffset) x.Id)
         |> List.sort
+
+type UserSetting = {
+    UserId: Guid
+    DisplayName: string
+    DefaultCardSettingId: Guid
+    DefaultDeckId: Guid
+    ShowNextReviewTime: bool
+    ShowRemainingCardCount: bool
+    StudyOrder: StudyOrder
+    NextDayStartsAt: Duration
+    LearnAheadLimit: Duration
+    TimeboxTimeLimit: Duration
+    IsNightMode: bool
+    Created: Instant
+    Timezone: TimezoneName
+}
+
+module SetUserSetting =
+    type _command = { // use create. The ctor isn't private cause that prevents access to members
+        DisplayName: string
+        DefaultCardSettingId: Guid
+        DefaultDeckId: Guid
+        ShowNextReviewTime: bool
+        ShowRemainingCardCount: bool
+        StudyOrder: StudyOrder
+        NextDayStartsAt: Duration
+        LearnAheadLimit: Duration
+        TimeboxTimeLimit: Duration
+        IsNightMode: bool
+        Timezone: TimezoneName
+    }
+    let create
+            displayName
+            defaultCardSettingId
+            defaultDeckId
+            showNextReviewTime
+            showRemainingCardCount
+            studyOrder
+            (nextDayStartsAt: Duration)
+            (learnAheadLimit: Duration)
+            (timeboxTimeLimit: Duration)
+            isNightMode
+            timezone = result {
+        let! displayName = displayName |> Result.requireNotNull "Display name cannot be null." |> Result.map MappingTools.standardizeWhitespace
+        do! displayName.Length >= 3 |> Result.requireTrue "Display name must be at least 3 characters."
+        do! displayName.Length <= 32 |> Result.requireTrue "Display name has a maximum of 32 characters."
+        do! nextDayStartsAt.TotalHours <= 24. |> Result.requireTrue "The next day must start at a maximum of 24 hrs."
+        do! learnAheadLimit.TotalHours <= 24. |> Result.requireTrue "The learn ahead limit has a maximum of 24 hrs."
+        do! timeboxTimeLimit.TotalHours <= 24. |> Result.requireTrue "The time box time limit has a maximum of 24 hrs."
+        do! Enum.IsDefined(typeof<TimezoneName>, timezone) |> Result.requireTrue "Invalid timezone enum."
+        do! Enum.IsDefined(typeof<StudyOrder>, studyOrder) |> Result.requireTrue "Invalid study order."
+        return
+            {   DisplayName = displayName
+                DefaultCardSettingId = defaultCardSettingId
+                DefaultDeckId = defaultDeckId
+                ShowNextReviewTime = showNextReviewTime
+                ShowRemainingCardCount = showRemainingCardCount
+                StudyOrder = studyOrder
+                NextDayStartsAt = nextDayStartsAt
+                LearnAheadLimit = learnAheadLimit
+                TimeboxTimeLimit = timeboxTimeLimit
+                IsNightMode = isNightMode
+                Timezone = timezone
+            }
+        }

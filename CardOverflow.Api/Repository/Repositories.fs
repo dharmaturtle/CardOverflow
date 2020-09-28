@@ -691,6 +691,43 @@ module UserRepository =
             .SingleOrDefaultAsync()
         |>% Result.requireNotNull (sprintf "User %A doesn't exist" userId)
         |>%% fun x -> { DisplayName = x }
+    let getSettings (db: CardOverflowDb) userId =
+        db.User.SingleOrDefaultAsync(fun x -> x.Id = userId)
+        |>% (fun x ->
+            {   UserId = x.Id
+                DisplayName = x.DisplayName
+                DefaultCardSettingId = x.DefaultCardSettingId
+                DefaultDeckId = x.DefaultDeckId
+                ShowNextReviewTime = x.ShowNextReviewTime
+                ShowRemainingCardCount = x.ShowRemainingCardCount
+                StudyOrder = x.StudyOrder
+                NextDayStartsAt = x.NextDayStartsAt |> LocalTime.toDuration
+                LearnAheadLimit = x.LearnAheadLimit |> LocalTime.toDuration
+                TimeboxTimeLimit = x.TimeboxTimeLimit |> LocalTime.toDuration
+                IsNightMode = x.IsNightMode
+                Created = x.Created
+                Timezone = x.Timezone
+            }
+        )
+    let setSettings (db: CardOverflowDb) userId (command: SetUserSetting._command) = taskResult {
+        let! (deck: DeckEntity) = db.Deck.SingleOrDefaultAsync(fun x -> x.Id = command.DefaultDeckId) |>% Result.requireNotNull (sprintf "Deck %A doesn't exist" command.DefaultDeckId)
+        do! Result.requireEqual deck.UserId userId (sprintf "Deck %A doesn't belong to User %A" command.DefaultDeckId userId)
+        let! (cardSetting: CardSettingEntity) = db.CardSetting.SingleOrDefaultAsync(fun x -> x.Id = command.DefaultCardSettingId) |>% Result.requireNotNull (sprintf "Card setting %A doesn't exist" command.DefaultCardSettingId)
+        do! Result.requireEqual cardSetting.UserId userId (sprintf "Card setting %A doesn't belong to User %A" command.DefaultCardSettingId userId)
+        let! (user: UserEntity) = db.User.SingleAsync(fun x -> x.Id = userId)
+        user.DisplayName <- command.DisplayName
+        user.DefaultCardSettingId <- command.DefaultCardSettingId
+        user.DefaultDeckId <- command.DefaultDeckId
+        user.ShowNextReviewTime <- command.ShowNextReviewTime
+        user.ShowRemainingCardCount <- command.ShowRemainingCardCount
+        user.StudyOrder <- command.StudyOrder
+        user.NextDayStartsAt <- command.NextDayStartsAt |> Duration.toLocalTime
+        user.LearnAheadLimit <- command.LearnAheadLimit |> Duration.toLocalTime
+        user.TimeboxTimeLimit <- command.TimeboxTimeLimit |> Duration.toLocalTime
+        user.IsNightMode <- command.IsNightMode
+        user.Timezone <- command.Timezone
+        return! db.SaveChangesAsyncI()
+    }
 
 type TreeTag = {
     Id: string
