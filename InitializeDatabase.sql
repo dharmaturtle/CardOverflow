@@ -1,4 +1,4 @@
-﻿-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
+-- medTODO counts involving `card_state <> 3` are going to be slightly wrong. They're using Card, and a Card can have multiple Cards.
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1050,6 +1050,8 @@ CREATE TABLE public.branch (
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
+    tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
+    tags_count integer[] DEFAULT '{}'::integer[] NOT NULL,
     CONSTRAINT "branch. id. is valid" CHECK (public.validate_ulid(id))
 );
 
@@ -1074,6 +1076,7 @@ CREATE TABLE public.card (
     is_lapsed boolean NOT NULL,
     front_personal_field character varying(5000) NOT NULL,
     back_personal_field character varying(5000) NOT NULL,
+    tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     tsv_helper text,
     tsv tsvector,
     CONSTRAINT "card. id. is valid" CHECK (public.validate_ulid(id)),
@@ -1099,6 +1102,7 @@ CREATE VIEW public.card_is_latest AS
     a.front_personal_field,
     a.back_personal_field,
     a.deck_id,
+    a.tags,
     (b.latest_id IS NULL) AS is_latest
    FROM (public.card a
      LEFT JOIN public.branch b ON ((b.latest_id = a.leaf_id)));
@@ -1349,6 +1353,8 @@ CREATE TABLE public.leaf (
     tsv_helper text,
     tsv tsvector,
     max_index_inclusive smallint NOT NULL,
+    tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
+    tags_count integer[] DEFAULT '{}'::integer[] NOT NULL,
     CONSTRAINT "leaf. id. is valid" CHECK (public.validate_ulid(id)),
     CONSTRAINT "leaf. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
@@ -1431,6 +1437,7 @@ CREATE TABLE public.padawan (
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
     timezone public.timezone_name DEFAULT 'UTC'::public.timezone_name,
+    card_tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     tsv tsvector,
     CONSTRAINT "user. id. is valid" CHECK (public.validate_ulid(id))
 );
@@ -1467,6 +1474,8 @@ CREATE TABLE public.stack (
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
+    tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
+    tags_count integer[] DEFAULT '{}'::integer[] NOT NULL,
     CONSTRAINT "stack. id. is valid" CHECK (public.validate_ulid(id))
 );
 
@@ -1495,6 +1504,7 @@ CREATE TABLE public.user_2_grompleaf (
     user_id uuid NOT NULL,
     grompleaf_id uuid NOT NULL,
     default_card_setting_id uuid NOT NULL,
+    default_tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -1730,9 +1740,9 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 
 
 
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''admin'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''collective'':2 ''the'':1');
-INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '''roboturtle'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, card_tags, tsv) VALUES ('00000000-0000-0000-0000-000000000001', 'Admin', '00000000-0000-0000-0000-5e7700000001', '00000000-0000-0000-0000-decc00000001', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '{}', '''admin'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, card_tags, tsv) VALUES ('00000000-0000-0000-0000-000000000002', 'The Collective', '00000000-0000-0000-0000-5e7700000002', '00000000-0000-0000-0000-decc00000002', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '{}', '''collective'':2 ''the'':1');
+INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_deck_id, show_next_review_time, show_remaining_card_count, study_order, next_day_starts_at, learn_ahead_limit, timebox_time_limit, is_night_mode, created, modified, timezone, card_tags, tsv) VALUES ('00000000-0000-0000-0000-000000000003', 'RoboTurtle', '00000000-0000-0000-0000-5e7700000003', '00000000-0000-0000-0000-decc00000003', true, true, 'Mixed', '04:00:00', '00:20:00', '00:00:00', false, '2020-08-15 21:40:11.66992+00', NULL, 'America/Chicago', '{}', '''roboturtle'':1');
 
 
 
@@ -1745,17 +1755,11 @@ INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_d
 
 
 
-
-
-
-
-
-
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
 
 
 
