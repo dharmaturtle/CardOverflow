@@ -60,6 +60,9 @@ namespace CardOverflow.Entity
         public Instant Created { get; set; }
         public Instant? Modified { get; set; }
         public TimezoneName Timezone { get; set; }
+        [Required]
+        [StringLength(300)]
+        public string[] CardTags { get; set; } = new string[0];
 
         [ForeignKey("DefaultCardSettingId")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }

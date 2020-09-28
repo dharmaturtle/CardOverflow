@@ -28,6 +28,11 @@ namespace CardOverflow.Entity
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Instant Created { get; set; }
         public Instant? Modified { get; set; }
+        [Required]
+        [StringLength(300)]
+        public string[] Tags { get; set; } = new string[0];
+        [Required]
+        public int[] TagsCount { get; set; } = new int[0];
 
         [ForeignKey("AuthorId")]
         [InverseProperty("Stacks")]

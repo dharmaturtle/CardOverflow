@@ -15,7 +15,6 @@ namespace CardOverflow.Entity
             Histories = new HashSet<HistoryEntity>();
             Relationship_CardSourceCards = new HashSet<Relationship_CardEntity>();
             Relationship_CardTargetCards = new HashSet<Relationship_CardEntity>();
-            Tag_Cards = new HashSet<Tag_CardEntity>();
         }
 
         [Key]
@@ -60,6 +59,9 @@ namespace CardOverflow.Entity
             }
         }
         private string _BackPersonalField = "";
+        [Required]
+        [StringLength(300)]
+        public string[] Tags { get; set; } = new string[0];
         public string TsvHelper { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
 
@@ -88,7 +90,5 @@ namespace CardOverflow.Entity
         public virtual ICollection<Relationship_CardEntity> Relationship_CardSourceCards { get; set; }
         [InverseProperty("TargetCard")]
         public virtual ICollection<Relationship_CardEntity> Relationship_CardTargetCards { get; set; }
-        [InverseProperty("Card")]
-        public virtual ICollection<Tag_CardEntity> Tag_Cards { get; set; }
     }
 }

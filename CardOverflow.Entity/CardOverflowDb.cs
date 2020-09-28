@@ -13,7 +13,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<BranchEntity> Branch { get; set; }
         public virtual DbSet<LeafEntity> Leaf { get; set; }
         private DbSet<LeafRelationshipCountEntity> _LeafRelationshipCountTracked { get; set; }
-        private DbSet<LeafTagCountEntity> _LeafTagCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
         public virtual DbSet<GromplateEntity> Gromplate { get; set; }
         public virtual DbSet<GrompleafEntity> Grompleaf { get; set; }
@@ -36,10 +35,6 @@ namespace CardOverflow.Entity
         public virtual DbSet<Relationship_CardEntity> Relationship_Card { get; set; }
         public virtual DbSet<StackEntity> Stack { get; set; }
         private DbSet<StackRelationshipCountEntity> _StackRelationshipCountTracked { get; set; }
-        private DbSet<StackTagCountEntity> _StackTagCountTracked { get; set; }
-        public virtual DbSet<TagEntity> Tag { get; set; }
-        public virtual DbSet<Tag_CardEntity> Tag_Card { get; set; }
-        public virtual DbSet<Tag_User_GrompleafEntity> Tag_User_Grompleaf { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
         public virtual DbSet<User_GrompleafEntity> User_Grompleaf { get; set; }
         public virtual DbSet<Vote_CommentGromplateEntity> Vote_CommentGromplate { get; set; }
@@ -141,10 +136,6 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<CardIsLatestEntity>(entity =>
             {
-                entity.HasMany(x => x.Tag_Cards)
-                    .WithOne()
-                    .HasForeignKey(x => x.CardId);
-
                 entity.ToView("card_is_latest");
             });
 
@@ -205,17 +196,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.GrompleafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasMany(x => x.StackTagCounts)
-                     .WithOne()
-                     .HasForeignKey(x => x.StackId);
-
                 entity.HasMany(x => x.StackRelationshipCounts)
                     .WithOne()
                     .HasForeignKey(x => x.StackId);
-
-                entity.HasMany(x => x.LeafTagCounts)
-                    .WithOne()
-                    .HasForeignKey(x => x.LeafId);
 
                 entity.HasMany(x => x.LeafRelationshipCounts)
                     .WithOne()
@@ -227,13 +210,6 @@ namespace CardOverflow.Entity
                 entity.HasKey(e => new { e.SourceLeafId, e.TargetLeafId, e.Name });
 
                 entity.ToView("leaf_relationship_count");
-            });
-
-            modelBuilder.Entity<LeafTagCountEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.LeafId, e.Name });
-
-                entity.ToView("leaf_tag_count");
             });
 
             modelBuilder.Entity<CardSettingEntity>(entity =>
@@ -525,51 +501,6 @@ namespace CardOverflow.Entity
                 entity.HasKey(e => new { e.SourceStackId, e.TargetStackId, e.Name });
 
                 entity.ToView("stack_relationship_count");
-            });
-
-            modelBuilder.Entity<StackTagCountEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.StackId, e.Name });
-
-                entity.ToView("stack_tag_count");
-            });
-
-            modelBuilder.Entity<TagEntity>(entity =>
-            {
-                IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
-                    () => entity.Ignore(e => e.Tsv));
-            });
-
-            modelBuilder.Entity<Tag_CardEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.StackId, e.TagId, e.UserId });
-
-                entity.HasIndex(e => e.CardId);
-
-                entity.HasIndex(e => new { e.TagId, e.StackId, e.UserId })
-                    .IsUnique();
-
-                entity.HasOne(d => d.Tag)
-                    .WithMany(p => p.Tag_Cards)
-                    .HasForeignKey(d => d.TagId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-            });
-
-            modelBuilder.Entity<Tag_User_GrompleafEntity>(entity =>
-            {
-                entity.HasKey(e => new { e.DefaultTagId, e.GrompleafId, e.UserId });
-
-                entity.HasIndex(e => e.DefaultTagId);
-
-                entity.HasOne(d => d.DefaultTag)
-                    .WithMany(p => p.Tag_User_Grompleafs)
-                    .HasForeignKey(d => d.DefaultTagId)
-                    .OnDelete(DeleteBehavior.ClientSetNull);
-
-                entity.HasOne(d => d.User_Grompleaf)
-                    .WithMany(p => p.Tag_User_Grompleafs)
-                    .HasForeignKey(d => new { d.UserId, d.GrompleafId })
-                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<UserEntity>(entity =>

@@ -9,11 +9,6 @@ namespace CardOverflow.Entity
 {
     public partial class CardIsLatestEntity
     {
-        public CardIsLatestEntity()
-        {
-            Tag_Cards = new HashSet<Tag_CardEntity>();
-        }    
-    
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public Guid StackId { get; set; }
@@ -30,7 +25,7 @@ namespace CardOverflow.Entity
         public string BackPersonalField { get; set; }
         public Guid DeckId { get; set; }
         public bool IsLatest { get; set; }
+        public string[] Tags { get; set; }
         public virtual LeafEntity Leaf { get; set; }
-        public virtual ICollection<Tag_CardEntity> Tag_Cards { get; set; }
     }
 }

@@ -61,6 +61,11 @@ namespace CardOverflow.Entity
         public string TsvHelper { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
         public short MaxIndexInclusive { get; set; }
+        [Required]
+        [StringLength(300)]
+        public string[] Tags { get; set; } = new string[0];
+        [Required]
+        public int[] TagsCount { get; set; } = new int[0];
 
         [ForeignKey("StackId")]
         public virtual StackEntity Stack { get; set; }
@@ -83,9 +88,7 @@ namespace CardOverflow.Entity
         public virtual ICollection<NotificationEntity> NotificationLeafs { get; set; }
         [InverseProperty("CopySource")]
         public virtual ICollection<StackEntity> StackCopySources { get; set; }
-        public virtual ICollection<StackTagCountEntity> StackTagCounts { get; set; }
         public virtual ICollection<StackRelationshipCountEntity> StackRelationshipCounts { get; set; }
-        public virtual ICollection<LeafTagCountEntity> LeafTagCounts { get; set; }
         public virtual ICollection<LeafRelationshipCountEntity> LeafRelationshipCounts { get; set; }
   }
 }
