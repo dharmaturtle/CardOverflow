@@ -70,7 +70,6 @@ module AnkiImporter =
         ankiDb
         userId
         fileEntityByAnkiFileName
-        (getTags: string list -> TagEntity list)
         (getDecks: string list -> DeckEntity list)
         (cardSettings: CardSettingEntity ResizeArray)
         defaultCardSetting
@@ -86,7 +85,6 @@ module AnkiImporter =
                 .SelectMany(id)
                 .Distinct()
                 |> Seq.toList
-                |> getTags
         result {
             let! cardSettingByDeckConfigurationId =
                 let toEntity _ (cardSetting: CardSetting) =
@@ -135,10 +133,7 @@ module AnkiImporter =
                         if e.User_Grompleafs.Any(fun x -> x.UserId = userId) |> not then
                             User_GrompleafEntity(
                                 UserId = userId,
-                                Tag_User_Grompleafs =
-                                    (gromplate.DefaultTags.ToList()
-                                    |> Seq.map (fun x -> Tag_User_GrompleafEntity(UserId = userId, DefaultTagId = x))
-                                    |> fun x -> x.ToList()),
+                                DefaultTags = gromplate.DefaultTags.ToArray(),
                                 DefaultCardSetting = defaultCardSetting)
                             |> e.User_Grompleafs.Add
                         e
@@ -166,7 +161,7 @@ module AnkiImporter =
                 | None -> ()
                 | Some nid -> 
                     let _, tags = cardsAndTagsByNoteId.[nid]
-                    card.Tag_Cards <- tags.Select(fun x -> Tag_CardEntity(Tag = x)).ToList()
+                    card.Tags <- tags.ToArray()
             )
             let! histories = ankiDb.Revlogs |> Seq.map (Anki.toHistory userId cardByNoteId getHistory) |> Result.consolidate
             return
@@ -203,7 +198,6 @@ module AnkiImporter =
                     ankiDb
                     userId
                     fileEntityByAnkiFileName
-                    <| (TagRepository.searchMany db >> Seq.toList)
                     <| (DeckRepository.searchMany db userId >> Seq.toList)
                     <| db.CardSetting
                         .Where(fun x -> x.UserId = userId)

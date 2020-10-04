@@ -34,7 +34,7 @@ type AnkiGrompleaf = {
     Fields: Field list
     Created: Instant
     Modified: Instant option
-    DefaultTags: Guid list
+    DefaultTags: string list
     DefaultCardSettingId: Guid
     LatexPre: string
     LatexPost: string
@@ -58,10 +58,7 @@ type AnkiGrompleaf = {
         entity.User_Grompleafs <-
             [User_GrompleafEntity(
                 UserId = userId,
-                Tag_User_Grompleafs =
-                    (this.DefaultTags
-                        .Select(fun x -> Tag_User_GrompleafEntity(UserId = userId, DefaultTagId = x))
-                        .ToList()),
+                DefaultTags = this.DefaultTags.ToArray(),
                 DefaultCardSetting = defaultCardSetting)].ToList()
         entity.Gromplate <- gromplate
         this.CopyTo entity
@@ -151,7 +148,6 @@ type AnkiCard = {
         entity
     member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         db.Card
-            .Include(fun x -> x.Tag_Cards)
             .SingleOrDefault(fun c ->
                 this.UserId = c.UserId &&
                 this.Index = c.Index &&
@@ -361,7 +357,7 @@ module Anki =
         userId
         fileEntityByAnkiFileName
         getCard = // lowTODO use tail recursion
-        let rec parseNotesRec tags cardsAndTagsByNoteId =
+        let rec parseNotesRec (tags: string list) cardsAndTagsByNoteId =
             function
             | (note: NoteEntity) :: tail ->
                 let notesTags =
@@ -372,11 +368,10 @@ module Anki =
                 let allTags =
                     Set.difference
                         notesTags
-                        (tags |> List.map (fun (x: TagEntity) -> x.Name) |> Set.ofSeq)
+                        (tags |> Set.ofList)
                     |> List.ofSeq
-                    |> List.map (fun x -> TagEntity(Name = x))
                     |> List.append tags
-                    |> List.groupBy (fun x -> x.Name.ToLower())
+                    |> List.groupBy (fun x -> x.ToLower())
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
@@ -401,7 +396,7 @@ module Anki =
                                 <| gromplate.Entity
                         else
                             toCard fieldValues gromplate.Entity
-                    let relevantTags = allTags |> List.filter(fun x -> notesTags.Contains x.Name)
+                    let relevantTags = allTags |> List.filter notesTags.Contains
                     note.Id, (cards, relevantTags)
                 parseNotesRec
                     allTags
@@ -414,7 +409,7 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardSettingAndDeckByDeckId: Map<int64, CardSettingEntity * DeckEntity>)
-        (cardAndTagsByNoteId: Map<int64, LeafEntity * TagEntity list>)
+        (cardAndTagsByNoteId: Map<int64, LeafEntity * (string list)>)
         (colCreateDate: Instant)
         userId
         getCard

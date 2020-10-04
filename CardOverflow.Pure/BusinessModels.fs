@@ -172,7 +172,7 @@ type Grompleaf = {
         |> Result.requireSome (sprintf "Index %i out of range" i)
 
 type CollectedGrompleaf = {
-    DefaultTags: Guid seq
+    DefaultTags: string seq
     DefaultCardSettingId: Guid
     Grompleaf: Grompleaf
 }
@@ -494,8 +494,8 @@ type BranchRevision = {
 }
 
 type UpsertKind =
-    | NewOriginal_TagIds of Guid list
-    | NewCopy_SourceLeafId_TagIds of Guid * Guid list
+    | NewOriginal_TagIds of string list
+    | NewCopy_SourceLeafId_TagIds of Guid * string list
     | NewBranch_Title of string
     | NewLeaf_Title of string
 with

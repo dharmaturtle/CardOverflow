@@ -26,16 +26,12 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
 
     do! SanitizeTagRepository.AddTo c.Db userId tagName stackId
 
-    Assert.SingleI(c.Db.Tag.Where(fun x -> x.Name = tagName).ToList())
+    Assert.SingleI(c.Db.Card.Single().Tags.Where((=) tagName).ToList())
     let joinTable () =
-        c.Db.Card
-            .Include(fun x -> x.Tag_Cards :> IEnumerable<_>)
-                .ThenInclude(fun (x: Tag_CardEntity) -> x.Tag)
-            .Single(fun x -> x.Id = card_1)
-            .Tag_Cards
+        c.Db.Card.Single(fun x -> x.Id = card_1).Tags
     Assert.Equal(
         tagName,
-        joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
+        joinTable().Single(fun x -> x = tagName)
     )
     
     do! SanitizeTagRepository.DeleteFrom c.Db userId tagName stackId
@@ -45,7 +41,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     do! SanitizeTagRepository.AddTo c.Db userId tagName stackId
     Assert.Equal(
         tagName,
-        joinTable().Single(fun x -> x.Tag.Name = tagName).Tag.Name
+        joinTable().Single(fun x -> x = tagName)
     )
     let! error = SanitizeTagRepository.AddTo c.Db userId tagName stackId |> TaskResult.getError
     Assert.Equal(sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId tagName, error)
@@ -83,7 +79,8 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
 let ``Tag counts work``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let assertTagUserCount expected =
-        c.Db.StackTagCount.SingleAsync() |> Task.map (fun x -> Assert.Equal(expected, x.Count))
+        c.Db.Stack.SingleAsync()
+        |>% (fun x -> Assert.Equal(expected, x.TagsCount.Single()))
     let author = user_1
     let collector = user_2
     let stackId = stack_1
@@ -109,7 +106,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
     let! (cc: Card ResizeArray) = StackRepository.GetCollected c.Db author stackId
     let cc = cc.Single()
     do! StackRepository.uncollectStack c.Db author cc.StackId
-    Assert.Empty <| c.Db.StackTagCount.ToList()
+    Assert.Empty <| c.Db.Stack.Single().TagsCount.ToList()
     } |> TaskResult.getOk)
 
 open TagRepository

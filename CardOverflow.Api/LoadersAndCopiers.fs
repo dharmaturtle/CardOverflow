@@ -287,7 +287,7 @@ type Grompleaf with
 
 type CollectedGrompleaf with
     static member load(entity: GrompleafEntity) =
-        { DefaultTags = entity.User_Grompleafs.Single().Tag_User_Grompleafs.Select(fun x -> x.DefaultTagId)
+        { DefaultTags = entity.User_Grompleafs.Single().DefaultTags
           DefaultCardSettingId = entity.User_Grompleafs.Single().DefaultCardSettingId
           Grompleaf = Grompleaf.load entity }
 
@@ -403,7 +403,7 @@ type QuizCard with
         }
 
 type Card with
-    member this.copyTo (entity: CardEntity) (tagIds: Guid seq) index =
+    member this.copyTo (entity: CardEntity) tags index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
         entity.StackId <- this.StackId
@@ -414,7 +414,7 @@ type Card with
         entity.IntervalOrStepsIndex <- IntervalOrStepsIndex.intervalToDb this.IntervalOrStepsIndex
         entity.CardSettingId <- this.CardSettingId
         entity.Due <- this.Due
-        entity.Tag_Cards <- tagIds.Select(fun x -> Tag_CardEntity(TagId = x)).ToList()
+        entity.Tags <- tags
         entity.DeckId <- this.DeckId
     member this.copyToNew tagIds i =
         let e = CardEntity()

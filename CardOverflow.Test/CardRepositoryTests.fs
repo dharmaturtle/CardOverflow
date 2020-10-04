@@ -67,11 +67,11 @@ let ``StackRepository.deleteCard works``(): Task<unit> = (taskResult {
     Assert.NotEmpty c.Db.Card
     Assert.NotEmpty c.Db.Relationship_Card
     Assert.NotEmpty c.Db.History
-    Assert.NotEmpty c.Db.Tag_Card
+    Assert.NotEmpty <| c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>)
     do! StackRepository.uncollectStack c.Db userId cc.StackId // can delete after adding a history, tag, and relationship
     Assert.Equal(stack2, c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.StackId) // from the other side of the relationship
     Assert.Empty c.Db.Relationship_Card
-    Assert.Empty c.Db.Tag_Card
+    Assert.Empty <| c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>)
 
     // but history remains
     Assert.NotEmpty c.Db.History

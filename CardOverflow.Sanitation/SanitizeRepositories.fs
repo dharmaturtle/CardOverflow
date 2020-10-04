@@ -127,7 +127,7 @@ type TagText = {
 }
 
 module SanitizeTagRepository =
-    let max = 250
+    let max = 300
     let sanitize (tag: string) =
         Array.FindAll(tag.ToCharArray(), fun c ->
             Char.IsLetterOrDigit c
@@ -138,45 +138,23 @@ module SanitizeTagRepository =
         |> Array.map (MappingTools.standardizeWhitespace >> MappingTools.toTitleCase)
         |> String.concat (string TagRepository.delimiter)
         |> String.truncate max
-    let upsertNoSave (db: CardOverflowDb) (newTag: string) = taskResult {
-        let newTag = sanitize newTag
-        let! (tag: TagEntity option) =
-            db.Tag.SingleOrDefaultAsync(fun x -> EF.Functions.ILike(x.Name, newTag))
-            |>% Option.ofObj
-        return
-            tag |> Option.defaultWith(fun () ->
-                let tag = TagEntity(Name = newTag)
-                db.Tag.AddI tag
-                tag
-            )
-        }
-    let upsert (db: CardOverflowDb) (newTag: string) = taskResult {
-        let! (e: TagEntity) = upsertNoSave db newTag
-        do! db.SaveChangesAsyncI()
-        return e.Id
-        }
-    let private getFirstCollected (db: CardOverflowDb) userId stackId =
-        db.Card.FirstOrDefaultAsync(fun x -> x.UserId = userId && x.StackId = stackId)
-        |>% (Result.requireNotNull <| sprintf "User #%A doesn't have Stack #%A." userId stackId)
+    let private getCollected (db: CardOverflowDb) userId stackId =
+        db.Card.Where(fun x -> x.UserId = userId && x.StackId = stackId).ToListAsync()
+        |>% Result.requireNotEmptyX (sprintf "User #%A doesn't have Stack #%A." userId stackId)
     let AddTo (db: CardOverflowDb) userId (newTag: string) stackId = taskResult {
         let newTag = sanitize newTag
-        let! (cc: CardEntity) = getFirstCollected db userId stackId
-        let! (tag: TagEntity) = upsertNoSave db newTag
-        do! db.Tag_Card
-                .AnyAsync(fun x -> x.StackId = stackId && x.UserId = userId && x.TagId = tag.Id)
-            |>% (Result.requireFalse <| sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId newTag)
-        Tag_CardEntity(Card = cc, Tag = tag)
-        |> db.Tag_Card.AddI
+        let! (ccs: CardEntity ResizeArray) = getCollected db userId stackId
+        for cc in ccs do
+            do! cc.Tags.Select(fun x -> x.ToLower()).Contains(newTag.ToLower()) |> (Result.requireFalse <| sprintf "Stack #%A for User #%A already has tag \"%s\"" stackId userId newTag)
+            cc.Tags <- cc.Tags.Append(newTag).ToArray()
         return! db.SaveChangesAsyncI ()
     }
     let DeleteFrom db userId tag stackId = taskResult {
         let tag = MappingTools.toTitleCase tag
-        let! (cc: CardEntity) = getFirstCollected db userId stackId
-        let! join =
-            db.Tag_Card
-                .SingleOrDefaultAsync(fun x -> x.CardId = cc.Id && x.Tag.Name = tag)
-            |>% (Result.requireNotNull <| sprintf "Stack #%A for User #%A doesn't have the tag \"%s\"" stackId userId tag)
-        db.Tag_Card.RemoveI join
+        let! (ccs: CardEntity ResizeArray) = getCollected db userId stackId
+        for cc in ccs do
+            do! cc.Tags.Contains tag |> (Result.requireTrue <| sprintf "Stack #%A for User #%A doesn't have the tag \"%s\"" stackId userId tag)
+            cc.Tags <- cc.Tags.Where(fun x -> x <> tag).ToArray()
         return! db.SaveChangesAsyncI()
     }
 
@@ -420,7 +398,7 @@ module SanitizeDeckRepository =
                         defaultCardSettingId
                         newDeckId
                         []
-                    |> fun x -> x.copyToNew [] index
+                    |> fun x -> x.copyToNew [||] index
                 List.zipOn
                     (theirs |> Seq.toList)
                     (mine |> Seq.toList)
@@ -845,11 +823,12 @@ module SanitizeStackRepository =
             | NewBranch_Title _ ->
                 db.Leaf.AddI leaf
                 StackRepository.collectStackNoSave db userId leaf true cardIds
-            | NewOriginal_TagIds tagIds
-            | NewCopy_SourceLeafId_TagIds (_, tagIds) -> taskResult {
+            | NewOriginal_TagIds tags
+            | NewCopy_SourceLeafId_TagIds (_, tags) -> taskResult {
                 let! (ccs: CardEntity list) = StackRepository.collectStackNoSave db userId leaf true cardIds
-                for tagId in tagIds do
-                    ccs.First().Tag_Cards.Add(Tag_CardEntity(TagId = tagId))
+                for tag in tags do
+                    for cc in ccs do
+                        cc.Tags <- cc.Tags.Append(tag).ToArray()
                 return ccs
                 }
             |>%% List.sortBy (fun x -> x.Index)

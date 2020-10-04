@@ -144,7 +144,7 @@ module ExploreStackRepository =
                 let cardIds = ids.Select(fun (_, _, _, c) -> c) |> Seq.toList
                 { StackId = stackId; BranchId = branchId; LeafId = leafId; CardIds = cardIds})
     let get (db: CardOverflowDb) userId stackId = taskResult {
-        let! (r: StackEntity * List<string> * List<string> * List<string>) =
+        let! (r: StackEntity * array<string> * array<int> * List<string> * List<string>) =
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Stack.Author)
                 .Include(fun x -> x.Stack.Branches :> IEnumerable<_>)
@@ -328,7 +328,7 @@ module StackRepository =
                 defaultCardSettingId
                 defaultDeckId
                 []
-            |> fun x -> x.copyToNew [] index // medTODO get tags from gromplate
+            |> fun x -> x.copyToNew [||] index // medTODO get tags from gromplate
         let new' =
             [0s .. leaf.MaxIndexInclusive]
             |> List.map cardSansIndex
@@ -387,13 +387,11 @@ module StackRepository =
                 .Include(fun x -> x.Leaf.Grompleaf)
                 .Include(fun x -> x.Leaf.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
-                .Include(fun x -> x.Leaf.Cards :> IEnumerable<_>)
-                    .ThenInclude(fun (x: CardEntity) -> x.Tag_Cards :> IEnumerable<_>)
-                    .ThenInclude(fun (x: Tag_CardEntity) -> x.Tag)
+                .Include(fun x -> x.Leaf.Cards)
                 .Where(fun x -> x.StackId = stackId && x.UserId = userId)
                 .Select(fun x ->
                     x,
-                    x.Leaf.Cards.Single(fun x -> x.UserId = userId).Tag_Cards.Select(fun x -> x.Tag.Name).ToList()
+                    x.Leaf.Cards.Single(fun x -> x.UserId = userId).Tags
                 ).ToListAsync()
         return!
             e.Select(fun (e, t) ->
@@ -412,8 +410,6 @@ module StackRepository =
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
-                x.Tag_Cards.Any(fun x ->
-                    x.Tag.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.Leaf.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private searchCollectedIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
@@ -423,8 +419,6 @@ module StackRepository =
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
-                x.Tag_Cards.Any(fun x ->
-                    x.Tag.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))) ||
                 x.Leaf.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
             )
     let private collectedByDeck (db: CardOverflowDb) deckId =
@@ -435,11 +429,9 @@ module StackRepository =
         task {
             let! r =
                 (searchCollectedIsLatest db userId searchTerm)
-                    .Include(fun x -> x.Tag_Cards :> IEnumerable<_>)
-                        .ThenInclude(fun (x: Tag_CardEntity) -> x.Tag)
                     .ToPagedListAsync(pageNumber, 15)
             return {
-                Results = r |> Seq.map (fun x -> Card.load (x.Tag_Cards.Select(fun x -> x.Tag.Name) |> Set.ofSeq) x true)
+                Results = r |> Seq.map (fun x -> Card.load (x.Tags |> Set.ofSeq) x true)
                 Details = {
                     CurrentPage = r.PageNumber
                     PageCount = r.PageCount
@@ -777,17 +769,9 @@ module TagRepository =
                 HasChildren = hasChildren
             })
     let getAll (db: CardOverflowDb) userId =
-        db.Tag_Card
-            .Where(fun x -> x.UserId = userId)
-            .Select(fun x -> x.Tag.Name)
-            .Distinct()
-            .ToListAsync()
-        |> Task.map parse
-    let searchMany (db: CardOverflowDb) (input: string list) =
-        let input = input |> List.map (fun x -> x.ToLower())
-        db.Tag.Where(fun t -> input.Contains(t.Name.ToLower()))
-    let search (db: CardOverflowDb) (input: string) =
-        db.Tag.Where(fun t -> EF.Functions.ILike(t.Name, input + "%"))
+        db.User
+            .SingleAsync(fun x -> x.Id = userId)
+        |> Task.map (fun x -> x.CardTags |> parse)
 
 [<CLIMutable>]
 type DeckWithFollowMeta =

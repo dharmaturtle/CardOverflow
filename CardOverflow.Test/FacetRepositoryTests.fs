@@ -52,13 +52,9 @@ let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds ids = {
     Ids = UpsertIds.fromTuple ids }
 
 let add gromplateName createCommand (db: CardOverflowDb) userId tags (ids: Guid * Guid * Guid * Guid list) = taskResult {
-    let tagIds = ResizeArray.empty
-    for tag in tags do
-        let! tagId = SanitizeTagRepository.upsert db tag |> TaskResult.getOk
-        tagIds.Add tagId
     let! gromplate = TestGromplateRepo.SearchEarliest db gromplateName
     return!
-        createCommand gromplate (tagIds |> List.ofSeq) ids
+        createCommand gromplate tags ids
         |> SanitizeStackRepository.Update db userId []
     }
 

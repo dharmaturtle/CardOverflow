@@ -100,7 +100,6 @@ let ``Import relationships has reduced Gromplates, also fieldvalue tests`` (): u
             userId
             Map.empty
             (fun _ -> [])
-            (fun _ -> [])
             ([option].ToList())
             option
             (fun _ -> None)
@@ -297,15 +296,13 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     )
     Assert.Equal<string>(
         [ "Basic"; "Othertag"; "Tag" ],
-        (c.Db.Tag.ToList()).Select(fun x -> x.Name) |> Seq.sort)
+        (c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>)) |> Seq.sort)
     Assert.Equal<string>(
         [ "Othertag" ],
         c.Db.Card
             .Include(fun x -> x.Leaf)
-            .Include(fun x -> x.Tag_Cards :> IEnumerable<_>)
-                .ThenInclude(fun (x: Tag_CardEntity) -> x.Tag)
             .Single(fun c -> c.Leaf.FieldValues.Contains("mp3"))
-            .Tag_Cards.Select(fun t -> t.Tag.Name)
+            .Tags
             |> Seq.sort)
     Assert.Equal<string>(
         "Default",
@@ -389,11 +386,11 @@ let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> =
     use c = new TestContainer(false, ankiFileName)
     let userId = user_3
     let! _ = FacetRepositoryTests.addBasicStack c.Db userId [ "Tag"; "Deck:Default" ] (stack_1, branch_1, leaf_1, [card_1])
-    Assert.Equal(2, c.Db.Tag.Count())
+    Assert.Equal(2, c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
 
-    Assert.Equal(["Basic"; "Deck:Default"; "Othertag"; "Tag"], c.Db.Tag.Select(fun x -> x.Name).OrderBy(fun x -> x))
+    Assert.Equal(["Basic"; "Deck:Default"; "Othertag"; "Tag"], c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
     } |> TaskResult.getOk)
 
 [<Theory>]
@@ -405,7 +402,7 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` anki
     for _ in [1..5] do
         do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
         Assert.Equal(2, c.Db.CardSetting.Count(fun x -> x.UserId = userId))
-        Assert.Equal(3, c.Db.Tag.Count())
+        Assert.Equal(3, c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Count())
         Assert.Equal(5, c.Db.Gromplate.Count(fun x -> x.AuthorId = theCollectiveId))
         Assert.Equal(7, c.Db.Grompleaf.Count(fun x -> x.Gromplate.AuthorId = theCollectiveId))
         Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
