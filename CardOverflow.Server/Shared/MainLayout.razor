@@ -1,4 +1,4 @@
-﻿@using ThoughtDesign.WebLibrary
+@using ThoughtDesign.WebLibrary
 @using System.Security.Claims
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -7,7 +7,7 @@
 @using CardOverflow.Sanitation
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject CardOverflowDb Db
+@inject DbExecutor DbExecutor
 @inject UrlProvider UrlProvider
 
 <CascadingValue Value=@_userTask>
@@ -28,10 +28,15 @@
 @code {
   Task<UserClaims> _userTask;
 
+  // My current understanding is that we want to cascade the Task (rather than the UserClaims) because if we first
+  // cascade the "default" UserClaims then later update to the new claims, this causes OnParametersSetAsync
+  // to rerun, leading to duplicate API calls. One possible improvement is to drop the CascadingValue and _userTask and
+  // simply register a UserClaims provider with the container.
   protected override void OnInitialized() {
     _userTask = AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(x => toUserClaims(x.Result));
   }
 
+  // DisplayName probably shouldn't be a claim. TimeZone is definitely not a claim. https://stackoverflow.com/questions/21645323/
   private UserClaims toUserClaims(AuthenticationState state) {
     if (state.User.Identity.IsAuthenticated) {
       var userId = state.User.Claims.Single(x =>

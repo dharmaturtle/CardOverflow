@@ -11,11 +11,11 @@
 @inject DbExecutor DbExecutor
 @inject IToastService ToastService
 
-<span class="@(_delta >= Duration.Zero ? "" : "text-danger" )">
+<span class="@(_delta >= NodaTime.Duration.Zero ? "" : "text-danger" )">
   @(ViewLogic.toString(_delta))
 </span>
 
 @code {
   [Parameter] public Instant DueDate { get; set; }
-  private Duration _delta => DueDate - TimeProvider.utcNow;
+  private NodaTime.Duration _delta => DueDate - TimeProvider.utcNow;
 }
