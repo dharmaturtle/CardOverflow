@@ -159,15 +159,23 @@ module ExploreStackRepository =
                 .Where(fun x -> x.StackId = stackId)
                 .Select(fun x ->
                     x.Stack,
-                    x.Stack.Cards.Single(fun x -> x.UserId = userId).Tag_Cards.Select(fun x -> x.Tag.Name).ToList(),
+                    x.Stack.Tags,
+                    x.Stack.TagsCount,
                     x.Stack.Cards.Single(fun x -> x.UserId = userId).Relationship_CardSourceCards.Select(fun x -> x.Relationship.Name).ToList(),
                     x.Stack.Cards.Single(fun x -> x.UserId = userId).Relationship_CardTargetCards.Select(fun x -> x.Relationship.Name).ToList()
                 ).SingleOrDefaultAsync()
-        let! stack, t, rs, rt = r |> Result.ofNullable (sprintf "Stack #%A not found" stackId)
-        let! (tc: List<StackTagCountEntity>) = db.StackTagCount.Where(fun x -> x.StackId = stackId).ToListAsync()
+        let! stack, t, tc, rs, rt = r |> Result.ofNullable (sprintf "Stack #%A not found" stackId)
+        let usersTags = Set.ofSeq t
+        let viewTags =
+            Seq.zip t tc |> Seq.map (fun (t, c) ->
+                {   Name = t
+                    Count = c
+                    IsCollected = usersTags.Contains t
+                }
+            ) |> toResizeArray
         let! (rc: List<StackRelationshipCountEntity>) = db.StackRelationshipCount.Where(fun x -> x.StackId = stackId).ToListAsync()
         let! collectedIds = getCollectedIds db userId stackId
-        return ExploreStack.load stack collectedIds (Set.ofSeq t) tc (Seq.append rs rt |> Set.ofSeq) rc
+        return ExploreStack.load stack collectedIds viewTags (Seq.append rs rt |> Set.ofSeq) rc
         }
     let leaf (db: CardOverflowDb) userId leafId = taskResult {
         let! (e: LeafEntity) =
