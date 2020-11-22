@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -16,9 +16,14 @@
     <Compile Include="Notification.fs" />
     <Compile Include="BusinessModels.fs" />
     <Compile Include="DatabaseLogic.fs" />
+    <Compile Include="Infrastructure.fs" />
+    <Compile Include="Stack.fs" />
+    <Compile Include="Branch.fs" />
+    <Compile Include="StackBranch.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FsCodec.NewtonsoftJson" Version="2.1.1" />
     <PackageReference Include="FSharp.Text.RegexProvider" Version="2.1.0" />
     <PackageReference Include="FsToolkit.ErrorHandling" Version="1.2.5" />
     <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="1.2.5" />
@@ -26,6 +31,7 @@
     <PackageReference Include="NodaTime" Version="3.0.0" />
     <PackageReference Include="Thoth.Json.Net" Version="3.6.0" />
     <PackageReference Include="htmldiff.net" Version="1.4.0" />
+    <PackageReference Include="Equinox" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -135,6 +135,7 @@ module Random =
 
 [<AutoOpen>]
 module Core =
+    let toString x = x.ToString()
     let curry f a b = f (a,b)
     let uncurry f (a,b) = f a b
 
