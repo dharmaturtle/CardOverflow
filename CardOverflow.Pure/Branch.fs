@@ -5,6 +5,7 @@ open FsCodec
 open FsCodec.NewtonsoftJson
 open Serilog
 open TypeShape
+open CardOverflow.Pure
 
 let streamName (id: BranchId) = StreamName.create "Branch" (id.ToString())
 
@@ -15,20 +16,20 @@ module Events =
     type Snapshotted =
         { BranchId: BranchId
           LeafId: LeafId
-          Name: string
+          Title: string
           StackId: StackId
           AuthorId: AuthorId
           GrompleafId: GrompleafId
           AnkiNoteId: int64 option
           GotDMCAed: bool
-          FieldValues: string list
+          FieldValues: Map<string, string>
           EditSummary: string
           Tags: string list }
     type Edited =
         { LeafId: LeafId
-          Name: string
+          Title: string
           GrompleafId: GrompleafId
-          FieldValues: string list
+          FieldValues: Map<string, string>
           EditSummary: string }
 
     type Event =
@@ -54,7 +55,7 @@ module Fold =
             | State.Active a ->
                 { a with
                     LeafId = b.LeafId
-                    Name = b.Name
+                    Title = b.Title
                     GrompleafId = b.GrompleafId
                     FieldValues = b.FieldValues
                     EditSummary = b.EditSummary
@@ -63,15 +64,25 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Snapshotted _ -> true | _ -> false
 
-let decideCreate state = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted state ]
+let decideCreate snapshotted = function
+    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted snapshotted ]
     | Fold.State.Active _ -> Error "Already created", []
+
+let decideEdit edited callerId = function
+    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist", []
+    | Fold.State.Active x ->
+        if x.AuthorId = callerId then
+            Ok ()                         , [ Events.Edited edited ]
+        else Error "You aren't the author", []
 
 type Service internal (resolve) =
 
     member _.Create(state: Events.Snapshotted) =
         let stream : Stream<_, _> = resolve state.BranchId
         stream.Transact(decideCreate state)
+    member _.Edit(state, branchId, callerId) =
+        let stream : Stream<_, _> = resolve branchId
+        stream.Transact(decideEdit state callerId)
 
 let create resolve =
     let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)

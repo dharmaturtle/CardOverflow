@@ -37,21 +37,49 @@ let stackBranchService store =
     let branches = Branch.memoryStore store
     StackBranch.Service(stacks, branches)
 
-[<Property>]
-let ``StackBranch.Service.Create persists both snapshots`` (stack: Stack.Events.Snapshotted, branch: Branch.Events.Snapshotted) =
+let runSynchronouslySuccessfully x =
+    x
+    |> Async.RunSynchronously
+    |> Result.getOk
+    |> Assert.Null
+
+[<Generators>]
+let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =
+    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
     let store = TestVolatileStore()
     let stackBranchService = stackBranchService store
-    Async.RunSynchronously <| async {
-        let! r = stackBranchService.Create(stack, branch)
-        Assert.Null(Result.getOk r)
-
-        stack.StackId
-        |> store.StackEvents
-        |> Assert.Single
-        |> Assert.equal (Stack.Events.Snapshotted stack)
+    let expectedStack, expectedBranch = StackBranch.stackBranch authorId command None tags "Default"
+    
+    stackBranchService.Upsert(authorId, command)
+    
+    |> runSynchronouslySuccessfully
+    % expectedStack.StackId
+    |> store.StackEvents
+    |> Assert.Single
+    |> Assert.equal (Stack.Events.Snapshotted expectedStack)
+    % expectedBranch.BranchId
+    |> store.BranchEvents
+    |> Assert.Single
+    |> Assert.equal (Branch.Events.Snapshotted expectedBranch)
+    
+[<Generators>]
+let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, tags, title) =
+    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
+    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
+    let store = TestVolatileStore()
+    let stackBranchService = stackBranchService store
+    let expectedBranch : Branch.Events.Edited =
+        let _, b = StackBranch.stackBranch authorId command2 None tags title
+        { LeafId      = b.LeafId
+          Title       = b.Title
+          GrompleafId = b.GrompleafId
+          FieldValues = b.FieldValues
+          EditSummary = b.EditSummary }
+    stackBranchService.Upsert(authorId, command1) |> runSynchronouslySuccessfully
         
-        branch.BranchId
-        |> store.BranchEvents
-        |> Assert.Single
-        |> Assert.equal (Branch.Events.Snapshotted branch)
-    }
+    stackBranchService.Upsert(authorId, command2) |> runSynchronouslySuccessfully
+
+    % command2.Ids.BranchId
+    |> store.BranchEvents
+    |> Seq.last
+    |> Assert.equal (Branch.Events.Edited expectedBranch)

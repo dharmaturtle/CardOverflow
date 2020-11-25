@@ -15,7 +15,8 @@ module Events =
     type Snapshotted =
         { StackId: StackId
           DefaultBranchId: BranchId
-          AuthorId: AuthorId }
+          AuthorId: AuthorId
+          CopySourceLeafId: LeafId Option }
 
     type Event =
         | DefaultBranchChanged of {| BranchId: BranchId |}
