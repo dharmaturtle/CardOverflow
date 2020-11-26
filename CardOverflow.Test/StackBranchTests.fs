@@ -37,11 +37,16 @@ let stackBranchService store =
     let branches = Branch.memoryStore store
     StackBranch.Service(stacks, branches)
 
-let runSynchronouslySuccessfully x =
-    x
-    |> Async.RunSynchronously
-    |> Result.getOk
-    |> Assert.Null
+module RunSynchronously =
+    let OkEquals ex =
+        Async.RunSynchronously
+        >> Result.getOk
+        >> Assert.equal ex
+    
+    let ErrorEquals ex =
+        Async.RunSynchronously
+        >> Result.getError
+        >> Assert.equal ex
 
 [<Generators>]
 let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =
@@ -52,7 +57,7 @@ let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, t
     
     stackBranchService.Upsert(authorId, command)
     
-    |> runSynchronouslySuccessfully
+    |> RunSynchronously.OkEquals ()
     % expectedStack.StackId
     |> store.StackEvents
     |> Assert.Single
@@ -75,9 +80,9 @@ let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, 
           GrompleafId = b.GrompleafId
           FieldValues = b.FieldValues
           EditSummary = b.EditSummary }
-    stackBranchService.Upsert(authorId, command1) |> runSynchronouslySuccessfully
+    stackBranchService.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
         
-    stackBranchService.Upsert(authorId, command2) |> runSynchronouslySuccessfully
+    stackBranchService.Upsert(authorId, command2) |> RunSynchronously.OkEquals ()
 
     % command2.Ids.BranchId
     |> store.BranchEvents
@@ -90,10 +95,8 @@ let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (
     let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
     let store = TestVolatileStore()
     let stackBranchService = stackBranchService store
-    stackBranchService.Upsert(authorId, command1) |> runSynchronouslySuccessfully
+    stackBranchService.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
         
     stackBranchService.Upsert(authorId, command2)
 
-    |> Async.RunSynchronously
-    |> Result.getError
-    |> Assert.equal $"Duplicate leafId:{command1.Ids.LeafId}"
+    |> RunSynchronously.ErrorEquals $"Duplicate leafId:{command1.Ids.LeafId}"
