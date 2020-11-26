@@ -16,6 +16,7 @@ module Events =
     type Snapshotted =
         { BranchId: BranchId
           LeafId: LeafId
+          LeafIds: LeafId list
           Title: string
           StackId: StackId
           AuthorId: AuthorId
@@ -54,8 +55,9 @@ module Fold =
             | State.Initial -> invalidOp "Can't edit an Initial Branch"
             | State.Active a ->
                 { a with
-                    LeafId = b.LeafId
-                    Title = b.Title
+                    LeafId      = b.LeafId
+                    LeafIds     = b.LeafId :: a.LeafIds
+                    Title       = b.Title
                     GrompleafId = b.GrompleafId
                     FieldValues = b.FieldValues
                     EditSummary = b.EditSummary
@@ -68,12 +70,15 @@ let decideCreate snapshotted = function
     | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted snapshotted ]
     | Fold.State.Active _ -> Error "Already created", []
 
-let decideEdit edited callerId = function
+let decideEdit (edited: Events.Edited) callerId = function
     | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist", []
     | Fold.State.Active x ->
-        if x.AuthorId = callerId then
-            Ok ()                         , [ Events.Edited edited ]
-        else Error "You aren't the author", []
+        if x.AuthorId <> callerId then
+            Error "You aren't the author"       , []
+        elif x.LeafIds |> Seq.contains edited.LeafId then
+            Error $"Duplicate leafId:{x.LeafId}", []
+        else
+            Ok ()                               , [ Events.Edited edited ]
 
 type Service internal (resolve) =
 

@@ -37,7 +37,7 @@ module Fold =
         | Events.Snapshotted s -> State.Active s
         | Events.DefaultBranchChanged b ->
             match state with
-            | State.Initial -> invalidOp "Can't change the default branch of an Initial Stack"
+            | State.Initial  -> invalidOp "Can't change the default branch of an Initial Stack"
             | State.Active a -> { a with DefaultBranchId = b.BranchId } |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve

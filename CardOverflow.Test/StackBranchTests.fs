@@ -65,7 +65,7 @@ let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, t
 [<Generators>]
 let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, tags, title) =
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
+    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = { command1.Ids with LeafId = command2.Ids.LeafId } }
     let store = TestVolatileStore()
     let stackBranchService = stackBranchService store
     let expectedBranch : Branch.Events.Edited =
@@ -83,3 +83,17 @@ let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, 
     |> store.BranchEvents
     |> Seq.last
     |> Assert.equal (Branch.Events.Edited expectedBranch)
+
+[<Generators>]
+let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (authorId, command1, command2, tags, title) =
+    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
+    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
+    let store = TestVolatileStore()
+    let stackBranchService = stackBranchService store
+    stackBranchService.Upsert(authorId, command1) |> runSynchronouslySuccessfully
+        
+    stackBranchService.Upsert(authorId, command2)
+
+    |> Async.RunSynchronously
+    |> Result.getError
+    |> Assert.equal $"Duplicate leafId:{command1.Ids.LeafId}"

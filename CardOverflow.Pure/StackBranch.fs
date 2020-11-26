@@ -8,6 +8,7 @@ open CardOverflow.Pure
 let branch authorId command tags title : Branch.Events.Snapshotted =
     { BranchId = % command.Ids.BranchId
       LeafId = % command.Ids.LeafId
+      LeafIds = [ % command.Ids.LeafId ]
       Title = title
       StackId = % command.Ids.StackId
       AuthorId = authorId
