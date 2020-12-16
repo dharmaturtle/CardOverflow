@@ -133,7 +133,7 @@
       Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditStack.Grompleaf.GromplateId));
     }
     if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<Guid>.Empty), null, UpsertIdsC.Create());
+      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(FSharpList<string>.Empty), null, UpsertIdsC.Create());
     }
     UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
     StateHasChanged();
@@ -156,7 +156,7 @@
         _savedBranchId = result.ResultValue;
         if (NewEditStackOnSave) {
           var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-          EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(FSharpList<Guid>.Empty), null, UpsertIdsC.Create());
+          EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(FSharpList<string>.Empty), null, UpsertIdsC.Create());
           UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
           _isDisabled = false;
         }
