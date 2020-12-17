@@ -100,3 +100,26 @@ let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (
     stackBranchService.Upsert(authorId, command2)
 
     |> RunSynchronously.ErrorEquals $"Duplicate leafId:{command1.Ids.LeafId}"
+
+[<Generators>]
+let ``StackBranch.Service.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title) =
+    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
+    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
+    let store = TestVolatileStore()
+    let stackBranchService = stackBranchService store
+    stackBranchService.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
+        
+    stackBranchService.Upsert(hackerId, command2)
+
+    |> RunSynchronously.ErrorEquals $"You aren't the author"
+
+[<Generators>]
+let ``StackBranch.Service.Upsert fails to insert twice`` (authorId, command, tags) =
+    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
+    let store = TestVolatileStore()
+    let stackBranchService = stackBranchService store
+    stackBranchService.Upsert(authorId, command) |> RunSynchronously.OkEquals ()
+        
+    stackBranchService.Upsert(authorId, command)
+
+    |> RunSynchronously.ErrorEquals $"Already created"
