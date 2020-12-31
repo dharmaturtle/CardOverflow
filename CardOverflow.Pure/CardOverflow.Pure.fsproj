@@ -17,6 +17,7 @@
     <Compile Include="BusinessModels.fs" />
     <Compile Include="DatabaseLogic.fs" />
     <Compile Include="Infrastructure.fs" />
+    <Compile Include="User.fs" />
     <Compile Include="Stack.fs" />
     <Compile Include="Branch.fs" />
     <Compile Include="StackBranch.fs" />
