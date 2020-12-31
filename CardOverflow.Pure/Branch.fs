@@ -19,7 +19,7 @@ module Events =
           LeafIds: LeafId list
           Title: string
           StackId: StackId
-          AuthorId: AuthorId
+          AuthorId: UserId
           GrompleafId: GrompleafId
           AnkiNoteId: int64 option
           GotDMCAed: bool

@@ -4,8 +4,8 @@ module Domain.Infrastructure
 open FSharp.UMX
 open System
 
-type AuthorId = Guid<authorId>
-    and [<Measure>] authorId
+type UserId = Guid<userId>
+    and [<Measure>] userId
 
 type StackId = Guid<stackId>
     and [<Measure>] stackId

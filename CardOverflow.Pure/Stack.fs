@@ -15,7 +15,7 @@ module Events =
     type Snapshotted =
         { StackId: StackId
           DefaultBranchId: BranchId
-          AuthorId: AuthorId
+          AuthorId: UserId
           CopySourceLeafId: LeafId Option }
 
     type Event =
