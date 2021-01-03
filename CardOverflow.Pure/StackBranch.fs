@@ -6,7 +6,7 @@ open FsToolkit.ErrorHandling
 open CardOverflow.Pure
 
 let branch authorId command tags title : Branch.Events.Snapshotted =
-    { BranchId = % command.Ids.BranchId
+    { Id = % command.Ids.BranchId
       LeafId = % command.Ids.LeafId
       LeafIds = [ % command.Ids.LeafId ]
       Title = title
@@ -19,7 +19,7 @@ let branch authorId command tags title : Branch.Events.Snapshotted =
       EditSummary = command.EditSummary
       Tags = tags }
 let stack authorId command sourceLeafId : Stack.Events.Snapshotted =
-    { StackId = % command.Ids.StackId
+    { Id = % command.Ids.StackId
       DefaultBranchId = % command.Ids.BranchId
       AuthorId = authorId
       CopySourceLeafId = sourceLeafId }
@@ -52,4 +52,4 @@ type Service
                   GrompleafId = branch.GrompleafId
                   FieldValues = branch.FieldValues
                   EditSummary = branch.EditSummary }
-            branches.Edit(edited, branch.BranchId, authorId)
+            branches.Edit(edited, branch.Id, authorId)

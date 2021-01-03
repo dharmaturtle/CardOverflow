@@ -22,11 +22,11 @@ let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, t
     stackBranchService.Upsert(authorId, command)
     
     |> RunSynchronously.OkEquals ()
-    % expectedStack.StackId
+    % expectedStack.Id
     |> store.StackEvents
     |> Assert.Single
     |> Assert.equal (Stack.Events.Snapshotted expectedStack)
-    % expectedBranch.BranchId
+    % expectedBranch.Id
     |> store.BranchEvents
     |> Assert.Single
     |> Assert.equal (Branch.Events.Snapshotted expectedBranch)

@@ -14,7 +14,7 @@ let streamName (id: BranchId) = StreamName.create "Branch" (id.ToString())
 module Events =
 
     type Snapshotted =
-        { BranchId: BranchId
+        { Id: BranchId
           LeafId: LeafId
           LeafIds: LeafId list
           Title: string
@@ -83,7 +83,7 @@ let decideEdit (edited: Events.Edited) callerId = function
 type Service internal (resolve) =
 
     member _.Create(state: Events.Snapshotted) =
-        let stream : Stream<_, _> = resolve state.BranchId
+        let stream : Stream<_, _> = resolve state.Id
         stream.Transact(decideCreate state)
     member _.Edit(state, branchId, callerId) =
         let stream : Stream<_, _> = resolve branchId

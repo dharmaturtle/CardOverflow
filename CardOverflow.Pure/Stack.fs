@@ -13,7 +13,7 @@ let streamName (id: StackId) = StreamName.create "Stack" (id.ToString())
 module Events =
     
     type Snapshotted =
-        { StackId: StackId
+        { Id: StackId
           DefaultBranchId: BranchId
           AuthorId: UserId
           CopySourceLeafId: LeafId Option }
@@ -50,7 +50,7 @@ let decideCreate state = function
 type Service internal (resolve) =
 
     member _.Create(state: Events.Snapshotted) =
-        let stream : Stream<_, _> = resolve state.StackId
+        let stream : Stream<_, _> = resolve state.Id
         stream.Transact(decideCreate state)
 
 let create resolve =
