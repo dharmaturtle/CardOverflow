@@ -1,9 +1,7 @@
 module Domain.Branch
 
-open Equinox
 open FsCodec
 open FsCodec.NewtonsoftJson
-open Serilog
 open TypeShape
 open CardOverflow.Pure
 
@@ -79,16 +77,3 @@ let decideEdit (edited: Events.Edited) callerId = function
             Error $"Duplicate leafId:{x.LeafId}", []
         else
             Ok ()                               , [ Events.Edited edited ]
-
-type Service internal (resolve) =
-
-    member _.Create(state: Events.Snapshotted) =
-        let stream : Stream<_, _> = resolve state.Id
-        stream.Transact(decideCreate state)
-    member _.Edit(state, branchId, callerId) =
-        let stream : Stream<_, _> = resolve branchId
-        stream.Transact(decideEdit state callerId)
-
-let create resolve =
-    let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-    Service(resolve)

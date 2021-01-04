@@ -11,6 +11,7 @@ open CardOverflow.Pure
 open CardOverflow.Test
 open FsCodec
 open TestingInfrastructure
+open EventService
 
 [<Generators>]
 let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =

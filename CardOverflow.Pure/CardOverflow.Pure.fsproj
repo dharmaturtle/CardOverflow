@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -20,7 +20,6 @@
     <Compile Include="User.fs" />
     <Compile Include="Stack.fs" />
     <Compile Include="Branch.fs" />
-    <Compile Include="StackBranch.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,7 +31,6 @@
     <PackageReference Include="NodaTime" Version="3.0.0" />
     <PackageReference Include="Thoth.Json.Net" Version="3.6.0" />
     <PackageReference Include="htmldiff.net" Version="1.4.0" />
-    <PackageReference Include="Equinox" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>

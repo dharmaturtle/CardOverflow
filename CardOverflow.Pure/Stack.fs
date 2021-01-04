@@ -1,9 +1,7 @@
 module Domain.Stack
 
-open Equinox
 open FsCodec
 open FsCodec.NewtonsoftJson
-open Serilog
 open TypeShape
 
 let streamName (id: StackId) = StreamName.create "Stack" (id.ToString())
@@ -47,13 +45,3 @@ module Fold =
 let decideCreate state = function
     | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted state ]
     | Fold.State.Active _ -> Error "Already created", []
-
-type Service internal (resolve) =
-
-    member _.Create(state: Events.Snapshotted) =
-        let stream : Stream<_, _> = resolve state.Id
-        stream.Transact(decideCreate state)
-
-let create resolve =
-    let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-    Service(resolve)

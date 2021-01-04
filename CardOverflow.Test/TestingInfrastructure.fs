@@ -10,6 +10,7 @@ open FsCheck.Xunit
 open CardOverflow.Pure
 open CardOverflow.Test
 open FsCodec
+open EventService
 
 type TestVolatileStore() =
     inherit VolatileStore<byte[]>()
