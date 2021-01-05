@@ -130,4 +130,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator editStackCommand
         |> AutoGenConfig.addGenerator instantGen
 
-type StandardProperty() = inherit PropertyAttribute(typeof<StandardConfig>)
+
+type StandardProperty(i) =
+    inherit PropertyAttribute(typeof<StandardConfig>, LanguagePrimitives.Int32WithMeasure i)
+    new () = StandardProperty(100)

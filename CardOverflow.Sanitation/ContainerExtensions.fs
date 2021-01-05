@@ -28,6 +28,7 @@ open Npgsql
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open Dapper.NodaTime
+open Nest
 
 module Environment =
     let get =
@@ -98,9 +99,42 @@ type Container with
     
     member container.RegisterStandardConnectionString =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection") |> ConnectionString)
+        container.RegisterSingleton<ElasticClient>(fun () ->
+            container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri")
+            |> Uri
+            |> fun x -> (new ConnectionSettings(x)).DefaultIndex("CardOverflow")
+            |> ElasticClient
+        )
     
     member container.RegisterServerConnectionString =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("ServerConnection") |> ConnectionString)
 
     member container.RegisterTestConnectionString dbName =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
+        let elasticSearchIndexName = dbName.ToLower()
+        container.RegisterSingleton<ElasticClient>(fun () ->
+            container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri")
+            |> Uri
+            |> fun x ->
+                (new ConnectionSettings(x))
+                    .DefaultIndex(elasticSearchIndexName)
+                    .EnableDebugMode(fun x ->
+                        if System.Text.RegularExpressions.Regex.IsMatch(x.DebugInformation, @"# Response:\s+{\s+""error""") then
+                            failwith x.DebugInformation
+                    )
+                    .ThrowExceptions()
+            |> ElasticClient
+        )
+        container.RegisterSingleton<ElseClient>(fun () ->
+            container.GetInstance<ElasticClient>()
+            |> ElseClient
+        )
+        container.RegisterInitializer<ElasticClient>(fun ec ->
+            try
+                elasticSearchIndexName
+                |> Indices.Parse
+                |> DeleteIndexRequest
+                |> ec.Indices.Delete
+                |> ignore
+            with _ -> ()
+        )

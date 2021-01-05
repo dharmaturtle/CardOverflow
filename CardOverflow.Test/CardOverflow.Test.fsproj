@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -78,6 +78,7 @@
     <Compile Include="ContainerExtensionsTests.fs" />
     <Compile Include="Hedgehog.fs" />
     <Compile Include="TestingInfrastructure.fs" />
+    <Compile Include="ElseClientTests.fs" />
     <Compile Include="StackBranchTests.fs" />
   </ItemGroup>
   <ItemGroup>

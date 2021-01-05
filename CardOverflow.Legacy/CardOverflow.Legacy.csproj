@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.6.3" />
     <PackageReference Include="FSharp.Core" Version="5.0.0" />
+    <PackageReference Include="NEST" Version="7.10.1" />
     <PackageReference Include="ObjectDumper.NET" Version="2.4.20008.1" />
   </ItemGroup>
 

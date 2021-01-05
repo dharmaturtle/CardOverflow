@@ -17,9 +17,10 @@ module Events =
           DefaultBranchId: BranchId
           AuthorId: UserId
           CopySourceLeafId: LeafId Option }
+    type DefaultBranchChanged = { BranchId: BranchId }
 
     type Event =
-        | DefaultBranchChanged of {| BranchId: BranchId |}
+        | DefaultBranchChanged of DefaultBranchChanged
         | Snapshotted          of Snapshotted
         interface UnionContract.IUnionContract
     

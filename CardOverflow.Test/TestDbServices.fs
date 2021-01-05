@@ -19,6 +19,7 @@ open CardOverflow.Sanitation
 open CardOverflow.Pure
 open Npgsql
 open System.Threading.Tasks
+open Nest
 
 type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
@@ -46,20 +47,41 @@ type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>]
         |> fun reset -> container.GetInstance<IConfiguration>().GetConnectionString "ServerConnection" |> ConnectionString |> reset dbName
 
     interface IDisposable with
-        member this.Dispose() =
+        member _.Dispose() =
             //this.Db.Database.EnsureDeleted() |> ignore
             container.Dispose()
             scope.Dispose()
 
-    member __.Db = // lowTODO this should take unit
+    member _.Db = // lowTODO this should take unit
         scope.Dispose()
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<CardOverflowDb>()
 
-    member __.Conn () =
+    member _.Conn () =
         scope.Dispose()
         scope <- AsyncScopedLifestyle.BeginScope container
         container.GetInstance<Task<NpgsqlConnection>>()
+
+type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
+    let container = new Container()
+    do
+        let dbName =
+            let temp =
+                if callerMembersArg.IsSome
+                then memberName.Value + "_" + callerMembersArg.Value
+                else memberName.Value
+            Regex.Replace(temp, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
+            |> sprintf "Ω_%s"
+        container.RegisterStuffTestOnly
+        container.RegisterTestConnectionString dbName
+        container.GetInstance<Task<NpgsqlConnection>>() |> ignore
+        container.Verify()
+
+    member _.ElasticClient () =
+        container.GetInstance<ElasticClient>()
+    
+    member _.ElseClient () =
+        container.GetInstance<ElseClient>()
 
 module TestGromplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {

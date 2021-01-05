@@ -17,6 +17,7 @@
     <Compile Include="Repository\Repositories.fs" />
     <Compile Include="Scheduler.fs" />
     <Compile Include="AnkiImporter.fs" />
+    <Compile Include="ElseClient.fs" />
     <Compile Include="WeatherForecast.fs" />
   </ItemGroup>
 
