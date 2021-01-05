@@ -142,3 +142,14 @@ module Constants =
     let ids_1          = UpsertIds.fromTuple(stack_1, branch_1, leaf_1, [card_1])
     let ids_2          = UpsertIds.fromTuple(stack_2, branch_2, leaf_2, [card_2])
     let ids_3          = UpsertIds.fromTuple(stack_3, branch_3, leaf_3, [card_3])
+
+module RunSynchronously =
+    let OkEquals ex =
+        Async.RunSynchronously
+        >> Result.getOk
+        >> Assert.equal ex
+
+    let ErrorEquals ex =
+        Async.RunSynchronously
+        >> Result.getError
+        >> Assert.equal ex

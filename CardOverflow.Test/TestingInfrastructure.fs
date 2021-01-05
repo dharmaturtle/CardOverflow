@@ -47,14 +47,3 @@ let stackBranchService store =
     let stacks   = Stack .memoryStore store
     let branches = Branch.memoryStore store
     StackBranch.Service(stacks, branches)
-
-module RunSynchronously =
-    let OkEquals ex =
-        Async.RunSynchronously
-        >> Result.getOk
-        >> Assert.equal ex
-    
-    let ErrorEquals ex =
-        Async.RunSynchronously
-        >> Result.getError
-        >> Assert.equal ex
