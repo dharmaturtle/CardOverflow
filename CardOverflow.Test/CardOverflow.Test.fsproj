@@ -77,7 +77,6 @@
     <Compile Include="AnkiPureTests.fs" />
     <Compile Include="ContainerExtensionsTests.fs" />
     <Compile Include="Hedgehog.fs" />
-    <Compile Include="TestingInfrastructure.fs" />
     <Compile Include="ElseClientTests.fs" />
     <Compile Include="StackBranchTests.fs" />
   </ItemGroup>

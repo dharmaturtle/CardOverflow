@@ -11,7 +11,6 @@ open CardOverflow.Pure
 open CardOverflow.Test
 open FsCodec
 open FSharp.Control.Tasks
-open TestingInfrastructure
 open System
 open CardOverflow.Api
 open NodaTime
