@@ -94,7 +94,7 @@ let clozeText =
         let! c = Gen.alphaNum |> GenX.cString 1 100
         return sprintf "%s{{c1::%s}}%s" a b c
     }
-let editStackCommand =
+let editStackCommandGen =
     gen {
         let! fieldNames =
             Gen.unicode
@@ -123,12 +123,41 @@ let editStackCommand =
         }
     }
 
+type NewOriginal = { NewOriginal: EditStackCommand }
+let newOriginalGen =
+    gen {
+        let! c = editStackCommandGen
+        let! tags = GenX.auto<string list>
+        let c = { c with Kind = UpsertKind.NewOriginal_TagIds tags }
+        return { NewOriginal = c }
+    }
+
+type NewBranch = { NewOriginal: EditStackCommand; NewBranch: EditStackCommand; BranchTitle: string }
+let newBranchGen =
+    gen {
+        let! { NewOriginal = newOriginal } = newOriginalGen
+        let! title = GenX.auto<string>
+        let! newBranch = editStackCommandGen
+        let newBranch =
+            { newBranch with
+                Kind = UpsertKind.NewBranch_Title title
+                Ids =
+                    { newBranch.Ids with
+                        StackId = newOriginal.Ids.StackId } }
+        return
+            { NewOriginal = newOriginal
+              NewBranch   = newBranch
+              BranchTitle = title }
+    }
+
 open Hedgehog.Xunit
 type StandardConfig =
     static member __ =
         GenX.defaults
-        |> AutoGenConfig.addGenerator editStackCommand
+        |> AutoGenConfig.addGenerator editStackCommandGen
         |> AutoGenConfig.addGenerator instantGen
+        |> AutoGenConfig.addGenerator newOriginalGen
+        |> AutoGenConfig.addGenerator newBranchGen
 
 
 type StandardProperty(i) =

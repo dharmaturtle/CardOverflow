@@ -11,6 +11,7 @@ open CardOverflow.Pure
 open CardOverflow.Test
 open FsCodec
 open EventService
+open Hedgehog
 
 [<Generators>]
 let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =
@@ -52,6 +53,22 @@ let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, 
     |> c.BranchEvents
     |> Seq.last
     |> Assert.equal (Branch.Events.Edited expectedBranch)
+    
+[<StandardProperty>]
+let ``StackBranch.Service.Upsert persists new branch`` (authorId, { NewOriginal = newOriginal; NewBranch = newBranch; BranchTitle = title }) =
+    let c = TestEsContainer()
+    let stackBranchService = c.StackBranchService()
+    let expectedBranch : Branch.Events.Snapshotted =
+        StackBranch.stackBranch authorId newBranch None [] title
+        |> snd
+    stackBranchService.Upsert(authorId, newOriginal) |> RunSynchronously.OkEquals ()
+        
+    stackBranchService.Upsert(authorId, newBranch) |> RunSynchronously.OkEquals ()
+
+    % newBranch.Ids.BranchId
+    |> c.BranchEvents
+    |> Seq.exactlyOne
+    |> Assert.equal (Branch.Events.Snapshotted expectedBranch)
 
 [<Generators>]
 let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (authorId, command1, command2, tags, title) =
