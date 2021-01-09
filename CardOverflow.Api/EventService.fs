@@ -28,7 +28,7 @@ module Stack =
 
     type Service internal (resolve) =
 
-        member _.Create(state: Events.Snapshotted) =
+        member internal _.Create(state: Events.Snapshotted) =
             let stream : Stream<_, _> = resolve state.Id
             stream.Transact(decideCreate state)
 

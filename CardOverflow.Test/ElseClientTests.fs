@@ -18,9 +18,10 @@ open Nest
 open System.Threading.Tasks
 open Hedgehog
 open FsToolkit.ErrorHandling
+open AsyncOp
 
 [<StandardProperty>]
-let ``ElseClient can handle all Stack events`` ((snapshot:Stack.Events.Snapshotted), branchId) = task {
+let ``ElseClient can handle all Stack events`` ((snapshot:Stack.Events.Snapshotted), branchId) = async {
     let client = TestEsContainer().ElseClient()
 
     // Snapshot

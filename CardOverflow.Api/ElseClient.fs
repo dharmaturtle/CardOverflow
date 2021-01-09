@@ -21,7 +21,8 @@ open NodaTime
 open Nest
 
 type ElseClient (client: ElasticClient) =
-    member _.Handle (stackId: string) = function
+    member _.Handle (stackId: string) e =
+        match e with
         | Stack.Events.Snapshotted snapshot ->
             client.IndexDocumentAsync snapshot |> Task.map ignore
         | Stack.Events.DefaultBranchChanged b ->
@@ -31,11 +32,13 @@ type ElseClient (client: ElasticClient) =
                     ud.Doc({| DefaultBranchId = b.BranchId |})
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore
+        |> Async.AwaitTask
     member this.Upsert (stackId: StackId) =
         stackId.ToString() |> this.Handle
     member _.GetStack (stackId: string) =
         client.GetAsync<Stack.Events.Snapshotted>(
             stackId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
+        |> Async.AwaitTask
     member this.Get (stackId: StackId) =
         stackId.ToString() |> this.GetStack
