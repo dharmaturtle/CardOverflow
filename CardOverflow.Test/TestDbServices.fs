@@ -84,7 +84,6 @@ module Branch =
 
 type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
-    let mutable scope = AsyncScopedLifestyle.BeginScope container
     do
         let dbName =
             let temp =
@@ -93,7 +92,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 else memberName.Value
             Regex.Replace(temp, "[^A-Za-z0-9 _]", "").Replace(' ', '_')
             |> sprintf "Ω_%s"
-        container.RegisterStuffTestOnly
+        container.RegisterStuff
         container.RegisterTestConnectionString dbName
         container.RegisterSingleton<VolatileStore<byte[]>>()
         container.RegisterSingleton<User.Service>(fun () ->
@@ -102,7 +101,6 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             container.GetInstance<VolatileStore<byte[]>>() |> Stack.memoryStore)
         container.RegisterSingleton<Branch.Service>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Branch.memoryStore)
-        container.GetInstance<Task<NpgsqlConnection>>() |> ignore
         container.Verify()
 
     member _.ElasticClient () =

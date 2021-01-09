@@ -96,6 +96,12 @@ type Container with
             .BuildServiceProvider(true)
             .UseSimpleInjector(container)
             |> ignore
+
+    member container.RegisterStuff =
+        container.RegisterInstance<IConfiguration>(Environment.get |> Configuration.get)
+        container.RegisterSingleton<ILogger>(fun () -> container.GetInstance<IConfiguration>() |> Logger.get :> ILogger)
+        container.RegisterInitializer<ILogger>(fun logger -> Log.Logger <- logger)
+        container.RegisterSingleton<IEntityHasher, EntityHasher>()
     
     member container.RegisterStandardConnectionString =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("DefaultConnection") |> ConnectionString)
