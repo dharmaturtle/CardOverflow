@@ -31,7 +31,7 @@ namespace ThoughtDesign.WebLibrary {
         //.UseLoggerFactory(loggerFactory)
         //.EnableSensitiveDataLogging()
         .UseSnakeCaseNamingConvention()
-        .UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+        .UseNpgsql(configuration.GetConnectionString("DefaultConnection"), x => x.UseNodaTime());
       });
       services.AddSingleton<DbExecutor>();
       services.AddSingleton<Func<Task<NpgsqlConnection>>>(_ => async () => {
