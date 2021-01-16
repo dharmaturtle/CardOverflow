@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -84,7 +84,6 @@
     <PackageReference Include="Equinox.MemoryStore" Version="2.2.0" />
     <PackageReference Include="dataannotationsvalidator" Version="2.2.0" />
     <PackageReference Include="FsCheck.Xunit" Version="2.14.3" />
-    <PackageReference Include="Hedgehog.Experimental" Version="0.2.4-alpha.0" />
     <PackageReference Include="Hedgehog.Xunit" Version="0.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
     <PackageReference Include="NCrunch.Framework" Version="4.0.0.1" />

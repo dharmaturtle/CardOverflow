@@ -27,14 +27,14 @@ let ``ElseClient can handle all Stack events`` ((snapshot:Stack.Events.Snapshott
     // Snapshot
     do! snapshot
         |> Stack.Events.Event.Snapshotted
-        |> client.Upsert snapshot.Id
+        |> client.UpsertStack snapshot.Id
     
     do! client.Get snapshot.Id |>% Assert.equal snapshot
 
     // DefaultBranchChanged
     do! { Stack.Events.BranchId = branchId }
         |> Stack.Events.Event.DefaultBranchChanged
-        |> client.Upsert snapshot.Id
+        |> client.UpsertStack snapshot.Id
     
     do! client.Get snapshot.Id |>% Assert.equal { snapshot with DefaultBranchId = branchId }
     }

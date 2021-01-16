@@ -13,7 +13,7 @@ open FsCodec
 open EventService
 open Hedgehog
 
-[<Generators>]
+[<StandardProperty>]
 let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =
     let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
     let c = TestEsContainer()
@@ -32,7 +32,7 @@ let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, t
     |> Assert.Single
     |> Assert.equal (Branch.Events.Snapshotted expectedBranch)
     
-[<Generators>]
+[<StandardProperty>]
 let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, tags, title) =
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
     let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = { command1.Ids with LeafId = command2.Ids.LeafId } }
@@ -70,7 +70,7 @@ let ``StackBranch.Service.Upsert persists new branch`` (authorId, { NewOriginal 
     |> Seq.exactlyOne
     |> Assert.equal (Branch.Events.Snapshotted expectedBranch)
 
-[<Generators>]
+[<StandardProperty>]
 let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (authorId, command1, command2, tags, title) =
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
     let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
@@ -82,7 +82,7 @@ let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (
 
     |> RunSynchronously.ErrorEquals $"Duplicate leafId:{command1.Ids.LeafId}"
 
-[<Generators>]
+[<StandardProperty>]
 let ``StackBranch.Service.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title) =
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
     let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
@@ -94,7 +94,7 @@ let ``StackBranch.Service.Upsert fails to persist edit with another author`` (au
 
     |> RunSynchronously.ErrorEquals $"You aren't the author"
 
-[<Generators>]
+[<StandardProperty>]
 let ``StackBranch.Service.Upsert fails to insert twice`` (authorId, command, tags) =
     let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
     let c = TestEsContainer()

@@ -29,6 +29,7 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open Dapper.NodaTime
 open Nest
+open Elasticsearch.Net
 
 module Environment =
     let get =
@@ -117,18 +118,27 @@ type Container with
 
     member container.RegisterTestConnectionString dbName =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
-        let elasticSearchIndexName = dbName.ToLower()
+        let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
+        let stackIndex  = nameof Domain.Stack  |> elasticSearchIndexName
+        let branchIndex = nameof Domain.Branch |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
-            container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri")
-            |> Uri
-            |> fun x ->
-                (new ConnectionSettings(x))
-                    .DefaultIndex(elasticSearchIndexName)
-                    .EnableDebugMode(fun x ->
-                        if System.Text.RegularExpressions.Regex.IsMatch(x.DebugInformation, @"# Response:\s+{\s+""error""") then
-                            failwith x.DebugInformation
-                    )
-                    .ThrowExceptions()
+            let sourceSerializerFactory =
+                ConnectionSettings.SourceSerializerFactory
+                    (fun x y -> Nest.JsonNetSerializer.JsonNetSerializer.Default (x, y))
+            let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
+            let pool = new SingleNodeConnectionPool(uri)
+            (new ConnectionSettings(pool, sourceSerializerFactory))
+                .DefaultMappingFor<Domain.Stack.Events.Snapshotted>(fun x ->
+                    x.IndexName stackIndex :> IClrTypeMapping<_>
+                )
+                .DefaultMappingFor<Domain.Branch.Events.Snapshotted>(fun x ->
+                    x.IndexName branchIndex :> IClrTypeMapping<_>
+                )
+                .EnableDebugMode(fun x ->
+                    if x.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227
+                        failwith x.DebugInformation
+                )
+                .ThrowExceptions()
             |> ElasticClient
         )
         container.RegisterSingleton<ElseClient>(fun () ->
@@ -137,7 +147,7 @@ type Container with
         )
         container.RegisterInitializer<ElasticClient>(fun ec ->
             try
-                elasticSearchIndexName
+                (dbName.ToLower() + "*")
                 |> Indices.Parse
                 |> DeleteIndexRequest
                 |> ec.Indices.Delete

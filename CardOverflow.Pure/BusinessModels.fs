@@ -141,7 +141,7 @@ type Grompleaf = {
     Name: string
     GromplateId: Guid
     Css: string
-    Fields: Field list
+    Fields: Field list // highTODO make this a map keyed on Name
     Created: Instant
     Modified: Instant option
     LatexPre: string

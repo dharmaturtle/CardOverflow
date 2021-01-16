@@ -100,6 +100,7 @@ let editStackCommandGen =
             Gen.unicode
             |> Gen.string (Range.constant 1 100)
             |> GenX.cList 1 100
+            |> Gen.map List.distinct
         let! gromplateType = gromplateType fieldNames
         let! grompleaf = grompleaf gromplateType fieldNames
         let values =

@@ -95,10 +95,25 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterStuff
         container.RegisterTestConnectionString dbName
         container.RegisterSingleton<VolatileStore<byte[]>>()
+        let vStore () = container.GetInstance<VolatileStore<byte[]>>()
         container.RegisterSingleton<User.Service>(fun () ->
-            container.GetInstance<VolatileStore<byte[]>>() |> User.memoryStore)
+            vStore() |> User.memoryStore)
+        container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
+            let elseClient = container.GetInstance<ElseClient>()
+            Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
+                let category, id = streamName |> StreamName.splitCategoryAndId
+                match category with
+                | "Stack" ->  events |> Array.map (Stack.Events.codec.TryDecode  >> Option.get >> elseClient.UpsertStack'  id)
+                | "Branch" -> events |> Array.map (Branch.Events.codec.TryDecode >> Option.get >> elseClient.UpsertBranch' id)
+                | _ -> failwith $"Unsupported category: {category}"
+                |> Async.Parallel
+                |> Async.RunSynchronously
+                |> ignore
+            ) |> store.Committed.AddHandler
+        )
         container.RegisterSingleton<Stack.Service>(fun () ->
-            container.GetInstance<VolatileStore<byte[]>>() |> Stack.memoryStore)
+            Stack.memoryStore
+                <| vStore() )
         container.RegisterSingleton<Branch.Service>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Branch.memoryStore)
         container.Verify()

@@ -21,7 +21,7 @@ open NodaTime
 open Nest
 
 type ElseClient (client: ElasticClient) =
-    member _.Handle (stackId: string) e =
+    member _.UpsertStack' (stackId: string) e =
         match e with
         | Stack.Events.Snapshotted snapshot ->
             client.IndexDocumentAsync snapshot |> Task.map ignore
@@ -29,12 +29,14 @@ type ElseClient (client: ElasticClient) =
             client.UpdateAsync<obj>(
                 stackId |> Id |> DocumentPath,
                 fun ud ->
-                    ud.Doc({| DefaultBranchId = b.BranchId |})
+                    ud
+                        .Index<Stack.Events.Snapshotted>()
+                        .Doc {| DefaultBranchId = b.BranchId |}
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore
         |> Async.AwaitTask
-    member this.Upsert (stackId: StackId) =
-        stackId.ToString() |> this.Handle
+    member this.UpsertStack (stackId: StackId) =
+        stackId.ToString() |> this.UpsertStack'
     member _.GetStack (stackId: string) =
         client.GetAsync<Stack.Events.Snapshotted>(
             stackId |> Id |> DocumentPath
@@ -42,3 +44,31 @@ type ElseClient (client: ElasticClient) =
         |> Async.AwaitTask
     member this.Get (stackId: StackId) =
         stackId.ToString() |> this.GetStack
+    member _.UpsertBranch' (branchId: string) e =
+        match e with
+        | Branch.Events.Snapshotted snapshot ->
+            client.IndexDocumentAsync snapshot |> Task.map ignore
+        | Branch.Events.Edited
+            { LeafId      = leafId
+              Title       = title
+              GrompleafId = grompleafId
+              FieldValues = fieldValues
+              EditSummary = editSummary } ->
+            client.UpdateAsync<obj>(
+                branchId |> Id |> DocumentPath,
+                fun ud ->
+                    ud
+                        .Index<Branch.Events.Snapshotted>()
+                        .Doc
+                        {| 
+                            LeafId      = leafId
+                            Title       = title
+                            GrompleafId = grompleafId
+                            FieldValues = fieldValues
+                            EditSummary = editSummary
+                        |}
+                    :> IUpdateRequest<_,_>
+            ) |> Task.map ignore
+        |> Async.AwaitTask
+    member this.UpsertBranch (branchId: BranchId) =
+        branchId.ToString() |> this.UpsertBranch'
