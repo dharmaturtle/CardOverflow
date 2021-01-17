@@ -12,6 +12,7 @@ open CardOverflow.Test
 open FsCodec
 open EventService
 open Hedgehog
+open CardOverflow.Api
 
 [<StandardProperty>]
 let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =

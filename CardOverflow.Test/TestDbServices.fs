@@ -117,6 +117,13 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterSingleton<Branch.Service>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Branch.memoryStore)
         container.Verify()
+        let tc = container.GetInstance<TableClient>()
+        let table = tc.CloudTableClient.GetTableReference tc.TableName
+        table.DeleteIfExists()    |> ignore
+        table.CreateIfNotExists() |> ignore
+
+    member _.TableClient () =
+        container.GetInstance<TableClient>()
 
     member _.ElasticClient () =
         container.GetInstance<ElasticClient>()

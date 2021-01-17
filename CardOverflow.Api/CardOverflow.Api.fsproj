@@ -17,6 +17,7 @@
     <Compile Include="Repository\Repositories.fs" />
     <Compile Include="Scheduler.fs" />
     <Compile Include="AnkiImporter.fs" />
+    <Compile Include="TableClient.fs" />
     <Compile Include="ElseClient.fs" />
     <Compile Include="EventService.fs" />
     <Compile Include="WeatherForecast.fs" />
@@ -25,6 +26,8 @@
   <ItemGroup>
     <PackageReference Include="Equinox" Version="2.2.0" />
     <PackageReference Include="Equinox.EventStore" Version="2.2.0" />
+    <PackageReference Include="FSharp.Azure.Storage" Version="5.0.1" />
+    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.8" />

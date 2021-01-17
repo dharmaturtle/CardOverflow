@@ -67,6 +67,7 @@ type EntityHasher () =
                 (e |> LeafView.load).MaxIndexInclusive
         member _.SanitizeTag = SanitizeTagRepository.sanitize
 
+open Humanizer
 type Container with
     member container.RegisterStuffTestOnly =
         container.Options.DefaultScopedLifestyle <- new AsyncScopedLifestyle() // https://simpleinjector.readthedocs.io/en/latest/lifetimes.html#web-request-lifestyle
@@ -118,6 +119,12 @@ type Container with
 
     member container.RegisterTestConnectionString dbName =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
+        
+        container.RegisterSingleton<TableClient>(fun () ->
+            let cs = container.GetInstance<IConfiguration>().GetConnectionString "AzureTableStorage"
+            TableClient(cs, (dbName.Substring 2).Pascalize()) // chopping off the omega and first underscore, then pascal casing
+        )
+        
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         let stackIndex  = nameof Domain.Stack  |> elasticSearchIndexName
         let branchIndex = nameof Domain.Branch |> elasticSearchIndexName
