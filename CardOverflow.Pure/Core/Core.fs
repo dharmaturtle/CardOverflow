@@ -57,7 +57,7 @@ module AsyncOp =
     let inline (<!>) x f = Async.bind f x // Inconsistent with common conventions, but ! is bind in computational expressions, so here we are
     let inline (|>%) x f = Async.map f x
     let inline (|>*) x f = Async.apply f x
-    let inline (|>!) f x = Async.bind f x
+    let inline (|>!) x f = Async.bind f x
 
 [<AutoOpen>]
 module TaskOp =

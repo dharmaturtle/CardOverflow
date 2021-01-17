@@ -17,6 +17,7 @@ open System.IO.Compression
 open System.Security.Cryptography
 open System.Collections.Generic
 open NodaTime
+open AsyncOp
 open FSharp.Azure.Storage.Table
 open Microsoft.Azure.Cosmos.Table
 open Newtonsoft.Json
@@ -29,8 +30,8 @@ type AzureTableStorageWrapper =
 type TableClient(connectionString, tableName) =
     let account = CloudStorageAccount.Parse connectionString
     let tableClient = account.CreateCloudTableClient()
-    let inTable   = inTable   tableClient tableName
-    let fromTable = fromTable tableClient tableName
+    let inTable   = inTableAsync   tableClient tableName
+    let fromTable = fromTableAsync tableClient tableName
     
     let getPartitionRow (x: obj) =
         match x with
@@ -56,12 +57,13 @@ type TableClient(connectionString, tableName) =
         Query.all<AzureTableStorageWrapper>
         |> Query.where <@ fun _ s -> s.RowKey = string rowKey @>
         |> fromTable
-        |> Seq.exactlyOne
-        |> fun (x, m) -> JsonConvert.DeserializeObject<'a> x.Payload, m
+        |>% Seq.exactlyOne
+        |>% fun (x, m) -> JsonConvert.DeserializeObject<'a> x.Payload, m
     
-    member this.Update update =
-        this.Get
-        >> fst
-        >> update
-        >> this.InsertOrReplace
-        >> ignore
+    member this.Update update x =
+        x
+        |> this.Get
+        |>% fst
+        |>% update
+        |>! this.InsertOrReplace
+        |>% ignore
