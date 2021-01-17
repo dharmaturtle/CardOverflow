@@ -33,11 +33,11 @@ type TableClient(connectionString, tableName) =
     let inTable   = inTableAsync   tableClient tableName
     let fromTable = fromTableAsync tableClient tableName
     
-    let getPartitionRow (x: obj) =
-        match x with
+    let getPartitionRow (snapshot: obj) =
+        match snapshot with
         | :? Domain.Stack .Events.Snapshotted as x -> string x.AuthorId, string x.Id
         | :? Domain.Branch.Events.Snapshotted as x -> string x.AuthorId, string x.Id
-        | _ -> failwith $"The type '{x.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
+        | _ -> failwith $"The type '{snapshot.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
         let partition, row = getPartitionRow payload
@@ -50,8 +50,8 @@ type TableClient(connectionString, tableName) =
     member _.CloudTableClient = tableClient
     member _.TableName = tableName
     
-    member _.InsertOrReplace x =
-        x |> wrap |> InsertOrReplace |> inTable
+    member _.InsertOrReplace snapshot =
+        snapshot |> wrap |> InsertOrReplace |> inTable
 
     member _.Get<'a> (rowKey: obj) =
         Query.all<AzureTableStorageWrapper>
@@ -60,10 +60,46 @@ type TableClient(connectionString, tableName) =
         |>% Seq.exactlyOne
         |>% fun (x, m) -> JsonConvert.DeserializeObject<'a> x.Payload, m
     
-    member this.Update update x =
-        x
+    member this.Update update (rowKey: obj) =
+        rowKey
         |> this.Get
         |>% fst
         |>% update
         |>! this.InsertOrReplace
         |>% ignore
+    member this.UpsertStack' (stackId: string) e =
+        match e with
+        | Stack.Events.Snapshotted snapshot ->
+            this.InsertOrReplace snapshot |>% ignore
+        | Stack.Events.DefaultBranchChanged b ->
+            this.Update (fun (x:Stack.Shot) ->
+                { x with DefaultBranchId = b.BranchId }
+            ) stackId |>% ignore
+    member this.UpsertStack (stackId: StackId) =
+        stackId.ToString() |> this.UpsertStack'
+    member this.GetStack (stackId: string) =
+        this.Get<Stack.Shot> stackId
+    member this.GetStack (stackId: StackId) =
+        stackId.ToString() |> this.GetStack
+    member this.UpsertBranch' (branchId: string) e =
+        match e with
+        | Branch.Events.Snapshotted snapshot ->
+            this.InsertOrReplace snapshot |>% ignore
+        | Branch.Events.Edited
+            { LeafId      = leafId
+              Title       = title
+              GrompleafId = grompleafId
+              FieldValues = fieldValues
+              EditSummary = editSummary } ->
+            this.Update(
+                fun (x: Branch.Shot) ->
+                    { x with
+                        LeafId       = leafId
+                        Title        = title
+                        GrompleafId  = grompleafId
+                        FieldValues  = fieldValues
+                        EditSummary  = editSummary
+                    }
+            ) branchId
+    member this.UpsertBranch (branchId: BranchId) =
+        branchId.ToString() |> this.UpsertBranch'

@@ -100,11 +100,12 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             vStore() |> User.memoryStore)
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let elseClient = container.GetInstance<ElseClient>()
+            let tableClient = container.GetInstance<TableClient>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 let category, id = streamName |> StreamName.splitCategoryAndId
                 match category with
-                | "Stack" ->  events |> Array.map (Stack.Events.codec.TryDecode  >> Option.get >> elseClient.UpsertStack'  id)
-                | "Branch" -> events |> Array.map (Branch.Events.codec.TryDecode >> Option.get >> elseClient.UpsertBranch' id)
+                | "Stack" ->  events |> Array.map (Stack.Events.codec.TryDecode  >> Option.get >> tableClient.UpsertStack'  id)
+                | "Branch" -> events |> Array.map (Branch.Events.codec.TryDecode >> Option.get >> tableClient.UpsertBranch' id)
                 | _ -> failwith $"Unsupported category: {category}"
                 |> Async.Parallel
                 |> Async.RunSynchronously
