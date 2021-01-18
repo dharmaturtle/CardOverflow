@@ -135,10 +135,10 @@ type Container with
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, sourceSerializerFactory))
-                .DefaultMappingFor<Domain.Stack.Events.Snapshotted>(fun x ->
+                .DefaultMappingFor<Domain.Stack.Events.Snapshot>(fun x ->
                     x.IndexName stackIndex :> IClrTypeMapping<_>
                 )
-                .DefaultMappingFor<Domain.Branch.Events.Snapshotted>(fun x ->
+                .DefaultMappingFor<Domain.Branch.Events.Snapshot>(fun x ->
                     x.IndexName branchIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun x ->

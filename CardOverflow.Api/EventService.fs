@@ -15,7 +15,7 @@ module Branch =
     
     type Service internal (resolve) =
 
-        member _.Create(state: Events.Snapshotted) =
+        member _.Create(state: Events.Snapshot) =
             let stream : Stream<_, _> = resolve state.Id
             stream.Transact(decideCreate state)
         member _.Edit(state, branchId, callerId) =
@@ -31,7 +31,7 @@ module Stack =
 
     type Service internal (resolve, tableClient: TableClient) =
 
-        member internal _.Create(state: Events.Snapshotted) =
+        member internal _.Create(state: Events.Snapshot) =
             let stream : Stream<_, _> = resolve state.Id
             stream.Transact(decideCreate state)
         member _.ChangeDefaultBranch stackId (newDefaultBranchId: BranchId) callerId = asyncResult {
@@ -49,7 +49,7 @@ module StackBranch =
     open Domain
     open FSharp.UMX
 
-    let branch authorId command tags title : Branch.Events.Snapshotted =
+    let branch authorId command tags title : Branch.Events.Snapshot =
         { Id = % command.Ids.BranchId
           LeafId = % command.Ids.LeafId
           LeafIds = [ % command.Ids.LeafId ]
@@ -62,7 +62,7 @@ module StackBranch =
           FieldValues = command.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
           EditSummary = command.EditSummary
           Tags = tags }
-    let stack authorId command sourceLeafId : Stack.Events.Snapshotted =
+    let stack authorId command sourceLeafId : Stack.Events.Snapshot =
         { Id = % command.Ids.StackId
           DefaultBranchId = % command.Ids.BranchId
           AuthorId = authorId
@@ -103,7 +103,7 @@ module User =
 
     type Service internal (resolve) =
 
-        member _.Create(state: Events.Snapshotted) =
+        member _.Create(state: Events.Snapshot) =
             let stream : Stream<_, _> = resolve state.UserId
             stream.Transact(decideCreate state)
 

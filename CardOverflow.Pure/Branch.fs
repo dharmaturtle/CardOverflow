@@ -11,7 +11,7 @@ let streamName (id: BranchId) = StreamName.create "Branch" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Snapshotted =
+    type Snapshot =
         { Id: BranchId
           LeafId: LeafId
           LeafIds: LeafId list
@@ -32,8 +32,8 @@ module Events =
           EditSummary: string }
 
     type Event =
-        | Snapshotted of Snapshotted
-        | Edited      of Edited
+        | Snapshot of Snapshot
+        | Edited   of Edited
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event>()
@@ -42,12 +42,12 @@ module Fold =
 
     type State =
         | Initial
-        | Active of Events.Snapshotted
+        | Active of Events.Snapshot
     let initial : State = State.Initial
     
     let evolve state =
         function
-        | Events.Snapshotted s -> State.Active s
+        | Events.Snapshot s -> State.Active s
         | Events.Edited b ->
             match state with
             | State.Initial -> invalidOp "Can't edit an Initial Branch"
@@ -62,10 +62,10 @@ module Fold =
                 } |> State.Active
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let isOrigin = function Events.Snapshotted _ -> true | _ -> false
+    let isOrigin = function Events.Snapshot _ -> true | _ -> false
 
-let decideCreate snapshotted = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted snapshotted ]
+let decideCreate snapshot = function
+    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot snapshot ]
     | Fold.State.Active _ -> Error "Already created", []
 
 let decideEdit (edited: Events.Edited) callerId = function

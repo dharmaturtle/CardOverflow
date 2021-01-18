@@ -35,8 +35,8 @@ type TableClient(connectionString, tableName) =
     
     let getPartitionRow (snapshot: obj) =
         match snapshot with
-        | :? Domain.Stack .Events.Snapshotted as x -> string x.AuthorId, string x.Id
-        | :? Domain.Branch.Events.Snapshotted as x -> string x.AuthorId, string x.Id
+        | :? Domain.Stack .Events.Snapshot as x -> string x.AuthorId, string x.Id
+        | :? Domain.Branch.Events.Snapshot as x -> string x.AuthorId, string x.Id
         | _ -> failwith $"The type '{snapshot.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -69,21 +69,21 @@ type TableClient(connectionString, tableName) =
         |>% ignore
     member this.UpsertStack' (stackId: string) e =
         match e with
-        | Stack.Events.Snapshotted snapshot ->
+        | Stack.Events.Snapshot snapshot ->
             this.InsertOrReplace snapshot |>% ignore
         | Stack.Events.DefaultBranchChanged b ->
-            this.Update (fun (x:Stack.Events.Snapshotted) ->
+            this.Update (fun (x:Stack.Events.Snapshot) ->
                 { x with DefaultBranchId = b.BranchId }
             ) stackId |>% ignore
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =
-        this.Get<Stack.Events.Snapshotted> stackId
+        this.Get<Stack.Events.Snapshot> stackId
     member this.GetStack (stackId: StackId) =
         stackId.ToString() |> this.GetStack
     member this.UpsertBranch' (branchId: string) e =
         match e with
-        | Branch.Events.Snapshotted snapshot ->
+        | Branch.Events.Snapshot snapshot ->
             this.InsertOrReplace snapshot |>% ignore
         | Branch.Events.Edited
             { LeafId      = leafId
@@ -92,7 +92,7 @@ type TableClient(connectionString, tableName) =
               FieldValues = fieldValues
               EditSummary = editSummary } ->
             this.Update(
-                fun (x: Branch.Events.Snapshotted) ->
+                fun (x: Branch.Events.Snapshot) ->
                     { x with
                         LeafId       = leafId
                         Title        = title
@@ -104,6 +104,6 @@ type TableClient(connectionString, tableName) =
     member this.UpsertBranch (branchId: BranchId) =
         branchId.ToString() |> this.UpsertBranch'
     member this.GetBranch (branchId: string) =
-        this.Get<Branch.Events.Snapshotted> branchId
+        this.Get<Branch.Events.Snapshot> branchId
     member this.GetBranch (branchId: BranchId) =
         branchId.ToString() |> this.GetBranch

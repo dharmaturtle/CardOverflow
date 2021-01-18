@@ -12,7 +12,7 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
     
-    type Snapshotted =
+    type Snapshot =
         {  UserId: UserId
            DisplayName: string
            DefaultCardSettingId: CardSettingId
@@ -32,7 +32,7 @@ module Events =
     type Event =
         | DefaultCardSettingIdChanged of {| CardSettingId: CardSettingId |}
         | DefaultDeckIdChanged        of {| DeckId: DeckId |}
-        | Snapshotted                 of Snapshotted
+        | Snapshot                    of Snapshot
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event>()
@@ -41,12 +41,12 @@ module Fold =
     
     type State =
         | Initial
-        | Active of Events.Snapshotted
+        | Active of Events.Snapshot
     let initial = State.Initial
 
     let evolve state =
         function
-        | Events.Snapshotted s -> State.Active s
+        | Events.Snapshot s -> State.Active s
         | Events.DefaultCardSettingIdChanged b ->
             match state with
             | State.Initial  -> invalidOp "User doesn't exist"
@@ -57,8 +57,8 @@ module Fold =
             | State.Active a -> { a with DefaultDeckId = b.DeckId } |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let isOrigin = function Events.Snapshotted _ -> true | _ -> false
+    let isOrigin = function Events.Snapshot _ -> true | _ -> false
 
 let decideCreate state = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted state ]
+    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot state ]
     | Fold.State.Active _ -> Error "Already created", []

@@ -21,12 +21,12 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``ElseClient can handle all Stack events`` ((snapshot:Stack.Events.Snapshotted), branchId) = async {
+let ``ElseClient can handle all Stack events`` ((snapshot:Stack.Events.Snapshot), branchId) = async {
     let client = TestEsContainer().ElseClient()
 
     // Snapshot
     do! snapshot
-        |> Stack.Events.Event.Snapshotted
+        |> Stack.Events.Event.Snapshot
         |> client.UpsertStack snapshot.Id
     
     do! client.Get snapshot.Id |>% Assert.equal snapshot

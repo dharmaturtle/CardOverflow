@@ -23,14 +23,14 @@ open Nest
 type ElseClient (client: ElasticClient) =
     member _.UpsertStack' (stackId: string) e =
         match e with
-        | Stack.Events.Snapshotted snapshot ->
+        | Stack.Events.Snapshot snapshot ->
             client.IndexDocumentAsync snapshot |> Task.map ignore
         | Stack.Events.DefaultBranchChanged b ->
             client.UpdateAsync<obj>(
                 stackId |> Id |> DocumentPath,
                 fun ud ->
                     ud
-                        .Index<Stack.Events.Snapshotted>()
+                        .Index<Stack.Events.Snapshot>()
                         .Doc {| DefaultBranchId = b.BranchId |}
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore
@@ -38,7 +38,7 @@ type ElseClient (client: ElasticClient) =
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member _.GetStack (stackId: string) =
-        client.GetAsync<Stack.Events.Snapshotted>(
+        client.GetAsync<Stack.Events.Snapshot>(
             stackId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
@@ -46,7 +46,7 @@ type ElseClient (client: ElasticClient) =
         stackId.ToString() |> this.GetStack
     member _.UpsertBranch' (branchId: string) e =
         match e with
-        | Branch.Events.Snapshotted snapshot ->
+        | Branch.Events.Snapshot snapshot ->
             client.IndexDocumentAsync snapshot |> Task.map ignore
         | Branch.Events.Edited
             { LeafId      = leafId
@@ -58,7 +58,7 @@ type ElseClient (client: ElasticClient) =
                 branchId |> Id |> DocumentPath,
                 fun ud ->
                     ud
-                        .Index<Branch.Events.Snapshotted>()
+                        .Index<Branch.Events.Snapshot>()
                         .Doc
                         {| 
                             LeafId      = leafId
