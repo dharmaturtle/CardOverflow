@@ -114,7 +114,8 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         )
         container.RegisterSingleton<Stack.Service>(fun () ->
             Stack.memoryStore
-                <| vStore() )
+                <| vStore()
+                <| container.GetInstance<TableClient>() )
         container.RegisterSingleton<Branch.Service>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Branch.memoryStore)
         container.Verify()

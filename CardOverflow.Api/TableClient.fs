@@ -72,13 +72,13 @@ type TableClient(connectionString, tableName) =
         | Stack.Events.Snapshotted snapshot ->
             this.InsertOrReplace snapshot |>% ignore
         | Stack.Events.DefaultBranchChanged b ->
-            this.Update (fun (x:Stack.Shot) ->
+            this.Update (fun (x:Stack.Events.Snapshotted) ->
                 { x with DefaultBranchId = b.BranchId }
             ) stackId |>% ignore
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =
-        this.Get<Stack.Shot> stackId
+        this.Get<Stack.Events.Snapshotted> stackId
     member this.GetStack (stackId: StackId) =
         stackId.ToString() |> this.GetStack
     member this.UpsertBranch' (branchId: string) e =
@@ -92,7 +92,7 @@ type TableClient(connectionString, tableName) =
               FieldValues = fieldValues
               EditSummary = editSummary } ->
             this.Update(
-                fun (x: Branch.Shot) ->
+                fun (x: Branch.Events.Snapshotted) ->
                     { x with
                         LeafId       = leafId
                         Title        = title
@@ -103,3 +103,7 @@ type TableClient(connectionString, tableName) =
             ) branchId
     member this.UpsertBranch (branchId: BranchId) =
         branchId.ToString() |> this.UpsertBranch'
+    member this.GetBranch (branchId: string) =
+        this.Get<Branch.Events.Snapshotted> branchId
+    member this.GetBranch (branchId: BranchId) =
+        branchId.ToString() |> this.GetBranch

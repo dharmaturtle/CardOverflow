@@ -38,8 +38,6 @@ module Events =
     
     let codec = Codec.Create<Event>()
 
-[<RequireQualifiedAccess>] type Shot = Events.Snapshotted
-
 module Fold =
 
     type State =

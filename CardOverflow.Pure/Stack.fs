@@ -24,8 +24,6 @@ module Events =
     
     let codec = Codec.Create<Event>()
 
-[<RequireQualifiedAccess>] type Shot = Events.Snapshotted
-
 module Fold =
     
     type State =
@@ -47,3 +45,13 @@ module Fold =
 let decideCreate state = function
     | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshotted state ]
     | Fold.State.Active _ -> Error "Already created", []
+
+let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) callerId = function
+    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist", []
+    | Fold.State.Active s ->
+        if s.AuthorId <> callerId then
+            Error $"Stack {s.Id} doesn't belong to User {callerId}"        , []
+        elif s.Id <> branchsStackId then
+            Error $"Branch {branchId} doesn't belong to Stack {s.Id}"      , []
+        else
+            Ok ()                                                          , [ { Events.DefaultBranchChanged.BranchId = branchId } |> Events.DefaultBranchChanged ]

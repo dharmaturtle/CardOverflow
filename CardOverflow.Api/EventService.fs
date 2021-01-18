@@ -6,6 +6,9 @@ open FsCodec.NewtonsoftJson
 open Serilog
 open TypeShape
 open CardOverflow.Pure
+open CardOverflow.Api
+open FsToolkit.ErrorHandling
+open Domain.Infrastructure
 
 module Branch =
     open Domain.Branch
@@ -26,21 +29,25 @@ module Branch =
 module Stack =
     open Domain.Stack
 
-    type Service internal (resolve) =
+    type Service internal (resolve, tableClient: TableClient) =
 
         member internal _.Create(state: Events.Snapshotted) =
             let stream : Stream<_, _> = resolve state.Id
             stream.Transact(decideCreate state)
+        member _.ChangeDefaultBranch stackId (newDefaultBranchId: BranchId) callerId = asyncResult {
+            let stream : Stream<_, _> = resolve stackId
+            let! b, _ = tableClient.GetBranch newDefaultBranchId
+            return! decideDefaultBranchChanged b.Id b.StackId callerId |> stream.Transact
+        }
 
-    let create resolve =
+    let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve)
+        Service(resolve, tableClient)
 
 module StackBranch =
 
     open Domain
     open FSharp.UMX
-    open FsToolkit.ErrorHandling
 
     let branch authorId command tags title : Branch.Events.Snapshotted =
         { Id = % command.Ids.BranchId
