@@ -3,6 +3,7 @@ module Domain.Stack
 open FsCodec
 open FsCodec.NewtonsoftJson
 open TypeShape
+open FsToolkit.ErrorHandling
 
 let streamName (id: StackId) = StreamName.create "Stack" (id.ToString())
 
@@ -22,7 +23,7 @@ module Events =
         | Snapshot             of Snapshot
         interface UnionContract.IUnionContract
     
-    let codec = Codec.Create<Event>()
+    let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
     
@@ -46,12 +47,10 @@ let decideCreate state = function
     | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot state ]
     | Fold.State.Active _ -> Error "Already created", []
 
-let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) callerId = function
-    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist", []
-    | Fold.State.Active s ->
-        if s.AuthorId <> callerId then
-            Error $"Stack {s.Id} doesn't belong to User {callerId}"        , []
-        elif s.Id <> branchsStackId then
-            Error $"Branch {branchId} doesn't belong to Stack {s.Id}"      , []
-        else
-            Ok ()                                                          , [ { Events.DefaultBranchChanged.BranchId = branchId } |> Events.DefaultBranchChanged ]
+let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) callerId state =
+    match state with
+    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
+    | Fold.State.Active s -> result {
+        do! Result.requireEqual s.AuthorId callerId $"Stack {s.Id} doesn't belong to User {callerId}"
+        do! Result.requireEqual s.Id branchsStackId $"Branch {branchId} doesn't belong to Stack {s.Id}" }
+    |> addEvent (Events.DefaultBranchChanged { BranchId = branchId })

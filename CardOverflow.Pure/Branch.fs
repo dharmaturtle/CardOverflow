@@ -4,6 +4,7 @@ open FsCodec
 open FsCodec.NewtonsoftJson
 open TypeShape
 open CardOverflow.Pure
+open FsToolkit.ErrorHandling
 
 let streamName (id: BranchId) = StreamName.create "Branch" (id.ToString())
 
@@ -36,7 +37,7 @@ module Events =
         | Edited   of Edited
         interface UnionContract.IUnionContract
     
-    let codec = Codec.Create<Event>()
+    let codec = Codec.Create<Event> jsonSerializerSettings
 
 module Fold =
 
@@ -68,12 +69,10 @@ let decideCreate snapshot = function
     | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot snapshot ]
     | Fold.State.Active _ -> Error "Already created", []
 
-let decideEdit (edited: Events.Edited) callerId = function
-    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist", []
-    | Fold.State.Active x ->
-        if x.AuthorId <> callerId then
-            Error "You aren't the author"       , []
-        elif x.LeafIds |> Seq.contains edited.LeafId then
-            Error $"Duplicate leafId:{x.LeafId}", []
-        else
-            Ok ()                               , [ Events.Edited edited ]
+let decideEdit (edited: Events.Edited) callerId state =
+    match state with
+    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
+    | Fold.State.Active x -> result {
+        do! Result.requireEqual x.AuthorId callerId                         "You aren't the author"
+        do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{x.LeafId}" }
+    |> addEvent (Events.Edited edited)

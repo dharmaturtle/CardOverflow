@@ -8,18 +8,21 @@ open TypeShape
 open CardOverflow.Pure
 open CardOverflow.Api
 open FsToolkit.ErrorHandling
-open Domain.Infrastructure
+open Domain
+open Infrastructure
+open FSharp.UMX
 
 module Branch =
-    open Domain.Branch
+    open Branch
     
     type Service internal (resolve) =
+        let resolve branchId : Stream<_, _> = resolve branchId
 
         member _.Create(state: Events.Snapshot) =
-            let stream : Stream<_, _> = resolve state.Id
+            let stream = resolve state.Id
             stream.Transact(decideCreate state)
         member _.Edit(state, branchId, callerId) =
-            let stream : Stream<_, _> = resolve branchId
+            let stream = resolve branchId
             stream.Transact(decideEdit state callerId)
 
     let create resolve =
@@ -27,15 +30,16 @@ module Branch =
         Service(resolve)
 
 module Stack =
-    open Domain.Stack
+    open Stack
 
     type Service internal (resolve, tableClient: TableClient) =
+        let resolve stackId : Stream<_, _> = resolve stackId
 
         member internal _.Create(state: Events.Snapshot) =
-            let stream : Stream<_, _> = resolve state.Id
+            let stream = resolve state.Id
             stream.Transact(decideCreate state)
         member _.ChangeDefaultBranch stackId (newDefaultBranchId: BranchId) callerId = asyncResult {
-            let stream : Stream<_, _> = resolve stackId
+            let stream = resolve stackId
             let! b, _ = tableClient.GetBranch newDefaultBranchId
             return! decideDefaultBranchChanged b.Id b.StackId callerId |> stream.Transact
         }
@@ -45,9 +49,6 @@ module Stack =
         Service(resolve, tableClient)
 
 module StackBranch =
-
-    open Domain
-    open FSharp.UMX
 
     let branch authorId command tags title : Branch.Events.Snapshot =
         { Id = % command.Ids.BranchId
@@ -99,15 +100,16 @@ module StackBranch =
                 branches.Edit(edited, branch.Id, authorId)
 
 module User =
-    open Domain.User
+    open User
 
     type Service internal (resolve, tableClient: TableClient) =
+        let resolve userId : Stream<_, _> = resolve userId
 
-        member _.Create(state: Events.Snapshot) =
-            let stream : Stream<_, _> = resolve state.Id
+        member _.Create (state: Events.Snapshot) =
+            let stream = resolve state.Id
             stream.Transact(decideCreate state)
-        member _.Update(userId, o: Events.OptionsEdited) =
-            let stream : Stream<_, _> = resolve userId
+        member _.Update userId o =
+            let stream = resolve userId
             stream.Transact(decideOptionsEdited o userId userId) // highTODO pass in the real userIds
 
     let create resolve tableClient =
