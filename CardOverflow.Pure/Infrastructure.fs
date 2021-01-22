@@ -23,3 +23,10 @@ type GromplateId = Guid<gromplateId>
     and [<Measure>] gromplateId
 type GrompleafId = Guid<grompleafId>
     and [<Measure>] grompleafId
+
+let addEvent okEvent = function
+    | Ok x    -> Ok x   , [okEvent]
+    | Error x -> Error x, []
+
+open NodaTime.Serialization.JsonNet
+let jsonSerializerSettings = Newtonsoft.Json.JsonSerializerSettings().ConfigureForNodaTime(NodaTime.DateTimeZoneProviders.Tzdb)

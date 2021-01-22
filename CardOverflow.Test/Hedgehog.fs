@@ -3,6 +3,7 @@ module Hedgehog
 open Hedgehog
 open CardOverflow.Pure
 open CardOverflow.Test
+open CardOverflow.Api
 
 // lowTODO this tries to shrink down to 1 element, which may be semantically incorrect depending on use case
 module SeqGen =
@@ -57,7 +58,11 @@ let gromplateType fields =
         clozeTemplate fields
     ]
 
-let instantGen = GenX.auto |> Gen.map NodaTime.Instant.FromDateTimeOffset
+open NodaTime
+let instantGen = GenX.auto |> Gen.map Instant.FromDateTimeOffset
+let durationGen = GenX.auto |> Gen.map Duration.FromTimeSpan
+let localTimeGen = Range.linear 0 86399 |> Gen.int |> Gen.map LocalTime.FromSecondsSinceMidnight
+let timezoneGen = TimezoneName.allNodaTime |> Gen.item
 
 let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field -> { field with Name = fieldName })) >> SeqGen.sequence
 let grompleaf gromplateType fieldNames =
@@ -157,6 +162,9 @@ type StandardConfig =
         GenX.defaults
         |> AutoGenConfig.addGenerator editStackCommandGen
         |> AutoGenConfig.addGenerator instantGen
+        |> AutoGenConfig.addGenerator durationGen
+        |> AutoGenConfig.addGenerator timezoneGen
+        |> AutoGenConfig.addGenerator localTimeGen
         |> AutoGenConfig.addGenerator newOriginalGen
         |> AutoGenConfig.addGenerator newBranchGen
 

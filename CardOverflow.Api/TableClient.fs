@@ -37,6 +37,7 @@ type TableClient(connectionString, tableName) =
         match snapshot with
         | :? Domain.Stack .Events.Snapshot as x -> string x.AuthorId, string x.Id
         | :? Domain.Branch.Events.Snapshot as x -> string x.AuthorId, string x.Id
+        | :? Domain.User  .Events.Snapshot as x -> string x.Id      , string x.Id
         | _ -> failwith $"The type '{snapshot.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -107,3 +108,16 @@ type TableClient(connectionString, tableName) =
         this.Get<Branch.Events.Snapshot> branchId
     member this.GetBranch (branchId: BranchId) =
         branchId.ToString() |> this.GetBranch
+    
+    member this.UpsertUser' (userId: string) e =
+        match e with
+        | User.Events.Snapshot snapshot ->
+            this.InsertOrReplace snapshot |>% ignore
+        | User.Events.OptionsEdited o ->
+            this.Update (User.Fold.evolveOptionsEdited o) userId
+    member this.UpsertUser (userId: UserId) =
+        userId.ToString() |> this.UpsertUser'
+    member this.GetUser (userId: string) =
+        this.Get<User.Events.Snapshot> userId
+    member this.GetUser (userId: UserId) =
+        userId.ToString() |> this.GetUser

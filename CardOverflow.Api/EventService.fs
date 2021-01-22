@@ -101,12 +101,15 @@ module StackBranch =
 module User =
     open Domain.User
 
-    type Service internal (resolve) =
+    type Service internal (resolve, tableClient: TableClient) =
 
         member _.Create(state: Events.Snapshot) =
-            let stream : Stream<_, _> = resolve state.UserId
+            let stream : Stream<_, _> = resolve state.Id
             stream.Transact(decideCreate state)
+        member _.Update(userId, o: Events.OptionsEdited) =
+            let stream : Stream<_, _> = resolve userId
+            stream.Transact(decideOptionsEdited o userId userId) // highTODO pass in the real userIds
 
-    let create resolve =
+    let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve)
+        Service(resolve, tableClient)

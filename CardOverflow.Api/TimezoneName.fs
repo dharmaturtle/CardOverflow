@@ -61,6 +61,9 @@ module TimezoneName =
         |> List.map (fun x -> DateTimeZoneProviders.Tzdb.Item x)
         |> List.map (fun x -> sprintf "(UTC%A) %s" (clock.GetCurrentInstant() |> x.GetUtcOffset) x.Id)
         |> List.sort
+    let allNodaTime =
+        DateTimeZoneProviders.Tzdb.Ids
+        |> Seq.map (fun x -> DateTimeZoneProviders.Tzdb.Item x)
 
 type UserSetting = {
     UserId: Guid

@@ -79,6 +79,7 @@
     <Compile Include="Hedgehog.fs" />
     <Compile Include="TableClientTests.fs" />
     <Compile Include="ElseClientTests.fs" />
+    <Compile Include="UserTests.fs" />
     <Compile Include="StackTests.fs" />
     <Compile Include="StackBranchTests.fs" />
   </ItemGroup>
