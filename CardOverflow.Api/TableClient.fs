@@ -25,13 +25,23 @@ open Newtonsoft.Json
 type AzureTableStorageWrapper =
     { [<PartitionKey>] Partition: string
       [<RowKey>] Row: string
-      Payload: string }
+      _0: string
+      _1: string
+      _2: string
+      _3: string
+      _4: string
+      _5: string
+      _6: string
+      _7: string
+      _8: string
+      _9: string }
 
 type TableClient(connectionString, tableName) =
     let account = CloudStorageAccount.Parse connectionString
     let tableClient = account.CreateCloudTableClient()
     let inTable   = inTableAsync   tableClient tableName
     let fromTable = fromTableAsync tableClient tableName
+    let encoding = System.Text.UnicodeEncoding() // this is UTF16 https://docs.microsoft.com/en-us/dotnet/api/system.text.unicodeencoding?view=net-5.0
     
     let getPartitionRow (snapshot: obj) =
         match snapshot with
@@ -42,11 +52,22 @@ type TableClient(connectionString, tableName) =
 
     let wrap payload =
         let partition, row = getPartitionRow payload
-        let payload = JsonConvert.SerializeObject payload
-        if payload.Length >= 32_767 then failwith "Serialized payload is too large for Azure Table Storage."
+        let payload = JsonConvert.SerializeObject(payload, Infrastructure.jsonSerializerSettings) |> encoding.GetBytes
+        let azureTablesMaxPropertySize = 65_536 // 64KiB https://docs.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
+        let payload = Array.chunkBySize azureTablesMaxPropertySize payload
+        let get index = payload |> Array.tryItem index |> Option.defaultValue [||] |> encoding.GetString
         { Partition = partition
           Row = row
-          Payload = payload }
+          _0  = get 0
+          _1  = get 1
+          _2  = get 2
+          _3  = get 3
+          _4  = get 4
+          _5  = get 5
+          _6  = get 6
+          _7  = get 7
+          _8  = get 8
+          _9  = get 9 } // according to math https://www.wolframalpha.com/input/?i=1+mib+%2F+64+kib this should keep going until _15 (0 indexed), but running tests on the Azure Table Emulator throws at about _9. medTODO find the real limit with the real Azure Table Storage
 
     member _.CloudTableClient = tableClient
     member _.TableName = tableName
@@ -59,7 +80,19 @@ type TableClient(connectionString, tableName) =
         |> Query.where <@ fun _ s -> s.RowKey = string rowKey @>
         |> fromTable
         |>% Seq.exactlyOne
-        |>% fun (x, m) -> JsonConvert.DeserializeObject<'a> x.Payload, m
+        |>% fun (x, m) ->
+            String.concat "" [
+              x._0
+              x._1
+              x._2
+              x._3
+              x._4
+              x._5
+              x._6
+              x._7
+              x._8
+              x._9
+            ] |> fun x -> JsonConvert.DeserializeObject<'a> (x, Infrastructure.jsonSerializerSettings), m
     
     member this.Update update (rowKey: obj) =
         rowKey

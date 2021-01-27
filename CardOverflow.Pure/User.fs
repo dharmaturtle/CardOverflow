@@ -28,6 +28,7 @@ module Events =
            Created: Instant
            Modified: Instant
            Timezone: DateTimeZone
+           CardSettings: CardSetting list
         }
     type OptionsEdited =
         {  DefaultCardSettingId: CardSettingId
