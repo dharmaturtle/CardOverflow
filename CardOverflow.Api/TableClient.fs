@@ -45,9 +45,9 @@ type TableClient(connectionString, tableName) =
     
     let getPartitionRow (snapshot: obj) =
         match snapshot with
-        | :? Domain.Stack .Events.Snapshot as x -> string x.AuthorId, string x.Id
-        | :? Domain.Branch.Events.Snapshot as x -> string x.AuthorId, string x.Id
-        | :? Domain.User  .Events.Snapshot as x -> string x.Id      , string x.Id
+        | :? Domain.Stack .Events.Snapshot as x -> string x.Id, string x.Id
+        | :? Domain.Branch.Events.Snapshot as x -> string x.Id, string x.Id
+        | :? Domain.User  .Events.Snapshot as x -> string x.Id, string x.Id
         | _ -> failwith $"The type '{snapshot.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -75,9 +75,9 @@ type TableClient(connectionString, tableName) =
     member _.InsertOrReplace snapshot =
         snapshot |> wrap |> InsertOrReplace |> inTable
 
-    member _.Get<'a> (rowKey: obj) =
+    member _.Get<'a> (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
         Query.all<AzureTableStorageWrapper>
-        |> Query.where <@ fun _ s -> s.RowKey = string rowKey @>
+        |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
         |> fromTable
         |>% Seq.exactlyOne
         |>% fun (x, m) ->
