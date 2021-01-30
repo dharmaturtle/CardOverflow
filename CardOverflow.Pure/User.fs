@@ -43,9 +43,13 @@ module Events =
            Timezone: DateTimeZone
         }
 
+    type CardSettingsEdited =
+        { CardSettings: CardSetting list }
+
     type Event =
-        | OptionsEdited of OptionsEdited
-        | Snapshot      of Snapshot
+        | CardSettingsEdited of CardSettingsEdited
+        | OptionsEdited      of OptionsEdited
+        | Snapshot           of Snapshot
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -56,6 +60,9 @@ module Fold =
         | Initial
         | Active of Events.Snapshot
     let initial = State.Initial
+
+    let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Snapshot) =
+        { s with CardSettings = cs.CardSettings }
 
     let evolveOptionsEdited (o: Events.OptionsEdited) (s: Events.Snapshot) =
         { s with
@@ -77,6 +84,10 @@ module Fold =
             match state with
             | State.Initial  -> invalidOp "User doesn't exist"
             | State.Active s -> evolveOptionsEdited o s |> State.Active
+        | Events.CardSettingsEdited cs ->
+            match state with
+            | State.Initial  -> invalidOp "User doesn't exist"
+            | State.Active s -> evolveCardSettingsEdited cs s |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Snapshot _ -> true | _ -> false
@@ -90,5 +101,12 @@ let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId defaultCardS
     | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
     | Fold.State.Active s -> result {
         do! Result.requireEqual s.Id defaultDeckUserId        $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
-        do! Result.requireEqual s.Id defaultCardSettingUserId $"CardSetting {o.DefaultCardSettingId} doesn't belong to User {s.Id}" }
-    |> addEvent (Events.OptionsEdited o)
+        do! Result.requireEqual s.Id defaultCardSettingUserId $"CardSetting {o.DefaultCardSettingId} doesn't belong to User {s.Id}"
+    } |> addEvent (Events.OptionsEdited o)
+
+let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
+    match state with
+    | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
+    | Fold.State.Active _ -> result {
+        do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
+    } |> addEvent (Events.CardSettingsEdited cs)

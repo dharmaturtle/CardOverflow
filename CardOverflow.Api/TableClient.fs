@@ -148,6 +148,8 @@ type TableClient(connectionString, tableName) =
             this.InsertOrReplace snapshot |>% ignore
         | User.Events.OptionsEdited o ->
             this.Update (User.Fold.evolveOptionsEdited o) userId
+        | User.Events.CardSettingsEdited cs ->
+            this.Update (User.Fold.evolveCardSettingsEdited cs) userId
     member this.UpsertUser (userId: UserId) =
         userId.ToString() |> this.UpsertUser'
     member this.GetUser (userId: string) =

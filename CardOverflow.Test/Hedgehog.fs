@@ -4,6 +4,7 @@ open Hedgehog
 open CardOverflow.Pure
 open CardOverflow.Test
 open CardOverflow.Api
+open Domain
 
 // lowTODO this tries to shrink down to 1 element, which may be semantically incorrect depending on use case
 module SeqGen =
@@ -63,6 +64,12 @@ let instantGen = GenX.auto |> Gen.map Instant.FromDateTimeOffset
 let durationGen = GenX.auto |> Gen.map Duration.FromTimeSpan
 let localTimeGen = Range.linear 0 86399 |> Gen.int |> Gen.map LocalTime.FromSecondsSinceMidnight
 let timezoneGen = TimezoneName.allNodaTime |> Gen.item
+let nodaConfig =
+    GenX.defaults
+    |> AutoGenConfig.addGenerator instantGen
+    |> AutoGenConfig.addGenerator durationGen
+    |> AutoGenConfig.addGenerator timezoneGen
+    |> AutoGenConfig.addGenerator localTimeGen
 
 let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field -> { field with Name = fieldName })) >> SeqGen.sequence
 let grompleaf gromplateType fieldNames =
@@ -129,6 +136,15 @@ let editStackCommandGen =
         }
     }
 
+let cardSettingsEditedListGen = gen {
+    let! nondefaults = nodaConfig |> GenX.autoWith<CardSetting> |> GenX.lList 0 100 |> Gen.map (List.map (fun x -> { x with IsDefault = false }))
+    let! theDefault  = nodaConfig |> GenX.autoWith<CardSetting>                     |> Gen.map           (fun x -> { x with IsDefault = true  })
+    return!
+        theDefault :: nondefaults
+        |> GenX.shuffle
+        |> Gen.map (fun x -> { User.Events.CardSettingsEdited.CardSettings = x })
+    }
+
 type NewOriginal = { NewOriginal: EditStackCommand }
 let newOriginalGen =
     gen {
@@ -161,6 +177,7 @@ type StandardConfig =
     static member __ =
         GenX.defaults
         |> AutoGenConfig.addGenerator editStackCommandGen
+        |> AutoGenConfig.addGenerator cardSettingsEditedListGen
         |> AutoGenConfig.addGenerator instantGen
         |> AutoGenConfig.addGenerator durationGen
         |> AutoGenConfig.addGenerator timezoneGen

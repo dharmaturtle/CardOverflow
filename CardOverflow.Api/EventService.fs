@@ -108,9 +108,12 @@ module User =
         member _.Create (state: Events.Snapshot) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
-        member _.Update userId o =
+        member _.OptionsEdited userId o =
             let stream = resolve userId
             stream.Transact(decideOptionsEdited o userId userId) // highTODO pass in the real userIds
+        member _.CardSettingsEdited userId cs =
+            let stream = resolve userId
+            stream.Transact(decideCardSettingsEdited cs)
 
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)

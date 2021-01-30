@@ -41,6 +41,33 @@ let ``Create snapshot roundtrips (azure table)`` (userSnapshot: User.Events.Snap
     Assert.equal userSnapshot user
     }
 
+[<StandardProperty>]
+let ``CardSettingsEdited roundtrips (event store)`` (userSnapshot: User.Events.Snapshot) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+    let c = TestEsContainer()
+    let userService = c.UserService()
+    do! userService.Create userSnapshot
+    
+    do! userService.CardSettingsEdited userSnapshot.Id cardSettings
+
+    userSnapshot.Id
+    |> c.UserEvents
+    |> Seq.last
+    |> Assert.equal (User.Events.CardSettingsEdited cardSettings)
+    }
+
+[<StandardProperty>]
+let ``CardSettingsEdited roundtrips (azure table)`` (userSnapshot: User.Events.Snapshot) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+    let c = TestEsContainer()
+    let userService = c.UserService()
+    let tableClient = c.TableClient()
+    do! userService.Create userSnapshot
+    
+    do! userService.CardSettingsEdited userSnapshot.Id cardSettings
+
+    let! user, _ = tableClient.GetUser userSnapshot.Id
+    Assert.equal { userSnapshot with CardSettings = cardSettings.CardSettings } user
+    }
+
 //[<Fact>]
 let ``Azure Tables max payload size`` () : unit =
     let userSnapshotGen =
