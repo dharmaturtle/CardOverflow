@@ -124,11 +124,20 @@ module Generators =
                 fields
                 |> List.map (fun f -> values |> Gen.map (fun value -> { EditField = f; Value = value }))
                 |> Gen.sequence
+            let! kind = Gen.genMap<UpsertKind> (fun x ->
+                match x with
+                | NewOriginal_TagIds tags -> tags |> List.filter (fun t -> t <> null) |> NewOriginal_TagIds
+                | NewCopy_SourceLeafId_TagIds (x, tags) ->
+                    let tags = tags |> List.filter (fun t -> t <> null)
+                    NewCopy_SourceLeafId_TagIds (x, tags)
+                | _ -> x
+            )
             return!
                 Gen.genMap<EditStackCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
                             Grompleaf = grompleaf
+                            Kind = kind
                     })
         }
     let notificationEntity = gen {

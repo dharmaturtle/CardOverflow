@@ -125,7 +125,14 @@ let editStackCommandGen =
             |> List.map (fun f -> values |> Gen.map (fun value -> { EditField = f; Value = value }))
             |> SeqGen.sequence
         let! editSummary = Gen.latin1 |> GenX.lString 0 50
-        let! kind = GenX.auto<UpsertKind>
+        let! kind = GenX.auto<UpsertKind> |> Gen.map (fun k ->
+            match k with
+            | NewOriginal_TagIds tags -> tags |> List.filter (fun t -> t <> null) |> NewOriginal_TagIds
+            | NewCopy_SourceLeafId_TagIds (x, tags) ->
+                let tags = tags |> List.filter (fun t -> t <> null)
+                NewCopy_SourceLeafId_TagIds (x, tags)
+            | _ -> k
+            )
         let! ids = GenX.auto<UpsertIds>
         return {
             EditSummary = editSummary

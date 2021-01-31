@@ -233,7 +233,7 @@ let ``Can import myHighPriority, but really testing duplicate card gromplates`` 
     Assert.Equal(0, c.Db.Relationship.Count())
     } |> TaskResult.getOk)
 
-[<Theory>]
+[<Theory(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task<unit> = task {
     use c = new TestContainer(false, ankiFileName)
@@ -393,7 +393,7 @@ let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> =
     Assert.Equal(["Basic"; "Deck:Default"; "Othertag"; "Tag"], c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().OrderBy(fun x -> x))
     } |> TaskResult.getOk)
 
-[<Theory>]
+[<Theory(Skip=PgSkip.reason)>]
 [<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
 let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)

@@ -26,7 +26,7 @@ open SimpleInjector.Lifestyles
 open NpgsqlTypes
 open CardOverflow.Entity
 
-[<Fact>] // Works in NodaTime 3.0 and PostgreSQL 12.2
+[<Fact(Skip=PgSkip.reason)>] // Works in NodaTime 3.0 and PostgreSQL 12.2
 let ``TimezoneName enums are both in NodaTime and Postgres``() : Task<unit> = (taskResult {
     use c = new Container()
     c.RegisterStuffTestOnly

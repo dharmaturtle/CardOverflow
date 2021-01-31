@@ -37,7 +37,7 @@ namespace CardOverflow.FrontEndTest {
         .Pipe(Arb.From);
     }
 
-    [Property(DisplayName = "Submitting default FollowDeckCommand _ displays validation error", Arbitrary = new[] { typeof(FollowButtonTestsArb) })]
+    //[Property(DisplayName = "Submitting default FollowDeckCommand _ displays validation error", Arbitrary = new[] { typeof(FollowButtonTestsArb) })]
     public bool _1(UserClaims userClaims, DeckWithFollowMeta deckWithFollowMeta, DeckEntity usersDefaultDeck) {
       Setup(Services, db => new UserEntity {
         Id = userClaims.Id,

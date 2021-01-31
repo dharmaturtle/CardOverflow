@@ -75,7 +75,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     Assert.Equal(sprintf "User #%A doesn't have Stack #%A." userId stackId, error)
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Tag counts work``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let assertTagUserCount expected =
@@ -186,7 +186,7 @@ let ``Tag "a/b/c" parses``(): unit =
             IsExpanded = false
             HasChildren = false }]
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3

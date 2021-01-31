@@ -149,7 +149,7 @@ let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult
     |> Assert.equal [(oldLeafId, true); (updatedLeafId, false)]
     } |> TaskResult.getOk)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -183,7 +183,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let! stack = ExploreStackRepository.get c.Db userId missingStack
     Assert.equal (sprintf "Stack #%A not found" missingStack) stack.error }
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
@@ -283,7 +283,7 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
         stack.Tags
     )}
     
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let rec ``GetCollected works when collecting 1 basic card``(): Task<unit> =
     testGetCollected
         1
@@ -291,7 +291,7 @@ let rec ``GetCollected works when collecting 1 basic card``(): Task<unit> =
         FacetRepositoryTests.basicGromplate
         <| nameof ``GetCollected works when collecting 1 basic card``
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let rec ``GetCollected works when collecting a pair``(): Task<unit> = 
     testGetCollected
         2
@@ -537,7 +537,7 @@ let ``Sanitize search`` (input: string, expectedPlain: string, expectedWildcards
     Assert.Equal(expectedPlain, actualPlain)
     Assert.Equal(expectedWildcards, actualWildcards)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3

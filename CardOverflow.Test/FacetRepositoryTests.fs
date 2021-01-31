@@ -392,7 +392,7 @@ let ``Leaf with "" as FieldValues is parsed to empty`` (): unit =
 
     Assert.Empty view.FieldValues
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``UpdateRepository.card edit/copy/branch works``() : Task<unit> = task {
     let og_s = stack_1
     let copy_s = stack_2

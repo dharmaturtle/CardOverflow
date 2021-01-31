@@ -99,7 +99,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
     |> Seq.iter Assert.Equal
     Assert.Equal<string list> (expected, actual)
 
-[<Fact>]
+[<Fact(Skip=PgSkip.reason)>]
 let ``AnkiImporter import cards that have the same collectHash as distinct cards`` (): Task<unit> = (taskResult { // lowTODO, perhaps they should be the same card
     let userId = user_3
     use c = new TestContainer()

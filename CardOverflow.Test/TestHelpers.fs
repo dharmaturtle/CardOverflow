@@ -153,3 +153,7 @@ module RunSynchronously =
         Async.RunSynchronously
         >> Result.getError
         >> Assert.equal ex
+
+module PgSkip =
+    [<Literal>]
+    let reason = "migrating off postgres"
