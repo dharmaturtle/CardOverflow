@@ -46,21 +46,23 @@ module Fold =
         | Active of Events.Snapshot
     let initial : State = State.Initial
     
+    let evolveEdited (e: Events.Edited) (s: Events.Snapshot) =
+        { s with
+            LeafId      = e.LeafId
+            LeafIds     = e.LeafId :: s.LeafIds
+            Title       = e.Title
+            GrompleafId = e.GrompleafId
+            FieldValues = e.FieldValues
+            EditSummary = e.EditSummary
+        }
+    
     let evolve state =
         function
         | Events.Snapshot s -> State.Active s
-        | Events.Edited b ->
+        | Events.Edited e ->
             match state with
             | State.Initial -> invalidOp "Can't edit an Initial Branch"
-            | State.Active a ->
-                { a with
-                    LeafId      = b.LeafId
-                    LeafIds     = b.LeafId :: a.LeafIds
-                    Title       = b.Title
-                    GrompleafId = b.GrompleafId
-                    FieldValues = b.FieldValues
-                    EditSummary = b.EditSummary
-                } |> State.Active
+            | State.Active s -> evolveEdited e s |> State.Active
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Snapshot _ -> true | _ -> false
@@ -74,5 +76,5 @@ let decideEdit (edited: Events.Edited) callerId state =
     | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
     | Fold.State.Active x -> result {
         do! Result.requireEqual x.AuthorId callerId                         "You aren't the author"
-        do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{x.LeafId}" }
-    |> addEvent (Events.Edited edited)
+        do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{x.LeafId}"
+    } |> addEvent (Events.Edited edited)

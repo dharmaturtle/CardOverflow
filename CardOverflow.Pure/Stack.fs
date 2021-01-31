@@ -52,5 +52,5 @@ let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) ca
     | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
     | Fold.State.Active s -> result {
         do! Result.requireEqual s.AuthorId callerId $"Stack {s.Id} doesn't belong to User {callerId}"
-        do! Result.requireEqual s.Id branchsStackId $"Branch {branchId} doesn't belong to Stack {s.Id}" }
-    |> addEvent (Events.DefaultBranchChanged { BranchId = branchId })
+        do! Result.requireEqual s.Id branchsStackId $"Branch {branchId} doesn't belong to Stack {s.Id}"
+    } |> addEvent (Events.DefaultBranchChanged { BranchId = branchId })

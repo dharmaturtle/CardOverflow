@@ -119,22 +119,8 @@ type TableClient(connectionString, tableName) =
         match e with
         | Branch.Events.Snapshot snapshot ->
             this.InsertOrReplace snapshot |>% ignore
-        | Branch.Events.Edited
-            { LeafId      = leafId
-              Title       = title
-              GrompleafId = grompleafId
-              FieldValues = fieldValues
-              EditSummary = editSummary } ->
-            this.Update(
-                fun (x: Branch.Events.Snapshot) ->
-                    { x with
-                        LeafId       = leafId
-                        Title        = title
-                        GrompleafId  = grompleafId
-                        FieldValues  = fieldValues
-                        EditSummary  = editSummary
-                    }
-            ) branchId
+        | Branch.Events.Edited e ->
+            this.Update (Branch.Fold.evolveEdited e) branchId
     member this.UpsertBranch (branchId: BranchId) =
         branchId.ToString() |> this.UpsertBranch'
     member this.GetBranch (branchId: string) =
