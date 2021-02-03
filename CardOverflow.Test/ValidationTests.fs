@@ -9,7 +9,6 @@ open Xunit
 open System
 open System.Linq
 open System.ComponentModel.DataAnnotations
-open DataAnnotationsValidator
 open FsCheck
 open FsCheck.Xunit
 open CardOverflow.Entity
@@ -208,76 +207,3 @@ type Generators =
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])
-
-type ValidationTests () =
-    let validator = DataAnnotationsValidator()
-    
-    [<Property>]
-    let ``EditFieldAndValue - empty Value is valid`` (editFieldAndValue: EditFieldAndValue): unit =
-        let validationResults = ResizeArray.empty
-        let editFieldAndValue =
-            {   editFieldAndValue
-                    with Value = ""
-            }
-
-        let isValid = validator.TryValidateObjectRecursive(editFieldAndValue, validationResults)
-
-        Assert.True isValid
-        Assert.Empty validationResults
-
-    [<Property>]
-    let ``EditFieldAndValue - super long Value is invalid`` (editFieldAndValue: EditFieldAndValue): unit =
-        let validationResults = ResizeArray.empty
-        let editFieldAndValue =
-            {   editFieldAndValue
-                    with Value = String('-', 10_001)
-            }
-
-        let isValid = validator.TryValidateObjectRecursive(editFieldAndValue, validationResults)
-
-        Assert.False isValid
-        Assert.equal
-            <| "The field Value must be a string with a maximum length of 10000."
-            <| validationResults.Single().ErrorMessage
-
-    [<Generators>]
-    let ``EditStackCommand - Generators only produces valid commands`` (editStackCommand: EditStackCommand): unit =
-        let validationResults = ResizeArray.empty
-        
-        let isValid = validator.TryValidateObjectRecursive(editStackCommand, validationResults)
-
-        Assert.True isValid
-        Assert.Empty validationResults
-
-    [<Generators>]
-    let ``EditStackCommand - super long Value is invalid`` (editStackCommand: EditStackCommand) (Generators.ClozeText clozeText): unit =
-        let validationResults = ResizeArray.empty
-        let editStackCommand =
-            {   editStackCommand with
-                    FieldValues =
-                        editStackCommand.FieldValues.Select(fun x -> { x with Value = clozeText + String('-', 10_001 ) }).ToList()
-            }
-        
-        let isValid = validator.TryValidateObjectRecursive(editStackCommand, validationResults)
-
-        Assert.False isValid
-        Assert.equal
-            <| "The field Value must be a string with a maximum length of 10000."
-            <| validationResults.Select(fun x -> x.ErrorMessage).Distinct().Single()
-
-    [<Generators>]
-    let ``EditStackCommand - text with random separator is invalid`` (editStackCommand: EditStackCommand) (Generators.ClozeText clozeText): unit =
-        let validationResults = ResizeArray.empty
-        let randomSeparator = ['\x1c'; '\x1d'; '\x1e'; '\x1f'] |> Gen.sample1 |> string
-        let editStackCommand =
-            {   editStackCommand with
-                    FieldValues =
-                        editStackCommand.FieldValues.Select(fun x -> { x with Value = clozeText + randomSeparator }).ToList()
-            }
-        
-        let isValid = validator.TryValidateObjectRecursive(editStackCommand, validationResults)
-
-        Assert.False isValid
-        Assert.equal
-            <| "Unit, record, group, and file separators are not permitted."
-            <| validationResults.Select(fun x -> x.ErrorMessage).Distinct().Single()

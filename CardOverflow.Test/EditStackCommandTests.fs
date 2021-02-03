@@ -27,7 +27,7 @@ let clozeFields =
     | Cloze t -> Cloze.templateRegex.TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
     | _ -> failwith "impossible"
 
-let test text expected grompleaf ids =
+let test text expected grompleaf =
     let view =
         {   EditSummary = ""
             FieldValues =
@@ -63,7 +63,6 @@ let ``EditStackCommand's back works with basic`` (): unit =
                     ShortBack = ""
                 } |> List.singleton |>Standard
             } |> ViewGrompleaf.load)
-            ids_1
     testOrdinary
         "The front"
         [ "The front Back" ]
