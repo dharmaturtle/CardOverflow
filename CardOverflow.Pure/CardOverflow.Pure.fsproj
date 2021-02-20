@@ -19,6 +19,7 @@
     <Compile Include="DatabaseLogic.fs" />
     <Compile Include="Infrastructure.fs" />
     <Compile Include="User.fs" />
+    <Compile Include="Deck.fs" />
     <Compile Include="Stack.fs" />
     <Compile Include="Branch.fs" />
   </ItemGroup>
