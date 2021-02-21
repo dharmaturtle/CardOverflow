@@ -148,6 +148,10 @@ type TableClient(connectionString, tableName) =
             this.Update (User.Fold.evolveOptionsEdited o) userId
         | User.Events.CardSettingsEdited cs ->
             this.Update (User.Fold.evolveCardSettingsEdited cs) userId
+        | User.Events.DeckFollowed d ->
+            this.Update (User.Fold.evolveDeckFollowed d) userId
+        | User.Events.DeckUnfollowed d ->
+            this.Update (User.Fold.evolveDeckUnfollowed d) userId
     member this.UpsertUser (userId: UserId) =
         userId.ToString() |> this.UpsertUser'
     member this.GetUser (userId: string) =

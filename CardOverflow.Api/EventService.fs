@@ -112,9 +112,17 @@ module User =
         member _.OptionsEdited userId o =
             let stream = resolve userId
             stream.Transact(decideOptionsEdited o userId userId) // highTODO pass in the real userIds
-        member _.CardSettingsEdited userId cs =
+        member _.CardSettingsEdited userId cardSettingsEdited =
             let stream = resolve userId
-            stream.Transact(decideCardSettingsEdited cs)
+            stream.Transact(decideCardSettingsEdited cardSettingsEdited)
+        member _.DeckFollowed userId deckId = async {
+            let stream = resolve userId
+            let! doesDeckExist = tableClient.Exists deckId
+            return! stream.Transact(decideFollowDeck deckId doesDeckExist)
+            }
+        member _.DeckUnfollowed userId deckId =
+            let stream = resolve userId
+            stream.Transact(decideUnfollowDeck deckId)
 
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)

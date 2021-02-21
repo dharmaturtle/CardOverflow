@@ -29,6 +29,7 @@ module Events =
            Modified: Instant
            Timezone: DateTimeZone
            CardSettings: CardSetting list
+           FollowedDecks: DeckId Set
         }
     type OptionsEdited =
         {  DefaultCardSettingId: CardSettingId
@@ -42,6 +43,8 @@ module Events =
            IsNightMode: bool
            Timezone: DateTimeZone
         }
+    type DeckFollowed   = { DeckId: DeckId}
+    type DeckUnfollowed = { DeckId: DeckId}
 
     type CardSettingsEdited =
         { CardSettings: CardSetting list }
@@ -49,6 +52,8 @@ module Events =
     type Event =
         | CardSettingsEdited of CardSettingsEdited
         | OptionsEdited      of OptionsEdited
+        | DeckFollowed       of DeckFollowed
+        | DeckUnfollowed     of DeckUnfollowed
         | Created            of Summary
         interface UnionContract.IUnionContract
     
@@ -64,6 +69,12 @@ module Fold =
     let mapActive f = function
         | Active a -> f a |> Active
         | x -> x
+
+    let evolveDeckFollowed (d: Events.DeckFollowed) (s: Events.Summary) =
+        { s with FollowedDecks = s.FollowedDecks |> Set.add d.DeckId }
+
+    let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: Events.Summary) =
+        { s with FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
 
     let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
         { s with CardSettings = cs.CardSettings }
@@ -83,9 +94,11 @@ module Fold =
 
     let evolve state =
         function
-        | Events.Created s             -> State.Active s
-        | Events.OptionsEdited o       -> state |> mapActive (evolveOptionsEdited o)
+        | Events.Created             s -> State.Active s
+        | Events.OptionsEdited       o -> state |> mapActive (evolveOptionsEdited o)
         | Events.CardSettingsEdited cs -> state |> mapActive (evolveCardSettingsEdited cs)
+        | Events.DeckFollowed        d -> state |> mapActive (evolveDeckFollowed d)
+        | Events.DeckUnfollowed      d -> state |> mapActive (evolveDeckUnfollowed d)
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
@@ -100,6 +113,24 @@ let validateSummary (summary: Events.Summary) = result {
             (summary.DisplayName.Trim())
             $"Remove the spaces before and/or after your display name: '{summary.DisplayName}'."
     }
+
+let isDeckFollowed (summary: Events.Summary) deckId =
+    summary.FollowedDecks.Contains deckId
+
+let validateDeckFollowed (summary: Events.Summary) deckId =
+    Result.requireTrue
+        $"You don't follow the deck '{deckId}'."
+        (isDeckFollowed summary deckId)
+
+let validateDeckNotFollowed (summary: Events.Summary) deckId =
+    Result.requireFalse
+        $"You already follow the deck '{deckId}'."
+        (isDeckFollowed summary deckId)
+
+let validateDeckExists doesDeckExist deckId =
+    Result.requireTrue
+        $"The deck '{deckId}' doesn't exist."
+        doesDeckExist
 
 let decideCreate (summary: Events.Summary) state =
     match state with
@@ -121,3 +152,18 @@ let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =
     | Fold.State.Active _ -> result {
         do! cs.CardSettings |> List.filter (fun x -> x.IsDefault) |> List.length |> Result.requireEqualTo 1 "You must have 1 default card setting."
     } |> addEvent (Events.CardSettingsEdited cs)
+
+let decideFollowDeck (deckId: DeckId) deckExists state =
+    match state with
+    | Fold.State.Initial  -> Error "You can't follow a deck if you don't exist..."
+    | Fold.State.Active s -> result {
+        do! validateDeckNotFollowed s deckId
+        do! validateDeckExists deckExists deckId
+    } |> addEvent (Events.DeckFollowed { Events.DeckFollowed.DeckId = deckId })
+
+let decideUnfollowDeck (deckId: DeckId) state =
+    match state with
+    | Fold.State.Initial  -> Error "You can't unfollow a deck if you don't exist..."
+    | Fold.State.Active s -> result {
+        do! validateDeckFollowed s deckId
+    } |> addEvent (Events.DeckUnfollowed { Events.DeckUnfollowed.DeckId = deckId })

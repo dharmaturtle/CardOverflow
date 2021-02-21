@@ -17,55 +17,71 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``Create summary roundtrips (event store)`` (userSummary: User.Events.Summary) = asyncResult {
+let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let userService = c.UserService()
 
     do! userService.Create userSummary
 
+    // event store roundtrips
     userSummary.Id
     |> c.UserEvents
     |> Seq.exactlyOne
     |> Assert.equal (User.Events.Created userSummary)
-    }
 
-[<StandardProperty>]
-let ``Create summary roundtrips (azure table)`` (userSummary: User.Events.Summary) = asyncResult {
-    let c = TestEsContainer()
-    let userService = c.UserService()
-    let tableClient = c.TableClient()
-
-    do! userService.Create userSummary
-
-    let! user, _ = tableClient.GetUser userSummary.Id
+    // azure table roundtrips
+    let! user, _ = c.TableClient().GetUser userSummary.Id
     Assert.equal userSummary user
     }
 
 [<StandardProperty>]
-let ``CardSettingsEdited roundtrips (event store)`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
     let c = TestEsContainer()
     let userService = c.UserService()
     do! userService.Create userSummary
     
     do! userService.CardSettingsEdited userSummary.Id cardSettings
 
+    // event store roundtrips
     userSummary.Id
     |> c.UserEvents
     |> Seq.last
     |> Assert.equal (User.Events.CardSettingsEdited cardSettings)
+
+    // azure table roundtrips
+    let! user, _ = c.TableClient().GetUser userSummary.Id
+    Assert.equal { userSummary with CardSettings = cardSettings.CardSettings } user
     }
 
 [<StandardProperty>]
-let ``CardSettingsEdited roundtrips (azure table)`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
+let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let userService = c.UserService()
-    let tableClient = c.TableClient()
+    let deckService = c.DeckService()
     do! userService.Create userSummary
+    do! deckService.Create deckSummary
     
-    do! userService.CardSettingsEdited userSummary.Id cardSettings
 
-    let! user, _ = tableClient.GetUser userSummary.Id
-    Assert.equal { userSummary with CardSettings = cardSettings.CardSettings } user
+    (***   when followed, then azure table updated   ***)
+    do! userService.DeckFollowed userSummary.Id deckSummary.Id
+
+    let! actual, _ = c.TableClient().GetUser userSummary.Id
+    Assert.equal { userSummary with FollowedDecks = userSummary.FollowedDecks |> Set.add deckSummary.Id } actual
+
+
+    (***   when unfollowed, then azure table updated   ***)
+    do! userService.DeckUnfollowed userSummary.Id deckSummary.Id
+
+    let! actual, _ = c.TableClient().GetUser userSummary.Id
+    Assert.equal userSummary actual
+
+    
+    (***   following nonexistant deck, fails   ***)
+    let nonexistantDeckId = % Guid.NewGuid()
+    
+    let! (r: Result<_,_>) = userService.DeckFollowed userSummary.Id nonexistantDeckId
+
+    Assert.equal $"The deck '{nonexistantDeckId}' doesn't exist." r.error
     }
 
 //[<Fact>]
