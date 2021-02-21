@@ -19,9 +19,9 @@ open AsyncOp
 [<StandardProperty>]
 let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let userService = c.UserService()
+    let userSaga = c.UserSaga()
 
-    do! userService.Create userSummary
+    do! userSaga.Create userSummary
 
     // event store roundtrips
     userSummary.Id
@@ -38,7 +38,7 @@ let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResu
 let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
     let c = TestEsContainer()
     let userService = c.UserService()
-    do! userService.Create userSummary
+    do! c.UserSaga().Create userSummary
     
     do! userService.CardSettingsEdited userSummary.Id cardSettings
 
@@ -58,7 +58,7 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummar
     let c = TestEsContainer()
     let userService = c.UserService()
     let deckService = c.DeckService()
-    do! userService.Create userSummary
+    do! c.UserSaga().Create userSummary
     do! deckService.Create deckSummary
     
 
@@ -102,10 +102,10 @@ let ``Azure Tables max payload size`` () : unit =
         let! userSummary = userSummaryGen
         asyncResult {
             let c = TestEsContainer()
-            let userService = c.UserService()
+            let userSaga = c.UserSaga()
             let tableClient = c.TableClient()
 
-            do! userService.Create userSummary
+            do! userSaga.Create userSummary
 
             let! user, _ = tableClient.GetUser userSummary.Id
             Assert.equal userSummary user

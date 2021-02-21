@@ -71,6 +71,11 @@ module User =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
+module UserSaga =
+    open User
+    let memoryStore store deckService =
+        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
+        |> UserSaga.create deckService
 module Deck =
     open Deck
     let memoryStore store =
@@ -109,6 +114,10 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Deck.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
+        container.RegisterSingleton<UserSaga.Service>(fun () ->
+            UserSaga.memoryStore
+                <| vStore()
+                <| container.GetInstance<Deck.Service>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let elseClient = container.GetInstance<ElseClient>()
             let tableClient = container.GetInstance<TableClient>()
@@ -148,6 +157,9 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     
     member _.UserService () =
         container.GetInstance<User.Service>()
+    
+    member _.UserSaga () =
+        container.GetInstance<UserSaga.Service>()
     
     member _.DeckService () =
         container.GetInstance<Deck.Service>()

@@ -77,7 +77,7 @@ module StackBranch =
         (   stackS  : Stack.Service,
             branchS : Branch.Service) =
     
-        let create (stackSummary, branchSummary) = asyncResult { // medTODO saga
+        let create (stackSummary, branchSummary) = asyncResult { // medTODO turn into a real saga
             do!     stackS .Create stackSummary
             return! branchS.Create branchSummary
         }
@@ -106,9 +106,6 @@ module User =
     type Service internal (resolve, tableClient: TableClient) =
         let resolve userId : Stream<_, _> = resolve userId
 
-        member _.Create (state: Events.Summary) =
-            let stream = resolve state.Id
-            stream.Transact(decideCreate state)
         member _.OptionsEdited userId o =
             let stream = resolve userId
             stream.Transact(decideOptionsEdited o userId userId) // highTODO pass in the real userIds
@@ -153,3 +150,19 @@ module Deck =
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
         Service(resolve, tableClient)
+
+module UserSaga = // medTODO turn into a real saga
+    open User
+
+    type Service internal (resolve, deckService: Deck.Service) =
+        let resolve userId : Stream<_, _> = resolve userId
+
+        member _.Create (summary: Events.Summary) = asyncResult {
+            let stream = resolve summary.Id
+            do! Deck.Events.defaultSummary summary.Id summary.DefaultDeckId |> deckService.Create
+            return! stream.Transact(decideCreate summary)
+            }
+
+    let create deckService resolve =
+        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
+        Service(resolve, deckService)

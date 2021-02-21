@@ -6,6 +6,7 @@ open TypeShape
 open NodaTime
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
+open FSharp.UMX
 
 let streamName (id: DeckId) = StreamName.create "Deck" (string id)
 
@@ -19,6 +20,12 @@ module Events =
             Name: string
             IsPublic: bool
             SourceId: DeckId option }
+    let defaultSummary userId deckId =
+        {   Id = deckId
+            UserId = userId
+            Name = "Default Deck"
+            IsPublic = false
+            SourceId = None }
     type Edited =
         {   Name: string
             SourceId: DeckId option }
