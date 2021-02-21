@@ -11,6 +11,7 @@ open FsToolkit.ErrorHandling
 open Domain
 open Infrastructure
 open FSharp.UMX
+open CardOverflow.Pure.AsyncOp
 
 module Branch =
     open Branch
@@ -114,6 +115,32 @@ module User =
         member _.CardSettingsEdited userId cs =
             let stream = resolve userId
             stream.Transact(decideCardSettingsEdited cs)
+
+    let create resolve tableClient =
+        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
+        Service(resolve, tableClient)
+
+module Deck =
+    open Deck
+
+    type Service internal (resolve, tableClient: TableClient) =
+        let resolve deckId : Stream<_, _> = resolve deckId
+
+        let doesSourceExist (source: DeckId option) =
+            match source with
+            | None -> Async.singleton true
+            | Some x -> tableClient.Exists x
+
+        member _.Create (summary: Events.Summary) = async {
+            let stream = resolve summary.Id
+            let! doesSourceExist = doesSourceExist summary.SourceId
+            return! stream.Transact(decideCreate summary doesSourceExist)
+            }
+        member _.Edit (edited: Events.Edited) callerId deckId = async {
+            let stream = resolve deckId
+            let! doesSourceExist = doesSourceExist edited.SourceId
+            return! stream.Transact(decideEdited edited callerId doesSourceExist)
+            }
 
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)

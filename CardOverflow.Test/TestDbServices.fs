@@ -71,6 +71,11 @@ module User =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
+module Deck =
+    open Deck
+    let memoryStore store =
+        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
+        |> create
 module Stack =
     open Stack
     let memoryStore store =
@@ -100,6 +105,10 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             User.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
+        container.RegisterSingleton<Deck.Service>(fun () ->
+            Deck.memoryStore
+                <| vStore()
+                <| container.GetInstance<TableClient>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let elseClient = container.GetInstance<ElseClient>()
             let tableClient = container.GetInstance<TableClient>()
@@ -109,6 +118,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 | "Stack"  -> events |> Array.map (Stack .Events.codec.TryDecode >> Option.get >> tableClient.UpsertStack'  id)
                 | "Branch" -> events |> Array.map (Branch.Events.codec.TryDecode >> Option.get >> tableClient.UpsertBranch' id)
                 | "User"   -> events |> Array.map (User  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'   id)
+                | "Deck"   -> events |> Array.map (Deck  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'   id)
                 | _ -> failwith $"Unsupported category: {category}"
                 |> Async.Parallel
                 |> Async.RunSynchronously
@@ -139,6 +149,9 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.UserService () =
         container.GetInstance<User.Service>()
     
+    member _.DeckService () =
+        container.GetInstance<Deck.Service>()
+    
     member _.StackService () =
         container.GetInstance<Stack.Service>()
     
@@ -155,6 +168,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member this.StackEvents (id) = this.events(Stack .streamName id, Stack .Events.codec)
     member this.BranchEvents(id) = this.events(Branch.streamName id, Branch.Events.codec)
     member this.UserEvents  (id) = this.events(User  .streamName id, User  .Events.codec)
+    member this.DeckEvents  (id) = this.events(Deck  .streamName id, Deck  .Events.codec)
 
 module TestGromplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {

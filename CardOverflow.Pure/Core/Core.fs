@@ -51,6 +51,15 @@ module TaskOption =
     let map f =
         Task.map (Option.map f)
 
+module OptionAsync =
+    let traverse (f: 'a -> Async<'b>) (ma: Option<'a>) : Async<Option<'b>> =
+        match ma with
+        | Some a -> f a |> Async.map Some
+        | None   -> Async.singleton None
+    
+    let sequence (maa : Option<Async<'a>>) : Async<Option<'a>> =
+        maa |> traverse id
+
 module AsyncOp =
     let inline (<%>) f x = Async.map f x
     let inline (<*>) f x = Async.apply f x

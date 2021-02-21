@@ -143,10 +143,32 @@ let editStackCommandGen =
         }
     }
 
-let userSnapshotGen =
+let userSummaryGen =
     nodaConfig
     |> GenX.autoWith<User.Events.Summary>
     |> Gen.filter (Domain.User.validateSummary >> Result.isOk)
+
+let deckSummaryGen = gen {
+    let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
+    let! summary =
+        nodaConfig
+        |> GenX.autoWith<Deck.Events.Summary>
+    return
+        { summary with
+            Name = name
+            SourceId = None }
+    }
+
+let deckEditGen = gen {
+    let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
+    let! edited =
+        nodaConfig
+        |> GenX.autoWith<Deck.Events.Edited>
+    return
+        { edited with
+            Name = name
+            SourceId = None }
+    }
 
 let cardSettingsEditedListGen = gen {
     let! nondefaults = nodaConfig |> GenX.autoWith<CardSetting> |> GenX.lList 0 100 |> Gen.map (List.map (fun x -> { x with IsDefault = false }))
@@ -188,7 +210,9 @@ open Hedgehog.Xunit
 type StandardConfig =
     static member __ =
         GenX.defaults
-        |> AutoGenConfig.addGenerator userSnapshotGen
+        |> AutoGenConfig.addGenerator userSummaryGen
+        |> AutoGenConfig.addGenerator deckSummaryGen
+        |> AutoGenConfig.addGenerator deckEditGen
         |> AutoGenConfig.addGenerator editStackCommandGen
         |> AutoGenConfig.addGenerator cardSettingsEditedListGen
         |> AutoGenConfig.addGenerator instantGen

@@ -48,6 +48,7 @@ type TableClient(connectionString, tableName) =
         | :? Domain.Stack .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Branch.Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.User  .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Deck  .Events.Summary as x -> string x.Id, string x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -75,12 +76,19 @@ type TableClient(connectionString, tableName) =
     member _.InsertOrReplace summary =
         summary |> wrap |> InsertOrReplace |> inTable
 
-    member _.Get<'a> (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
+    member private _.PointQuery (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
         Query.all<AzureTableStorageWrapper>
         |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
         |> fromTable
-        |>% Seq.exactlyOne
-        |>% fun (x, m) ->
+
+    member this.Exists (key: obj) =
+        this.PointQuery key
+        |>% (Seq.isEmpty >> not)
+
+    member this.TryGet<'a> (key: obj) =
+        this.PointQuery key
+        |>% Seq.tryExactlyOne
+        |>% Option.map (fun (x, m) ->
             String.concat "" [
               x._0
               x._1
@@ -93,6 +101,10 @@ type TableClient(connectionString, tableName) =
               x._8
               x._9
             ] |> fun x -> JsonConvert.DeserializeObject<'a> (x, Infrastructure.jsonSerializerSettings), m
+        )
+
+    member this.Get<'a> (key: obj) =
+        this.TryGet<'a> key |>% Option.get
     
     member this.Update update (rowKey: obj) =
         rowKey
@@ -142,3 +154,16 @@ type TableClient(connectionString, tableName) =
         this.Get<User.Events.Summary> userId
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser
+
+    member this.UpsertDeck' (deckId: string) e =
+        match e with
+        | Deck.Events.Created summary ->
+            this.InsertOrReplace summary |>% ignore
+        | Deck.Events.Edited e ->
+            this.Update (Deck.Fold.evolveEdited e) deckId
+    member this.UpsertDeck (deckId: DeckId) =
+        deckId.ToString() |> this.UpsertDeck'
+    member this.GetDeck (deckId: string) =
+        this.Get<Deck.Events.Summary> deckId
+    member this.GetDeck (deckId: DeckId) =
+        deckId.ToString() |> this.GetDeck

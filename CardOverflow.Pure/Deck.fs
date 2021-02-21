@@ -58,8 +58,9 @@ let validateName (name: string) = result {
     }
 
 let validateSourceId doesSourceExist (sourceId: DeckId option) =
-    doesSourceExist
-    |> Result.requireTrue $"The source {sourceId.Value} doesn't exist"
+    match sourceId with
+    | Some sourceId -> doesSourceExist |> Result.requireTrue $"The source deck '{sourceId}' doesn't exist"
+    | None -> Ok()
 
 let decideCreate (summary: Events.Summary) doesSourceExist state =
     match state with
