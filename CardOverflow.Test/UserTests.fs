@@ -54,6 +54,27 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
     }
 
 [<StandardProperty>]
+let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
+    let c = TestEsContainer()
+    do! c.DeckService().Create { deckSummary with UserId = userSummary.Id }
+    let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
+    do! c.UserSaga().Create userSummary
+    let userService = c.UserService()
+    
+    do! userService.OptionsEdited userSummary.Id optionsEdited
+
+    // event store roundtrips
+    userSummary.Id
+    |> c.UserEvents
+    |> Seq.last
+    |> Assert.equal (User.Events.OptionsEdited optionsEdited)
+
+    // azure table roundtrips
+    let! user, _ = c.TableClient().GetUser userSummary.Id
+    Assert.equal (User.Fold.evolveOptionsEdited optionsEdited userSummary) user
+    }
+
+[<StandardProperty>]
 let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let userService = c.UserService()

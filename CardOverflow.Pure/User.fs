@@ -16,7 +16,6 @@ module Events =
     type Summary =
         {  Id: UserId
            DisplayName: string
-           DefaultCardSettingId: CardSettingId
            DefaultDeckId: DeckId
            ShowNextReviewTime: bool
            ShowRemainingCardCount: bool
@@ -32,8 +31,7 @@ module Events =
            FollowedDecks: DeckId Set
         }
     type OptionsEdited =
-        {  DefaultCardSettingId: CardSettingId
-           DefaultDeckId: DeckId
+        {  DefaultDeckId: DeckId
            ShowNextReviewTime: bool
            ShowRemainingCardCount: bool
            StudyOrder: StudyOrder
@@ -81,7 +79,6 @@ module Fold =
 
     let evolveOptionsEdited (o: Events.OptionsEdited) (s: Events.Summary) =
         { s with
-            DefaultCardSettingId   = o.DefaultCardSettingId
             DefaultDeckId          = o.DefaultDeckId
             ShowNextReviewTime     = o.ShowNextReviewTime
             ShowRemainingCardCount = o.ShowRemainingCardCount
@@ -138,12 +135,11 @@ let decideCreate (summary: Events.Summary) state =
     | Fold.State.Initial  -> validateSummary summary
     |> addEvent (Events.Created summary)
 
-let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId defaultCardSettingUserId state =
+let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit the options of a user that doesn't exist."
     | Fold.State.Active s -> result {
-        do! Result.requireEqual s.Id defaultDeckUserId        $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
-        do! Result.requireEqual s.Id defaultCardSettingUserId $"CardSetting {o.DefaultCardSettingId} doesn't belong to User {s.Id}"
+        do! Result.requireEqual s.Id defaultDeckUserId $"Deck {o.DefaultDeckId} doesn't belong to User {s.Id}"
     } |> addEvent (Events.OptionsEdited o)
 
 let decideCardSettingsEdited (cs: Events.CardSettingsEdited) state =

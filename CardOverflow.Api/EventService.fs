@@ -106,9 +106,11 @@ module User =
     type Service internal (resolve, tableClient: TableClient) =
         let resolve userId : Stream<_, _> = resolve userId
 
-        member _.OptionsEdited userId o =
+        member _.OptionsEdited userId (o: Events.OptionsEdited) = async {
             let stream = resolve userId
-            stream.Transact(decideOptionsEdited o userId userId) // highTODO pass in the real userIds
+            let! deck, _ = tableClient.GetDeck o.DefaultDeckId
+            return! stream.Transact(decideOptionsEdited o deck.UserId)
+            }
         member _.CardSettingsEdited userId cardSettingsEdited =
             let stream = resolve userId
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
