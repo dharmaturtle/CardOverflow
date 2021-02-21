@@ -18,7 +18,7 @@ module Branch =
     type Service internal (resolve) =
         let resolve branchId : Stream<_, _> = resolve branchId
 
-        member _.Create(state: Events.Snapshot) =
+        member _.Create(state: Events.Summary) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
         member _.Edit(state, branchId, callerId) =
@@ -35,7 +35,7 @@ module Stack =
     type Service internal (resolve, tableClient: TableClient) =
         let resolve stackId : Stream<_, _> = resolve stackId
 
-        member internal _.Create(state: Events.Snapshot) =
+        member internal _.Create(state: Events.Summary) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
         member _.ChangeDefaultBranch stackId (newDefaultBranchId: BranchId) callerId = asyncResult {
@@ -50,7 +50,7 @@ module Stack =
 
 module StackBranch =
 
-    let branch authorId command tags title : Branch.Events.Snapshot =
+    let branch authorId command tags title : Branch.Events.Summary =
         { Id = % command.Ids.BranchId
           LeafId = % command.Ids.LeafId
           LeafIds = [ % command.Ids.LeafId ]
@@ -63,7 +63,7 @@ module StackBranch =
           FieldValues = command.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
           EditSummary = command.EditSummary
           Tags = tags }
-    let stack authorId command sourceLeafId : Stack.Events.Snapshot =
+    let stack authorId command sourceLeafId : Stack.Events.Summary =
         { Id = % command.Ids.StackId
           DefaultBranchId = % command.Ids.BranchId
           AuthorId = authorId
@@ -76,9 +76,9 @@ module StackBranch =
         (   stacks : Stack.Service,
             branches : Branch.Service) =
     
-        let create (stackSnapshot, branchSnapshot) = asyncResult {
-            do!     stacks  .Create stackSnapshot
-            return! branches.Create branchSnapshot
+        let create (stackSummary, branchSummary) = asyncResult {
+            do!     stacks  .Create stackSummary
+            return! branches.Create branchSummary
         }
 
         member _.Upsert (authorId, command) =
@@ -105,7 +105,7 @@ module User =
     type Service internal (resolve, tableClient: TableClient) =
         let resolve userId : Stream<_, _> = resolve userId
 
-        member _.Create (state: Events.Snapshot) =
+        member _.Create (state: Events.Summary) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
         member _.OptionsEdited userId o =

@@ -12,7 +12,7 @@ let streamName (id: BranchId) = StreamName.create "Branch" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
 
-    type Snapshot =
+    type Summary =
         { Id: BranchId
           LeafId: LeafId
           LeafIds: LeafId list
@@ -33,8 +33,8 @@ module Events =
           EditSummary: string }
 
     type Event =
-        | Snapshot of Snapshot
-        | Edited   of Edited
+        | Created of Summary
+        | Edited  of Edited
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -43,10 +43,10 @@ module Fold =
 
     type State =
         | Initial
-        | Active of Events.Snapshot
+        | Active of Events.Summary
     let initial : State = State.Initial
     
-    let evolveEdited (e: Events.Edited) (s: Events.Snapshot) =
+    let evolveEdited (e: Events.Edited) (s: Events.Summary) =
         { s with
             LeafId      = e.LeafId
             LeafIds     = e.LeafId :: s.LeafIds
@@ -58,17 +58,17 @@ module Fold =
     
     let evolve state =
         function
-        | Events.Snapshot s -> State.Active s
+        | Events.Created s -> State.Active s
         | Events.Edited e ->
             match state with
             | State.Initial -> invalidOp "Can't edit an Initial Branch"
             | State.Active s -> evolveEdited e s |> State.Active
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let isOrigin = function Events.Snapshot _ -> true | _ -> false
+    let isOrigin = function Events.Created _ -> true | _ -> false
 
-let decideCreate snapshot = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot snapshot ]
+let decideCreate summary = function
+    | Fold.State.Initial  -> Ok ()                  , [ Events.Created summary ]
     | Fold.State.Active _ -> Error "Already created", []
 
 let decideEdit (edited: Events.Edited) callerId state =

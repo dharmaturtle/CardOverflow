@@ -21,20 +21,20 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``ElseClient can handle all Stack events`` ((snapshot:Stack.Events.Snapshot), branchId) = async {
+let ``ElseClient can handle all Stack events`` ((summary: Stack.Events.Summary), branchId) = async {
     let client = TestEsContainer().ElseClient()
 
-    // Snapshot
-    do! snapshot
-        |> Stack.Events.Event.Snapshot
-        |> client.UpsertStack snapshot.Id
+    // Created
+    do! summary
+        |> Stack.Events.Event.Created
+        |> client.UpsertStack summary.Id
     
-    do! client.Get snapshot.Id |>% Assert.equal snapshot
+    do! client.Get summary.Id |>% Assert.equal summary
 
     // DefaultBranchChanged
     do! { Stack.Events.BranchId = branchId }
         |> Stack.Events.Event.DefaultBranchChanged
-        |> client.UpsertStack snapshot.Id
+        |> client.UpsertStack summary.Id
     
-    do! client.Get snapshot.Id |>% Assert.equal { snapshot with DefaultBranchId = branchId }
+    do! client.Get summary.Id |>% Assert.equal { summary with DefaultBranchId = branchId }
     }

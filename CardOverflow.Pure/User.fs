@@ -13,7 +13,7 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
     
-    type Snapshot =
+    type Summary =
         {  Id: UserId
            DisplayName: string
            DefaultCardSettingId: CardSettingId
@@ -49,7 +49,7 @@ module Events =
     type Event =
         | CardSettingsEdited of CardSettingsEdited
         | OptionsEdited      of OptionsEdited
-        | Snapshot           of Snapshot
+        | Created            of Summary
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -58,13 +58,13 @@ module Fold =
     
     type State =
         | Initial
-        | Active of Events.Snapshot
+        | Active of Events.Summary
     let initial = State.Initial
 
-    let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Snapshot) =
+    let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
         { s with CardSettings = cs.CardSettings }
 
-    let evolveOptionsEdited (o: Events.OptionsEdited) (s: Events.Snapshot) =
+    let evolveOptionsEdited (o: Events.OptionsEdited) (s: Events.Summary) =
         { s with
             DefaultCardSettingId   = o.DefaultCardSettingId
             DefaultDeckId          = o.DefaultDeckId
@@ -79,7 +79,7 @@ module Fold =
 
     let evolve state =
         function
-        | Events.Snapshot s -> State.Active s
+        | Events.Created s -> State.Active s
         | Events.OptionsEdited o ->
             match state with
             | State.Initial  -> invalidOp "User doesn't exist"
@@ -90,10 +90,9 @@ module Fold =
             | State.Active s -> evolveCardSettingsEdited cs s |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let isOrigin = function Events.Snapshot _ -> true | _ -> false
 
 let decideCreate state = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot state ]
+    | Fold.State.Initial  -> Ok ()                  , [ Events.Created state ]
     | Fold.State.Active _ -> Error "Already created", []
 
 let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId defaultCardSettingUserId state =

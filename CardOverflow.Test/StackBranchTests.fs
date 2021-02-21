@@ -15,7 +15,7 @@ open Hedgehog
 open CardOverflow.Api
 
 [<StandardProperty>]
-let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, tags) =
+let ``StackBranch.Service.Upsert persists both summaries`` (authorId, command, tags) =
     let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
     let c = TestEsContainer()
     let stackBranchService = c.StackBranchService()
@@ -27,11 +27,11 @@ let ``StackBranch.Service.Upsert persists both snapshots`` (authorId, command, t
     % expectedStack.Id
     |> c.StackEvents
     |> Assert.Single
-    |> Assert.equal (Stack.Events.Snapshot expectedStack)
+    |> Assert.equal (Stack.Events.Created expectedStack)
     % expectedBranch.Id
     |> c.BranchEvents
     |> Assert.Single
-    |> Assert.equal (Branch.Events.Snapshot expectedBranch)
+    |> Assert.equal (Branch.Events.Created expectedBranch)
     
 [<StandardProperty>]
 let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, tags, title) =
@@ -59,7 +59,7 @@ let ``StackBranch.Service.Upsert persists edit`` (authorId, command1, command2, 
 let ``StackBranch.Service.Upsert persists new branch`` (authorId, { NewOriginal = newOriginal; NewBranch = newBranch; BranchTitle = title }) =
     let c = TestEsContainer()
     let stackBranchService = c.StackBranchService()
-    let expectedBranch : Branch.Events.Snapshot =
+    let expectedBranch : Branch.Events.Summary =
         StackBranch.stackBranch authorId newBranch None [] title
         |> snd
     stackBranchService.Upsert(authorId, newOriginal) |> RunSynchronously.OkEquals ()
@@ -69,7 +69,7 @@ let ``StackBranch.Service.Upsert persists new branch`` (authorId, { NewOriginal 
     % newBranch.Ids.BranchId
     |> c.BranchEvents
     |> Seq.exactlyOne
-    |> Assert.equal (Branch.Events.Snapshot expectedBranch)
+    |> Assert.equal (Branch.Events.Created expectedBranch)
 
 [<StandardProperty>]
 let ``StackBranch.Service.Upsert fails to persist edit with duplicate leafId`` (authorId, command1, command2, tags, title) =

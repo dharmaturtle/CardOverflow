@@ -43,12 +43,12 @@ type TableClient(connectionString, tableName) =
     let fromTable = fromTableAsync tableClient tableName
     let encoding = System.Text.UnicodeEncoding() // this is UTF16 https://docs.microsoft.com/en-us/dotnet/api/system.text.unicodeencoding?view=net-5.0
     
-    let getPartitionRow (snapshot: obj) =
-        match snapshot with
-        | :? Domain.Stack .Events.Snapshot as x -> string x.Id, string x.Id
-        | :? Domain.Branch.Events.Snapshot as x -> string x.Id, string x.Id
-        | :? Domain.User  .Events.Snapshot as x -> string x.Id, string x.Id
-        | _ -> failwith $"The type '{snapshot.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
+    let getPartitionRow (summary: obj) =
+        match summary with
+        | :? Domain.Stack .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Branch.Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.User  .Events.Summary as x -> string x.Id, string x.Id
+        | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
         let partition, row = getPartitionRow payload
@@ -72,8 +72,8 @@ type TableClient(connectionString, tableName) =
     member _.CloudTableClient = tableClient
     member _.TableName = tableName
     
-    member _.InsertOrReplace snapshot =
-        snapshot |> wrap |> InsertOrReplace |> inTable
+    member _.InsertOrReplace summary =
+        summary |> wrap |> InsertOrReplace |> inTable
 
     member _.Get<'a> (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
         Query.all<AzureTableStorageWrapper>
@@ -103,35 +103,35 @@ type TableClient(connectionString, tableName) =
         |>% ignore
     member this.UpsertStack' (stackId: string) e =
         match e with
-        | Stack.Events.Snapshot snapshot ->
-            this.InsertOrReplace snapshot |>% ignore
+        | Stack.Events.Created summary ->
+            this.InsertOrReplace summary |>% ignore
         | Stack.Events.DefaultBranchChanged b ->
-            this.Update (fun (x:Stack.Events.Snapshot) ->
+            this.Update (fun (x:Stack.Events.Summary) ->
                 { x with DefaultBranchId = b.BranchId }
             ) stackId |>% ignore
     member this.UpsertStack (stackId: StackId) =
         stackId.ToString() |> this.UpsertStack'
     member this.GetStack (stackId: string) =
-        this.Get<Stack.Events.Snapshot> stackId
+        this.Get<Stack.Events.Summary> stackId
     member this.GetStack (stackId: StackId) =
         stackId.ToString() |> this.GetStack
     member this.UpsertBranch' (branchId: string) e =
         match e with
-        | Branch.Events.Snapshot snapshot ->
-            this.InsertOrReplace snapshot |>% ignore
+        | Branch.Events.Created summary ->
+            this.InsertOrReplace summary |>% ignore
         | Branch.Events.Edited e ->
             this.Update (Branch.Fold.evolveEdited e) branchId
     member this.UpsertBranch (branchId: BranchId) =
         branchId.ToString() |> this.UpsertBranch'
     member this.GetBranch (branchId: string) =
-        this.Get<Branch.Events.Snapshot> branchId
+        this.Get<Branch.Events.Summary> branchId
     member this.GetBranch (branchId: BranchId) =
         branchId.ToString() |> this.GetBranch
     
     member this.UpsertUser' (userId: string) e =
         match e with
-        | User.Events.Snapshot snapshot ->
-            this.InsertOrReplace snapshot |>% ignore
+        | User.Events.Created summary ->
+            this.InsertOrReplace summary |>% ignore
         | User.Events.OptionsEdited o ->
             this.Update (User.Fold.evolveOptionsEdited o) userId
         | User.Events.CardSettingsEdited cs ->
@@ -139,6 +139,6 @@ type TableClient(connectionString, tableName) =
     member this.UpsertUser (userId: UserId) =
         userId.ToString() |> this.UpsertUser'
     member this.GetUser (userId: string) =
-        this.Get<User.Events.Snapshot> userId
+        this.Get<User.Events.Summary> userId
     member this.GetUser (userId: UserId) =
         userId.ToString() |> this.GetUser

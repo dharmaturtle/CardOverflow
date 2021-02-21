@@ -11,7 +11,7 @@ let streamName (id: StackId) = StreamName.create "Stack" (id.ToString())
 [<RequireQualifiedAccess>]
 module Events =
     
-    type Snapshot =
+    type Summary =
         { Id: StackId
           DefaultBranchId: BranchId
           AuthorId: UserId
@@ -20,7 +20,7 @@ module Events =
 
     type Event =
         | DefaultBranchChanged of DefaultBranchChanged
-        | Snapshot             of Snapshot
+        | Created              of Summary
         interface UnionContract.IUnionContract
     
     let codec = Codec.Create<Event> jsonSerializerSettings
@@ -29,22 +29,22 @@ module Fold =
     
     type State =
         | Initial
-        | Active of Events.Snapshot
+        | Active of Events.Summary
     let initial = State.Initial
 
     let evolve state =
         function
-        | Events.Snapshot s -> State.Active s
+        | Events.Created s -> State.Active s
         | Events.DefaultBranchChanged b ->
             match state with
             | State.Initial  -> invalidOp "Can't change the default branch of an Initial Stack"
             | State.Active a -> { a with DefaultBranchId = b.BranchId } |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
-    let isOrigin = function Events.Snapshot _ -> true | _ -> false
+    let isOrigin = function Events.Created _ -> true | _ -> false
 
 let decideCreate state = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Snapshot state ]
+    | Fold.State.Initial  -> Ok ()                  , [ Events.Created state ]
     | Fold.State.Active _ -> Error "Already created", []
 
 let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) callerId state =
