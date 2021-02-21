@@ -61,6 +61,10 @@ module Fold =
         | Active of Events.Summary
     let initial = State.Initial
 
+    let mapActive f = function
+        | Active a -> f a |> Active
+        | x -> x
+
     let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
         { s with CardSettings = cs.CardSettings }
 
@@ -79,21 +83,29 @@ module Fold =
 
     let evolve state =
         function
-        | Events.Created s -> State.Active s
-        | Events.OptionsEdited o ->
-            match state with
-            | State.Initial  -> invalidOp "User doesn't exist"
-            | State.Active s -> evolveOptionsEdited o s |> State.Active
-        | Events.CardSettingsEdited cs ->
-            match state with
-            | State.Initial  -> invalidOp "User doesn't exist"
-            | State.Active s -> evolveCardSettingsEdited cs s |> State.Active
+        | Events.Created s             -> State.Active s
+        | Events.OptionsEdited o       -> state |> mapActive (evolveOptionsEdited o)
+        | Events.CardSettingsEdited cs -> state |> mapActive (evolveCardSettingsEdited cs)
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
-let decideCreate state = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Created state ]
-    | Fold.State.Active _ -> Error "Already created", []
+let validateName (name: string) =
+    (4 <= name.Length && name.Length <= 18)
+    |> Result.requireTrue $"The name '{name}' must be between 4 and 18 characters."
+
+let validateSummary (summary: Events.Summary) = result {
+    do! validateName summary.DisplayName
+    do! Result.requireEqual
+            (summary.DisplayName)
+            (summary.DisplayName.Trim())
+            $"Remove the spaces before and/or after your display name: '{summary.DisplayName}'."
+    }
+
+let decideCreate (summary: Events.Summary) state =
+    match state with
+    | Fold.State.Active s -> Error $"User '{s.Id}' already exists."
+    | Fold.State.Initial  -> validateSummary summary
+    |> addEvent (Events.Created summary)
 
 let decideOptionsEdited (o: Events.OptionsEdited) defaultDeckUserId defaultCardSettingUserId state =
     match state with

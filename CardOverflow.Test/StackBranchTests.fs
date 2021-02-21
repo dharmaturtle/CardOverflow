@@ -104,4 +104,4 @@ let ``StackBranch.Service.Upsert fails to insert twice`` (authorId, command, tag
         
     stackBranchService.Upsert(authorId, command)
 
-    |> RunSynchronously.ErrorEquals $"Already created"
+    |> RunSynchronously.ErrorEquals $"Stack '{command.Ids.StackId}' already exists."

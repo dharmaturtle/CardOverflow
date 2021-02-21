@@ -73,12 +73,12 @@ module StackBranch =
         (branch authorId command tags title)
 
     type Service
-        (   stacks : Stack.Service,
-            branches : Branch.Service) =
+        (   stackS  : Stack.Service,
+            branchS : Branch.Service) =
     
-        let create (stackSummary, branchSummary) = asyncResult {
-            do!     stacks  .Create stackSummary
-            return! branches.Create branchSummary
+        let create (stackSummary, branchSummary) = asyncResult { // medTODO saga
+            do!     stackS .Create stackSummary
+            return! branchS.Create branchSummary
         }
 
         member _.Upsert (authorId, command) =
@@ -88,7 +88,7 @@ module StackBranch =
             | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) ->
                 stackBranch authorId command (% sourceLeafId |> Some) tags "Default" |> create
             | NewBranch_Title title ->
-                branches.Create(branch authorId command [] title)
+                branchS.Create(branch authorId command [] title)
             | NewLeaf_Title title ->
                 let branch  =   branch authorId command [] title
                 let edited : Branch.Events.Edited =
@@ -97,7 +97,7 @@ module StackBranch =
                       GrompleafId = branch.GrompleafId
                       FieldValues = branch.FieldValues
                       EditSummary = branch.EditSummary }
-                branches.Edit(edited, branch.Id, authorId)
+                branchS.Edit(edited, branch.Id, authorId)
 
 module User =
     open User

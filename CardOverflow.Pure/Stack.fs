@@ -43,9 +43,11 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-let decideCreate state = function
-    | Fold.State.Initial  -> Ok ()                  , [ Events.Created state ]
-    | Fold.State.Active _ -> Error "Already created", []
+let decideCreate summary state =
+    match state with
+    | Fold.State.Active s -> Error $"Stack '{s.Id}' already exists."
+    | Fold.State.Initial  -> Ok ()
+    |> addEvent (Events.Created summary)
 
 let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) callerId state =
     match state with

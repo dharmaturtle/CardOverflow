@@ -52,9 +52,10 @@ module Fold =
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
-let validateName (name: string) =
-    name.Length < 100
-    |> Result.requireTrue $"The deck's name '{name}' is too long. It must be under 100 characters."
+let validateName (name: string) = result {
+    do! (1 <= name.Length && name.Length <= 100) |> Result.requireTrue $"The name '{name}' must be between 1 and 100 characters."
+    do! Result.requireEqual name (name.Trim()) $"Remove the spaces before and/or after the name: '{name}'."
+    }
 
 let validateSourceId doesSourceExist (sourceId: DeckId option) =
     doesSourceExist
