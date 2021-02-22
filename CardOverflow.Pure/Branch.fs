@@ -46,6 +46,10 @@ module Fold =
         | Active of Events.Summary
     let initial : State = State.Initial
     
+    let mapActive f = function
+        | Active a -> f a |> Active
+        | x -> x
+    
     let evolveEdited (e: Events.Edited) (s: Events.Summary) =
         { s with
             LeafId      = e.LeafId
@@ -53,16 +57,11 @@ module Fold =
             Title       = e.Title
             GrompleafId = e.GrompleafId
             FieldValues = e.FieldValues
-            EditSummary = e.EditSummary
-        }
+            EditSummary = e.EditSummary }
     
-    let evolve state =
-        function
+    let evolve state = function
         | Events.Created s -> State.Active s
-        | Events.Edited e ->
-            match state with
-            | State.Initial -> invalidOp "Can't edit an Initial Branch"
-            | State.Active s -> evolveEdited e s |> State.Active
+        | Events.Edited e -> state |> mapActive (evolveEdited e)
 
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
