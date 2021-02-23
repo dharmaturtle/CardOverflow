@@ -56,7 +56,7 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
 [<StandardProperty>]
 let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
     let c = TestEsContainer()
-    do! c.DeckWriter().Create { deckSummary with UserId = userSummary.Id }
+    do! c.DeckWriter().Create { deckSummary with AuthorId = userSummary.Id }
     let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
     do! c.UserSagaWriter().Create userSummary
     let userWriter = c.UserWriter()

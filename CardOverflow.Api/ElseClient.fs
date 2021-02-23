@@ -49,11 +49,11 @@ type ElseClient (client: ElasticClient) =
         | Branch.Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
         | Branch.Events.Edited
-            { LeafId      = leafId
-              Title       = title
-              GrompleafId = grompleafId
-              FieldValues = fieldValues
-              EditSummary = editSummary } ->
+            { LeafId             = leafId
+              Title              = title
+              TemplateRevisionId = templateRevisionId
+              FieldValues        = fieldValues
+              EditSummary        = editSummary } ->
             client.UpdateAsync<obj>(
                 branchId |> Id |> DocumentPath,
                 fun ud ->
@@ -61,11 +61,11 @@ type ElseClient (client: ElasticClient) =
                         .Index<Branch.Events.Summary>()
                         .Doc
                         {| 
-                            LeafId      = leafId
-                            Title       = title
-                            GrompleafId = grompleafId
-                            FieldValues = fieldValues
-                            EditSummary = editSummary
+                            LeafId             = leafId
+                            Title              = title
+                            TemplateRevisionId = templateRevisionId
+                            FieldValues        = fieldValues
+                            EditSummary        = editSummary
                         |}
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore

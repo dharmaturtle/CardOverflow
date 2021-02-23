@@ -99,12 +99,12 @@ module Fold =
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
 
-let validateName (name: string) =
-    (4 <= name.Length && name.Length <= 18)
-    |> Result.requireTrue $"The name '{name}' must be between 4 and 18 characters."
+let validateDisplayName (displayName: string) =
+    (4 <= displayName.Length && displayName.Length <= 18)
+    |> Result.requireTrue $"The display name '{displayName}' must be between 4 and 18 characters."
 
 let validateSummary (summary: Events.Summary) = result {
-    do! validateName summary.DisplayName
+    do! validateDisplayName summary.DisplayName
     do! Result.requireEqual
             (summary.DisplayName)
             (summary.DisplayName.Trim())

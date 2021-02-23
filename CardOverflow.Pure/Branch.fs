@@ -19,16 +19,15 @@ module Events =
           Title: string
           StackId: StackId
           AuthorId: UserId
-          GrompleafId: GrompleafId
+          TemplateRevisionId: TemplateRevisionId
           AnkiNoteId: int64 option
-          GotDMCAed: bool
           FieldValues: Map<string, string>
           EditSummary: string
           Tags: string Set }
     type Edited =
         { LeafId: LeafId
           Title: string
-          GrompleafId: GrompleafId
+          TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
           EditSummary: string }
 
@@ -44,6 +43,7 @@ module Fold =
     type State =
         | Initial
         | Active of Events.Summary
+        //| Dmca of Events.Summary * DmcaMetadata // medTODO
     let initial : State = State.Initial
     
     let mapActive f = function
@@ -52,12 +52,12 @@ module Fold =
     
     let evolveEdited (e: Events.Edited) (s: Events.Summary) =
         { s with
-            LeafId      = e.LeafId
-            LeafIds     = e.LeafId :: s.LeafIds
-            Title       = e.Title
-            GrompleafId = e.GrompleafId
-            FieldValues = e.FieldValues
-            EditSummary = e.EditSummary }
+            LeafId             = e.LeafId
+            LeafIds            = e.LeafId :: s.LeafIds
+            Title              = e.Title
+            TemplateRevisionId = e.TemplateRevisionId
+            FieldValues        = e.FieldValues
+            EditSummary        = e.EditSummary }
     
     let evolve state = function
         | Events.Created s -> State.Active s

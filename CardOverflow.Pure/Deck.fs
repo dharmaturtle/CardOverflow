@@ -16,13 +16,13 @@ module Events =
     
     type Summary =
         {   Id: DeckId
-            UserId: UserId
+            AuthorId: UserId
             Name: string
             IsPublic: bool
             SourceId: DeckId option }
     let defaultSummary userId deckId =
         {   Id = deckId
-            UserId = userId
+            AuthorId = userId
             Name = "Default Deck"
             IsPublic = false
             SourceId = None }
@@ -81,7 +81,7 @@ let decideEdited (e: Events.Edited) callerId doesSourceExist state =
     match state with
     | Fold.State.Initial  -> Error $"You ({callerId}) can't edit a deck that doesn't exist."
     | Fold.State.Active s -> result {
-        do! Result.requireEqual callerId s.UserId $"You ({callerId}) didn't author this deck ({s.Id})."
+        do! Result.requireEqual callerId s.AuthorId $"You ({callerId}) didn't author this deck ({s.Id})."
         do! validateSourceId doesSourceExist e.SourceId
         do! validateName e.Name
     } |> addEvent (Events.Edited e)

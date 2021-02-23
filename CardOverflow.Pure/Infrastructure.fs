@@ -19,10 +19,10 @@ type BranchId = Guid<branchId>
 type LeafId = Guid<leafId>
     and [<Measure>] leafId
 
-type GromplateId = Guid<gromplateId>
-    and [<Measure>] gromplateId
-type GrompleafId = Guid<grompleafId>
-    and [<Measure>] grompleafId
+type TemplateId = Guid<templateId>
+    and [<Measure>] templateId
+type TemplateRevisionId = Guid<templateRevisionId>
+    and [<Measure>] templateRevisionId
 
 let addEvent okEvent = function
     | Ok x    -> Ok x   , [okEvent]

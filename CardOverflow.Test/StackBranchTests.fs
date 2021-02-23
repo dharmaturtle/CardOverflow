@@ -41,11 +41,11 @@ let ``StackBranchWriter.Upsert persists edit`` (authorId, command1, command2, ta
     let stackBranchWriter = c.StackBranchWriter()
     let expectedBranch : Branch.Events.Edited =
         let _, b = StackBranch.stackBranch authorId command2 None tags title
-        { LeafId      = b.LeafId
-          Title       = b.Title
-          GrompleafId = b.GrompleafId
-          FieldValues = b.FieldValues
-          EditSummary = b.EditSummary }
+        { LeafId             = b.LeafId
+          Title              = b.Title
+          TemplateRevisionId = b.TemplateRevisionId
+          FieldValues        = b.FieldValues
+          EditSummary        = b.EditSummary }
     stackBranchWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
         
     stackBranchWriter.Upsert(authorId, command2) |> RunSynchronously.OkEquals ()

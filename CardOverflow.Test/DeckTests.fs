@@ -47,7 +47,7 @@ let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edit
     let deckWriter = c.DeckWriter()
     do! deckWriter.Create deckSummary
     
-    do! deckWriter.Edit edited deckSummary.UserId deckSummary.Id
+    do! deckWriter.Edit edited deckSummary.AuthorId deckSummary.Id
 
     deckSummary.Id
     |> c.DeckEvents
@@ -62,7 +62,7 @@ let ``Edited roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) (edit
     let tableClient = c.TableClient()
     do! deckWriter.Create deckSummary
     
-    do! deckWriter.Edit edited deckSummary.UserId deckSummary.Id
+    do! deckWriter.Edit edited deckSummary.AuthorId deckSummary.Id
 
     let! actual, _ = tableClient.GetDeck deckSummary.Id
     Assert.equal (Deck.Fold.evolveEdited edited deckSummary) actual
