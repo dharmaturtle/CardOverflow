@@ -10,7 +10,7 @@ open FSharp.UMX
 open FsCheck.Xunit
 open CardOverflow.Pure
 open CardOverflow.Test
-open EventService
+open EventWriter
 open Hedgehog
 open D
 open FsToolkit.ErrorHandling
@@ -19,9 +19,9 @@ open AsyncOp
 [<StandardProperty>]
 let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let deckService = c.DeckService()
+    let deckWriter = c.DeckWriter()
 
-    do! deckService.Create deckSummary
+    do! deckWriter.Create deckSummary
 
     deckSummary.Id
     |> c.DeckEvents
@@ -32,10 +32,10 @@ let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summar
 [<StandardProperty>]
 let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let deckService = c.DeckService()
+    let deckWriter = c.DeckWriter()
     let tableClient = c.TableClient()
 
-    do! deckService.Create deckSummary
+    do! deckWriter.Create deckSummary
 
     let! actual, _ = tableClient.GetDeck deckSummary.Id
     Assert.equal deckSummary actual
@@ -44,10 +44,10 @@ let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summar
 [<StandardProperty>]
 let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
-    let deckService = c.DeckService()
-    do! deckService.Create deckSummary
+    let deckWriter = c.DeckWriter()
+    do! deckWriter.Create deckSummary
     
-    do! deckService.Edit edited deckSummary.UserId deckSummary.Id
+    do! deckWriter.Edit edited deckSummary.UserId deckSummary.Id
 
     deckSummary.Id
     |> c.DeckEvents
@@ -58,11 +58,11 @@ let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edit
 [<StandardProperty>]
 let ``Edited roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
-    let deckService = c.DeckService()
+    let deckWriter = c.DeckWriter()
     let tableClient = c.TableClient()
-    do! deckService.Create deckSummary
+    do! deckWriter.Create deckSummary
     
-    do! deckService.Edit edited deckSummary.UserId deckSummary.Id
+    do! deckWriter.Edit edited deckSummary.UserId deckSummary.Id
 
     let! actual, _ = tableClient.GetDeck deckSummary.Id
     Assert.equal (Deck.Fold.evolveEdited edited deckSummary) actual

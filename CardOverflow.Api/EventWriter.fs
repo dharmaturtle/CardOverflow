@@ -1,4 +1,4 @@
-module EventService
+module EventWriter
 
 open Equinox
 open FsCodec
@@ -16,7 +16,7 @@ open CardOverflow.Pure.AsyncOp
 module Branch =
     open Branch
     
-    type Service internal (resolve) =
+    type Writer internal (resolve) =
         let resolve branchId : Stream<_, _> = resolve branchId
 
         member _.Create(state: Events.Summary) =
@@ -27,13 +27,13 @@ module Branch =
             stream.Transact(decideEdit state callerId)
 
     let create resolve =
-        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve)
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve)
 
 module Stack =
     open Stack
 
-    type Service internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, tableClient: TableClient) =
         let resolve stackId : Stream<_, _> = resolve stackId
 
         member internal _.Create(state: Events.Summary) =
@@ -46,8 +46,8 @@ module Stack =
         }
 
     let create resolve tableClient =
-        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve, tableClient)
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve, tableClient)
 
 module StackBranch =
 
@@ -73,13 +73,13 @@ module StackBranch =
         (stack  authorId command sourceLeafId),
         (branch authorId command tags title)
 
-    type Service
-        (   stackS  : Stack.Service,
-            branchS : Branch.Service) =
+    type Writer
+        (   stackWriter  : Stack.Writer,
+            branchWriter : Branch.Writer) =
     
         let create (stackSummary, branchSummary) = asyncResult { // medTODO turn into a real saga
-            do!     stackS .Create stackSummary
-            return! branchS.Create branchSummary
+            do!     stackWriter .Create stackSummary
+            return! branchWriter.Create branchSummary
         }
 
         member _.Upsert (authorId, command) =
@@ -89,7 +89,7 @@ module StackBranch =
             | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) ->
                 stackBranch authorId command (% sourceLeafId |> Some) tags "Default" |> create
             | NewBranch_Title title ->
-                branchS.Create(branch authorId command Set.empty title)
+                branchWriter.Create(branch authorId command Set.empty title)
             | NewLeaf_Title title ->
                 let branch  =   branch authorId command Set.empty title
                 let edited : Branch.Events.Edited =
@@ -98,12 +98,12 @@ module StackBranch =
                       GrompleafId = branch.GrompleafId
                       FieldValues = branch.FieldValues
                       EditSummary = branch.EditSummary }
-                branchS.Edit(edited, branch.Id, authorId)
+                branchWriter.Edit(edited, branch.Id, authorId)
 
 module User =
     open User
 
-    type Service internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, tableClient: TableClient) =
         let resolve userId : Stream<_, _> = resolve userId
 
         member _.OptionsEdited userId (o: Events.OptionsEdited) = async {
@@ -124,13 +124,13 @@ module User =
             stream.Transact(decideUnfollowDeck deckId)
 
     let create resolve tableClient =
-        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve, tableClient)
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve, tableClient)
 
 module Deck =
     open Deck
 
-    type Service internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, tableClient: TableClient) =
         let resolve deckId : Stream<_, _> = resolve deckId
 
         let doesSourceExist (source: DeckId option) =
@@ -150,21 +150,21 @@ module Deck =
             }
 
     let create resolve tableClient =
-        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve, tableClient)
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve, tableClient)
 
 module UserSaga = // medTODO turn into a real saga
     open User
 
-    type Service internal (resolve, deckService: Deck.Service) =
+    type Writer internal (resolve, deckWriter: Deck.Writer) =
         let resolve userId : Stream<_, _> = resolve userId
 
         member _.Create (summary: Events.Summary) = asyncResult {
             let stream = resolve summary.Id
-            do! Deck.Events.defaultSummary summary.Id summary.DefaultDeckId |> deckService.Create
+            do! Deck.Events.defaultSummary summary.Id summary.DefaultDeckId |> deckWriter.Create
             return! stream.Transact(decideCreate summary)
             }
 
-    let create deckService resolve =
-        let resolve id = Stream(Log.ForContext<Service>(), resolve (streamName id), maxAttempts=3)
-        Service(resolve, deckService)
+    let create deckWriter resolve =
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve, deckWriter)

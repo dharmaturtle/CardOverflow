@@ -20,7 +20,7 @@
     <Compile Include="AnkiImporter.fs" />
     <Compile Include="TableClient.fs" />
     <Compile Include="ElseClient.fs" />
-    <Compile Include="EventService.fs" />
+    <Compile Include="EventWriter.fs" />
     <Compile Include="WeatherForecast.fs" />
   </ItemGroup>
 

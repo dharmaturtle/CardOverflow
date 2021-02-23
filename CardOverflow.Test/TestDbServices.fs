@@ -23,7 +23,7 @@ open Nest
 open Equinox.MemoryStore
 open FsCodec
 open Domain
-open EventService
+open EventWriter
 
 type TestContainer(?newDb: bool, ?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
     let container = new Container()
@@ -73,9 +73,9 @@ module User =
         |> create
 module UserSaga =
     open User
-    let memoryStore store deckService =
+    let memoryStore store deckWriter =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> UserSaga.create deckService
+        |> UserSaga.create deckWriter
 module Deck =
     open Deck
     let memoryStore store =
@@ -106,18 +106,18 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterTestConnectionString dbName
         container.RegisterSingleton<VolatileStore<byte[]>>()
         let vStore () = container.GetInstance<VolatileStore<byte[]>>()
-        container.RegisterSingleton<User.Service>(fun () ->
+        container.RegisterSingleton<User.Writer>(fun () ->
             User.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
-        container.RegisterSingleton<Deck.Service>(fun () ->
+        container.RegisterSingleton<Deck.Writer>(fun () ->
             Deck.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
-        container.RegisterSingleton<UserSaga.Service>(fun () ->
+        container.RegisterSingleton<UserSaga.Writer>(fun () ->
             UserSaga.memoryStore
                 <| vStore()
-                <| container.GetInstance<Deck.Service>() )
+                <| container.GetInstance<Deck.Writer>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let elseClient = container.GetInstance<ElseClient>()
             let tableClient = container.GetInstance<TableClient>()
@@ -134,11 +134,11 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 |> ignore
             ) |> store.Committed.AddHandler
         )
-        container.RegisterSingleton<Stack.Service>(fun () ->
+        container.RegisterSingleton<Stack.Writer>(fun () ->
             Stack.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
-        container.RegisterSingleton<Branch.Service>(fun () ->
+        container.RegisterSingleton<Branch.Writer>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Branch.memoryStore)
         container.Verify()
         let tc = container.GetInstance<TableClient>()
@@ -155,23 +155,23 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.ElseClient () =
         container.GetInstance<ElseClient>()
     
-    member _.UserService () =
-        container.GetInstance<User.Service>()
+    member _.UserWriter () =
+        container.GetInstance<User.Writer>()
     
-    member _.UserSaga () =
-        container.GetInstance<UserSaga.Service>()
+    member _.UserSagaWriter () =
+        container.GetInstance<UserSaga.Writer>()
     
-    member _.DeckService () =
-        container.GetInstance<Deck.Service>()
+    member _.DeckWriter () =
+        container.GetInstance<Deck.Writer>()
     
-    member _.StackService () =
-        container.GetInstance<Stack.Service>()
+    member _.StackWriter () =
+        container.GetInstance<Stack.Writer>()
     
-    member _.BranchService () =
-        container.GetInstance<Branch.Service>()
+    member _.BranchWriter () =
+        container.GetInstance<Branch.Writer>()
     
-    member _.StackBranchService () =
-        container.GetInstance<StackBranch.Service>()
+    member _.StackBranchWriter () =
+        container.GetInstance<StackBranch.Writer>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()

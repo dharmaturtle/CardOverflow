@@ -10,7 +10,7 @@ open FSharp.UMX
 open FsCheck.Xunit
 open CardOverflow.Pure
 open CardOverflow.Test
-open EventService
+open EventWriter
 open Hedgehog
 open D
 open FsToolkit.ErrorHandling
@@ -19,7 +19,7 @@ open AsyncOp
 [<StandardProperty>]
 let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let userSaga = c.UserSaga()
+    let userSaga = c.UserSagaWriter()
 
     do! userSaga.Create userSummary
 
@@ -37,10 +37,10 @@ let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResu
 [<StandardProperty>]
 let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSettings: User.Events.CardSettingsEdited) = asyncResult {
     let c = TestEsContainer()
-    let userService = c.UserService()
-    do! c.UserSaga().Create userSummary
+    let userWriter = c.UserWriter()
+    do! c.UserSagaWriter().Create userSummary
     
-    do! userService.CardSettingsEdited userSummary.Id cardSettings
+    do! userWriter.CardSettingsEdited userSummary.Id cardSettings
 
     // event store roundtrips
     userSummary.Id
@@ -56,12 +56,12 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
 [<StandardProperty>]
 let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) (optionsEdited: User.Events.OptionsEdited) = asyncResult {
     let c = TestEsContainer()
-    do! c.DeckService().Create { deckSummary with UserId = userSummary.Id }
+    do! c.DeckWriter().Create { deckSummary with UserId = userSummary.Id }
     let optionsEdited = { optionsEdited with DefaultDeckId = deckSummary.Id }
-    do! c.UserSaga().Create userSummary
-    let userService = c.UserService()
+    do! c.UserSagaWriter().Create userSummary
+    let userWriter = c.UserWriter()
     
-    do! userService.OptionsEdited userSummary.Id optionsEdited
+    do! userWriter.OptionsEdited userSummary.Id optionsEdited
 
     // event store roundtrips
     userSummary.Id
@@ -77,21 +77,21 @@ let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary
 [<StandardProperty>]
 let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
-    let userService = c.UserService()
-    let deckService = c.DeckService()
-    do! c.UserSaga().Create userSummary
-    do! deckService.Create deckSummary
+    let userWriter = c.UserWriter()
+    let deckWriter = c.DeckWriter()
+    do! c.UserSagaWriter().Create userSummary
+    do! deckWriter.Create deckSummary
     
 
     (***   when followed, then azure table updated   ***)
-    do! userService.DeckFollowed userSummary.Id deckSummary.Id
+    do! userWriter.DeckFollowed userSummary.Id deckSummary.Id
 
     let! actual, _ = c.TableClient().GetUser userSummary.Id
     Assert.equal { userSummary with FollowedDecks = userSummary.FollowedDecks |> Set.add deckSummary.Id } actual
 
 
     (***   when unfollowed, then azure table updated   ***)
-    do! userService.DeckUnfollowed userSummary.Id deckSummary.Id
+    do! userWriter.DeckUnfollowed userSummary.Id deckSummary.Id
 
     let! actual, _ = c.TableClient().GetUser userSummary.Id
     Assert.equal userSummary actual
@@ -100,7 +100,7 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummar
     (***   following nonexistant deck, fails   ***)
     let nonexistantDeckId = % Guid.NewGuid()
     
-    let! (r: Result<_,_>) = userService.DeckFollowed userSummary.Id nonexistantDeckId
+    let! (r: Result<_,_>) = userWriter.DeckFollowed userSummary.Id nonexistantDeckId
 
     Assert.equal $"The deck '{nonexistantDeckId}' doesn't exist." r.error
     }
@@ -123,7 +123,7 @@ let ``Azure Tables max payload size`` () : unit =
         let! userSummary = userSummaryGen
         asyncResult {
             let c = TestEsContainer()
-            let userSaga = c.UserSaga()
+            let userSaga = c.UserSagaWriter()
             let tableClient = c.TableClient()
 
             do! userSaga.Create userSummary
