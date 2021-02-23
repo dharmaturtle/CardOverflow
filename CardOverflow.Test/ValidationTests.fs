@@ -125,9 +125,9 @@ module Generators =
                 |> Gen.sequence
             let! kind = Gen.genMap<UpsertKind> (fun x ->
                 match x with
-                | NewOriginal_TagIds tags -> tags |> List.filter (fun t -> t <> null) |> NewOriginal_TagIds
+                | NewOriginal_TagIds tags -> tags |> Set.filter (fun t -> t <> null) |> NewOriginal_TagIds
                 | NewCopy_SourceLeafId_TagIds (x, tags) ->
-                    let tags = tags |> List.filter (fun t -> t <> null)
+                    let tags = tags |> Set.filter (fun t -> t <> null)
                     NewCopy_SourceLeafId_TagIds (x, tags)
                 | _ -> x
             )

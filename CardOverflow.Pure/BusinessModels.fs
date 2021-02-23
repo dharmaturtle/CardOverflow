@@ -494,8 +494,8 @@ type BranchRevision = {
 }
 
 type UpsertKind =
-    | NewOriginal_TagIds of string list
-    | NewCopy_SourceLeafId_TagIds of Guid * string list
+    | NewOriginal_TagIds of string Set
+    | NewCopy_SourceLeafId_TagIds of Guid * string Set
     | NewBranch_Title of string
     | NewLeaf_Title of string
 with

@@ -509,7 +509,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                 })
                             .ToList()
                     Grompleaf = gromplate
-                    Kind = NewOriginal_TagIds []
+                    Kind = NewOriginal_TagIds Set.empty
                     Title = null
                     Ids = ids_1
                 }

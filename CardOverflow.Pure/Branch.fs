@@ -24,7 +24,7 @@ module Events =
           GotDMCAed: bool
           FieldValues: Map<string, string>
           EditSummary: string
-          Tags: string list }
+          Tags: string Set }
     type Edited =
         { LeafId: LeafId
           Title: string
@@ -66,11 +66,46 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-let decideCreate summary state =
+let validateFieldName (field: string) = result {
+    do! Result.requireEqual field (field.Trim()) $"Remove the spaces before and/or after the field name: '{field}'."
+    do! (1 <= field.Length && field.Length <= 50) |> Result.requireTrue $"The field name '{field}' must be between 1 and 50 characters."
+    }
+
+let validateFieldValues (fieldValues: Map<string, string>) = result {
+    for field, value in fieldValues |> Map.toSeq do
+        do! validateFieldName field
+        do! (value.Length <= 10_000) |> Result.requireTrue $"The value of '{field}' must be less than 10,000 characters, but it has {value.Length} characters."
+    }
+
+let validateTag (tag: string) = result {
+    do! Result.requireEqual tag (tag.Trim()) $"Remove the spaces before and/or after the tag: '{tag}'."
+    do! (1 <= tag.Length && tag.Length <= 100) |> Result.requireTrue $"Tags must be between 1 and 100 characters, but '{tag}' has {tag.Length} characters."
+    }
+
+let validateTags (tags: string Set) = result {
+    for tag in tags do
+        do! validateTag tag
+    }
+
+let validateEditSummary (editSummary: string) = result {
+    do! (editSummary.Length <= 200) |> Result.requireTrue $"The edit summary must be less than 200 characters, but it has {editSummary.Length} characters."
+    }
+
+let validateTitle (title: string) = result {
+    do! (title.Length <= 200) |> Result.requireTrue $"The title must be less than 200 characters, but it has {title.Length} characters."
+    }
+
+// medTODO validate leafId global uniqueness
+
+let decideCreate (summary: Events.Summary) state =
     match state with
     | Fold.State.Active s -> Error $"Branch '{s.Id}' already exists."
-    | Fold.State.Initial  -> Ok ()
-    |> addEvent (Events.Created summary)
+    | Fold.State.Initial  -> result {
+        do! validateFieldValues summary.FieldValues
+        do! validateEditSummary summary.EditSummary
+        do! validateTitle summary.Title
+        do! validateTags summary.Tags
+    } |> addEvent (Events.Created summary)
 
 let decideEdit (edited: Events.Edited) callerId state =
     match state with

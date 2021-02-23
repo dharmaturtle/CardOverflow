@@ -60,7 +60,7 @@ let ``StackBranch.Service.Upsert persists new branch`` (authorId, { NewOriginal 
     let c = TestEsContainer()
     let stackBranchService = c.StackBranchService()
     let expectedBranch : Branch.Events.Summary =
-        StackBranch.stackBranch authorId newBranch None [] title
+        StackBranch.stackBranch authorId newBranch None Set.empty title
         |> snd
     stackBranchService.Upsert(authorId, newOriginal) |> RunSynchronously.OkEquals ()
         

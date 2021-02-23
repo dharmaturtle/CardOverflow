@@ -19,7 +19,13 @@ module SeqGen =
             return r
         }
 
-    let sequence ma = traverse id ma 
+    let sequence ma = traverse id ma
+
+let tagsGen =
+    GenX.auto<string>
+    |> Gen.filter (Branch.validateTag >> Result.isOk)
+    |> Gen.list (Range.linear 0 30)
+    |> Gen.map Set.ofList
 
 let unicode max = Gen.string (Range.constant 1 max) Gen.unicode
 let standardTemplate fields =
@@ -111,6 +117,7 @@ let editStackCommandGen =
         let! fieldNames =
             Gen.unicode
             |> Gen.string (Range.constant 1 100)
+            |> Gen.filter (Branch.validateFieldName >> Result.isOk)
             |> GenX.cList 1 100
             |> Gen.map List.distinct
         let! gromplateType = gromplateType fieldNames
@@ -124,12 +131,13 @@ let editStackCommandGen =
             fields
             |> List.map (fun f -> values |> Gen.map (fun value -> { EditField = f; Value = value }))
             |> SeqGen.sequence
-        let! editSummary = Gen.latin1 |> GenX.lString 0 50
+        let! editSummary = GenX.auto<string> |> Gen.filter (Branch.validateEditSummary >> Result.isOk)
+        let! tags = tagsGen
         let! kind = GenX.auto<UpsertKind> |> Gen.map (fun k ->
             match k with
-            | NewOriginal_TagIds tags -> tags |> List.filter (fun t -> t <> null) |> NewOriginal_TagIds
-            | NewCopy_SourceLeafId_TagIds (x, tags) ->
-                let tags = tags |> List.filter (fun t -> t <> null)
+            | NewOriginal_TagIds _ ->
+                NewOriginal_TagIds tags
+            | NewCopy_SourceLeafId_TagIds (x, _) ->
                 NewCopy_SourceLeafId_TagIds (x, tags)
             | _ -> k
             )
@@ -183,7 +191,7 @@ type NewOriginal = { NewOriginal: EditStackCommand }
 let newOriginalGen =
     gen {
         let! c = editStackCommandGen
-        let! tags = GenX.auto<string list>
+        let! tags = tagsGen
         let c = { c with Kind = UpsertKind.NewOriginal_TagIds tags }
         return { NewOriginal = c }
     }
@@ -221,6 +229,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator localTimeGen
         |> AutoGenConfig.addGenerator newOriginalGen
         |> AutoGenConfig.addGenerator newBranchGen
+        |> AutoGenConfig.addGenerator tagsGen
 
 
 type StandardProperty(i) =

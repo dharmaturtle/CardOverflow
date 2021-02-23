@@ -30,7 +30,7 @@ let normalCommand fieldValues grompleaf tagIds ids =
                 Value = fieldValues.[i]
             }) |> toResizeArray
         EditSummary = "Initial creation"
-        Kind = NewOriginal_TagIds tagIds
+        Kind = NewOriginal_TagIds (tagIds |> Set.ofList)
         Title = null
         Ids = UpsertIds.fromTuple ids
     }
@@ -47,7 +47,7 @@ let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds ids = {
                     "extra"
         }).ToList()
     Grompleaf = clozeGromplate
-    Kind = NewOriginal_TagIds tagIds
+    Kind = NewOriginal_TagIds (tagIds |> Set.ofList)
     Title = null
     Ids = UpsertIds.fromTuple ids }
 

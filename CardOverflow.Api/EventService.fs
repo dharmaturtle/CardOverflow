@@ -89,9 +89,9 @@ module StackBranch =
             | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) ->
                 stackBranch authorId command (% sourceLeafId |> Some) tags "Default" |> create
             | NewBranch_Title title ->
-                branchS.Create(branch authorId command [] title)
+                branchS.Create(branch authorId command Set.empty title)
             | NewLeaf_Title title ->
-                let branch  =   branch authorId command [] title
+                let branch  =   branch authorId command Set.empty title
                 let edited : Branch.Events.Edited =
                     { LeafId      = branch.LeafId
                       Title       = branch.Title

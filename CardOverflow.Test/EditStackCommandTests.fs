@@ -40,7 +40,7 @@ let test text expected grompleaf =
                             f.Name
                 }).ToList()
             Grompleaf = grompleaf
-            Kind = NewOriginal_TagIds []
+            Kind = NewOriginal_TagIds Set.empty
             Title = null
             Ids = ids_1
         }
@@ -108,7 +108,7 @@ let ``EditStackCommand's back works with cloze`` (): unit =
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
                     } |> ViewGrompleaf.load
-                Kind = NewOriginal_TagIds []
+                Kind = NewOriginal_TagIds Set.empty
                 Title = null
                 Ids = ids_1
             }

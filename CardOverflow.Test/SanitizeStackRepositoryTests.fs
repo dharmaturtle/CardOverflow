@@ -61,7 +61,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
                 Grompleaf = gromplate
-                Kind = NewOriginal_TagIds []
+                Kind = NewOriginal_TagIds Set.empty
                 Title = null
                 Ids = ids
             }

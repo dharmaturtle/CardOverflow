@@ -795,7 +795,7 @@ module SanitizeStackRepository =
                             <| Fields.fromString j.Grompleaf.Fields
                             <| ""
                     Grompleaf = j.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
-                    Kind = NewOriginal_TagIds []
+                    Kind = NewOriginal_TagIds Set.empty
                     Title = null
                     Ids = ids
                 }
@@ -807,7 +807,7 @@ module SanitizeStackRepository =
         | VNewCopySource_LeafId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Branch Leaf #%A not found." leafId)
-            |> TaskResult.bind(toCommand (NewCopy_SourceLeafId_TagIds (leafId, [])))
+            |> TaskResult.bind(toCommand (NewCopy_SourceLeafId_TagIds (leafId, Set.empty)))
         | VUpdate_BranchId branchId ->
             db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
             |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
