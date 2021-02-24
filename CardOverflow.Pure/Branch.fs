@@ -14,7 +14,6 @@ module Events =
 
     type Summary =
         { Id: BranchId
-          LeafId: LeafId
           LeafIds: LeafId list
           Title: string
           StackId: StackId
@@ -50,14 +49,19 @@ module Fold =
         | Active a -> f a |> Active
         | x -> x
     
-    let evolveEdited (e: Events.Edited) (s: Events.Summary) =
+    let evolveEdited
+        ({  LeafId = leafId
+            Title = title
+            TemplateRevisionId = templateRevisionId
+            FieldValues = fieldValues
+            EditSummary = editSummary }: Events.Edited)
+        (s: Events.Summary) =
         { s with
-            LeafId             = e.LeafId
-            LeafIds            = e.LeafId :: s.LeafIds
-            Title              = e.Title
-            TemplateRevisionId = e.TemplateRevisionId
-            FieldValues        = e.FieldValues
-            EditSummary        = e.EditSummary }
+            LeafIds            = leafId :: s.LeafIds
+            Title              = title
+            TemplateRevisionId = templateRevisionId
+            FieldValues        = fieldValues
+            EditSummary        = editSummary }
     
     let evolve state = function
         | Events.Created s -> State.Active s
@@ -111,6 +115,6 @@ let decideEdit (edited: Events.Edited) callerId state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
     | Fold.State.Active x -> result {
-        do! Result.requireEqual x.AuthorId callerId                         "You aren't the author"
-        do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{x.LeafId}"
+        do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author"
+        do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{edited.LeafId}"
     } |> addEvent (Events.Edited edited)

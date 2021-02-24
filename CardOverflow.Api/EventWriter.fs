@@ -53,7 +53,6 @@ module StackBranch =
 
     let branch authorId command tags title : Branch.Events.Summary =
         { Id = % command.Ids.BranchId
-          LeafId = % command.Ids.LeafId
           LeafIds = [ % command.Ids.LeafId ]
           Title = title
           StackId = % command.Ids.StackId
@@ -92,7 +91,7 @@ module StackBranch =
             | NewLeaf_Title title ->
                 let branch        = branch authorId command Set.empty title
                 let edited : Branch.Events.Edited =
-                    { LeafId             = branch.LeafId
+                    { LeafId             = branch.LeafIds.Head
                       Title              = branch.Title
                       TemplateRevisionId = branch.TemplateRevisionId
                       FieldValues        = branch.FieldValues

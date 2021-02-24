@@ -41,7 +41,7 @@ let ``StackBranchWriter.Upsert persists edit`` (authorId, command1, command2, ta
     let stackBranchWriter = c.StackBranchWriter()
     let expectedBranch : Branch.Events.Edited =
         let _, b = StackBranch.stackBranch authorId command2 None tags title
-        { LeafId             = b.LeafId
+        { LeafId             = b.LeafIds.Head
           Title              = b.Title
           TemplateRevisionId = b.TemplateRevisionId
           FieldValues        = b.FieldValues
@@ -93,7 +93,7 @@ let ``StackBranchWriter.Upsert fails to persist edit with another author`` (auth
         
     stackBranchWriter.Upsert(hackerId, command2)
 
-    |> RunSynchronously.ErrorEquals $"You aren't the author"
+    |> RunSynchronously.ErrorEquals $"You ({hackerId}) aren't the author"
 
 [<StandardProperty>]
 let ``StackBranchWriter.Upsert fails to insert twice`` (authorId, command, tags) =
