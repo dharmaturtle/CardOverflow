@@ -70,14 +70,9 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-let validateFieldName (field: string) = result {
-    do! Result.requireEqual field (field.Trim()) $"Remove the spaces before and/or after the field name: '{field}'."
-    do! (1 <= field.Length && field.Length <= 50) |> Result.requireTrue $"The field name '{field}' must be between 1 and 50 characters."
-    }
-
 let validateFieldValues (fieldValues: Map<string, string>) = result {
     for field, value in fieldValues |> Map.toSeq do
-        do! validateFieldName field
+        do! Template.validateFieldName field
         do! (value.Length <= 10_000) |> Result.requireTrue $"The value of '{field}' must be less than 10,000 characters, but it has {value.Length} characters."
     }
 

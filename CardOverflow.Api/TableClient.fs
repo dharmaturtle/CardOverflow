@@ -45,10 +45,11 @@ type TableClient(connectionString, tableName) =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :? Domain.Stack .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Branch.Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.User  .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Deck  .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Stack   .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Branch  .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.User    .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Deck    .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Template.Events.Summary as x -> string x.Id, string x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -171,3 +172,16 @@ type TableClient(connectionString, tableName) =
         this.Get<Deck.Events.Summary> deckId
     member this.GetDeck (deckId: DeckId) =
         deckId.ToString() |> this.GetDeck
+
+    member this.UpsertTemplate' (templateId: string) e =
+        match e with
+        | Template.Events.Created summary ->
+            this.InsertOrReplace summary |>% ignore
+        | Template.Events.Edited e ->
+            this.Update (Template.Fold.evolveEdited e) templateId
+    member this.UpsertTemplate (templateId: TemplateId) =
+        templateId.ToString() |> this.UpsertTemplate'
+    member this.GetTemplate (templateId: string) =
+        this.Get<Template.Events.Summary> templateId
+    member this.GetTemplate (templateId: TemplateId) =
+        templateId.ToString() |> this.GetTemplate

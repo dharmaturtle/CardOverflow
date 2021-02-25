@@ -151,6 +151,30 @@ module Deck =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, tableClient)
 
+module Template =
+    open Template
+
+    type Writer internal (resolve, tableClient: TableClient) =
+        let resolve templateId : Stream<_, _> = resolve templateId
+
+        member _.Create (summary: Events.Summary) =
+            summary.RevisionIds |> Seq.tryExactlyOne |> function
+            | Some revisionId -> async {
+                let stream = resolve summary.Id
+                let! doesRevisionExist = tableClient.Exists revisionId
+                return! stream.Transact(decideCreate summary doesRevisionExist)
+                }
+            | None -> $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1." |> Error |> Async.singleton
+        member _.Edit (edited: Events.Edited) callerId templateId = async {
+            let stream = resolve templateId
+            let! doesRevisionExist = tableClient.Exists edited.RevisionId
+            return! stream.Transact(decideEdit edited callerId doesRevisionExist)
+            }
+
+    let create resolve tableClient =
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve, tableClient)
+
 module UserSaga = // medTODO turn into a real saga
     open User
 

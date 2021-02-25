@@ -81,6 +81,11 @@ module Deck =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
+module Template =
+    open Template
+    let memoryStore store =
+        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
+        |> create
 module Stack =
     open Stack
     let memoryStore store =
@@ -114,6 +119,10 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Deck.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
+        container.RegisterSingleton<Template.Writer>(fun () ->
+            Template.memoryStore
+                <| vStore()
+                <| container.GetInstance<TableClient>() )
         container.RegisterSingleton<UserSaga.Writer>(fun () ->
             UserSaga.memoryStore
                 <| vStore()
@@ -124,10 +133,11 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 let category, id = streamName |> StreamName.splitCategoryAndId
                 match category with
-                | "Stack"  -> events |> Array.map (Stack .Events.codec.TryDecode >> Option.get >> tableClient.UpsertStack'  id)
-                | "Branch" -> events |> Array.map (Branch.Events.codec.TryDecode >> Option.get >> tableClient.UpsertBranch' id)
-                | "User"   -> events |> Array.map (User  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'   id)
-                | "Deck"   -> events |> Array.map (Deck  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'   id)
+                | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> tableClient.UpsertStack'    id)
+                | "Branch"   -> events |> Array.map (Branch  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertBranch'   id)
+                | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'     id)
+                | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'     id)
+                | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> tableClient.UpsertTemplate' id)
                 | _ -> failwith $"Unsupported category: {category}"
                 |> Async.Parallel
                 |> Async.RunSynchronously
@@ -158,6 +168,9 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.UserWriter () =
         container.GetInstance<User.Writer>()
     
+    member _.TemplateWriter () =
+        container.GetInstance<Template.Writer>()
+    
     member _.UserSagaWriter () =
         container.GetInstance<UserSaga.Writer>()
     
@@ -177,10 +190,11 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         streamName.ToString()
         |> (container.GetInstance<VolatileStore<byte[]>>().TryLoad >> Option.get)
         |> Array.map (codec.TryDecode >> Option.get)
-    member this.StackEvents (id) = this.events(Stack .streamName id, Stack .Events.codec)
-    member this.BranchEvents(id) = this.events(Branch.streamName id, Branch.Events.codec)
-    member this.UserEvents  (id) = this.events(User  .streamName id, User  .Events.codec)
-    member this.DeckEvents  (id) = this.events(Deck  .streamName id, Deck  .Events.codec)
+    member this.StackEvents   (id) = this.events(Stack   .streamName id, Stack   .Events.codec)
+    member this.BranchEvents  (id) = this.events(Branch  .streamName id, Branch  .Events.codec)
+    member this.UserEvents    (id) = this.events(User    .streamName id, User    .Events.codec)
+    member this.DeckEvents    (id) = this.events(Deck    .streamName id, Deck    .Events.codec)
+    member this.TemplateEvents(id) = this.events(Template.streamName id, Template.Events.codec)
 
 module TestGromplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {

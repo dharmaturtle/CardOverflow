@@ -19,12 +19,12 @@ module Events =
           AuthorId: UserId
           Name: string
           Css: string
-          Fields: Field list
+          Fields: Field list // highTODO bring all the types here
           Created: Instant
           Modified: Instant
           LatexPre: string
           LatexPost: string
-          Templates: GromplateType
+          Templates: GromplateType // highTODO bring all the types here
           EditSummary: string }
     type Edited =
         { RevisionId: TemplateRevisionId
@@ -85,9 +85,10 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+let fieldNameMax = 50
 let validateFieldName (field: string) = result {
     do! Result.requireEqual field (field.Trim()) $"Remove the spaces before and/or after the field name: '{field}'."
-    do! (1 <= field.Length && field.Length <= 50) |> Result.requireTrue $"The field name '{field}' must be between 1 and 50 characters."
+    do! (1 <= field.Length && field.Length <= fieldNameMax) |> Result.requireTrue $"The field name '{field}' must be between 1 and {fieldNameMax} characters."
     }
 
 let validateFields (fields: Field list) = result {
@@ -97,29 +98,42 @@ let validateFields (fields: Field list) = result {
         do! validateFieldName field.Name
     }
 
+let editSummaryMax = 200
 let validateEditSummary (editSummary: string) = result {
-    do! (editSummary.Length <= 200) |> Result.requireTrue $"The edit summary must be less than 200 characters, but it has {editSummary.Length} characters."
+    do! (editSummary.Length <= editSummaryMax) |> Result.requireTrue $"The edit summary must be less than {editSummaryMax} characters, but it has {editSummary.Length} characters."
     }
 
+let nameMax = 200
 let validateName (name: string) = result {
-    do! (name.Length <= 200) |> Result.requireTrue $"The title must be less than 200 characters, but it has {name.Length} characters."
+    do! (name.Length <= nameMax) |> Result.requireTrue $"The name must be less than {nameMax} characters, but it has {name.Length} characters."
     }
 
-// medTODO validate revisionId global uniqueness
+let validateRevisionIsUnique doesRevisionExist (revisionId: TemplateRevisionId) =
+    doesRevisionExist |> Result.requireFalse $"Something already exists with the id '{revisionId}'."
 
-let decideCreate (summary: Events.Summary) state =
+let validateSummary doesRevisionExist (summary: Events.Summary) = result {
+    let! revisionId = summary.RevisionIds |> Seq.tryExactlyOne |> Result.requireSome $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1."
+    do! validateRevisionIsUnique doesRevisionExist revisionId
+    do! validateFields summary.Fields
+    do! validateEditSummary summary.EditSummary
+    do! validateName summary.Name
+    }
+
+let validateEdited (summary: Events.Summary) callerId doesRevisionExist (edited: Events.Edited) = result {
+    do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author"
+    do! validateRevisionIsUnique doesRevisionExist edited.RevisionId
+    do! summary.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate revision id:{edited.RevisionId}"
+    do! validateEditSummary edited.EditSummary
+    }
+
+let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
     | Fold.State.Active s -> Error $"Template '{s.Id}' already exists."
-    | Fold.State.Initial  -> result {
-        do! validateFields summary.Fields
-        do! validateEditSummary summary.EditSummary
-        do! validateName summary.Name
-    } |> addEvent (Events.Created summary)
+    | Fold.State.Initial  -> validateSummary doesRevisionExist summary
+    |> addEvent (Events.Created summary)
 
-let decideEdit (edited: Events.Edited) callerId state =
+let decideEdit (edited: Events.Edited) callerId doesRevisionExist state =
     match state with
-    | Fold.State.Initial  -> Error "Can't edit a template that doesn't exist"
-    | Fold.State.Active x -> result {
-        do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author"
-        do! x.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate revision id:{edited.RevisionId}"
-    } |> addEvent (Events.Edited edited)
+    | Fold.State.Initial -> Error "Can't edit a template that doesn't exist"
+    | Fold.State.Active summary -> validateEdited summary callerId doesRevisionExist edited
+    |> addEvent (Events.Edited edited)

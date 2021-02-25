@@ -5,6 +5,7 @@ open CardOverflow.Pure
 open CardOverflow.Test
 open CardOverflow.Api
 open Domain
+open FSharp.UMX
 
 // lowTODO this tries to shrink down to 1 element, which may be semantically incorrect depending on use case
 module SeqGen =
@@ -112,14 +113,17 @@ let clozeText =
         let! c = Gen.alphaNum |> GenX.cString 1 100
         return sprintf "%s{{c1::%s}}%s" a b c
     }
+
+let fieldNamesGen =
+    Gen.unicode
+    |> Gen.string (Range.linear 1 Template.fieldNameMax)
+    |> Gen.filter (Template.validateFieldName >> Result.isOk)
+    |> GenX.cList 1 100
+    |> Gen.map List.distinct
+
 let editStackCommandGen =
     gen {
-        let! fieldNames =
-            Gen.unicode
-            |> Gen.string (Range.constant 1 100)
-            |> Gen.filter (Branch.validateFieldName >> Result.isOk)
-            |> GenX.cList 1 100
-            |> Gen.map List.distinct
+        let! fieldNames = fieldNamesGen
         let! gromplateType = gromplateType fieldNames
         let! grompleaf = grompleaf gromplateType fieldNames
         let values =
@@ -154,7 +158,45 @@ let editStackCommandGen =
 let userSummaryGen =
     nodaConfig
     |> GenX.autoWith<User.Events.Summary>
-    |> Gen.filter (Domain.User.validateSummary >> Result.isOk)
+    |> Gen.filter (User.validateSummary >> Result.isOk)
+
+let templateGen : Template.Events.Summary Gen = gen {
+    let! fieldNames = fieldNamesGen
+    let! fields = fieldNames |> fields
+    let! id = Gen.guid
+    let! revisionId = Gen.guid
+    let! authorId = Gen.guid
+    let! name = Gen.latin1 |> GenX.lString 1 Template.nameMax
+    let! gromplateType = gromplateType fieldNames
+    let! css = Gen.latin1 |> GenX.lString 0 50
+    let! created = instantGen
+    let! modified = instantGen
+    let! latexPre  = Gen.latin1 |> GenX.lString 0 50
+    let! latexPost = Gen.latin1 |> GenX.lString 0 50
+    let! editSummary = Gen.latin1 |> GenX.lString 0 Template.editSummaryMax
+    return
+        { Id = % id
+          RevisionIds = [% revisionId]
+          AuthorId = % authorId
+          Name = name
+          Css = css
+          Fields = fields
+          Created = created
+          Modified = modified
+          LatexPre = latexPre
+          LatexPost = latexPost
+          Templates = gromplateType
+          EditSummary = editSummary }
+    }
+    
+let templateEditGen = gen {
+    let! template = templateGen
+    let! edited =
+        nodaConfig
+        |> GenX.autoWith<Template.Events.Edited>
+        |> Gen.filter (Template.validateEdited template template.AuthorId false >> Result.isOk)
+    return template, edited
+    }
 
 let deckSummaryGen = gen {
     let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
@@ -219,6 +261,8 @@ type StandardConfig =
     static member __ =
         GenX.defaults
         |> AutoGenConfig.addGenerator userSummaryGen
+        |> AutoGenConfig.addGenerator templateGen
+        |> AutoGenConfig.addGenerator templateEditGen
         |> AutoGenConfig.addGenerator deckSummaryGen
         |> AutoGenConfig.addGenerator deckEditGen
         |> AutoGenConfig.addGenerator editStackCommandGen
