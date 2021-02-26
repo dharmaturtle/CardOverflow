@@ -23,6 +23,7 @@
     <Compile Include="Template.fs" />
     <Compile Include="Stack.fs" />
     <Compile Include="Branch.fs" />
+    <Compile Include="Ztack.fs" />
   </ItemGroup>
 
   <ItemGroup>

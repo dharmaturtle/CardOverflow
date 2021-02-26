@@ -19,7 +19,7 @@ let ``StackBranchWriter.Upsert persists both summaries`` (authorId, command, tag
     let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
     let c = TestEsContainer()
     let stackBranchWriter = c.StackBranchWriter()
-    let expectedStack, expectedBranch = StackBranch.stackBranch authorId command None tags "Default"
+    let expectedStack, expectedBranch = StackBranch.stackBranch authorId command None "Default"
     
     stackBranchWriter.Upsert(authorId, command)
     
@@ -40,7 +40,7 @@ let ``StackBranchWriter.Upsert persists edit`` (authorId, command1, command2, ta
     let c = TestEsContainer()
     let stackBranchWriter = c.StackBranchWriter()
     let expectedBranch : Branch.Events.Edited =
-        let _, b = StackBranch.stackBranch authorId command2 None tags title
+        let _, b = StackBranch.stackBranch authorId command2 None title
         { LeafId             = b.LeafIds.Head
           Title              = b.Title
           TemplateRevisionId = b.TemplateRevisionId
@@ -60,7 +60,7 @@ let ``StackBranchWriter.Upsert persists new branch`` (authorId, { NewOriginal = 
     let c = TestEsContainer()
     let stackBranchWriter = c.StackBranchWriter()
     let expectedBranch : Branch.Events.Summary =
-        StackBranch.stackBranch authorId newBranch None Set.empty title
+        StackBranch.stackBranch authorId newBranch None title
         |> snd
     stackBranchWriter.Upsert(authorId, newOriginal) |> RunSynchronously.OkEquals ()
         

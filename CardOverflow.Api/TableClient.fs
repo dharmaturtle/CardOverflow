@@ -46,7 +46,9 @@ type TableClient(connectionString, tableName) =
     let getPartitionRow (summary: obj) =
         match summary with
         | :? Domain.Stack   .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Ztack   .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Branch  .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Branch     .LeafSummary as x -> string x.Id, string x.Id
         | :? Domain.User    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Deck    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Template.Events.Summary as x -> string x.Id, string x.Id
@@ -82,7 +84,7 @@ type TableClient(connectionString, tableName) =
         |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
         |> fromTable
 
-    member this.Exists (key: obj) =
+    member this.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever)
         this.PointQuery key
         |>% (Seq.isEmpty >> not)
 
@@ -131,9 +133,17 @@ type TableClient(connectionString, tableName) =
     member this.UpsertBranch' (branchId: string) e =
         match e with
         | Branch.Events.Created summary ->
-            this.InsertOrReplace summary |>% ignore
-        | Branch.Events.Edited e ->
-            this.Update (Branch.Fold.evolveEdited e) branchId
+            [ this.InsertOrReplace (Branch.toLeafSummary summary)
+              this.InsertOrReplace summary
+            ] |> Async.Parallel |>% ignore
+        | Branch.Events.Edited e -> async {
+            let! summary, _ = this.GetBranch branchId
+            let summary = Branch.Fold.evolveEdited e summary
+            return!
+                [ this.InsertOrReplace summary
+                  this.InsertOrReplace (Branch.toLeafSummary summary)
+                ] |> Async.Parallel |>% ignore
+            }
     member this.UpsertBranch (branchId: BranchId) =
         branchId.ToString() |> this.UpsertBranch'
     member this.GetBranch (branchId: string) =
@@ -185,3 +195,16 @@ type TableClient(connectionString, tableName) =
         this.Get<Template.Events.Summary> templateId
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
+
+    member this.UpsertZtack' (ztackId: string) e =
+        match e with
+        | Ztack.Events.Created summary ->
+            this.InsertOrReplace summary |>% ignore
+        | Ztack.Events.TagsChanged e ->
+            this.Update (Ztack.Fold.evolveTagsChanged e) ztackId
+    member this.UpsertZtack (ztackId: ZtackId) =
+        ztackId.ToString() |> this.UpsertZtack'
+    member this.GetZtack (ztackId: string) =
+        this.Get<Ztack.Events.Summary> ztackId
+    member this.GetZtack (ztackId: ZtackId) =
+        ztackId.ToString() |> this.GetZtack

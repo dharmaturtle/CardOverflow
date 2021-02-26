@@ -51,7 +51,7 @@ module Stack =
 
 module StackBranch =
 
-    let branch authorId command tags title : Branch.Events.Summary =
+    let branch authorId command title : Branch.Events.Summary =
         { Id = % command.Ids.BranchId
           LeafIds = [ % command.Ids.LeafId ]
           Title = title
@@ -60,16 +60,15 @@ module StackBranch =
           TemplateRevisionId = % command.Grompleaf.Id
           AnkiNoteId = None
           FieldValues = command.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
-          EditSummary = command.EditSummary
-          Tags = tags }
+          EditSummary = command.EditSummary }
     let stack authorId command sourceLeafId : Stack.Events.Summary =
         { Id = % command.Ids.StackId
           DefaultBranchId = % command.Ids.BranchId
           AuthorId = authorId
           CopySourceLeafId = sourceLeafId }
-    let stackBranch authorId command sourceLeafId tags title =
+    let stackBranch authorId command sourceLeafId title =
         (stack  authorId command sourceLeafId),
-        (branch authorId command tags title)
+        (branch authorId command title)
 
     type Writer
         (   stackWriter  : Stack.Writer,
@@ -82,14 +81,14 @@ module StackBranch =
 
         member _.Upsert (authorId, command) =
             match command.Kind with
-            | NewOriginal_TagIds tags ->
-                stackBranch authorId command None                     tags "Default" |> create
-            | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) ->
-                stackBranch authorId command (% sourceLeafId |> Some) tags "Default" |> create
+            | NewOriginal_TagIds tags -> // highTODO create card (with tag)
+                stackBranch authorId command None                     "Default" |> create
+            | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) -> // highTODO create card (with tag)
+                stackBranch authorId command (% sourceLeafId |> Some) "Default" |> create
             | NewBranch_Title title ->
-                branchWriter.Create(branch authorId command Set.empty title)
+                branchWriter.Create(branch authorId command title)
             | NewLeaf_Title title ->
-                let branch        = branch authorId command Set.empty title
+                let branch        = branch authorId command title
                 let edited : Branch.Events.Edited =
                     { LeafId             = branch.LeafIds.Head
                       Title              = branch.Title
@@ -170,6 +169,25 @@ module Template =
             let! doesRevisionExist = tableClient.Exists edited.RevisionId
             return! stream.Transact(decideEdit edited callerId doesRevisionExist)
             }
+
+    let create resolve tableClient =
+        let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
+        Writer(resolve, tableClient)
+
+module Ztack =
+    open Ztack
+
+    type Writer internal (resolve, tableClient: TableClient) =
+        let resolve templateId : Stream<_, _> = resolve templateId
+
+        member _.Create (summary: Events.Summary) = async {
+            let stream = resolve summary.Id
+            let! doesRevisionExist = tableClient.Exists summary.ExpressionRevisionId
+            return! stream.Transact(decideCreate summary doesRevisionExist)
+            }
+        member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId templateId =
+            let stream = resolve templateId
+            stream.Transact(decideChangeTags tagsChanged callerId)
 
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)

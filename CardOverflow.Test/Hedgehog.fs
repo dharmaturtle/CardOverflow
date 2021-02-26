@@ -24,7 +24,7 @@ module SeqGen =
 
 let tagsGen =
     GenX.auto<string>
-    |> Gen.filter (Branch.validateTag >> Result.isOk)
+    |> Gen.filter (Ztack.validateTag >> Result.isOk)
     |> Gen.list (Range.linear 0 30)
     |> Gen.map Set.ofList
 
@@ -209,6 +209,21 @@ let deckSummaryGen = gen {
             SourceId = None }
     }
 
+let branchSummaryGen = gen {
+    let! title       = GenX.lString 0 Branch.titleMax       Gen.latin1
+    let! editSummary = GenX.lString 0 Branch.editSummaryMax Gen.latin1
+    let! leafId = GenX.auto
+    return!
+        nodaConfig
+        |> GenX.autoWith<Branch.Events.Summary>
+        |> Gen.map (fun b ->
+            { b with
+                Title = title
+                EditSummary = editSummary
+                LeafIds = [ leafId ]      })
+        |> Gen.filter (Branch.validateSummary >> Result.isOk)
+    }
+
 let deckEditGen = gen {
     let! name = GenX.auto<string> |> Gen.filter (Deck.validateName >> Result.isOk)
     let! edited =
@@ -274,6 +289,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator newOriginalGen
         |> AutoGenConfig.addGenerator newBranchGen
         |> AutoGenConfig.addGenerator tagsGen
+        |> AutoGenConfig.addGenerator branchSummaryGen
 
 
 type StandardProperty(i) =
