@@ -52,6 +52,7 @@ type TableClient(connectionString, tableName) =
         | :? Domain.User    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Deck    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Template.Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Template   .LeafSummary as x -> string x.Id, string x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -186,15 +187,27 @@ type TableClient(connectionString, tableName) =
     member this.UpsertTemplate' (templateId: string) e =
         match e with
         | Template.Events.Created summary ->
-            this.InsertOrReplace summary |>% ignore
-        | Template.Events.Edited e ->
-            this.Update (Template.Fold.evolveEdited e) templateId
+            [ this.InsertOrReplace (Template.toLeafSummary summary)
+              this.InsertOrReplace summary
+            ] |> Async.Parallel |>% ignore
+        | Template.Events.Edited e -> async {
+            let! summary, _ = this.GetTemplate templateId
+            let summary = Template.Fold.evolveEdited e summary
+            return!
+                [ this.InsertOrReplace summary
+                  this.InsertOrReplace (Template.toLeafSummary summary)
+                ] |> Async.Parallel |>% ignore
+            }
     member this.UpsertTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.UpsertTemplate'
     member this.GetTemplate (templateId: string) =
         this.Get<Template.Events.Summary> templateId
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
+    member this.GetTemplateRevision (templateRevisionId: string) =
+        this.Get<Template.LeafSummary> templateRevisionId
+    member this.GetTemplateRevision (templateRevisionId: TemplateRevisionId) =
+        templateRevisionId.ToString() |> this.GetTemplateRevision
 
     member this.UpsertStack' (stackId: string) e =
         match e with

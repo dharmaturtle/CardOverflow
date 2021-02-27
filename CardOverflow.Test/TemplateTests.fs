@@ -33,6 +33,8 @@ let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = a
     // azure table roundtrips
     let! actual, _ = c.TableClient().GetTemplate templateSummary.Id
     Assert.equal templateSummary actual
+    let! actual, _ = templateSummary.RevisionIds |> Seq.exactlyOne |> c.TableClient().GetTemplateRevision
+    Assert.equal (Template.toLeafSummary templateSummary) actual
     }
 
 [<StandardProperty>]
@@ -52,4 +54,6 @@ let ``Edited roundtrips`` (((templateSummary, edited): Template.Events.Summary *
     // azure table roundtrips
     let! actual, _ = c.TableClient().GetTemplate templateSummary.Id
     Assert.equal (templateSummary |> Fold.evolveEdited edited) actual
+    let! actual, _ = templateSummary.RevisionIds |> Seq.exactlyOne |> c.TableClient().GetTemplateRevision
+    Assert.equal (Template.toLeafSummary templateSummary) actual
     }

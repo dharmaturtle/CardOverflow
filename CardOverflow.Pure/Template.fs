@@ -85,6 +85,32 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
+type LeafSummary =
+    { Id: TemplateRevisionId
+      TemplateId: TemplateId
+      AuthorId: UserId
+      Name: string
+      Css: string
+      Fields: Field list
+      Created: Instant
+      LatexPre: string
+      LatexPost: string
+      Templates: GromplateType
+      EditSummary: string }
+
+let toLeafSummary (b: Events.Summary) =
+    { Id = b.RevisionIds.Head
+      TemplateId = b.Id
+      AuthorId = b.AuthorId
+      Name = b.Name
+      Css = b.Css
+      Fields = b.Fields
+      Created = b.Created
+      LatexPre = b.LatexPre
+      LatexPost = b.LatexPost
+      Templates = b.Templates
+      EditSummary = b.EditSummary }
+
 let fieldNameMax = 50
 let validateFieldName (field: string) = result {
     do! Result.requireEqual field (field.Trim()) $"Remove the spaces before and/or after the field name: '{field}'."
