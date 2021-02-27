@@ -15,7 +15,7 @@
         style="width: 1px; min-width: 100%; height:100px;" />
 
 @code {
-  [Parameter] public Guid StackId { get; set; }
+  [Parameter] public Guid ConceptId { get; set; }
   [Parameter] public (Guid LeafId, short Index) Leaf { get; set; }
   [Parameter] public Guid GromplateId { get; set; }
   [Parameter] public Guid GrompleafId { get; set; }
@@ -29,8 +29,8 @@
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     var middle = "";
-    if (StackId != Guid.Empty) {
-      middle = "stack/" + StackId;
+    if (ConceptId != Guid.Empty) {
+      middle = "concept/" + ConceptId;
     } else if (!Leaf.Equals(default)) {
       middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
     } else if (GromplateId != Guid.Empty) {

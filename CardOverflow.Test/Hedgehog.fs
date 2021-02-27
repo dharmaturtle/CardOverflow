@@ -121,7 +121,7 @@ let fieldNamesGen =
     |> GenX.cList 1 100
     |> Gen.map List.distinct
 
-let editStackCommandGen =
+let editConceptCommandGen =
     gen {
         let! fieldNames = fieldNamesGen
         let! gromplateType = gromplateType fieldNames
@@ -244,27 +244,27 @@ let cardSettingsEditedListGen = gen {
         |> Gen.map (fun x -> { User.Events.CardSettingsEdited.CardSettings = x })
     }
 
-type NewOriginal = { NewOriginal: EditStackCommand }
+type NewOriginal = { NewOriginal: EditConceptCommand }
 let newOriginalGen =
     gen {
-        let! c = editStackCommandGen
+        let! c = editConceptCommandGen
         let! tags = tagsGen
         let c = { c with Kind = UpsertKind.NewOriginal_TagIds tags }
         return { NewOriginal = c }
     }
 
-type NewBranch = { NewOriginal: EditStackCommand; NewBranch: EditStackCommand; BranchTitle: string }
+type NewBranch = { NewOriginal: EditConceptCommand; NewBranch: EditConceptCommand; BranchTitle: string }
 let newBranchGen =
     gen {
         let! { NewOriginal = newOriginal } = newOriginalGen
         let! title = GenX.auto<string>
-        let! newBranch = editStackCommandGen
+        let! newBranch = editConceptCommandGen
         let newBranch =
             { newBranch with
                 Kind = UpsertKind.NewBranch_Title title
                 Ids =
                     { newBranch.Ids with
-                        StackId = newOriginal.Ids.StackId } }
+                        ConceptId = newOriginal.Ids.ConceptId } }
         return
             { NewOriginal = newOriginal
               NewBranch   = newBranch
@@ -280,7 +280,7 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator templateEditGen
         |> AutoGenConfig.addGenerator deckSummaryGen
         |> AutoGenConfig.addGenerator deckEditGen
-        |> AutoGenConfig.addGenerator editStackCommandGen
+        |> AutoGenConfig.addGenerator editConceptCommandGen
         |> AutoGenConfig.addGenerator cardSettingsEditedListGen
         |> AutoGenConfig.addGenerator instantGen
         |> AutoGenConfig.addGenerator durationGen

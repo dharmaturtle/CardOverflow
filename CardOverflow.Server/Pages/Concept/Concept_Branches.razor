@@ -20,11 +20,11 @@
     <tr>
       @if (IsExplore) {
         <th scope="col" style="text-align:center;">
-          <CollectToggles IsStack=true
+          <CollectToggles IsConcept=true
                           CollectedIds=@CollectedIds
-                          Ids=@(new StackLeafIds(Stack.Id, Stack.Default.Id, Stack.Default.Leaf.Id))
-                          CardCount=@Stack.Default.Leaf.Indexes.Count()
-                          BranchUsers=@Stack.Users
+                          Ids=@(new ConceptLeafIds(Concept.Id, Concept.Default.Id, Concept.Default.Leaf.Id))
+                          CardCount=@Concept.Default.Leaf.Indexes.Count()
+                          BranchUsers=@Concept.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>
       }
@@ -33,10 +33,10 @@
           <h4>Branches</h4>
         } else {
           <div class="btn-group" role="group">
-            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="stack?leaf=@CollectedIds.Value.LeafId">
+            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="concept?leaf=@CollectedIds.Value.LeafId">
               All Branches
             </a>
-            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/stack?leaf=@CollectedIds.Value.LeafId">
+            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/concept?leaf=@CollectedIds.Value.LeafId">
               My Branch
             </a>
           </div>
@@ -44,7 +44,7 @@
       </th>
       @if (IsExplore) {
         <th scope="col">
-          <a class="btn btn-outline-success" href="stack/branchstack/@Selected.StackId" title="Add a Branch">
+          <a class="btn btn-outline-success" href="concept/branchconcept/@Selected.ConceptId" title="Add a Branch">
             <i class="fas fa-plus"></i>
           </a>
         </th>
@@ -54,7 +54,7 @@
   @if (IsExplore) {
     <tbody>
       @foreach (var branch in Branches) {
-        <Stack_Branch Branch=@branch
+        <Concept_Branch Branch=@branch
                       LeafSelected=@LeafSelected
                       CollectedIds=@CollectedIds
                       UpdateCollectedIds=@UpdateCollectedIds
@@ -67,7 +67,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public ExploreStack Stack { get; set; }
+  [Parameter] public ExploreConcept Concept { get; set; }
   [Parameter] public List<Branch> Branches { get; set; }
   [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }

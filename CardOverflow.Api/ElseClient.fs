@@ -21,29 +21,29 @@ open NodaTime
 open Nest
 
 type ElseClient (client: ElasticClient) =
-    member _.UpsertStack' (stackId: string) e =
+    member _.UpsertConcept' (conceptId: string) e =
         match e with
-        | Stack.Events.Created summary ->
+        | Concept.Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
-        | Stack.Events.DefaultBranchChanged b ->
+        | Concept.Events.DefaultBranchChanged b ->
             client.UpdateAsync<obj>(
-                stackId |> Id |> DocumentPath,
+                conceptId |> Id |> DocumentPath,
                 fun ud ->
                     ud
-                        .Index<Stack.Events.Summary>()
+                        .Index<Concept.Events.Summary>()
                         .Doc {| DefaultBranchId = b.BranchId |}
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore
         |> Async.AwaitTask
-    member this.UpsertStack (stackId: StackId) =
-        stackId.ToString() |> this.UpsertStack'
-    member _.GetStack (stackId: string) =
-        client.GetAsync<Stack.Events.Summary>(
-            stackId |> Id |> DocumentPath
+    member this.UpsertConcept (conceptId: ConceptId) =
+        conceptId.ToString() |> this.UpsertConcept'
+    member _.GetConcept (conceptId: string) =
+        client.GetAsync<Concept.Events.Summary>(
+            conceptId |> Id |> DocumentPath
         ) |> Task.map (fun x -> x.Source)
         |> Async.AwaitTask
-    member this.Get (stackId: StackId) =
-        stackId.ToString() |> this.GetStack
+    member this.Get (conceptId: ConceptId) =
+        conceptId.ToString() |> this.GetConcept
     member _.UpsertBranch' (branchId: string) e =
         match e with
         | Branch.Events.Created summary ->

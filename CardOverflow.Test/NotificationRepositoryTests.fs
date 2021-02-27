@@ -68,7 +68,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let newDeckId = deck_ 4
     let newDeckName = Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (newDeckId, newDeckName)) true None
-    do! FacetRepositoryTests.addBasicStack c.Db authorId [] (stack_1, branch_1, leaf_1, [card_1])
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, branch_1, leaf_1, [card_1])
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single
@@ -83,7 +83,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
         Assert.Empty c.Db.ReceivedNotification
     }
     let ids =
-        {   StackId = stack_1
+        {   ConceptId = concept_1
             BranchId = branch_1
             LeafId = leaf_1 }
 
@@ -92,53 +92,53 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
                 Created = Instant.MinValue
-                Message = DeckAddedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
-                                           MyDeck = Some { Id = newDeckId; Name = newDeckName }
-                                           Collected = None
-                                           New = ids
-                                           NewCardCount = 1 } }
+                Message = DeckAddedConcept { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
+                                             MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                             Collected = None
+                                             New = ids
+                                             NewCardCount = 1 } }
     
-    // works with DeckUpdatedStack, uncollected
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
-    let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
-    let expectedDeckUpdatedStackNotification nid newLeafId collected =
+    // works with DeckUpdatedConcept, uncollected
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((concept_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! _ = SanitizeConceptRepository.Update c.Db authorId [] conceptCommand
+    let expectedDeckUpdatedConceptNotification nid newLeafId collected =
             {   Id = nid
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
                 Created = Instant.MinValue
-                Message = DeckUpdatedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
-                                             MyDeck = Some { Id = newDeckId; Name = newDeckName }
-                                             Collected = collected
-                                             New = { ids with LeafId = newLeafId }
-                                             NewCardCount = 1 } }
+                Message = DeckUpdatedConcept { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
+                                               MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                               Collected = collected
+                                               New = { ids with LeafId = newLeafId }
+                                               NewCardCount = 1 } }
 
-    do! expectedDeckUpdatedStackNotification notification_2 leaf_2 None |> assertNotificationThenDelete
+    do! expectedDeckUpdatedConceptNotification notification_2 leaf_2 None |> assertNotificationThenDelete
 
-    // works with DeckUpdatedStack, collected
+    // works with DeckUpdatedConcept, collected
     let collectedLeaf = ids.LeafId
-    do! StackRepository.CollectCard c.Db followerId collectedLeaf [ card_2 ]
-    let! stackCommand = SanitizeStackRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((stack_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
-    let! _ = SanitizeStackRepository.Update c.Db authorId [] stackCommand
+    do! ConceptRepository.CollectCard c.Db followerId collectedLeaf [ card_2 ]
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((concept_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! _ = SanitizeConceptRepository.Update c.Db authorId [] conceptCommand
     let collected =
-        {   StackId = ids.StackId
+        {   ConceptId = ids.ConceptId
             BranchId = ids.BranchId
             LeafId = collectedLeaf
             CardIds = [ card_2 ] } |> Some
     
-    do! expectedDeckUpdatedStackNotification notification_3 leaf_3 collected
+    do! expectedDeckUpdatedConceptNotification notification_3 leaf_3 collected
         |> assertNotificationThenDelete
     
-    // works with DeckDeletedStack
-    do! StackRepository.uncollectStack c.Db authorId ids.StackId
+    // works with DeckDeletedConcept
+    do! ConceptRepository.uncollectConcept c.Db authorId ids.ConceptId
 
     do! assertNotificationThenDelete
             {   Id = notification_ 4
                 SenderId = authorId
                 SenderDisplayName = "RoboTurtle"
                 Created = Instant.MinValue
-                Message = DeckDeletedStack { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
-                                             MyDeck = Some { Id = newDeckId; Name = newDeckName }
-                                             Collected = collected
-                                             Deleted = { ids with LeafId = leaf_3 }
-                                             DeletedCardCount = 1 } }
+                Message = DeckDeletedConcept { TheirDeck = { Id = publicDeckId; Name = "Default Deck" }
+                                               MyDeck = Some { Id = newDeckId; Name = newDeckName }
+                                               Collected = collected
+                                               Deleted = { ids with LeafId = leaf_3 }
+                                               DeletedCardCount = 1 } }
     } |> TaskResult.getOk)

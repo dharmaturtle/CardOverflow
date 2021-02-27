@@ -45,7 +45,7 @@ type TableClient(connectionString, tableName) =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :? Domain.Stack   .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Concept .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Ztack   .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Branch  .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Branch     .LeafSummary as x -> string x.Id, string x.Id
@@ -116,20 +116,20 @@ type TableClient(connectionString, tableName) =
         |>% update
         |>! this.InsertOrReplace
         |>% ignore
-    member this.UpsertStack' (stackId: string) e =
+    member this.UpsertConcept' (conceptId: string) e =
         match e with
-        | Stack.Events.Created summary ->
+        | Concept.Events.Created summary ->
             this.InsertOrReplace summary |>% ignore
-        | Stack.Events.DefaultBranchChanged b ->
-            this.Update (fun (x:Stack.Events.Summary) ->
+        | Concept.Events.DefaultBranchChanged b ->
+            this.Update (fun (x:Concept.Events.Summary) ->
                 { x with DefaultBranchId = b.BranchId }
-            ) stackId |>% ignore
-    member this.UpsertStack (stackId: StackId) =
-        stackId.ToString() |> this.UpsertStack'
-    member this.GetStack (stackId: string) =
-        this.Get<Stack.Events.Summary> stackId
-    member this.GetStack (stackId: StackId) =
-        stackId.ToString() |> this.GetStack
+            ) conceptId |>% ignore
+    member this.UpsertConcept (conceptId: ConceptId) =
+        conceptId.ToString() |> this.UpsertConcept'
+    member this.GetConcept (conceptId: string) =
+        this.Get<Concept.Events.Summary> conceptId
+    member this.GetConcept (conceptId: ConceptId) =
+        conceptId.ToString() |> this.GetConcept
     member this.UpsertBranch' (branchId: string) e =
         match e with
         | Branch.Events.Created summary ->

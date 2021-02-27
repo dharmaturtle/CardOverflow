@@ -126,7 +126,7 @@ type Container with
         )
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
-        let stackIndex  = nameof Domain.Stack  |> elasticSearchIndexName
+        let conceptIndex  = nameof Domain.Concept  |> elasticSearchIndexName
         let branchIndex = nameof Domain.Branch |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
             let sourceSerializerFactory =
@@ -135,8 +135,8 @@ type Container with
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, sourceSerializerFactory))
-                .DefaultMappingFor<Domain.Stack.Events.Summary>(fun x ->
-                    x.IndexName stackIndex :> IClrTypeMapping<_>
+                .DefaultMappingFor<Domain.Concept.Events.Summary>(fun x ->
+                    x.IndexName conceptIndex :> IClrTypeMapping<_>
                 )
                 .DefaultMappingFor<Domain.Branch.Events.Summary>(fun x ->
                     x.IndexName branchIndex :> IClrTypeMapping<_>

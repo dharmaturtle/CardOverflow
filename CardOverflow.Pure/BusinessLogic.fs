@@ -212,33 +212,33 @@ module Heatmap =
 
 [<CLIMutable>]
 type UpsertIds = {
-    StackId: Guid
+    ConceptId: Guid
     BranchId: Guid
     LeafId: Guid
     CardIds: Guid list // should be ordered by index
 }
 module UpsertIds =
-    let fromTuple (stackId, branchId, leafId, cardIds) =
-        {   StackId = stackId
+    let fromTuple (conceptId, branchId, leafId, cardIds) =
+        {   ConceptId = conceptId
             BranchId = branchId
             LeafId = leafId
             CardIds = cardIds
         }
 
-type StackLeafIds = {
-    StackId: Guid
+type ConceptLeafIds = {
+    ConceptId: Guid
     BranchId: Guid
     LeafId: Guid
 } with
     member this.ToUpsertIds cardIds =
-        {   StackId = this.StackId
+        {   ConceptId = this.ConceptId
             BranchId = this.BranchId
             LeafId = this.LeafId
             CardIds = cardIds
         }
 
-type StackLeafIndex = {
-    StackId: Guid
+type ConceptLeafIndex = {
+    ConceptId: Guid
     BranchId: Guid
     LeafId: Guid
     Index: int16
@@ -246,16 +246,16 @@ type StackLeafIndex = {
     CardId: Guid
 }
 
-module StackLeafIds =
-    let fromTuple (stackId, branchId, leafId) =
-        {   StackId = stackId
+module ConceptLeafIds =
+    let fromTuple (conceptId, branchId, leafId) =
+        {   ConceptId = conceptId
             BranchId = branchId
             LeafId = leafId
         }
 
-module StackLeafIndex =
-    let fromTuple (stackId, branchId, leafId, index, deckId, cardId) =
-        {   StackId = stackId
+module ConceptLeafIndex =
+    let fromTuple (conceptId, branchId, leafId, index, deckId, cardId) =
+        {   ConceptId = conceptId
             BranchId = branchId
             LeafId = leafId
             Index = index
@@ -264,38 +264,38 @@ module StackLeafIndex =
         }
 
 type DiffState =
-    | Unchanged of StackLeafIndex
-    | LeafChanged of StackLeafIndex * StackLeafIndex // theirs, mine
-    | BranchChanged of StackLeafIndex * StackLeafIndex
-    | AddedStack of StackLeafIndex
-    | RemovedStack of StackLeafIndex
+    | Unchanged of ConceptLeafIndex
+    | LeafChanged of ConceptLeafIndex * ConceptLeafIndex // theirs, mine
+    | BranchChanged of ConceptLeafIndex * ConceptLeafIndex
+    | AddedConcept of ConceptLeafIndex
+    | RemovedConcept of ConceptLeafIndex
 
 [<CLIMutable>]
 type DiffStateSummary = {
-    Unchanged: StackLeafIndex list
-    LeafChanged: (StackLeafIndex * StackLeafIndex) list // theirs, mine
-    BranchChanged: (StackLeafIndex * StackLeafIndex) list
-    AddedStack: StackLeafIndex list
-    RemovedStack: StackLeafIndex list
-    MoveToAnotherDeck: StackLeafIndex list
+    Unchanged: ConceptLeafIndex list
+    LeafChanged: (ConceptLeafIndex * ConceptLeafIndex) list // theirs, mine
+    BranchChanged: (ConceptLeafIndex * ConceptLeafIndex) list
+    AddedConcept: ConceptLeafIndex list
+    RemovedConcept: ConceptLeafIndex list
+    MoveToAnotherDeck: ConceptLeafIndex list
 } with
     member this.DeckIds =
         let tupleToList (a, b) = [a; b]
         [   this.Unchanged
             (this.LeafChanged |> List.collect tupleToList)
             (this.BranchChanged |> List.collect tupleToList)
-            this.AddedStack
-            this.RemovedStack
+            this.AddedConcept
+            this.RemovedConcept
         ] |> List.concat
         |> List.map (fun x -> x.DeckId)
         |> List.distinct
 
 module Diff =
     let ids aIds bIds =
-        let sort = List.sortBy (fun x -> x.StackId, x.BranchId, x.LeafId, x.Index)
+        let sort = List.sortBy (fun x -> x.ConceptId, x.BranchId, x.LeafId, x.Index)
         let aIds = aIds |> sort
         let bIds = bIds |> sort
-        List.zipOn aIds bIds (fun a b -> a.StackId = b.StackId && a.Index = b.Index)
+        List.zipOn aIds bIds (fun a b -> a.ConceptId = b.ConceptId && a.Index = b.Index)
         |> List.map (
             function
             | Some a, Some b ->
@@ -305,16 +305,16 @@ module Diff =
                     LeafChanged (a, b)
                 else
                     BranchChanged (a, b)
-            | Some a, None   -> AddedStack a
-            | None  , Some b -> RemovedStack b
+            | Some a, None   -> AddedConcept a
+            | None  , Some b -> RemovedConcept b
             | None  , None   -> failwith "impossible"
         )
     let toSummary diffStates =
         let unchanged             = ResizeArray.empty
         let leafChanged = ResizeArray.empty
         let branchChanged         = ResizeArray.empty
-        let addedStack            = ResizeArray.empty
-        let removedStack          = ResizeArray.empty
+        let addedConcept            = ResizeArray.empty
+        let removedConcept          = ResizeArray.empty
         diffStates |> List.iter
             (function
             | Unchanged x ->
@@ -323,19 +323,19 @@ module Diff =
                 leafChanged.Add (x, y)
             | BranchChanged (x, y) ->
                 branchChanged.Add (x, y)
-            | AddedStack x ->
-                addedStack.Add x
-            | RemovedStack x ->
-                removedStack.Add x)
-        let moveToAnotherDeck, removedStack =
-            removedStack |> List.ofSeq |> List.partition (fun r ->
+            | AddedConcept x ->
+                addedConcept.Add x
+            | RemovedConcept x ->
+                removedConcept.Add x)
+        let moveToAnotherDeck, removedConcept =
+            removedConcept |> List.ofSeq |> List.partition (fun r ->
                 unchanged
-                    .Select(fun x -> (x.StackId, x.BranchId, x.LeafId))
-                    .Contains(       (r.StackId, r.BranchId, r.LeafId)))
+                    .Select(fun x -> (x.ConceptId, x.BranchId, x.LeafId))
+                    .Contains(       (r.ConceptId, r.BranchId, r.LeafId)))
         {   Unchanged = unchanged |> Seq.toList
             LeafChanged = leafChanged |> Seq.toList
             BranchChanged = branchChanged |> Seq.toList
-            AddedStack = addedStack |> Seq.toList
-            RemovedStack = removedStack
+            AddedConcept = addedConcept |> Seq.toList
+            RemovedConcept = removedConcept
             MoveToAnotherDeck = moveToAnotherDeck
         }

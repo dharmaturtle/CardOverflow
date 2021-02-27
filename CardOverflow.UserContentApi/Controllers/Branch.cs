@@ -18,16 +18,16 @@ namespace CardOverflow.UserContentApi.Controllers {
     }
 
     [HttpGet("branch/{id}/{index}/front")]
-    public async Task<IActionResult> Front(Guid id, int index) => _Front(index, await StackViewRepository.get(_db, id));
+    public async Task<IActionResult> Front(Guid id, int index) => _Front(index, await ConceptViewRepository.get(_db, id));
 
     [HttpGet("branch/{id}/{index}/back")]
-    public async Task<IActionResult> Back(Guid id, int index) => _Back(index, await StackViewRepository.get(_db, id));
+    public async Task<IActionResult> Back(Guid id, int index) => _Back(index, await ConceptViewRepository.get(_db, id));
 
     [HttpGet("leaf/{id}/{index}/front")]
-    public async Task<IActionResult> LeafFront(Guid id, int index) => _Front(index, await StackViewRepository.leaf(_db, id));
+    public async Task<IActionResult> LeafFront(Guid id, int index) => _Front(index, await ConceptViewRepository.leaf(_db, id));
 
     [HttpGet("leaf/{id}/{index}/back")]
-    public async Task<IActionResult> LeafBack(Guid id, int index) => _Back(index, await StackViewRepository.leaf(_db, id));
+    public async Task<IActionResult> LeafBack(Guid id, int index) => _Back(index, await ConceptViewRepository.leaf(_db, id));
 
     private ContentResult _Front(int index, FSharpResult<LeafView, string> view) =>
       ( view.IsError

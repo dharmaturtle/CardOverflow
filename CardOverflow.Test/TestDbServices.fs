@@ -86,8 +86,8 @@ module Template =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module Stack =
-    open Stack
+module Concept =
+    open Concept
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
@@ -138,7 +138,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 let category, id = streamName |> StreamName.splitCategoryAndId
                 match category with
-                | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> tableClient.UpsertStack'    id)
+                | "Concept"  -> events |> Array.map (Concept .Events.codec.TryDecode >> Option.get >> tableClient.UpsertConcept'  id)
                 | "Branch"   -> events |> Array.map (Branch  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertBranch'   id)
                 | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'     id)
                 | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'     id)
@@ -150,8 +150,8 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 |> ignore
             ) |> store.Committed.AddHandler
         )
-        container.RegisterSingleton<Stack.Writer>(fun () ->
-            Stack.memoryStore
+        container.RegisterSingleton<Concept.Writer>(fun () ->
+            Concept.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
         container.RegisterSingleton<Ztack.Writer>(fun () ->
@@ -190,20 +190,20 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.ZtackWriter () =
         container.GetInstance<Ztack.Writer>()
     
-    member _.StackWriter () =
-        container.GetInstance<Stack.Writer>()
+    member _.ConceptWriter () =
+        container.GetInstance<Concept.Writer>()
     
     member _.BranchWriter () =
         container.GetInstance<Branch.Writer>()
     
-    member _.StackBranchWriter () =
-        container.GetInstance<StackBranch.Writer>()
+    member _.ConceptBranchWriter () =
+        container.GetInstance<ConceptBranch.Writer>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()
         |> (container.GetInstance<VolatileStore<byte[]>>().TryLoad >> Option.get)
         |> Array.map (codec.TryDecode >> Option.get)
-    member this.StackEvents    id = this.events(Stack   .streamName id, Stack   .Events.codec)
+    member this.ConceptEvents  id = this.events(Concept .streamName id, Concept .Events.codec)
     member this.ZtackEvents    id = this.events(Ztack   .streamName id, Ztack   .Events.codec)
     member this.BranchEvents   id = this.events(Branch  .streamName id, Branch  .Events.codec)
     member this.UserEvents     id = this.events(User    .streamName id, User    .Events.codec)

@@ -21,7 +21,7 @@ namespace CardOverflow.Entity
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid UserId { get; set; }
-        public Guid StackId { get; set; }
+        public Guid ConceptId { get; set; }
         public Guid BranchId { get; set; }
         public Guid LeafId { get; set; }
         public short Index { get; set; }
@@ -78,9 +78,9 @@ namespace CardOverflow.Entity
         [ForeignKey("DeckId")]
         [InverseProperty("Cards")]
         public virtual DeckEntity Deck { get; set; }
-        [ForeignKey("StackId")]
+        [ForeignKey("ConceptId")]
         [InverseProperty("Cards")]
-        public virtual StackEntity Stack { get; set; }
+        public virtual ConceptEntity Concept { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("Cards")]
         public virtual UserEntity User { get; set; }

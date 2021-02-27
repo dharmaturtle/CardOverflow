@@ -14,7 +14,7 @@
 <div>
   <div class="d-flex justify-content-between">
     <h4>Tags</h4>
-    @if (Stack.IsAnyCollected) {
+    @if (Concept.IsAnyCollected) {
       @if (_showTagAdder) {
         <TagAdder AddTag=@(x => CollectTag(x.Text)) />
       } else {
@@ -25,16 +25,16 @@
     }
   </div>
   <ul class="d-flex flex-wrap list-unstyled">
-    @foreach (var tag in Stack.Tags.Where(x => x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+    @foreach (var tag in Concept.Tags.Where(x => x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
       <li class="m-1">
         <button type="button" class="btn btn-outline-collected btn-sm" @onclick=@(() => DeleteTag(tag.Name))>
           <span class="badge badge-success">@tag.Count</span> @tag.Name
         </button>
       </li>
     }
-    @foreach (var tag in Stack.Tags.Where(x => !x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
+    @foreach (var tag in Concept.Tags.Where(x => !x.IsCollected).OrderByDescending(x => x.Count).ThenBy(x => x.Name)) {
       <li class="m-1">
-        <button type="button" class="btn btn-outline-uncollected btn-sm" @onclick=@(() => CollectTag(tag.Name, false)) disabled=@(!Stack.IsAnyCollected)>
+        <button type="button" class="btn btn-outline-uncollected btn-sm" @onclick=@(() => CollectTag(tag.Name, false)) disabled=@(!Concept.IsAnyCollected)>
           <span class="badge badge-success">@tag.Count</span> @tag.Name
         </button>
       </li>
@@ -44,13 +44,13 @@
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
   private bool _showTagAdder;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
-    if (!Stack.IsAnyCollected) {
-      foreach (var tag in Stack.Tags.Where(t => t.IsCollected)) {
+    if (!Concept.IsAnyCollected) {
+      foreach (var tag in Concept.Tags.Where(t => t.IsCollected)) {
         tag.IsCollected = false;
         tag.Count--;
       }
@@ -59,13 +59,13 @@
 
   async Task CollectTag(string name, bool isNew = true) {
     var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, user.Id, name, Stack.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.AddTo(db, user.Id, name, Concept.Id));
     if (x.IsOk) {
       if (isNew) {
-        Stack.Tags = Stack.Tags.Append(new ViewTag(name, 0, false)).ToList();
+        Concept.Tags = Concept.Tags.Append(new ViewTag(name, 0, false)).ToList();
       }
-      Stack.Tags.Single(t => t.Name == name).IsCollected = true;
-      Stack.Tags.Single(t => t.Name == name).Count++;
+      Concept.Tags.Single(t => t.Name == name).IsCollected = true;
+      Concept.Tags.Single(t => t.Name == name).Count++;
       StateHasChanged();
     } else {
       ToastService.ShowError(x.ErrorValue);
@@ -74,10 +74,10 @@
 
   async Task DeleteTag(string tag) {
     var user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, user.Id, tag, Stack.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTagRepository.DeleteFrom(db, user.Id, tag, Concept.Id));
     if (x.IsOk) {
-      Stack.Tags.Single(t => t.Name == tag).IsCollected = false;
-      Stack.Tags.Single(t => t.Name == tag).Count--;
+      Concept.Tags.Single(t => t.Name == tag).IsCollected = false;
+      Concept.Tags.Single(t => t.Name == tag).Count--;
       StateHasChanged();
     } else {
       ToastService.ShowError(x.ErrorValue);

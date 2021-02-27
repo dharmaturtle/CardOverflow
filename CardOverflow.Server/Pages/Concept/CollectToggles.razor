@@ -14,7 +14,7 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-@if (IsStack) {
+@if (IsConcept) {
   @if (CollectedIds == null) {
     <CollectToggles_Button Css="btn-collect-card"
                            OnClick=@Collect
@@ -76,13 +76,13 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; } = new EventCallback<FSharpOption<UpsertIds>>();
-  [Parameter] public StackLeafIds Ids { get; set; }
+  [Parameter] public ConceptLeafIds Ids { get; set; }
   [Parameter] public int CardCount { get; set; }
 
   [Parameter] public int? BranchUsers { get; set; }
   [Parameter] public int? LeafUsers { get; set; }
   [Parameter] public bool IsBranch { get; set; }
-  [Parameter] public bool IsStack { get; set; }
+  [Parameter] public bool IsConcept { get; set; }
   [Parameter] public FSharpOption<Guid> DeckId { get; set; } = FSharpOption<Guid>.None;
   private BSModal _modal;
 
@@ -103,7 +103,7 @@
       return Task.CompletedTask;
     } else {
       var cardIds = Gulid.Create(CardCount).ToFList();
-      return DbExecutor.QueryAsync(db => StackRepository.collect(db, _user.Id, Ids.LeafId, DeckId, cardIds)).Match(ToastService, async ccIds => {
+      return DbExecutor.QueryAsync(db => ConceptRepository.collect(db, _user.Id, Ids.LeafId, DeckId, cardIds)).Match(ToastService, async ccIds => {
         onSuccess();
         await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.Some(Ids.ToUpsertIds(cardIds)));
       });
@@ -117,7 +117,7 @@
   }
 
   private Task _Discard() =>
-    DbExecutor.QueryAsync(db => StackRepository.uncollectStack(db, _user.Id, Ids.StackId)).Match(ToastService, async _ => {
+    DbExecutor.QueryAsync(db => ConceptRepository.uncollectConcept(db, _user.Id, Ids.ConceptId)).Match(ToastService, async _ => {
       _onDiscardSuccess?.Invoke();
       await UpdateCollectedIds.InvokeAsync(FSharpOption<UpsertIds>.None);
       _modal.Hide();

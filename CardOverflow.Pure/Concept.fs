@@ -1,18 +1,18 @@
-module Domain.Stack
+module Domain.Concept
 
 open FsCodec
 open FsCodec.NewtonsoftJson
 open TypeShape
 open FsToolkit.ErrorHandling
 
-let streamName (id: StackId) = StreamName.create "Stack" (id.ToString())
+let streamName (id: ConceptId) = StreamName.create "Concept" (id.ToString())
 
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
 module Events =
     
     type Summary =
-        { Id: StackId
+        { Id: ConceptId
           DefaultBranchId: BranchId
           AuthorId: UserId
           CopySourceLeafId: LeafId Option }
@@ -37,7 +37,7 @@ module Fold =
         | Events.Created s -> State.Active s
         | Events.DefaultBranchChanged b ->
             match state with
-            | State.Initial  -> invalidOp "Can't change the default branch of an Initial Stack"
+            | State.Initial  -> invalidOp "Can't change the default branch of an Initial Concept"
             | State.Active a -> { a with DefaultBranchId = b.BranchId } |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
@@ -45,14 +45,14 @@ module Fold =
 
 let decideCreate summary state =
     match state with
-    | Fold.State.Active s -> Error $"Stack '{s.Id}' already exists."
+    | Fold.State.Active s -> Error $"Concept '{s.Id}' already exists."
     | Fold.State.Initial  -> Ok ()
     |> addEvent (Events.Created summary)
 
-let decideDefaultBranchChanged (branchId: BranchId) (branchsStackId: StackId) callerId state =
+let decideDefaultBranchChanged (branchId: BranchId) (branchsConceptId: ConceptId) callerId state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
     | Fold.State.Active s -> result {
-        do! Result.requireEqual s.AuthorId callerId $"Stack {s.Id} doesn't belong to User {callerId}"
-        do! Result.requireEqual s.Id branchsStackId $"Branch {branchId} doesn't belong to Stack {s.Id}"
+        do! Result.requireEqual s.AuthorId callerId $"Concept {s.Id} doesn't belong to User {callerId}"
+        do! Result.requireEqual s.Id branchsConceptId $"Branch {branchId} doesn't belong to Concept {s.Id}"
     } |> addEvent (Events.DefaultBranchChanged { BranchId = branchId })

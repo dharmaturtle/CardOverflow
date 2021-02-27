@@ -2,7 +2,7 @@
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
-@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Server.Pages.Concept
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
@@ -79,7 +79,7 @@
                 </div>
                 <div class="card-body">
                   @foreach (var conflictingLeafId in conflictingLeafIds) {
-                    <a href="my/stack?leaf=@conflictingLeafId">
+                    <a href="my/concept?leaf=@conflictingLeafId">
                       @conflictingLeafId
                     </a>
                   }

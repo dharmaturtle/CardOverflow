@@ -69,7 +69,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     let branchId = branch_1
     let! gromplate = FacetRepositoryTests.basicGromplate c.Db
     let! r =
-        SanitizeStackRepository.Update c.Db userId []
+        SanitizeConceptRepository.Update c.Db userId []
             {   EditSummary = "Initial creation"
                 FieldValues =
                     gromplate.Fields.Select(fun f -> {

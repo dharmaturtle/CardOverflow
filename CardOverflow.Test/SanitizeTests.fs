@@ -10,8 +10,8 @@ open CardOverflow.Test
 open NodaTime
 
 [<Fact>]
-let ``GetStackId fails on bork``(): unit =
-    SanitizeRelationshipRepository.GetStackId "bork"
+let ``GetConceptId fails on bork``(): unit =
+    SanitizeRelationshipRepository.GetConceptId "bork"
     |> Result.isOk
     |> Assert.False
 
@@ -64,7 +64,7 @@ type GetCardIdIsOkData () =
 
 [<Theory>]
 [<ClassData(typeof<GetCardIdIsOkData>)>]
-let ``GetStackId works`` expected raw : unit =
-    SanitizeRelationshipRepository.GetStackId raw
+let ``GetConceptId works`` expected raw : unit =
+    SanitizeRelationshipRepository.GetConceptId raw
     |> Result.getOk
     |> Assert.equal expected

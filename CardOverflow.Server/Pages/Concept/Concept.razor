@@ -14,18 +14,18 @@
 @inject NavigationManager NavigationManager
 @inject TimeProvider TimeProvider
 
-@if (_stack == null || _selected == null) {
+@if (_concept == null || _selected == null) {
   <p><em>@_loadingMessage</em></p>
 } else {
   <div class="@(IsCurate ? "" : "row")">
     <div class="col-4">
-      <Stack_Branches Stack=@_stack
-                      Branches=@_stack.Branches
+      <Concept_Branches Concept=@_concept
+                      Branches=@_concept.Branches
                       LeafSelected=@(x => _selected = x)
-                      CollectedIds=@_stack.CollectedIds
+                      CollectedIds=@_concept.CollectedIds
                       UpdateCollectedIds=@(async ids => {
-                                             _stack.CollectedIds = ids;
-                                             await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, _stack.Id)).Match(ToastService, ccs => _cards = ccs);
+                                             _concept.CollectedIds = ids;
+                                             await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, _user.Id, _concept.Id)).Match(ToastService, ccs => _cards = ccs);
                                            })
                       Selected=@_selected
                       IsExplore=@(!IsCurate) />
@@ -33,13 +33,13 @@
     <div class="col">
       <div class="row">
         <div class="col-xl">
-          <Stack_IFrameHeader Stack=@_stack Leaf=@_selected />
+          <Concept_IFrameHeader Concept=@_concept Leaf=@_selected />
           @foreach (var i in _selected.Indexes) {
             var card = _cards.SingleOrDefault(x => x.LeafMeta.Id == _selected.Id && x.Index == i);
             <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
               @if (IsCurate && card != default) {
                 <div class="col-4 @(card.CardState.IsSuspended ? "text-white bg-secondary" : "")">
-                  <Stack_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
+                  <Concept_Collect Card=@card CardStateUpdated=@(x => _CardStateUpdated(x.Item1, x.Item2)) />
                 </div>
               }
               <div class="col">
@@ -51,11 +51,11 @@
       </div>
       <div class="row">
         <div class="col-xl">
-          <Stack_Tag Stack=@_stack />
-          <Stack_Relationship Stack=@_stack />
+          <Concept_Tag Concept=@_concept />
+          <Concept_Relationship Concept=@_concept />
         </div>
         <div class="col-xl">
-          <Stack_Comments Stack=@_stack />
+          <Concept_Comments Concept=@_concept />
         </div>
       </div>
     </div>
@@ -63,57 +63,57 @@
 }
 
 @code {
-  [Parameter] public Guid? StackId { get; set; }
+  [Parameter] public Guid? ConceptId { get; set; }
   [Parameter] public Guid? BranchId { get; set; }
   [Parameter] public Guid? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  private CardOverflow.Pure.ExploreStack _stack;
+  private CardOverflow.Pure.ExploreConcept _concept;
   private LeafMeta _selected;
   private List<Card> _cards = new List<Card>();
   private string _loadingMessage = "Loading...";
 
   private void sub1() {
-    if (_stack.IsAnyCollected) {
-      _stack.Users--;
+    if (_concept.IsAnyCollected) {
+      _concept.Users--;
     }
     if (_selected.IsCollected) {
       _selected.Users--;
     }
-    foreach (var branch in _stack.Branches) {
-      if (branch.Leaf.Id == _stack.CollectedIds?.Value?.LeafId || branch.Id == _stack.CollectedIds?.Value?.BranchId) {
+    foreach (var branch in _concept.Branches) {
+      if (branch.Leaf.Id == _concept.CollectedIds?.Value?.LeafId || branch.Id == _concept.CollectedIds?.Value?.BranchId) {
         branch.Summary.Users--;
       }
     }
   }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
-    var oldStackId = StackId;
+    var oldConceptId = ConceptId;
     var oldBranchId = BranchId;
     var oldLeafId = LeafId;
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (StackId.HasValue && oldStackId != StackId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.get(db, _user.Id, StackId.Value)).Match(_ShowError, x => {
-        _stack = x;
-        _selected = _stack.Default.Leaf;
+    if (ConceptId.HasValue && oldConceptId != ConceptId) {
+      await DbExecutor.QueryAsync(db => ExploreConceptRepository.get(db, _user.Id, ConceptId.Value)).Match(_ShowError, x => {
+        _concept = x;
+        _selected = _concept.Default.Leaf;
         sub1();
       });
     } else if (BranchId.HasValue && oldBranchId != BranchId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.branch(db, _user.Id, BranchId.Value)).Match(_ShowError, x => {
-        (_selected, _stack) = x;
+      await DbExecutor.QueryAsync(db => ExploreConceptRepository.branch(db, _user.Id, BranchId.Value)).Match(_ShowError, x => {
+        (_selected, _concept) = x;
         sub1();
       });
     } else if (LeafId.HasValue && oldLeafId != LeafId) {
-      await DbExecutor.QueryAsync(db => ExploreStackRepository.leaf(db, _user.Id, LeafId.Value)).Match(_ShowError, x => {
-        (_selected, _stack) = x;
+      await DbExecutor.QueryAsync(db => ExploreConceptRepository.leaf(db, _user.Id, LeafId.Value)).Match(_ShowError, x => {
+        (_selected, _concept) = x;
         sub1();
       });
     }
-    if (_user.IsAuthenticated && _stack != null) {
-      var r = await DbExecutor.QueryAsync(db => StackRepository.GetCollected(db, _user.Id, _stack.Id));
+    if (_user.IsAuthenticated && _concept != null) {
+      var r = await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, _user.Id, _concept.Id));
       if (r.IsOk) {
         _cards = r.ResultValue;
       } // the only error so far is due to not collecting the card, so intentionally not showing it.
@@ -129,9 +129,9 @@
   private void _CardStateUpdated(int index, CardState newState) {
     var oldState = _cards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == index).CardState;
     if (!oldState.IsSuspended && newState.IsSuspended && _cards.All(x => x.CardState.IsSuspended)) {
-      _stack.Users--;
+      _concept.Users--;
     } else if (oldState.IsSuspended && !newState.IsSuspended && _cards.All(x => !x.CardState.IsSuspended)) {
-      _stack.Users++;
+      _concept.Users++;
     }
     _cards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == index).CardState = newState;
   }

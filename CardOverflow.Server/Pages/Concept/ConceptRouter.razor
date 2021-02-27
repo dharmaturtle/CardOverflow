@@ -1,6 +1,6 @@
-@page "/stack"
-@page "/stack/{StackId:guid}"
-@page "/my/stack"
+@page "/concept"
+@page "/concept/{ConceptId:guid}"
+@page "/my/concept"
 
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -18,11 +18,11 @@
 @if (_isCurate) {
   <Curate SelectedLeafId=@_leafId Index=@_index />
 } else {
-  <Explore SelectedStackId=@StackId BranchId=@_branchId LeafId=@_leafId Index=@_index />
+  <Explore SelectedConceptId=@ConceptId BranchId=@_branchId LeafId=@_leafId Index=@_index />
 }
 
 @code {
-  [Parameter] public Guid? StackId { get; set; }
+  [Parameter] public Guid? ConceptId { get; set; }
   private Guid? _leafId;
   private Guid? _branchId;
   private short? _index;
@@ -31,7 +31,7 @@
 
   protected override void GetQueryStringValues() {
     _path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-    if (StackId == null) {
+    if (ConceptId == null) {
       NavigationManager.TryGetQueryString<Guid?>("branch", out _branchId);
       NavigationManager.TryGetQueryString<Guid?>("leaf", out _leafId);
       NavigationManager.TryGetQueryString<short?>("index", out _index);

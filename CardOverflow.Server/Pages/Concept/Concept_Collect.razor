@@ -97,7 +97,7 @@
 
   private async Task _editState(CardState state) {
     var user = await UserTask;
-    await DbExecutor.QueryAsync(db => StackRepository.editState(db, user.Id, Card.CardId, state)).Match(ToastService, async _ =>
+    await DbExecutor.QueryAsync(db => ConceptRepository.editState(db, user.Id, Card.CardId, state)).Match(ToastService, async _ =>
       await CardStateUpdated.InvokeAsync((Card.Index, state)
     ));
   }

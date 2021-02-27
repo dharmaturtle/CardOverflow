@@ -42,8 +42,8 @@ module Notification =
             lazy (myDeck |> Option.ofObj |> Option.map(fun myDeck ->
                 { Id = myDeck.Id
                   Name = myDeck.Name }))
-        let stackLeafIds =
-            lazy{ StackId = n.StackId.Value
+        let conceptLeafIds =
+            lazy{ ConceptId = n.ConceptId.Value
                   BranchId = n.BranchId.Value
                   LeafId = n.LeafId.Value
                 }
@@ -52,7 +52,7 @@ module Notification =
             lazy(cc |> List.ofSeq |> function
                 | [] -> None
                 | card ->
-                    {   StackId = card.First().StackId
+                    {   ConceptId = card.First().ConceptId
                         BranchId = card.First().BranchId
                         LeafId = card.First().LeafId
                         CardIds = card.Select(fun x -> x.Id) |> Seq.toList
@@ -60,27 +60,27 @@ module Notification =
                 )
         let message =
             match n.Type with
-            | NotificationType.DeckAddedStack ->
-                {   DeckAddedStack.TheirDeck = theirDeck.Value
+            | NotificationType.DeckAddedConcept ->
+                {   DeckAddedConcept.TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    New = stackLeafIds.Value
+                    New = conceptLeafIds.Value
                     NewCardCount = cardCount
                     Collected = collected.Value
-                } |> DeckAddedStack
-            | NotificationType.DeckUpdatedStack ->
+                } |> DeckAddedConcept
+            | NotificationType.DeckUpdatedConcept ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    New = stackLeafIds.Value
+                    New = conceptLeafIds.Value
                     NewCardCount = cardCount
                     Collected = collected.Value
-                } |> DeckUpdatedStack
-            | NotificationType.DeckDeletedStack ->
+                } |> DeckUpdatedConcept
+            | NotificationType.DeckDeletedConcept ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    Deleted = stackLeafIds.Value
+                    Deleted = conceptLeafIds.Value
                     DeletedCardCount = cardCount
                     Collected = collected.Value
-                } |> DeckDeletedStack
+                } |> DeckDeletedConcept
             | x -> failwith <| sprintf "Invalid enum value: %A" x
         {   Id = n.Id
             SenderId = n.SenderId
@@ -316,12 +316,12 @@ type LeafView with
         entity
     member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields leafId =
         let e = this.CopyToNew commields
-        if branch.Stack = null then
-            if branch.StackId = Guid.Empty then failwith "StackId is Guid.Empty, you gotta .Include it"
-            e.StackId <- branch.StackId
+        if branch.Concept = null then
+            if branch.ConceptId = Guid.Empty then failwith "ConceptId is Guid.Empty, you gotta .Include it"
+            e.ConceptId <- branch.ConceptId
         else
-            e.Stack <- branch.Stack
-            e.StackId <- branch.Stack.Id
+            e.Concept <- branch.Concept
+            e.ConceptId <- branch.Concept.Id
         e.Id <- leafId
         e.Branch <- branch
         e.BranchId <- branch.Id
@@ -339,7 +339,7 @@ type LeafMeta with
     static member loadIndex (i: int16) isCollected isLatest (entity: LeafEntity) =
         let front, back, _, _ = entity |> LeafView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
-            StackId = entity.StackId
+            ConceptId = entity.ConceptId
             BranchId = entity.BranchId
             MaxIndexInclusive = entity.MaxIndexInclusive
             Created = entity.Created
@@ -359,7 +359,7 @@ type LeafMeta with
         |> List.map(fun i -> LeafMeta.loadIndex i isCollected isLatest entity)
     static member initialize =
         {   Id = Guid.Empty
-            StackId = Guid.Empty
+            ConceptId = Guid.Empty
             BranchId = Guid.Empty
             MaxIndexInclusive = 0s
             Created = DateTimeX.UtcNow
@@ -406,7 +406,7 @@ type Card with
     member this.copyTo (entity: CardEntity) tags index =
         entity.UserId <- this.UserId
         entity.BranchId <- this.BranchId
-        entity.StackId <- this.StackId
+        entity.ConceptId <- this.ConceptId
         entity.Index <- index
         entity.CardState <- CardState.toDb this.CardState
         entity.IsLapsed <- this.IsLapsed
@@ -422,7 +422,7 @@ type Card with
         this.copyTo e tagIds i
         e
     static member initialize cardId userId cardSettingId deckId tags =
-        {   StackId = Guid.Empty
+        {   ConceptId = Guid.Empty
             BranchId = Guid.Empty
             CardId = cardId
             LeafMeta = LeafMeta.initialize
@@ -440,7 +440,7 @@ type Card with
     static member load (usersTags: string Set) (entity: CardIsLatestEntity) isCollected = result {
         let! cardState = entity.CardState |> CardState.create
         return
-            {   StackId = entity.StackId
+            {   ConceptId = entity.ConceptId
                 BranchId = entity.BranchId
                 CardId = entity.Id
                 LeafMeta = LeafMeta.loadIndex entity.Index isCollected entity.IsLatest entity.Leaf
@@ -458,7 +458,7 @@ type Card with
         }
 
 type Comment with
-    static member load (entity: CommentStackEntity) = {
+    static member load (entity: CommentConceptEntity) = {
         User = entity.User.DisplayName
         UserId = entity.UserId
         Text = entity.Text
@@ -484,17 +484,17 @@ type Branch with
                 <| branch
     }
 
-type ExploreStack with
-    static member load (entity: StackEntity) collectedIds tags (usersRelationships: string Set) (relationshipCounts: StackRelationshipCountEntity ResizeArray) = {
+type ExploreConcept with
+    static member load (entity: ConceptEntity) collectedIds tags (usersRelationships: string Set) (relationshipCounts: ConceptRelationshipCountEntity ResizeArray) = {
         Id = entity.Id
         Users = entity.Users
-        Comments = entity.CommentStacks |> Seq.map Comment.load |> toResizeArray
+        Comments = entity.CommentConcepts |> Seq.map Comment.load |> toResizeArray
         Tags = tags
         Relationships =
             relationshipCounts.Select(fun x ->
                 {   Name = x.Name
-                    SourceStackId = x.SourceStackId
-                    TargetStackId = x.TargetStackId
+                    SourceConceptId = x.SourceConceptId
+                    TargetConceptId = x.TargetConceptId
                     IsCollected = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray

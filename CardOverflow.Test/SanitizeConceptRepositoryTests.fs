@@ -1,4 +1,4 @@
-module SanitizeStackRepositoryTests
+module SanitizeConceptRepositoryTests
 
 open LoadersAndCopiers
 open Helpers
@@ -21,7 +21,7 @@ open FsCheck
 open FsCheck.Xunit
 
 [<Property(MaxTest = 1)>]
-let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdGen): unit =
+let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.StdGen): unit =
     (taskResult {
         let userId = user_3
         use c = new TestContainer()
@@ -57,7 +57,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             } |> Gen.listOfLength 5
             |> Gen.eval 100 stdGen
             |> fun x -> x.[0], x.[1], x.[2], x.[3], x.[4]
-        let stackCommand gromplate ids =
+        let conceptCommand gromplate ids =
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
                 Grompleaf = gromplate
@@ -67,21 +67,21 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
             }
 
         let! gromplate = FacetRepositoryTests.basicGromplate c.Db
-        let stackId = stack_1
+        let conceptId = concept_1
         let branchId = branch_1
 
-        do! SanitizeStackRepository.Update c.Db userId
+        do! SanitizeConceptRepository.Update c.Db userId
                 [ basicCommand ]
-                (stackCommand gromplate ids_1)
+                (conceptCommand gromplate ids_1)
             |>%% Assert.equal branchId
 
         let! (cc: Card) =
-            StackRepository.GetCollected c.Db userId stackId
+            ConceptRepository.GetCollected c.Db userId conceptId
             |>%% Assert.Single
         Assert.equal
             {   CardId = cc.CardId
                 UserId = userId
-                StackId = stackId
+                ConceptId = conceptId
                 BranchId = branchId
                 LeafMeta = cc.LeafMeta // untested
                 Index = 0s
@@ -98,21 +98,21 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
     
         // works on multiple collected cards, e.g. reversedBasicGromplate
         let! gromplate = FacetRepositoryTests.reversedBasicGromplate c.Db
-        let stackId = stack_2
+        let conceptId = concept_2
         let branchId = branch_2
 
-        do! SanitizeStackRepository.Update c.Db userId
+        do! SanitizeConceptRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
-                (stackCommand gromplate { ids_2 with CardIds = [ card_2; card_3 ] })
+                (conceptCommand gromplate { ids_2 with CardIds = [ card_2; card_3 ] })
             |>%% Assert.equal branchId
 
-        let! (ccs: Card ResizeArray) = StackRepository.GetCollected c.Db userId stackId
+        let! (ccs: Card ResizeArray) = ConceptRepository.GetCollected c.Db userId conceptId
         let a = ccs.First(fun x -> x.Index = 0s)
         let b = ccs.First(fun x -> x.Index = 1s)
         Assert.equal
             {   CardId = a.CardId
                 UserId = userId
-                StackId = stackId
+                ConceptId = conceptId
                 BranchId = branchId
                 LeafMeta = a.LeafMeta // untested
                 Index = 0s
@@ -129,7 +129,7 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         Assert.equal
             {   CardId = b.CardId
                 UserId = userId
-                StackId = stackId
+                ConceptId = conceptId
                 BranchId = branchId
                 LeafMeta = b.LeafMeta // untested
                 Index = 1s
@@ -149,32 +149,32 @@ let ``SanitizeStackRepository.Update with EditCardCommands``(stdGen: Random.StdG
         // doesn't work with someone else's deckId
         let failDeckCommand = { failDeckCommand with DeckId = deck_1 }
         let! (error: Result<_, _>) =
-            SanitizeStackRepository.Update c.Db userId
+            SanitizeConceptRepository.Update c.Db userId
                 [ failDeckCommand ]
-                (stackCommand gromplate ids_3)
+                (conceptCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with someone else's cardSettingId
         let failCardSettingCommand = { failCardSettingCommand with CardSettingId = setting_1 }
         let! (error: Result<_, _>) =
-            SanitizeStackRepository.Update c.Db userId
+            SanitizeConceptRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                (stackCommand gromplate ids_3)
+                (conceptCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
         // doesn't work with invalid deckId
         let failDeckCommand = { failDeckCommand with DeckId = Ulid.create }
         let! (error: Result<_, _>) =
-            SanitizeStackRepository.Update c.Db userId
+            SanitizeConceptRepository.Update c.Db userId
                 [ failDeckCommand ]
-                (stackCommand gromplate ids_3)
+                (conceptCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with invalid cardSettingId
         let failCardSettingCommand = { failCardSettingCommand with CardSettingId = Ulid.create }
         let! (error: Result<_, _>) =
-            SanitizeStackRepository.Update c.Db userId
+            SanitizeConceptRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                (stackCommand gromplate ids_3)
+                (conceptCommand gromplate ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     } |> TaskResult.getOk).GetAwaiter().GetResult()

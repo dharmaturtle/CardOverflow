@@ -110,14 +110,14 @@ let ``AnkiImporter import cards that have the same collectHash as distinct cards
         ["Bab::Endocrinology::Thyroid::Thyroidcancer"; "Bab::Gastroenterology::Clinical::Livertumors"; "Differentcaserepeatedtag"; "Pathoma::Neoplasia::Tumor_Progression"; "Repeatedtag"],
         c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).OrderBy(fun x -> x))
     Assert.SingleI(c.Db.Deck.Where(fun x -> x.Name = "duplicate cards"))
-    Assert.Equal(3, c.Db.Stack.Count())
+    Assert.Equal(3, c.Db.Concept.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(8, c.Db.Grompleaf.Count())
     Assert.Equal(6, c.Db.LatestGrompleaf.Count())
     } |> TaskResult.getOk)
 
-let testCommields (c: TestContainer) userId stackId expected = task {
-    let! collected = StackRepository.GetCollected c.Db userId stackId
+let testCommields (c: TestContainer) userId conceptId expected = task {
+    let! collected = ConceptRepository.GetCollected c.Db userId conceptId
     let collected = collected.Value.Single()
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
@@ -132,7 +132,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Equal(7, c.Db.Card.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(3, c.Db.Branch.Count())
-    Assert.Equal(3, c.Db.Stack.Count())
+    Assert.Equal(3, c.Db.Concept.Count())
     Assert.Equal(4s, c.Db.Leaf.Single(fun x -> x.FieldValues.Contains "Drugs").MaxIndexInclusive)
     Assert.Null x.Value
     let allLeafViews =
@@ -168,18 +168,18 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
             .Where(fun x -> x.FieldValues.Contains("acute"))
     Assert.True(c.Db.Leaf.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
     let leaf = Assert.Single <| c.Db.Leaf.Where(fun x -> x.FieldValues.Contains("microtubules"))
-    let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
-    let stack = stack.Value
+    let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+    let concept = concept.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        stack.Default.Leaf.StrippedFront)
-    let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
-    Assert.Empty stack.Value.Relationships
+        concept.Default.Leaf.StrippedFront)
+    let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+    Assert.Empty concept.Value.Relationships
     Assert.Empty c.Db.Relationship
 
     let! clozes = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value.Contains "mnemonic")).ToListAsync()
     for leaf in clozes do
-        do! testCommields leaf.StackId [longThing; ""]
+        do! testCommields leaf.ConceptId [longThing; ""]
     }
 
 [<Fact>]
@@ -187,10 +187,10 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_1, branch_1, leaf_1, [card_1; card_2])
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
-    let! view = StackViewRepository.leaf c.Db leaf_1
+    let! view = ConceptViewRepository.leaf c.Db leaf_1
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
     Assert.Equal<string seq>(
@@ -204,14 +204,14 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let getCard branchId =
         c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
-        |> Task.map (fun x -> x.StackId)
-        |> Task.bind (fun stackId -> StackRepository.GetCollected c.Db userId stackId |> TaskResult.map Seq.exactlyOne)
+        |> Task.map (fun x -> x.ConceptId)
+        |> Task.bind (fun conceptId -> ConceptRepository.GetCollected c.Db userId conceptId |> TaskResult.map Seq.exactlyOne)
     let branchId = branch_1
-    let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
     Assert.equal branchId actualBranchId
     let ccId = card_1
     
-    // insert new stack with invalid settingsId
+    // insert new concept with invalid settingsId
     let invalidCardId = Ulid.create
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
@@ -219,7 +219,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
         |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
-    // insert new stack with someone else's settingId
+    // insert new concept with someone else's settingId
     let someoneElse'sSettingId = setting_2
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
@@ -227,7 +227,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
         |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
-    // insert new stack with invalid deckId
+    // insert new concept with invalid deckId
     let invalidDeckId = Ulid.create
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
@@ -235,7 +235,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
         |>  SanitizeCardRepository.update c.Db userId ccId
     Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
-    // insert new stack with someone else's deckId
+    // insert new concept with someone else's deckId
     let someoneElse'sDeckId = deck_2
     let! (error: Result<_,_>) =
         {   EditCardCommand.init with
@@ -254,14 +254,14 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     let defaultSettingId = ids.First()
     let latestSettingId = ids.Last()
     
-    // insert new stack with latest settingsId
+    // insert new concept with latest settingsId
     do! {   EditCardCommand.init with
                 CardSettingId = latestSettingId }
         |> SanitizeCardRepository.update c.Db userId ccId
     let! (card: Card) = getCard branchId
     Assert.Equal(latestSettingId, card.CardSettingId)
 
-    // insert new stack with default settingsId
+    // insert new concept with default settingsId
     do! EditCardCommand.init
         |> SanitizeCardRepository.update c.Db userId ccId
     let! (card: Card) = getCard branchId
@@ -269,14 +269,14 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
 
     let latestDeckId = Ulid.create
     do! SanitizeDeckRepository.create c.Db userId (Guid.NewGuid().ToString()) latestDeckId
-    // insert new stack with latest deckId
+    // insert new concept with latest deckId
     do! {   EditCardCommand.init with
                 DeckId = latestDeckId }
         |> SanitizeCardRepository.update c.Db userId ccId
     let! (card: Card) = getCard branchId
     Assert.Equal(latestDeckId, card.DeckId)
 
-    // insert new stack with default deckId
+    // insert new concept with default deckId
     do! EditCardCommand.init
         |> SanitizeCardRepository.update c.Db userId ccId
     let! (card: Card) = getCard branchId
@@ -302,8 +302,8 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
                     .ToListAsync()
             for id in commeafIds do
                 Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = id))
-            let! stackIds = (getLeafs clozeText).Select(fun x -> x.StackId).ToListAsync()
-            for id in stackIds do
+            let! conceptIds = (getLeafs clozeText).Select(fun x -> x.ConceptId).ToListAsync()
+            for id in conceptIds do
                 do! testCommields id [clozeText]
         otherTest clozeText }
     let assertUserHasNormalCardCount expected =
@@ -332,7 +332,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             assertCount 0 "{{c1::Portland::city}} was founded in 1845."
     do! assertUserHasNormalCardCount 4
 
-    let! (e: PagedList<Result<Card, string>>) = StackRepository.GetCollectedPages c.Db userId 1 ""
+    let! (e: PagedList<Result<Card, string>>) = ConceptRepository.GetCollectedPages c.Db userId 1 ""
     let expected =
         [   "Canberra was founded in [ ... ] .", "Canberra was founded in [ 1913 ] . extra"
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
@@ -349,129 +349,129 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     let assertUserHasNormalCardCount expected =
         c.Db.Card.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
-    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
     do! assertUserHasNormalCardCount 1
 
     // updating card fails for mismatching cardIds
     let mismatching = Ulid.create
-    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
-    let! (r: Result<_, _>) = SanitizeStackRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [mismatching])
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! (r: Result<_, _>) = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [mismatching])
     Assert.equal (sprintf "Card ids don't match. Was given %A and expected %A" mismatching card_1) r.error
     do! assertUserHasNormalCardCount 1
 
     // go from 1 cloze to 2 clozes
-    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
     let command =
         { command with
-            ViewEditStackCommand.FieldValues =
+            ViewEditConceptCommand.FieldValues =
                 [   {   command.FieldValues.[0] with
                             Value = "{{c2::Canberra}} was founded in {{c1::1913}}."
                     }
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1; card_2])
+    let! actualBranchId = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1; card_2])
     Assert.Equal(branch_1, actualBranchId)
     do! assertUserHasNormalCardCount 2
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_3, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_3, []) |> UpsertIds.fromTuple)
     let command =
         { command with
-            ViewEditStackCommand.FieldValues =
+            ViewEditConceptCommand.FieldValues =
                 [   {   command.FieldValues.[0] with
                             Value = "Canberra was founded in {{c1::1913}}."
                     }
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1])
+    let! actualBranchId = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1])
     Assert.Equal(branch_1, actualBranchId)
     do! assertUserHasNormalCardCount 1
     
     // multiple c1's works
-    let! command = SanitizeStackRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((stack_1, branch_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
     let command =
         { command with
-            ViewEditStackCommand.FieldValues =
+            ViewEditConceptCommand.FieldValues =
                 [   {   command.FieldValues.[0] with
                             Value = "{{c1::Canberra}} was founded in {{c1::1913}}."
                     }
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeStackRepository.Update c.Db userId [] command
+    let! actualBranchId = SanitizeConceptRepository.Update c.Db userId [] command
     Assert.Equal(branch_1, actualBranchId)
     do! assertUserHasNormalCardCount 1
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``SanitizeStackRepository.Update checks ids`` (): Task<unit> = (taskResult { // lowTODO add more tests for other ids
+let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult { // lowTODO add more tests for other ids
     let userId = user_3
     use c = new TestContainer()
 
-    let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceStackId stack_1) id ids_1 branch_1
+    let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceConceptId concept_1) id ids_1 branch_1
 
-    Assert.equal "Stack #00000000-0000-0000-0000-57ac00000001 not found." x.error
+    Assert.equal "Concept #00000000-0000-0000-0000-57ac00000001 not found." x.error
 
     let ex =
         Assert.Throws<Microsoft.EntityFrameworkCore.DbUpdateException>(fun () -> 
-            (FacetRepositoryTests.addBasicStack c.Db userId [] (Guid.Empty, branch_1, leaf_1, [card_1]))
+            (FacetRepositoryTests.addBasicConcept c.Db userId [] (Guid.Empty, branch_1, leaf_1, [card_1]))
                 .GetAwaiter().GetResult() |> ignore
         )
     Assert.equal
-        "23514: new row for relation \"stack\" violates check constraint \"stack. id. is valid\""
+        "23514: new row for relation \"concept\" violates check constraint \"concept. id. is valid\""
         ex.InnerException.Message
 
     // https://codereview.stackexchange.com/questions/188948/correct-using-of-try-catch-clause-on-database-execution
     // https://github.com/StackExchange/Dapper/issues/710
     // this code is very temp
-    //let! actualBranchId = FacetRepositoryTests.addBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
-    //let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceStackId stack_1) id ids_1 branch_1
+    //let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
+    //let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceConceptId concept_1) id ids_1 branch_1
     
-    //Assert.equal "Stack #00000000-0000-0000-0000-57ac00000001 not found." x.error
+    //Assert.equal "Concept #00000000-0000-0000-0000-57ac00000001 not found." x.error
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``UpdateRepository.stack on addReversedBasicStack works`` (): Task<unit> = (taskResult {
+let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
 
     // inserting with just 1 cardId fails
-    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1])
+    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
     Assert.equal "Leaf#00000000-0000-0000-0000-1eaf00000001 requires 2 card id(s). You provided 1." x.error
 
     // setup
-    let! _ = FacetRepositoryTests.addReversedBasicStack c.Db userId [] (stack_1, branch_1, leaf_1, [card_1; card_2])
-    let stackId = stack_1
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1; card_2])
+    let conceptId = concept_1
     let branchId_og = branch_1
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    let! revisions = StackRepository.Revisions c.Db userId branchId_og
+    let! revisions = ConceptRepository.Revisions c.Db userId branchId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
-    // branching a stack collects it
+    // branching a concept collects it
     let branchId_alt = branch_2
     do! FacetRepositoryTests.update c userId
-            (VNewBranch_SourceStackId stackId) id { ids_2 with StackId = stack_1; CardIds = [card_1; card_2] } branchId_alt
+            (VNewBranch_SourceConceptId conceptId) id { ids_2 with ConceptId = concept_1; CardIds = [card_1; card_2] } branchId_alt
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
     // updating an uncollected branch doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { StackId = stack_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [] } branchId_og
+            (VUpdate_BranchId branchId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { ConceptId = concept_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [] } branchId_og
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
 
-    // switching to testing StackRepository.Revisions
-    let! revisions = StackRepository.Revisions c.Db userId branchId_og
+    // switching to testing ConceptRepository.Revisions
+    let! revisions = ConceptRepository.Revisions c.Db userId branchId_og
 
     Assert.equal 2 revisions.SortedMeta.Length
 
     // invalid branchId
     let invalidBranchId = Ulid.create
-    let! (revisions: Result<_, _>) = StackRepository.Revisions c.Db userId invalidBranchId
+    let! (revisions: Result<_, _>) = ConceptRepository.Revisions c.Db userId invalidBranchId
 
     Assert.equal (sprintf "BranchId #%A not found" invalidBranchId) revisions.error
     } |> TaskResult.getOk)
@@ -485,12 +485,12 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
-    let stackId = stack_1
+    let conceptId = concept_1
     let leafId = leaf_1
 
     let test customTest = task {
         let! _ =
-            SanitizeStackRepository.Update
+            SanitizeConceptRepository.Update
                 c.Db
                 userId
                 []
@@ -515,7 +515,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                 }
             |> Task.map Result.getOk
         let! field = c.Db.Commield.SingleAsync()
-        Assert.Equal(stackId, field.Id)
+        Assert.Equal(conceptId, field.Id)
         Assert.Equal(user_3, field.AuthorId)
         let! leaf = c.Db.Commeaf.Include(fun x -> x.Commeaf_Leafs).SingleAsync(fun x -> x.Value = communalValue)
         Assert.Equal(leafId, leaf.Id)

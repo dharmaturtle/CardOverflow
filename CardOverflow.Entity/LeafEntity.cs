@@ -17,7 +17,7 @@ namespace CardOverflow.Entity
             Commeaf_Leafs = new HashSet<Commeaf_LeafEntity>();
             File_Leafs = new HashSet<File_LeafEntity>();
             Histories = new HashSet<HistoryEntity>();
-            StackCopySources = new HashSet<StackEntity>();
+            ConceptCopySources = new HashSet<ConceptEntity>();
             NotificationLeafs = new HashSet<NotificationEntity>();
         }
 
@@ -27,7 +27,7 @@ namespace CardOverflow.Entity
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Instant Created { get; set; }
         public Instant? Modified { get; set; }
-        public Guid StackId { get; set; }
+        public Guid ConceptId { get; set; }
         public Guid BranchId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
@@ -67,8 +67,8 @@ namespace CardOverflow.Entity
         [Required]
         public int[] TagsCount { get; set; } = new int[0];
 
-        [ForeignKey("StackId")]
-        public virtual StackEntity Stack { get; set; }
+        [ForeignKey("ConceptId")]
+        public virtual ConceptEntity Concept { get; set; }
 
         [ForeignKey("BranchId")]
         [InverseProperty("Leafs")]
@@ -87,8 +87,8 @@ namespace CardOverflow.Entity
         [InverseProperty("Leaf")]
         public virtual ICollection<NotificationEntity> NotificationLeafs { get; set; }
         [InverseProperty("CopySource")]
-        public virtual ICollection<StackEntity> StackCopySources { get; set; }
-        public virtual ICollection<StackRelationshipCountEntity> StackRelationshipCounts { get; set; }
+        public virtual ICollection<ConceptEntity> ConceptCopySources { get; set; }
+        public virtual ICollection<ConceptRelationshipCountEntity> ConceptRelationshipCounts { get; set; }
         public virtual ICollection<LeafRelationshipCountEntity> LeafRelationshipCounts { get; set; }
   }
 }

@@ -18,7 +18,7 @@ namespace CardOverflow.Entity
             CardSettings = new HashSet<CardSettingEntity>();
             Gromplates = new HashSet<GromplateEntity>();
             CommentGromplates = new HashSet<CommentGromplateEntity>();
-            CommentStacks = new HashSet<CommentStackEntity>();
+            CommentConcepts = new HashSet<CommentConceptEntity>();
             Commields = new HashSet<CommieldEntity>();
             DeckFollowers = new HashSet<DeckFollowerEntity>();
             Decks = new HashSet<DeckEntity>();
@@ -27,10 +27,10 @@ namespace CardOverflow.Entity
             Histories = new HashSet<HistoryEntity>();
             SentNotifications = new HashSet<NotificationEntity>();
             ReceivedNotifications = new HashSet<ReceivedNotificationEntity>();
-            Stacks = new HashSet<StackEntity>();
+            Concepts = new HashSet<ConceptEntity>();
             User_Grompleafs = new HashSet<User_GrompleafEntity>();
             Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
-            Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
+            Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
 
@@ -79,7 +79,7 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CommentGromplateEntity> CommentGromplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
+        public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
         [InverseProperty("Author")]
         public virtual ICollection<CommieldEntity> Commields { get; set; }
         [InverseProperty("Follower")]
@@ -97,13 +97,13 @@ namespace CardOverflow.Entity
         [InverseProperty("Receiver")]
         public virtual ICollection<ReceivedNotificationEntity> ReceivedNotifications { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<StackEntity> Stacks { get; set; }
+        public virtual ICollection<ConceptEntity> Concepts { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<User_GrompleafEntity> User_Grompleafs { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
+        public virtual ICollection<Vote_CommentConceptEntity> Vote_CommentConcepts { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_FeedbackEntity> Vote_Feedbacks { get; set; }
     }

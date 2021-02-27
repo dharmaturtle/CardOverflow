@@ -173,7 +173,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     let! r = AnkiImporter.save c.Db AnkiImportTestData.relationships userId Map.empty
     Assert.Null r.Value
     
-    Assert.Equal(3, c.Db.Stack.Count())
+    Assert.Equal(3, c.Db.Concept.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
     Assert.Equal(AnkiDefaults.grompleafIdByHash.Count + 1, c.Db.Gromplate.Count())
     Assert.Equal(10, c.Db.Grompleaf.Count())
@@ -188,21 +188,21 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     
     let! basic = getLeafs "Basic"
     for leaf in basic do
-        let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
-        let stack = stack.Value
-        Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Leaf.Commields
+        let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+        let concept = concept.Value
+        Assert.Empty concept.Relationships
+        Assert.Empty concept.Default.Leaf.Commields
     
     let! sketchy = getLeafs "Sketchy"
     let expectedFieldAndValues =
         ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
          "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
     for card in sketchy do
-        let! stack = ExploreStackRepository.get c.Db userId card.StackId
-        let stack = stack.Value
-        Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Leaf.Commields
-        let! view = StackViewRepository.get c.Db stack.Id
+        let! concept = ExploreConceptRepository.get c.Db userId card.ConceptId
+        let concept = concept.Value
+        Assert.Empty concept.Relationships
+        Assert.Empty concept.Default.Leaf.Commields
+        let! view = ConceptViewRepository.get c.Db concept.Id
         Assert.Equal(
             expectedFieldAndValues,
             view.Value.FieldValues
@@ -211,7 +211,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
 
     let! cloze = getLeafs "Cloze"
     for leaf in cloze do
-        let! view = StackViewRepository.get c.Db leaf.StackId
+        let! view = ConceptViewRepository.get c.Db leaf.ConceptId
         [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
             "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.Select(fun x -> x.Field.Name, x.Value))
@@ -226,7 +226,7 @@ let ``Can import myHighPriority, but really testing duplicate card gromplates`` 
     let userId = user_3
     do! AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     
-    Assert.Equal(2, c.Db.Stack.Count())
+    Assert.Equal(2, c.Db.Concept.Count())
     Assert.Equal(2, c.Db.Leaf.Count())
     Assert.Equal(6, c.Db.Gromplate.Count())
     Assert.Equal(8, c.Db.Grompleaf.Count())
@@ -286,7 +286,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
         ].ToList(),
         c.Db.Leaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
-    Assert.Equal(8, c.Db.Stack.Count())
+    Assert.Equal(8, c.Db.Concept.Count())
     Assert.Equal(10, c.Db.Card.Count(fun x -> x.UserId = userId))
     Assert.Equal(8, c.Db.User.Include(fun x -> x.Cards).Single(fun x -> x.Id = userId).Cards.Select(fun x -> x.LeafId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
@@ -320,17 +320,17 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
 
     let! leafs = getLeafs "optional"
     for leaf in leafs do
-        let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
-        let stack = stack.Value
-        Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Leaf.Commields
+        let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+        let concept = concept.Value
+        Assert.Empty concept.Relationships
+        Assert.Empty concept.Default.Leaf.Commields
 
     let! leafs = getLeafs "and reversed card)"
     for leaf in leafs do
-        let! stack = ExploreStackRepository.get c.Db userId leaf.StackId
-        let stack = stack.Value
-        Assert.Empty stack.Relationships
-        Assert.Empty stack.Default.Leaf.Commields
+        let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+        let concept = concept.Value
+        Assert.Empty concept.Relationships
+        Assert.Empty concept.Default.Leaf.Commields
 
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.grompleafIdByHash.Count - 1, c.Db.User_Grompleaf.Count(fun x -> x.UserId = userId))
@@ -385,7 +385,7 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicStack c.Db userId [ "Tag"; "Deck:Default" ] (stack_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [ "Tag"; "Deck:Default" ] (concept_1, branch_1, leaf_1, [card_1])
     Assert.Equal(2, c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
@@ -408,8 +408,8 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Gromplates`` anki
         Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(0, c.Db.Grompleaf.Count(fun x -> x.Gromplate.AuthorId = userId))
         Assert.Equal(0, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(8, c.Db.Stack.Count(fun x -> x.AuthorId = userId))
-        Assert.Equal(8, c.Db.Stack.Count())
+        Assert.Equal(8, c.Db.Concept.Count(fun x -> x.AuthorId = userId))
+        Assert.Equal(8, c.Db.Concept.Count())
         Assert.Equal(2, c.Db.Leaf.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
         Assert.Equal(1, c.Db.Leaf.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
         Assert.Equal(1, c.Db.Leaf.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))

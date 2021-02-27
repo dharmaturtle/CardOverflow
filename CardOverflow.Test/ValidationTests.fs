@@ -108,7 +108,7 @@ module Generators =
             let! c = alphanumericString
             return sprintf "%s{{c1::%s}}%s" a b c
         }
-    let editStackCommand =
+    let editConceptCommand =
         Arb.register<NodaGen>() |> ignore
         gen {
             let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
@@ -132,7 +132,7 @@ module Generators =
                 | _ -> x
             )
             return!
-                Gen.genMap<EditStackCommand> (fun c ->
+                Gen.genMap<EditConceptCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
                             Grompleaf = grompleaf
@@ -163,47 +163,47 @@ module Generators =
         return array }
     let uniqueGuids length =
         Arb.generate<Guid> |> Gen.listOfLength length
-    let StackLeafIds length = gen {
-        let! stacks = uniqueGuids length
+    let ConceptLeafIds length = gen {
+        let! concepts = uniqueGuids length
         let! branches = uniqueGuids length
         let! leafs = uniqueGuids length
         return
-            Seq.zip3 stacks branches leafs
-            |> Seq.map StackLeafIds.fromTuple
+            Seq.zip3 concepts branches leafs
+            |> Seq.map ConceptLeafIds.fromTuple
             |> List.ofSeq
         }
-    let StackLeafIds3 =
-        StackLeafIds 3
-    let StackLeafIndex length = gen {
-        let! stacks = uniqueGuids length
+    let ConceptLeafIds3 =
+        ConceptLeafIds 3
+    let ConceptLeafIndex length = gen {
+        let! concepts = uniqueGuids length
         let! branches = uniqueGuids length
         let! leafs = uniqueGuids length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
         let! deckId = Arb.generate<Guid> |> Gen.listOfLength length
         let! cardId = uniqueGuids length
         return
-            Seq.zip6 stacks branches leafs indexes deckId cardId
-            |> Seq.map StackLeafIndex.fromTuple
+            Seq.zip6 concepts branches leafs indexes deckId cardId
+            |> Seq.map ConceptLeafIndex.fromTuple
             |> List.ofSeq
         }
-    let StackLeafIndex3 =
-        StackLeafIndex 3
+    let ConceptLeafIndex3 =
+        ConceptLeafIndex 3
 
 type Generators =
     static member instant =
         NodaGen.instant()
-    static member editStackCommand =
-        Generators.editStackCommand |> Arb.fromGen
+    static member editConceptCommand =
+        Generators.editConceptCommand |> Arb.fromGen
     static member clozeText =
         Generators.clozeText
         |> Gen.map Generators.ClozeText
         |> Arb.fromGen
     static member notificationEntity =
         Generators.notificationEntity |> Arb.fromGen
-    static member StackLeafIds3 =
-        Generators.StackLeafIds3 |> Arb.fromGen
-    static member StackLeafIndex3 =
-        Generators.StackLeafIndex3 |> Arb.fromGen
+    static member ConceptLeafIds3 =
+        Generators.ConceptLeafIds3 |> Arb.fromGen
+    static member ConceptLeafIndex3 =
+        Generators.ConceptLeafIndex3 |> Arb.fromGen
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])

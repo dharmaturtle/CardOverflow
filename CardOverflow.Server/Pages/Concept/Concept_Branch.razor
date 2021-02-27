@@ -18,7 +18,7 @@
   <th scope="row" style="text-align: center">
     <CollectToggles IsBranch=true
                     CollectedIds=@CollectedIds
-                    Ids=@(new StackLeafIds(Branch.Leaf.StackId, Branch.Id, Branch.Leaf.Id))
+                    Ids=@(new ConceptLeafIds(Branch.Leaf.ConceptId, Branch.Id, Branch.Leaf.Id))
                     CardCount=@Branch.Leaf.Indexes.Count()
                     BranchUsers=@Branch.Users
                     LeafUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
@@ -38,7 +38,7 @@
       </span>
       @if (_revisions != null && _displayAllRevisions) {
         <div>
-          <Stack_BranchSummary Leaf=@_revisions.SortedMeta.First() />
+          <Concept_BranchSummary Leaf=@_revisions.SortedMeta.First() />
         </div>
       }
     </div>
@@ -48,16 +48,16 @@
       <BSDropdownToggle Class="bg-transparent"></BSDropdownToggle>
       <BSDropdownMenu>
         @if (Branch.AuthorId == _user.Id) {
-          <BSDropdownItem Href="@($"stack/editbranch/{Branch.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
+          <BSDropdownItem Href="@($"concept/editbranch/{Branch.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
         }
-        <BSDropdownItem Href="@($"stack/copyleaf/{Branch.Leaf.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+        <BSDropdownItem Href="@($"concept/copyleaf/{Branch.Leaf.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
         <BSDropdownItem Href="@($"branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
         <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
         @if (Branch.Name != null) {
-          <BSDropdownItem Href="@($"stackdiff/{Branch.Leaf.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+          <BSDropdownItem Href="@($"conceptdiff/{Branch.Leaf.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
         }
         @if (CollectedIds?.Value?.LeafId != null && Branch.Leaf.Id != CollectedIds.Value.LeafId) {
-          <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{Branch.Leaf.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+          <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{Branch.Leaf.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
         }
       </BSDropdownMenu>
     </BSDropdown>
@@ -70,26 +70,26 @@
       <td class="row pr-3">
         <div class="col-auto">
           <CollectToggles CollectedIds=@CollectedIds
-                          Ids=@(new StackLeafIds(revision.StackId, revision.BranchId, revision.Id))
+                          Ids=@(new ConceptLeafIds(revision.ConceptId, revision.BranchId, revision.Id))
                           CardCount=@revision.Indexes.Count()
                           LeafUsers=@revision.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </div>
         <button class="col list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => LeafSelected.InvokeAsync(revision))">
-          <Stack_BranchSummary Leaf=@revision />
+          <Concept_BranchSummary Leaf=@revision />
         </button>
       </td>
       <td>
         <BSDropdown Class="align-self-center">
           <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
           <BSDropdownMenu>
-            <BSDropdownItem Href="@($"stack/copyleaf/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Stack</BSDropdownItem>
+            <BSDropdownItem Href="@($"concept/copyleaf/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
             @if (Branch.Name != null) {
-              <BSDropdownItem Href="@($"stackdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+              <BSDropdownItem Href="@($"conceptdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
             }
-            <BSDropdownItem Href="@($"stackdiff/{revision.Id}/Older Branch Leaf/{Branch.Leaf.Id}/Latest Branch Leaf")">&Delta; Compare with latest Branch Leaf</BSDropdownItem>
+            <BSDropdownItem Href="@($"conceptdiff/{revision.Id}/Older Branch Leaf/{Branch.Leaf.Id}/Latest Branch Leaf")">&Delta; Compare with latest Branch Leaf</BSDropdownItem>
             @if (CollectedIds?.Value?.LeafId != null && revision.Id != CollectedIds.Value.LeafId) {
-              <BSDropdownItem Href="@($"stackdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+              <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
             }
           </BSDropdownMenu>
         </BSDropdown>
@@ -127,7 +127,7 @@
   private async Task toggleRevisions() {
     _displayAllRevisions = !_displayAllRevisions;
     if (_revisions == null) {
-      await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => {
+      await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => {
         _revisions = x;
         sub1();
       });

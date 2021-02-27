@@ -15,11 +15,11 @@
 <div class="d-flex justify-content-end">
   by&nbsp;<a href="@($"/user/{_branch.AuthorId}")" style="color:unset">@_branch.Author</a>
   @if (_branch.AuthorId == _user.Id) {
-    <a href="stack/editbranch/@_branch.Id" title="Edit">
+    <a href="concept/editbranch/@_branch.Id" title="Edit">
       <span class="oi oi-pencil ml-2" />
     </a>
   }
-  <a href="stack/copyleaf/@Leaf.Id" title="Edit a Copy">
+  <a href="concept/copyleaf/@Leaf.Id" title="Edit a Copy">
     <span class="fas fa-copy ml-2" />
   </a>
   <a href="/branch/@_branch.Id/revision" title="Revisions">
@@ -31,7 +31,7 @@
       <span class="fas fa-sync text-success ml-2" title="Up to date" />
     </a>
   } else {
-    <a href="@($"stackdiff/{Leaf.Id}/Older Branch Leaf/{_branch.Leaf.Id}/Latest Branch Leaf")">
+    <a href="@($"conceptdiff/{Leaf.Id}/Older Branch Leaf/{_branch.Leaf.Id}/Latest Branch Leaf")">
       <span class="fas fa-sync text-danger ml-2" title="Out of date" />
     </a>
   }
@@ -41,8 +41,8 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public LeafMeta Leaf { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
-  private Branch _branch => Stack.Branches.Single(b => b.Id == Leaf.BranchId);
+  [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
+  private Branch _branch => Concept.Branches.Single(b => b.Id == Leaf.BranchId);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

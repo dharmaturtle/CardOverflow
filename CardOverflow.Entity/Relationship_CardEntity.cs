@@ -14,9 +14,9 @@ namespace CardOverflow.Entity
         [Key]
         public Guid UserId { get; set; }
         [Key]
-        public Guid SourceStackId { get; set; }
+        public Guid SourceConceptId { get; set; }
         [Key]
-        public Guid TargetStackId { get; set; }
+        public Guid TargetConceptId { get; set; }
         public Guid SourceCardId { get; set; }
         public Guid TargetCardId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

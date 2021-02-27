@@ -21,7 +21,7 @@
     <Compile Include="User.fs" />
     <Compile Include="Deck.fs" />
     <Compile Include="Template.fs" />
-    <Compile Include="Stack.fs" />
+    <Compile Include="Concept.fs" />
     <Compile Include="Branch.fs" />
     <Compile Include="Ztack.fs" />
   </ItemGroup>

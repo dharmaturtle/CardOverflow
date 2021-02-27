@@ -7,17 +7,17 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommentStackEntity
+    public partial class CommentConceptEntity
     {
-        public CommentStackEntity()
+        public CommentConceptEntity()
         {
-            Vote_CommentStacks = new HashSet<Vote_CommentStackEntity>();
+            Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
         }
 
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
-        public Guid StackId { get; set; }
+        public Guid ConceptId { get; set; }
         public Guid UserId { get; set; }
         [Required]
         [StringLength(500)]
@@ -34,13 +34,13 @@ namespace CardOverflow.Entity
         public Instant? Modified { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("StackId")]
-        [InverseProperty("CommentStacks")]
-        public virtual StackEntity Stack { get; set; }
+        [ForeignKey("ConceptId")]
+        [InverseProperty("CommentConcepts")]
+        public virtual ConceptEntity Concept { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("CommentStacks")]
+        [InverseProperty("CommentConcepts")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("CommentStack")]
-        public virtual ICollection<Vote_CommentStackEntity> Vote_CommentStacks { get; set; }
+        [InverseProperty("CommentConcept")]
+        public virtual ICollection<Vote_CommentConceptEntity> Vote_CommentConcepts { get; set; }
     }
 }

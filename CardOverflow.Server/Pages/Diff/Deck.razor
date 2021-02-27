@@ -4,7 +4,7 @@
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
-@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Server.Pages.Concept
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
@@ -39,7 +39,7 @@
       </small>
     </div>
   </div>
-  @if (_diffState.AddedStack.Any()) {
+  @if (_diffState.AddedConcept.Any()) {
     <div class="row mb-5">
       <div class="col text-center">
         <div class="card">
@@ -47,16 +47,16 @@
             Collect to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
-            @foreach (var ids in _diffState.AddedStack) {
+            @foreach (var ids in _diffState.AddedConcept) {
               <div>
-                <CollectToggles Ids=@(new StackLeafIds(ids.StackId, ids.BranchId, ids.LeafId))
+                <CollectToggles Ids=@(new ConceptLeafIds(ids.ConceptId, ids.BranchId, ids.LeafId))
                                 CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
-                                                      .Concat(_diffState.AddedStack.Where(x => x.StackId == ids.StackId))
+                                                      .Concat(_diffState.AddedConcept.Where(x => x.ConceptId == ids.ConceptId))
                                                       .ToFList();
-                                                    _diffState.AddedStack = _diffState.AddedStack.Where(x => x.StackId != ids.StackId).ToFList();
+                                                    _diffState.AddedConcept = _diffState.AddedConcept.Where(x => x.ConceptId != ids.ConceptId).ToFList();
                                                   }) />
                 <Deck_CardPreview LeafId=@ids.LeafId Index=@ids.Index />
                 @OtherDeckCheck(ids.DeckId, "Collecting")
@@ -68,7 +68,7 @@
       <div class="col"></div>
     </div>
   }
-  @if (_diffState.RemovedStack.Any()) {
+  @if (_diffState.RemovedConcept.Any()) {
     <div class="row mb-5">
       <div class="col"></div>
       <div class="col text-center">
@@ -77,14 +77,14 @@
             Discard to sync with <a href="user/@_theirDeck.AuthorId">@_theirDeck.AuthorName</a>'s <a href="deck/@_theirDeck.Id">@_theirDeck.Name</a>
           </h4>
           <div class="card-body">
-            @foreach (var ids in _diffState.RemovedStack) {
-              var ids2 = new StackLeafIds(ids.StackId, ids.BranchId, ids.LeafId);
+            @foreach (var ids in _diffState.RemovedConcept) {
+              var ids2 = new ConceptLeafIds(ids.ConceptId, ids.BranchId, ids.LeafId);
               <div>
                 <CollectToggles Ids=@ids2
                                 CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
                                 CollectedIds=@(FSharpOption<UpsertIds>.Some(ids2.ToUpsertIds(FList.Singleton(ids.CardId))))
-                                UpdateCollectedIds=@(_ => _diffState.RemovedStack = _diffState.RemovedStack.Where(x => x.StackId != ids.StackId).ToFList()) />
+                                UpdateCollectedIds=@(_ => _diffState.RemovedConcept = _diffState.RemovedConcept.Where(x => x.ConceptId != ids.ConceptId).ToFList()) />
                 <Deck_CardPreview LeafId=@ids.LeafId Index=@ids.Index />
                 @OtherDeckCheck(ids.DeckId, "Discarding")
               </div>
@@ -105,21 +105,21 @@
           <div class="card-body">
             @foreach (var (theirs, mine) in _diffState.BranchChanged) {
               <div>
-                <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
+                <CollectToggles Ids=@(new ConceptLeafIds(theirs.ConceptId, theirs.BranchId, theirs.LeafId))
                                 CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
-                                CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.StackId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
+                                CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.ConceptId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
-                                                      .Concat(_diffState.BranchChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
+                                                      .Concat(_diffState.BranchChanged.Where(x => x.Item2.ConceptId == mine.ConceptId).Select(x => x.Item1))
                                                       .ToFList();
-                                                    _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
+                                                    _diffState.BranchChanged = _diffState.BranchChanged.Where(x => x.Item2.ConceptId != mine.ConceptId).ToFList();
                                                   }) />
                 Switch from
                 <Deck_CardPreview LeafId=@mine.LeafId Index=@mine.Index ShowId=false />
                 to
                 <Deck_CardPreview LeafId=@theirs.LeafId Index=@theirs.Index ShowId=false />
-                <a href="stackdiff/@mine.LeafId/@theirs.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
+                <a href="conceptdiff/@mine.LeafId/@theirs.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
                   &Delta;
                 </a>
                 @OtherDeckCheck(mine.DeckId, "Switching")
@@ -142,22 +142,22 @@
           <div class="card-body">
             @foreach (var (theirs, mine) in _diffState.LeafChanged) {
               <div>
-                <CollectToggles Ids=@(new StackLeafIds(theirs.StackId, theirs.BranchId, theirs.LeafId))
+                <CollectToggles Ids=@(new ConceptLeafIds(theirs.ConceptId, theirs.BranchId, theirs.LeafId))
                                 CardCount=1
                                 DeckId=@(FSharpOption<Guid>.Some(MyDeckId))
-                                CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.StackId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
+                                CollectedIds=@(FSharpOption<UpsertIds>.Some(new UpsertIds(mine.ConceptId, mine.BranchId, mine.LeafId, FList.Singleton(mine.CardId))))
                                 IsBranch=@true
                                 UpdateCollectedIds=@(async _ => {
                                                     _diffState.Unchanged = _diffState.Unchanged.ToList()
-                                                      .Concat(_diffState.LeafChanged.Where(x => x.Item2.StackId == mine.StackId).Select(x => x.Item1))
+                                                      .Concat(_diffState.LeafChanged.Where(x => x.Item2.ConceptId == mine.ConceptId).Select(x => x.Item1))
                                                       .ToFList();
-                                                    _diffState.LeafChanged = _diffState.LeafChanged.Where(x => x.Item2.StackId != mine.StackId).ToFList();
+                                                    _diffState.LeafChanged = _diffState.LeafChanged.Where(x => x.Item2.ConceptId != mine.ConceptId).ToFList();
                                                   }) />
                 Update from
                 <Deck_CardPreview LeafId=@mine.LeafId Index=@mine.Index ShowId=@false />
                 to
                 <Deck_CardPreview LeafId=@theirs.LeafId Index=@theirs.Index ShowId=@false />
-                <a href="stackdiff/@mine.LeafId/@theirs.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
+                <a href="conceptdiff/@mine.LeafId/@theirs.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
                   &Delta;
                 </a>
                 @OtherDeckCheck(mine.DeckId, "Updating")

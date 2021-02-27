@@ -30,7 +30,7 @@ namespace CardOverflow.Entity
         }
         private string _Name;
         public Guid AuthorId { get; set; }
-        public Guid StackId { get; set; }
+        public Guid ConceptId { get; set; }
         public Guid LatestId { get; set; }
         public int Users { get; set; }
         public bool IsListed { get; set; }
@@ -48,9 +48,9 @@ namespace CardOverflow.Entity
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestId")]
         public virtual LeafEntity Latest { get; set; }
-        [ForeignKey("StackId")]
+        [ForeignKey("ConceptId")]
         [InverseProperty("Branches")]
-        public virtual StackEntity Stack { get; set; }
+        public virtual ConceptEntity Concept { get; set; }
         public virtual ICollection<CardEntity> CardBranchNavigations { get; set; }
         [InverseProperty("Branch")]
         public virtual ICollection<CardEntity> CardBranches { get; set; }

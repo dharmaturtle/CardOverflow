@@ -30,61 +30,61 @@ module Branch =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve)
 
-module Stack =
-    open Stack
+module Concept =
+    open Concept
 
     type Writer internal (resolve, tableClient: TableClient) =
-        let resolve stackId : Stream<_, _> = resolve stackId
+        let resolve conceptId : Stream<_, _> = resolve conceptId
 
         member internal _.Create(state: Events.Summary) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
-        member _.ChangeDefaultBranch stackId (newDefaultBranchId: BranchId) callerId = asyncResult {
-            let stream = resolve stackId
+        member _.ChangeDefaultBranch conceptId (newDefaultBranchId: BranchId) callerId = asyncResult {
+            let stream = resolve conceptId
             let! b, _ = tableClient.GetBranch newDefaultBranchId
-            return! decideDefaultBranchChanged b.Id b.StackId callerId |> stream.Transact
+            return! decideDefaultBranchChanged b.Id b.ConceptId callerId |> stream.Transact
         }
 
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, tableClient)
 
-module StackBranch =
+module ConceptBranch =
 
     let branch authorId command title : Branch.Events.Summary =
         { Id = % command.Ids.BranchId
           LeafIds = [ % command.Ids.LeafId ]
           Title = title
-          StackId = % command.Ids.StackId
+          ConceptId = % command.Ids.ConceptId
           AuthorId = authorId
           TemplateRevisionId = % command.Grompleaf.Id
           AnkiNoteId = None
           FieldValues = command.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
           EditSummary = command.EditSummary }
-    let stack authorId command sourceLeafId : Stack.Events.Summary =
-        { Id = % command.Ids.StackId
+    let concept authorId command sourceLeafId : Concept.Events.Summary =
+        { Id = % command.Ids.ConceptId
           DefaultBranchId = % command.Ids.BranchId
           AuthorId = authorId
           CopySourceLeafId = sourceLeafId }
-    let stackBranch authorId command sourceLeafId title =
-        (stack  authorId command sourceLeafId),
+    let conceptBranch authorId command sourceLeafId title =
+        (concept  authorId command sourceLeafId),
         (branch authorId command title)
 
     type Writer
-        (   stackWriter  : Stack.Writer,
+        (   conceptWriter  : Concept.Writer,
             branchWriter : Branch.Writer) =
     
-        let create (stackSummary, branchSummary) = asyncResult { // medTODO turn into a real saga
-            do!     stackWriter .Create stackSummary
+        let create (conceptSummary, branchSummary) = asyncResult { // medTODO turn into a real saga
+            do!     conceptWriter .Create conceptSummary
             return! branchWriter.Create branchSummary
         }
 
         member _.Upsert (authorId, command) =
             match command.Kind with
             | NewOriginal_TagIds tags -> // highTODO create card (with tag)
-                stackBranch authorId command None                     "Default" |> create
+                conceptBranch authorId command None                     "Default" |> create
             | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) -> // highTODO create card (with tag)
-                stackBranch authorId command (% sourceLeafId |> Some) "Default" |> create
+                conceptBranch authorId command (% sourceLeafId |> Some) "Default" |> create
             | NewBranch_Title title ->
                 branchWriter.Create(branch authorId command title)
             | NewLeaf_Title title ->

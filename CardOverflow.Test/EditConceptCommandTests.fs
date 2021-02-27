@@ -1,4 +1,4 @@
-module EditStackCommandTests
+module EditConceptCommandTests
 
 open CardOverflow.Api
 open ContainerExtensions
@@ -51,7 +51,7 @@ let test text expected grompleaf =
     |> fun x -> Assert.Equal<string seq>(expected, x)
 
 [<Fact>]
-let ``EditStackCommand's back works with basic`` (): unit =
+let ``EditConceptCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
             ({ (Grompleaf.initialize Ulid.create Ulid.create) with
@@ -68,7 +68,7 @@ let ``EditStackCommand's back works with basic`` (): unit =
         [ "The front Back" ]
 
 [<Fact>]
-let ``EditStackCommand's back works with cloze`` (): unit =
+let ``EditConceptCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
             ({ (Grompleaf.initialize Ulid.create Ulid.create) with

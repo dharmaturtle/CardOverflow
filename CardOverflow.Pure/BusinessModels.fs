@@ -367,8 +367,8 @@ type ViewTag = {
 [<CLIMutable>]
 type ViewRelationship = {
     Name: string
-    SourceStackId: Guid
-    TargetStackId: Guid
+    SourceConceptId: Guid
+    TargetConceptId: Guid
     IsCollected: bool
     Users: int
 } with
@@ -380,7 +380,7 @@ type ViewRelationship = {
 [<CLIMutable>]
 type LeafMeta = {
     Id: Guid
-    StackId: Guid
+    ConceptId: Guid
     BranchId: Guid
     MaxIndexInclusive: int16
     Created: Instant
@@ -400,7 +400,7 @@ type LeafMeta = {
 type Card = {
     CardId: Guid
     UserId: Guid
-    StackId: Guid
+    ConceptId: Guid
     BranchId: Guid
     LeafMeta: LeafMeta
     Index: int16
@@ -423,7 +423,7 @@ type Comment = {
 }
 
 [<CLIMutable>]
-type ExploreStackSummary = {
+type ExploreConceptSummary = {
     Id: Guid
     Users: int
     Author: string
@@ -463,13 +463,13 @@ module CollectedIds =
         function
         | Some x -> x.BranchId
         | None -> Guid.Empty
-    let stackId =
+    let conceptId =
         function
-        | Some x -> x.StackId
+        | Some x -> x.ConceptId
         | None -> Guid.Empty
 
 [<CLIMutable>]
-type ExploreStack = {
+type ExploreConcept = {
     Id: Guid
     Users: int
     Tags: ViewTag ResizeArray
@@ -504,7 +504,7 @@ with
         | NewCopy_SourceLeafId_TagIds (leafId, _) -> x <- leafId; true
         | _ -> false
 
-type EditStackCommand = {
+type EditConceptCommand = {
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
     Grompleaf: Grompleaf

@@ -1,0 +1,125 @@
+@using Microsoft.FSharp.Core
+@using CardOverflow.Entity
+@using CardOverflow.Debug
+@using CardOverflow.Pure
+@using CardOverflow.Api
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using CardOverflow.Sanitation
+@using CardOverflow.Server.Data
+@inject DbExecutor DbExecutor
+@inject IToastService ToastService
+@inject UserContentHttpClient UserContentHttpClient
+
+<div class=@(_showAddRelationship ? "" : "d-flex justify-content-between")>
+  <h4>Relationships</h4>
+  @if (Concept.IsAnyCollected) {
+    @if (_showAddRelationship) {
+      <EditForm Model=@Command OnValidSubmit=@Add>
+        <div class="form-group btn-group">
+          <InputText @bind-Value=@Command.TargetConceptLink class="form-control" placeholder="Related Card Link (or #)" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+          <InputText @bind-Value=@Command.Name class="form-control" placeholder="New Relationship Name" /> @*this seems to break validation: @bind-Value:event="oninput"*@
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+        <ValidationSummary />
+        <DataAnnotationsValidator />
+      </EditForm>
+    } else {
+      <button class="btn btn-outline-success" @onclick=@(() => _showAddRelationship = true)>
+        <i class="fas fa-plus"></i>
+      </button>
+    }
+  }
+</div>
+<ul class="list-unstyled">
+  @foreach (var (relationship, conceptId) in Concept.Relationships.Where(x => x.IsCollected).Select(x => (x, x.SourceConceptId == Concept.Id ? x.TargetConceptId : x.SourceConceptId))) {
+    <li>
+      <button type="button" class="btn btn-outline-collected btn-sm" @onclick=@(() => Uncollect(relationship.Name, relationship.SourceConceptId, relationship.TargetConceptId))>
+        <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
+          <ChildContent>
+            <ResizingIframe ConceptId=@conceptId Front />
+          </ChildContent>
+          <AdditionalHoverTarget>
+            <span class="badge badge-success">@relationship.Users</span>
+          </AdditionalHoverTarget>
+        </HoverPreview>
+        @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
+      </button>
+      <a href="/concept/@conceptId">@getHtml(conceptId)</a>
+    </li>
+  }
+  @foreach (var (relationship, conceptId) in Concept.Relationships.Where(x => !x.IsCollected).Select(x => (x, x.SourceConceptId == Concept.Id ? x.TargetConceptId : x.SourceConceptId))) {
+    <li>
+      <button type="button" class="btn btn-outline-uncollected btn-sm" @onclick=@(() => Collect(relationship.Name, relationship.SourceConceptId, relationship.TargetConceptId))>
+        <HoverPreview IsCollected=@relationship.IsCollected Padding="0">
+          <ChildContent>
+            <ResizingIframe ConceptId=@conceptId Front />
+          </ChildContent>
+          <AdditionalHoverTarget>
+            <span class="badge badge-success">@relationship.Users</span>
+          </AdditionalHoverTarget>
+        </HoverPreview>
+        @relationship.PrimaryName<sub><small>@relationship.SecondaryName</small></sub>
+      </button>
+      <a href="/concept/@conceptId">@htmlByCardId[conceptId]</a>
+    </li>
+  }
+</ul>
+
+@code {
+  [CascadingParameter] Task<UserClaims> UserTask { get; set; }
+  private UserClaims _user = UserClaims.init;
+  [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
+  AddRelationshipCommand Command;
+  IDictionary<Guid, string> htmlByCardId = new Dictionary<Guid, string>();
+  private bool _showAddRelationship;
+
+  public override async Task SetParametersAsync(ParameterView parameters) {
+    await base.SetParametersAsync(parameters);
+    Command = new AddRelationshipCommand { SourceConceptId = Concept.Id };
+    var relationshipIds = Concept.Relationships.SelectMany(x => new List<Guid> { x.SourceConceptId, x.TargetConceptId }).Distinct().Where(x => x != Concept.Id).ToList();
+    htmlByCardId = relationshipIds.ToDictionary(x => x, _ => "");
+    htmlByCardId = (await relationshipIds.Select(async x => (x, await UserContentHttpClient.GetStrippedFront(x)))
+      .Apply(Task.WhenAll))
+      .ToDictionary(x => x.Item1, x => x.Item2);
+    _user = await UserTask;
+    StateHasChanged();
+  }
+
+  string getHtml(Guid conceptId) =>
+    htmlByCardId.ContainsKey(conceptId)
+    ? htmlByCardId[conceptId]
+    : "Loading...";
+
+  async Task Add() {
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, _user.Id, Command));
+    if (x.IsOk) {
+      var targetConceptId = SanitizeRelationshipRepository.GetConceptId(Command.TargetConceptLink).ResultValue;
+      Concept.Relationships = Concept.Relationships.Append(new ViewRelationship(Command.Name, Concept.Id, targetConceptId, true, 1)).ToList();
+      if (targetConceptId != Concept.Id && !htmlByCardId.ContainsKey(targetConceptId)) { // lazy GetStrippedFront - don't use TryAdd
+        htmlByCardId.Add(targetConceptId, await UserContentHttpClient.GetStrippedFront(targetConceptId));
+      }
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  async Task Collect(string name, Guid sourceConceptId, Guid targetConceptId) {
+    var x = await DbExecutor.QueryAsync(db => SanitizeRelationshipRepository.Add(db, _user.Id, new AddRelationshipCommand(name, sourceConceptId, targetConceptId.ToString())));
+    if (x.IsOk) {
+      Concept.Relationships.Single(r => r.SourceConceptId == sourceConceptId && r.TargetConceptId == targetConceptId && r.Name == name).IsCollected = true;
+      Concept.Relationships.Single(r => r.SourceConceptId == sourceConceptId && r.TargetConceptId == targetConceptId && r.Name == name).Users++;
+      StateHasChanged();
+    } else {
+      ToastService.ShowError(x.ErrorValue);
+    }
+  }
+
+  async Task Uncollect(string name, Guid sourceConceptId, Guid targetConceptId) {
+    await DbExecutor.CommandAsync(db => SanitizeRelationshipRepository.Remove(db, sourceConceptId, targetConceptId, _user.Id, name));
+    Concept.Relationships.Single(r => r.SourceConceptId == sourceConceptId && r.TargetConceptId == targetConceptId && r.Name == name).IsCollected = false;
+    Concept.Relationships.Single(r => r.SourceConceptId == sourceConceptId && r.TargetConceptId == targetConceptId && r.Name == name).Users--;
+    StateHasChanged();
+  }
+
+}

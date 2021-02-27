@@ -50,7 +50,7 @@
     <Compile Include="DiffTests.fs" />
     <Compile Include="RelationshipTests.fs" />
     <Compile Include="CardHtmlGenerateTests.fs" />
-    <Compile Include="EditStackCommandTests.fs" />
+    <Compile Include="EditConceptCommandTests.fs" />
     <Compile Include="SanitizeTests.fs" />
     <Compile Include="AnkiImportLogicTests.fs" />
     <Compile Include="ResultTests.fs" />
@@ -67,7 +67,7 @@
     <Compile Include="NotificationRepositoryTests.fs" />
     <Compile Include="GromplateRepositoryTests.fs" />
     <Compile Include="CardSettingTests.fs" />
-    <Compile Include="SanitizeStackRepositoryTests.fs" />
+    <Compile Include="SanitizeConceptRepositoryTests.fs" />
     <Compile Include="TagRepositoryTests.fs" />
     <Compile Include="DeckRepositoryTests.fs" />
     <Compile Include="UserRepositoryTests.fs" />
@@ -82,8 +82,8 @@
     <Compile Include="UserTests.fs" />
     <Compile Include="DeckTests.fs" />
     <Compile Include="TemplateTests.fs" />
-    <Compile Include="StackTests.fs" />
-    <Compile Include="StackBranchTests.fs" />
+    <Compile Include="ConceptTests.fs" />
+    <Compile Include="ConceptBranchTests.fs" />
     <Compile Include="ZtackTests.fs" />
   </ItemGroup>
   <ItemGroup>

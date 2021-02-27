@@ -7,13 +7,13 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class StackEntity
+    public partial class ConceptEntity
     {
-        public StackEntity()
+        public ConceptEntity()
         {
             Cards = new HashSet<CardEntity>();
             Branches = new HashSet<BranchEntity>();
-            CommentStacks = new HashSet<CommentStackEntity>();
+            CommentConcepts = new HashSet<CommentConceptEntity>();
             Notifications = new HashSet<NotificationEntity>();
         }
 
@@ -35,20 +35,20 @@ namespace CardOverflow.Entity
         public int[] TagsCount { get; set; } = new int[0];
 
         [ForeignKey("AuthorId")]
-        [InverseProperty("Stacks")]
+        [InverseProperty("Concepts")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("DefaultBranchId")]
         public virtual BranchEntity DefaultBranch { get; set; }
         [ForeignKey("CopySourceId")]
-        [InverseProperty("StackCopySources")]
+        [InverseProperty("ConceptCopySources")]
         public virtual LeafEntity CopySource { get; set; }
-        [InverseProperty("Stack")]
+        [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
-        [InverseProperty("Stack")]
+        [InverseProperty("Concept")]
         public virtual ICollection<BranchEntity> Branches { get; set; }
-        [InverseProperty("Stack")]
-        public virtual ICollection<CommentStackEntity> CommentStacks { get; set; }
-        [InverseProperty("Stack")]
+        [InverseProperty("Concept")]
+        public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
+        [InverseProperty("Concept")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
     }
 }

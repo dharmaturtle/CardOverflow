@@ -4,7 +4,7 @@
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
-@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Server.Pages.Concept
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
@@ -20,32 +20,32 @@
     @Sender()
   </td>
   <td>
-    @if (Notification.Message.TryDeckAddedStack(out var deckAddedStack)) {
+    @if (Notification.Message.TryDeckAddedConcept(out var deckAddedConcept)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeBranch LeafId=@(deckAddedStack.New.LeafId) Back />
+          <ResizingIframeBranch LeafId=@(deckAddedConcept.New.LeafId) Back />
         </HoverPreview>
-        @Stack(deckAddedStack.New.LeafId)
+        @Concept(deckAddedConcept.New.LeafId)
         added to
         @Sender()&apos;s
         deck
-        @Deck(@deckAddedStack.TheirDeck.Id, deckAddedStack.TheirDeck.Name).
+        @Deck(@deckAddedConcept.TheirDeck.Id, deckAddedConcept.TheirDeck.Name).
       </span>
       <div class="float-right">
-        <CollectToggles @ref="_addedStackCollectToggles"
-                        Ids=@deckAddedStack.New
-                        CardCount=@deckAddedStack.NewCardCount
-                        DeckId=@_getDeckId(deckAddedStack.MyDeck)
+        <CollectToggles @ref="_addedConceptCollectToggles"
+                        Ids=@deckAddedConcept.New
+                        CardCount=@deckAddedConcept.NewCardCount
+                        DeckId=@_getDeckId(deckAddedConcept.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
-                @onclick=@(async () => await _addedStackCollectToggles.Collect(async () => await _remove()))>
+                @onclick=@(async () => await _addedConceptCollectToggles.Collect(async () => await _remove()))>
           Sync & <span class="oi oi-trash"></span>
         </button>
       </div>
-    } else if (Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)) {
-      var showBoth = _collectedState.HasValue() && _collectedState.Value.LeafId != deckUpdatedStack.New.LeafId;
+    } else if (Notification.Message.TryDeckUpdatedConcept(out var deckUpdatedConcept)) {
+      var showBoth = _collectedState.HasValue() && _collectedState.Value.LeafId != deckUpdatedConcept.New.LeafId;
       var newId = $"Notification-{Notification.Id}-New";
       var oldId = $"Notification-{Notification.Id}-Old";
       <span>
@@ -54,7 +54,7 @@
         }
         <span id="@newId">
           <HoverPreview Padding="0">
-            <ResizingIframeBranch LeafId=@deckUpdatedStack.New.LeafId Back />
+            <ResizingIframeBranch LeafId=@deckUpdatedConcept.New.LeafId Back />
           </HoverPreview>
         </span>
         @if (showBoth) {
@@ -64,51 +64,51 @@
               <ResizingIframeBranch LeafId=@_collectedState.Value.LeafId Back />
             </HoverPreview>
           </span>
-          <a href="stackdiff/@_collectedState.Value.LeafId/@deckUpdatedStack.New.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
+          <a href="conceptdiff/@_collectedState.Value.LeafId/@deckUpdatedConcept.New.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
             &Delta;
           </a>
         }
-        @Stack(deckUpdatedStack.New.LeafId)
+        @Concept(deckUpdatedConcept.New.LeafId)
         updated in
         @Sender()&apos;s
         deck
-        @Deck(@deckUpdatedStack.TheirDeck.Id, deckUpdatedStack.TheirDeck.Name).
+        @Deck(@deckUpdatedConcept.TheirDeck.Id, deckUpdatedConcept.TheirDeck.Name).
       </span>
       <div class="float-right">
-        <CollectToggles @ref="_updatedStackCollectToggles"
-                        Ids=@deckUpdatedStack.New
-                        CardCount=@deckUpdatedStack.NewCardCount
-                        DeckId=@_getDeckId(deckUpdatedStack.MyDeck)
+        <CollectToggles @ref="_updatedConceptCollectToggles"
+                        Ids=@deckUpdatedConcept.New
+                        CardCount=@deckUpdatedConcept.NewCardCount
+                        DeckId=@_getDeckId(deckUpdatedConcept.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
-                @onclick=@(async () => await _updatedStackCollectToggles.Collect(async () => await _remove()))>
+                @onclick=@(async () => await _updatedConceptCollectToggles.Collect(async () => await _remove()))>
           Sync & <span class="oi oi-trash"></span>
         </button>
       </div>
-    } else if (Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)) {
+    } else if (Notification.Message.TryDeckDeletedConcept(out var deckDeletedConcept)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeBranch LeafId=@(deckDeletedStack.Deleted.LeafId) Back />
+          <ResizingIframeBranch LeafId=@(deckDeletedConcept.Deleted.LeafId) Back />
         </HoverPreview>
-        @Stack(deckDeletedStack.Deleted.LeafId)
+        @Concept(deckDeletedConcept.Deleted.LeafId)
         deleted from
         @Sender()&apos;s
         deck
-        @Deck(deckDeletedStack.TheirDeck.Id, deckDeletedStack.TheirDeck.Name).
+        @Deck(deckDeletedConcept.TheirDeck.Id, deckDeletedConcept.TheirDeck.Name).
       </span>
       <div class="float-right">
-        <CollectToggles @ref="_deletedStackCollectToggles"
-                        Ids=@deckDeletedStack.Deleted
-                        CardCount=@deckDeletedStack.DeletedCardCount
-                        DeckId=@_getDeckId(deckDeletedStack.MyDeck)
+        <CollectToggles @ref="_deletedConceptCollectToggles"
+                        Ids=@deckDeletedConcept.Deleted
+                        CardCount=@deckDeletedConcept.DeletedCardCount
+                        DeckId=@_getDeckId(deckDeletedConcept.MyDeck)
                         IsBranch=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
                 @onclick=@(async () => await _collectedState.Select(_ => {
-                             _deletedStackCollectToggles.OpenDiscardModal(async () => await _remove());
+                             _deletedConceptCollectToggles.OpenDiscardModal(async () => await _remove());
                              return System.Threading.Tasks.Task.CompletedTask;
                            }).GetOrElse(_remove))>
           Sync & <span class="oi oi-trash"></span>
@@ -134,9 +134,9 @@
   [Parameter] public Pure.Notification Notification { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
   private FSharpOption<UpsertIds> _collectedState;
-  private CollectToggles _addedStackCollectToggles;
-  private CollectToggles _updatedStackCollectToggles;
-  private CollectToggles _deletedStackCollectToggles;
+  private CollectToggles _addedConceptCollectToggles;
+  private CollectToggles _updatedConceptCollectToggles;
+  private CollectToggles _deletedConceptCollectToggles;
   private FSharpOption<Guid> _getDeckId(FSharpOption<IdName> fallbackDeck) =>
     _collectedState.HasValue()
     ? FSharpOption<Guid>.None
@@ -146,12 +146,12 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     _collectedState =
-      Notification.Message.TryDeckAddedStack(out var deckAddedStack)
-      ? deckAddedStack.Collected
-      : Notification.Message.TryDeckUpdatedStack(out var deckUpdatedStack)
-      ? deckUpdatedStack.Collected
-      : Notification.Message.TryDeckDeletedStack(out var deckDeletedStack)
-      ? deckDeletedStack.Collected
+      Notification.Message.TryDeckAddedConcept(out var deckAddedConcept)
+      ? deckAddedConcept.Collected
+      : Notification.Message.TryDeckUpdatedConcept(out var deckUpdatedConcept)
+      ? deckUpdatedConcept.Collected
+      : Notification.Message.TryDeckDeletedConcept(out var deckDeletedConcept)
+      ? deckDeletedConcept.Collected
       : FSharpOption<UpsertIds>.None;
     StateHasChanged();
   }
@@ -164,9 +164,9 @@
   private RenderFragment Sender() =>
   @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
 
-private RenderFragment Stack(Guid leafId) =>
-@<a href="stack?leaf=@leafId">
-  Stack
+private RenderFragment Concept(Guid leafId) =>
+@<a href="concept?leaf=@leafId">
+  Concept
 </a>;
 
 private RenderFragment Deck(Guid deckId, string deckName) =>

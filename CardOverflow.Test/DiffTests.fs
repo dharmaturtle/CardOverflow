@@ -10,64 +10,64 @@ open System.Linq
 open CardOverflow.Test
 
 [<Generators>]
-let ``Diff Unchanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
-    let theirs = stackLeafIndexes
-    let mine = stackLeafIndexes
+let ``Diff Unchanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
+    let theirs = conceptLeafIndexes
+    let mine = conceptLeafIndexes
     
     Diff.ids theirs mine
 
-    |> Assert.areEquivalent (stackLeafIndexes |> List.map Unchanged)
+    |> Assert.areEquivalent (conceptLeafIndexes |> List.map Unchanged)
 
 [<Generators>]
-let ``Diff AddedStack`` (stackLeafIndexes: StackLeafIndex list) : unit =
-    let theirs = stackLeafIndexes
-    let mine = stackLeafIndexes.[0] |> List.singleton
-    
-    Diff.ids theirs mine
-    
-    |> Assert.areEquivalent
-        (stackLeafIndexes |> List.mapi (fun i x ->
-            match i with
-            | 0 -> Unchanged x
-            | _ -> AddedStack x
-        ))
-
-[<Generators>]
-let ``Diff RemovedStack`` (stackLeafIndexes: StackLeafIndex list) : unit =
-    let mine = stackLeafIndexes
-    let theirs = stackLeafIndexes.[0] |> List.singleton
+let ``Diff AddedConcept`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
+    let theirs = conceptLeafIndexes
+    let mine = conceptLeafIndexes.[0] |> List.singleton
     
     Diff.ids theirs mine
     
     |> Assert.areEquivalent
-        (stackLeafIndexes |> List.mapi (fun i x ->
+        (conceptLeafIndexes |> List.mapi (fun i x ->
             match i with
             | 0 -> Unchanged x
-            | _ -> RemovedStack x
+            | _ -> AddedConcept x
         ))
 
 [<Generators>]
-let ``Diff LeafChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
-    let theirs = stackLeafIndexes
+let ``Diff RemovedConcept`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
+    let mine = conceptLeafIndexes
+    let theirs = conceptLeafIndexes.[0] |> List.singleton
+    
+    Diff.ids theirs mine
+    
+    |> Assert.areEquivalent
+        (conceptLeafIndexes |> List.mapi (fun i x ->
+            match i with
+            | 0 -> Unchanged x
+            | _ -> RemovedConcept x
+        ))
+
+[<Generators>]
+let ``Diff LeafChanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
+    let theirs = conceptLeafIndexes
     let mine =
-        {   stackLeafIndexes.[0] with
+        {   conceptLeafIndexes.[0] with
                 LeafId = Ulid.create
         }   |> List.singleton
     
     Diff.ids theirs mine
     
     |> Assert.areEquivalent
-        (stackLeafIndexes |> List.mapi (fun i x ->
+        (conceptLeafIndexes |> List.mapi (fun i x ->
             match i with
             | 0 -> LeafChanged (x, mine.[0])
-            | _ -> AddedStack x
+            | _ -> AddedConcept x
         ))
 
 [<Generators>]
-let ``Diff BranchChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
-    let theirs = stackLeafIndexes
+let ``Diff BranchChanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
+    let theirs = conceptLeafIndexes
     let mine =
-        {   stackLeafIndexes.[0] with
+        {   conceptLeafIndexes.[0] with
                 BranchId = Ulid.create
                 LeafId = Ulid.create
         }   |> List.singleton
@@ -75,17 +75,17 @@ let ``Diff BranchChanged`` (stackLeafIndexes: StackLeafIndex list) : unit =
     Diff.ids theirs mine
     
     |> Assert.areEquivalent
-        (stackLeafIndexes |> List.mapi (fun i x ->
+        (conceptLeafIndexes |> List.mapi (fun i x ->
             match i with
             | 0 -> BranchChanged (x, mine.[0])
-            | _ -> AddedStack x
+            | _ -> AddedConcept x
         ))
         
 [<Generators>]
-let ``Diff of deck with itself is unchanged _ when it contains 2 of the same branch with differing indexes`` (stackLeafIndex: StackLeafIndex) : unit =
+let ``Diff of deck with itself is unchanged _ when it contains 2 of the same branch with differing indexes`` (conceptLeafIndex: ConceptLeafIndex) : unit =
     let a =
-        [ { stackLeafIndex with Index = 0s }
-          { stackLeafIndex with Index = 1s } ]
+        [ { conceptLeafIndex with Index = 0s }
+          { conceptLeafIndex with Index = 1s } ]
     
     Diff.ids a a
     
@@ -93,7 +93,7 @@ let ``Diff of deck with itself is unchanged _ when it contains 2 of the same bra
         (a |> List.map Unchanged)
 
 [<Generators>]
-let ``Diff of MoveToAnotherDeck works`` (ids: StackLeafIndex) : unit =
+let ``Diff of MoveToAnotherDeck works`` (ids: ConceptLeafIndex) : unit =
     let ids index = { ids with Index = index }
     let theirs = [ ids 0s ]
     let mine   = [ ids 0s; ids 1s ]
@@ -105,5 +105,5 @@ let ``Diff of MoveToAnotherDeck works`` (ids: StackLeafIndex) : unit =
           MoveToAnotherDeck     = [ ids 1s ]
           LeafChanged = []
           BranchChanged         = []
-          AddedStack            = []
-          RemovedStack          = [] }
+          AddedConcept            = []
+          RemovedConcept          = [] }

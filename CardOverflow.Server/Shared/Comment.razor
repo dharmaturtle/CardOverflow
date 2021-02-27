@@ -31,7 +31,7 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public Guid StackId { get; set; }
+  [Parameter] public Guid ConceptId { get; set; }
   [Parameter] public EventCallback<string> AddComment { get; set; }
   CommentText WriteComment = new CommentText();
   bool isSaved;
@@ -43,7 +43,7 @@
   }
 
   async Task SaveComment() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, WriteComment.Text, StackId, _user.Id));
+    var x = await DbExecutor.QueryAsync(db => SanitizeCommentRepository.AddAndSaveAsync(db, WriteComment.Text, ConceptId, _user.Id));
     if (x.IsOk) {
       isSaved = true;
       await AddComment.InvokeAsync(WriteComment.Text);

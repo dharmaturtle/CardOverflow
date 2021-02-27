@@ -12,7 +12,7 @@
 
 <AuthorizeView>
   <div class="d-flex justify-content-between align-items-center">
-    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/stack" CreateLink=@(x => $"/my/stack?leaf={x}") Ids=@cards?.Select(x => x.LeafMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedLeafId.ToString() Query=@search.Query />
+    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?leaf={x}") Ids=@cards?.Select(x => x.LeafMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedLeafId.ToString() Query=@search.Query />
   </div>
   @if (SelectedLeafId == null) {
     <div>
@@ -34,7 +34,7 @@
                 </HoverPreview>
               </td>
               <td>
-                <a href="/my/stack?leaf=@card.LeafMeta.Id">
+                <a href="/my/concept?leaf=@card.LeafMeta.Id">
                   @card.LeafMeta.StrippedFront
                 </a>
               </td>
@@ -51,7 +51,7 @@
       <Pager Details=@details PageChanged=@PageChanged />
     </div>
   } else {
-    <Stack LeafId=@SelectedLeafId.Value IsCurate=true Index=@Index />
+    <Concept LeafId=@SelectedLeafId.Value IsCurate=true Index=@Index />
   }
 </AuthorizeView>
 
@@ -76,7 +76,7 @@
           var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedLeafFromLeaf(db, _user.Id, SelectedLeafId.Value));
           if (x.IsOk) {
             if (SelectedLeafId != x.ResultValue) {
-              NavigationManager.NavigateTo($"my/stack?leaf={x.ResultValue}");
+              NavigationManager.NavigateTo($"my/concept?leaf={x.ResultValue}");
             } else {
               SelectedLeafId = x.ResultValue;
             }
@@ -91,7 +91,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeStackRepository.GetCollectedPages(db, _user.Id, pageNumber, search));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.GetCollectedPages(db, _user.Id, pageNumber, search));
     details = pagedList.Details;
     cards = pagedList.Results.Where(x => x.IsOk).Select(x => x.ResultValue).ToList();
     if (pagedList.Results.Any(x => x.IsError)) {

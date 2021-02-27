@@ -31,7 +31,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Message;
-        public Guid? StackId { get; set; }
+        public Guid? ConceptId { get; set; }
         public Guid? BranchId { get; set; }
         public Guid? LeafId { get; set; }
         public Guid? DeckId { get; set; }
@@ -56,9 +56,9 @@ namespace CardOverflow.Entity
         [ForeignKey("SenderId")]
         [InverseProperty("SentNotifications")]
         public virtual UserEntity Sender { get; set; }
-        [ForeignKey("StackId")]
+        [ForeignKey("ConceptId")]
         [InverseProperty("Notifications")]
-        public virtual StackEntity Stack { get; set; }
+        public virtual ConceptEntity Concept { get; set; }
         [InverseProperty("Notification")]
         public virtual ICollection<ReceivedNotificationEntity> ReceivedNotifications { get; set; }
     }

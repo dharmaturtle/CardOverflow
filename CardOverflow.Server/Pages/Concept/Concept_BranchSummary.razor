@@ -21,7 +21,7 @@
 } else {
   @Leaf.EditSummary
 }
-<a style="color:unset" class="font-italic float-right" title=@(Leaf.Created + " UTC") href=@($"stack?leaf={Leaf.Id}")>
+<a style="color:unset" class="font-italic float-right" title=@(Leaf.Created + " UTC") href=@($"concept?leaf={Leaf.Id}")>
   - @ViewLogic.timestampToPretty(Leaf.Created, TimeProvider.utcNow)
 </a>
 

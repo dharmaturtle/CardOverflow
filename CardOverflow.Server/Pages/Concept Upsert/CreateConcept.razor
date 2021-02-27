@@ -1,4 +1,4 @@
-@page "/stack/create"
+@page "/concept/create"
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -16,20 +16,20 @@
 @if (_command == null || _gromplates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditStackDetail EditStack=@_command Gromplates=@_gromplates NewEditStackOnSave=true />
+  <EditConceptDetail EditConcept=@_command Gromplates=@_gromplates NewEditConceptOnSave=true />
 }
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   string LoadingMessage = "Loading...";
-  private ViewEditStackCommand _command;
+  private ViewEditConceptCommand _command;
   private List<ViewGromplateWithAllLeafs> _gromplates;
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
     _user = await UserTask;
-    var x = await DbExecutor.QueryAsync(db => SanitizeStackRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewOriginal_UserId(_user.Id), UpsertIdsC.Create())); // lowTODO just pass the userId normally, not as part of a DU
+    var x = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewOriginal_UserId(_user.Id), UpsertIdsC.Create())); // lowTODO just pass the userId normally, not as part of a DU
     if (x.IsOk) {
       _command = x.ResultValue;
     } else {

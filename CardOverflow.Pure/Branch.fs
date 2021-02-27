@@ -16,7 +16,7 @@ module Events =
         { Id: BranchId
           LeafIds: LeafId list
           Title: string
-          StackId: StackId
+          ConceptId: ConceptId
           AuthorId: UserId
           TemplateRevisionId: TemplateRevisionId
           AnkiNoteId: int64 option
@@ -73,7 +73,7 @@ type LeafSummary =
     { Id: LeafId
       BranchId: BranchId
       Title: string
-      StackId: StackId
+      ConceptId: ConceptId
       AuthorId: UserId
       TemplateRevisionId: TemplateRevisionId
       FieldValues: Map<string, string>
@@ -83,7 +83,7 @@ let toLeafSummary (b: Events.Summary) =
     { Id = b.LeafIds.Head
       BranchId = b.Id
       Title = b.Title
-      StackId = b.StackId
+      ConceptId = b.ConceptId
       AuthorId = b.AuthorId
       TemplateRevisionId = b.TemplateRevisionId
       FieldValues = b.FieldValues

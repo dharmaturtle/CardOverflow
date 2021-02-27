@@ -16,9 +16,9 @@ open NodaTime
     You should probably write a test covering legacy types. *)
 
 type NotificationType = // the indexes currently have no semantic meaning - they're here because F# requires them to make the "DU" an Enum
-    | DeckAddedStack = 0
-    | DeckUpdatedStack = 1
-    | DeckDeletedStack = 2
+    | DeckAddedConcept = 0
+    | DeckUpdatedConcept = 1
+    | DeckDeletedConcept = 2
 
 type StudyOrder = // the indexes currently have no semantic meaning - they're here because F# requires them to make the "DU" an Enum
     | Mixed = 0
@@ -31,46 +31,46 @@ type IdName = {
     Name: string
 }
 
-type DeckAddedStack = {
+type DeckAddedConcept = {
     TheirDeck: IdName
     MyDeck: IdName Option
-    New: StackLeafIds
+    New: ConceptLeafIds
     NewCardCount: int
     Collected: UpsertIds Option
 }
 
-type DeckUpdatedStack = {
+type DeckUpdatedConcept = {
     TheirDeck: IdName
     MyDeck: IdName Option
-    New: StackLeafIds
+    New: ConceptLeafIds
     NewCardCount: int
     Collected: UpsertIds Option
 }
 
-type DeckDeletedStack = {
+type DeckDeletedConcept = {
     TheirDeck: IdName
     MyDeck: IdName Option
-    Deleted: StackLeafIds
+    Deleted: ConceptLeafIds
     DeletedCardCount: int
     Collected: UpsertIds Option
 }
 
 type Message =
-    | DeckAddedStack of DeckAddedStack
-    | DeckUpdatedStack of DeckUpdatedStack
-    | DeckDeletedStack of DeckDeletedStack
+    | DeckAddedConcept of DeckAddedConcept
+    | DeckUpdatedConcept of DeckUpdatedConcept
+    | DeckDeletedConcept of DeckDeletedConcept
 with
-    member this.TryDeckAddedStack([<Out>] out: _ byref) =
+    member this.TryDeckAddedConcept([<Out>] out: _ byref) =
         match this with
-        | DeckAddedStack x -> out <- x; true
+        | DeckAddedConcept x -> out <- x; true
         | _ -> false
-    member this.TryDeckUpdatedStack([<Out>] out: _ byref) =
+    member this.TryDeckUpdatedConcept([<Out>] out: _ byref) =
         match this with
-        | DeckUpdatedStack x -> out <- x; true
+        | DeckUpdatedConcept x -> out <- x; true
         | _ -> false
-    member this.TryDeckDeletedStack([<Out>] out: _ byref) =
+    member this.TryDeckDeletedConcept([<Out>] out: _ byref) =
         match this with
-        | DeckDeletedStack x -> out <- x; true
+        | DeckDeletedConcept x -> out <- x; true
         | _ -> false
 
 type Notification = {

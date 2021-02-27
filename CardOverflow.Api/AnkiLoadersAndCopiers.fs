@@ -89,11 +89,11 @@ type AnkiCardWrite = {
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
         let entity = LeafEntity()
         entity.EditSummary <- "Imported from Anki"
-        let stack = StackEntity(AuthorId = this.AuthorId)
-        entity.Stack <- stack
+        let concept = ConceptEntity(AuthorId = this.AuthorId)
+        entity.Concept <- concept
         entity.Branch <-
             BranchEntity(
-                Stack = stack,
+                Concept = concept,
                 AuthorId = this.AuthorId
             )
         entity.File_Leafs <-
@@ -141,7 +141,7 @@ type AnkiCard = {
     member this.CopyToNew i =
         let entity = CardEntity()
         this.CopyToX entity i
-        entity.Stack <- this.Leaf.Branch.Stack
+        entity.Concept <- this.Leaf.Branch.Concept
         entity.Branch <- this.Leaf.Branch
         entity.Leaf <- this.Leaf
         entity.CardSetting <- this.CardSetting

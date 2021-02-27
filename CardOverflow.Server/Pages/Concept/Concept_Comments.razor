@@ -15,7 +15,7 @@
 <div>
   <h4>Comments</h4>
   <ul class="list-group">
-    @foreach (var comment in Stack.Comments) {
+    @foreach (var comment in Concept.Comments) {
       <li class="list-group-item border-0">
         <div>
           @comment.Text
@@ -31,17 +31,17 @@
         </div>
       </li>
     }
-    <Comment StackId=@Stack.Id AddComment=@_AddComment />
+    <Comment ConceptId=@Concept.Id AddComment=@_AddComment />
   </ul>
 </div>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
-  [Parameter] public CardOverflow.Pure.ExploreStack Stack { get; set; }
+  [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
 
   async Task _AddComment(string comment) {
     var user = await UserTask;
-    Stack.Comments = Stack.Comments.Append(new Pure.Comment(user.DisplayName, user.Id, comment, TimeProvider.utcNow, false)).ToList();
+    Concept.Comments = Concept.Comments.Append(new Pure.Comment(user.DisplayName, user.Id, comment, TimeProvider.utcNow, false)).ToList();
   }
 
 }

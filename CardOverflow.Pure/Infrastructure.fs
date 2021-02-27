@@ -12,8 +12,8 @@ type DeckId = Guid<deckId>
 type CardSettingId = Guid<cardSettingId>
     and [<Measure>] cardSettingId
 
-type StackId = Guid<stackId>
-    and [<Measure>] stackId
+type ConceptId = Guid<conceptId>
+    and [<Measure>] conceptId
 type BranchId = Guid<branchId>
     and [<Measure>] branchId
 type LeafId = Guid<leafId>

@@ -18,9 +18,9 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 CREATE TYPE public.notification_type AS ENUM (
-    'DeckAddedStack',
-    'DeckUpdatedStack',
-    'DeckDeletedStack'
+    'DeckAddedConcept',
+    'DeckUpdatedConcept',
+    'DeckDeletedConcept'
 );
 
 
@@ -639,11 +639,11 @@ CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
     DECLARE
         default_branch_id uuid NOT NULL := '00000000-0000-0000-0000-000000000000';
     BEGIN
-        default_branch_id := (SELECT s.default_branch_id FROM stack s WHERE NEW.stack_id = s.id);
+        default_branch_id := (SELECT s.default_branch_id FROM concept s WHERE NEW.concept_id = s.id);
         IF ((NEW.name IS NOT NULL) AND (default_branch_id = NEW.id)) THEN
-            RAISE EXCEPTION 'Default Branches must have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.stack_id), (NEW.id), (NEW.author_id), (NEW.name);
+            RAISE EXCEPTION 'Default Branches must have a null Name. ConceptId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.concept_id), (NEW.id), (NEW.author_id), (NEW.name);
         ELSIF ((NEW.name IS NULL) AND (default_branch_id <> NEW.id)) THEN
-            RAISE EXCEPTION 'Only Default Branches may have a null Name. StackId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.stack_id), (NEW.id), (NEW.author_id), (NEW.name);
+            RAISE EXCEPTION 'Only Default Branches may have a null Name. ConceptId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.concept_id), (NEW.id), (NEW.author_id), (NEW.name);
         END IF;
         RETURN NULL;
     END;
@@ -656,9 +656,9 @@ CREATE FUNCTION public.fn_ctr_card_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc.leaf_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.stack_id = NEW.stack_id) _)) THEN
-            RAISE EXCEPTION 'UserId #% with Card #% and Stack #% tried to have LeafId #%, but they already have LeafId #%',
-            (NEW.user_id), (NEW.id), (NEW.stack_id), (NEW.leaf_id), (SELECT cc.leaf_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.stack_id = NEW.stack_id LIMIT 1);
+        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc.leaf_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.concept_id = NEW.concept_id) _)) THEN
+            RAISE EXCEPTION 'UserId #% with Card #% and Concept #% tried to have LeafId #%, but they already have LeafId #%',
+            (NEW.user_id), (NEW.id), (NEW.concept_id), (NEW.leaf_id), (SELECT cc.leaf_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.concept_id = NEW.concept_id LIMIT 1);
         END IF;
 		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id OR OLD.index <> NEW.index))) THEN
 		IF ((SELECT bi.max_index_inclusive FROM public.leaf bi WHERE bi.id = NEW.leaf_id) < NEW.index) THEN
@@ -705,9 +705,9 @@ CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
     AS $$
     BEGIN
         IF (TG_OP = 'INSERT') THEN
-            UPDATE stack s
+            UPDATE concept s
             SET    default_branch_id = NEW.id
-            WHERE (s.id = NEW.stack_id AND s.default_branch_id = '00000000-0000-0000-0000-000000000000');
+            WHERE (s.id = NEW.concept_id AND s.default_branch_id = '00000000-0000-0000-0000-000000000000');
         END IF;
         RETURN NULL;
     END;
@@ -732,9 +732,9 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             UPDATE	branch b
             SET		users = b.users - 1
             WHERE	b.id = OLD.branch_id;
-            UPDATE  stack stack
-            SET     users = stack.users - 1
-            WHERE stack.id = OLD.stack_id;
+            UPDATE  concept concept
+            SET     users = concept.users - 1
+            WHERE concept.id = OLD.concept_id;
         END IF;
         IF ((TG_OP = 'INSERT' AND NEW.index = 0) OR
             (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id
@@ -745,17 +745,17 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             UPDATE	branch b
             SET		users = b.users + 1
             WHERE	b.id = NEW.branch_id;
-            UPDATE  stack stack
-            SET     users = stack.users + 1
-            WHERE stack.id = NEW.stack_id;
+            UPDATE  concept concept
+            SET     users = concept.users + 1
+            WHERE concept.id = NEW.concept_id;
         END IF;
         new_is_public := COALESCE((SELECT is_public FROM public.deck WHERE id = NEW.deck_id), 'f');
         old_is_public := COALESCE((SELECT is_public FROM public.deck WHERE id = OLD.deck_id), 'f');
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  stack_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedStack', NULL,     NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedConcept', NULL,     NEW.concept_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -765,8 +765,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'UPDATE' AND OLD.leaf_id <> NEW.leaf_id) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  stack_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedStack', NULL,     NEW.stack_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedConcept', NULL,     NEW.concept_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -776,8 +776,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  stack_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
-                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedStack', NULL,     OLD.stack_id, OLD.branch_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedConcept', NULL,     OLD.concept_id, OLD.branch_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -1044,7 +1044,7 @@ CREATE TABLE public.branch (
     id uuid NOT NULL,
     name character varying(64),
     author_id uuid NOT NULL,
-    stack_id uuid NOT NULL,
+    concept_id uuid NOT NULL,
     latest_id uuid NOT NULL,
     users integer NOT NULL,
     is_listed boolean NOT NULL,
@@ -1061,7 +1061,7 @@ ALTER TABLE public.branch OWNER TO postgres;
 CREATE TABLE public.card (
     id uuid NOT NULL,
     user_id uuid NOT NULL,
-    stack_id uuid NOT NULL,
+    concept_id uuid NOT NULL,
     branch_id uuid NOT NULL,
     leaf_id uuid NOT NULL,
     index smallint NOT NULL,
@@ -1089,7 +1089,7 @@ ALTER TABLE public.card OWNER TO postgres;
 CREATE VIEW public.card_is_latest AS
  SELECT a.id,
     a.user_id,
-    a.stack_id,
+    a.concept_id,
     a.branch_id,
     a.leaf_id,
     a.index,
@@ -1181,19 +1181,19 @@ CREATE TABLE public.comment_gromplate (
 
 ALTER TABLE public.comment_gromplate OWNER TO postgres;
 
-CREATE TABLE public.comment_stack (
+CREATE TABLE public.comment_concept (
     id uuid NOT NULL,
-    stack_id uuid NOT NULL,
+    concept_id uuid NOT NULL,
     user_id uuid NOT NULL,
     text character varying(500) NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
     is_dmca boolean NOT NULL,
-    CONSTRAINT "comment_stack. id. is valid" CHECK (public.validate_ulid(id))
+    CONSTRAINT "comment_concept. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
-ALTER TABLE public.comment_stack OWNER TO postgres;
+ALTER TABLE public.comment_concept OWNER TO postgres;
 
 CREATE TABLE public.commield (
     id uuid NOT NULL,
@@ -1341,7 +1341,7 @@ CREATE TABLE public.leaf (
     id uuid NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
-    stack_id uuid NOT NULL,
+    concept_id uuid NOT NULL,
     branch_id uuid NOT NULL,
     is_dmca boolean NOT NULL,
     field_values character varying(10000) NOT NULL,
@@ -1376,8 +1376,8 @@ ALTER TABLE public.relationship OWNER TO postgres;
 CREATE TABLE public.relationship_2_card (
     relationship_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    source_stack_id uuid NOT NULL,
-    target_stack_id uuid NOT NULL,
+    source_concept_id uuid NOT NULL,
+    target_concept_id uuid NOT NULL,
     source_card_id uuid NOT NULL,
     target_card_id uuid NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -1410,7 +1410,7 @@ CREATE TABLE public.notification (
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     type public.notification_type NOT NULL,
     message character varying(4000),
-    stack_id uuid,
+    concept_id uuid,
     branch_id uuid,
     leaf_id uuid,
     deck_id uuid,
@@ -1465,7 +1465,7 @@ CREATE TABLE public.received_notification (
 
 ALTER TABLE public.received_notification OWNER TO postgres;
 
-CREATE TABLE public.stack (
+CREATE TABLE public.concept (
     id uuid NOT NULL,
     author_id uuid NOT NULL,
     users integer NOT NULL,
@@ -1476,16 +1476,16 @@ CREATE TABLE public.stack (
     modified timestamp with time zone,
     tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     tags_count integer[] DEFAULT '{}'::integer[] NOT NULL,
-    CONSTRAINT "stack. id. is valid" CHECK (public.validate_ulid(id))
+    CONSTRAINT "concept. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
-ALTER TABLE public.stack OWNER TO postgres;
+ALTER TABLE public.concept OWNER TO postgres;
 
-CREATE VIEW public.stack_relationship_count AS
- SELECT sac.stack_id AS source_stack_id,
-    tac.stack_id AS target_stack_id,
-    unnest(ARRAY[sac.stack_id, tac.stack_id]) AS stack_id,
+CREATE VIEW public.concept_relationship_count AS
+ SELECT sac.concept_id AS source_concept_id,
+    tac.concept_id AS target_concept_id,
+    unnest(ARRAY[sac.concept_id, tac.concept_id]) AS concept_id,
     ( SELECT r.name
            FROM public.relationship r
           WHERE (r.id = rac.relationship_id)
@@ -1495,10 +1495,10 @@ CREATE VIEW public.stack_relationship_count AS
      JOIN public.card sac ON ((rac.source_card_id = sac.id)))
      JOIN public.card tac ON ((rac.target_card_id = tac.id)))
   WHERE ((sac.card_state <> 3) AND (tac.card_state <> 3))
-  GROUP BY sac.stack_id, tac.stack_id, rac.relationship_id;
+  GROUP BY sac.concept_id, tac.concept_id, rac.relationship_id;
 
 
-ALTER TABLE public.stack_relationship_count OWNER TO postgres;
+ALTER TABLE public.concept_relationship_count OWNER TO postgres;
 
 CREATE TABLE public.user_2_grompleaf (
     user_id uuid NOT NULL,
@@ -1520,14 +1520,14 @@ CREATE TABLE public.vote_2_comment_gromplate (
 
 ALTER TABLE public.vote_2_comment_gromplate OWNER TO postgres;
 
-CREATE TABLE public.vote_2_comment_stack (
-    comment_stack_id uuid NOT NULL,
+CREATE TABLE public.vote_2_comment_concept (
+    comment_concept_id uuid NOT NULL,
     user_id uuid NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
-ALTER TABLE public.vote_2_comment_stack OWNER TO postgres;
+ALTER TABLE public.vote_2_comment_concept OWNER TO postgres;
 
 CREATE TABLE public.vote_2_feedback (
     feedback_id uuid NOT NULL,
@@ -1773,7 +1773,7 @@ ALTER TABLE ONLY public.alpha_beta_key
 
 
 ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT branch_id_stack_id_key UNIQUE (id, stack_id);
+    ADD CONSTRAINT branch_id_concept_id_key UNIQUE (id, concept_id);
 
 
 ALTER TABLE ONLY public.branch
@@ -1781,7 +1781,7 @@ ALTER TABLE ONLY public.branch
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT card_id_stack_id_user_id_key UNIQUE (id, stack_id, user_id);
+    ADD CONSTRAINT card_id_concept_id_user_id_key UNIQUE (id, concept_id, user_id);
 
 
 ALTER TABLE ONLY public.card
@@ -1812,8 +1812,8 @@ ALTER TABLE ONLY public.comment_gromplate
     ADD CONSTRAINT comment_gromplate_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.comment_stack
-    ADD CONSTRAINT comment_stack_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.comment_concept
+    ADD CONSTRAINT comment_concept_pkey PRIMARY KEY (id);
 
 
 ALTER TABLE ONLY public.commield
@@ -1869,7 +1869,7 @@ ALTER TABLE ONLY public.leaf
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_id_stack_id_key UNIQUE (id, stack_id);
+    ADD CONSTRAINT leaf_id_concept_id_key UNIQUE (id, concept_id);
 
 
 ALTER TABLE ONLY public.leaf
@@ -1893,15 +1893,15 @@ ALTER TABLE ONLY public.received_notification
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT relationship_2_card_pkey PRIMARY KEY (source_stack_id, target_stack_id, relationship_id, user_id);
+    ADD CONSTRAINT relationship_2_card_pkey PRIMARY KEY (source_concept_id, target_concept_id, relationship_id, user_id);
 
 
 ALTER TABLE ONLY public.relationship
     ADD CONSTRAINT relationship_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT stack_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.concept
+    ADD CONSTRAINT concept_pkey PRIMARY KEY (id);
 
 
 ALTER TABLE ONLY public.user_2_grompleaf
@@ -1912,8 +1912,8 @@ ALTER TABLE ONLY public.vote_2_comment_gromplate
     ADD CONSTRAINT vote_2_comment_gromplate_pkey PRIMARY KEY (comment_gromplate_id, user_id);
 
 
-ALTER TABLE ONLY public.vote_2_comment_stack
-    ADD CONSTRAINT vote_2_comment_stack_pkey PRIMARY KEY (comment_stack_id, user_id);
+ALTER TABLE ONLY public.vote_2_comment_concept
+    ADD CONSTRAINT vote_2_comment_concept_pkey PRIMARY KEY (comment_concept_id, user_id);
 
 
 ALTER TABLE ONLY public.vote_2_feedback
@@ -1923,7 +1923,7 @@ ALTER TABLE ONLY public.vote_2_feedback
 CREATE UNIQUE INDEX "alpha_beta_key. key. uq idx" ON public.alpha_beta_key USING btree (key);
 
 
-CREATE UNIQUE INDEX "branch. stack_id, upper(name). uq idx" ON public.branch USING btree (stack_id, upper((name)::text));
+CREATE UNIQUE INDEX "branch. concept_id, upper(name). uq idx" ON public.branch USING btree (concept_id, upper((name)::text));
 
 
 CREATE INDEX "card. card_setting_id. idx" ON public.card USING btree (card_setting_id);
@@ -1944,7 +1944,7 @@ CREATE INDEX "card. user_id, branch_id. idx" ON public.card USING btree (user_id
 CREATE UNIQUE INDEX "card. user_id, leaf_id, index. uq idx" ON public.card USING btree (user_id, leaf_id, index);
 
 
-CREATE INDEX "card. user_id, stack_id. idx" ON public.card USING btree (user_id, stack_id);
+CREATE INDEX "card. user_id, concept_id. idx" ON public.card USING btree (user_id, concept_id);
 
 
 CREATE INDEX "card. user_id. idx" ON public.card USING btree (user_id);
@@ -1968,10 +1968,10 @@ CREATE INDEX "comment_gromplate. gromplate_id. idx" ON public.comment_gromplate 
 CREATE INDEX "comment_gromplate. user_id. idx" ON public.comment_gromplate USING btree (user_id);
 
 
-CREATE INDEX "comment_stack. stack_id. idx" ON public.comment_stack USING btree (stack_id);
+CREATE INDEX "comment_concept. concept_id. idx" ON public.comment_concept USING btree (concept_id);
 
 
-CREATE INDEX "comment_stack. user_id. idx" ON public.comment_stack USING btree (user_id);
+CREATE INDEX "comment_concept. user_id. idx" ON public.comment_concept USING btree (user_id);
 
 
 CREATE INDEX "commield. author_id. idx" ON public.commield USING btree (author_id);
@@ -2046,7 +2046,7 @@ CREATE INDEX "relationship_2_card. source_card_id. idx" ON public.relationship_2
 CREATE INDEX "relationship_2_card. target_card_id. idx" ON public.relationship_2_card USING btree (target_card_id);
 
 
-CREATE INDEX "stack. author_id. idx" ON public.stack USING btree (author_id);
+CREATE INDEX "concept. author_id. idx" ON public.concept USING btree (author_id);
 
 
 CREATE INDEX "user. tsv. idx" ON public.padawan USING gin (tsv);
@@ -2061,7 +2061,7 @@ CREATE INDEX "user_2_grompleaf. grompleaf_id. idx" ON public.user_2_grompleaf US
 CREATE INDEX "vote_2_comment_gromplate. user_id. idx" ON public.vote_2_comment_gromplate USING btree (user_id);
 
 
-CREATE INDEX "vote_2_comment_stack. user_id. idx" ON public.vote_2_comment_stack USING btree (user_id);
+CREATE INDEX "vote_2_comment_concept. user_id. idx" ON public.vote_2_comment_concept USING btree (user_id);
 
 
 CREATE INDEX "vote_2_feedback. user_id. idx" ON public.vote_2_feedback USING btree (user_id);
@@ -2111,7 +2111,7 @@ ALTER TABLE ONLY public.branch
 
 
 ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT "branch to stack. stack_id. FK" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "branch to concept. concept_id. FK" FOREIGN KEY (concept_id) REFERENCES public.concept(id);
 
 
 ALTER TABLE ONLY public.branch
@@ -2123,7 +2123,7 @@ ALTER TABLE ONLY public.card
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to branch. stack_id, branch_id. FK" FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id);
+    ADD CONSTRAINT "card to branch. concept_id, branch_id. FK" FOREIGN KEY (concept_id, branch_id) REFERENCES public.branch(concept_id, id);
 
 
 ALTER TABLE ONLY public.card
@@ -2143,7 +2143,7 @@ ALTER TABLE ONLY public.card
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to stack. stack_id. FK" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "card to concept. concept_id. FK" FOREIGN KEY (concept_id) REFERENCES public.concept(id);
 
 
 ALTER TABLE ONLY public.card
@@ -2174,12 +2174,12 @@ ALTER TABLE ONLY public.comment_gromplate
     ADD CONSTRAINT "comment_gromplate to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.comment_stack
-    ADD CONSTRAINT "comment_stack to stack. stack_id. FK" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+ALTER TABLE ONLY public.comment_concept
+    ADD CONSTRAINT "comment_concept to concept. concept_id. FK" FOREIGN KEY (concept_id) REFERENCES public.concept(id);
 
 
-ALTER TABLE ONLY public.comment_stack
-    ADD CONSTRAINT "comment_stack to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+ALTER TABLE ONLY public.comment_concept
+    ADD CONSTRAINT "comment_concept to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.commield
@@ -2255,7 +2255,7 @@ ALTER TABLE ONLY public.leaf
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to branch. stack_id, branch_id. FK" FOREIGN KEY (stack_id, branch_id) REFERENCES public.branch(stack_id, id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "leaf to branch. concept_id, branch_id. FK" FOREIGN KEY (concept_id, branch_id) REFERENCES public.branch(concept_id, id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.leaf
@@ -2263,7 +2263,7 @@ ALTER TABLE ONLY public.leaf
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to branch. branch_id, stack_id. FK" FOREIGN KEY (branch_id, stack_id) REFERENCES public.branch(id, stack_id);
+    ADD CONSTRAINT "notification to branch. branch_id, concept_id. FK" FOREIGN KEY (branch_id, concept_id) REFERENCES public.branch(id, concept_id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2287,7 +2287,7 @@ ALTER TABLE ONLY public.notification
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to leaf. leaf_id, stack_id. FK" FOREIGN KEY (leaf_id, stack_id) REFERENCES public.leaf(id, stack_id);
+    ADD CONSTRAINT "notification to leaf. leaf_id, concept_id. FK" FOREIGN KEY (leaf_id, concept_id) REFERENCES public.leaf(id, concept_id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2295,7 +2295,7 @@ ALTER TABLE ONLY public.notification
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to stack. stack_id. FK" FOREIGN KEY (stack_id) REFERENCES public.stack(id);
+    ADD CONSTRAINT "notification to concept. concept_id. FK" FOREIGN KEY (concept_id) REFERENCES public.concept(id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2323,23 +2323,23 @@ ALTER TABLE ONLY public.relationship_2_card
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT "rlnship_2_card to card. sourceCardId, userId, sourceStackId. FK" FOREIGN KEY (source_card_id, user_id, source_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
+    ADD CONSTRAINT "rlnship_2_card to card. sourceCardId, userId, sourceConceptId. FK" FOREIGN KEY (source_card_id, user_id, source_concept_id) REFERENCES public.card(id, user_id, concept_id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY public.relationship_2_card
-    ADD CONSTRAINT "rlnship_2_card to card. targetCardId, userId, targetStackId. FK" FOREIGN KEY (target_card_id, user_id, target_stack_id) REFERENCES public.card(id, user_id, stack_id) ON DELETE CASCADE;
+    ADD CONSTRAINT "rlnship_2_card to card. targetCardId, userId, targetConceptId. FK" FOREIGN KEY (target_card_id, user_id, target_concept_id) REFERENCES public.card(id, user_id, concept_id) ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT "stack to branch. default_branch_id, id. FK" FOREIGN KEY (default_branch_id, id) REFERENCES public.branch(id, stack_id) DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE ONLY public.concept
+    ADD CONSTRAINT "concept to branch. default_branch_id, id. FK" FOREIGN KEY (default_branch_id, id) REFERENCES public.branch(id, concept_id) DEFERRABLE INITIALLY DEFERRED;
 
 
-ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT "stack to leaf. copy_source_id. FK" FOREIGN KEY (copy_source_id) REFERENCES public.leaf(id);
+ALTER TABLE ONLY public.concept
+    ADD CONSTRAINT "concept to leaf. copy_source_id. FK" FOREIGN KEY (copy_source_id) REFERENCES public.leaf(id);
 
 
-ALTER TABLE ONLY public.stack
-    ADD CONSTRAINT "stack to user. author_id. FK" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
+ALTER TABLE ONLY public.concept
+    ADD CONSTRAINT "concept to user. author_id. FK" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.padawan
@@ -2370,12 +2370,12 @@ ALTER TABLE ONLY public.vote_2_comment_gromplate
     ADD CONSTRAINT "vote_2_comment_gromplate to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.vote_2_comment_stack
-    ADD CONSTRAINT "vote_2_comment_stack to comment_stack. comment_stack_id. FK" FOREIGN KEY (comment_stack_id) REFERENCES public.comment_stack(id);
+ALTER TABLE ONLY public.vote_2_comment_concept
+    ADD CONSTRAINT "vote_2_comment_concept to comment_concept. comment_concept_id. FK" FOREIGN KEY (comment_concept_id) REFERENCES public.comment_concept(id);
 
 
-ALTER TABLE ONLY public.vote_2_comment_stack
-    ADD CONSTRAINT "vote_2_comment_stack to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+ALTER TABLE ONLY public.vote_2_comment_concept
+    ADD CONSTRAINT "vote_2_comment_concept to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.vote_2_feedback

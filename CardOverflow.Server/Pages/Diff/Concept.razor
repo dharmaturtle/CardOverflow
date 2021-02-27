@@ -1,6 +1,6 @@
-@page "/stackdiff/{A_LeafId:guid}"
-@page "/stackdiff/{A_LeafId:guid}/{B_LeafId:guid}"
-@page "/stackdiff/{A_LeafId:guid}/{ATitle}/{B_LeafId:guid}/{BTitle}"
+@page "/conceptdiff/{A_LeafId:guid}"
+@page "/conceptdiff/{A_LeafId:guid}/{B_LeafId:guid}"
+@page "/conceptdiff/{A_LeafId:guid}/{ATitle}/{B_LeafId:guid}/{BTitle}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -42,7 +42,7 @@
         <ResizingIframeBranch LeafId=@A_LeafId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="leaf/@A_LeafId">
-        @(ATitle ?? "Old Stack")
+        @(ATitle ?? "Old Concept")
       </a>
       @if (_a.Grompleaf.Id != _b.Grompleaf.Id) {
         <span>
@@ -53,8 +53,8 @@
         </a>
       }
       @if (_aIsCollected && !_bIsCollected && _user.IsAuthenticated) {
-        <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewStack>
-          Get New Stack
+        <button class="float-right btn btn-sm btn-success" @onclick=@_GetNewConcept>
+          Get New Concept
         </button>
       }
     </div>
@@ -63,7 +63,7 @@
         <ResizingIframeBranch LeafId=@B_LeafId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="leaf/@B_LeafId">
-        @(BTitle ?? "New Stack")
+        @(BTitle ?? "New Concept")
       </a>
       @if (_a.Grompleaf.Id != _b.Grompleaf.Id) {
         <span>
@@ -100,12 +100,12 @@
       <BSTab>
         <BSTabLabel>
           Holistic detailed
-          @if (_stackZips().Any(x => x.AFront != x.BFront || x.ABack != x.BBack)) {
+          @if (_conceptZips().Any(x => x.AFront != x.BFront || x.ABack != x.BBack)) {
             <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
           }
         </BSTabLabel>
         <BSTabContent>
-          @foreach (var zip in _stackZips()) {
+          @foreach (var zip in _conceptZips()) {
             <TextDiff OldText=@zip.AFront NewText=@zip.BFront CollapseContent=true MaxHeight="-1">
               <Header>
                 <h6 style="padding: 12px; margin: 0px;">
@@ -256,7 +256,7 @@
   private string _gromplateFields(LeafView view) => view.Grompleaf.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(LeafView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
-  private List<(string AFront, string ABack, string BFront, string BBack)> _stackZips() =>
+  private List<(string AFront, string ABack, string BFront, string BBack)> _conceptZips() =>
     _a.FrontBackFrontSynthBackSynth.ZipLongest(_b.FrontBackFrontSynthBackSynth, (a, b) =>
       (AFront: a?.Item1 ?? "",
         ABack: a?.Item2 ?? "",
@@ -264,7 +264,7 @@
         BBack: b?.Item2 ?? ""
       )).ToList();
   private List<(string Front, string Back)> _holisticDiffs() =>
-    _stackZips().Select(x =>
+    _conceptZips().Select(x =>
         (ViewLogic.diff(x.AFront, x.BFront),
         ViewLogic.diff(x.ABack, x.BBack))
       ).ToList();
@@ -303,7 +303,7 @@
     await base.OnParametersSetAsync();
     _user = await UserTask;
     if (B_LeafId == Guid.Empty) {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.leafWithLatest(db, A_LeafId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.leafWithLatest(db, A_LeafId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected, B_LeafId) = x.ResultValue;
         _OnOk();
@@ -311,7 +311,7 @@
         _OnError(x.ErrorValue);
       }
     } else {
-      var x = await DbExecutor.QueryAsync(db => StackViewRepository.leafPair(db, A_LeafId, B_LeafId, _user.Id));
+      var x = await DbExecutor.QueryAsync(db => ConceptViewRepository.leafPair(db, A_LeafId, B_LeafId, _user.Id));
       if (x.IsOk) {
         (_a, _aIsCollected, _b, _bIsCollected) = x.ResultValue;
         _OnOk();
@@ -321,8 +321,8 @@
     }
   }
 
-  private async Task _GetNewStack() {
-    await DbExecutor.CommandAsync(db => StackRepository.CollectCard(db, _user.Id, B_LeafId, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
+  private async Task _GetNewConcept() {
+    await DbExecutor.CommandAsync(db => ConceptRepository.CollectCard(db, _user.Id, B_LeafId, Gulid.Create(_b.MaxIndexInclusive).ToFList()));
     var collectedIds = await DbExecutor.QueryAsync(db => CardRepository.getCollected(db, _user.Id, new List<Guid> { A_LeafId, B_LeafId }));
     _aIsCollected = collectedIds.Contains(A_LeafId);
     _bIsCollected = collectedIds.Contains(B_LeafId);

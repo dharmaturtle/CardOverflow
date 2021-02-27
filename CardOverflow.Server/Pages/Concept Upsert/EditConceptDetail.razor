@@ -15,21 +15,21 @@
 @if (Gromplates == null) {
   <p><em>Loading...</em></p>
 } else {
-  <EditForm Model=@EditStack OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
+  <EditForm Model=@EditConcept OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
     <fieldset disabled=@_isDisabled>
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @if (EditStack.Kind.IsNewBranch_Title || EditStack.Kind.IsNewLeaf_Title) {
+            @if (EditConcept.Kind.IsNewBranch_Title || EditConcept.Kind.IsNewLeaf_Title) {
               <div class="input-group">
                 <label for="branchTitleInput" class="col-form-label mr-2">
                   Branch Title:
                 </label>
-                <InputText @bind-Value=@EditStack.Title class="form-control" id="branchTitleInput" />
+                <InputText @bind-Value=@EditConcept.Title class="form-control" id="branchTitleInput" />
               </div>
             }
-            @foreach (var field in EditStack.FieldValues) {
-              <EditStackField Field=@field ValueUpdated=@(x => { field.Value = x; trySetIndexCount(); }) IsDisabled=@_isDisabled />
+            @foreach (var field in EditConcept.FieldValues) {
+              <EditConceptField Field=@field ValueUpdated=@(x => { field.Value = x; trySetIndexCount(); }) IsDisabled=@_isDisabled />
             }
           </div>
           <div class="col-sm">
@@ -53,14 +53,14 @@
                 }
               </select>
             </div>
-            @if (EditStack.Backs.IsOk) {
-              @foreach (var (back, i) in EditStack.Backs.ResultValue.Select((x, i) => (x, i))) {
+            @if (EditConcept.Backs.IsOk) {
+              @foreach (var (back, i) in EditConcept.Backs.ResultValue.Select((x, i) => (x, i))) {
                 <iframe sandbox="allow-scripts" srcdoc=@back style="height: @(80/_indexCount)vh; width: 100%; resize: vertical;"></iframe>
-                <EditStackDetail_Card Command=@_ccCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateCardCommand(i, command)) />
+                <EditConceptDetail_Card Command=@_ccCommands.ElementAtOrDefault(i) UpdateCommand=@(command => _updateCardCommand(i, command)) />
               }
             } else {
               <span>
-                Error: @EditStack.Backs.ErrorValue
+                Error: @EditConcept.Backs.ErrorValue
               </span>
             }
           </div>
@@ -68,23 +68,23 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditStack.Kind.TryGetCopySourceLeafId(out var leafId)) {
+          @if (EditConcept.Kind.TryGetCopySourceLeafId(out var leafId)) {
             <span>Copied from</span>
             <a href="leaf/@leafId">
               Card
             </a>
           }
-          @if (EditStack.Kind.IsNewBranch_Title) {
+          @if (EditConcept.Kind.IsNewBranch_Title) {
             <span>Branched from</span>
-            <a href="stack/@EditStack.Ids.StackId">
-              Stack
+            <a href="concept/@EditConcept.Ids.ConceptId">
+              Concept
             </a>
           }
         </div>
         <div class="col-sm">
           <div class="row mx-1">
             <span class="btn-group w-100">
-              <InputText @bind-Value=@EditStack.EditSummary class="form-control w-100" placeholder="Edit Summary" />
+              <InputText @bind-Value=@EditConcept.EditSummary class="form-control w-100" placeholder="Edit Summary" />
               <button type="button" class="btn btn-primary" @onclick=@UpdateCard>Save</button>
             </span>
           </div>
@@ -94,7 +94,7 @@
             @if (_savedBranchId != default) {
               <span>
                 Saved! Link to
-                <a href="stack?branch=@_savedBranchId">
+                <a href="concept?branch=@_savedBranchId">
                   card.
                 </a>
               </span>
@@ -107,8 +107,8 @@
 }
 
 @code {
-  [Parameter] public ViewEditStackCommand EditStack { get; set; }
-  [Parameter] public bool NewEditStackOnSave { get; set; }
+  [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
+  [Parameter] public bool NewEditConceptOnSave { get; set; }
   [Parameter] public List<ViewGromplateWithAllLeafs> Gromplates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
@@ -130,34 +130,34 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (Gromplates == null) {
-      Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditStack.Grompleaf.GromplateId));
+      Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditConcept.Grompleaf.GromplateId));
     }
-    if (EditStack == null) {
-      EditStack = new ViewEditStackCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+    if (EditConcept == null) {
+      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
     }
-    UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
+    UpdateSelectedGromplate(EditConcept.Grompleaf.GromplateId, EditConcept.Grompleaf.Id);
     StateHasChanged();
   }
 
   //private void _SetOption(int newId) {
-  //  EditStack.EditCard.CardSettingId = newId;
+  //  EditConcept.EditCard.CardSettingId = newId;
   //}
 
   async Task UpdateCard() {
-    if (EditStack.Backs.IsOk) {
-      if (EditStack.Kind.IsNewCopy_SourceLeafId_TagIds) {
-        EditStack.Ids.CardIds = FSharpList<Guid>.Empty;
+    if (EditConcept.Backs.IsOk) {
+      if (EditConcept.Kind.IsNewCopy_SourceLeafId_TagIds) {
+        EditConcept.Ids.CardIds = FSharpList<Guid>.Empty;
       }
-      EditStack.Ids.CardIds = Ulid.resizeList(EditStack.Backs.ResultValue.Count(), EditStack.Ids.CardIds);
+      EditConcept.Ids.CardIds = Ulid.resizeList(EditConcept.Backs.ResultValue.Count(), EditConcept.Ids.CardIds);
       _isDisabled = true;
-      var result = await DbExecutor.QueryAsync(db => SanitizeStackRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditStack));
+      var result = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditConcept));
       if (result.IsOk) {
         ToastService.ShowInfo("Saved!");
         _savedBranchId = result.ResultValue;
-        if (NewEditStackOnSave) {
-          var fieldValues = EditStack.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-          EditStack = new ViewEditStackCommand(EditStack.EditSummary, fieldValues, EditStack.Grompleaf, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
-          UpdateSelectedGromplate(EditStack.Grompleaf.GromplateId, EditStack.Grompleaf.Id);
+        if (NewEditConceptOnSave) {
+          var fieldValues = EditConcept.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
+          EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.Grompleaf, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+          UpdateSelectedGromplate(EditConcept.Grompleaf.GromplateId, EditConcept.Grompleaf.Id);
           _isDisabled = false;
         }
       } else {
@@ -178,9 +178,9 @@
 
   void UpdateSelectedGrompleaf(Guid leafId) {
     _selectedGrompleafId = leafId;
-    EditStack.Grompleaf = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
-    var valuesByField = EditStack.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
-    EditStack.FieldValues = EditStack.Grompleaf.Fields
+    EditConcept.Grompleaf = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
+    var valuesByField = EditConcept.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
+    EditConcept.FieldValues = EditConcept.Grompleaf.Fields
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)
@@ -200,7 +200,7 @@
 
   private int _indexCount = 1;
   private void trySetIndexCount() {
-    var newIndexCount = EditStack.Backs.ResultValue.Count();
+    var newIndexCount = EditConcept.Backs.ResultValue.Count();
     if (_indexCount != newIndexCount) {
       _indexCount = newIndexCount;
     }

@@ -2,7 +2,7 @@
 @using CardOverflow.Entity
 @using CardOverflow.Debug
 @using CardOverflow.Pure
-@using CardOverflow.Server.Pages.Stack
+@using CardOverflow.Server.Pages.Concept
 @using CardOverflow.Api
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
@@ -10,7 +10,7 @@
 @using ThoughtDesign.WebLibrary
 @using Microsoft.FSharp.Collections
 
-<a href="stack?leaf=@LeafId">
+<a href="concept?leaf=@LeafId">
   <HoverPreview Padding="0">
     <ResizingIframe Leaf=@((LeafId, Index)) Back />
   </HoverPreview>

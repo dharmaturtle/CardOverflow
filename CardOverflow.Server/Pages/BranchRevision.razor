@@ -14,8 +14,8 @@
   <p><em>Loading...</em></p>
 } else {
   <div class="d-flex justify-content-between">
-    <a href="stack/@_revision.SortedMeta.First().StackId">
-      Return to Stack
+    <a href="concept/@_revision.SortedMeta.First().ConceptId">
+      Return to Concept
     </a>
     <h3>
       @if (_revision.Name == null) {
@@ -50,7 +50,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     var user = await UserTask;
-    await DbExecutor.QueryAsync(db => StackRepository.Revisions(db, user.Id, Id)).Match(ToastService, 
+    await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, user.Id, Id)).Match(ToastService, 
       x => _revision = x);
     StateHasChanged();
   }
