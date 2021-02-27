@@ -91,8 +91,8 @@ module Concept =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module Ztack =
-    open Ztack
+module Stack =
+    open Stack
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
@@ -143,7 +143,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'     id)
                 | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'     id)
                 | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> tableClient.UpsertTemplate' id)
-                | "Ztack"    -> events |> Array.map (Ztack   .Events.codec.TryDecode >> Option.get >> tableClient.UpsertZtack'    id)
+                | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> tableClient.UpsertStack'    id)
                 | _ -> failwith $"Unsupported category: {category}"
                 |> Async.Parallel
                 |> Async.RunSynchronously
@@ -154,8 +154,8 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Concept.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
-        container.RegisterSingleton<Ztack.Writer>(fun () ->
-            Ztack.memoryStore
+        container.RegisterSingleton<Stack.Writer>(fun () ->
+            Stack.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
         container.RegisterSingleton<Branch.Writer>(fun () ->
@@ -187,8 +187,8 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.DeckWriter () =
         container.GetInstance<Deck.Writer>()
     
-    member _.ZtackWriter () =
-        container.GetInstance<Ztack.Writer>()
+    member _.StackWriter () =
+        container.GetInstance<Stack.Writer>()
     
     member _.ConceptWriter () =
         container.GetInstance<Concept.Writer>()
@@ -204,7 +204,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         |> (container.GetInstance<VolatileStore<byte[]>>().TryLoad >> Option.get)
         |> Array.map (codec.TryDecode >> Option.get)
     member this.ConceptEvents  id = this.events(Concept .streamName id, Concept .Events.codec)
-    member this.ZtackEvents    id = this.events(Ztack   .streamName id, Ztack   .Events.codec)
+    member this.StackEvents    id = this.events(Stack   .streamName id, Stack   .Events.codec)
     member this.BranchEvents   id = this.events(Branch  .streamName id, Branch  .Events.codec)
     member this.UserEvents     id = this.events(User    .streamName id, User    .Events.codec)
     member this.DeckEvents     id = this.events(Deck    .streamName id, Deck    .Events.codec)

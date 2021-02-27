@@ -46,7 +46,7 @@ type TableClient(connectionString, tableName) =
     let getPartitionRow (summary: obj) =
         match summary with
         | :? Domain.Concept .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Ztack   .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Stack   .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Branch  .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Branch     .LeafSummary as x -> string x.Id, string x.Id
         | :? Domain.User    .Events.Summary as x -> string x.Id, string x.Id
@@ -196,15 +196,15 @@ type TableClient(connectionString, tableName) =
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
 
-    member this.UpsertZtack' (ztackId: string) e =
+    member this.UpsertStack' (stackId: string) e =
         match e with
-        | Ztack.Events.Created summary ->
+        | Stack.Events.Created summary ->
             this.InsertOrReplace summary |>% ignore
-        | Ztack.Events.TagsChanged e ->
-            this.Update (Ztack.Fold.evolveTagsChanged e) ztackId
-    member this.UpsertZtack (ztackId: ZtackId) =
-        ztackId.ToString() |> this.UpsertZtack'
-    member this.GetZtack (ztackId: string) =
-        this.Get<Ztack.Events.Summary> ztackId
-    member this.GetZtack (ztackId: ZtackId) =
-        ztackId.ToString() |> this.GetZtack
+        | Stack.Events.TagsChanged e ->
+            this.Update (Stack.Fold.evolveTagsChanged e) stackId
+    member this.UpsertStack (stackId: StackId) =
+        stackId.ToString() |> this.UpsertStack'
+    member this.GetStack (stackId: string) =
+        this.Get<Stack.Events.Summary> stackId
+    member this.GetStack (stackId: StackId) =
+        stackId.ToString() |> this.GetStack

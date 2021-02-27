@@ -18,8 +18,8 @@ type BranchId = Guid<branchId>
     and [<Measure>] branchId
 type LeafId = Guid<leafId>
     and [<Measure>] leafId
-type ZtackId = Guid<ztackId>
-    and [<Measure>] ztackId
+type StackId = Guid<stackId>
+    and [<Measure>] stackId
 type SubtemplateName = string<subtemplateName>
     and [<Measure>] subtemplateName
 

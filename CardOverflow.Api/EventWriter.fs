@@ -174,8 +174,8 @@ module Template =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, tableClient)
 
-module Ztack =
-    open Ztack
+module Stack =
+    open Stack
 
     type Writer internal (resolve, tableClient: TableClient) =
         let resolve templateId : Stream<_, _> = resolve templateId

@@ -1,4 +1,4 @@
-module Domain.Ztack
+module Domain.Stack
 
 open FsCodec
 open FsCodec.NewtonsoftJson
@@ -7,7 +7,7 @@ open TypeShape
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 
-let streamName (id: ZtackId) = StreamName.create "Ztack" (string id)
+let streamName (id: StackId) = StreamName.create "Stack" (string id)
 
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
@@ -26,7 +26,7 @@ module Events =
           IsLapsed: bool
           History: Review list }
     type Details =
-        | Shadow of ZtackId * SubtemplateName // medTODO don't allow more than 1 hop to prevent infinite loop
+        | Shadow of StackId * SubtemplateName // medTODO don't allow more than 1 hop to prevent infinite loop
         | ShadowableDetails of ShadowableDetails
     type Card =
         { SubtemplateName: SubtemplateName
@@ -38,7 +38,7 @@ module Events =
           State: CardState
           Tags: string Set }
     type Summary =
-        { Id: ZtackId
+        { Id: StackId
           AuthorId: UserId
           ExpressionRevisionId: LeafId
           FrontPersonalField: string
@@ -113,7 +113,7 @@ let validateTagsChanged (summary: Events.Summary) callerId (tagsChanged: Events.
 
 let decideCreate (summary: Events.Summary) doesRevisionExist state =
     match state with
-    | Fold.State.Active s -> Error $"Ztack '{s.Id}' already exists."
+    | Fold.State.Active s -> Error $"Stack '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSummary summary doesRevisionExist
     |> addEvent (Events.Created summary)
 

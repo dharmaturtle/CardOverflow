@@ -24,7 +24,7 @@ module SeqGen =
 
 let tagsGen =
     GenX.auto<string>
-    |> Gen.filter (Ztack.validateTag >> Result.isOk)
+    |> Gen.filter (Stack.validateTag >> Result.isOk)
     |> Gen.list (Range.linear 0 30)
     |> Gen.map Set.ofList
 
