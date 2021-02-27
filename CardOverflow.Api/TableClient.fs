@@ -151,6 +151,10 @@ type TableClient(connectionString, tableName) =
         this.Get<Branch.Events.Summary> branchId
     member this.GetBranch (branchId: BranchId) =
         branchId.ToString() |> this.GetBranch
+    member this.GetExpressionRevision (expressionRevisionId: string) =
+        this.Get<Branch.LeafSummary> expressionRevisionId
+    member this.GetExpressionRevision (expressionRevisionId: LeafId) =
+        expressionRevisionId.ToString() |> this.GetExpressionRevision
     
     member this.UpsertUser' (userId: string) e =
         match e with

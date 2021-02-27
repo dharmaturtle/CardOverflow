@@ -24,7 +24,7 @@ let ``Create summary roundtrips`` (templateSummary: Template.Events.Summary) = a
 
     do! templateWriter.Create templateSummary
 
-    // event store roundtrips
+    // memory store roundtrips
     templateSummary.Id
     |> c.TemplateEvents
     |> Seq.exactlyOne

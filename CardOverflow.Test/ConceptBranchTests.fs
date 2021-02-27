@@ -13,17 +13,18 @@ open FsCodec
 open EventWriter
 open Hedgehog
 open CardOverflow.Api
+open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ConceptBranchWriter.Upsert persists both summaries`` (authorId, command, tags) =
+let ``ConceptBranchWriter.Upsert persists both summaries`` (authorId, command, tags) = asyncResult {
     let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
     let c = TestEsContainer()
     let conceptBranchWriter = c.ConceptBranchWriter()
     let expectedConcept, expectedBranch = ConceptBranch.conceptBranch authorId command None "Default"
     
-    conceptBranchWriter.Upsert(authorId, command)
+    do! conceptBranchWriter.Upsert(authorId, command)
     
-    |> RunSynchronously.OkEquals ()
+    // memory store roundtrips
     % expectedConcept.Id
     |> c.ConceptEvents
     |> Assert.Single
@@ -33,27 +34,49 @@ let ``ConceptBranchWriter.Upsert persists both summaries`` (authorId, command, t
     |> Assert.Single
     |> Assert.equal (Branch.Events.Created expectedBranch)
     
+    // azure table roundtrips
+    let! actual, _ = c.TableClient().GetConcept (string command.Ids.ConceptId)
+    Assert.equal expectedConcept actual
+    let! actual, _ = c.TableClient().GetBranch (string command.Ids.BranchId)
+    Assert.equal expectedBranch actual
+    let! actual, _ = c.TableClient().GetExpressionRevision (string command.Ids.LeafId)
+    Assert.equal (Branch.toLeafSummary expectedBranch) actual
+    }
+    
 [<StandardProperty>]
-let ``ConceptBranchWriter.Upsert persists edit`` (authorId, command1, command2, tags, title) =
+let ``ConceptBranchWriter.Upsert persists edit`` (authorId, command1, command2, tags, title) = asyncResult {
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
     let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = { command1.Ids with LeafId = command2.Ids.LeafId } }
     let c = TestEsContainer()
     let conceptBranchWriter = c.ConceptBranchWriter()
-    let expectedBranch : Branch.Events.Edited =
+    let expectedConcept, expectedBanchSummary1 = ConceptBranch.conceptBranch authorId command1 None "Default"
+    let expectedBranchEdit : Branch.Events.Edited =
         let _, b = ConceptBranch.conceptBranch authorId command2 None title
         { LeafId             = b.LeafIds.Head
           Title              = b.Title
           TemplateRevisionId = b.TemplateRevisionId
           FieldValues        = b.FieldValues
           EditSummary        = b.EditSummary }
-    conceptBranchWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
+    do! conceptBranchWriter.Upsert(authorId, command1)
         
-    conceptBranchWriter.Upsert(authorId, command2) |> RunSynchronously.OkEquals ()
+    do! conceptBranchWriter.Upsert(authorId, command2)
 
     % command2.Ids.BranchId
     |> c.BranchEvents
     |> Seq.last
-    |> Assert.equal (Branch.Events.Edited expectedBranch)
+    |> Assert.equal (Branch.Events.Edited expectedBranchEdit)
+    
+    // azure table roundtrips
+    let! actual, _ = c.TableClient().GetConcept (string command2.Ids.ConceptId)
+    Assert.equal expectedConcept actual
+    let! actual, _ = c.TableClient().GetBranch (string command2.Ids.BranchId)
+    let evolvedSummary = Branch.Fold.evolveEdited expectedBranchEdit expectedBanchSummary1
+    Assert.equal evolvedSummary actual
+    let! actual, _ = c.TableClient().GetExpressionRevision (string command1.Ids.LeafId)
+    Assert.equal (Branch.toLeafSummary expectedBanchSummary1) actual
+    let! actual, _ = c.TableClient().GetExpressionRevision (string command2.Ids.LeafId)
+    Assert.equal (Branch.toLeafSummary evolvedSummary) actual
+    }
     
 [<StandardProperty>]
 let ``ConceptBranchWriter.Upsert persists new branch`` (authorId, { NewOriginal = newOriginal; NewBranch = newBranch; BranchTitle = title }) =
