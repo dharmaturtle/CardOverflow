@@ -182,7 +182,7 @@ module Stack =
 
         member _.Create (summary: Events.Summary) = async {
             let stream = resolve summary.Id
-            let! doesRevisionExist = tableClient.Exists summary.ExpressionRevisionId
+            let! doesRevisionExist = tableClient.Exists summary.ExampleRevisionId
             return! stream.Transact(decideCreate summary doesRevisionExist)
             }
         member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId templateId =

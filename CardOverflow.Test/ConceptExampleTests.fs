@@ -39,7 +39,7 @@ let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, 
     Assert.equal expectedConcept actual
     let! actual, _ = c.TableClient().GetExample (string command.Ids.ExampleId)
     Assert.equal expectedExample actual
-    let! actual, _ = c.TableClient().GetExpressionRevision (string command.Ids.LeafId)
+    let! actual, _ = c.TableClient().GetExampleRevision (string command.Ids.LeafId)
     Assert.equal (Example.toLeafSummary expectedExample) actual
     }
     
@@ -72,9 +72,9 @@ let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2,
     let! actual, _ = c.TableClient().GetExample (string command2.Ids.ExampleId)
     let evolvedSummary = Example.Fold.evolveEdited expectedExampleEdit expectedBanchSummary1
     Assert.equal evolvedSummary actual
-    let! actual, _ = c.TableClient().GetExpressionRevision (string command1.Ids.LeafId)
+    let! actual, _ = c.TableClient().GetExampleRevision (string command1.Ids.LeafId)
     Assert.equal (Example.toLeafSummary expectedBanchSummary1) actual
-    let! actual, _ = c.TableClient().GetExpressionRevision (string command2.Ids.LeafId)
+    let! actual, _ = c.TableClient().GetExampleRevision (string command2.Ids.LeafId)
     Assert.equal (Example.toLeafSummary evolvedSummary) actual
     }
     

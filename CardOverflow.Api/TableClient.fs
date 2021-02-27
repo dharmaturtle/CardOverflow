@@ -151,10 +151,10 @@ type TableClient(connectionString, tableName) =
         this.Get<Example.Events.Summary> exampleId
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
-    member this.GetExpressionRevision (expressionRevisionId: string) =
-        this.Get<Example.LeafSummary> expressionRevisionId
-    member this.GetExpressionRevision (expressionRevisionId: LeafId) =
-        expressionRevisionId.ToString() |> this.GetExpressionRevision
+    member this.GetExampleRevision (exampleRevisionId: string) =
+        this.Get<Example.LeafSummary> exampleRevisionId
+    member this.GetExampleRevision (exampleRevisionId: LeafId) =
+        exampleRevisionId.ToString() |> this.GetExampleRevision
     
     member this.UpsertUser' (userId: string) e =
         match e with
