@@ -20,7 +20,7 @@ open LoadersAndCopiers
 let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
     let conceptId = concept_1
     let tagName = Guid.NewGuid().ToString() |> SanitizeTagRepository.sanitize
 
@@ -65,7 +65,7 @@ let ``SanitizeTagRepository AddTo/DeleteFrom works``(): Task<unit> = (taskResult
     
     // Can't delete a tag from a card that ain't yours
     let otherUser = user_2
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db otherUser [tagName] (concept_2, branch_2, leaf_2, [card_2])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db otherUser [tagName] (concept_2, example_2, leaf_2, [card_2])
     let conceptId = concept_2
     let! error = SanitizeTagRepository.DeleteFrom c.Db userId tagName conceptId |> TaskResult.getError
     Assert.Equal(sprintf "User #%A doesn't have Concept #%A." userId conceptId, error)
@@ -88,7 +88,7 @@ let ``Tag counts work``(): Task<unit> = (taskResult {
 
     // initial tag has 1 user
     let tagName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db author [tagName] (concept_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db author [tagName] (concept_1, example_1, leaf_1, [card_1])
     do! assertTagUserCount 1
 
     // initial tag has 2 users after collecting
@@ -190,7 +190,7 @@ let ``Tag "a/b/c" parses``(): unit =
 let ``TagRepository.getAll works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId ["ax" +/+ "by" +/+ "cz"] (concept_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId ["ax" +/+ "by" +/+ "cz"] (concept_1, example_1, leaf_1, [card_1])
     
     let! actual = TagRepository.getAll c.Db userId
 

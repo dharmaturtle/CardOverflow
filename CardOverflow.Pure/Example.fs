@@ -1,4 +1,4 @@
-module Domain.Branch
+module Domain.Example
 
 open FsCodec
 open FsCodec.NewtonsoftJson
@@ -6,14 +6,14 @@ open TypeShape
 open CardOverflow.Pure
 open FsToolkit.ErrorHandling
 
-let streamName (id: BranchId) = StreamName.create "Branch" (id.ToString())
+let streamName (id: ExampleId) = StreamName.create "Example" (id.ToString())
 
 // NOTE - these types and the union case names reflect the actual storage formats and hence need to be versioned with care
 [<RequireQualifiedAccess>]
 module Events =
 
     type Summary =
-        { Id: BranchId
+        { Id: ExampleId
           LeafIds: LeafId list
           Title: string
           ConceptId: ConceptId
@@ -71,7 +71,7 @@ module Fold =
 
 type LeafSummary =
     { Id: LeafId
-      BranchId: BranchId
+      ExampleId: ExampleId
       Title: string
       ConceptId: ConceptId
       AuthorId: UserId
@@ -81,7 +81,7 @@ type LeafSummary =
 
 let toLeafSummary (b: Events.Summary) =
     { Id = b.LeafIds.Head
-      BranchId = b.Id
+      ExampleId = b.Id
       Title = b.Title
       ConceptId = b.ConceptId
       AuthorId = b.AuthorId
@@ -115,13 +115,13 @@ let validateSummary (summary: Events.Summary) = result {
 
 let decideCreate (summary: Events.Summary) state =
     match state with
-    | Fold.State.Active s -> Error $"Branch '{s.Id}' already exists."
+    | Fold.State.Active s -> Error $"Example '{s.Id}' already exists."
     | Fold.State.Initial  -> validateSummary summary
     |> addEvent (Events.Created summary)
 
 let decideEdit (edited: Events.Edited) callerId state =
     match state with
-    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
+    | Fold.State.Initial  -> Error "Can't edit a example that doesn't exist"
     | Fold.State.Active x -> result {
         do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author"
         do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{edited.LeafId}"

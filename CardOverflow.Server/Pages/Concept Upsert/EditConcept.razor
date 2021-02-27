@@ -1,6 +1,6 @@
-@page "/concept/editbranch/{BranchId:guid}"
+@page "/concept/editexample/{ExampleId:guid}"
 @page "/concept/copyleaf/{CopySourceLeafId:guid}"
-@page "/concept/branchconcept/{BranchSourceConceptId:guid}"
+@page "/concept/exampleconcept/{ExampleSourceConceptId:guid}"
 @attribute [Authorize]
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
@@ -25,9 +25,9 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public Guid BranchId { get; set; }
+  [Parameter] public Guid ExampleId { get; set; }
   [Parameter] public Guid CopySourceLeafId { get; set; }
-  [Parameter] public Guid BranchSourceConceptId { get; set; }
+  [Parameter] public Guid ExampleSourceConceptId { get; set; }
   string LoadingMessage = "Loading...";
   ViewEditConceptCommand _command;
 
@@ -42,12 +42,12 @@
   }
 
   private Task<FSharpResult<ViewEditConceptCommand, string>> _GetCommandAndCard() {
-    if (BranchId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVUpdate_BranchId(BranchId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
+    if (ExampleId != default) {
+      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVUpdate_ExampleId(ExampleId), new UpsertIds(Guid.Empty, Guid.Empty, Ulid.create, FSharpList<Guid>.Empty)));
     } else if (CopySourceLeafId != default) {
       return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewCopySource_LeafId(CopySourceLeafId), new UpsertIds(Ulid.create, Ulid.create, Ulid.create, FSharpList<Guid>.Empty)));
-    } else if (BranchSourceConceptId != default) {
-      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewBranch_SourceConceptId(BranchSourceConceptId), new UpsertIds(Guid.Empty, Ulid.create, Ulid.create, FSharpList<Guid>.Empty)));
+    } else if (ExampleSourceConceptId != default) {
+      return DbExecutor.QueryAsync(db => SanitizeConceptRepository.getUpsert(db, _user.Id, UpsertCardSource.NewVNewExample_SourceConceptId(ExampleSourceConceptId), new UpsertIds(Guid.Empty, Ulid.create, Ulid.create, FSharpList<Guid>.Empty)));
     } else {
       return FSharpResult<ViewEditConceptCommand, string>.NewError("Invalid id provided.").Apply(Task.FromResult);
     }

@@ -17,46 +17,46 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``ChangeDefaultBranch works`` (authorId, { NewOriginal = s; NewBranch = b; BranchTitle = _ }) = asyncResult {
+let ``ChangeDefaultExample works`` (authorId, { NewOriginal = s; NewExample = b; ExampleTitle = _ }) = asyncResult {
     let c = TestEsContainer()
-    let conceptBranchWriter = c.ConceptBranchWriter()
+    let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
-    do! conceptBranchWriter.Upsert(authorId, s)
-    do! conceptBranchWriter.Upsert(authorId, b)
+    do! conceptExampleWriter.Upsert(authorId, s)
+    do! conceptExampleWriter.Upsert(authorId, b)
 
-    do! conceptWriter.ChangeDefaultBranch (% s.Ids.ConceptId) (% b.Ids.BranchId) authorId
+    do! conceptWriter.ChangeDefaultExample (% s.Ids.ConceptId) (% b.Ids.ExampleId) authorId
 
     % b.Ids.ConceptId
     |> c.ConceptEvents
     |> Seq.last
-    |> Assert.equal (Concept.Events.DefaultBranchChanged { BranchId = % b.Ids.BranchId })
+    |> Assert.equal (Concept.Events.DefaultExampleChanged { ExampleId = % b.Ids.ExampleId })
     }
 
 [<StandardProperty>]
-let ``ChangeDefaultBranch fails when branch is on a different concept`` (authorId, { NewOriginal = s1; NewBranch = _; BranchTitle = _ }, { NewOriginal = s2; NewBranch = b2; BranchTitle = _ }) = asyncResult {
+let ``ChangeDefaultExample fails when example is on a different concept`` (authorId, { NewOriginal = s1; NewExample = _; ExampleTitle = _ }, { NewOriginal = s2; NewExample = b2; ExampleTitle = _ }) = asyncResult {
     let c = TestEsContainer()
-    let conceptBranchWriter = c.ConceptBranchWriter()
+    let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
-    do! conceptBranchWriter.Upsert(authorId, s1)
-    do! conceptBranchWriter.Upsert(authorId, s2)
-    do! conceptBranchWriter.Upsert(authorId, b2)
+    do! conceptExampleWriter.Upsert(authorId, s1)
+    do! conceptExampleWriter.Upsert(authorId, s2)
+    do! conceptExampleWriter.Upsert(authorId, b2)
 
-    do! conceptWriter.ChangeDefaultBranch (% s1.Ids.ConceptId) (% b2.Ids.BranchId) authorId
+    do! conceptWriter.ChangeDefaultExample (% s1.Ids.ConceptId) (% b2.Ids.ExampleId) authorId
         
     |>% Result.getError
-    |>% Assert.equal $"Branch {b2.Ids.BranchId} doesn't belong to Concept {s1.Ids.ConceptId}"
+    |>% Assert.equal $"Example {b2.Ids.ExampleId} doesn't belong to Concept {s1.Ids.ConceptId}"
     }
 
 [<StandardProperty>]
-let ``ChangeDefaultBranch fails when branch author tries to be default`` (conceptAuthorId, branchAuthorId, { NewOriginal = s; NewBranch = b; BranchTitle = _ }) = asyncResult {
+let ``ChangeDefaultExample fails when example author tries to be default`` (conceptAuthorId, exampleAuthorId, { NewOriginal = s; NewExample = b; ExampleTitle = _ }) = asyncResult {
     let c = TestEsContainer()
-    let conceptBranchWriter = c.ConceptBranchWriter()
+    let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
-    do! conceptBranchWriter.Upsert(conceptAuthorId,  s)
-    do! conceptBranchWriter.Upsert(branchAuthorId, b)
+    do! conceptExampleWriter.Upsert(conceptAuthorId,  s)
+    do! conceptExampleWriter.Upsert(exampleAuthorId, b)
 
-    do! conceptWriter.ChangeDefaultBranch (% s.Ids.ConceptId) (% b.Ids.BranchId) branchAuthorId
+    do! conceptWriter.ChangeDefaultExample (% s.Ids.ConceptId) (% b.Ids.ExampleId) exampleAuthorId
 
     |>% Result.getError
-    |>% Assert.equal $"Concept {s.Ids.ConceptId} doesn't belong to User {branchAuthorId}"
+    |>% Assert.equal $"Concept {s.Ids.ConceptId} doesn't belong to User {exampleAuthorId}"
     }

@@ -13,16 +13,16 @@
 @inject TimeProvider TimeProvider
 
 <div class="d-flex justify-content-end">
-  by&nbsp;<a href="@($"/user/{_branch.AuthorId}")" style="color:unset">@_branch.Author</a>
-  @if (_branch.AuthorId == _user.Id) {
-    <a href="concept/editbranch/@_branch.Id" title="Edit">
+  by&nbsp;<a href="@($"/user/{_example.AuthorId}")" style="color:unset">@_example.Author</a>
+  @if (_example.AuthorId == _user.Id) {
+    <a href="concept/editexample/@_example.Id" title="Edit">
       <span class="oi oi-pencil ml-2" />
     </a>
   }
   <a href="concept/copyleaf/@Leaf.Id" title="Edit a Copy">
     <span class="fas fa-copy ml-2" />
   </a>
-  <a href="/branch/@_branch.Id/revision" title="Revisions">
+  <a href="/example/@_example.Id/revision" title="Revisions">
     <i class="fas fa-history ml-2"></i>
   </a>
   @if (Leaf.IsLatest) {
@@ -31,7 +31,7 @@
       <span class="fas fa-sync text-success ml-2" title="Up to date" />
     </a>
   } else {
-    <a href="@($"conceptdiff/{Leaf.Id}/Older Branch Leaf/{_branch.Leaf.Id}/Latest Branch Leaf")">
+    <a href="@($"conceptdiff/{Leaf.Id}/Older Example Leaf/{_example.Leaf.Id}/Latest Example Leaf")">
       <span class="fas fa-sync text-danger ml-2" title="Out of date" />
     </a>
   }
@@ -42,7 +42,7 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public LeafMeta Leaf { get; set; }
   [Parameter] public CardOverflow.Pure.ExploreConcept Concept { get; set; }
-  private Branch _branch => Concept.Branches.Single(b => b.Id == Leaf.BranchId);
+  private Example _example => Concept.Examples.Single(b => b.Id == Leaf.ExampleId);
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

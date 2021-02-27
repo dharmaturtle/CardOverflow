@@ -633,24 +633,24 @@ CREATE TYPE public.timezone_name AS ENUM (
 
 ALTER TYPE public.timezone_name OWNER TO postgres;
 
-CREATE FUNCTION public.fn_ctr_branch_insertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_ctr_example_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     DECLARE
-        default_branch_id uuid NOT NULL := '00000000-0000-0000-0000-000000000000';
+        default_example_id uuid NOT NULL := '00000000-0000-0000-0000-000000000000';
     BEGIN
-        default_branch_id := (SELECT s.default_branch_id FROM concept s WHERE NEW.concept_id = s.id);
-        IF ((NEW.name IS NOT NULL) AND (default_branch_id = NEW.id)) THEN
-            RAISE EXCEPTION 'Default Branches must have a null Name. ConceptId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.concept_id), (NEW.id), (NEW.author_id), (NEW.name);
-        ELSIF ((NEW.name IS NULL) AND (default_branch_id <> NEW.id)) THEN
-            RAISE EXCEPTION 'Only Default Branches may have a null Name. ConceptId#% with BranchId#% by UserId#% just attempted to be titled %', (NEW.concept_id), (NEW.id), (NEW.author_id), (NEW.name);
+        default_example_id := (SELECT s.default_example_id FROM concept s WHERE NEW.concept_id = s.id);
+        IF ((NEW.name IS NOT NULL) AND (default_example_id = NEW.id)) THEN
+            RAISE EXCEPTION 'Default Examples must have a null Name. ConceptId#% with ExampleId#% by UserId#% just attempted to be titled %', (NEW.concept_id), (NEW.id), (NEW.author_id), (NEW.name);
+        ELSIF ((NEW.name IS NULL) AND (default_example_id <> NEW.id)) THEN
+            RAISE EXCEPTION 'Only Default Examples may have a null Name. ConceptId#% with ExampleId#% by UserId#% just attempted to be titled %', (NEW.concept_id), (NEW.id), (NEW.author_id), (NEW.name);
         END IF;
         RETURN NULL;
     END;
 $$;
 
 
-ALTER FUNCTION public.fn_ctr_branch_insertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_ctr_example_insertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_ctr_card_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -700,21 +700,21 @@ ALTER FUNCTION public.fn_delete_received_notification(outer_notification_id uuid
 COMMENT ON FUNCTION public.fn_delete_received_notification(outer_notification_id uuid, outer_receiver_id uuid) IS 'https://stackoverflow.com/a/15810159';
 
 
-CREATE FUNCTION public.fn_tr_branch_afterinsertupdate() RETURNS trigger
+CREATE FUNCTION public.fn_tr_example_afterinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
         IF (TG_OP = 'INSERT') THEN
             UPDATE concept s
-            SET    default_branch_id = NEW.id
-            WHERE (s.id = NEW.concept_id AND s.default_branch_id = '00000000-0000-0000-0000-000000000000');
+            SET    default_example_id = NEW.id
+            WHERE (s.id = NEW.concept_id AND s.default_example_id = '00000000-0000-0000-0000-000000000000');
         END IF;
         RETURN NULL;
     END;
 $$;
 
 
-ALTER FUNCTION public.fn_tr_branch_afterinsertupdate() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_example_afterinsertupdate() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -729,9 +729,9 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             UPDATE	leaf ci
             SET     users = ci.users - 1
             WHERE	ci.id = OLD.leaf_id;
-            UPDATE	branch b
+            UPDATE	example b
             SET		users = b.users - 1
-            WHERE	b.id = OLD.branch_id;
+            WHERE	b.id = OLD.example_id;
             UPDATE  concept concept
             SET     users = concept.users - 1
             WHERE concept.id = OLD.concept_id;
@@ -742,9 +742,9 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             UPDATE	leaf ci
             SET     users = ci.users + 1
             WHERE	ci.id = NEW.leaf_id;
-            UPDATE	branch b
+            UPDATE	example b
             SET		users = b.users + 1
-            WHERE	b.id = NEW.branch_id;
+            WHERE	b.id = NEW.example_id;
             UPDATE  concept concept
             SET     users = concept.users + 1
             WHERE concept.id = NEW.concept_id;
@@ -754,8 +754,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedConcept', NULL,     NEW.concept_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -765,8 +765,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'UPDATE' AND OLD.leaf_id <> NEW.leaf_id) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedConcept', NULL,     NEW.concept_id, NEW.branch_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -776,8 +776,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     branch_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
-                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedConcept', NULL,     OLD.concept_id, OLD.branch_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedConcept', NULL,     OLD.concept_id, OLD.example_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -887,9 +887,9 @@ CREATE FUNCTION public.fn_tr_leaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
-  UPDATE branch b
+  UPDATE example b
   SET    latest_id = NEW.id
-  WHERE  b.id = NEW.branch_id;
+  WHERE  b.id = NEW.example_id;
   IF (NEW.tsv_helper IS NOT NULL) THEN
     NEW.tsv = to_tsvector('pg_catalog.english', NEW.tsv_helper);
     NEW.tsv_helper = NULL;
@@ -1040,7 +1040,7 @@ CREATE TABLE public.alpha_beta_key (
 
 ALTER TABLE public.alpha_beta_key OWNER TO postgres;
 
-CREATE TABLE public.branch (
+CREATE TABLE public.example (
     id uuid NOT NULL,
     name character varying(64),
     author_id uuid NOT NULL,
@@ -1052,17 +1052,17 @@ CREATE TABLE public.branch (
     modified timestamp with time zone,
     tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     tags_count integer[] DEFAULT '{}'::integer[] NOT NULL,
-    CONSTRAINT "branch. id. is valid" CHECK (public.validate_ulid(id))
+    CONSTRAINT "example. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
-ALTER TABLE public.branch OWNER TO postgres;
+ALTER TABLE public.example OWNER TO postgres;
 
 CREATE TABLE public.card (
     id uuid NOT NULL,
     user_id uuid NOT NULL,
     concept_id uuid NOT NULL,
-    branch_id uuid NOT NULL,
+    example_id uuid NOT NULL,
     leaf_id uuid NOT NULL,
     index smallint NOT NULL,
     card_state smallint NOT NULL,
@@ -1090,7 +1090,7 @@ CREATE VIEW public.card_is_latest AS
  SELECT a.id,
     a.user_id,
     a.concept_id,
-    a.branch_id,
+    a.example_id,
     a.leaf_id,
     a.index,
     a.card_state,
@@ -1105,7 +1105,7 @@ CREATE VIEW public.card_is_latest AS
     a.tags,
     (b.latest_id IS NULL) AS is_latest
    FROM (public.card a
-     LEFT JOIN public.branch b ON ((b.latest_id = a.leaf_id)));
+     LEFT JOIN public.example b ON ((b.latest_id = a.leaf_id)));
 
 
 ALTER TABLE public.card_is_latest OWNER TO postgres;
@@ -1342,7 +1342,7 @@ CREATE TABLE public.leaf (
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
     concept_id uuid NOT NULL,
-    branch_id uuid NOT NULL,
+    example_id uuid NOT NULL,
     is_dmca boolean NOT NULL,
     field_values character varying(10000) NOT NULL,
     grompleaf_id uuid NOT NULL,
@@ -1411,7 +1411,7 @@ CREATE TABLE public.notification (
     type public.notification_type NOT NULL,
     message character varying(4000),
     concept_id uuid,
-    branch_id uuid,
+    example_id uuid,
     leaf_id uuid,
     deck_id uuid,
     gromplate_id uuid,
@@ -1470,7 +1470,7 @@ CREATE TABLE public.concept (
     author_id uuid NOT NULL,
     users integer NOT NULL,
     copy_source_id uuid,
-    default_branch_id uuid NOT NULL,
+    default_example_id uuid NOT NULL,
     is_listed boolean NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
@@ -1772,12 +1772,12 @@ ALTER TABLE ONLY public.alpha_beta_key
     ADD CONSTRAINT alpha_beta_key_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT branch_id_concept_id_key UNIQUE (id, concept_id);
+ALTER TABLE ONLY public.example
+    ADD CONSTRAINT example_id_concept_id_key UNIQUE (id, concept_id);
 
 
-ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT branch_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.example
+    ADD CONSTRAINT example_pkey PRIMARY KEY (id);
 
 
 ALTER TABLE ONLY public.card
@@ -1865,7 +1865,7 @@ ALTER TABLE ONLY public.history
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_id_branch_id_key UNIQUE (id, branch_id);
+    ADD CONSTRAINT leaf_id_example_id_key UNIQUE (id, example_id);
 
 
 ALTER TABLE ONLY public.leaf
@@ -1923,7 +1923,7 @@ ALTER TABLE ONLY public.vote_2_feedback
 CREATE UNIQUE INDEX "alpha_beta_key. key. uq idx" ON public.alpha_beta_key USING btree (key);
 
 
-CREATE UNIQUE INDEX "branch. concept_id, upper(name). uq idx" ON public.branch USING btree (concept_id, upper((name)::text));
+CREATE UNIQUE INDEX "example. concept_id, upper(name). uq idx" ON public.example USING btree (concept_id, upper((name)::text));
 
 
 CREATE INDEX "card. card_setting_id. idx" ON public.card USING btree (card_setting_id);
@@ -1938,7 +1938,7 @@ CREATE INDEX "card. leaf_id. idx" ON public.card USING btree (leaf_id);
 CREATE INDEX "card. tsv. idx" ON public.card USING gin (tsv);
 
 
-CREATE INDEX "card. user_id, branch_id. idx" ON public.card USING btree (user_id, branch_id);
+CREATE INDEX "card. user_id, example_id. idx" ON public.card USING btree (user_id, example_id);
 
 
 CREATE UNIQUE INDEX "card. user_id, leaf_id, index. uq idx" ON public.card USING btree (user_id, leaf_id, index);
@@ -2019,7 +2019,7 @@ CREATE INDEX "grompleaf. tsv. idx" ON public.grompleaf USING gin (tsv);
 CREATE INDEX "history. card_id. idx" ON public.history USING btree (card_id);
 
 
-CREATE INDEX "leaf. branch_id. idx" ON public.leaf USING btree (branch_id);
+CREATE INDEX "leaf. example_id. idx" ON public.leaf USING btree (example_id);
 
 
 CREATE INDEX "leaf. grompleaf_id. idx" ON public.leaf USING btree (grompleaf_id);
@@ -2067,13 +2067,13 @@ CREATE INDEX "vote_2_comment_concept. user_id. idx" ON public.vote_2_comment_con
 CREATE INDEX "vote_2_feedback. user_id. idx" ON public.vote_2_feedback USING btree (user_id);
 
 
-CREATE CONSTRAINT TRIGGER ctr_branch_insertupdate AFTER INSERT OR UPDATE ON public.branch DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_branch_insertupdate();
+CREATE CONSTRAINT TRIGGER ctr_example_insertupdate AFTER INSERT OR UPDATE ON public.example DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_example_insertupdate();
 
 
 CREATE CONSTRAINT TRIGGER ctr_card_insertupdate AFTER INSERT OR UPDATE ON public.card DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.fn_ctr_card_insertupdate();
 
 
-CREATE TRIGGER tr_branch_afterinsertupdate AFTER INSERT OR UPDATE ON public.branch FOR EACH ROW EXECUTE FUNCTION public.fn_tr_branch_afterinsertupdate();
+CREATE TRIGGER tr_example_afterinsertupdate AFTER INSERT OR UPDATE ON public.example FOR EACH ROW EXECUTE FUNCTION public.fn_tr_example_afterinsertupdate();
 
 
 CREATE TRIGGER tr_card_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public.card FOR EACH ROW EXECUTE FUNCTION public.fn_tr_card_afterinsertdeleteupdate();
@@ -2106,24 +2106,24 @@ CREATE TRIGGER tr_user_afterinsert AFTER INSERT ON public.padawan FOR EACH ROW E
 CREATE TRIGGER tr_user_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.padawan FOR EACH ROW EXECUTE FUNCTION public.fn_tr_user_beforeinsertupdate();
 
 
-ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT "branch to leaf. latest_id, id. FK" FOREIGN KEY (latest_id, id) REFERENCES public.leaf(id, branch_id) DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE ONLY public.example
+    ADD CONSTRAINT "example to leaf. latest_id, id. FK" FOREIGN KEY (latest_id, id) REFERENCES public.leaf(id, example_id) DEFERRABLE INITIALLY DEFERRED;
 
 
-ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT "branch to concept. concept_id. FK" FOREIGN KEY (concept_id) REFERENCES public.concept(id);
+ALTER TABLE ONLY public.example
+    ADD CONSTRAINT "example to concept. concept_id. FK" FOREIGN KEY (concept_id) REFERENCES public.concept(id);
 
 
-ALTER TABLE ONLY public.branch
-    ADD CONSTRAINT "branch to user. author_id. FK" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
-
-
-ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to branch. branch_id. FK" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+ALTER TABLE ONLY public.example
+    ADD CONSTRAINT "example to user. author_id. FK" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to branch. concept_id, branch_id. FK" FOREIGN KEY (concept_id, branch_id) REFERENCES public.branch(concept_id, id);
+    ADD CONSTRAINT "card to example. example_id. FK" FOREIGN KEY (example_id) REFERENCES public.example(id);
+
+
+ALTER TABLE ONLY public.card
+    ADD CONSTRAINT "card to example. concept_id, example_id. FK" FOREIGN KEY (concept_id, example_id) REFERENCES public.example(concept_id, id);
 
 
 ALTER TABLE ONLY public.card
@@ -2135,7 +2135,7 @@ ALTER TABLE ONLY public.card
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to leaf. branch_id, leaf_id. FK" FOREIGN KEY (branch_id, leaf_id) REFERENCES public.leaf(branch_id, id);
+    ADD CONSTRAINT "card to leaf. example_id, leaf_id. FK" FOREIGN KEY (example_id, leaf_id) REFERENCES public.leaf(example_id, id);
 
 
 ALTER TABLE ONLY public.card
@@ -2251,11 +2251,11 @@ ALTER TABLE ONLY public.history
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to branch. branch_id. FK" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+    ADD CONSTRAINT "leaf to example. example_id. FK" FOREIGN KEY (example_id) REFERENCES public.example(id);
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to branch. concept_id, branch_id. FK" FOREIGN KEY (concept_id, branch_id) REFERENCES public.branch(concept_id, id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "leaf to example. concept_id, example_id. FK" FOREIGN KEY (concept_id, example_id) REFERENCES public.example(concept_id, id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.leaf
@@ -2263,11 +2263,11 @@ ALTER TABLE ONLY public.leaf
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to branch. branch_id, concept_id. FK" FOREIGN KEY (branch_id, concept_id) REFERENCES public.branch(id, concept_id);
+    ADD CONSTRAINT "notification to example. example_id, concept_id. FK" FOREIGN KEY (example_id, concept_id) REFERENCES public.example(id, concept_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to branch. branch_id. FK" FOREIGN KEY (branch_id) REFERENCES public.branch(id);
+    ADD CONSTRAINT "notification to example. example_id. FK" FOREIGN KEY (example_id) REFERENCES public.example(id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2283,7 +2283,7 @@ ALTER TABLE ONLY public.notification
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to leaf. leaf_id, branch_id. FK" FOREIGN KEY (leaf_id, branch_id) REFERENCES public.leaf(id, branch_id);
+    ADD CONSTRAINT "notification to leaf. leaf_id, example_id. FK" FOREIGN KEY (leaf_id, example_id) REFERENCES public.leaf(id, example_id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2331,7 +2331,7 @@ ALTER TABLE ONLY public.relationship_2_card
 
 
 ALTER TABLE ONLY public.concept
-    ADD CONSTRAINT "concept to branch. default_branch_id, id. FK" FOREIGN KEY (default_branch_id, id) REFERENCES public.branch(id, concept_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "concept to example. default_example_id, id. FK" FOREIGN KEY (default_example_id, id) REFERENCES public.example(id, concept_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.concept

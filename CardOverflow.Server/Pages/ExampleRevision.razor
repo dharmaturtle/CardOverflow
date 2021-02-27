@@ -1,4 +1,4 @@
-@page "/branch/{Id:guid}/revision"
+@page "/example/{Id:guid}/revision"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -35,7 +35,7 @@
         @if (meta.Modified != null) {
           <label>Modified:</label> @meta.Modified.Value;
         }
-        <ResizingIframeBranch LeafId=@meta.Id MaxIndexInclusive=@meta.MaxIndexInclusive Back />
+        <ResizingIframeExample LeafId=@meta.Id MaxIndexInclusive=@meta.MaxIndexInclusive Back />
       </li>
     }
   </ol>
@@ -45,7 +45,7 @@
   [Parameter] public Guid Id { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  private CardOverflow.Pure.BranchRevision _revision;
+  private CardOverflow.Pure.ExampleRevision _revision;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

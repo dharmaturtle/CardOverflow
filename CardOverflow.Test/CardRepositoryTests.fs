@@ -26,9 +26,9 @@ open Dapper.NodaTime
 let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
-    let branchId = branch_1
-    Assert.Equal(branchId, actualBranchId)
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let exampleId = example_1
+    Assert.Equal(exampleId, actualExampleId)
     let getCollected () = ConceptRepository.GetCollected c.Db userId concept_1
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
@@ -42,7 +42,7 @@ let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (cc: Card ResizeArray) = getCollected ()
     let cc = cc.Single()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
+            (VUpdate_ExampleId exampleId) id { ids_1 with LeafId = leaf_2 } exampleId
     do! ConceptRepository.uncollectConcept c.Db userId cc.ConceptId
     Assert.Empty c.Db.Card // still empty after editing then deleting
 
@@ -53,9 +53,9 @@ let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
     let! (batch: Result<QuizCard, string> ResizeArray) = ConceptRepository.GetQuizBatch c.Db userId ""
     do! SanitizeHistoryRepository.AddAndSaveAsync c.Db (batch.First().Value.CardId) Score.Easy (DateTimeX.UtcNow) (Duration.FromDays(13.)) 0. (Duration.FromSeconds 1.) (IntervalXX <| Duration.FromDays 13.)
     do! SanitizeTagRepository.AddTo c.Db userId "tag" cc.ConceptId |> TaskResult.getOk
-    let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_3, branch_3, leaf_3, [card_3])
-    let newCardBranchId = branch_3
-    Assert.Equal(newCardBranchId, actualBranchId)
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_3, example_3, leaf_3, [card_3])
+    let newCardExampleId = example_3
+    Assert.Equal(newCardExampleId, actualExampleId)
     let! (concept2: ConceptEntity) = c.Db.Concept.SingleOrDefaultAsync(fun x -> x.Id <> cc.ConceptId)
     let concept2 = concept2.Id
     let addRelationshipCommand =
@@ -87,9 +87,9 @@ let ``ConceptRepository.deleteCard works``(): Task<unit> = (taskResult {
 let ``ConceptRepository.editState works``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
-    let branchId = branch_1
-    Assert.Equal(branchId, actualBranchId.Value)
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let exampleId = example_1
+    Assert.Equal(exampleId, actualExampleId.Value)
     let! cc = ConceptRepository.GetCollected c.Db userId concept_1
     let cc = cc.Value.Single()
     
@@ -100,7 +100,7 @@ let ``ConceptRepository.editState works``(): Task<unit> = task {
     Assert.Equal(cc.CardState, CardState.Suspended)
 
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
+            (VUpdate_ExampleId exampleId) id { ids_1 with LeafId = leaf_2 } exampleId
         |> TaskResult.getOk
     let! cc = ConceptRepository.GetCollected c.Db userId cc.ConceptId
     let cc = cc.Value.Single()
@@ -115,24 +115,24 @@ let ``ConceptRepository.editState works``(): Task<unit> = task {
 let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
     let conceptId = concept_1
-    let branchId = branch_1
-    Assert.Equal(branchId, actualBranchId.Value)
+    let exampleId = example_1
+    Assert.Equal(exampleId, actualExampleId.Value)
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId) id { ids_1 with LeafId = leaf_2 } branchId
+            (VUpdate_ExampleId exampleId) id { ids_1 with LeafId = leaf_2 } exampleId
         |> TaskResult.getOk
     let i2 = leaf_2
     let! _ = ConceptRepository.CollectCard c.Db userId i2 [ card_1 ] |> TaskResult.getOk // collecting a different revision of a card doesn't create a new Card; it only swaps out the LeafId
     Assert.Equal(i2, c.Db.Card.Single().LeafId)
-    Assert.Equal(branchId, c.Db.Card.Single().BranchId)
+    Assert.Equal(exampleId, c.Db.Card.Single().ExampleId)
     Assert.Equal(conceptId, c.Db.Card.Single().ConceptId)
     
     use db = c.Db
     db.Card.AddI <|
         CardEntity(
             ConceptId = conceptId,
-            BranchId = branchId,
+            ExampleId = exampleId,
             LeafId = i2,
             Due = DateTimeX.UtcNow,
             UserId = userId,
@@ -148,7 +148,7 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
         CardEntity(
             Id = card_3,
             ConceptId = conceptId,
-            BranchId = branchId,
+            ExampleId = exampleId,
             LeafId = i1,
             Due = DateTimeX.UtcNow,
             UserId = userId,
@@ -164,8 +164,8 @@ let ``Users can't collect multiple leafs of a card``(): Task<unit> = task {
 let ``collect works``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let authorId = user_3
-    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, branch_1, leaf_1, [card_1])
-    let branchId = branch_1
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
+    let exampleId = example_1
     let leafId = leaf_1
     let conceptId = concept_1
     let collectorId = user_1
@@ -210,9 +210,9 @@ let ``collect works``(): Task<unit> = (taskResult {
     do! assertDeck newDeckId
 
     // collecting/updating to *new* leaf doesn't change deckId or cardId
-    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_BranchId branchId) {
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId exampleId) {
         ConceptId = concept_1
-        BranchId = branch_1
+        ExampleId = example_1
         LeafId = leaf_2
         CardIds = [card_1]
     }
@@ -238,9 +238,9 @@ let ``CollectCards works``(): Task<unit> = task {
     let authorId = user_3
     
     let s1 = concept_1
-    let b1 = branch_1
+    let b1 = example_1
     let ci1_1 = leaf_1
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
     Assert.Equal(1, c.Db.Concept.Single().Users)
     Assert.Equal(1, c.Db.Leaf.Single().Users)
     Assert.Equal(1, c.Db.Concept.Single(fun x -> x.Id = s1).Users)
@@ -249,7 +249,7 @@ let ``CollectCards works``(): Task<unit> = task {
     
     let s2 = concept_2
     let ci2_1 = leaf_2
-    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db authorId [] (concept_2, branch_2, leaf_2, [card_2; card_3])
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db authorId [] (concept_2, example_2, leaf_2, [card_2; card_3])
     Assert.Equal(1, c.Db.Concept.Single(fun x -> x.Id = s2).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci2_1).Users)
     Assert.Equal(3, c.Db.Card.Count())
@@ -267,8 +267,8 @@ let ``CollectCards works``(): Task<unit> = task {
     Assert.Equal(6, c.Db.Card.Count())
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.LeafId = ci1_1));
 
-    // update branch
-    let! r = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_BranchId b1) ids_1
+    // update example
+    let! r = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId b1) ids_1
     let ci1_2 = leaf_3
     let command =
         { r.Value with
@@ -279,8 +279,8 @@ let ``CollectCards works``(): Task<unit> = task {
                     LeafId = ci1_2
             }
         }
-    let! branchId = SanitizeConceptRepository.Update c.Db authorId [] command |> TaskResult.getOk
-    Assert.Equal(b1, branchId)
+    let! exampleId = SanitizeConceptRepository.Update c.Db authorId [] command |> TaskResult.getOk
+    Assert.Equal(b1, exampleId)
     Assert.Equal(2, c.Db.Concept.Single(fun x -> x.Id = s1).Users)
     Assert.Equal(1, c.Db.Leaf.Single(fun x -> x.Id = ci1_2).Users)
     // misc
@@ -316,7 +316,7 @@ let ``SanitizeHistoryRepository.AddAndSaveAsync works``(): Task<unit> = task {
     use! conn = c.Conn()
     let userId = user_3
 
-    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1; card_2])
 
     let! a = ConceptRepository.GetQuizBatch c.Db userId ""
     let getId (x: Result<QuizCard, string> seq) = x.First().Value.CardId

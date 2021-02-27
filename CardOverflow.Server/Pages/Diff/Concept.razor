@@ -39,7 +39,7 @@
   <div class="row">
     <div class="col-sm">
       <HoverPreview IsCollected=@_aIsCollected Padding="0">
-        <ResizingIframeBranch LeafId=@A_LeafId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
+        <ResizingIframeExample LeafId=@A_LeafId MaxIndexInclusive=@_a.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="leaf/@A_LeafId">
         @(ATitle ?? "Old Concept")
@@ -60,7 +60,7 @@
     </div>
     <div class="col-sm">
       <HoverPreview IsCollected=@_bIsCollected Padding="0">
-        <ResizingIframeBranch LeafId=@B_LeafId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
+        <ResizingIframeExample LeafId=@B_LeafId MaxIndexInclusive=@_b.MaxIndexInclusive Back />
       </HoverPreview>
       <a href="leaf/@B_LeafId">
         @(BTitle ?? "New Concept")

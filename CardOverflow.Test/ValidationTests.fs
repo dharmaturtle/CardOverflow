@@ -165,10 +165,10 @@ module Generators =
         Arb.generate<Guid> |> Gen.listOfLength length
     let ConceptLeafIds length = gen {
         let! concepts = uniqueGuids length
-        let! branches = uniqueGuids length
+        let! examples = uniqueGuids length
         let! leafs = uniqueGuids length
         return
-            Seq.zip3 concepts branches leafs
+            Seq.zip3 concepts examples leafs
             |> Seq.map ConceptLeafIds.fromTuple
             |> List.ofSeq
         }
@@ -176,13 +176,13 @@ module Generators =
         ConceptLeafIds 3
     let ConceptLeafIndex length = gen {
         let! concepts = uniqueGuids length
-        let! branches = uniqueGuids length
+        let! examples = uniqueGuids length
         let! leafs = uniqueGuids length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
         let! deckId = Arb.generate<Guid> |> Gen.listOfLength length
         let! cardId = uniqueGuids length
         return
-            Seq.zip6 concepts branches leafs indexes deckId cardId
+            Seq.zip6 concepts examples leafs indexes deckId cardId
             |> Seq.map ConceptLeafIndex.fromTuple
             |> List.ofSeq
         }

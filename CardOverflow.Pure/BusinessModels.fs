@@ -381,7 +381,7 @@ type ViewRelationship = {
 type LeafMeta = {
     Id: Guid
     ConceptId: Guid
-    BranchId: Guid
+    ExampleId: Guid
     MaxIndexInclusive: int16
     Created: Instant
     Modified: Instant option
@@ -401,7 +401,7 @@ type Card = {
     CardId: Guid
     UserId: Guid
     ConceptId: Guid
-    BranchId: Guid
+    ExampleId: Guid
     LeafMeta: LeafMeta
     Index: int16
     CardState: CardState
@@ -433,7 +433,7 @@ type ExploreConceptSummary = {
     member this.IsCollected = this.Leaf.IsCollected
 
 [<CLIMutable>]
-type ExploreBranchSummary = {
+type ExploreExampleSummary = {
     Id: Guid
     Users: int
     Author: string
@@ -442,9 +442,9 @@ type ExploreBranchSummary = {
 } with
     member this.IsCollected = this.Leaf.IsCollected
 
-type Branch = {
+type Example = {
     Name: string
-    Summary: ExploreBranchSummary
+    Summary: ExploreExampleSummary
 } with
     member this.Id = this.Summary.Id
     member this.Users = this.Summary.Users
@@ -459,9 +459,9 @@ module CollectedIds =
         function
         | Some (x: UpsertIds) -> x.LeafId
         | None -> Guid.Empty
-    let branchId =
+    let exampleId =
         function
-        | Some x -> x.BranchId
+        | Some x -> x.ExampleId
         | None -> Guid.Empty
     let conceptId =
         function
@@ -476,16 +476,16 @@ type ExploreConcept = {
     Relationships: ViewRelationship ResizeArray
     Comments: Comment ResizeArray
     CollectedIds: CollectedIds
-    Branches: Branch ResizeArray
+    Examples: Example ResizeArray
 } with
     //don't add users - the UI needs it to be mutable
-    member this.Default = this.Branches.Single(fun x -> x.Name = null)
+    member this.Default = this.Examples.Single(fun x -> x.Name = null)
     member this.Author = this.Default.Author
     member this.AuthorId = this.Default.AuthorId
     member this.IsAnyCollected =
         this.CollectedIds |> Option.isSome
 
-type BranchRevision = {
+type ExampleRevision = {
     Id: Guid
     Author: string
     AuthorId: Guid
@@ -496,7 +496,7 @@ type BranchRevision = {
 type UpsertKind =
     | NewOriginal_TagIds of string Set
     | NewCopy_SourceLeafId_TagIds of Guid * string Set
-    | NewBranch_Title of string
+    | NewExample_Title of string
     | NewLeaf_Title of string
 with
     member this.TryGetCopySourceLeafId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768

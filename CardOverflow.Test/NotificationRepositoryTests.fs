@@ -68,7 +68,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     let newDeckId = deck_ 4
     let newDeckName = Guid.NewGuid().ToString()
     do! SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (newDeckId, newDeckName)) true None
-    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, branch_1, leaf_1, [card_1])
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
     let assertNotificationThenDelete expected = task {
         let! (ns: _ PagedList) = NotificationRepository.get c.Db followerId 1
         let n = ns.Results |> Assert.Single
@@ -84,7 +84,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     }
     let ids =
         {   ConceptId = concept_1
-            BranchId = branch_1
+            ExampleId = example_1
             LeafId = leaf_1 }
 
     do! assertNotificationThenDelete
@@ -99,7 +99,7 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
                                              NewCardCount = 1 } }
     
     // works with DeckUpdatedConcept, uncollected
-    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((concept_1, branch_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId ids.ExampleId) ((concept_1, example_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeConceptRepository.Update c.Db authorId [] conceptCommand
     let expectedDeckUpdatedConceptNotification nid newLeafId collected =
             {   Id = nid
@@ -117,11 +117,11 @@ let ``NotificationRepository.get populates MyDeck"``(): Task<unit> = (taskResult
     // works with DeckUpdatedConcept, collected
     let collectedLeaf = ids.LeafId
     do! ConceptRepository.CollectCard c.Db followerId collectedLeaf [ card_2 ]
-    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_BranchId ids.BranchId) ((concept_1, branch_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId ids.ExampleId) ((concept_1, example_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeConceptRepository.Update c.Db authorId [] conceptCommand
     let collected =
         {   ConceptId = ids.ConceptId
-            BranchId = ids.BranchId
+            ExampleId = ids.ExampleId
             LeafId = collectedLeaf
             CardIds = [ card_2 ] } |> Some
     

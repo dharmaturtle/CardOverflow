@@ -64,11 +64,11 @@ let ``Diff LeafChanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
         ))
 
 [<Generators>]
-let ``Diff BranchChanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
+let ``Diff ExampleChanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
     let theirs = conceptLeafIndexes
     let mine =
         {   conceptLeafIndexes.[0] with
-                BranchId = Ulid.create
+                ExampleId = Ulid.create
                 LeafId = Ulid.create
         }   |> List.singleton
     
@@ -77,12 +77,12 @@ let ``Diff BranchChanged`` (conceptLeafIndexes: ConceptLeafIndex list) : unit =
     |> Assert.areEquivalent
         (conceptLeafIndexes |> List.mapi (fun i x ->
             match i with
-            | 0 -> BranchChanged (x, mine.[0])
+            | 0 -> ExampleChanged (x, mine.[0])
             | _ -> AddedConcept x
         ))
         
 [<Generators>]
-let ``Diff of deck with itself is unchanged _ when it contains 2 of the same branch with differing indexes`` (conceptLeafIndex: ConceptLeafIndex) : unit =
+let ``Diff of deck with itself is unchanged _ when it contains 2 of the same example with differing indexes`` (conceptLeafIndex: ConceptLeafIndex) : unit =
     let a =
         [ { conceptLeafIndex with Index = 0s }
           { conceptLeafIndex with Index = 1s } ]
@@ -101,9 +101,9 @@ let ``Diff of MoveToAnotherDeck works`` (ids: ConceptLeafIndex) : unit =
     Diff.ids theirs mine |> Diff.toSummary
     
     |> Assert.equal 
-        { Unchanged             = [ ids 0s ]
-          MoveToAnotherDeck     = [ ids 1s ]
-          LeafChanged = []
-          BranchChanged         = []
-          AddedConcept            = []
-          RemovedConcept          = [] }
+        { Unchanged         = [ ids 0s ]
+          MoveToAnotherDeck = [ ids 1s ]
+          LeafChanged       = []
+          ExampleChanged    = []
+          AddedConcept      = []
+          RemovedConcept    = [] }

@@ -13,17 +13,17 @@ open Infrastructure
 open FSharp.UMX
 open CardOverflow.Pure.AsyncOp
 
-module Branch =
-    open Branch
+module Example =
+    open Example
     
     type Writer internal (resolve) =
-        let resolve branchId : Stream<_, _> = resolve branchId
+        let resolve exampleId : Stream<_, _> = resolve exampleId
 
         member _.Create(state: Events.Summary) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
-        member _.Edit(state, branchId, callerId) =
-            let stream = resolve branchId
+        member _.Edit(state, exampleId, callerId) =
+            let stream = resolve exampleId
             stream.Transact(decideEdit state callerId)
 
     let create resolve =
@@ -39,20 +39,20 @@ module Concept =
         member internal _.Create(state: Events.Summary) =
             let stream = resolve state.Id
             stream.Transact(decideCreate state)
-        member _.ChangeDefaultBranch conceptId (newDefaultBranchId: BranchId) callerId = asyncResult {
+        member _.ChangeDefaultExample conceptId (newDefaultExampleId: ExampleId) callerId = asyncResult {
             let stream = resolve conceptId
-            let! b, _ = tableClient.GetBranch newDefaultBranchId
-            return! decideDefaultBranchChanged b.Id b.ConceptId callerId |> stream.Transact
+            let! b, _ = tableClient.GetExample newDefaultExampleId
+            return! decideDefaultExampleChanged b.Id b.ConceptId callerId |> stream.Transact
         }
 
     let create resolve tableClient =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
         Writer(resolve, tableClient)
 
-module ConceptBranch =
+module ConceptExample =
 
-    let branch authorId command title : Branch.Events.Summary =
-        { Id = % command.Ids.BranchId
+    let example authorId command title : Example.Events.Summary =
+        { Id = % command.Ids.ExampleId
           LeafIds = [ % command.Ids.LeafId ]
           Title = title
           ConceptId = % command.Ids.ConceptId
@@ -63,39 +63,39 @@ module ConceptBranch =
           EditSummary = command.EditSummary }
     let concept authorId command sourceLeafId : Concept.Events.Summary =
         { Id = % command.Ids.ConceptId
-          DefaultBranchId = % command.Ids.BranchId
+          DefaultExampleId = % command.Ids.ExampleId
           AuthorId = authorId
           CopySourceLeafId = sourceLeafId }
-    let conceptBranch authorId command sourceLeafId title =
+    let conceptExample authorId command sourceLeafId title =
         (concept  authorId command sourceLeafId),
-        (branch authorId command title)
+        (example authorId command title)
 
     type Writer
-        (   conceptWriter  : Concept.Writer,
-            branchWriter : Branch.Writer) =
+        (   conceptWriter : Concept.Writer,
+            exampleWriter : Example.Writer) =
     
-        let create (conceptSummary, branchSummary) = asyncResult { // medTODO turn into a real saga
-            do!     conceptWriter .Create conceptSummary
-            return! branchWriter.Create branchSummary
+        let create (conceptSummary, exampleSummary) = asyncResult { // medTODO turn into a real saga
+            do!     conceptWriter.Create conceptSummary
+            return! exampleWriter.Create exampleSummary
         }
 
         member _.Upsert (authorId, command) =
             match command.Kind with
             | NewOriginal_TagIds tags -> // highTODO create card (with tag)
-                conceptBranch authorId command None                     "Default" |> create
+                conceptExample authorId command None                     "Default" |> create
             | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) -> // highTODO create card (with tag)
-                conceptBranch authorId command (% sourceLeafId |> Some) "Default" |> create
-            | NewBranch_Title title ->
-                branchWriter.Create(branch authorId command title)
+                conceptExample authorId command (% sourceLeafId |> Some) "Default" |> create
+            | NewExample_Title title ->
+                exampleWriter.Create(example authorId command title)
             | NewLeaf_Title title ->
-                let branch        = branch authorId command title
-                let edited : Branch.Events.Edited =
-                    { LeafId             = branch.LeafIds.Head
-                      Title              = branch.Title
-                      TemplateRevisionId = branch.TemplateRevisionId
-                      FieldValues        = branch.FieldValues
-                      EditSummary        = branch.EditSummary }
-                branchWriter.Edit(edited, branch.Id, authorId)
+                let example        = example authorId command title
+                let edited : Example.Events.Edited =
+                    { LeafId             = example.LeafIds.Head
+                      Title              = example.Title
+                      TemplateRevisionId = example.TemplateRevisionId
+                      FieldValues        = example.FieldValues
+                      EditSummary        = example.EditSummary }
+                exampleWriter.Edit(edited, example.Id, authorId)
 
 module User =
     open User

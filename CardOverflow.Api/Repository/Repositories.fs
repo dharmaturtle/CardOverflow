@@ -133,24 +133,24 @@ module HistoryRepository =
 module ExploreConceptRepository =
     let getCollectedIds (db: CardOverflowDb) userId conceptId =
             db.Card
-                .Include(fun x -> x.Concept.Branches :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchEntity) -> x.Latest)
+                .Include(fun x -> x.Concept.Examples :> IEnumerable<_>)
+                    .ThenInclude(fun (x: ExampleEntity) -> x.Latest)
                 .Where(fun x -> x.UserId = userId && x.ConceptId = conceptId)
-                .Select(fun x -> x.ConceptId, x.BranchId, x.LeafId, x.Id)
+                .Select(fun x -> x.ConceptId, x.ExampleId, x.LeafId, x.Id)
                 .ToListAsync()
             |>% Seq.toOption
             |>% Option.map (fun ids ->
-                let conceptId, branchId, leafId = ids.Select(fun (a, b, c, _) -> (a, b, c)).Distinct().Single()
+                let conceptId, exampleId, leafId = ids.Select(fun (a, b, c, _) -> (a, b, c)).Distinct().Single()
                 let cardIds = ids.Select(fun (_, _, _, c) -> c) |> Seq.toList
-                { ConceptId = conceptId; BranchId = branchId; LeafId = leafId; CardIds = cardIds})
+                { ConceptId = conceptId; ExampleId = exampleId; LeafId = leafId; CardIds = cardIds})
     let get (db: CardOverflowDb) userId conceptId = taskResult {
         let! (r: ConceptEntity * array<string> * array<int> * List<string> * List<string>) =
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Concept.Author)
-                .Include(fun x -> x.Concept.Branches :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchEntity) -> x.Latest.Grompleaf)
-                .Include(fun x -> x.Concept.Branches :> IEnumerable<_>)
-                    .ThenInclude(fun (x: BranchEntity) -> x.Author)
+                .Include(fun x -> x.Concept.Examples :> IEnumerable<_>)
+                    .ThenInclude(fun (x: ExampleEntity) -> x.Latest.Grompleaf)
+                .Include(fun x -> x.Concept.Examples :> IEnumerable<_>)
+                    .ThenInclude(fun (x: ExampleEntity) -> x.Author)
                 .Include(fun x -> x.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
                 .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
@@ -180,32 +180,32 @@ module ExploreConceptRepository =
     let leaf (db: CardOverflowDb) userId leafId = taskResult {
         let! (e: LeafEntity) =
             db.Leaf
-                .Include(fun x -> x.Branch.Concept.Author)
-                .Include(fun x -> x.Branch.Concept.CommentConcepts :> IEnumerable<_>)
+                .Include(fun x -> x.Example.Concept.Author)
+                .Include(fun x -> x.Example.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
                 .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
                 .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch Leaf #%A not found" leafId))
+            |> Task.map (Result.requireNotNull (sprintf "Example Leaf #%A not found" leafId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.LeafId = leafId)
         let! latest = get db userId e.ConceptId
-        return LeafMeta.load isCollected (e.Branch.LatestId = e.Id) e, latest // lowTODO optimization, only send the old leaf - the latest leaf isn't used
+        return LeafMeta.load isCollected (e.Example.LatestId = e.Id) e, latest // lowTODO optimization, only send the old leaf - the latest leaf isn't used
     }
-    let branch (db: CardOverflowDb) userId branchId = taskResult {
+    let example (db: CardOverflowDb) userId exampleId = taskResult {
         let! (e: LeafEntity) =
             db.LatestLeaf
-                .Include(fun x -> x.Branch.Concept.Author)
-                .Include(fun x -> x.Branch.Concept.CommentConcepts :> IEnumerable<_>)
+                .Include(fun x -> x.Example.Concept.Author)
+                .Include(fun x -> x.Example.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
                 .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
                 .Include(fun x -> x.Grompleaf)
-                .SingleOrDefaultAsync(fun x -> x.BranchId = branchId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch #%A not found" branchId))
-        let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.BranchId = branchId)
+                .SingleOrDefaultAsync(fun x -> x.ExampleId = exampleId)
+            |> Task.map (Result.requireNotNull (sprintf "Example #%A not found" exampleId))
+        let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.ExampleId = exampleId)
         let! latest = get db userId e.ConceptId
-        return LeafMeta.load isCollected (e.Branch.LatestId = e.Id) e, latest // lowTODO optimization, only send the old leaf - the latest leaf isn't used
+        return LeafMeta.load isCollected (e.Example.LatestId = e.Id) e, latest // lowTODO optimization, only send the old leaf - the latest leaf isn't used
     }
 
 module FileRepository =
@@ -230,7 +230,7 @@ module ConceptViewRepository =
             db.Leaf
                 .Include(fun x -> x.Grompleaf)
                 .SingleOrDefaultAsync(fun x -> x.Id = a_leafId)
-            |> Task.map (Result.requireNotNull (sprintf "Branch leaf #%A not found" a_leafId))
+            |> Task.map (Result.requireNotNull (sprintf "Example leaf #%A not found" a_leafId))
         let! (b: LeafEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Grompleaf)
@@ -249,8 +249,8 @@ module ConceptViewRepository =
                 .Include(fun x -> x.Grompleaf)
                 .Where(fun x -> x.Id = a_leafId || x.Id = b_leafId)
                 .ToListAsync()
-        let! a = Result.requireNotNull (sprintf "Branch leaf #%A not found" a_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = a_leafId)
-        let! b = Result.requireNotNull (sprintf "Branch leaf #%A not found" b_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = b_leafId)
+        let! a = Result.requireNotNull (sprintf "Example leaf #%A not found" a_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = a_leafId)
+        let! b = Result.requireNotNull (sprintf "Example leaf #%A not found" b_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = b_leafId)
         let! (collectedLeafIds: Guid ResizeArray) = getCollectedLeafIds db userId a_leafId b_leafId
         return
             LeafView.load a,
@@ -263,7 +263,7 @@ module ConceptViewRepository =
             db.Leaf
             .Include(fun x -> x.Grompleaf)
             .SingleOrDefaultAsync(fun x -> x.Id = leafId) with
-        | null -> return Error <| sprintf "Branch leaf %A not found" leafId
+        | null -> return Error <| sprintf "Example leaf %A not found" leafId
         | x -> return Ok <| LeafView.load x
     }
     let get (db: CardOverflowDb) conceptId =
@@ -282,12 +282,12 @@ module CardRepository =
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 x.LeafId = leafId ||
-                x.Branch.Leafs.Any(fun x -> x.Id = leafId)
+                x.Example.Leafs.Any(fun x -> x.Id = leafId)
             )
             .Select(fun x -> x.LeafId)
             .Distinct()
             .SingleOrDefaultAsync()
-        |> Task.map (Result.requireNotEqualTo Guid.Empty <| sprintf "You don't have any cards with Branch Leaf #%A" leafId)
+        |> Task.map (Result.requireNotEqualTo Guid.Empty <| sprintf "You don't have any cards with Example Leaf #%A" leafId)
 
 module ConceptRepository =
     let uncollectConcept (db: CardOverflowDb) userId conceptId = taskResult {
@@ -303,21 +303,21 @@ module ConceptRepository =
         cc.CardState <- CardState.toDb state
         return! db.SaveChangesAsyncI()
     }
-    let Revisions (db: CardOverflowDb) userId branchId = taskResult {
+    let Revisions (db: CardOverflowDb) userId exampleId = taskResult {
         let! r =
-            db.Branch
+            db.Example
                 .Include(fun x -> x.Author)
                 .Include(fun x -> x.Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: LeafEntity) -> x.Grompleaf)
-                .SingleOrDefaultAsync(fun x -> x.Id = branchId)
-            |> Task.map (Result.requireNotNull <| sprintf "BranchId #%A not found" branchId)
+                .SingleOrDefaultAsync(fun x -> x.Id = exampleId)
+            |> Task.map (Result.requireNotNull <| sprintf "ExampleId #%A not found" exampleId)
         let! collectedLeafId =
             db.Card
-                .Where(fun x -> x.UserId = userId && x.BranchId = branchId)
+                .Where(fun x -> x.UserId = userId && x.ExampleId = exampleId)
                 .Select(fun x -> x.LeafId)
                 .Distinct()
                 .SingleOrDefaultAsync()
-        return BranchRevision.load collectedLeafId r
+        return ExampleRevision.load collectedLeafId r
     }
     let collectConceptNoSave (db: CardOverflowDb) userId (leaf: LeafEntity) mayUpdate (cardIds: Guid list) = taskResult {
         let requiredLength = int leaf.MaxIndexInclusive + 1
@@ -355,16 +355,16 @@ module ConceptRepository =
                     None
                 | Some new', None ->
                     new'.Leaf <- leaf
-                    new'.Branch <- leaf.Branch
+                    new'.Example <- leaf.Example
                     new'.Concept <- leaf.Concept
                     new'.ConceptId <- leaf.ConceptId
                     new'.LeafId <- leaf.Id
                     db.Card.AddI new'
                     Some new'
                 | Some _, Some old' ->
-                    if leaf.BranchId = old'.BranchId || mayUpdate then
+                    if leaf.ExampleId = old'.ExampleId || mayUpdate then
                         old'.ConceptId <- leaf.ConceptId
-                        old'.BranchId <- leaf.BranchId
+                        old'.ExampleId <- leaf.ExampleId
                         old'.LeafId <- leaf.Id
                         Some old'
                     else None
@@ -374,9 +374,9 @@ module ConceptRepository =
     let collect (db: CardOverflowDb) userId leafId deckId (cardIds: Guid list) = taskResult {
         let! (leaf: LeafEntity) =
             db.Leaf
-                .Include(fun x -> x.Branch.Concept)
+                .Include(fun x -> x.Example.Concept)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |> Task.map (Result.requireNotNull <| sprintf "Branch Leaf #%A not found" leafId)
+            |> Task.map (Result.requireNotNull <| sprintf "Example Leaf #%A not found" leafId)
         let! (ccs: CardEntity list) = collectConceptNoSave db userId leaf true cardIds
         match deckId with
         | Some deckId ->
@@ -524,24 +524,24 @@ module ConceptRepository =
 
 module UpdateRepository =
     let concept (db: CardOverflowDb) userId (command: EditConceptCommand) =
-        let branchNameCheck branchId name =
-            db.Branch.AnyAsync(fun b -> b.Id = branchId && b.Concept.Branches.Any(fun b -> b.Name = name && b.Id <> branchId)) // veryLowTODO make case insensitive
-            |> Task.map (Result.requireFalse <| sprintf "The concept with Branch #%A already has a Branch named '%s'." branchId name)
-        let branchNameCheckConceptId conceptId name =
-            db.Concept.AnyAsync(fun s -> s.Id = conceptId && s.Branches.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
-            |> Task.map (Result.requireFalse <| sprintf "Concept #%A already has a Branch named '%s'." conceptId name)
+        let exampleNameCheck exampleId name =
+            db.Example.AnyAsync(fun b -> b.Id = exampleId && b.Concept.Examples.Any(fun b -> b.Name = name && b.Id <> exampleId)) // veryLowTODO make case insensitive
+            |> Task.map (Result.requireFalse <| sprintf "The concept with Example #%A already has a Example named '%s'." exampleId name)
+        let exampleNameCheckConceptId conceptId name =
+            db.Concept.AnyAsync(fun s -> s.Id = conceptId && s.Examples.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
+            |> Task.map (Result.requireFalse <| sprintf "Concept #%A already has a Example named '%s'." conceptId name)
         taskResult {
-            let! (branch: BranchEntity) =
+            let! (example: ExampleEntity) =
                 match command.Kind with
                     | NewLeaf_Title name ->
-                        branchNameCheck command.Ids.BranchId name
+                        exampleNameCheck command.Ids.ExampleId name
                         |> TaskResult.bind (fun () ->
-                            db.Branch.Include(fun x -> x.Concept).SingleOrDefaultAsync(fun x -> x.Id = command.Ids.BranchId && x.AuthorId = userId)
-                            |> Task.map (Result.requireNotNull <| sprintf "Either Branch #%A doesn't exist or you aren't its author" command.Ids.BranchId)
+                            db.Example.Include(fun x -> x.Concept).SingleOrDefaultAsync(fun x -> x.Id = command.Ids.ExampleId && x.AuthorId = userId)
+                            |> Task.map (Result.requireNotNull <| sprintf "Either Example #%A doesn't exist or you aren't its author" command.Ids.ExampleId)
                         )
                     | NewCopy_SourceLeafId_TagIds (leafId, _) ->
-                        BranchEntity(
-                            Id = command.Ids.BranchId,
+                        ExampleEntity(
+                            Id = command.Ids.ExampleId,
                             AuthorId = userId,
                             Concept =
                                 ConceptEntity(
@@ -549,29 +549,29 @@ module UpdateRepository =
                                     AuthorId = userId,
                                     CopySourceId = Nullable leafId
                                 )) |> Ok |> Task.FromResult
-                    | NewBranch_Title name -> taskResult {
+                    | NewExample_Title name -> taskResult {
                         do! db.Concept.AnyAsync(fun x -> x.Id = command.Ids.ConceptId)
                             |>% Result.requireTrue (sprintf "Concept %A not found" command.Ids.ConceptId)
-                        do! branchNameCheckConceptId command.Ids.ConceptId name
-                        let branch =
-                            BranchEntity(
-                                Id = command.Ids.BranchId,
+                        do! exampleNameCheckConceptId command.Ids.ConceptId name
+                        let example =
+                            ExampleEntity(
+                                Id = command.Ids.ExampleId,
                                 AuthorId = userId,
                                 Name = name,
                                 ConceptId = command.Ids.ConceptId)
-                        db.Entry(branch).State <- EntityState.Added
-                        return branch
+                        db.Entry(example).State <- EntityState.Added
+                        return example
                         }
                     | NewOriginal_TagIds _ ->
-                        BranchEntity(
-                            Id = command.Ids.BranchId,
+                        ExampleEntity(
+                            Id = command.Ids.ExampleId,
                             AuthorId = userId,
                             Concept =
                                 ConceptEntity(
                                     Id = command.Ids.ConceptId,
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            return command.CardView.CopyFieldsToNewLeaf branch command.EditSummary [] command.Ids.LeafId
+            return command.CardView.CopyFieldsToNewLeaf example command.EditSummary [] command.Ids.LeafId
         }
 
 module NotificationRepository =

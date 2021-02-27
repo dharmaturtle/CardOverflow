@@ -18,30 +18,30 @@
   @if (CollectedIds == null) {
     <CollectToggles_Button Css="btn-collect-card"
                            OnClick=@Collect
-                           BranchUsers=@BranchUsers />
+                           ExampleUsers=@ExampleUsers />
 
   } else {
     <CollectToggles_Button Css="btn-uncollect-card"
                            OnClick=@(() => _modal.Show())
-                           BranchUsers=@(BranchUsers + 1) />
+                           ExampleUsers=@(ExampleUsers + 1) />
   }
 } else {
   @if (CollectedIds?.Value?.LeafId == Ids.LeafId) {
     <CollectToggles_Button Css="btn-uncollect-card"
                            OnClick=@(() => _modal.Show())
-                           BranchUsers=@(BranchUsers + 1)
+                           ExampleUsers=@(ExampleUsers + 1)
                            LeafUsers=@(LeafUsers + 1) />
   } else {
-    @if (CollectedIds?.Value?.BranchId == Ids.BranchId && IsBranch) {
+    @if (CollectedIds?.Value?.ExampleId == Ids.ExampleId && IsExample) {
       <CollectToggles_Button Css="btn-collect-card btn-success btn-striped"
                              OnClick=@Collect
-                             BranchUsers=@(BranchUsers + 1)
+                             ExampleUsers=@(ExampleUsers + 1)
                              LeafUsers=@LeafUsers />
 
     } else {
       <CollectToggles_Button Css="btn-collect-card"
                              OnClick=@Collect
-                             BranchUsers=@BranchUsers
+                             ExampleUsers=@ExampleUsers
                              LeafUsers=@LeafUsers />
     }
   }
@@ -79,9 +79,9 @@
   [Parameter] public ConceptLeafIds Ids { get; set; }
   [Parameter] public int CardCount { get; set; }
 
-  [Parameter] public int? BranchUsers { get; set; }
+  [Parameter] public int? ExampleUsers { get; set; }
   [Parameter] public int? LeafUsers { get; set; }
-  [Parameter] public bool IsBranch { get; set; }
+  [Parameter] public bool IsExample { get; set; }
   [Parameter] public bool IsConcept { get; set; }
   [Parameter] public FSharpOption<Guid> DeckId { get; set; } = FSharpOption<Guid>.None;
   private BSModal _modal;

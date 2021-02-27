@@ -135,7 +135,7 @@ let editConceptCommandGen =
             fields
             |> List.map (fun f -> values |> Gen.map (fun value -> { EditField = f; Value = value }))
             |> SeqGen.sequence
-        let! editSummary = GenX.auto<string> |> Gen.filter (Branch.validateEditSummary >> Result.isOk)
+        let! editSummary = GenX.auto<string> |> Gen.filter (Example.validateEditSummary >> Result.isOk)
         let! tags = tagsGen
         let! kind = GenX.auto<UpsertKind> |> Gen.map (fun k ->
             match k with
@@ -209,19 +209,19 @@ let deckSummaryGen = gen {
             SourceId = None }
     }
 
-let branchSummaryGen = gen {
-    let! title       = GenX.lString 0 Branch.titleMax       Gen.latin1
-    let! editSummary = GenX.lString 0 Branch.editSummaryMax Gen.latin1
+let exampleSummaryGen = gen {
+    let! title       = GenX.lString 0 Example.titleMax       Gen.latin1
+    let! editSummary = GenX.lString 0 Example.editSummaryMax Gen.latin1
     let! leafId = GenX.auto
     return!
         nodaConfig
-        |> GenX.autoWith<Branch.Events.Summary>
+        |> GenX.autoWith<Example.Events.Summary>
         |> Gen.map (fun b ->
             { b with
                 Title = title
                 EditSummary = editSummary
                 LeafIds = [ leafId ]      })
-        |> Gen.filter (Branch.validateSummary >> Result.isOk)
+        |> Gen.filter (Example.validateSummary >> Result.isOk)
     }
 
 let deckEditGen = gen {
@@ -253,22 +253,22 @@ let newOriginalGen =
         return { NewOriginal = c }
     }
 
-type NewBranch = { NewOriginal: EditConceptCommand; NewBranch: EditConceptCommand; BranchTitle: string }
-let newBranchGen =
+type NewExample = { NewOriginal: EditConceptCommand; NewExample: EditConceptCommand; ExampleTitle: string }
+let newExampleGen =
     gen {
         let! { NewOriginal = newOriginal } = newOriginalGen
         let! title = GenX.auto<string>
-        let! newBranch = editConceptCommandGen
-        let newBranch =
-            { newBranch with
-                Kind = UpsertKind.NewBranch_Title title
+        let! newExample = editConceptCommandGen
+        let newExample =
+            { newExample with
+                Kind = UpsertKind.NewExample_Title title
                 Ids =
-                    { newBranch.Ids with
+                    { newExample.Ids with
                         ConceptId = newOriginal.Ids.ConceptId } }
         return
             { NewOriginal = newOriginal
-              NewBranch   = newBranch
-              BranchTitle = title }
+              NewExample   = newExample
+              ExampleTitle = title }
     }
 
 open Hedgehog.Xunit
@@ -287,9 +287,9 @@ type StandardConfig =
         |> AutoGenConfig.addGenerator timezoneGen
         |> AutoGenConfig.addGenerator localTimeGen
         |> AutoGenConfig.addGenerator newOriginalGen
-        |> AutoGenConfig.addGenerator newBranchGen
+        |> AutoGenConfig.addGenerator newExampleGen
         |> AutoGenConfig.addGenerator tagsGen
-        |> AutoGenConfig.addGenerator branchSummaryGen
+        |> AutoGenConfig.addGenerator exampleSummaryGen
 
 
 type StandardProperty(i) =

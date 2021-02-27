@@ -16,29 +16,29 @@
 
 <tr>
   <th scope="row" style="text-align: center">
-    <CollectToggles IsBranch=true
+    <CollectToggles IsExample=true
                     CollectedIds=@CollectedIds
-                    Ids=@(new ConceptLeafIds(Branch.Leaf.ConceptId, Branch.Id, Branch.Leaf.Id))
-                    CardCount=@Branch.Leaf.Indexes.Count()
-                    BranchUsers=@Branch.Users
+                    Ids=@(new ConceptLeafIds(Example.Leaf.ConceptId, Example.Id, Example.Leaf.Id))
+                    CardCount=@Example.Leaf.Indexes.Count()
+                    ExampleUsers=@Example.Users
                     LeafUsers=@(_displayAllRevisions && _revisions != default ? (int?) _revisions.SortedMeta.First().Users : null)
                     UpdateCollectedIds=@UpdateCollectedIds />
   </th>
   <td>
-    <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Branch.Leaf.Id ? "active" : "border-0")" @onclick="@(() => LeafSelected.InvokeAsync(Branch.Leaf))">
+    <div class="cursor-pointer list-group-item list-group-item-action @(Selected.Id == Example.Leaf.Id ? "active" : "border-0")" @onclick="@(() => LeafSelected.InvokeAsync(Example.Leaf))">
       <span class="font-weight-bolder">
-        @if (Branch.Name == null) {
+        @if (Example.Name == null) {
           <span>&laquo; Default &raquo;</span>
         } else {
-          @Branch.Name
+          @Example.Name
         }
       </span>
       <span class="font-italic float-right">
-        by <a href="@($"/user/{Branch.AuthorId}")" style="color:unset">@Branch.Author</a>
+        by <a href="@($"/user/{Example.AuthorId}")" style="color:unset">@Example.Author</a>
       </span>
       @if (_revisions != null && _displayAllRevisions) {
         <div>
-          <Concept_BranchSummary Leaf=@_revisions.SortedMeta.First() />
+          <Concept_ExampleSummary Leaf=@_revisions.SortedMeta.First() />
         </div>
       }
     </div>
@@ -47,17 +47,17 @@
     <BSDropdown Class="align-self-center">
       <BSDropdownToggle Class="bg-transparent"></BSDropdownToggle>
       <BSDropdownMenu>
-        @if (Branch.AuthorId == _user.Id) {
-          <BSDropdownItem Href="@($"concept/editbranch/{Branch.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
+        @if (Example.AuthorId == _user.Id) {
+          <BSDropdownItem Href="@($"concept/editexample/{Example.Id}")"><span class="oi oi-pencil"></span> Edit</BSDropdownItem>
         }
-        <BSDropdownItem Href="@($"concept/copyleaf/{Branch.Leaf.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
-        <BSDropdownItem Href="@($"branch/{Branch.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
+        <BSDropdownItem Href="@($"concept/copyleaf/{Example.Leaf.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
+        <BSDropdownItem Href="@($"example/{Example.Id}/revision")" target="_blank"><i class="fas fa-history"></i> Revisions (in new window)</BSDropdownItem>
         <BSDropdownItem OnClick=@toggleRevisions><i class="fas fa-history"></i> Revisions Toggle (this window)</BSDropdownItem>
-        @if (Branch.Name != null) {
-          <BSDropdownItem Href="@($"conceptdiff/{Branch.Leaf.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
+        @if (Example.Name != null) {
+          <BSDropdownItem Href="@($"conceptdiff/{Example.Leaf.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
         }
-        @if (CollectedIds?.Value?.LeafId != null && Branch.Leaf.Id != CollectedIds.Value.LeafId) {
-          <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{Branch.Leaf.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+        @if (CollectedIds?.Value?.LeafId != null && Example.Leaf.Id != CollectedIds.Value.LeafId) {
+          <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.LeafId}/Your Collected Example/{Example.Leaf.Id}/Other Example")">&Delta; Compare with your collected Example</BSDropdownItem>
         }
       </BSDropdownMenu>
     </BSDropdown>
@@ -70,13 +70,13 @@
       <td class="row pr-3">
         <div class="col-auto">
           <CollectToggles CollectedIds=@CollectedIds
-                          Ids=@(new ConceptLeafIds(revision.ConceptId, revision.BranchId, revision.Id))
+                          Ids=@(new ConceptLeafIds(revision.ConceptId, revision.ExampleId, revision.Id))
                           CardCount=@revision.Indexes.Count()
                           LeafUsers=@revision.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </div>
         <button class="col list-group-item list-group-item-action @(Selected.Id == revision.Id ? "active" : "border-0")" @onclick="@(() => LeafSelected.InvokeAsync(revision))">
-          <Concept_BranchSummary Leaf=@revision />
+          <Concept_ExampleSummary Leaf=@revision />
         </button>
       </td>
       <td>
@@ -84,12 +84,12 @@
           <BSDropdownToggle Class="pl-3 bg-transparent"></BSDropdownToggle>
           <BSDropdownMenu>
             <BSDropdownItem Href="@($"concept/copyleaf/{revision.Id}")"><span class="fas fa-copy"></span> Copy to a new Concept</BSDropdownItem>
-            @if (Branch.Name != null) {
+            @if (Example.Name != null) {
               <BSDropdownItem Href="@($"conceptdiff/{revision.Id}")">&Delta; Compare with &laquo; Default &raquo;</BSDropdownItem>
             }
-            <BSDropdownItem Href="@($"conceptdiff/{revision.Id}/Older Branch Leaf/{Branch.Leaf.Id}/Latest Branch Leaf")">&Delta; Compare with latest Branch Leaf</BSDropdownItem>
+            <BSDropdownItem Href="@($"conceptdiff/{revision.Id}/Older Example Leaf/{Example.Leaf.Id}/Latest Example Leaf")">&Delta; Compare with latest Example Leaf</BSDropdownItem>
             @if (CollectedIds?.Value?.LeafId != null && revision.Id != CollectedIds.Value.LeafId) {
-              <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.LeafId}/Your Collected Branch/{revision.Id}/Other Branch")">&Delta; Compare with your collected Branch</BSDropdownItem>
+              <BSDropdownItem Href="@($"conceptdiff/{CollectedIds.Value.LeafId}/Your Collected Example/{revision.Id}/Other Example")">&Delta; Compare with your collected Example</BSDropdownItem>
             }
           </BSDropdownMenu>
         </BSDropdown>
@@ -101,18 +101,18 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public Branch Branch { get; set; }
+  [Parameter] public Example Example { get; set; }
   [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }
   [Parameter] public LeafMeta Selected { get; set; }
   private bool _displayAllRevisions;
-  private BranchRevision _revisions;
+  private ExampleRevision _revisions;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (Selected.BranchId == Branch.Id && Selected.Id != Branch.Leaf.Id && !_displayAllRevisions) {
+    if (Selected.ExampleId == Example.Id && Selected.Id != Example.Leaf.Id && !_displayAllRevisions) {
       await toggleRevisions();
     }
     StateHasChanged();
@@ -127,13 +127,13 @@
   private async Task toggleRevisions() {
     _displayAllRevisions = !_displayAllRevisions;
     if (_revisions == null) {
-      await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, _user.Id, Branch.Id)).Match(ToastService, x => {
+      await DbExecutor.QueryAsync(db => ConceptRepository.Revisions(db, _user.Id, Example.Id)).Match(ToastService, x => {
         _revisions = x;
         sub1();
       });
     }
     if (!_displayAllRevisions && _revisions.SortedMeta.Skip(1).Select(x => x.Id).Contains(Selected.Id)) {
-      await LeafSelected.InvokeAsync(Branch.Leaf);
+      await LeafSelected.InvokeAsync(Example.Leaf);
     }
   }
 

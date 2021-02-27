@@ -14,8 +14,8 @@ type CardSettingId = Guid<cardSettingId>
 
 type ConceptId = Guid<conceptId>
     and [<Measure>] conceptId
-type BranchId = Guid<branchId>
-    and [<Measure>] branchId
+type ExampleId = Guid<exampleId>
+    and [<Measure>] exampleId
 type LeafId = Guid<leafId>
     and [<Measure>] leafId
 type StackId = Guid<stackId>

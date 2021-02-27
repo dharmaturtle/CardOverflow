@@ -19,16 +19,16 @@
 } else {
   <div class="@(IsCurate ? "" : "row")">
     <div class="col-4">
-      <Concept_Branches Concept=@_concept
-                      Branches=@_concept.Branches
-                      LeafSelected=@(x => _selected = x)
-                      CollectedIds=@_concept.CollectedIds
-                      UpdateCollectedIds=@(async ids => {
-                                             _concept.CollectedIds = ids;
-                                             await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, _user.Id, _concept.Id)).Match(ToastService, ccs => _cards = ccs);
-                                           })
-                      Selected=@_selected
-                      IsExplore=@(!IsCurate) />
+      <Concept_Examples Concept=@_concept
+                        Examples=@_concept.Examples
+                        LeafSelected=@(x => _selected = x)
+                        CollectedIds=@_concept.CollectedIds
+                        UpdateCollectedIds=@(async ids => {
+                                               _concept.CollectedIds = ids;
+                                               await DbExecutor.QueryAsync(db => ConceptRepository.GetCollected(db, _user.Id, _concept.Id)).Match(ToastService, ccs => _cards = ccs);
+                                             })
+                        Selected=@_selected
+                        IsExplore=@(!IsCurate) />
     </div>
     <div class="col">
       <div class="row">
@@ -64,7 +64,7 @@
 
 @code {
   [Parameter] public Guid? ConceptId { get; set; }
-  [Parameter] public Guid? BranchId { get; set; }
+  [Parameter] public Guid? ExampleId { get; set; }
   [Parameter] public Guid? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
@@ -82,16 +82,16 @@
     if (_selected.IsCollected) {
       _selected.Users--;
     }
-    foreach (var branch in _concept.Branches) {
-      if (branch.Leaf.Id == _concept.CollectedIds?.Value?.LeafId || branch.Id == _concept.CollectedIds?.Value?.BranchId) {
-        branch.Summary.Users--;
+    foreach (var example in _concept.Examples) {
+      if (example.Leaf.Id == _concept.CollectedIds?.Value?.LeafId || example.Id == _concept.CollectedIds?.Value?.ExampleId) {
+        example.Summary.Users--;
       }
     }
   }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     var oldConceptId = ConceptId;
-    var oldBranchId = BranchId;
+    var oldExampleId = ExampleId;
     var oldLeafId = LeafId;
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
@@ -101,8 +101,8 @@
         _selected = _concept.Default.Leaf;
         sub1();
       });
-    } else if (BranchId.HasValue && oldBranchId != BranchId) {
-      await DbExecutor.QueryAsync(db => ExploreConceptRepository.branch(db, _user.Id, BranchId.Value)).Match(_ShowError, x => {
+    } else if (ExampleId.HasValue && oldExampleId != ExampleId) {
+      await DbExecutor.QueryAsync(db => ExploreConceptRepository.example(db, _user.Id, ExampleId.Value)).Match(_ShowError, x => {
         (_selected, _concept) = x;
         sub1();
       });

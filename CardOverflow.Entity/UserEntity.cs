@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         public UserEntity()
         {
             Cards = new HashSet<CardEntity>();
-            Branches = new HashSet<BranchEntity>();
+            Examples = new HashSet<ExampleEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
             Gromplates = new HashSet<GromplateEntity>();
             CommentGromplates = new HashSet<CommentGromplateEntity>();
@@ -71,7 +71,7 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<BranchEntity> Branches { get; set; }
+        public virtual ICollection<ExampleEntity> Examples { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]

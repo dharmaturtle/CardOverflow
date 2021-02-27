@@ -32,8 +32,8 @@
   <div class="d-flex align-items-center flex-column align-middle">
     <i class="fas fa-bookmark" style="position:absolute; transform: scaleY(1.5) scaleX(@(_scaleX()));"></i>
     <div class="users">
-      @if (BranchUsers != default) {
-        @BranchUsers
+      @if (ExampleUsers != default) {
+        @ExampleUsers
       } else {
         <span>&nbsp;</span>
       }
@@ -49,8 +49,8 @@
 @code {
   [Parameter] public string Css { get; set; }
   [Parameter] public EventCallback OnClick { get; set; }
-  [Parameter] public int? BranchUsers { get; set; }
+  [Parameter] public int? ExampleUsers { get; set; }
   [Parameter] public int? LeafUsers { get; set; }
-  private double _scaleX() => Math.Max(1.5, (BranchUsers?.ToString() ?? "").Length);
+  private double _scaleX() => Math.Max(1.5, (ExampleUsers?.ToString() ?? "").Length);
 
 }

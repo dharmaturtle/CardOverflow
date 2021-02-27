@@ -38,7 +38,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     Assert.Equal(1, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
 
     // Testing UpdateFieldsToNewLeaf
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
     let newQuestionXemplate = "modified {{Front mutated}}"
     let newGromplateName = "new name"
     let oldLeafId = c.Db.Card.Single().LeafId
@@ -77,7 +77,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     Assert.Equal(2, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.Leaf.Count())
     let concept_1 = c.Db.Concept.Single().Id
-    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Branch.ConceptId = concept_1))
+    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Example.ConceptId = concept_1))
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.ConceptId = concept_1))
     let createds = c.Db.Grompleaf.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])

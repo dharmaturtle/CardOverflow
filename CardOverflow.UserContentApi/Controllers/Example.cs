@@ -10,17 +10,17 @@ using ThoughtDesign.WebLibrary;
 namespace CardOverflow.UserContentApi.Controllers {
   [ApiController]
   //[Route("[controller]")]
-  public class Branch : Controller {
+  public class Example : Controller {
     private readonly CardOverflowDb _db;
 
-    public Branch(CardOverflowDb db) {
+    public Example(CardOverflowDb db) {
       _db = db;
     }
 
-    [HttpGet("branch/{id}/{index}/front")]
+    [HttpGet("example/{id}/{index}/front")]
     public async Task<IActionResult> Front(Guid id, int index) => _Front(index, await ConceptViewRepository.get(_db, id));
 
-    [HttpGet("branch/{id}/{index}/back")]
+    [HttpGet("example/{id}/{index}/back")]
     public async Task<IActionResult> Back(Guid id, int index) => _Back(index, await ConceptViewRepository.get(_db, id));
 
     [HttpGet("leaf/{id}/{index}/front")]

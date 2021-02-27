@@ -22,7 +22,7 @@
     <Compile Include="Deck.fs" />
     <Compile Include="Template.fs" />
     <Compile Include="Concept.fs" />
-    <Compile Include="Branch.fs" />
+    <Compile Include="Example.fs" />
     <Compile Include="Stack.fs" />
   </ItemGroup>
 

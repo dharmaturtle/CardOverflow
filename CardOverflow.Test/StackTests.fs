@@ -18,11 +18,11 @@ open AsyncOp
 open Domain.Stack
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (branchSummary: Branch.Events.Summary) = asyncResult {
+let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (exampleSummary: Example.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let stackWriter = c.StackWriter()
-    do! c.BranchWriter().Create branchSummary
-    let stackSummary = { stackSummary with ExpressionRevisionId = branchSummary.LeafIds.Head }
+    do! c.ExampleWriter().Create exampleSummary
+    let stackSummary = { stackSummary with ExpressionRevisionId = exampleSummary.LeafIds.Head }
 
     do! stackWriter.Create stackSummary
 
@@ -38,11 +38,11 @@ let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (branchSu
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) branchSummary tagsChanged = asyncResult {
+let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) exampleSummary tagsChanged = asyncResult {
     let c = TestEsContainer()
     let stackWriter = c.StackWriter()
-    do! c.BranchWriter().Create branchSummary
-    let stackSummary = { stackSummary with ExpressionRevisionId = branchSummary.LeafIds.Head }
+    do! c.ExampleWriter().Create exampleSummary
+    let stackSummary = { stackSummary with ExpressionRevisionId = exampleSummary.LeafIds.Head }
     do! stackWriter.Create stackSummary
     
     do! stackWriter.ChangeTags tagsChanged stackSummary.AuthorId stackSummary.Id

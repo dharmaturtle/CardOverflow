@@ -213,33 +213,33 @@ module Heatmap =
 [<CLIMutable>]
 type UpsertIds = {
     ConceptId: Guid
-    BranchId: Guid
+    ExampleId: Guid
     LeafId: Guid
     CardIds: Guid list // should be ordered by index
 }
 module UpsertIds =
-    let fromTuple (conceptId, branchId, leafId, cardIds) =
+    let fromTuple (conceptId, exampleId, leafId, cardIds) =
         {   ConceptId = conceptId
-            BranchId = branchId
+            ExampleId = exampleId
             LeafId = leafId
             CardIds = cardIds
         }
 
 type ConceptLeafIds = {
     ConceptId: Guid
-    BranchId: Guid
+    ExampleId: Guid
     LeafId: Guid
 } with
     member this.ToUpsertIds cardIds =
         {   ConceptId = this.ConceptId
-            BranchId = this.BranchId
+            ExampleId = this.ExampleId
             LeafId = this.LeafId
             CardIds = cardIds
         }
 
 type ConceptLeafIndex = {
     ConceptId: Guid
-    BranchId: Guid
+    ExampleId: Guid
     LeafId: Guid
     Index: int16
     DeckId: Guid
@@ -247,16 +247,16 @@ type ConceptLeafIndex = {
 }
 
 module ConceptLeafIds =
-    let fromTuple (conceptId, branchId, leafId) =
+    let fromTuple (conceptId, exampleId, leafId) =
         {   ConceptId = conceptId
-            BranchId = branchId
+            ExampleId = exampleId
             LeafId = leafId
         }
 
 module ConceptLeafIndex =
-    let fromTuple (conceptId, branchId, leafId, index, deckId, cardId) =
+    let fromTuple (conceptId, exampleId, leafId, index, deckId, cardId) =
         {   ConceptId = conceptId
-            BranchId = branchId
+            ExampleId = exampleId
             LeafId = leafId
             Index = index
             DeckId = deckId
@@ -266,7 +266,7 @@ module ConceptLeafIndex =
 type DiffState =
     | Unchanged of ConceptLeafIndex
     | LeafChanged of ConceptLeafIndex * ConceptLeafIndex // theirs, mine
-    | BranchChanged of ConceptLeafIndex * ConceptLeafIndex
+    | ExampleChanged of ConceptLeafIndex * ConceptLeafIndex
     | AddedConcept of ConceptLeafIndex
     | RemovedConcept of ConceptLeafIndex
 
@@ -274,7 +274,7 @@ type DiffState =
 type DiffStateSummary = {
     Unchanged: ConceptLeafIndex list
     LeafChanged: (ConceptLeafIndex * ConceptLeafIndex) list // theirs, mine
-    BranchChanged: (ConceptLeafIndex * ConceptLeafIndex) list
+    ExampleChanged: (ConceptLeafIndex * ConceptLeafIndex) list
     AddedConcept: ConceptLeafIndex list
     RemovedConcept: ConceptLeafIndex list
     MoveToAnotherDeck: ConceptLeafIndex list
@@ -283,7 +283,7 @@ type DiffStateSummary = {
         let tupleToList (a, b) = [a; b]
         [   this.Unchanged
             (this.LeafChanged |> List.collect tupleToList)
-            (this.BranchChanged |> List.collect tupleToList)
+            (this.ExampleChanged |> List.collect tupleToList)
             this.AddedConcept
             this.RemovedConcept
         ] |> List.concat
@@ -292,7 +292,7 @@ type DiffStateSummary = {
 
 module Diff =
     let ids aIds bIds =
-        let sort = List.sortBy (fun x -> x.ConceptId, x.BranchId, x.LeafId, x.Index)
+        let sort = List.sortBy (fun x -> x.ConceptId, x.ExampleId, x.LeafId, x.Index)
         let aIds = aIds |> sort
         let bIds = bIds |> sort
         List.zipOn aIds bIds (fun a b -> a.ConceptId = b.ConceptId && a.Index = b.Index)
@@ -301,28 +301,28 @@ module Diff =
             | Some a, Some b ->
                 if a.LeafId = b.LeafId && a.Index = b.Index then
                     Unchanged b
-                elif a.BranchId = b.BranchId then
+                elif a.ExampleId = b.ExampleId then
                     LeafChanged (a, b)
                 else
-                    BranchChanged (a, b)
+                    ExampleChanged (a, b)
             | Some a, None   -> AddedConcept a
             | None  , Some b -> RemovedConcept b
             | None  , None   -> failwith "impossible"
         )
     let toSummary diffStates =
-        let unchanged             = ResizeArray.empty
-        let leafChanged = ResizeArray.empty
-        let branchChanged         = ResizeArray.empty
-        let addedConcept            = ResizeArray.empty
-        let removedConcept          = ResizeArray.empty
+        let unchanged      = ResizeArray.empty
+        let leafChanged    = ResizeArray.empty
+        let exampleChanged = ResizeArray.empty
+        let addedConcept   = ResizeArray.empty
+        let removedConcept = ResizeArray.empty
         diffStates |> List.iter
             (function
             | Unchanged x ->
                 unchanged.Add x
             | LeafChanged (x, y) ->
                 leafChanged.Add (x, y)
-            | BranchChanged (x, y) ->
-                branchChanged.Add (x, y)
+            | ExampleChanged (x, y) ->
+                exampleChanged.Add (x, y)
             | AddedConcept x ->
                 addedConcept.Add x
             | RemovedConcept x ->
@@ -330,11 +330,11 @@ module Diff =
         let moveToAnotherDeck, removedConcept =
             removedConcept |> List.ofSeq |> List.partition (fun r ->
                 unchanged
-                    .Select(fun x -> (x.ConceptId, x.BranchId, x.LeafId))
-                    .Contains(       (r.ConceptId, r.BranchId, r.LeafId)))
+                    .Select(fun x -> (x.ConceptId, x.ExampleId, x.LeafId))
+                    .Contains(       (r.ConceptId, r.ExampleId, r.LeafId)))
         {   Unchanged = unchanged |> Seq.toList
             LeafChanged = leafChanged |> Seq.toList
-            BranchChanged = branchChanged |> Seq.toList
+            ExampleChanged = exampleChanged |> Seq.toList
             AddedConcept = addedConcept |> Seq.toList
             RemovedConcept = removedConcept
             MoveToAnotherDeck = moveToAnotherDeck

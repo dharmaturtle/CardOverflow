@@ -7,14 +7,14 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class BranchEntity
+    public partial class ExampleEntity
     {
-        public BranchEntity()
+        public ExampleEntity()
         {
-            CardBranchNavigations = new HashSet<CardEntity>();
-            CardBranches = new HashSet<CardEntity>();
+            CardExampleNavigations = new HashSet<CardEntity>();
+            CardExamples = new HashSet<CardEntity>();
             Leafs = new HashSet<LeafEntity>();
-            NotificationBranches = new HashSet<NotificationEntity>();
+            NotificationExamples = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -44,19 +44,19 @@ namespace CardOverflow.Entity
         public int[] TagsCount { get; set; } = new int[0];
 
         [ForeignKey("AuthorId")]
-        [InverseProperty("Branches")]
+        [InverseProperty("Examples")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestId")]
         public virtual LeafEntity Latest { get; set; }
         [ForeignKey("ConceptId")]
-        [InverseProperty("Branches")]
+        [InverseProperty("Examples")]
         public virtual ConceptEntity Concept { get; set; }
-        public virtual ICollection<CardEntity> CardBranchNavigations { get; set; }
-        [InverseProperty("Branch")]
-        public virtual ICollection<CardEntity> CardBranches { get; set; }
-        [InverseProperty("Branch")]
+        public virtual ICollection<CardEntity> CardExampleNavigations { get; set; }
+        [InverseProperty("Example")]
+        public virtual ICollection<CardEntity> CardExamples { get; set; }
+        [InverseProperty("Example")]
         public virtual ICollection<LeafEntity> Leafs { get; set; }
-        [InverseProperty("Branch")]
-        public virtual ICollection<NotificationEntity> NotificationBranches { get; set; }
+        [InverseProperty("Example")]
+        public virtual ICollection<NotificationEntity> NotificationExamples { get; set; }
     }
 }

@@ -91,8 +91,8 @@ type AnkiCardWrite = {
         entity.EditSummary <- "Imported from Anki"
         let concept = ConceptEntity(AuthorId = this.AuthorId)
         entity.Concept <- concept
-        entity.Branch <-
-            BranchEntity(
+        entity.Example <-
+            ExampleEntity(
                 Concept = concept,
                 AuthorId = this.AuthorId
             )
@@ -141,8 +141,8 @@ type AnkiCard = {
     member this.CopyToNew i =
         let entity = CardEntity()
         this.CopyToX entity i
-        entity.Concept <- this.Leaf.Branch.Concept
-        entity.Branch <- this.Leaf.Branch
+        entity.Concept <- this.Leaf.Example.Concept
+        entity.Example <- this.Leaf.Example
         entity.Leaf <- this.Leaf
         entity.CardSetting <- this.CardSetting
         entity

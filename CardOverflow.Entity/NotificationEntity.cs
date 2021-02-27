@@ -32,15 +32,15 @@ namespace CardOverflow.Entity
         }
         private string _Message;
         public Guid? ConceptId { get; set; }
-        public Guid? BranchId { get; set; }
+        public Guid? ExampleId { get; set; }
         public Guid? LeafId { get; set; }
         public Guid? DeckId { get; set; }
         public Guid? GromplateId { get; set; }
         public Guid? GrompleafId { get; set; }
 
-        [ForeignKey("BranchId")]
-        [InverseProperty("NotificationBranches")]
-        public virtual BranchEntity Branch { get; set; }
+        [ForeignKey("ExampleId")]
+        [InverseProperty("NotificationExamples")]
+        public virtual ExampleEntity Example { get; set; }
         [ForeignKey("LeafId")]
         [InverseProperty("NotificationLeafs")]
         public virtual LeafEntity Leaf { get; set; }

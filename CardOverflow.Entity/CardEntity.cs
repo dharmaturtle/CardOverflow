@@ -22,7 +22,7 @@ namespace CardOverflow.Entity
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid UserId { get; set; }
         public Guid ConceptId { get; set; }
-        public Guid BranchId { get; set; }
+        public Guid ExampleId { get; set; }
         public Guid LeafId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }
@@ -65,13 +65,13 @@ namespace CardOverflow.Entity
         public string TsvHelper { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
 
-        [ForeignKey("BranchId")]
-        [InverseProperty("CardBranches")]
-        public virtual BranchEntity Branch { get; set; }
+        [ForeignKey("ExampleId")]
+        [InverseProperty("CardExamples")]
+        public virtual ExampleEntity Example { get; set; }
         [ForeignKey("LeafId")]
         [InverseProperty("Cards")]
         public virtual LeafEntity Leaf { get; set; }
-        public virtual BranchEntity BranchNavigation { get; set; }
+        public virtual ExampleEntity ExampleNavigation { get; set; }
         [ForeignKey("CardSettingId")]
         [InverseProperty("Cards")]
         public virtual CardSettingEntity CardSetting { get; set; }

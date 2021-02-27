@@ -10,7 +10,7 @@ namespace CardOverflow.Entity
         public virtual DbSet<CardEntity> Card { get; set; }
         private DbSet<CardIsLatestEntity> _CardIsLatestTracked { get; set; }
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
-        public virtual DbSet<BranchEntity> Branch { get; set; }
+        public virtual DbSet<ExampleEntity> Example { get; set; }
         public virtual DbSet<LeafEntity> Leaf { get; set; }
         private DbSet<LeafRelationshipCountEntity> _LeafRelationshipCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
@@ -81,7 +81,7 @@ namespace CardOverflow.Entity
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasIndex(e => new { e.UserId, e.BranchId });
+                entity.HasIndex(e => new { e.UserId, e.ExampleId });
 
                 entity.HasIndex(e => new { e.UserId, e.ConceptId });
 
@@ -91,9 +91,9 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => new { e.UserId, e.LeafId, e.Index })
                     .IsUnique();
 
-                entity.HasOne(d => d.Branch)
-                    .WithMany(p => p.CardBranches)
-                    .HasForeignKey(d => d.BranchId)
+                entity.HasOne(d => d.Example)
+                    .WithMany(p => p.CardExamples)
+                    .HasForeignKey(d => d.ExampleId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Leaf)
@@ -121,16 +121,16 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                //entity.HasOne(d => d.BranchI)
-                //    .WithMany(p => p.CardBranchIs)
-                //    .HasPrincipalKey(p => new { p.BranchId, p.Id })
-                //    .HasForeignKey(d => new { d.BranchId, d.LeafId })
+                //entity.HasOne(d => d.ExampleI)
+                //    .WithMany(p => p.CardExampleIs)
+                //    .HasPrincipalKey(p => new { p.ExampleId, p.Id })
+                //    .HasForeignKey(d => new { d.ExampleId, d.LeafId })
                 //    .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.BranchNavigation)
-                    .WithMany(p => p.CardBranchNavigations)
+                entity.HasOne(d => d.ExampleNavigation)
+                    .WithMany(p => p.CardExampleNavigations)
                     .HasPrincipalKey(p => new { p.ConceptId, p.Id })
-                    .HasForeignKey(d => new { d.ConceptId, d.BranchId })
+                    .HasForeignKey(d => new { d.ConceptId, d.ExampleId })
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -145,7 +145,7 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<BranchEntity>(entity =>
+            modelBuilder.Entity<ExampleEntity>(entity =>
             {
                 entity.HasIndex(e => new { e.Id, e.ConceptId })
                     .IsUnique();
@@ -153,12 +153,12 @@ namespace CardOverflow.Entity
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
-                    .WithMany(p => p.Branches)
+                    .WithMany(p => p.Examples)
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Concept)
-                    .WithMany(p => p.Branches)
+                    .WithMany(p => p.Examples)
                     .HasForeignKey(d => d.ConceptId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
@@ -170,7 +170,7 @@ namespace CardOverflow.Entity
 
             modelBuilder.Entity<LeafEntity>(entity =>
             {
-                entity.HasIndex(e => e.BranchId);
+                entity.HasIndex(e => e.ExampleId);
 
                 entity.HasIndex(e => e.GrompleafId);
 
@@ -180,15 +180,15 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
                     () => entity.Ignore(e => e.Tsv));
 
-                entity.HasIndex(e => new { e.Id, e.BranchId })
+                entity.HasIndex(e => new { e.Id, e.ExampleId })
                     .IsUnique();
 
                 entity.HasIndex(e => new { e.Id, e.ConceptId })
                     .IsUnique();
 
-                entity.HasOne(d => d.Branch)
+                entity.HasOne(d => d.Example)
                     .WithMany(p => p.Leafs)
-                    .HasForeignKey(d => d.BranchId)
+                    .HasForeignKey(d => d.ExampleId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Grompleaf)
@@ -490,9 +490,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.DefaultBranch)
+                entity.HasOne(d => d.DefaultExample)
                     .WithMany()
-                    .HasForeignKey(d => d.DefaultBranchId)
+                    .HasForeignKey(d => d.DefaultExampleId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 

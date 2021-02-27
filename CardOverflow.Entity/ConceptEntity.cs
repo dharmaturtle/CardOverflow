@@ -12,7 +12,7 @@ namespace CardOverflow.Entity
         public ConceptEntity()
         {
             Cards = new HashSet<CardEntity>();
-            Branches = new HashSet<BranchEntity>();
+            Examples = new HashSet<ExampleEntity>();
             CommentConcepts = new HashSet<CommentConceptEntity>();
             Notifications = new HashSet<NotificationEntity>();
         }
@@ -23,7 +23,7 @@ namespace CardOverflow.Entity
         public Guid AuthorId { get; set; }
         public int Users { get; set; }
         public Guid? CopySourceId { get; set; }
-        public Guid DefaultBranchId { get; set; }
+        public Guid DefaultExampleId { get; set; }
         public bool IsListed { get; set; } = true;
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Instant Created { get; set; }
@@ -37,15 +37,15 @@ namespace CardOverflow.Entity
         [ForeignKey("AuthorId")]
         [InverseProperty("Concepts")]
         public virtual UserEntity Author { get; set; }
-        [ForeignKey("DefaultBranchId")]
-        public virtual BranchEntity DefaultBranch { get; set; }
+        [ForeignKey("DefaultExampleId")]
+        public virtual ExampleEntity DefaultExample { get; set; }
         [ForeignKey("CopySourceId")]
         [InverseProperty("ConceptCopySources")]
         public virtual LeafEntity CopySource { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Concept")]
-        public virtual ICollection<BranchEntity> Branches { get; set; }
+        public virtual ICollection<ExampleEntity> Examples { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
         [InverseProperty("Concept")]

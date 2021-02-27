@@ -68,12 +68,12 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
 
         let! gromplate = FacetRepositoryTests.basicGromplate c.Db
         let conceptId = concept_1
-        let branchId = branch_1
+        let exampleId = example_1
 
         do! SanitizeConceptRepository.Update c.Db userId
                 [ basicCommand ]
                 (conceptCommand gromplate ids_1)
-            |>%% Assert.equal branchId
+            |>%% Assert.equal exampleId
 
         let! (cc: Card) =
             ConceptRepository.GetCollected c.Db userId conceptId
@@ -82,7 +82,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
             {   CardId = cc.CardId
                 UserId = userId
                 ConceptId = conceptId
-                BranchId = branchId
+                ExampleId = exampleId
                 LeafMeta = cc.LeafMeta // untested
                 Index = 0s
                 CardState = basicCommand.CardState
@@ -99,12 +99,12 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         // works on multiple collected cards, e.g. reversedBasicGromplate
         let! gromplate = FacetRepositoryTests.reversedBasicGromplate c.Db
         let conceptId = concept_2
-        let branchId = branch_2
+        let exampleId = example_2
 
         do! SanitizeConceptRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
                 (conceptCommand gromplate { ids_2 with CardIds = [ card_2; card_3 ] })
-            |>%% Assert.equal branchId
+            |>%% Assert.equal exampleId
 
         let! (ccs: Card ResizeArray) = ConceptRepository.GetCollected c.Db userId conceptId
         let a = ccs.First(fun x -> x.Index = 0s)
@@ -113,7 +113,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
             {   CardId = a.CardId
                 UserId = userId
                 ConceptId = conceptId
-                BranchId = branchId
+                ExampleId = exampleId
                 LeafMeta = a.LeafMeta // untested
                 Index = 0s
                 CardState = aRevCommand.CardState
@@ -130,7 +130,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
             {   CardId = b.CardId
                 UserId = userId
                 ConceptId = conceptId
-                BranchId = branchId
+                ExampleId = exampleId
                 LeafMeta = b.LeafMeta // untested
                 Index = 1s
                 CardState = bRevCommand.CardState

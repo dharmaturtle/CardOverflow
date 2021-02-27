@@ -25,13 +25,13 @@ type ElseClient (client: ElasticClient) =
         match e with
         | Concept.Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
-        | Concept.Events.DefaultBranchChanged b ->
+        | Concept.Events.DefaultExampleChanged b ->
             client.UpdateAsync<obj>(
                 conceptId |> Id |> DocumentPath,
                 fun ud ->
                     ud
                         .Index<Concept.Events.Summary>()
-                        .Doc {| DefaultBranchId = b.BranchId |}
+                        .Doc {| DefaultExampleId = b.ExampleId |}
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore
         |> Async.AwaitTask
@@ -44,21 +44,21 @@ type ElseClient (client: ElasticClient) =
         |> Async.AwaitTask
     member this.Get (conceptId: ConceptId) =
         conceptId.ToString() |> this.GetConcept
-    member _.UpsertBranch' (branchId: string) e =
+    member _.UpsertExample' (exampleId: string) e =
         match e with
-        | Branch.Events.Created summary ->
+        | Example.Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
-        | Branch.Events.Edited
+        | Example.Events.Edited
             { LeafId             = leafId
               Title              = title
               TemplateRevisionId = templateRevisionId
               FieldValues        = fieldValues
               EditSummary        = editSummary } ->
             client.UpdateAsync<obj>(
-                branchId |> Id |> DocumentPath,
+                exampleId |> Id |> DocumentPath,
                 fun ud ->
                     ud
-                        .Index<Branch.Events.Summary>()
+                        .Index<Example.Events.Summary>()
                         .Doc
                         {| 
                             LeafId             = leafId
@@ -70,5 +70,5 @@ type ElseClient (client: ElasticClient) =
                     :> IUpdateRequest<_,_>
             ) |> Task.map ignore
         |> Async.AwaitTask
-    member this.UpsertBranch (branchId: BranchId) =
-        branchId.ToString() |> this.UpsertBranch'
+    member this.UpsertExample (exampleId: ExampleId) =
+        exampleId.ToString() |> this.UpsertExample'

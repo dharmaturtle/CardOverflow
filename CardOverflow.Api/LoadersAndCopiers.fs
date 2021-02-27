@@ -44,7 +44,7 @@ module Notification =
                   Name = myDeck.Name }))
         let conceptLeafIds =
             lazy{ ConceptId = n.ConceptId.Value
-                  BranchId = n.BranchId.Value
+                  ExampleId = n.ExampleId.Value
                   LeafId = n.LeafId.Value
                 }
         let cardCount = newCardCount |> int |> (+) 1
@@ -53,7 +53,7 @@ module Notification =
                 | [] -> None
                 | card ->
                     {   ConceptId = card.First().ConceptId
-                        BranchId = card.First().BranchId
+                        ExampleId = card.First().ExampleId
                         LeafId = card.First().LeafId
                         CardIds = card.Select(fun x -> x.Id) |> Seq.toList
                     } |> Some
@@ -314,17 +314,17 @@ type LeafView with
         let entity = LeafEntity()
         this.CopyToX entity commields
         entity
-    member this.CopyFieldsToNewLeaf (branch: BranchEntity) editSummary commields leafId =
+    member this.CopyFieldsToNewLeaf (example: ExampleEntity) editSummary commields leafId =
         let e = this.CopyToNew commields
-        if branch.Concept = null then
-            if branch.ConceptId = Guid.Empty then failwith "ConceptId is Guid.Empty, you gotta .Include it"
-            e.ConceptId <- branch.ConceptId
+        if example.Concept = null then
+            if example.ConceptId = Guid.Empty then failwith "ConceptId is Guid.Empty, you gotta .Include it"
+            e.ConceptId <- example.ConceptId
         else
-            e.Concept <- branch.Concept
-            e.ConceptId <- branch.Concept.Id
+            e.Concept <- example.Concept
+            e.ConceptId <- example.Concept.Id
         e.Id <- leafId
-        e.Branch <- branch
-        e.BranchId <- branch.Id
+        e.Example <- example
+        e.ExampleId <- example.Id
         e.EditSummary <- editSummary
         e.MaxIndexInclusive <- this.MaxIndexInclusive
         e
@@ -340,7 +340,7 @@ type LeafMeta with
         let front, back, _, _ = entity |> LeafView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
             ConceptId = entity.ConceptId
-            BranchId = entity.BranchId
+            ExampleId = entity.ExampleId
             MaxIndexInclusive = entity.MaxIndexInclusive
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
@@ -360,7 +360,7 @@ type LeafMeta with
     static member initialize =
         {   Id = Guid.Empty
             ConceptId = Guid.Empty
-            BranchId = Guid.Empty
+            ExampleId = Guid.Empty
             MaxIndexInclusive = 0s
             Created = DateTimeX.UtcNow
             Modified = None
@@ -405,7 +405,7 @@ type QuizCard with
 type Card with
     member this.copyTo (entity: CardEntity) tags index =
         entity.UserId <- this.UserId
-        entity.BranchId <- this.BranchId
+        entity.ExampleId <- this.ExampleId
         entity.ConceptId <- this.ConceptId
         entity.Index <- index
         entity.CardState <- CardState.toDb this.CardState
@@ -423,7 +423,7 @@ type Card with
         e
     static member initialize cardId userId cardSettingId deckId tags =
         {   ConceptId = Guid.Empty
-            BranchId = Guid.Empty
+            ExampleId = Guid.Empty
             CardId = cardId
             LeafMeta = LeafMeta.initialize
             Index = 0s
@@ -441,7 +441,7 @@ type Card with
         let! cardState = entity.CardState |> CardState.create
         return
             {   ConceptId = entity.ConceptId
-                BranchId = entity.BranchId
+                ExampleId = entity.ExampleId
                 CardId = entity.Id
                 LeafMeta = LeafMeta.loadIndex entity.Index isCollected entity.IsLatest entity.Leaf
                 Index = entity.Index
@@ -466,8 +466,8 @@ type Comment with
         IsDmca = entity.IsDmca
     }
 
-type ExploreBranchSummary with
-    static member load leaf (entity: BranchEntity) = {
+type ExploreExampleSummary with
+    static member load leaf (entity: ExampleEntity) = {
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
@@ -475,13 +475,13 @@ type ExploreBranchSummary with
         Leaf = leaf
     }
 
-type Branch with
-    static member load (ids: CollectedIds) (branch: BranchEntity) = {
-        Name = branch.Name
+type Example with
+    static member load (ids: CollectedIds) (example: ExampleEntity) = {
+        Name = example.Name
         Summary =
-            ExploreBranchSummary.load
-                <| LeafMeta.load (branch.LatestId = CollectedIds.leafId ids) true branch.Latest
-                <| branch
+            ExploreExampleSummary.load
+                <| LeafMeta.load (example.LatestId = CollectedIds.leafId ids) true example.Latest
+                <| example
     }
 
 type ExploreConcept with
@@ -498,12 +498,12 @@ type ExploreConcept with
                     IsCollected = usersRelationships.Contains x.Name
                     Users = x.Count
                 })  |> toResizeArray
-        Branches = entity.Branches |> Seq.map (Branch.load collectedIds) |> toResizeArray
+        Examples = entity.Examples |> Seq.map (Example.load collectedIds) |> toResizeArray
         CollectedIds = collectedIds
     }
 
-type BranchRevision with
-    static member load leafId (e: BranchEntity) = {
+type ExampleRevision with
+    static member load leafId (e: ExampleEntity) = {
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId

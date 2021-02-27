@@ -324,7 +324,7 @@ module SanitizeDeckRepository =
                 | _ -> false
     type ConceptLeafIndex = {
         ConceptId: Guid
-        BranchId: Guid
+        ExampleId: Guid
         LeafId: Guid
         Index: int16
     }
@@ -342,7 +342,7 @@ module SanitizeDeckRepository =
                         .Where(fun cc -> cc.DeckId = deckId)
                         .Select(fun x -> {
                             ConceptId = x.ConceptId
-                            BranchId = x.BranchId
+                            ExampleId = x.ExampleId
                             LeafId = x.LeafId
                             Index = x.Index
                         })
@@ -407,14 +407,14 @@ module SanitizeDeckRepository =
                     (function
                     | Some theirs, Some mine ->
                         mine.ConceptId <- theirs.ConceptId
-                        mine.BranchId <- theirs.BranchId
+                        mine.ExampleId <- theirs.ExampleId
                         mine.LeafId <- theirs.LeafId
                         mine.Index <- theirs.Index
                         mine.DeckId <- newDeckId
                     | Some theirs, None ->
                         let mine = cardSansIndex theirs.Index
                         mine.ConceptId <- theirs.ConceptId
-                        mine.BranchId <- theirs.BranchId
+                        mine.ExampleId <- theirs.ExampleId
                         mine.LeafId <- theirs.LeafId
                         mine.Index <- theirs.Index
                         db.Card.AddI mine
@@ -436,7 +436,7 @@ module SanitizeDeckRepository =
         let get deckId =
             db.Card
                 .Where(fun x -> x.DeckId = deckId)
-                .Select(fun x -> x.ConceptId, x.BranchId, x.LeafId, x.Index, x.DeckId, Guid.Empty)
+                .Select(fun x -> x.ConceptId, x.ExampleId, x.LeafId, x.Index, x.DeckId, Guid.Empty)
                 .ToListAsync()
             |>% Seq.map ConceptLeafIndex.fromTuple
             |>% List.ofSeq
@@ -447,7 +447,7 @@ module SanitizeDeckRepository =
         let! (inOtherDeckIds: (Guid * Guid * Guid * int16 * Guid * Guid) ResizeArray) =
             db.Card
                 .Where(fun x -> x.UserId = userId && addedConceptIds.Contains x.ConceptId)
-                .Select(fun x -> x.ConceptId, x.BranchId, x.LeafId, x.Index, x.DeckId, x.Id)
+                .Select(fun x -> x.ConceptId, x.ExampleId, x.LeafId, x.Index, x.DeckId, x.Id)
                 .ToListAsync() // using Task.map over ConceptLeafIndex.fromTuple doesn't work here for some reason
         let added =
             List.zipOn
@@ -460,7 +460,7 @@ module SanitizeDeckRepository =
                 | Some x, _      -> Some x
                 | None  , _      -> None
             ) |> List.choose id
-        let added, leafChanged, branchChanged =
+        let added, leafChanged, exampleChanged =
             List.zipOn
                 (diffs.AddedConcept) // theirs
                 added              // mine, sometimes
@@ -469,7 +469,7 @@ module SanitizeDeckRepository =
                 | Some x, Some y ->
                     if x.LeafId = y.LeafId then
                         Some y, None, None
-                    elif x.BranchId = y.BranchId then
+                    elif x.ExampleId = y.ExampleId then
                         None, Some (x, y), None
                     else
                         None, None, Some (x, y)
@@ -483,12 +483,12 @@ module SanitizeDeckRepository =
         let conceptIds =
             added
                 @ (leafChanged   |> List.map snd)
-                @ (branchChanged |> List.map snd)
+                @ (exampleChanged |> List.map snd)
             |> List.map (fun x -> x.ConceptId)
         return
             { diffs with
                 AddedConcept    = added         @ (diffs.AddedConcept    |> List.filterOut (fun  x     -> conceptIds.Contains x.ConceptId))
-                BranchChanged = branchChanged @ (diffs.BranchChanged |> List.filterOut (fun (x, _) -> conceptIds.Contains x.ConceptId))
+                ExampleChanged = exampleChanged @ (diffs.ExampleChanged |> List.filterOut (fun (x, _) -> conceptIds.Contains x.ConceptId))
                 LeafChanged   = leafChanged   @ (diffs.LeafChanged   |> List.filterOut (fun (x, _) -> conceptIds.Contains x.ConceptId))
             }
     }
@@ -701,7 +701,7 @@ type ViewEditConceptCommand = {
                 match this.Kind with
                 | NewOriginal_TagIds _
                 | NewCopy_SourceLeafId_TagIds _ -> this.Kind
-                | NewBranch_Title _ -> NewBranch_Title title
+                | NewExample_Title _ -> NewExample_Title title
                 | NewLeaf_Title _ -> NewLeaf_Title title
         {   EditConceptCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
@@ -713,8 +713,8 @@ type ViewEditConceptCommand = {
 type UpsertCardSource =
     | VNewOriginal_UserId of Guid
     | VNewCopySource_LeafId of Guid
-    | VNewBranch_SourceConceptId of Guid
-    | VUpdate_BranchId of Guid
+    | VNewExample_SourceConceptId of Guid
+    | VUpdate_ExampleId of Guid
 
 module SanitizeCardRepository =
     let validateCommands (db: CardOverflowDb) userId (commands: EditCardCommand ResizeArray) = taskResult {
@@ -773,12 +773,12 @@ module SanitizeConceptRepository =
                         match kind with
                         | NewOriginal_TagIds _
                         | NewCopy_SourceLeafId_TagIds _ -> null
-                        | NewBranch_Title title
+                        | NewExample_Title title
                         | NewLeaf_Title title -> title
                     Ids =
                         { ids with
                             ConceptId = if ids.ConceptId = Guid.Empty then leaf.ConceptId else ids.ConceptId
-                            BranchId = if ids.BranchId = Guid.Empty then leaf.BranchId else ids.BranchId
+                            ExampleId = if ids.ExampleId = Guid.Empty then leaf.ExampleId else ids.ExampleId
                             LeafId = if ids.LeafId = Guid.Empty then leaf.Id else ids.LeafId
                             CardIds = cardIds |> Seq.toList
                         }
@@ -800,18 +800,18 @@ module SanitizeConceptRepository =
                     Ids = ids
                 }
             )
-        | VNewBranch_SourceConceptId conceptId ->
-            db.Concept.Include(fun x -> x.DefaultBranch.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = conceptId)
+        | VNewExample_SourceConceptId conceptId ->
+            db.Concept.Include(fun x -> x.DefaultExample.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = conceptId)
             |>% Result.requireNotNull (sprintf "Concept #%A not found." conceptId)
-            |> TaskResult.bind(fun concept -> toCommand (NewBranch_Title "New Branch") concept.DefaultBranch.Latest)
+            |> TaskResult.bind(fun concept -> toCommand (NewExample_Title "New Example") concept.DefaultExample.Latest)
         | VNewCopySource_LeafId leafId ->
             db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
-            |>% Result.requireNotNull (sprintf "Branch Leaf #%A not found." leafId)
+            |>% Result.requireNotNull (sprintf "Example Leaf #%A not found." leafId)
             |> TaskResult.bind(toCommand (NewCopy_SourceLeafId_TagIds (leafId, Set.empty)))
-        | VUpdate_BranchId branchId ->
-            db.Branch.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = branchId)
-            |>% Result.requireNotNull (sprintf "Branch #%A not found." branchId)
-            |> TaskResult.bind(fun branch -> toCommand (NewLeaf_Title branch.Name) branch.Latest)
+        | VUpdate_ExampleId exampleId ->
+            db.Example.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = exampleId)
+            |>% Result.requireNotNull (sprintf "Example #%A not found." exampleId)
+            |> TaskResult.bind(fun example -> toCommand (NewLeaf_Title example.Name) example.Latest)
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (conceptCommand: ViewEditConceptCommand) = taskResult {
         let! (leaf: LeafEntity) = UpdateRepository.concept db userId conceptCommand.load
         let! (ccs: CardEntity list) =
@@ -820,7 +820,7 @@ module SanitizeConceptRepository =
             | NewLeaf_Title _ ->
                 db.Leaf.AddI leaf
                 ConceptRepository.collectConceptNoSave db userId leaf false cardIds
-            | NewBranch_Title _ ->
+            | NewExample_Title _ ->
                 db.Leaf.AddI leaf
                 ConceptRepository.collectConceptNoSave db userId leaf true cardIds
             | NewOriginal_TagIds tags
@@ -843,7 +843,7 @@ module SanitizeConceptRepository =
                 cc.BackPersonalField <- command.BackPersonalField
             )
         do! db.SaveChangesAsyncI()
-        return leaf.BranchId
+        return leaf.ExampleId
         }
     let search (db: CardOverflowDb) userId pageNumber searchCommand =
         ConceptRepository.search db userId pageNumber searchCommand.Order searchCommand.Query

@@ -11,7 +11,7 @@
 <div class="d-flex justify-content-between align-items-center">
   <SearchBar SearchClicked="@SearchClicked" BackLink="/concept/" CreateLink=@(x => $"/concept/{x}") Ids=@_concepts?.Select(x => x.Id.ToString())?.ToList() SelectedId=@SelectedConceptId.ToString() />
 </div>
-@if (SelectedConceptId == default && BranchId == default && LeafId == default) {
+@if (SelectedConceptId == default && ExampleId == default && LeafId == default) {
   @if (_concepts == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -25,7 +25,7 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@concept.IsCollected>
-              <ResizingIframeBranch LeafId=@concept.Leaf.Id Front />
+              <ResizingIframeExample LeafId=@concept.Leaf.Id Front />
             </HoverPreview>
           </td>
           <td>
@@ -42,14 +42,14 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Concept ConceptId=@SelectedConceptId BranchId=@BranchId LeafId=@LeafId Index=@Index />
+  <Concept ConceptId=@SelectedConceptId ExampleId=@ExampleId LeafId=@LeafId Index=@Index />
 }
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public Guid? SelectedConceptId { get; set; }
-  [Parameter] public Guid? BranchId { get; set; }
+  [Parameter] public Guid? ExampleId { get; set; }
   [Parameter] public Guid? LeafId { get; set; }
   [Parameter] public short? Index { get; set; }
   private IList<CardOverflow.Pure.ExploreConceptSummary> _concepts;
@@ -59,7 +59,7 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (SelectedConceptId == default && BranchId == default && LeafId == default && _concepts == default) {
+    if (SelectedConceptId == default && ExampleId == default && LeafId == default && _concepts == default) {
       await PageChanged(1);
     }
     StateHasChanged();

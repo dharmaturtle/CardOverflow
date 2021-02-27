@@ -66,7 +66,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
     do! canUpdateIsDefault newId
 
     // Insert new card
-    let branchId = branch_1
+    let exampleId = example_1
     let! gromplate = FacetRepositoryTests.basicGromplate c.Db
     let! r =
         SanitizeConceptRepository.Update c.Db userId []
@@ -81,7 +81,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                 Title = null
                 Ids = ids_1
             }
-    Assert.Equal(branchId, r.Value)
+    Assert.Equal(exampleId, r.Value)
 
     // new card has default option
     let! cc = c.Db.Card.SingleAsync(fun x -> x.UserId = userId)

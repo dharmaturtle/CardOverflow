@@ -47,8 +47,8 @@ type TableClient(connectionString, tableName) =
         match summary with
         | :? Domain.Concept .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Stack   .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Branch  .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Branch     .LeafSummary as x -> string x.Id, string x.Id
+        | :? Domain.Example .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Example    .LeafSummary as x -> string x.Id, string x.Id
         | :? Domain.User    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Deck    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Template.Events.Summary as x -> string x.Id, string x.Id
@@ -121,9 +121,9 @@ type TableClient(connectionString, tableName) =
         match e with
         | Concept.Events.Created summary ->
             this.InsertOrReplace summary |>% ignore
-        | Concept.Events.DefaultBranchChanged b ->
+        | Concept.Events.DefaultExampleChanged b ->
             this.Update (fun (x:Concept.Events.Summary) ->
-                { x with DefaultBranchId = b.BranchId }
+                { x with DefaultExampleId = b.ExampleId }
             ) conceptId |>% ignore
     member this.UpsertConcept (conceptId: ConceptId) =
         conceptId.ToString() |> this.UpsertConcept'
@@ -131,28 +131,28 @@ type TableClient(connectionString, tableName) =
         this.Get<Concept.Events.Summary> conceptId
     member this.GetConcept (conceptId: ConceptId) =
         conceptId.ToString() |> this.GetConcept
-    member this.UpsertBranch' (branchId: string) e =
+    member this.UpsertExample' (exampleId: string) e =
         match e with
-        | Branch.Events.Created summary ->
-            [ this.InsertOrReplace (Branch.toLeafSummary summary)
+        | Example.Events.Created summary ->
+            [ this.InsertOrReplace (Example.toLeafSummary summary)
               this.InsertOrReplace summary
             ] |> Async.Parallel |>% ignore
-        | Branch.Events.Edited e -> async {
-            let! summary, _ = this.GetBranch branchId
-            let summary = Branch.Fold.evolveEdited e summary
+        | Example.Events.Edited e -> async {
+            let! summary, _ = this.GetExample exampleId
+            let summary = Example.Fold.evolveEdited e summary
             return!
                 [ this.InsertOrReplace summary
-                  this.InsertOrReplace (Branch.toLeafSummary summary)
+                  this.InsertOrReplace (Example.toLeafSummary summary)
                 ] |> Async.Parallel |>% ignore
             }
-    member this.UpsertBranch (branchId: BranchId) =
-        branchId.ToString() |> this.UpsertBranch'
-    member this.GetBranch (branchId: string) =
-        this.Get<Branch.Events.Summary> branchId
-    member this.GetBranch (branchId: BranchId) =
-        branchId.ToString() |> this.GetBranch
+    member this.UpsertExample (exampleId: ExampleId) =
+        exampleId.ToString() |> this.UpsertExample'
+    member this.GetExample (exampleId: string) =
+        this.Get<Example.Events.Summary> exampleId
+    member this.GetExample (exampleId: ExampleId) =
+        exampleId.ToString() |> this.GetExample
     member this.GetExpressionRevision (expressionRevisionId: string) =
-        this.Get<Branch.LeafSummary> expressionRevisionId
+        this.Get<Example.LeafSummary> expressionRevisionId
     member this.GetExpressionRevision (expressionRevisionId: LeafId) =
         expressionRevisionId.ToString() |> this.GetExpressionRevision
     

@@ -18,13 +18,13 @@
 @if (_isCurate) {
   <Curate SelectedLeafId=@_leafId Index=@_index />
 } else {
-  <Explore SelectedConceptId=@ConceptId BranchId=@_branchId LeafId=@_leafId Index=@_index />
+  <Explore SelectedConceptId=@ConceptId ExampleId=@_exampleId LeafId=@_leafId Index=@_index />
 }
 
 @code {
   [Parameter] public Guid? ConceptId { get; set; }
   private Guid? _leafId;
-  private Guid? _branchId;
+  private Guid? _exampleId;
   private short? _index;
   private bool _isCurate => _path.StartsWith("my/", StringComparison.OrdinalIgnoreCase);
   private string _path = "";
@@ -32,7 +32,7 @@
   protected override void GetQueryStringValues() {
     _path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
     if (ConceptId == null) {
-      NavigationManager.TryGetQueryString<Guid?>("branch", out _branchId);
+      NavigationManager.TryGetQueryString<Guid?>("example", out _exampleId);
       NavigationManager.TryGetQueryString<Guid?>("leaf", out _leafId);
       NavigationManager.TryGetQueryString<short?>("index", out _index);
     }

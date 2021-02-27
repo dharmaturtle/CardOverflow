@@ -20,12 +20,12 @@
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @if (EditConcept.Kind.IsNewBranch_Title || EditConcept.Kind.IsNewLeaf_Title) {
+            @if (EditConcept.Kind.IsNewExample_Title || EditConcept.Kind.IsNewLeaf_Title) {
               <div class="input-group">
-                <label for="branchTitleInput" class="col-form-label mr-2">
-                  Branch Title:
+                <label for="exampleTitleInput" class="col-form-label mr-2">
+                  Title:
                 </label>
-                <InputText @bind-Value=@EditConcept.Title class="form-control" id="branchTitleInput" />
+                <InputText @bind-Value=@EditConcept.Title class="form-control" id="exampleTitleInput" />
               </div>
             }
             @foreach (var field in EditConcept.FieldValues) {
@@ -74,8 +74,8 @@
               Card
             </a>
           }
-          @if (EditConcept.Kind.IsNewBranch_Title) {
-            <span>Branched from</span>
+          @if (EditConcept.Kind.IsNewExample_Title) {
+            <span>Example from</span>
             <a href="concept/@EditConcept.Ids.ConceptId">
               Concept
             </a>
@@ -91,10 +91,10 @@
           <div class="row float-right">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            @if (_savedBranchId != default) {
+            @if (_savedExampleId != default) {
               <span>
                 Saved! Link to
-                <a href="concept?branch=@_savedBranchId">
+                <a href="concept?example=@_savedExampleId">
                   card.
                 </a>
               </span>
@@ -117,7 +117,7 @@
   private Guid _selectedGromplateId;
   private Guid _selectedGrompleafId;
   private bool _isDisabled;
-  private Guid _savedBranchId;
+  private Guid _savedExampleId;
 
   private void _updateCardCommand(int i, EditCardCommand command) {
     while (_ccCommands.ElementAtOrDefault(i) == default) {
@@ -153,7 +153,7 @@
       var result = await DbExecutor.QueryAsync(db => SanitizeConceptRepository.Update(db, _user.Id, _ccCommands.ToFList(), EditConcept));
       if (result.IsOk) {
         ToastService.ShowInfo("Saved!");
-        _savedBranchId = result.ResultValue;
+        _savedExampleId = result.ResultValue;
         if (NewEditConceptOnSave) {
           var fieldValues = EditConcept.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
           EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.Grompleaf, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());

@@ -24,27 +24,27 @@
                           CollectedIds=@CollectedIds
                           Ids=@(new ConceptLeafIds(Concept.Id, Concept.Default.Id, Concept.Default.Leaf.Id))
                           CardCount=@Concept.Default.Leaf.Indexes.Count()
-                          BranchUsers=@Concept.Users
+                          ExampleUsers=@Concept.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>
       }
       <th scope="col" style="width:100%; text-align:center;">
         @if (CollectedIds == default) {
-          <h4>Branches</h4>
+          <h4>Examples</h4>
         } else {
           <div class="btn-group" role="group">
             <a class="btn btn-@(IsExplore ? "primary" : "light")" href="concept?leaf=@CollectedIds.Value.LeafId">
-              All Branches
+              All Examples
             </a>
             <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/concept?leaf=@CollectedIds.Value.LeafId">
-              My Branch
+              My Example
             </a>
           </div>
         }
       </th>
       @if (IsExplore) {
         <th scope="col">
-          <a class="btn btn-outline-success" href="concept/branchconcept/@Selected.ConceptId" title="Add a Branch">
+          <a class="btn btn-outline-success" href="concept/exampleconcept/@Selected.ConceptId" title="Add an Example">
             <i class="fas fa-plus"></i>
           </a>
         </th>
@@ -53,8 +53,8 @@
   </thead>
   @if (IsExplore) {
     <tbody>
-      @foreach (var branch in Branches) {
-        <Concept_Branch Branch=@branch
+      @foreach (var example in Examples) {
+        <Concept_Example Example=@example
                       LeafSelected=@LeafSelected
                       CollectedIds=@CollectedIds
                       UpdateCollectedIds=@UpdateCollectedIds
@@ -68,7 +68,7 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public ExploreConcept Concept { get; set; }
-  [Parameter] public List<Branch> Branches { get; set; }
+  [Parameter] public List<Example> Examples { get; set; }
   [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }

@@ -13,13 +13,13 @@ module Events =
     
     type Summary =
         { Id: ConceptId
-          DefaultBranchId: BranchId
+          DefaultExampleId: ExampleId
           AuthorId: UserId
           CopySourceLeafId: LeafId Option }
-    type DefaultBranchChanged = { BranchId: BranchId }
+    type DefaultExampleChanged = { ExampleId: ExampleId }
 
     type Event =
-        | DefaultBranchChanged of DefaultBranchChanged
+        | DefaultExampleChanged of DefaultExampleChanged
         | Created              of Summary
         interface UnionContract.IUnionContract
     
@@ -35,10 +35,10 @@ module Fold =
     let evolve state =
         function
         | Events.Created s -> State.Active s
-        | Events.DefaultBranchChanged b ->
+        | Events.DefaultExampleChanged b ->
             match state with
-            | State.Initial  -> invalidOp "Can't change the default branch of an Initial Concept"
-            | State.Active a -> { a with DefaultBranchId = b.BranchId } |> State.Active
+            | State.Initial  -> invalidOp "Can't change the default example of an Initial Concept"
+            | State.Active a -> { a with DefaultExampleId = b.ExampleId } |> State.Active
     
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
@@ -49,10 +49,10 @@ let decideCreate summary state =
     | Fold.State.Initial  -> Ok ()
     |> addEvent (Events.Created summary)
 
-let decideDefaultBranchChanged (branchId: BranchId) (branchsConceptId: ConceptId) callerId state =
+let decideDefaultExampleChanged (exampleId: ExampleId) (examplesConceptId: ConceptId) callerId state =
     match state with
-    | Fold.State.Initial  -> Error "Can't edit a branch that doesn't exist"
+    | Fold.State.Initial  -> Error "Can't edit a example that doesn't exist"
     | Fold.State.Active s -> result {
         do! Result.requireEqual s.AuthorId callerId $"Concept {s.Id} doesn't belong to User {callerId}"
-        do! Result.requireEqual s.Id branchsConceptId $"Branch {branchId} doesn't belong to Concept {s.Id}"
-    } |> addEvent (Events.DefaultBranchChanged { BranchId = branchId })
+        do! Result.requireEqual s.Id examplesConceptId $"Example {exampleId} doesn't belong to Concept {s.Id}"
+    } |> addEvent (Events.DefaultExampleChanged { ExampleId = exampleId })

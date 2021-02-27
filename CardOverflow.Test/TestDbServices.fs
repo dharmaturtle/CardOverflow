@@ -96,8 +96,8 @@ module Stack =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module Branch =
-    open Branch
+module Example =
+    open Example
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
@@ -139,7 +139,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 let category, id = streamName |> StreamName.splitCategoryAndId
                 match category with
                 | "Concept"  -> events |> Array.map (Concept .Events.codec.TryDecode >> Option.get >> tableClient.UpsertConcept'  id)
-                | "Branch"   -> events |> Array.map (Branch  .Events.codec.TryDecode >> Option.get >> tableClient.UpsertBranch'   id)
+                | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> tableClient.UpsertExample'  id)
                 | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'     id)
                 | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'     id)
                 | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> tableClient.UpsertTemplate' id)
@@ -158,8 +158,8 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Stack.memoryStore
                 <| vStore()
                 <| container.GetInstance<TableClient>() )
-        container.RegisterSingleton<Branch.Writer>(fun () ->
-            container.GetInstance<VolatileStore<byte[]>>() |> Branch.memoryStore)
+        container.RegisterSingleton<Example.Writer>(fun () ->
+            container.GetInstance<VolatileStore<byte[]>>() |> Example.memoryStore)
         container.Verify()
         let tc = container.GetInstance<TableClient>()
         let table = tc.CloudTableClient.GetTableReference tc.TableName
@@ -193,11 +193,11 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.ConceptWriter () =
         container.GetInstance<Concept.Writer>()
     
-    member _.BranchWriter () =
-        container.GetInstance<Branch.Writer>()
+    member _.ExampleWriter () =
+        container.GetInstance<Example.Writer>()
     
-    member _.ConceptBranchWriter () =
-        container.GetInstance<ConceptBranch.Writer>()
+    member _.ConceptExampleWriter () =
+        container.GetInstance<ConceptExample.Writer>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()
@@ -205,7 +205,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         |> Array.map (codec.TryDecode >> Option.get)
     member this.ConceptEvents  id = this.events(Concept .streamName id, Concept .Events.codec)
     member this.StackEvents    id = this.events(Stack   .streamName id, Stack   .Events.codec)
-    member this.BranchEvents   id = this.events(Branch  .streamName id, Branch  .Events.codec)
+    member this.ExampleEvents  id = this.events(Example .streamName id, Example .Events.codec)
     member this.UserEvents     id = this.events(User    .streamName id, User    .Events.codec)
     member this.DeckEvents     id = this.events(Deck    .streamName id, Deck    .Events.codec)
     member this.TemplateEvents id = this.events(Template.streamName id, Template.Events.codec)

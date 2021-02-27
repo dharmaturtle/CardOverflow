@@ -23,7 +23,7 @@
     @if (Notification.Message.TryDeckAddedConcept(out var deckAddedConcept)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeBranch LeafId=@(deckAddedConcept.New.LeafId) Back />
+          <ResizingIframeExample LeafId=@(deckAddedConcept.New.LeafId) Back />
         </HoverPreview>
         @Concept(deckAddedConcept.New.LeafId)
         added to
@@ -36,7 +36,7 @@
                         Ids=@deckAddedConcept.New
                         CardCount=@deckAddedConcept.NewCardCount
                         DeckId=@_getDeckId(deckAddedConcept.MyDeck)
-                        IsBranch=@true
+                        IsExample=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
@@ -54,14 +54,14 @@
         }
         <span id="@newId">
           <HoverPreview Padding="0">
-            <ResizingIframeBranch LeafId=@deckUpdatedConcept.New.LeafId Back />
+            <ResizingIframeExample LeafId=@deckUpdatedConcept.New.LeafId Back />
           </HoverPreview>
         </span>
         @if (showBoth) {
           <BSTooltip Target="@oldId" Placement="Placement.Top">Yours</BSTooltip>
           <span id="@oldId">
             <HoverPreview Padding="0">
-              <ResizingIframeBranch LeafId=@_collectedState.Value.LeafId Back />
+              <ResizingIframeExample LeafId=@_collectedState.Value.LeafId Back />
             </HoverPreview>
           </span>
           <a href="conceptdiff/@_collectedState.Value.LeafId/@deckUpdatedConcept.New.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
@@ -79,7 +79,7 @@
                         Ids=@deckUpdatedConcept.New
                         CardCount=@deckUpdatedConcept.NewCardCount
                         DeckId=@_getDeckId(deckUpdatedConcept.MyDeck)
-                        IsBranch=@true
+                        IsExample=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"
@@ -90,7 +90,7 @@
     } else if (Notification.Message.TryDeckDeletedConcept(out var deckDeletedConcept)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeBranch LeafId=@(deckDeletedConcept.Deleted.LeafId) Back />
+          <ResizingIframeExample LeafId=@(deckDeletedConcept.Deleted.LeafId) Back />
         </HoverPreview>
         @Concept(deckDeletedConcept.Deleted.LeafId)
         deleted from
@@ -103,7 +103,7 @@
                         Ids=@deckDeletedConcept.Deleted
                         CardCount=@deckDeletedConcept.DeletedCardCount
                         DeckId=@_getDeckId(deckDeletedConcept.MyDeck)
-                        IsBranch=@true
+                        IsExample=@true
                         CollectedIds=@_collectedState
                         UpdateCollectedIds=@(x => _collectedState = x) />
         <button type="button" class="btn btn-primary"

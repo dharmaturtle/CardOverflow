@@ -12,7 +12,7 @@ namespace CardOverflow.Entity
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public Guid ConceptId { get; set; }
-        public Guid BranchId { get; set; }
+        public Guid ExampleId { get; set; }
         public Guid LeafId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }

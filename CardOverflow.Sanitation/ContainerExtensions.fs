@@ -127,7 +127,7 @@ type Container with
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         let conceptIndex  = nameof Domain.Concept  |> elasticSearchIndexName
-        let branchIndex = nameof Domain.Branch |> elasticSearchIndexName
+        let exampleIndex = nameof Domain.Example |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
             let sourceSerializerFactory =
                 ConnectionSettings.SourceSerializerFactory
@@ -138,8 +138,8 @@ type Container with
                 .DefaultMappingFor<Domain.Concept.Events.Summary>(fun x ->
                     x.IndexName conceptIndex :> IClrTypeMapping<_>
                 )
-                .DefaultMappingFor<Domain.Branch.Events.Summary>(fun x ->
-                    x.IndexName branchIndex :> IClrTypeMapping<_>
+                .DefaultMappingFor<Domain.Example.Events.Summary>(fun x ->
+                    x.IndexName exampleIndex :> IClrTypeMapping<_>
                 )
                 .EnableDebugMode(fun x ->
                     if x.HttpStatusCode = Nullable 404 then // https://github.com/elastic/elasticsearch-net/issues/5227

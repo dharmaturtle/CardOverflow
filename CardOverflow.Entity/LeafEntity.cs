@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
         public Instant Created { get; set; }
         public Instant? Modified { get; set; }
         public Guid ConceptId { get; set; }
-        public Guid BranchId { get; set; }
+        public Guid ExampleId { get; set; }
         public bool IsDmca { get; set; }
         [Required]
         [StringLength(10000)]
@@ -70,9 +70,9 @@ namespace CardOverflow.Entity
         [ForeignKey("ConceptId")]
         public virtual ConceptEntity Concept { get; set; }
 
-        [ForeignKey("BranchId")]
+        [ForeignKey("ExampleId")]
         [InverseProperty("Leafs")]
-        public virtual BranchEntity Branch { get; set; }
+        public virtual ExampleEntity Example { get; set; }
         [ForeignKey("GrompleafId")]
         [InverseProperty("Leafs")]
         public virtual GrompleafEntity Grompleaf { get; set; }

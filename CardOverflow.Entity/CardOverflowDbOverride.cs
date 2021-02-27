@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Security.Cryptography;
@@ -51,7 +51,7 @@ namespace CardOverflow.Entity {
 
       IOrderedQueryable<LeafEntity> order(IQueryable<LeafEntity> query) =>
         searchOrder == SearchOrder.Popularity
-        ? query.OrderByDescending(x => x.Branch.Users)
+        ? query.OrderByDescending(x => x.Example.Users)
         : query.OrderByDescending(x =>
           x.Tsv.RankCoverDensity(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization));
 
@@ -141,8 +141,8 @@ namespace CardOverflow.Entity {
     public IQueryable<CardIsLatestEntity> CardIsLatest => _CardIsLatestTracked.AsNoTracking();
     public IQueryable<LeafRelationshipCountEntity> LeafRelationshipCount => _LeafRelationshipCountTracked.AsNoTracking();
     public IQueryable<ConceptRelationshipCountEntity> ConceptRelationshipCount => _ConceptRelationshipCountTracked.AsNoTracking();
-    public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Branch.LatestId == x.Id).AsNoTracking();
-    public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Branch.Concept.DefaultBranchId == x.BranchId).AsNoTracking();
+    public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
+    public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
     public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestId == x.Id).AsNoTracking();
     public IQueryable<GrompleafEntity> LatestGrompleaf => Grompleaf.Where(x => x.Gromplate.LatestId == x.Id).AsNoTracking();
 

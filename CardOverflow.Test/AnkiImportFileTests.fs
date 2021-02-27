@@ -131,7 +131,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
     Assert.Equal(7, c.Db.Card.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(3, c.Db.Branch.Count())
+    Assert.Equal(3, c.Db.Example.Count())
     Assert.Equal(3, c.Db.Concept.Count())
     Assert.Equal(4s, c.Db.Leaf.Single(fun x -> x.FieldValues.Contains "Drugs").MaxIndexInclusive)
     Assert.Null x.Value
@@ -187,7 +187,7 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_1, branch_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_1, example_1, leaf_1, [card_1; card_2])
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
     let! view = ConceptViewRepository.leaf c.Db leaf_1
@@ -202,13 +202,13 @@ let ``LeafView.load works on cloze`` (): Task<unit> = task {
 let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer()
-    let getCard branchId =
-        c.Db.Branch.SingleAsync(fun x -> x.Id = branchId)
+    let getCard exampleId =
+        c.Db.Example.SingleAsync(fun x -> x.Id = exampleId)
         |> Task.map (fun x -> x.ConceptId)
         |> Task.bind (fun conceptId -> ConceptRepository.GetCollected c.Db userId conceptId |> TaskResult.map Seq.exactlyOne)
-    let branchId = branch_1
-    let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
-    Assert.equal branchId actualBranchId
+    let exampleId = example_1
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    Assert.equal exampleId actualExampleId
     let ccId = card_1
     
     // insert new concept with invalid settingsId
@@ -258,13 +258,13 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     do! {   EditCardCommand.init with
                 CardSettingId = latestSettingId }
         |> SanitizeCardRepository.update c.Db userId ccId
-    let! (card: Card) = getCard branchId
+    let! (card: Card) = getCard exampleId
     Assert.Equal(latestSettingId, card.CardSettingId)
 
     // insert new concept with default settingsId
     do! EditCardCommand.init
         |> SanitizeCardRepository.update c.Db userId ccId
-    let! (card: Card) = getCard branchId
+    let! (card: Card) = getCard exampleId
     Assert.Equal(defaultSettingId, card.CardSettingId)
 
     let latestDeckId = Ulid.create
@@ -273,13 +273,13 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
     do! {   EditCardCommand.init with
                 DeckId = latestDeckId }
         |> SanitizeCardRepository.update c.Db userId ccId
-    let! (card: Card) = getCard branchId
+    let! (card: Card) = getCard exampleId
     Assert.Equal(latestDeckId, card.DeckId)
 
     // insert new concept with default deckId
     do! EditCardCommand.init
         |> SanitizeCardRepository.update c.Db userId ccId
-    let! (card: Card) = getCard branchId
+    let! (card: Card) = getCard exampleId
     Assert.Equal(deck_3, card.DeckId)
     } |> TaskResult.getOk)
 
@@ -349,18 +349,18 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     let assertUserHasNormalCardCount expected =
         c.Db.Card.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
-    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
     do! assertUserHasNormalCardCount 1
 
     // updating card fails for mismatching cardIds
     let mismatching = Ulid.create
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_2, []) |> UpsertIds.fromTuple)
     let! (r: Result<_, _>) = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [mismatching])
     Assert.equal (sprintf "Card ids don't match. Was given %A and expected %A" mismatching card_1) r.error
     do! assertUserHasNormalCardCount 1
 
     // go from 1 cloze to 2 clozes
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_2, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditConceptCommand.FieldValues =
@@ -370,12 +370,12 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1; card_2])
-    Assert.Equal(branch_1, actualBranchId)
+    let! actualExampleId = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1; card_2])
+    Assert.Equal(example_1, actualExampleId)
     do! assertUserHasNormalCardCount 2
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_3, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_3, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditConceptCommand.FieldValues =
@@ -385,12 +385,12 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1])
-    Assert.Equal(branch_1, actualBranchId)
+    let! actualExampleId = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [card_1])
+    Assert.Equal(example_1, actualExampleId)
     do! assertUserHasNormalCardCount 1
     
     // multiple c1's works
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_BranchId branch_1) ((concept_1, branch_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditConceptCommand.FieldValues =
@@ -400,8 +400,8 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
                     command.FieldValues.[1]
                 ].ToList()
         }
-    let! actualBranchId = SanitizeConceptRepository.Update c.Db userId [] command
-    Assert.Equal(branch_1, actualBranchId)
+    let! actualExampleId = SanitizeConceptRepository.Update c.Db userId [] command
+    Assert.Equal(example_1, actualExampleId)
     do! assertUserHasNormalCardCount 1
     } |> TaskResult.getOk)
 
@@ -410,13 +410,13 @@ let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult
     let userId = user_3
     use c = new TestContainer()
 
-    let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceConceptId concept_1) id ids_1 branch_1
+    let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewExample_SourceConceptId concept_1) id ids_1 example_1
 
     Assert.equal "Concept #00000000-0000-0000-0000-57ac00000001 not found." x.error
 
     let ex =
         Assert.Throws<Microsoft.EntityFrameworkCore.DbUpdateException>(fun () -> 
-            (FacetRepositoryTests.addBasicConcept c.Db userId [] (Guid.Empty, branch_1, leaf_1, [card_1]))
+            (FacetRepositoryTests.addBasicConcept c.Db userId [] (Guid.Empty, example_1, leaf_1, [card_1]))
                 .GetAwaiter().GetResult() |> ignore
         )
     Assert.equal
@@ -426,8 +426,8 @@ let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult
     // https://codereview.stackexchange.com/questions/188948/correct-using-of-try-catch-clause-on-database-execution
     // https://github.com/StackExchange/Dapper/issues/710
     // this code is very temp
-    //let! actualBranchId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
-    //let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewBranch_SourceConceptId concept_1) id ids_1 branch_1
+    //let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    //let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewExample_SourceConceptId concept_1) id ids_1 example_1
     
     //Assert.equal "Concept #00000000-0000-0000-0000-57ac00000001 not found." x.error
     } |> TaskResult.getOk)
@@ -438,42 +438,42 @@ let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit>
     use c = new TestContainer()
 
     // inserting with just 1 cardId fails
-    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1])
+    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
     Assert.equal "Leaf#00000000-0000-0000-0000-1eaf00000001 requires 2 card id(s). You provided 1." x.error
 
     // setup
-    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, branch_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1; card_2])
     let conceptId = concept_1
-    let branchId_og = branch_1
-    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    let! revisions = ConceptRepository.Revisions c.Db userId branchId_og
+    let exampleId_og = example_1
+    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_og)
+    let! revisions = ConceptRepository.Revisions c.Db userId exampleId_og
     Assert.equal 1 revisions.SortedMeta.Length
 
-    // branching a concept collects it
-    let branchId_alt = branch_2
+    // creating an example on a concept collects it
+    let exampleId_alt = example_2
     do! FacetRepositoryTests.update c userId
-            (VNewBranch_SourceConceptId conceptId) id { ids_2 with ConceptId = concept_1; CardIds = [card_1; card_2] } branchId_alt
+            (VNewExample_SourceConceptId conceptId) id { ids_2 with ConceptId = concept_1; CardIds = [card_1; card_2] } exampleId_alt
 
-    Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+    Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_og)
+    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_alt)
 
-    // updating an uncollected branch doesn't change the Cards
+    // updating an uncollected example doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdate_BranchId branchId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { ConceptId = concept_1; BranchId = branchId_og; LeafId = leaf_3; CardIds = [] } branchId_og
+            (VUpdate_ExampleId exampleId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { ConceptId = concept_1; ExampleId = exampleId_og; LeafId = leaf_3; CardIds = [] } exampleId_og
 
-    Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_og)
-    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.BranchId = branchId_alt)
+    Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_og)
+    Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_alt)
 
     // switching to testing ConceptRepository.Revisions
-    let! revisions = ConceptRepository.Revisions c.Db userId branchId_og
+    let! revisions = ConceptRepository.Revisions c.Db userId exampleId_og
 
     Assert.equal 2 revisions.SortedMeta.Length
 
-    // invalid branchId
-    let invalidBranchId = Ulid.create
-    let! (revisions: Result<_, _>) = ConceptRepository.Revisions c.Db userId invalidBranchId
+    // invalid exampleId
+    let invalidExampleId = Ulid.create
+    let! (revisions: Result<_, _>) = ConceptRepository.Revisions c.Db userId invalidExampleId
 
-    Assert.equal (sprintf "BranchId #%A not found" invalidBranchId) revisions.error
+    Assert.equal (sprintf "ExampleId #%A not found" invalidExampleId) revisions.error
     } |> TaskResult.getOk)
 
 //[<Fact>] // medTODO uncomment when you bring back communals
