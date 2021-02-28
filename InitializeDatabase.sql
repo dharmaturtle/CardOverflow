@@ -754,7 +754,7 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, template_revision_id)
                                             VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
@@ -765,7 +765,7 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'UPDATE' AND OLD.leaf_id <> NEW.leaf_id) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, template_revision_id)
                                             VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
@@ -776,7 +776,7 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, grompleaf_id)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     gromplate_id, template_revision_id)
                                             VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedConcept', NULL,     OLD.concept_id, OLD.example_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
@@ -862,7 +862,7 @@ $$;
 
 ALTER FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_grompleaf_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_template_revision_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -881,7 +881,7 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_tr_grompleaf_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_template_revision_beforeinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_leaf_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
@@ -1295,7 +1295,7 @@ CREATE TABLE public.gromplate (
 
 ALTER TABLE public.gromplate OWNER TO postgres;
 
-CREATE TABLE public.grompleaf (
+CREATE TABLE public.template_revision (
     id uuid NOT NULL,
     name character varying(100) NOT NULL,
     gromplate_id uuid NOT NULL,
@@ -1313,12 +1313,12 @@ CREATE TABLE public.grompleaf (
     hash bit(512) NOT NULL,
     c_weight_tsv_helper text,
     tsv tsvector,
-    CONSTRAINT "grompleaf. c_weight_tsv_helper. is null check" CHECK ((c_weight_tsv_helper IS NULL)),
-    CONSTRAINT "grompleaf. id. is valid" CHECK (public.validate_ulid(id))
+    CONSTRAINT "template_revision. c_weight_tsv_helper. is null check" CHECK ((c_weight_tsv_helper IS NULL)),
+    CONSTRAINT "template_revision. id. is valid" CHECK (public.validate_ulid(id))
 );
 
 
-ALTER TABLE public.grompleaf OWNER TO postgres;
+ALTER TABLE public.template_revision OWNER TO postgres;
 
 CREATE TABLE public.history (
     id uuid NOT NULL,
@@ -1345,7 +1345,7 @@ CREATE TABLE public.leaf (
     example_id uuid NOT NULL,
     is_dmca boolean NOT NULL,
     field_values character varying(10000) NOT NULL,
-    grompleaf_id uuid NOT NULL,
+    template_revision_id uuid NOT NULL,
     users integer NOT NULL,
     edit_summary character varying(200) NOT NULL,
     anki_note_id bigint,
@@ -1415,7 +1415,7 @@ CREATE TABLE public.notification (
     leaf_id uuid,
     deck_id uuid,
     gromplate_id uuid,
-    grompleaf_id uuid,
+    template_revision_id uuid,
     CONSTRAINT "notification. id. is valid" CHECK (public.validate_ulid(id))
 );
 
@@ -1500,16 +1500,16 @@ CREATE VIEW public.concept_relationship_count AS
 
 ALTER TABLE public.concept_relationship_count OWNER TO postgres;
 
-CREATE TABLE public.user_2_grompleaf (
+CREATE TABLE public.user_2_template_revision (
     user_id uuid NOT NULL,
-    grompleaf_id uuid NOT NULL,
+    template_revision_id uuid NOT NULL,
     default_card_setting_id uuid NOT NULL,
     default_tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
-ALTER TABLE public.user_2_grompleaf OWNER TO postgres;
+ALTER TABLE public.user_2_template_revision OWNER TO postgres;
 
 CREATE TABLE public.vote_2_comment_gromplate (
     comment_gromplate_id uuid NOT NULL,
@@ -1581,7 +1581,7 @@ INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modi
 INSERT INTO public.gromplate (id, author_id, latest_id, is_listed, created, modified) VALUES ('00000000-0000-0000-0000-7e3900000005', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-7e3900001007', true, '2020-08-15 21:40:11.66992+00', NULL);
 
 
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001001', 'Basic', '00000000-0000-0000-0000-7e3900000001', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001001', 'Basic', '00000000-0000-0000-0000-7e3900000001', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1600,7 +1600,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 <hr id=answer>
 
 {{Back}}', 0, 'FrontFalseFalseBackFalseFalse', 'Imported from Anki', 1554689669581, B'10011010111111101110110011101011110011110101011100000110000000101000000110110000011000001000100110100011011101011110011110001110011001110110101001111110010011110110110110110111110001000111001010011101110110111100100000011101011000001100010111110101110111011100001001110010101100011001110100100010101011000011010110110001000111100101100101000101110010110011110001011100000000001011011001101000000110111100111010010100100100110100010101000000000000000010111001010001001010000011000111001011111001010010110111001100', NULL, '''1'':5C ''20px'':17 ''align'':20 ''arial'':13 ''back'':3C,8C ''background'':25 ''background-color'':24 ''basic'':1A ''black'':23 ''card'':4C,9 ''center'':21 ''color'':22,26 ''famili'':12 ''font'':11,15 ''font-famili'':10 ''font-siz'':14 ''front'':2C,6C ''frontsid'':7C ''size'':16 ''text'':19 ''text-align'':18 ''white'':27');
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001002', 'Basic (optional reversed card)', '00000000-0000-0000-0000-7e3900000002', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001002', 'Basic (optional reversed card)', '00000000-0000-0000-0000-7e3900000002', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1623,7 +1623,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 <hr id=answer>
 
 {{Front}}', 0, 'FrontFalseFalseBackFalseFalseAdd ReverseFalseFalse', 'Imported from Anki', 1554689669572, B'10011100101011110010101010111010100011010000110011111010001011100001101110011001100000010001110001101110101110011010011010011001100010100111010001101010000001001101010110010010111111000100011011111001001101111011100001011000111101000001001011001100100111110111011001110110011111110010011110011100001100100001000010010101111101000010001010101010001100000110001011011110110101010011000011101010100111010101011001101101100000011110011100010010101101000000001100111111011111111011000011010000001000011111111010110110', NULL, '''/add'':19C ''1'':10C ''2'':15C ''20px'':31 ''add'':7C,16C ''align'':34 ''arial'':27 ''back'':6C,13C,18C ''background'':39 ''background-color'':38 ''basic'':1A ''black'':37 ''card'':4A,9C,14C,23 ''center'':35 ''color'':36,40 ''famili'':26 ''font'':25,29 ''font-famili'':24 ''font-siz'':28 ''front'':5C,11C,22C ''frontsid'':12C,21C ''option'':2A ''revers'':3A,8C,17C,20C ''size'':30 ''text'':33 ''text-align'':32 ''white'':41');
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001003', 'Basic (and reversed card)', '00000000-0000-0000-0000-7e3900000003', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001003', 'Basic (and reversed card)', '00000000-0000-0000-0000-7e3900000003', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1646,7 +1646,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 <hr id=answer>
 
 {{Front}}', 0, 'FrontFalseFalseBackFalseFalse', 'Imported from Anki', 1554689669577, B'11010101100110100001101111011111100000111101010111000101110011111000111000101111000101001101101101110001010110100000110110010101100100110101111000000011001111000101011000010010110010111010000000111110111101110110100011010010101000001100011010010001010001111000001100101010101101001010011000000110000100010110000011101101010111111110000101001111000010101110010001101011111010101011111111001010110010001100010011010100010000100011010100010101100000001011101101101010001001100011000011100011101011010000110101100001', NULL, '''1'':8C ''2'':13C ''20px'':25 ''align'':28 ''arial'':21 ''back'':6C,11C,14C ''background'':33 ''background-color'':32 ''basic'':1A ''black'':31 ''card'':4A,7C,12C,17 ''center'':29 ''color'':30,34 ''famili'':20 ''font'':19,23 ''font-famili'':18 ''font-siz'':22 ''front'':5C,9C,16C ''frontsid'':10C,15C ''revers'':3A ''size'':24 ''text'':27 ''text-align'':26 ''white'':35');
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001004', 'Basic (type in the answer)', '00000000-0000-0000-0000-7e3900000004', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001004', 'Basic (type in the answer)', '00000000-0000-0000-0000-7e3900000004', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1666,7 +1666,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 <hr id=answer>
 
 {{Back}}', 0, 'FrontFalseFalseBackFalseFalse', 'Imported from Anki', 1554689669571, B'10011010000110101110010010000001101101100010101011100100101001110010110110001010010101001110111001000111111100001011010010000110011001111111100000011110110101110000111100111010011110101001101100000011011110011110000110011111110001011011010101011001101000110011110110110010100110000110001110100101001010110111110001100011001110010011100111111011110110000010001000101011110000100010001000010010010001101111000000011000111110110001011001100100101011010100111110011000000000000111001110010010100111111001111100110000', NULL, '''1'':9C ''20px'':23 ''align'':26 ''answer'':5A ''arial'':19 ''back'':7C,12C,14C ''background'':31 ''background-color'':30 ''basic'':1A ''black'':29 ''card'':8C,15 ''center'':27 ''color'':28,32 ''famili'':18 ''font'':17,21 ''font-famili'':16 ''font-siz'':20 ''front'':6C,10C ''frontsid'':13C ''size'':22 ''text'':25 ''text-align'':24 ''type'':2A,11C ''white'':33');
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001005', 'Cloze', '00000000-0000-0000-0000-7e3900000005', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001005', 'Cloze', '00000000-0000-0000-0000-7e3900000005', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1689,7 +1689,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 \begin{document}
 ', '\end{document}', false, 'Cloze{{cloze:Text}}{{cloze:Text}}<br>
 {{Extra}}', 1, 'TextFalseFalseExtraFalseFalse', 'Imported from Anki', 1554689669570, B'00100010000000111110010011011111110110111111010110100000101001001011100011011010101101101001001111011110100011110010110010110011011100001001010000111001100110100111101111000100010100011101101011111100111100101100101011100101110110110110000100000111111000000110010100101101011011111101110101100000100010111000001010101100010111010111011100111000001001001110101000001100110010110001011000010110001001000110111110100010001111111111100011011010110010000011010100011011110101100010100100100110001110100011011101101101', NULL, '''20px'':18 ''align'':21 ''arial'':14 ''background'':26 ''background-color'':25 ''black'':24 ''blue'':35 ''bold'':33 ''card'':10 ''center'':22 ''cloze'':1A,4C,5C,7C,29,37 ''color'':23,27,34,38 ''extra'':3C,9C ''famili'':13 ''font'':12,16,31 ''font-famili'':11 ''font-siz'':15 ''font-weight'':30 ''lightblu'':39 ''nightmod'':36 ''size'':17 ''text'':2C,6C,8C,20 ''text-align'':19 ''weight'':32 ''white'':28');
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001006', 'Basic (type in the answer)', '00000000-0000-0000-0000-7e3900000004', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001006', 'Basic (type in the answer)', '00000000-0000-0000-0000-7e3900000004', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1710,7 +1710,7 @@ INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, la
 <hr id=answer>
 
 {{type:Back}}', 0, 'FrontFalseFalseBackFalseFalse', 'Answer uses {{Front}} instead of {{FrontSide}} and {{type:Back}} instead of {{Back}} as of Anki v2.1.15', 1587486094455, B'11111101101111111011100111011000100110111111000110101111101000001011000100011111011000111110110111001111100111000000111111101000100111010011011000100010101110110010110000000100010110111011001111111010011110110101111010000110011110010101110000101111110000001111101000010101010101000001100011010011110011111110011010001010100001011110100000110010011000100011110000111100101100110011000011111000101111111101100110111010011000001001001100001010100011010101000111110011000011001010101001000100110111001011101010001010', NULL, '''20px'':22 ''align'':25 ''answer'':5A ''arial'':18 ''back'':7C,10C,13C ''background'':30 ''background-color'':29 ''basic'':1A ''black'':28 ''card'':14 ''center'':26 ''color'':27,31 ''famili'':17 ''font'':16,20 ''font-famili'':15 ''font-siz'':19 ''front'':6C,8C,11C ''size'':21 ''text'':24 ''text-align'':23 ''type'':2A,9C,12C ''white'':32');
-INSERT INTO public.grompleaf (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001007', 'Cloze', '00000000-0000-0000-0000-7e3900000005', '.card {
+INSERT INTO public.template_revision (id, name, gromplate_id, css, created, modified, latex_pre, latex_post, is_dmca, card_templates, type, fields, edit_summary, anki_id, hash, c_weight_tsv_helper, tsv) VALUES ('00000000-0000-0000-0000-7e3900001007', 'Cloze', '00000000-0000-0000-0000-7e3900000005', '.card {
  font-family: arial;
  font-size: 20px;
  text-align: center;
@@ -1755,11 +1755,11 @@ INSERT INTO public.padawan (id, display_name, default_card_setting_id, default_d
 
 
 
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
-INSERT INTO public.user_2_grompleaf (user_id, grompleaf_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_template_revision (user_id, template_revision_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001001', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_template_revision (user_id, template_revision_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001002', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_template_revision (user_id, template_revision_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001003', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_template_revision (user_id, template_revision_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001006', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
+INSERT INTO public.user_2_template_revision (user_id, template_revision_id, default_card_setting_id, default_tags, created) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-7e3900001005', '00000000-0000-0000-0000-5e7700000003', '{}', '2020-08-15 21:40:11.66992+00');
 
 
 
@@ -1852,12 +1852,12 @@ ALTER TABLE ONLY public.gromplate
     ADD CONSTRAINT gromplate_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.grompleaf
-    ADD CONSTRAINT grompleaf_id_gromplate_id_key UNIQUE (id, gromplate_id);
+ALTER TABLE ONLY public.template_revision
+    ADD CONSTRAINT template_revision_id_gromplate_id_key UNIQUE (id, gromplate_id);
 
 
-ALTER TABLE ONLY public.grompleaf
-    ADD CONSTRAINT grompleaf_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.template_revision
+    ADD CONSTRAINT template_revision_pkey PRIMARY KEY (id);
 
 
 ALTER TABLE ONLY public.history
@@ -1904,8 +1904,8 @@ ALTER TABLE ONLY public.concept
     ADD CONSTRAINT concept_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT user_2_grompleaf_pkey PRIMARY KEY (grompleaf_id, user_id);
+ALTER TABLE ONLY public.user_2_template_revision
+    ADD CONSTRAINT user_2_template_revision_pkey PRIMARY KEY (template_revision_id, user_id);
 
 
 ALTER TABLE ONLY public.vote_2_comment_gromplate
@@ -2007,13 +2007,13 @@ CREATE INDEX "filter. user_id. idx" ON public.filter USING btree (user_id);
 CREATE INDEX "gromplate. author_id. idx" ON public.gromplate USING btree (author_id);
 
 
-CREATE INDEX "grompleaf. gromplate_id. idx" ON public.grompleaf USING btree (gromplate_id);
+CREATE INDEX "template_revision. gromplate_id. idx" ON public.template_revision USING btree (gromplate_id);
 
 
-CREATE INDEX "grompleaf. hash. idx" ON public.grompleaf USING btree (hash);
+CREATE INDEX "template_revision. hash. idx" ON public.template_revision USING btree (hash);
 
 
-CREATE INDEX "grompleaf. tsv. idx" ON public.grompleaf USING gin (tsv);
+CREATE INDEX "template_revision. tsv. idx" ON public.template_revision USING gin (tsv);
 
 
 CREATE INDEX "history. card_id. idx" ON public.history USING btree (card_id);
@@ -2022,7 +2022,7 @@ CREATE INDEX "history. card_id. idx" ON public.history USING btree (card_id);
 CREATE INDEX "leaf. example_id. idx" ON public.leaf USING btree (example_id);
 
 
-CREATE INDEX "leaf. grompleaf_id. idx" ON public.leaf USING btree (grompleaf_id);
+CREATE INDEX "leaf. template_revision_id. idx" ON public.leaf USING btree (template_revision_id);
 
 
 CREATE INDEX "leaf. hash. idx" ON public.leaf USING btree (hash);
@@ -2052,10 +2052,10 @@ CREATE INDEX "concept. author_id. idx" ON public.concept USING btree (author_id)
 CREATE INDEX "user. tsv. idx" ON public.padawan USING gin (tsv);
 
 
-CREATE INDEX "user_2_grompleaf. default_card_setting_id. idx" ON public.user_2_grompleaf USING btree (default_card_setting_id);
+CREATE INDEX "user_2_template_revision. default_card_setting_id. idx" ON public.user_2_template_revision USING btree (default_card_setting_id);
 
 
-CREATE INDEX "user_2_grompleaf. grompleaf_id. idx" ON public.user_2_grompleaf USING btree (grompleaf_id);
+CREATE INDEX "user_2_template_revision. template_revision_id. idx" ON public.user_2_template_revision USING btree (template_revision_id);
 
 
 CREATE INDEX "vote_2_comment_gromplate. user_id. idx" ON public.vote_2_comment_gromplate USING btree (user_id);
@@ -2091,7 +2091,7 @@ CREATE TRIGGER tr_deck_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.deck
 CREATE TRIGGER tr_deckfollower_afterinsertdeleteupdate AFTER INSERT OR DELETE OR UPDATE ON public.deck_follower FOR EACH ROW EXECUTE FUNCTION public.fn_tr_deckfollower_afterinsertdeleteupdate();
 
 
-CREATE TRIGGER tr_grompleaf_beforeinsert BEFORE INSERT ON public.grompleaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_grompleaf_beforeinsert();
+CREATE TRIGGER tr_template_revision_beforeinsert BEFORE INSERT ON public.template_revision FOR EACH ROW EXECUTE FUNCTION public.fn_tr_template_revision_beforeinsert();
 
 
 CREATE TRIGGER tr_leaf_beforeinsert BEFORE INSERT ON public.leaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_leaf_beforeinsert();
@@ -2227,15 +2227,15 @@ ALTER TABLE ONLY public.filter
 
 
 ALTER TABLE ONLY public.gromplate
-    ADD CONSTRAINT "gromplate to grompleaf. latest_id, id. FK" FOREIGN KEY (latest_id, id) REFERENCES public.grompleaf(id, gromplate_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "gromplate to template_revision. latest_id, id. FK" FOREIGN KEY (latest_id, id) REFERENCES public.template_revision(id, gromplate_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.gromplate
     ADD CONSTRAINT "gromplate to user. author_id. FK" FOREIGN KEY (author_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.grompleaf
-    ADD CONSTRAINT "grompleaf to gromplate. gromplate_id. FK" FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
+ALTER TABLE ONLY public.template_revision
+    ADD CONSTRAINT "template_revision to gromplate. gromplate_id. FK" FOREIGN KEY (gromplate_id) REFERENCES public.gromplate(id);
 
 
 ALTER TABLE ONLY public.history
@@ -2259,7 +2259,7 @@ ALTER TABLE ONLY public.leaf
 
 
 ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to grompleaf. grompleaf_id. FK" FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
+    ADD CONSTRAINT "leaf to template_revision. template_revision_id. FK" FOREIGN KEY (template_revision_id) REFERENCES public.template_revision(id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2279,7 +2279,7 @@ ALTER TABLE ONLY public.notification
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to grompleaf. grompleaf_id. FK" FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
+    ADD CONSTRAINT "notification to template_revision. template_revision_id. FK" FOREIGN KEY (template_revision_id) REFERENCES public.template_revision(id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2350,16 +2350,16 @@ ALTER TABLE ONLY public.padawan
     ADD CONSTRAINT "user to deck. default_deck_id, id. FK" FOREIGN KEY (default_deck_id, id) REFERENCES public.deck(id, user_id) DEFERRABLE INITIALLY DEFERRED;
 
 
-ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT "user_2_grompleaf to card_setting. default_card_setting_id. FK" FOREIGN KEY (default_card_setting_id) REFERENCES public.card_setting(id);
+ALTER TABLE ONLY public.user_2_template_revision
+    ADD CONSTRAINT "user_2_template_revision to card_setting. default_card_setting_id. FK" FOREIGN KEY (default_card_setting_id) REFERENCES public.card_setting(id);
 
 
-ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT "user_2_grompleaf to grompleaf. grompleaf_id. FK" FOREIGN KEY (grompleaf_id) REFERENCES public.grompleaf(id);
+ALTER TABLE ONLY public.user_2_template_revision
+    ADD CONSTRAINT "user_2_template_revision to template_revision. template_revision_id. FK" FOREIGN KEY (template_revision_id) REFERENCES public.template_revision(id);
 
 
-ALTER TABLE ONLY public.user_2_grompleaf
-    ADD CONSTRAINT "user_2_grompleaf to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
+ALTER TABLE ONLY public.user_2_template_revision
+    ADD CONSTRAINT "user_2_template_revision to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
 ALTER TABLE ONLY public.vote_2_comment_gromplate

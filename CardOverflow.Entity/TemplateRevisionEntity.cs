@@ -9,14 +9,14 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class GrompleafEntity
+    public partial class TemplateRevisionEntity
     {
-        public GrompleafEntity()
+        public TemplateRevisionEntity()
         {
             Leafs = new HashSet<LeafEntity>();
             Gromplates = new HashSet<GromplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
-            User_Grompleafs = new HashSet<User_GrompleafEntity>();
+            User_TemplateRevisions = new HashSet<User_TemplateRevisionEntity>();
         }
 
         [Key]
@@ -108,15 +108,15 @@ namespace CardOverflow.Entity
         public NpgsqlTsVector Tsv { get; set; }
 
         [ForeignKey("GromplateId")]
-        [InverseProperty("Grompleafs")]
+        [InverseProperty("TemplateRevisions")]
         public virtual GromplateEntity Gromplate { get; set; }
-        [InverseProperty("Grompleaf")]
+        [InverseProperty("TemplateRevision")]
         public virtual ICollection<LeafEntity> Leafs { get; set; }
         [InverseProperty("Latest")]
         public virtual ICollection<GromplateEntity> Gromplates { get; set; }
-        [InverseProperty("Grompleaf")]
+        [InverseProperty("TemplateRevision")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
-        [InverseProperty("Grompleaf")]
-        public virtual ICollection<User_GrompleafEntity> User_Grompleafs { get; set; }
+        [InverseProperty("TemplateRevision")]
+        public virtual ICollection<User_TemplateRevisionEntity> User_TemplateRevisions { get; set; }
     }
 }

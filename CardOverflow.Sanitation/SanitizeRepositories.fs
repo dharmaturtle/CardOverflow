@@ -661,14 +661,14 @@ type ViewEditConceptCommand = {
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
     FieldValues: EditFieldAndValue ResizeArray
-    Grompleaf: ViewGrompleaf
+    TemplateRevision: ViewTemplateRevision
     Kind: UpsertKind
     Title: string // needed cause Blazor can't bind against the immutable FSharpOption or the DU in UpsertKind
     Ids: UpsertIds
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-        match this.Grompleaf.CardTemplates with
+        match this.TemplateRevision.CardTemplates with
         | Cloze t ->
              result {
                 let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (valueByFieldName |> Map.ofSeq) t.Front
@@ -677,7 +677,7 @@ type ViewEditConceptCommand = {
                         <| valueByFieldName
                         <| t.Front
                         <| t.Back
-                        <| this.Grompleaf.Css
+                        <| this.TemplateRevision.Css
                         <| CardHtml.Cloze clozeIndex
                     |> fun (_, back, _, _) -> back
                     ) |> toResizeArray
@@ -688,7 +688,7 @@ type ViewEditConceptCommand = {
                     <| (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Seq.toList)
                     <| t.Front
                     <| t.Back
-                    <| this.Grompleaf.Css
+                    <| this.TemplateRevision.Css
                     <| CardHtml.Standard
                 |> fun (_, back, _, _) -> back
             ) |> toResizeArray
@@ -705,7 +705,7 @@ type ViewEditConceptCommand = {
                 | NewLeaf_Title _ -> NewLeaf_Title title
         {   EditConceptCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            Grompleaf = this.Grompleaf |> ViewGrompleaf.copyTo
+            TemplateRevision = this.TemplateRevision |> ViewTemplateRevision.copyTo
             Kind = kind
             Ids = this.Ids
         }
@@ -765,9 +765,9 @@ module SanitizeConceptRepository =
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString leaf.Grompleaf.Fields
+                            <| Fields.fromString leaf.TemplateRevision.Fields
                             <| leaf.FieldValues
-                    Grompleaf = leaf.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
+                    TemplateRevision = leaf.TemplateRevision |> TemplateRevision.load |> ViewTemplateRevision.load
                     Kind = kind
                     Title =
                         match kind with
@@ -786,30 +786,30 @@ module SanitizeConceptRepository =
             }
         match source with
         | VNewOriginal_UserId userId ->
-            db.User_Grompleaf.Include(fun x -> x.Grompleaf).FirstOrDefaultAsync(fun x -> x.UserId = userId)
+            db.User_TemplateRevision.Include(fun x -> x.TemplateRevision).FirstOrDefaultAsync(fun x -> x.UserId = userId)
             |>% (Result.requireNotNull (sprintf "User #%A doesn't have any templates" userId))
             |>%% (fun j ->
                 {   EditSummary = ""
                     FieldValues =
                         EditFieldAndValue.load
-                            <| Fields.fromString j.Grompleaf.Fields
+                            <| Fields.fromString j.TemplateRevision.Fields
                             <| ""
-                    Grompleaf = j.Grompleaf |> Grompleaf.load |> ViewGrompleaf.load
+                    TemplateRevision = j.TemplateRevision |> TemplateRevision.load |> ViewTemplateRevision.load
                     Kind = NewOriginal_TagIds Set.empty
                     Title = null
                     Ids = ids
                 }
             )
         | VNewExample_SourceConceptId conceptId ->
-            db.Concept.Include(fun x -> x.DefaultExample.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = conceptId)
+            db.Concept.Include(fun x -> x.DefaultExample.Latest.TemplateRevision).SingleOrDefaultAsync(fun x -> x.Id = conceptId)
             |>% Result.requireNotNull (sprintf "Concept #%A not found." conceptId)
             |> TaskResult.bind(fun concept -> toCommand (NewExample_Title "New Example") concept.DefaultExample.Latest)
         | VNewCopySource_LeafId leafId ->
-            db.Leaf.Include(fun x -> x.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = leafId)
+            db.Leaf.Include(fun x -> x.TemplateRevision).SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |>% Result.requireNotNull (sprintf "Example Leaf #%A not found." leafId)
             |> TaskResult.bind(toCommand (NewCopy_SourceLeafId_TagIds (leafId, Set.empty)))
         | VUpdate_ExampleId exampleId ->
-            db.Example.Include(fun x -> x.Latest.Grompleaf).SingleOrDefaultAsync(fun x -> x.Id = exampleId)
+            db.Example.Include(fun x -> x.Latest.TemplateRevision).SingleOrDefaultAsync(fun x -> x.Id = exampleId)
             |>% Result.requireNotNull (sprintf "Example #%A not found." exampleId)
             |> TaskResult.bind(fun example -> toCommand (NewLeaf_Title example.Name) example.Latest)
     let Update (db: CardOverflowDb) userId (acCommands: EditCardCommand list) (conceptCommand: ViewEditConceptCommand) = taskResult {

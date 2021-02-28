@@ -27,11 +27,11 @@ let clozeFields =
     | Cloze t -> Cloze.templateRegex.TypedMatches(t.Front).Select(fun x -> x.fieldName.Value) |> Seq.toList
     | _ -> failwith "impossible"
 
-let test text expected grompleaf =
+let test text expected templateRevision =
     let view =
         {   EditSummary = ""
             FieldValues =
-                (Grompleaf.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
+                (TemplateRevision.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
                     EditField = f
                     Value =
                         if f.Name = "Front" then
@@ -39,13 +39,13 @@ let test text expected grompleaf =
                         else
                             f.Name
                 }).ToList()
-            Grompleaf = grompleaf
+            TemplateRevision = templateRevision
             Kind = NewOriginal_TagIds Set.empty
             Title = null
             Ids = ids_1
         }
-    if grompleaf.FirstCardTemplate.Name = "Cloze" then
-        Assert.Equal<string seq>(["Front"], clozeFields view.Grompleaf.CardTemplates)
+    if templateRevision.FirstCardTemplate.Name = "Cloze" then
+        Assert.Equal<string seq>(["Front"], clozeFields view.TemplateRevision.CardTemplates)
     view.Backs.Value
     |> Seq.map MappingTools.stripHtmlTags
     |> fun x -> Assert.Equal<string seq>(expected, x)
@@ -54,7 +54,7 @@ let test text expected grompleaf =
 let ``EditConceptCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
-            ({ (Grompleaf.initialize Ulid.create Ulid.create) with
+            ({ (TemplateRevision.initialize Ulid.create Ulid.create) with
                 CardTemplates =
                 {   Name = "Basic"
                     Front = "{{Front}}"
@@ -62,7 +62,7 @@ let ``EditConceptCommand's back works with basic`` (): unit =
                     ShortFront = ""
                     ShortBack = ""
                 } |> List.singleton |>Standard
-            } |> ViewGrompleaf.load)
+            } |> ViewTemplateRevision.load)
     testOrdinary
         "The front"
         [ "The front Back" ]
@@ -71,7 +71,7 @@ let ``EditConceptCommand's back works with basic`` (): unit =
 let ``EditConceptCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
-            ({ (Grompleaf.initialize Ulid.create Ulid.create) with
+            ({ (TemplateRevision.initialize Ulid.create Ulid.create) with
                 CardTemplates =
                     {   Name = "Cloze"
                         Front = "{{cloze:Front}}"
@@ -79,7 +79,7 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
                         ShortFront = ""
                         ShortBack = ""
                     } |> Cloze
-            } |> ViewGrompleaf.load)
+            } |> ViewTemplateRevision.load)
     testCloze
         "{{c1::Canberra::city}} was founded in {{c1::1913}}."
         [   "[ Canberra ] was founded in [ 1913 ] . Back" ]
@@ -92,7 +92,7 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
         let view =
             {   EditSummary = ""
                 FieldValues =
-                    (Grompleaf.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
+                    (TemplateRevision.initialize Ulid.create Ulid.create).Fields.Select(fun f -> {
                         EditField = f
                         Value =
                             match f.Name with
@@ -100,19 +100,19 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
                             | "Back" -> back
                             | _ -> "Source goes here"
                     }).ToList()
-                Grompleaf =
-                    {   (Grompleaf.initialize Ulid.create Ulid.create) with
+                TemplateRevision =
+                    {   (TemplateRevision.initialize Ulid.create Ulid.create) with
                             CardTemplates =
-                                {   (Grompleaf.initialize Ulid.create Ulid.create).JustCardTemplates.[0] with
+                                {   (TemplateRevision.initialize Ulid.create Ulid.create).JustCardTemplates.[0] with
                                         Front = "{{cloze:Front}}{{cloze:Back}}"
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
-                    } |> ViewGrompleaf.load
+                    } |> ViewTemplateRevision.load
                 Kind = NewOriginal_TagIds Set.empty
                 Title = null
                 Ids = ids_1
             }
-        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.Grompleaf.CardTemplates)
+        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.TemplateRevision.CardTemplates)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expectedBack, x)

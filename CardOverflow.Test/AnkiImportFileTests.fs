@@ -38,8 +38,8 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     Assert.Equal(3, c.Db.File_Leaf.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
-    Assert.Equal(7, c.Db.Grompleaf.Count())
-    Assert.Equal(5, c.Db.LatestGrompleaf.Count())
+    Assert.Equal(7, c.Db.TemplateRevision.Count())
+    Assert.Equal(5, c.Db.LatestTemplateRevision.Count())
     } |> TaskResult.getOk)
 
 [<Theory>]
@@ -112,8 +112,8 @@ let ``AnkiImporter import cards that have the same collectHash as distinct cards
     Assert.SingleI(c.Db.Deck.Where(fun x -> x.Name = "duplicate cards"))
     Assert.Equal(3, c.Db.Concept.Count())
     Assert.Equal(3, c.Db.Leaf.Count())
-    Assert.Equal(8, c.Db.Grompleaf.Count())
-    Assert.Equal(6, c.Db.LatestGrompleaf.Count())
+    Assert.Equal(8, c.Db.TemplateRevision.Count())
+    Assert.Equal(6, c.Db.LatestTemplateRevision.Count())
     } |> TaskResult.getOk)
 
 let testCommields (c: TestContainer) userId conceptId expected = task {
@@ -137,7 +137,7 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     Assert.Null x.Value
     let allLeafViews =
         c.Db.Leaf
-            .Include(fun x -> x.Grompleaf)
+            .Include(fun x -> x.TemplateRevision)
             .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                 .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
             .ToList()
@@ -312,7 +312,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
         c.Db.Leaf
-            .Include(fun x -> x.Grompleaf)
+            .Include(fun x -> x.TemplateRevision)
             .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                 .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
             .ToList()
@@ -508,7 +508,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     Value = value
                                 })
                             .ToList()
-                    Grompleaf = gromplate
+                    TemplateRevision = gromplate
                     Kind = NewOriginal_TagIds Set.empty
                     Title = null
                     Ids = ids_1
@@ -541,24 +541,24 @@ let ``AnkiDefaults.gromplateIdByHash is same as initial database`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()
     let dbGromplates =
-        c.Db.Grompleaf
+        c.Db.TemplateRevision
             .OrderBy(fun x -> x.Id)
             .ToList()
     
     // test that the calculated hash is the same as the one stored in the db
     for gromplate in dbGromplates do
-        let calculated = GrompleafEntity.hashBase64 hasher gromplate
+        let calculated = TemplateRevisionEntity.hashBase64 hasher gromplate
         let dbValue = LeafEntity.bitArrayToByteArray gromplate.Hash |> Convert.ToBase64String
-        //for x in GrompleafEntity.hash hasher gromplate do
+        //for x in TemplateRevisionEntity.hash hasher gromplate do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
         Assert.Equal(calculated, dbValue)
 
     // test that AnkiDefaults.gromplateIdByHash is up to date
     for dbGromplate in dbGromplates do
-        let calculated = GrompleafEntity.hashBase64 hasher dbGromplate
+        let calculated = TemplateRevisionEntity.hashBase64 hasher dbGromplate
         //calculated.D(string dbGromplate.Id)
-        Assert.Equal(AnkiDefaults.grompleafIdByHash.[calculated], dbGromplate.Id)
+        Assert.Equal(AnkiDefaults.templateRevisionIdByHash.[calculated], dbGromplate.Id)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {

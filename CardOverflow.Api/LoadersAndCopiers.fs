@@ -16,8 +16,8 @@ open System.Collections
 open NodaTime
 open CardOverflow.Api
 
-module GrompleafEntity =
-    let byteArrayHash (hasher: SHA512) (e: GrompleafEntity) =
+module TemplateRevisionEntity =
+    let byteArrayHash (hasher: SHA512) (e: TemplateRevisionEntity) =
         [   e.Name
             e.Css
             e.LatexPre
@@ -103,7 +103,7 @@ module LeafEntity =
             [   e.FieldValues
                 e.AnkiNoteId.ToString()
                 //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by gromplateHash and e.FieldValues
-                e.Grompleaf.AnkiId.ToString()]
+                e.TemplateRevision.AnkiId.ToString()]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
@@ -218,8 +218,8 @@ type CardTemplate with
         List.map CardTemplate.copyTo
         >> MappingTools.joinByRecordSeparator
 
-type Grompleaf with
-    static member load (entity: GrompleafEntity) =
+type TemplateRevision with
+    static member load (entity: TemplateRevisionEntity) =
         {   Id = entity.Id
             Name = entity.Name
             GromplateId = entity.GromplateId
@@ -232,8 +232,8 @@ type Grompleaf with
             CardTemplates = entity.Type |> GromplateType.fromDb (entity.CardTemplates |> CardTemplate.loadMany)
             EditSummary = entity.EditSummary
         }
-    static member initialize grompleafId gromplateId = {
-        Id = grompleafId
+    static member initialize templateRevisionId gromplateId = {
+        Id = templateRevisionId
         Name = "New Card Template"
         GromplateId = gromplateId
         Css = """.card {
@@ -265,7 +265,7 @@ type Grompleaf with
         LatexPost = """\end{document}"""
         CardTemplates = GromplateType.initStandard
         EditSummary = "Initial creation" }
-    member this.CopyTo (entity: GrompleafEntity) =
+    member this.CopyTo (entity: TemplateRevisionEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -279,29 +279,29 @@ type Grompleaf with
             | Standard _ -> 0s
             | Cloze _ -> 1s
     member this.CopyToNewLeaf =
-        let e = GrompleafEntity()
+        let e = TemplateRevisionEntity()
         this.CopyTo e
         e.Id <- this.Id
         e.GromplateId <- this.GromplateId
         e
 
-type CollectedGrompleaf with
-    static member load(entity: GrompleafEntity) =
-        { DefaultTags = entity.User_Grompleafs.Single().DefaultTags
-          DefaultCardSettingId = entity.User_Grompleafs.Single().DefaultCardSettingId
-          Grompleaf = Grompleaf.load entity }
+type CollectedTemplateRevision with
+    static member load(entity: TemplateRevisionEntity) =
+        { DefaultTags = entity.User_TemplateRevisions.Single().DefaultTags
+          DefaultCardSettingId = entity.User_TemplateRevisions.Single().DefaultCardSettingId
+          TemplateRevision = TemplateRevision.load entity }
 
 type LeafView with
-    static member private toView (grompleaf: GrompleafEntity) (fieldValues: string)=
-        {   FieldValues = FieldAndValue.load (Fields.fromString grompleaf.Fields) fieldValues
-            Grompleaf = Grompleaf.load grompleaf }
+    static member private toView (templateRevision: TemplateRevisionEntity) (fieldValues: string)=
+        {   FieldValues = FieldAndValue.load (Fields.fromString templateRevision.Fields) fieldValues
+            TemplateRevision = TemplateRevision.load templateRevision }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.Grompleaf.CardTemplates)
+            (this.TemplateRevision.CardTemplates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     static member load (entity: LeafEntity) =
         LeafView.toView
-            entity.Grompleaf
+            entity.TemplateRevision
             entity.FieldValues
     member this.CopyToX (entity: LeafEntity) (commields: CommeafEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
@@ -309,7 +309,7 @@ type LeafView with
             commields.Select(fun x -> Commeaf_LeafEntity(Commeaf = x))
             |> entity.Commeaf_Leafs.Concat
             |> toResizeArray
-        entity.GrompleafId <- this.Grompleaf.Id
+        entity.TemplateRevisionId <- this.TemplateRevision.Id
     member this.CopyToNew commields =
         let entity = LeafEntity()
         this.CopyToX entity commields

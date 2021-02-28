@@ -12,7 +12,7 @@ namespace CardOverflow.Entity
         public CardSettingEntity()
         {
             Cards = new HashSet<CardEntity>();
-            User_Grompleafs = new HashSet<User_GrompleafEntity>();
+            User_TemplateRevisions = new HashSet<User_TemplateRevisionEntity>();
         }
 
         [Key]
@@ -58,7 +58,7 @@ namespace CardOverflow.Entity
         [InverseProperty("CardSetting")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("DefaultCardSetting")]
-        public virtual ICollection<User_GrompleafEntity> User_Grompleafs { get; set; }
+        public virtual ICollection<User_TemplateRevisionEntity> User_TemplateRevisions { get; set; }
     }
 }
 

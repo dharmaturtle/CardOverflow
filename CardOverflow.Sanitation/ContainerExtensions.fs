@@ -59,9 +59,9 @@ module Logger =
 type EntityHasher () =
     interface IEntityHasher with
         member val LeafHasher =
-            fun struct (leaf, grompleafHash, sha512) -> LeafEntity.hash grompleafHash sha512 leaf
-        member val GrompleafHasher =
-            fun struct (leaf, sha512) -> GrompleafEntity.hash sha512 leaf
+            fun struct (leaf, templateRevisionHash, sha512) -> LeafEntity.hash templateRevisionHash sha512 leaf
+        member val TemplateRevisionHasher =
+            fun struct (leaf, sha512) -> TemplateRevisionEntity.hash sha512 leaf
         member _.GetMaxIndexInclusive =
             fun (e: LeafEntity) ->
                 (e |> LeafView.load).MaxIndexInclusive

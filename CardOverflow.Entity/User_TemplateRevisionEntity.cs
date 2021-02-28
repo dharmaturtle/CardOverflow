@@ -6,13 +6,13 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    [Table("user_2_grompleaf")]
-    public partial class User_GrompleafEntity
+    [Table("user_2_template_revision")]
+    public partial class User_TemplateRevisionEntity
     {
         [Key]
         public Guid UserId { get; set; }
         [Key]
-        public Guid GrompleafId { get; set; }
+        public Guid TemplateRevisionId { get; set; }
         public Guid DefaultCardSettingId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Instant Created { get; set; }
@@ -20,14 +20,14 @@ namespace CardOverflow.Entity
         [StringLength(300)]
         public string[] DefaultTags { get; set; } = new string[0];
 
-        [ForeignKey("GrompleafId")]
-        [InverseProperty("User_Grompleafs")]
-        public virtual GrompleafEntity Grompleaf { get; set; }
+        [ForeignKey("TemplateRevisionId")]
+        [InverseProperty("User_TemplateRevisions")]
+        public virtual TemplateRevisionEntity TemplateRevision { get; set; }
         [ForeignKey("DefaultCardSettingId")]
-        [InverseProperty("User_Grompleafs")]
+        [InverseProperty("User_TemplateRevisions")]
         public virtual CardSettingEntity DefaultCardSetting { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("User_Grompleafs")]
+        [InverseProperty("User_TemplateRevisions")]
         public virtual UserEntity User { get; set; }
     }
 }

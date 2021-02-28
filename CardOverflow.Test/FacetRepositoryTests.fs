@@ -17,14 +17,14 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 open FsToolkit.ErrorHandling
 
-let normalCommand fieldValues grompleaf tagIds ids =
+let normalCommand fieldValues templateRevision tagIds ids =
     let fieldValues =
         match fieldValues with
         | [] -> ["Front"; "Back"]
         | _ -> fieldValues
-    {   Grompleaf = grompleaf
+    {   TemplateRevision = templateRevision
         FieldValues =
-            grompleaf.Fields
+            templateRevision.Fields
             |> Seq.mapi (fun i field -> {
                 EditField = ViewField.copyTo field
                 Value = fieldValues.[i]
@@ -35,7 +35,7 @@ let normalCommand fieldValues grompleaf tagIds ids =
         Ids = UpsertIds.fromTuple ids
     }
 
-let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds ids = {
+let clozeCommand clozeText (clozeGromplate: ViewTemplateRevision) tagIds ids = {
     EditSummary = "Initial creation"
     FieldValues =
         clozeGromplate.Fields.Select(fun f -> {
@@ -46,7 +46,7 @@ let clozeCommand clozeText (clozeGromplate: ViewGrompleaf) tagIds ids = {
                 else
                     "extra"
         }).ToList()
-    Grompleaf = clozeGromplate
+    TemplateRevision = clozeGromplate
     Kind = NewOriginal_TagIds (tagIds |> Set.ofList)
     Title = null
     Ids = UpsertIds.fromTuple ids }
@@ -385,7 +385,7 @@ let ``Leaf with "" as FieldValues is parsed to empty`` (): unit =
     let view =
         LeafEntity(
             FieldValues = "",
-            Grompleaf = GrompleafEntity(
+            TemplateRevision = TemplateRevisionEntity(
                 Fields = "FrontArial20False0FalseBackArial20False1False"
             ))
         |> LeafView.load

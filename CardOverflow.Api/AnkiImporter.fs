@@ -19,7 +19,7 @@ open Microsoft.EntityFrameworkCore
 open NodaTime
 
 module AnkiDefaults =
-    let grompleafIdByHash = // lowTODO could make this a byte array
+    let templateRevisionIdByHash = // lowTODO could make this a byte array
         [("WX831/PqYECBDQaRxa7nceZWfvK27SNOudsTuAajr7tDTo25RDWsjXiaotM8OgBtFthzKcmiAgB0ihSM06e0Mw==", Guid.Parse("00000000-0000-0000-0000-7e3900001001"))
          ("OfVUXbEwX3TYmYE4dp1lmVEuViCrST9in+wdGi9IM/lubv7kOUwIqS9EVQxGe6sMV7lqtoHnSC3A/P4NC4R/bQ==", Guid.Parse("00000000-0000-0000-0000-7e3900001002"))
          ("q1nY+8Gro/Nx9Cjbjlqwqcl6wDxqSNMFfO8WSwVjieLBVC1lYIgGt/qH8lAn1lf9UxMjK0KsqAHdVmQMx7Wwhg==", Guid.Parse("00000000-0000-0000-0000-7e3900001003"))
@@ -121,7 +121,7 @@ module AnkiImporter =
                     |?? lazy (DeckEntity(UserId = userId, Name = deckName))
                 )
             let! gromplatesByModelId =
-                let toEntity gromplateEntity (gromplate: AnkiGrompleaf) =
+                let toEntity gromplateEntity (gromplate: AnkiTemplateRevision) =
                     let defaultCardSetting =
                         cardSettingAndDeckByDeckId.TryFind gromplate.DeckId
                         |> function
@@ -129,13 +129,13 @@ module AnkiImporter =
                         | None -> defaultCardSetting // veryLowTODO some anki models have invalid deck ids. Perhaps log this
                     getGromplates gromplate
                     |> function
-                    | Some (e: GrompleafEntity) ->
-                        if e.User_Grompleafs.Any(fun x -> x.UserId = userId) |> not then
-                            User_GrompleafEntity(
+                    | Some (e: TemplateRevisionEntity) ->
+                        if e.User_TemplateRevisions.Any(fun x -> x.UserId = userId) |> not then
+                            User_TemplateRevisionEntity(
                                 UserId = userId,
                                 DefaultTags = gromplate.DefaultTags.ToArray(),
                                 DefaultCardSetting = defaultCardSetting)
-                            |> e.User_Grompleafs.Add
+                            |> e.User_TemplateRevisions.Add
                         e
                     | None -> gromplate.CopyToNewWithGromplate userId gromplateEntity defaultCardSetting
                     |> fun x -> {| Entity = x; Gromplate = gromplate |}
@@ -171,18 +171,18 @@ module AnkiImporter =
     let save (db: CardOverflowDb) ankiDb userId fileEntityByAnkiFileName =
         use hasher = SHA512.Create()
         let defaultCardSetting = db.User.Include(fun x -> x.DefaultCardSetting).Single(fun x -> x.Id = userId).DefaultCardSetting
-        let getGrompleaf (grompleaf: AnkiGrompleaf) =
-            let ti = grompleaf.CopyToNew userId defaultCardSetting
-            let hash = GrompleafEntity.hashBase64 hasher ti
-            AnkiDefaults.grompleafIdByHash.TryFind hash
+        let getTemplateRevision (templateRevision: AnkiTemplateRevision) =
+            let ti = templateRevision.CopyToNew userId defaultCardSetting
+            let hash = TemplateRevisionEntity.hashBase64 hasher ti
+            AnkiDefaults.templateRevisionIdByHash.TryFind hash
             |> function
             | Some id ->
-                db.Grompleaf
-                    .Include(fun x -> x.User_Grompleafs)
+                db.TemplateRevision
+                    .Include(fun x -> x.User_TemplateRevisions)
                     .Single(fun x -> x.Id = id)
             | None ->
-                db.Grompleaf
-                    .Include(fun x -> x.User_Grompleafs)
+                db.TemplateRevision
+                    .Include(fun x -> x.User_TemplateRevisions)
                     .OrderBy(fun x -> x.Created)
                     .FirstOrDefault(fun x -> x.Hash = ti.Hash)
             |> Option.ofObj
@@ -203,7 +203,7 @@ module AnkiImporter =
                         .Where(fun x -> x.UserId = userId)
                         .ToList()
                     <| defaultCardSetting
-                    <| getGrompleaf
+                    <| getTemplateRevision
                     <| getCCard
                     <| getCard
                     <| getHistory

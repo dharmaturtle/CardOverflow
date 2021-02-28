@@ -53,7 +53,7 @@ module ViewField =
     }
 
 [<CLIMutable>]
-type ViewGrompleaf = {
+type ViewTemplateRevision = {
     Id: Guid
     [<Required>]
     [<StringLength(100, MinimumLength = 3, ErrorMessage = "Name must be 3-100 characters long.")>]
@@ -82,8 +82,8 @@ type ViewGrompleaf = {
         | Cloze t -> [t]
         | Standard ts -> ts
 
-module ViewGrompleaf =
-    let load (bznz: Grompleaf) = {
+module ViewTemplateRevision =
+    let load (bznz: TemplateRevision) = {
         Id = bznz.Id
         Name = bznz.Name
         GromplateId = bznz.GromplateId
@@ -96,7 +96,7 @@ module ViewGrompleaf =
         CardTemplates = bznz.CardTemplates
         EditSummary = bznz.EditSummary
     }
-    let copyTo (view: ViewGrompleaf): Grompleaf = {
+    let copyTo (view: ViewTemplateRevision): TemplateRevision = {
         Id = view.Id
         Name = view.Name
         GromplateId = view.GromplateId
@@ -110,7 +110,7 @@ module ViewGrompleaf =
         EditSummary = view.EditSummary
     }
 
-type ViewSearchGrompleaf = {
+type ViewSearchTemplateRevision = {
     Id: Guid
     Name: string
     GromplateId: Guid
@@ -126,8 +126,8 @@ type ViewSearchGrompleaf = {
     IsCollected: bool
 }
 
-module ViewSearchGrompleaf =
-    let load gromplateUsers isCollected (bznz: Grompleaf) = {
+module ViewSearchTemplateRevision =
+    let load gromplateUsers isCollected (bznz: TemplateRevision) = {
         Id = bznz.Id
         Name = bznz.Name
         GromplateId = bznz.GromplateId
@@ -147,14 +147,14 @@ module ViewSearchGrompleaf =
 type ViewGromplateWithAllLeafs = {
     Id: Guid
     AuthorId: Guid
-    Leafs: ViewGrompleaf ResizeArray
-    Editable: ViewGrompleaf
+    Leafs: ViewTemplateRevision ResizeArray
+    Editable: ViewTemplateRevision
 } with
     static member load (entity: GromplateEntity) =
         let leafs =
-            entity.Grompleafs
+            entity.TemplateRevisions
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.map (Grompleaf.load >> ViewGrompleaf.load)
+            |> Seq.map (TemplateRevision.load >> ViewTemplateRevision.load)
             |> toResizeArray
         {   Id = entity.Id
             AuthorId = entity.AuthorId
@@ -163,8 +163,8 @@ type ViewGromplateWithAllLeafs = {
                 leafs.First() with
                     Id = Guid.Empty
                     EditSummary = "" }}
-    static member initialize userId grompleafId gromplateId =
-        let leaf = Grompleaf.initialize grompleafId gromplateId |> ViewGrompleaf.load
+    static member initialize userId templateRevisionId gromplateId =
+        let leaf = TemplateRevision.initialize templateRevisionId gromplateId |> ViewTemplateRevision.load
         {   Id = gromplateId
             AuthorId = userId
             Leafs = [leaf].ToList()
@@ -173,13 +173,13 @@ type ViewGromplateWithAllLeafs = {
 
 module SanitizeGromplate =
     let latest (db: CardOverflowDb) gromplateId =
-        GromplateRepository.latest db gromplateId |> TaskResult.map ViewGrompleaf.load
+        GromplateRepository.latest db gromplateId |> TaskResult.map ViewTemplateRevision.load
     let leaf (db: CardOverflowDb) leafId =
-        GromplateRepository.leaf db leafId |> TaskResult.map ViewGrompleaf.load
+        GromplateRepository.leaf db leafId |> TaskResult.map ViewTemplateRevision.load
     let AllLeafs (db: CardOverflowDb) gromplateId = task {
         let! gromplate =
             db.Gromplate
-                .Include(fun x -> x.Grompleafs)
+                .Include(fun x -> x.TemplateRevisions)
                 .SingleOrDefaultAsync(fun x -> gromplateId = x.Id)
         return
             match gromplate with
@@ -189,18 +189,18 @@ module SanitizeGromplate =
     let Search (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
         let! r =
-            db.LatestGrompleaf
+            db.LatestTemplateRevision
                 .Where(fun x ->
                     String.IsNullOrWhiteSpace searchTerm ||
                     x.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
                 ).Select(fun x ->
-                    x.Gromplate.Grompleafs.Select(fun x -> x.User_Grompleafs.Count).ToList(), // lowTODO sum here
-                    x.User_Grompleafs.Any(fun x -> x.UserId = userId),
+                    x.Gromplate.TemplateRevisions.Select(fun x -> x.User_TemplateRevisions.Count).ToList(), // lowTODO sum here
+                    x.User_TemplateRevisions.Any(fun x -> x.UserId = userId),
                     x
                 ).ToPagedListAsync(pageNumber, 15)
         return {
             Results = r |> Seq.map (fun (users, isCollected, l) ->
-                l |> Grompleaf.load |> ViewSearchGrompleaf.load (users.Sum()) isCollected) |> toResizeArray
+                l |> TemplateRevision.load |> ViewSearchTemplateRevision.load (users.Sum()) isCollected) |> toResizeArray
             Details = {
                 CurrentPage = r.PageNumber
                 PageCount = r.PageCount
@@ -208,27 +208,27 @@ module SanitizeGromplate =
         }}
     let GetMine (db: CardOverflowDb) userId = task {
         let! x =
-            db.User_Grompleaf
+            db.User_TemplateRevision
                 .Where(fun x ->  x.UserId = userId)
-                .Select(fun x -> x.Grompleaf.Gromplate)
+                .Select(fun x -> x.TemplateRevision.Gromplate)
                 .Distinct()
-                .Include(fun x -> x.Grompleafs)
+                .Include(fun x -> x.TemplateRevisions)
                 .ToListAsync()
         return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
         }
     let GetMineWith (db: CardOverflowDb) userId gromplateId = task {
         let! x =
-            db.User_Grompleaf
-                .Where(fun x ->  x.UserId = userId || x.Grompleaf.GromplateId = gromplateId)
-                .Select(fun x -> x.Grompleaf.Gromplate)
+            db.User_TemplateRevision
+                .Where(fun x ->  x.UserId = userId || x.TemplateRevision.GromplateId = gromplateId)
+                .Select(fun x -> x.TemplateRevision.Gromplate)
                 .Distinct()
-                .Include(fun x -> x.Grompleafs)
+                .Include(fun x -> x.TemplateRevisions)
                 .ToListAsync()
         return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
         }
-    let Update (db: CardOverflowDb) userId (leaf: ViewGrompleaf) =
+    let Update (db: CardOverflowDb) userId (leaf: ViewTemplateRevision) =
         let update gromplate = task {
-            let! r = ViewGrompleaf.copyTo leaf |> GromplateRepository.UpdateFieldsToNewLeaf db userId gromplate
+            let! r = ViewTemplateRevision.copyTo leaf |> GromplateRepository.UpdateFieldsToNewLeaf db userId gromplate
             return r |> Ok
         }
         if leaf.Fields.Count = leaf.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then

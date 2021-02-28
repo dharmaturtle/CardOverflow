@@ -27,7 +27,7 @@ namespace CardOverflow.UserContentApi.Controllers {
     [HttpGet("gromplateleaf/{id}/{index}/back")]
     public async Task<IActionResult> LeafBack(Guid id, int index) => _back(index, await GromplateRepository.leaf(_db, id));
 
-    private ContentResult _front(int index, FSharpResult<Grompleaf, string> view) =>
+    private ContentResult _front(int index, FSharpResult<TemplateRevision, string> view) =>
       ( view.IsError
       ? view.ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).IsError
@@ -35,7 +35,7 @@ namespace CardOverflow.UserContentApi.Controllers {
       : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).ResultValue.Item1
       ) .ToTextHtmlContent(this);
 
-    private ContentResult _back(int index, FSharpResult<Grompleaf, string> view) =>
+    private ContentResult _back(int index, FSharpResult<TemplateRevision, string> view) =>
       ( view.IsError
       ? view.ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndexed(index).IsError

@@ -42,7 +42,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _FieldValues;
-        public Guid GrompleafId { get; set; }
+        public Guid TemplateRevisionId { get; set; }
         public int Users { get; set; }
         [Required]
         [StringLength(200)]
@@ -73,9 +73,9 @@ namespace CardOverflow.Entity
         [ForeignKey("ExampleId")]
         [InverseProperty("Leafs")]
         public virtual ExampleEntity Example { get; set; }
-        [ForeignKey("GrompleafId")]
+        [ForeignKey("TemplateRevisionId")]
         [InverseProperty("Leafs")]
-        public virtual GrompleafEntity Grompleaf { get; set; }
+        public virtual TemplateRevisionEntity TemplateRevision { get; set; }
         [InverseProperty("Leaf")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Leaf")]

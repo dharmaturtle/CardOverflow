@@ -90,12 +90,12 @@ module Generators =
     let fields =
         List.map (fun fieldName -> Gen.genMap<Field> (fun field -> { field with Name = fieldName }))
         >> Gen.sequence
-    let grompleaf gromplateType fieldNames =
+    let templateRevision gromplateType fieldNames =
         gen {
             let! fields = fields fieldNames
             return!
-                Gen.genMap<Grompleaf> (fun grompleaf -> {
-                    grompleaf with
+                Gen.genMap<TemplateRevision> (fun templateRevision -> {
+                    templateRevision with
                         Fields = fields
                         CardTemplates = gromplateType
                 })
@@ -113,7 +113,7 @@ module Generators =
         gen {
             let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
             let! gromplateType = gromplateType fieldNames
-            let! grompleaf = grompleaf gromplateType fieldNames
+            let! templateRevision = templateRevision gromplateType fieldNames
             let values =
                 match gromplateType with
                 | Standard _ -> alphanumericString
@@ -135,7 +135,7 @@ module Generators =
                 Gen.genMap<EditConceptCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
-                            Grompleaf = grompleaf
+                            TemplateRevision = templateRevision
                             Kind = kind
                     })
         }

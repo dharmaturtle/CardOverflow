@@ -79,7 +79,7 @@ let nodaConfig =
     |> AutoGenConfig.addGenerator localTimeGen
 
 let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field -> { field with Name = fieldName })) >> SeqGen.sequence
-let grompleaf gromplateType fieldNames =
+let templateRevision gromplateType fieldNames =
     gen {
         let! fields = fieldNames |> fields
         let! id = Gen.guid
@@ -125,7 +125,7 @@ let editConceptCommandGen =
     gen {
         let! fieldNames = fieldNamesGen
         let! gromplateType = gromplateType fieldNames
-        let! grompleaf = grompleaf gromplateType fieldNames
+        let! templateRevision = templateRevision gromplateType fieldNames
         let values =
             match gromplateType with
             | Standard _ -> Gen.alphaNum |> Gen.string (Range.constant 1 100)
@@ -149,7 +149,7 @@ let editConceptCommandGen =
         return {
             EditSummary = editSummary
             FieldValues = fields |> toResizeArray
-            Grompleaf = grompleaf
+            TemplateRevision = templateRevision
             Kind = kind
             Ids = ids
         }

@@ -213,18 +213,18 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
 module TestGromplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.LatestGrompleaf
+            db.LatestTemplateRevision
                 .Where(fun x -> x.Name.Contains query)
                 .ToListAsync()
-        return x |> Seq.map (Grompleaf.load >> ViewGrompleaf.load) |> toResizeArray
+        return x |> Seq.map (TemplateRevision.load >> ViewTemplateRevision.load) |> toResizeArray
         }
     let SearchEarliest (db: CardOverflowDb) (query: string) = task {
         let! x =
-            db.Grompleaf
+            db.TemplateRevision
                 .Where(fun x -> x.Name = query)
                 .OrderBy(fun x -> x.Created)
                 .FirstAsync()
-        return x |> Grompleaf.load |> ViewGrompleaf.load
+        return x |> TemplateRevision.load |> ViewTemplateRevision.load
         }
 
 // Sqlite

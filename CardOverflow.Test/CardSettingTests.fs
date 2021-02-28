@@ -76,7 +76,7 @@ let ``SanitizeCardSetting.upsertMany can add/update new option``(): Task<unit> =
                         EditField = ViewField.copyTo f
                         Value = Guid.NewGuid().ToString()
                     }).ToList()
-                Grompleaf = gromplate
+                TemplateRevision = gromplate
                 Kind = NewOriginal_TagIds Set.empty
                 Title = null
                 Ids = ids_1

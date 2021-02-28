@@ -26,7 +26,7 @@ type SimpleAnkiDb = {
     Revlogs: RevlogEntity list
 }
 
-type AnkiGrompleaf = {
+type AnkiTemplateRevision = {
     AnkiId: int64
     AuthorId: Guid
     Name: string
@@ -42,7 +42,7 @@ type AnkiGrompleaf = {
     DeckId: int64
     IsCloze: bool
 } with
-    member this.CopyTo (entity: GrompleafEntity) =
+    member this.CopyTo (entity: TemplateRevisionEntity) =
         entity.Name <- this.Name
         entity.Css <- this.Css
         entity.Fields <- Fields.toString this.Fields
@@ -54,9 +54,9 @@ type AnkiGrompleaf = {
         entity.EditSummary <- "Imported from Anki"
         entity.Type <- if this.IsCloze then 1s else 0s
     member this.CopyToNewWithGromplate userId gromplate defaultCardSetting =
-        let entity = GrompleafEntity()
-        entity.User_Grompleafs <-
-            [User_GrompleafEntity(
+        let entity = TemplateRevisionEntity()
+        entity.User_TemplateRevisions <-
+            [User_TemplateRevisionEntity(
                 UserId = userId,
                 DefaultTags = this.DefaultTags.ToArray(),
                 DefaultCardSetting = defaultCardSetting)].ToList()
@@ -70,7 +70,7 @@ type AnkiGrompleaf = {
 type AnkiCardWrite = {
     AnkiNoteId: int64
     Commields: CommeafEntity list
-    Gromplate: GrompleafEntity
+    Gromplate: TemplateRevisionEntity
     FieldValues: string
     Created: Instant
     Modified: Instant option
@@ -80,7 +80,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.Grompleaf <- this.Gromplate
+        entity.TemplateRevision <- this.Gromplate
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.Commeaf_Leafs <-
             this.Commields
@@ -106,7 +106,7 @@ type AnkiCardWrite = {
         this.CopyTo entity
         entity
     member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let gromplateHash = this.Gromplate |> GrompleafEntity.hash hasher
+        let gromplateHash = this.Gromplate |> TemplateRevisionEntity.hash hasher
         let hash = this.CopyToNew [] |> LeafEntity.hash gromplateHash hasher
         db.Leaf
             .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
@@ -118,7 +118,7 @@ type AnkiCardWrite = {
 type AnkiCard = {
     UserId: Guid
     Leaf: LeafEntity
-    Grompleaf: GrompleafEntity
+    TemplateRevision: TemplateRevisionEntity
     Index: int16
     CardState: CardState
     IsLapsed: bool
@@ -352,7 +352,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (gromplateByModelId: Map<string, {| Entity: GrompleafEntity; Gromplate: AnkiGrompleaf |}>)
+        (gromplateByModelId: Map<string, {| Entity: TemplateRevisionEntity; Gromplate: AnkiTemplateRevision |}>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -416,7 +416,7 @@ module Anki =
         (ankiCard: Anki.CardEntity) =
         let cardSetting, deck = cardSettingAndDeckByDeckId.[ankiCard.Did]
         let card, _ = cardAndTagsByNoteId.[ankiCard.Nid]
-        let cti = card.Grompleaf
+        let cti = card.TemplateRevision
         match ankiCard.Type with
         | 0L -> Ok New
         | 1L -> Ok Learning
@@ -428,7 +428,7 @@ module Anki =
                 let c: AnkiCard =
                     { UserId = userId
                       Leaf = card
-                      Grompleaf = cti
+                      TemplateRevision = cti
                       Index = ankiCard.Ord |> int16
                       CardState =
                         match ankiCard.Queue with

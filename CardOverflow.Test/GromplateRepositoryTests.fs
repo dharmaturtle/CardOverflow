@@ -22,7 +22,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let userId = user_2
     use c = new TestContainer()
     
-    let gromplateId = c.Db.Gromplate.Single(fun x -> x.Grompleafs.Any(fun x -> x.Name = "Basic")).Id
+    let gromplateId = c.Db.Gromplate.Single(fun x -> x.TemplateRevisions.Any(fun x -> x.Name = "Basic")).Id
     let! gromplate = SanitizeGromplate.AllLeafs c.Db gromplateId
     let latestLeaf = gromplate.Value.Leafs |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
@@ -35,7 +35,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     Assert.Equal(
         "{{Front}}",
         latestLeaf.FirstCardTemplate.Front)
-    Assert.Equal(1, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
+    Assert.Equal(1, c.Db.TemplateRevision.Count(fun x -> x.GromplateId = gromplateId))
 
     // Testing UpdateFieldsToNewLeaf
     let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
@@ -73,13 +73,13 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     Assert.NotEqual(oldLeafId, c.Db.Card.Single().LeafId)
     Assert.Equal(
         latestLeaf.Id,
-        c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.GrompleafId)
-    Assert.Equal(2, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
+        c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.TemplateRevisionId)
+    Assert.Equal(2, c.Db.TemplateRevision.Count(fun x -> x.GromplateId = gromplateId))
     Assert.Equal(2, c.Db.Leaf.Count())
     let concept_1 = c.Db.Concept.Single().Id
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Example.ConceptId = concept_1))
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.ConceptId = concept_1))
-    let createds = c.Db.Grompleaf.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
+    let createds = c.Db.TemplateRevision.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = ConceptViewRepository.get c.Db concept_1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth.[0]
@@ -128,7 +128,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
 
     // test existing
     let testView getView id expectedFront expectedBack = task {
-        let! (actual: Result<Grompleaf, string>) = getView c.Db id
+        let! (actual: Result<TemplateRevision, string>) = getView c.Db id
         let front, back, _, _ = actual.Value.FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
         BusinessLogicTests.assertStripped expectedFront front
         BusinessLogicTests.assertStripped expectedBack back
@@ -145,6 +145,6 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
     let gromplateMissingId = Ulid.create
     do! testViewError GromplateRepository.latest gromplateMissingId <| sprintf "Gromplate #%A not found" gromplateMissingId // TODO base64
-    let grompleafMissingId = Ulid.create
-    do! testViewError GromplateRepository.leaf   grompleafMissingId <| sprintf "Gromplate Leaf #%A not found" grompleafMissingId // TODO base64
+    let templateRevisionMissingId = Ulid.create
+    do! testViewError GromplateRepository.leaf   templateRevisionMissingId <| sprintf "Gromplate Leaf #%A not found" templateRevisionMissingId // TODO base64
     }

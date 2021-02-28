@@ -28,7 +28,7 @@ namespace CardOverflow.Entity
             SentNotifications = new HashSet<NotificationEntity>();
             ReceivedNotifications = new HashSet<ReceivedNotificationEntity>();
             Concepts = new HashSet<ConceptEntity>();
-            User_Grompleafs = new HashSet<User_GrompleafEntity>();
+            User_TemplateRevisions = new HashSet<User_TemplateRevisionEntity>();
             Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
             Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
@@ -99,7 +99,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Author")]
         public virtual ICollection<ConceptEntity> Concepts { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<User_GrompleafEntity> User_Grompleafs { get; set; }
+        public virtual ICollection<User_TemplateRevisionEntity> User_TemplateRevisions { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
         [InverseProperty("User")]

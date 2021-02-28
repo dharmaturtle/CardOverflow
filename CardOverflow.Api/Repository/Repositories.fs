@@ -81,32 +81,32 @@ module CommentRepository =
 
 module GromplateRepository =
     let latest (db: CardOverflowDb) gromplateId =
-        db.LatestGrompleaf
+        db.LatestTemplateRevision
             .SingleOrDefaultAsync(fun x -> x.GromplateId = gromplateId)
         |> Task.map (Result.requireNotNull <| sprintf "Gromplate #%A not found" gromplateId)
-        |> TaskResult.map Grompleaf.load
+        |> TaskResult.map TemplateRevision.load
     let leaf (db: CardOverflowDb) leafId =
-        db.Grompleaf
+        db.TemplateRevision
             .SingleOrDefaultAsync(fun x -> x.Id = leafId)
         |> Task.map (Result.requireNotNull <| sprintf "Gromplate Leaf #%A not found" leafId)
-        |> TaskResult.map Grompleaf.load
-    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId gromplate (leaf: Grompleaf) = task {
-        let newGrompleaf = leaf.CopyToNewLeaf
-        newGrompleaf.Gromplate <- gromplate
-        db.Grompleaf.AddI newGrompleaf
+        |> TaskResult.map TemplateRevision.load
+    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId gromplate (leaf: TemplateRevision) = task {
+        let newTemplateRevision = leaf.CopyToNewLeaf
+        newTemplateRevision.Gromplate <- gromplate
+        db.TemplateRevision.AddI newTemplateRevision
         db  
             .Card
             .Include(fun x -> x.Leaf)
-            .Where(fun x -> x.Leaf.Grompleaf.GromplateId = leaf.GromplateId)
+            .Where(fun x -> x.Leaf.TemplateRevision.GromplateId = leaf.GromplateId)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
                 cc.Leaf.Id <- Ulid.create
-                cc.Leaf.Grompleaf <- newGrompleaf
+                cc.Leaf.TemplateRevision <- newTemplateRevision
             )
-        let! existing = db.User_Grompleaf.Where(fun x -> x.UserId = userId && x.Grompleaf.GromplateId = newGrompleaf.GromplateId).ToListAsync()
-        db.User_Grompleaf.RemoveRange existing
-        User_GrompleafEntity(UserId = userId, Grompleaf = newGrompleaf, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-5e7700000002")) // lowTODO do we ever use the card setting here?
-        |> db.User_Grompleaf.AddI
+        let! existing = db.User_TemplateRevision.Where(fun x -> x.UserId = userId && x.TemplateRevision.GromplateId = newTemplateRevision.GromplateId).ToListAsync()
+        db.User_TemplateRevision.RemoveRange existing
+        User_TemplateRevisionEntity(UserId = userId, TemplateRevision = newTemplateRevision, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-5e7700000002")) // lowTODO do we ever use the card setting here?
+        |> db.User_TemplateRevision.AddI
         return! db.SaveChangesAsyncI()
         }
 
@@ -148,14 +148,14 @@ module ExploreConceptRepository =
             db.LatestDefaultLeaf
                 .Include(fun x -> x.Concept.Author)
                 .Include(fun x -> x.Concept.Examples :> IEnumerable<_>)
-                    .ThenInclude(fun (x: ExampleEntity) -> x.Latest.Grompleaf)
+                    .ThenInclude(fun (x: ExampleEntity) -> x.Latest.TemplateRevision)
                 .Include(fun x -> x.Concept.Examples :> IEnumerable<_>)
                     .ThenInclude(fun (x: ExampleEntity) -> x.Author)
                 .Include(fun x -> x.Concept.CommentConcepts :> IEnumerable<_>)
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
                 .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
-                .Include(fun x -> x.Grompleaf)
+                .Include(fun x -> x.TemplateRevision)
                 .Where(fun x -> x.ConceptId = conceptId)
                 .Select(fun x ->
                     x.Concept,
@@ -185,7 +185,7 @@ module ExploreConceptRepository =
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
                 .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
-                .Include(fun x -> x.Grompleaf)
+                .Include(fun x -> x.TemplateRevision)
                 .SingleOrDefaultAsync(fun x -> x.Id = leafId)
             |> Task.map (Result.requireNotNull (sprintf "Example Leaf #%A not found" leafId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.LeafId = leafId)
@@ -200,7 +200,7 @@ module ExploreConceptRepository =
                     .ThenInclude(fun (x: CommentConceptEntity) -> x.User)
                 .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
-                .Include(fun x -> x.Grompleaf)
+                .Include(fun x -> x.TemplateRevision)
                 .SingleOrDefaultAsync(fun x -> x.ExampleId = exampleId)
             |> Task.map (Result.requireNotNull (sprintf "Example #%A not found" exampleId))
         let! isCollected = db.Card.AnyAsync(fun x -> x.UserId = userId && x.ExampleId = exampleId)
@@ -228,12 +228,12 @@ module ConceptViewRepository =
     let leafWithLatest (db: CardOverflowDb) a_leafId userId = taskResult {
         let! (a: LeafEntity) =
             db.Leaf
-                .Include(fun x -> x.Grompleaf)
+                .Include(fun x -> x.TemplateRevision)
                 .SingleOrDefaultAsync(fun x -> x.Id = a_leafId)
             |> Task.map (Result.requireNotNull (sprintf "Example leaf #%A not found" a_leafId))
         let! (b: LeafEntity) = // verylowTODO optimization try to get this from `a` above
             db.LatestDefaultLeaf
-                .Include(fun x -> x.Grompleaf)
+                .Include(fun x -> x.TemplateRevision)
                 .SingleAsync(fun x -> x.ConceptId = a.ConceptId)
         let! (collectedLeafIds: Guid ResizeArray) = getCollectedLeafIds db userId a_leafId b.Id
         return
@@ -246,7 +246,7 @@ module ConceptViewRepository =
     let leafPair (db: CardOverflowDb) a_leafId b_leafId userId = taskResult {
         let! (leafs: LeafEntity ResizeArray) =
             db.Leaf
-                .Include(fun x -> x.Grompleaf)
+                .Include(fun x -> x.TemplateRevision)
                 .Where(fun x -> x.Id = a_leafId || x.Id = b_leafId)
                 .ToListAsync()
         let! a = Result.requireNotNull (sprintf "Example leaf #%A not found" a_leafId) <| leafs.SingleOrDefault(fun x -> x.Id = a_leafId)
@@ -261,14 +261,14 @@ module ConceptViewRepository =
     let leaf (db: CardOverflowDb) leafId = task {
         match!
             db.Leaf
-            .Include(fun x -> x.Grompleaf)
+            .Include(fun x -> x.TemplateRevision)
             .SingleOrDefaultAsync(fun x -> x.Id = leafId) with
         | null -> return Error <| sprintf "Example leaf %A not found" leafId
         | x -> return Ok <| LeafView.load x
     }
     let get (db: CardOverflowDb) conceptId =
         db.LatestDefaultLeaf
-            .Include(fun x -> x.Grompleaf)
+            .Include(fun x -> x.TemplateRevision)
             .SingleOrDefaultAsync(fun x -> x.ConceptId = conceptId)
         |> Task.map Ok
         |> TaskResult.bind (fun x -> Result.requireNotNull (sprintf "Concept #%A not found" conceptId) x |> Task.FromResult)
@@ -308,7 +308,7 @@ module ConceptRepository =
             db.Example
                 .Include(fun x -> x.Author)
                 .Include(fun x -> x.Leafs :> IEnumerable<_>)
-                    .ThenInclude(fun (x: LeafEntity) -> x.Grompleaf)
+                    .ThenInclude(fun (x: LeafEntity) -> x.TemplateRevision)
                 .SingleOrDefaultAsync(fun x -> x.Id = exampleId)
             |> Task.map (Result.requireNotNull <| sprintf "ExampleId #%A not found" exampleId)
         let! collectedLeafId =
@@ -392,7 +392,7 @@ module ConceptRepository =
     let GetCollected (db: CardOverflowDb) (userId: Guid) (conceptId: Guid) = taskResult {
         let! (e: _ ResizeArray) =
             db.CardIsLatest
-                .Include(fun x -> x.Leaf.Grompleaf)
+                .Include(fun x -> x.Leaf.TemplateRevision)
                 .Include(fun x -> x.Leaf.Commeaf_Leafs :> IEnumerable<_>)
                     .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
                 .Include(fun x -> x.Leaf.Cards)
@@ -414,7 +414,7 @@ module ConceptRepository =
     let private searchCollected (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.Card
-            .Include(fun x -> x.Leaf.Grompleaf)
+            .Include(fun x -> x.Leaf.TemplateRevision)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
@@ -423,7 +423,7 @@ module ConceptRepository =
     let private searchCollectedIsLatest (db: CardOverflowDb) userId (searchTerm: string) =
         let plain, wildcard = FullTextSearch.parse searchTerm
         db.CardIsLatest
-            .Include(fun x -> x.Leaf.Grompleaf)
+            .Include(fun x -> x.Leaf.TemplateRevision)
             .Where(fun x -> x.UserId = userId)
             .Where(fun x ->
                 String.IsNullOrWhiteSpace searchTerm ||
@@ -431,7 +431,7 @@ module ConceptRepository =
             )
     let private collectedByDeck (db: CardOverflowDb) deckId =
         db.Card
-            .Include(fun x -> x.Leaf.Grompleaf)
+            .Include(fun x -> x.Leaf.TemplateRevision)
             .Where(fun x -> x.DeckId = deckId)
     let GetCollectedPages (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) =
         task {
@@ -483,7 +483,7 @@ module ConceptRepository =
                 filteredLeafs.Select(fun x ->
                     x,
                     x.Cards.Any(fun x -> x.UserId = userId),
-                    x.Grompleaf, // .Include fails for some reason, so we have to manually select
+                    x.TemplateRevision, // .Include fails for some reason, so we have to manually select
                     x.Concept,
                     x.Concept.Author
                 ).ToPagedListAsync(pageNumber, 15)
@@ -491,7 +491,7 @@ module ConceptRepository =
                 r |> List.ofSeq |> List.map (fun (c, isCollected, gromplate, concept, author) ->
                     c.Concept <- concept
                     c.Concept.Author <- author
-                    c.Grompleaf <- gromplate
+                    c.TemplateRevision <- gromplate
                     c, isCollected
                 )
             return {
@@ -665,12 +665,12 @@ module UserRepository =
         DeckEntity(Name = "Default Deck") |> db.Deck.AddI
         
         let! (nonClozeIds: Guid list) =
-            db.LatestGrompleaf
+            db.LatestTemplateRevision
                 .Where(fun x -> x.Name <> defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
                 .Select(fun x -> x.Id)
                 .ToListAsync() |> Task.map List.ofSeq
         let! oldestClozeId =
-            db.Grompleaf
+            db.TemplateRevision
                 .Where(fun x -> x.Name = defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
                 .OrderBy(fun x -> x.Created)
                 .Select(fun x -> x.Id)
@@ -679,9 +679,9 @@ module UserRepository =
             Id = id,
             DisplayName = displayName,
             //Filters = [ FilterEntity ( Name = "All", Query = "" )].ToList(),
-            User_Grompleafs =
+            User_TemplateRevisions =
                 (oldestClozeId :: nonClozeIds)
-                .Select(fun id -> User_GrompleafEntity (GrompleafId = id, DefaultCardSetting = defaultSetting ))
+                .Select(fun id -> User_TemplateRevisionEntity (TemplateRevisionId = id, DefaultCardSetting = defaultSetting ))
                 .ToList()) |> db.User.AddI
         return! db.SaveChangesAsyncI () }
     let profile (db: CardOverflowDb) userId =

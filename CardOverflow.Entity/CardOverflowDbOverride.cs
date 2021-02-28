@@ -21,7 +21,7 @@ namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
     FSharpFunc<(LeafEntity, BitArray, SHA512), BitArray> LeafHasher { get; }
-    FSharpFunc<(GrompleafEntity, SHA512), BitArray> GrompleafHasher { get; }
+    FSharpFunc<(TemplateRevisionEntity, SHA512), BitArray> TemplateRevisionHasher { get; }
     FSharpFunc<LeafEntity, short> GetMaxIndexInclusive { get; }
     FSharpFunc<string, string> SanitizeTag { get; }
   }
@@ -110,19 +110,19 @@ namespace CardOverflow.Entity {
     private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var gromplate in _filter<GrompleafEntity>(entries)) {
-        gromplate.Hash = _entityHasher.GrompleafHasher.Invoke((gromplate, sha512));
+      foreach (var gromplate in _filter<TemplateRevisionEntity>(entries)) {
+        gromplate.Hash = _entityHasher.TemplateRevisionHasher.Invoke((gromplate, sha512));
         gromplate.CWeightTsvHelper =
           Fields.fromString.Invoke(gromplate.Fields).Select(x => x.Name)
             .Append(MappingTools.stripHtmlTags(gromplate.CardTemplates))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var leaf in _filter<LeafEntity>(entries)) {
-        if (leaf.Grompleaf == null) {
-          leaf.Grompleaf = await Grompleaf.FindAsync(leaf.GrompleafId);
+        if (leaf.TemplateRevision == null) {
+          leaf.TemplateRevision = await TemplateRevision.FindAsync(leaf.TemplateRevisionId);
         }
         leaf.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(leaf);
-        var gromplateHash = leaf.Grompleaf?.Hash ?? Grompleaf.Find(leaf.GrompleafId).Hash;
+        var gromplateHash = leaf.TemplateRevision?.Hash ?? TemplateRevision.Find(leaf.TemplateRevisionId).Hash;
         leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, gromplateHash, sha512));
         leaf.TsvHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
       }
@@ -144,7 +144,7 @@ namespace CardOverflow.Entity {
     public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
     public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
     public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestId == x.Id).AsNoTracking();
-    public IQueryable<GrompleafEntity> LatestGrompleaf => Grompleaf.Where(x => x.Gromplate.LatestId == x.Id).AsNoTracking();
+    public IQueryable<TemplateRevisionEntity> LatestTemplateRevision => TemplateRevision.Where(x => x.Gromplate.LatestId == x.Id).AsNoTracking();
 
   }
 }

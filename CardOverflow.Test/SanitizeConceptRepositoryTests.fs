@@ -60,7 +60,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         let conceptCommand gromplate ids =
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
-                Grompleaf = gromplate
+                TemplateRevision = gromplate
                 Kind = NewOriginal_TagIds Set.empty
                 Title = null
                 Ids = ids

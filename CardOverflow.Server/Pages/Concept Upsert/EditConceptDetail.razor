@@ -44,11 +44,11 @@
               </select>
             </div>
             <div class="row">
-              <a href="Gromplate/@_selectedGromplateId?LeafId=@_selectedGrompleafId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Gromplate/@_selectedGromplateId?LeafId=@_selectedTemplateRevisionId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
-              <select value=@_selectedGrompleafId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(UpdateSelectedGrompleaf))>
-                @foreach (var leaf in _selectedGrompleafs) {
+              <select value=@_selectedTemplateRevisionId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(UpdateSelectedTemplateRevision))>
+                @foreach (var leaf in _selectedTemplateRevisions) {
                   <option value=@leaf.Id>@leaf.Created - @leaf.EditSummary</option>
                 }
               </select>
@@ -113,9 +113,9 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private UserClaims _user = UserClaims.init;
-  private List<ViewGrompleaf> _selectedGrompleafs;
+  private List<ViewTemplateRevision> _selectedTemplateRevisions;
   private Guid _selectedGromplateId;
-  private Guid _selectedGrompleafId;
+  private Guid _selectedTemplateRevisionId;
   private bool _isDisabled;
   private Guid _savedExampleId;
 
@@ -130,12 +130,12 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (Gromplates == null) {
-      Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditConcept.Grompleaf.GromplateId));
+      Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditConcept.TemplateRevision.GromplateId));
     }
     if (EditConcept == null) {
       EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
     }
-    UpdateSelectedGromplate(EditConcept.Grompleaf.GromplateId, EditConcept.Grompleaf.Id);
+    UpdateSelectedGromplate(EditConcept.TemplateRevision.GromplateId, EditConcept.TemplateRevision.Id);
     StateHasChanged();
   }
 
@@ -156,8 +156,8 @@
         _savedExampleId = result.ResultValue;
         if (NewEditConceptOnSave) {
           var fieldValues = EditConcept.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
-          EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.Grompleaf, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
-          UpdateSelectedGromplate(EditConcept.Grompleaf.GromplateId, EditConcept.Grompleaf.Id);
+          EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.TemplateRevision, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+          UpdateSelectedGromplate(EditConcept.TemplateRevision.GromplateId, EditConcept.TemplateRevision.Id);
           _isDisabled = false;
         }
       } else {
@@ -172,15 +172,15 @@
 
   void UpdateSelectedGromplate(Guid gromplateId, Guid? leafId = null) {
     _selectedGromplateId = gromplateId;
-    _selectedGrompleafs = Gromplates.Single(t => t.Id == gromplateId).Leafs;
-    UpdateSelectedGrompleaf(leafId ?? _selectedGrompleafs.First().Id);
+    _selectedTemplateRevisions = Gromplates.Single(t => t.Id == gromplateId).Leafs;
+    UpdateSelectedTemplateRevision(leafId ?? _selectedTemplateRevisions.First().Id);
   }
 
-  void UpdateSelectedGrompleaf(Guid leafId) {
-    _selectedGrompleafId = leafId;
-    EditConcept.Grompleaf = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
+  void UpdateSelectedTemplateRevision(Guid leafId) {
+    _selectedTemplateRevisionId = leafId;
+    EditConcept.TemplateRevision = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
     var valuesByField = EditConcept.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
-    EditConcept.FieldValues = EditConcept.Grompleaf.Fields
+    EditConcept.FieldValues = EditConcept.TemplateRevision.Fields
       .Select(ViewFieldModule.copyTo)
       .Select(field =>
         (valuesByField.ContainsKey(field.Name)

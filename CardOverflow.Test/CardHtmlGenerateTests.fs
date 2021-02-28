@@ -430,8 +430,8 @@ let ``CardHtml renders multiple cloze gromplates properly 4 with hint``(): unit 
         back
 
 [<Fact>]
-let ``Grompleaf.FrontBackFrontSynthBackSynth works``(): unit =
-    let front, back, _, _ = (Grompleaf.initialize Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
+let ``TemplateRevision.FrontBackFrontSynthBackSynth works``(): unit =
+    let front, back, _, _ = (TemplateRevision.initialize Ulid.create Ulid.create).FrontBackFrontSynthBackSynth() |> Seq.exactlyOne
     assertStripped
         "{{Front}}"
         front

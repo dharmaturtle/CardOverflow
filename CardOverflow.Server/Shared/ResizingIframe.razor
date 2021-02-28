@@ -18,7 +18,7 @@
   [Parameter] public Guid ConceptId { get; set; }
   [Parameter] public (Guid LeafId, short Index) Leaf { get; set; }
   [Parameter] public Guid GromplateId { get; set; }
-  [Parameter] public Guid GrompleafId { get; set; }
+  [Parameter] public Guid TemplateRevisionId { get; set; }
   [Parameter] public Guid CommieldId { get; set; }
   [Parameter] public Guid CommeafId { get; set; }
   [Parameter] public bool Front { get; set; }
@@ -35,8 +35,8 @@
       middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
     } else if (GromplateId != Guid.Empty) {
       middle = "gromplate/" + GromplateId;
-    } else if (GrompleafId != Guid.Empty) {
-      middle = "gromplateleaf/" + GrompleafId;
+    } else if (TemplateRevisionId != Guid.Empty) {
+      middle = "gromplateleaf/" + TemplateRevisionId;
     } else if (CommieldId != Guid.Empty) {
       middle = "communalfield/" + CommieldId;
     } else if (CommeafId != Guid.Empty) {
