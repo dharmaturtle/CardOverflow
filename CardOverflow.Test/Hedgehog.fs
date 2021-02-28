@@ -60,7 +60,7 @@ let clozeCardTemplate fields =
                 ShortBack = ""
             } |> Cloze
     }
-let gromplateType fields =
+let templateType fields =
     Gen.choice [
         standardCardTemplate fields
         clozeCardTemplate fields
@@ -79,12 +79,12 @@ let nodaConfig =
     |> AutoGenConfig.addGenerator localTimeGen
 
 let fields = List.map (fun fieldName -> GenX.auto<Field> |> Gen.map(fun field -> { field with Name = fieldName })) >> SeqGen.sequence
-let templateRevision gromplateType fieldNames =
+let templateRevision templateType fieldNames =
     gen {
         let! fields = fieldNames |> fields
         let! id = Gen.guid
         let! name = Gen.latin1 |> GenX.lString 0 50
-        let! gromplateId = Gen.guid
+        let! templateId = Gen.guid
         let! css = Gen.latin1 |> GenX.lString 0 50
         let! created = instantGen
         let! modified = instantGen
@@ -94,14 +94,14 @@ let templateRevision gromplateType fieldNames =
         return {
             Id = id
             Name = name
-            GromplateId = gromplateId
+            TemplateId = templateId
             Css = css
             Fields = fields
             Created = created
             Modified = Some modified
             LatexPre = latexPre
             LatexPost = latexPost
-            CardTemplates = gromplateType
+            CardTemplates = templateType
             EditSummary = editSummary
         }
     }
@@ -124,10 +124,10 @@ let fieldNamesGen =
 let editConceptCommandGen =
     gen {
         let! fieldNames = fieldNamesGen
-        let! gromplateType = gromplateType fieldNames
-        let! templateRevision = templateRevision gromplateType fieldNames
+        let! templateType = templateType fieldNames
+        let! templateRevision = templateRevision templateType fieldNames
         let values =
-            match gromplateType with
+            match templateType with
             | Standard _ -> Gen.alphaNum |> Gen.string (Range.constant 1 100)
             | Cloze _ -> clozeText
         let! fields = fields fieldNames
@@ -167,7 +167,7 @@ let templateGen : Template.Events.Summary Gen = gen {
     let! revisionId = Gen.guid
     let! authorId = Gen.guid
     let! name = Gen.latin1 |> GenX.lString 1 Template.nameMax
-    let! gromplateType = gromplateType fieldNames
+    let! templateType = templateType fieldNames
     let! css = Gen.latin1 |> GenX.lString 0 50
     let! created = instantGen
     let! modified = instantGen
@@ -185,7 +185,7 @@ let templateGen : Template.Events.Summary Gen = gen {
           Modified = modified
           LatexPre = latexPre
           LatexPost = latexPost
-          CardTemplates = gromplateType
+          CardTemplates = templateType
           EditSummary = editSummary }
     }
     

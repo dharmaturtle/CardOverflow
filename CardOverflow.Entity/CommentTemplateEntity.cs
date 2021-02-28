@@ -7,17 +7,17 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class CommentGromplateEntity
+    public partial class CommentTemplateEntity
     {
-        public CommentGromplateEntity()
+        public CommentTemplateEntity()
         {
-            Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
+            Vote_CommentTemplates = new HashSet<Vote_CommentTemplateEntity>();
         }
 
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
-        public Guid GromplateId { get; set; }
+        public Guid TemplateId { get; set; }
         public Guid UserId { get; set; }
         [Required]
         [StringLength(500)]
@@ -34,13 +34,13 @@ namespace CardOverflow.Entity
         public Instant? Modified { get; set; }
         public bool IsDmca { get; set; }
 
-        [ForeignKey("GromplateId")]
-        [InverseProperty("CommentGromplates")]
-        public virtual GromplateEntity Gromplate { get; set; }
+        [ForeignKey("TemplateId")]
+        [InverseProperty("CommentTemplates")]
+        public virtual TemplateEntity Template { get; set; }
         [ForeignKey("UserId")]
-        [InverseProperty("CommentGromplates")]
+        [InverseProperty("CommentTemplates")]
         public virtual UserEntity User { get; set; }
-        [InverseProperty("CommentGromplate")]
-        public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
+        [InverseProperty("CommentTemplate")]
+        public virtual ICollection<Vote_CommentTemplateEntity> Vote_CommentTemplates { get; set; }
     }
 }

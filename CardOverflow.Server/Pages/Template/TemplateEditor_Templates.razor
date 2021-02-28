@@ -28,7 +28,7 @@
 </div>
 <div>
   @foreach (var cardTemplate in Leaf.JustCardTemplates) {
-    <GromplateEditor_Template
+    <TemplateEditor_Template
                             Template=@cardTemplate
                             Css=@Leaf.Css
                             DisplayDelete=@(Leaf.JustCardTemplates.Count() >= 2)
@@ -39,17 +39,17 @@
 
 @code {
   [Parameter] public ViewTemplateRevision Leaf { get; set; }
-  [Parameter] public EventCallback<GromplateType> UpdateGromplateType { get; set; }
+  [Parameter] public EventCallback<TemplateType> UpdateTemplateType { get; set; }
   [Parameter] public bool IsDisabled { get; set; }
 
   private Task AddTemplate() =>
     Leaf.JustCardTemplates.Append(CardTemplate.initStandard).ToFList()
-    .Apply(GromplateType.NewStandard)
-    .Apply(UpdateGromplateType.InvokeAsync);
+    .Apply(TemplateType.NewStandard)
+    .Apply(UpdateTemplateType.InvokeAsync);
 
   private Task DeleteTemplate(CardTemplate cardTemplate) =>
     Leaf.JustCardTemplates.Where(x => x != cardTemplate).ToFList()
-    .Apply(GromplateType.NewStandard)
-    .Apply(UpdateGromplateType.InvokeAsync);
+    .Apply(TemplateType.NewStandard)
+    .Apply(UpdateTemplateType.InvokeAsync);
 
 }

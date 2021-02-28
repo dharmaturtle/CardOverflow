@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         public TemplateRevisionEntity()
         {
             Leafs = new HashSet<LeafEntity>();
-            Gromplates = new HashSet<GromplateEntity>();
+            Templates = new HashSet<TemplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
             User_TemplateRevisions = new HashSet<User_TemplateRevisionEntity>();
         }
@@ -32,7 +32,7 @@ namespace CardOverflow.Entity
             }
         }
         private string _Name;
-        public Guid GromplateId { get; set; }
+        public Guid TemplateId { get; set; }
         [Required]
         [StringLength(4000)]
         public string Css {
@@ -107,13 +107,13 @@ namespace CardOverflow.Entity
         public string CWeightTsvHelper { get; set; }
         public NpgsqlTsVector Tsv { get; set; }
 
-        [ForeignKey("GromplateId")]
+        [ForeignKey("TemplateId")]
         [InverseProperty("TemplateRevisions")]
-        public virtual GromplateEntity Gromplate { get; set; }
+        public virtual TemplateEntity Template { get; set; }
         [InverseProperty("TemplateRevision")]
         public virtual ICollection<LeafEntity> Leafs { get; set; }
         [InverseProperty("Latest")]
-        public virtual ICollection<GromplateEntity> Gromplates { get; set; }
+        public virtual ICollection<TemplateEntity> Templates { get; set; }
         [InverseProperty("TemplateRevision")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
         [InverseProperty("TemplateRevision")]

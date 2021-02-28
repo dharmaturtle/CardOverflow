@@ -79,31 +79,31 @@ module CommentRepository =
         db.CommentConcept.AddI comment
         db.SaveChangesAsyncI ()
 
-module GromplateRepository =
-    let latest (db: CardOverflowDb) gromplateId =
+module TemplateRepository =
+    let latest (db: CardOverflowDb) templateId =
         db.LatestTemplateRevision
-            .SingleOrDefaultAsync(fun x -> x.GromplateId = gromplateId)
-        |> Task.map (Result.requireNotNull <| sprintf "Gromplate #%A not found" gromplateId)
+            .SingleOrDefaultAsync(fun x -> x.TemplateId = templateId)
+        |> Task.map (Result.requireNotNull <| sprintf "Template #%A not found" templateId)
         |> TaskResult.map TemplateRevision.load
     let leaf (db: CardOverflowDb) leafId =
         db.TemplateRevision
             .SingleOrDefaultAsync(fun x -> x.Id = leafId)
-        |> Task.map (Result.requireNotNull <| sprintf "Gromplate Leaf #%A not found" leafId)
+        |> Task.map (Result.requireNotNull <| sprintf "Template Leaf #%A not found" leafId)
         |> TaskResult.map TemplateRevision.load
-    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId gromplate (leaf: TemplateRevision) = task {
+    let UpdateFieldsToNewLeaf (db: CardOverflowDb) userId template (leaf: TemplateRevision) = task {
         let newTemplateRevision = leaf.CopyToNewLeaf
-        newTemplateRevision.Gromplate <- gromplate
+        newTemplateRevision.Template <- template
         db.TemplateRevision.AddI newTemplateRevision
         db  
             .Card
             .Include(fun x -> x.Leaf)
-            .Where(fun x -> x.Leaf.TemplateRevision.GromplateId = leaf.GromplateId)
+            .Where(fun x -> x.Leaf.TemplateRevision.TemplateId = leaf.TemplateId)
             |> Seq.iter(fun cc ->
                 db.Entry(cc.Leaf).State <- EntityState.Added
                 cc.Leaf.Id <- Ulid.create
                 cc.Leaf.TemplateRevision <- newTemplateRevision
             )
-        let! existing = db.User_TemplateRevision.Where(fun x -> x.UserId = userId && x.TemplateRevision.GromplateId = newTemplateRevision.GromplateId).ToListAsync()
+        let! existing = db.User_TemplateRevision.Where(fun x -> x.UserId = userId && x.TemplateRevision.TemplateId = newTemplateRevision.TemplateId).ToListAsync()
         db.User_TemplateRevision.RemoveRange existing
         User_TemplateRevisionEntity(UserId = userId, TemplateRevision = newTemplateRevision, DefaultCardSettingId = Guid.Parse("00000000-0000-0000-0000-5e7700000002")) // lowTODO do we ever use the card setting here?
         |> db.User_TemplateRevision.AddI
@@ -336,7 +336,7 @@ module ConceptRepository =
                 defaultCardSettingId
                 defaultDeckId
                 []
-            |> fun x -> x.copyToNew [||] index // medTODO get tags from gromplate
+            |> fun x -> x.copyToNew [||] index // medTODO get tags from template
         let new' =
             [0s .. leaf.MaxIndexInclusive]
             |> List.map cardSansIndex
@@ -488,10 +488,10 @@ module ConceptRepository =
                     x.Concept.Author
                 ).ToPagedListAsync(pageNumber, 15)
             let squashed =
-                r |> List.ofSeq |> List.map (fun (c, isCollected, gromplate, concept, author) ->
+                r |> List.ofSeq |> List.map (fun (c, isCollected, template, concept, author) ->
                     c.Concept <- concept
                     c.Concept.Author <- author
-                    c.TemplateRevision <- gromplate
+                    c.TemplateRevision <- template
                     c, isCollected
                 )
             return {
@@ -666,12 +666,12 @@ module UserRepository =
         
         let! (nonClozeIds: Guid list) =
             db.LatestTemplateRevision
-                .Where(fun x -> x.Name <> defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
+                .Where(fun x -> x.Name <> defaultCloze && x.Template.AuthorId = theCollectiveId)
                 .Select(fun x -> x.Id)
                 .ToListAsync() |> Task.map List.ofSeq
         let! oldestClozeId =
             db.TemplateRevision
-                .Where(fun x -> x.Name = defaultCloze && x.Gromplate.AuthorId = theCollectiveId)
+                .Where(fun x -> x.Name = defaultCloze && x.Template.AuthorId = theCollectiveId)
                 .OrderBy(fun x -> x.Created)
                 .Select(fun x -> x.Id)
                 .FirstAsync()

@@ -94,7 +94,7 @@ module LeafEntity =
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
         bitArray.CopyTo(bytes, 0)
         bytes
-    let hash (gromplateHash: BitArray) (hasher: SHA512) (e: LeafEntity) =
+    let hash (templateHash: BitArray) (hasher: SHA512) (e: LeafEntity) =
         e.Commeaf_Leafs
             .Select(fun x -> x.Commeaf.Value)
             .OrderBy(fun x -> x)
@@ -102,12 +102,12 @@ module LeafEntity =
         |> List.append
             [   e.FieldValues
                 e.AnkiNoteId.ToString()
-                //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by gromplateHash and e.FieldValues
+                //e.MaxIndexInclusive |> string // Do not include! This is set from CardOverflowDbOverride, and AnkiImporter doesn't set it, leading to incorrect hashes at import-read-time. Anyway, this should be covered by templateHash and e.FieldValues
                 e.TemplateRevision.AnkiId.ToString()]
         |> List.map standardizeWhitespace
         |> MappingTools.joinByUnitSeparator
         |> Encoding.Unicode.GetBytes
-        |> Array.append (bitArrayToByteArray gromplateHash)
+        |> Array.append (bitArrayToByteArray templateHash)
         |> hasher.ComputeHash
         |> BitArray
 
@@ -222,20 +222,20 @@ type TemplateRevision with
     static member load (entity: TemplateRevisionEntity) =
         {   Id = entity.Id
             Name = entity.Name
-            GromplateId = entity.GromplateId
+            TemplateId = entity.TemplateId
             Css = entity.Css
             Fields = Fields.fromString entity.Fields
             Created = entity.Created
             Modified = entity.Modified |> Option.ofNullable
             LatexPre = entity.LatexPre
             LatexPost = entity.LatexPost
-            CardTemplates = entity.Type |> GromplateType.fromDb (entity.CardTemplates |> CardTemplate.loadMany)
+            CardTemplates = entity.Type |> TemplateType.fromDb (entity.CardTemplates |> CardTemplate.loadMany)
             EditSummary = entity.EditSummary
         }
-    static member initialize templateRevisionId gromplateId = {
+    static member initialize templateRevisionId templateId = {
         Id = templateRevisionId
         Name = "New Card Template"
-        GromplateId = gromplateId
+        TemplateId = templateId
         Css = """.card {
      font-family: arial;
      font-size: 20px;
@@ -263,7 +263,7 @@ type TemplateRevision with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        CardTemplates = GromplateType.initStandard
+        CardTemplates = TemplateType.initStandard
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: TemplateRevisionEntity) =
         entity.Name <- this.Name
@@ -282,7 +282,7 @@ type TemplateRevision with
         let e = TemplateRevisionEntity()
         this.CopyTo e
         e.Id <- this.Id
-        e.GromplateId <- this.GromplateId
+        e.TemplateId <- this.TemplateId
         e
 
 type CollectedTemplateRevision with

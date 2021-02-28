@@ -13,10 +13,10 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_command == null || _gromplates == null) {
+@if (_command == null || _templates == null) {
   <p><em>@LoadingMessage</em></p>
 } else {
-  <EditConceptDetail EditConcept=@_command Gromplates=@_gromplates NewEditConceptOnSave=true />
+  <EditConceptDetail EditConcept=@_command Templates=@_templates NewEditConceptOnSave=true />
 }
 
 @code {
@@ -24,7 +24,7 @@
   private UserClaims _user = UserClaims.init;
   string LoadingMessage = "Loading...";
   private ViewEditConceptCommand _command;
-  private List<ViewGromplateWithAllLeafs> _gromplates;
+  private List<ViewTemplateWithAllLeafs> _templates;
 
   protected override async Task OnParametersSetAsync() {
     await base.OnParametersSetAsync();
@@ -35,7 +35,7 @@
     } else {
       ToastService.ShowError(x.ErrorValue);
     }
-    _gromplates = (await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMine(db, _user.Id))).ToList();
+    _templates = (await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, _user.Id))).ToList();
     StateHasChanged();
   }
 

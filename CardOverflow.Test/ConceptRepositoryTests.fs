@@ -215,7 +215,7 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     Assert.Equal(0, concept.Value.Default.Leaf.Users) // suspended cards don't count to User count
     }
 
-let testGetCollected (acCount: int) addCard getGromplate name = task {
+let testGetCollected (acCount: int) addCard getTemplate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = user_1 // this user creates the card
@@ -252,11 +252,11 @@ let testGetCollected (acCount: int) addCard getGromplate name = task {
     Assert.Equal(1, concepts.Results.Count())
 
     // author creating another example keeps tags
-    let! gromplate = getGromplate c.Db
+    let! template = getTemplate c.Db
     let! _ =
         {   EditConceptCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateRevision = gromplate |> ViewTemplateRevision.copyTo
+            TemplateRevision = template |> ViewTemplateRevision.copyTo
             Kind = NewExample_Title "New Example"
             Ids = ids_1
         } |> UpdateRepository.concept c.Db authorId
@@ -288,7 +288,7 @@ let rec ``GetCollected works when collecting 1 basic card``(): Task<unit> =
     testGetCollected
         1
         FacetRepositoryTests.addBasicConcept
-        FacetRepositoryTests.basicGromplate
+        FacetRepositoryTests.basicTemplate
         <| nameof ``GetCollected works when collecting 1 basic card``
 
 [<Fact(Skip=PgSkip.reason)>]
@@ -296,7 +296,7 @@ let rec ``GetCollected works when collecting a pair``(): Task<unit> =
     testGetCollected
         2
         FacetRepositoryTests.addReversedBasicConcept
-        FacetRepositoryTests.reversedBasicGromplate
+        FacetRepositoryTests.reversedBasicTemplate
         <| nameof ``GetCollected works when collecting a pair``
 
 let relationshipTestInit (c: TestContainer) relationshipName = task {
@@ -643,60 +643,60 @@ let ``Card search works`` (): Task<unit> = task {
     let! hits = search tag
     Assert.Equal(lorem, hits.Results.First().Leaf.StrippedFront)
 
-    // testing gromplate search
-    let search = SanitizeGromplate.Search c.Db userId 1
-    let! gromplates = search "Cloze"
-    Assert.Equal("Cloze", gromplates.Results.Single().Name)
-    Assert.Equal(1, gromplates.Results.Single().GromplateUsers)
-    Assert.False(gromplates.Results.Single().IsCollected) // most recent cloze is not collected because it's missing Extra. Why Damien?
-    let! gromplates = search "type"
-    Assert.Equal("Basic (type in the answer)", gromplates.Results.Single().Name)
-    Assert.Equal(1, gromplates.Results.Single().GromplateUsers)
-    Assert.True(gromplates.Results.Single().IsCollected)
-    let! gromplates = search "Basic"
-    Assert.Equal(4, gromplates.Results.Count())
-    Assert.True(gromplates.Results.All(fun x -> x.GromplateUsers = 1))
-    Assert.True(gromplates.Results.All(fun x -> x.IsCollected))
+    // testing template search
+    let search = SanitizeTemplate.Search c.Db userId 1
+    let! templates = search "Cloze"
+    Assert.Equal("Cloze", templates.Results.Single().Name)
+    Assert.Equal(1, templates.Results.Single().TemplateUsers)
+    Assert.False(templates.Results.Single().IsCollected) // most recent cloze is not collected because it's missing Extra. Why Damien?
+    let! templates = search "type"
+    Assert.Equal("Basic (type in the answer)", templates.Results.Single().Name)
+    Assert.Equal(1, templates.Results.Single().TemplateUsers)
+    Assert.True(templates.Results.Single().IsCollected)
+    let! templates = search "Basic"
+    Assert.Equal(4, templates.Results.Count())
+    Assert.True(templates.Results.All(fun x -> x.TemplateUsers = 1))
+    Assert.True(templates.Results.All(fun x -> x.IsCollected))
     }
 
 [<Fact>]
-let ``New user has TheCollective's card gromplates`` (): Task<unit> = task {
+let ``New user has TheCollective's card templates`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
     let theCollectiveId = c.Db.User.Single(fun x -> x.DisplayName = "The Collective").Id
-    for gromplate in myGromplates do
-        Assert.Equal(theCollectiveId, gromplate.AuthorId)
+    for template in myTemplates do
+        Assert.Equal(theCollectiveId, template.AuthorId)
     }
 
 [<Fact>]
-let ``Updating card gromplate with duplicate field names yields error`` (): Task<unit> = task {
+let ``Updating card template with duplicate field names yields error`` (): Task<unit> = task {
     let userId = user_3
     let fieldName = Guid.NewGuid().ToString()
-    let gromplate = (TemplateRevision.initialize Ulid.create Ulid.create) |> ViewTemplateRevision.load
-    let gromplate = { gromplate with Fields = gromplate.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
+    let template = (TemplateRevision.initialize Ulid.create Ulid.create) |> ViewTemplateRevision.load
+    let template = { template with Fields = template.Fields.Select(fun f -> { f with Name = fieldName }).ToList() }
     
-    let! error = SanitizeGromplate.Update null userId gromplate
+    let! error = SanitizeTemplate.Update null userId template
     
     Assert.Equal("Field names must differ", error.error)
     }
 
 [<Fact>]
-let ``Can create card gromplate and insert a modified one`` (): Task<unit> = task {
+let ``Can create card template and insert a modified one`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
     let name = Guid.NewGuid().ToString()
     let templateRevisionId1 = templateRevision_ 8
-    let gromplateId1 = gromplate_ 8
-    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId templateRevisionId1 gromplateId1
+    let templateId1 = template_ 8
+    let initialTemplate = ViewTemplateWithAllLeafs.initialize userId templateRevisionId1 templateId1
 
-    let! x = SanitizeGromplate.Update c.Db userId { initialGromplate.Editable with Name = name }
+    let! x = SanitizeTemplate.Update c.Db userId { initialTemplate.Editable with Name = name }
     Assert.Null x.Value
-    let! myGromplates1 = SanitizeGromplate.GetMine c.Db userId
+    let! myTemplates1 = SanitizeTemplate.GetMine c.Db userId
 
-    Assert.equal name <| myGromplates1.Single(fun x -> x.Id = gromplateId1).Editable.Name
+    Assert.equal name <| myTemplates1.Single(fun x -> x.Id = templateId1).Editable.Name
     
-    // testing a brand new gromplate, but slightly different
+    // testing a brand new template, but slightly different
     let fieldName = Guid.NewGuid().ToString()
     let newEditable =
         let newField =
@@ -704,76 +704,76 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
                 IsRightToLeft = false
                 IsSticky = false
             }
-        {   initialGromplate.Editable with
+        {   initialTemplate.Editable with
                 Id = templateRevision_ 9
-                GromplateId = gromplate_ 9
-                Fields = initialGromplate.Editable.Fields.Append newField |> Core.toResizeArray
+                TemplateId = template_ 9
+                Fields = initialTemplate.Editable.Fields.Append newField |> Core.toResizeArray
         }
-    let! x = SanitizeGromplate.Update c.Db userId newEditable
+    let! x = SanitizeTemplate.Update c.Db userId newEditable
     Assert.Null x.Value
     
-    Assert.Equal(2, c.Db.Gromplate.Count(fun x -> x.AuthorId = userId))
-    let! myGromplates2 = SanitizeGromplate.GetMine c.Db userId
-    let latestId = myGromplates2.Select(fun x -> x.Id).Except(myGromplates1.Select(fun x -> x.Id)).Single()
-    Assert.equal (gromplate_ 9) latestId
-    let latestGromplate = myGromplates2.Single(fun x -> x.Id = latestId).Editable
-    Assert.True(latestGromplate.Fields.Any(fun x -> x.Name = fieldName))
+    Assert.Equal(2, c.Db.Template.Count(fun x -> x.AuthorId = userId))
+    let! myTemplates2 = SanitizeTemplate.GetMine c.Db userId
+    let latestId = myTemplates2.Select(fun x -> x.Id).Except(myTemplates1.Select(fun x -> x.Id)).Single()
+    Assert.equal (template_ 9) latestId
+    let latestTemplate = myTemplates2.Single(fun x -> x.Id = latestId).Editable
+    Assert.True(latestTemplate.Fields.Any(fun x -> x.Name = fieldName))
 
-    // updating the slightly different gromplate
+    // updating the slightly different template
     let name = Guid.NewGuid().ToString()
-    let! x = SanitizeGromplate.Update c.Db userId { latestGromplate with Name = name; Id = Ulid.create }
+    let! x = SanitizeTemplate.Update c.Db userId { latestTemplate with Name = name; Id = Ulid.create }
     Assert.Null x.Value
 
-    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).TemplateId)
 
     // updating to cloze
     let name = Guid.NewGuid().ToString()
     let! x =
-        SanitizeGromplate.Update c.Db userId
-            { latestGromplate
+        SanitizeTemplate.Update c.Db userId
+            { latestTemplate
                 with
                     Id = Ulid.create
                     Name = name
-                    CardTemplates = Cloze <| latestGromplate.JustCardTemplates.First()
+                    CardTemplates = Cloze <| latestTemplate.JustCardTemplates.First()
             }
     Assert.Null x.Value
 
-    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
-    Assert.True(myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).IsCloze)
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).TemplateId)
+    Assert.True(myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).IsCloze)
 
     // updating to multiple card templates
     let name = Guid.NewGuid().ToString()
     let! x =
-        SanitizeGromplate.Update c.Db userId
-            { latestGromplate
+        SanitizeTemplate.Update c.Db userId
+            { latestTemplate
                 with
                     Id = Ulid.create
                     Name = name
-                    CardTemplates = Standard [ latestGromplate.JustCardTemplates.First() ; latestGromplate.JustCardTemplates.First() ]
+                    CardTemplates = Standard [ latestTemplate.JustCardTemplates.First() ; latestTemplate.JustCardTemplates.First() ]
             }
     Assert.Null x.Value
 
-    let! myGromplates = SanitizeGromplate.GetMine c.Db userId
-    Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
-    Assert.Equal(2, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).JustCardTemplates.Count())
+    let! myTemplates = SanitizeTemplate.GetMine c.Db userId
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).TemplateId)
+    Assert.Equal(2, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).JustCardTemplates.Count())
     }
 
 [<Fact>]
-let ``New card gromplate has correct hash`` (): Task<unit> = (taskResult {
+let ``New card template has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let initialGromplate = ViewGromplateWithAllLeafs.initialize userId Ulid.create Ulid.create
+    let initialTemplate = ViewTemplateWithAllLeafs.initialize userId Ulid.create Ulid.create
     use sha512 = SHA512.Create()
-    do! SanitizeGromplate.Update c.Db userId initialGromplate.Editable
-    let! (dbGromplate: TemplateRevisionEntity) = c.Db.TemplateRevision.SingleAsync(fun x -> x.Gromplate.AuthorId = userId)
+    do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable
+    let! (dbTemplate: TemplateRevisionEntity) = c.Db.TemplateRevision.SingleAsync(fun x -> x.Template.AuthorId = userId)
     
     let computedHash =
-        initialGromplate.Editable
+        initialTemplate.Editable
         |> ViewTemplateRevision.copyTo
         |> fun x -> x.CopyToNewLeaf
         |> TemplateRevisionEntity.hash sha512
     
-    Assert.Equal<BitArray>(dbGromplate.Hash, computedHash)
+    Assert.Equal<BitArray>(dbTemplate.Hash, computedHash)
     } |> TaskResult.getOk)

@@ -57,22 +57,22 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
             } |> Gen.listOfLength 5
             |> Gen.eval 100 stdGen
             |> fun x -> x.[0], x.[1], x.[2], x.[3], x.[4]
-        let conceptCommand gromplate ids =
+        let conceptCommand template ids =
             {   EditSummary = Guid.NewGuid().ToString()
                 FieldValues = [].ToList()
-                TemplateRevision = gromplate
+                TemplateRevision = template
                 Kind = NewOriginal_TagIds Set.empty
                 Title = null
                 Ids = ids
             }
 
-        let! gromplate = FacetRepositoryTests.basicGromplate c.Db
+        let! template = FacetRepositoryTests.basicTemplate c.Db
         let conceptId = concept_1
         let exampleId = example_1
 
         do! SanitizeConceptRepository.Update c.Db userId
                 [ basicCommand ]
-                (conceptCommand gromplate ids_1)
+                (conceptCommand template ids_1)
             |>%% Assert.equal exampleId
 
         let! (cc: Card) =
@@ -96,14 +96,14 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
             }
             cc
     
-        // works on multiple collected cards, e.g. reversedBasicGromplate
-        let! gromplate = FacetRepositoryTests.reversedBasicGromplate c.Db
+        // works on multiple collected cards, e.g. reversedBasicTemplate
+        let! template = FacetRepositoryTests.reversedBasicTemplate c.Db
         let conceptId = concept_2
         let exampleId = example_2
 
         do! SanitizeConceptRepository.Update c.Db userId
                 [ aRevCommand; bRevCommand ]
-                (conceptCommand gromplate { ids_2 with CardIds = [ card_2; card_3 ] })
+                (conceptCommand template { ids_2 with CardIds = [ card_2; card_3 ] })
             |>%% Assert.equal exampleId
 
         let! (ccs: Card ResizeArray) = ConceptRepository.GetCollected c.Db userId conceptId
@@ -151,7 +151,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         let! (error: Result<_, _>) =
             SanitizeConceptRepository.Update c.Db userId
                 [ failDeckCommand ]
-                (conceptCommand gromplate ids_3)
+                (conceptCommand template ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with someone else's cardSettingId
@@ -159,7 +159,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         let! (error: Result<_, _>) =
             SanitizeConceptRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                (conceptCommand gromplate ids_3)
+                (conceptCommand template ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     
         // doesn't work with invalid deckId
@@ -167,7 +167,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         let! (error: Result<_, _>) =
             SanitizeConceptRepository.Update c.Db userId
                 [ failDeckCommand ]
-                (conceptCommand gromplate ids_3)
+                (conceptCommand template ids_3)
         Assert.equal "You provided an invalid or unauthorized deck id." error.error
     
         // doesn't work with invalid cardSettingId
@@ -175,6 +175,6 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
         let! (error: Result<_, _>) =
             SanitizeConceptRepository.Update c.Db userId
                 [ failCardSettingCommand ]
-                (conceptCommand gromplate ids_3)
+                (conceptCommand template ids_3)
         Assert.equal "You provided an invalid or unauthorized card setting id." error.error
     } |> TaskResult.getOk).GetAwaiter().GetResult()

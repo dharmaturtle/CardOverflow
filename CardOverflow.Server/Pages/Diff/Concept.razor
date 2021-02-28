@@ -48,7 +48,7 @@
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="gromplateleaf/@_a.TemplateRevision.Id">
+        <a href="templateleaf/@_a.TemplateRevision.Id">
           Old Template
         </a>
       }
@@ -69,11 +69,11 @@
         <span>
           &nbsp;and&nbsp;
         </span>
-        <a href="gromplateleaf/@_b.TemplateRevision.Id">
+        <a href="templateleaf/@_b.TemplateRevision.Id">
           New Template
         </a>
       } else {
-        <a href="gromplateleaf/@_a.TemplateRevision.Id" class="float-right">
+        <a href="templateleaf/@_a.TemplateRevision.Id" class="float-right">
           Template
         </a>
       }
@@ -185,14 +185,14 @@
         <BSTabLabel>
           Templates detailed
           @if (
-       _gromplateFields(_a) != _gromplateFields(_b) ||
+       _templateFields(_a) != _templateFields(_b) ||
        _XemplateDetailed().Any(x => x.AFront != x.BFront || x.ABack != x.BBack) ||
        _a.TemplateRevision.Css != _b.TemplateRevision.Css) {
       <i class="fas fa-asterisk" title="Indicates that a difference exists."></i>
     }
         </BSTabLabel>
         <BSTabContent>
-          <TextDiff OldText=@_gromplateFields(_a) NewText=@_gromplateFields(_b) CollapseContent=true MaxHeight="-1">
+          <TextDiff OldText=@_templateFields(_a) NewText=@_templateFields(_b) CollapseContent=true MaxHeight="-1">
             <Header>
               <h6 style="padding: 12px; margin: 0px;">
                 Fields
@@ -253,7 +253,7 @@
   private LeafView _b;
   private bool _aIsCollected;
   private bool _bIsCollected;
-  private string _gromplateFields(LeafView view) => view.TemplateRevision.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
+  private string _templateFields(LeafView view) => view.TemplateRevision.Fields.Select(x => x.Name).Apply(x => string.Join("\r\n", x));
   private List<string> _fieldNames;
   private string _value(LeafView view, string fieldName) => view.FieldValues.SingleOrDefault(x => x.Field.Name == fieldName)?.Value ?? "";
   private List<(string AFront, string ABack, string BFront, string BBack)> _conceptZips() =>

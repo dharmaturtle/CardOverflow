@@ -53,24 +53,24 @@ type AnkiTemplateRevision = {
         entity.CardTemplates <- this.CardTemplates |> CardTemplate.copyToMany
         entity.EditSummary <- "Imported from Anki"
         entity.Type <- if this.IsCloze then 1s else 0s
-    member this.CopyToNewWithGromplate userId gromplate defaultCardSetting =
+    member this.CopyToNewWithTemplate userId template defaultCardSetting =
         let entity = TemplateRevisionEntity()
         entity.User_TemplateRevisions <-
             [User_TemplateRevisionEntity(
                 UserId = userId,
                 DefaultTags = this.DefaultTags.ToArray(),
                 DefaultCardSetting = defaultCardSetting)].ToList()
-        entity.Gromplate <- gromplate
+        entity.Template <- template
         this.CopyTo entity
         entity.AnkiId <- Nullable this.AnkiId
         entity
     member this.CopyToNew userId defaultCardSetting =
-        this.CopyToNewWithGromplate userId (GromplateEntity(AuthorId = this.AuthorId)) defaultCardSetting
+        this.CopyToNewWithTemplate userId (TemplateEntity(AuthorId = this.AuthorId)) defaultCardSetting
     
 type AnkiCardWrite = {
     AnkiNoteId: int64
     Commields: CommeafEntity list
-    Gromplate: TemplateRevisionEntity
+    Template: TemplateRevisionEntity
     FieldValues: string
     Created: Instant
     Modified: Instant option
@@ -80,7 +80,7 @@ type AnkiCardWrite = {
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
-        entity.TemplateRevision <- this.Gromplate
+        entity.TemplateRevision <- this.Template
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
         entity.Commeaf_Leafs <-
             this.Commields
@@ -106,8 +106,8 @@ type AnkiCardWrite = {
         this.CopyTo entity
         entity
     member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
-        let gromplateHash = this.Gromplate |> TemplateRevisionEntity.hash hasher
-        let hash = this.CopyToNew [] |> LeafEntity.hash gromplateHash hasher
+        let templateHash = this.Template |> TemplateRevisionEntity.hash hasher
+        let hash = this.CopyToNew [] |> LeafEntity.hash templateHash hasher
         db.Leaf
             .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
                 .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
@@ -277,7 +277,7 @@ module Anki =
         |> Decode.fromString
     let parseModels userId =
         Decode.object(fun get ->
-            let gromplates =
+            let templates =
                 get.Required.Field "tmpls" (Decode.object(fun g ->
                             { Name = g.Required.Field "name" Decode.string
                               Front = g.Required.Field "qfmt" Decode.string
@@ -300,7 +300,7 @@ module Anki =
                         |> Decode.list)
                         |> List.sortBy snd
                         |> List.map fst
-                CardTemplates = gromplates
+                CardTemplates = templates
                 Created = get.Required.Field "id" Decode.int64 |> Instant.FromUnixTimeMilliseconds
                 Modified = get.Required.Field "mod" Decode.int64 |> Instant.FromUnixTimeSeconds |> Some
                 DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids
@@ -352,7 +352,7 @@ module Anki =
     
     let fieldInheritPrefix = "x/Inherit:"
     let parseNotes
-        (gromplateByModelId: Map<string, {| Entity: TemplateRevisionEntity; Gromplate: AnkiTemplateRevision |}>)
+        (templateByModelId: Map<string, {| Entity: TemplateRevisionEntity; Template: AnkiTemplateRevision |}>)
         initialTags
         userId
         fileEntityByAnkiFileName
@@ -375,11 +375,11 @@ module Anki =
                     |> List.map (fun (_, x) -> x.First())
                 let files, fieldValues = replaceAnkiFilenames note.Flds fileEntityByAnkiFileName
                 let fieldValues = fieldValues |> MappingTools.splitByUnitSeparator
-                let gromplate = gromplateByModelId.[string note.Mid]
-                let toCard fields gromplate =
+                let template = templateByModelId.[string note.Mid]
+                let toCard fields template =
                     let c = {
                         AnkiNoteId = note.Id
-                        Gromplate = gromplate
+                        Template = template
                         Commields = []
                         FieldValues = fields |> MappingTools.joinByUnitSeparator
                         Created = Instant.FromUnixTimeMilliseconds note.Id
@@ -390,12 +390,12 @@ module Anki =
                         <| c.CopyToNew files
                 let noteIdCardsAndTags =
                     let cards =
-                        if gromplate.Gromplate.IsCloze then
+                        if template.Template.IsCloze then
                             toCard
                                 <| fieldValues
-                                <| gromplate.Entity
+                                <| template.Entity
                         else
-                            toCard fieldValues gromplate.Entity
+                            toCard fieldValues template.Entity
                     let relevantTags = allTags |> List.filter notesTags.Contains
                     note.Id, (cards, relevantTags)
                 parseNotesRec

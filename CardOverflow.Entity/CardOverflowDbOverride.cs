@@ -110,11 +110,11 @@ namespace CardOverflow.Entity {
     private async Task _OnBeforeSaving() {
       var entries = ChangeTracker.Entries().ToList();
       using var sha512 = SHA512.Create();
-      foreach (var gromplate in _filter<TemplateRevisionEntity>(entries)) {
-        gromplate.Hash = _entityHasher.TemplateRevisionHasher.Invoke((gromplate, sha512));
-        gromplate.CWeightTsvHelper =
-          Fields.fromString.Invoke(gromplate.Fields).Select(x => x.Name)
-            .Append(MappingTools.stripHtmlTags(gromplate.CardTemplates))
+      foreach (var template in _filter<TemplateRevisionEntity>(entries)) {
+        template.Hash = _entityHasher.TemplateRevisionHasher.Invoke((template, sha512));
+        template.CWeightTsvHelper =
+          Fields.fromString.Invoke(template.Fields).Select(x => x.Name)
+            .Append(MappingTools.stripHtmlTags(template.CardTemplates))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var leaf in _filter<LeafEntity>(entries)) {
@@ -122,8 +122,8 @@ namespace CardOverflow.Entity {
           leaf.TemplateRevision = await TemplateRevision.FindAsync(leaf.TemplateRevisionId);
         }
         leaf.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(leaf);
-        var gromplateHash = leaf.TemplateRevision?.Hash ?? TemplateRevision.Find(leaf.TemplateRevisionId).Hash;
-        leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, gromplateHash, sha512));
+        var templateHash = leaf.TemplateRevision?.Hash ?? TemplateRevision.Find(leaf.TemplateRevisionId).Hash;
+        leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, templateHash, sha512));
         leaf.TsvHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
       }
       foreach (var commeaf in _filter<CommeafEntity>(entries)) {
@@ -144,7 +144,7 @@ namespace CardOverflow.Entity {
     public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
     public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
     public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestId == x.Id).AsNoTracking();
-    public IQueryable<TemplateRevisionEntity> LatestTemplateRevision => TemplateRevision.Where(x => x.Gromplate.LatestId == x.Id).AsNoTracking();
+    public IQueryable<TemplateRevisionEntity> LatestTemplateRevision => TemplateRevision.Where(x => x.Template.LatestId == x.Id).AsNoTracking();
 
   }
 }

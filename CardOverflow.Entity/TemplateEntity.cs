@@ -7,12 +7,12 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class GromplateEntity
+    public partial class TemplateEntity
     {
-        public GromplateEntity()
+        public TemplateEntity()
         {
             TemplateRevisions = new HashSet<TemplateRevisionEntity>();
-            CommentGromplates = new HashSet<CommentGromplateEntity>();
+            CommentTemplates = new HashSet<CommentTemplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
         }
 
@@ -27,16 +27,16 @@ namespace CardOverflow.Entity
         public Instant? Modified { get; set; }
 
         [ForeignKey("AuthorId")]
-        [InverseProperty("Gromplates")]
+        [InverseProperty("Templates")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestId")]
-        [InverseProperty("Gromplates")]
+        [InverseProperty("Templates")]
         public virtual TemplateRevisionEntity Latest { get; set; }
-        [InverseProperty("Gromplate")]
+        [InverseProperty("Template")]
         public virtual ICollection<TemplateRevisionEntity> TemplateRevisions { get; set; }
-        [InverseProperty("Gromplate")]
-        public virtual ICollection<CommentGromplateEntity> CommentGromplates { get; set; }
-        [InverseProperty("Gromplate")]
+        [InverseProperty("Template")]
+        public virtual ICollection<CommentTemplateEntity> CommentTemplates { get; set; }
+        [InverseProperty("Template")]
         public virtual ICollection<NotificationEntity> Notifications { get; set; }
     }
 }

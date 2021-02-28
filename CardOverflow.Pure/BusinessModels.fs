@@ -120,7 +120,7 @@ type CardTemplate = {
             ShortBack = ""
         }
 
-type GromplateType =
+type TemplateType =
     | Standard of CardTemplate list
     | Cloze of CardTemplate
   with
@@ -132,21 +132,21 @@ type GromplateType =
         function
         | 0s -> Standard cardTemplates
         | 1s -> Cloze <| cardTemplates.Single()
-        | x -> failwith <| sprintf "Unable to convert '%i' to a GromplateType" x
+        | x -> failwith <| sprintf "Unable to convert '%i' to a TemplateType" x
     static member initStandard =
         CardTemplate.initStandard |> List.singleton |> Standard
 
 type TemplateRevision = {
     Id: Guid
     Name: string
-    GromplateId: Guid
+    TemplateId: Guid
     Css: string
     Fields: Field list
     Created: Instant
     Modified: Instant option
     LatexPre: string
     LatexPost: string
-    CardTemplates: GromplateType
+    CardTemplates: TemplateType
     EditSummary: string
 } with
     member this.JustCardTemplates =
@@ -177,7 +177,7 @@ type CollectedTemplateRevision = {
     TemplateRevision: TemplateRevision
 }
 
-type Gromplate = {
+type Template = {
     Id: Guid
     AuthorId: Guid
     Latest: TemplateRevision
@@ -212,7 +212,7 @@ type QuizCard = {
 
 // medTODO delete?
 //type CollectedDisplayCard = { // Collected cause only private tags can be on a card
-//    GromplateName: string
+//    TemplateName: string
 //    Front: string
 //    Back: string
 //    Tags: string seq

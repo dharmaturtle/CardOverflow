@@ -73,7 +73,7 @@ module AnkiImporter =
         (getDecks: string list -> DeckEntity list)
         (cardSettings: CardSettingEntity ResizeArray)
         defaultCardSetting
-        getGromplates
+        getTemplates
         getCCard
         getCard
         getHistory =
@@ -120,30 +120,30 @@ module AnkiImporter =
                     decks.SingleOrDefault(fun x -> x.Name = deckName)
                     |?? lazy (DeckEntity(UserId = userId, Name = deckName))
                 )
-            let! gromplatesByModelId =
-                let toEntity gromplateEntity (gromplate: AnkiTemplateRevision) =
+            let! templatesByModelId =
+                let toEntity templateEntity (template: AnkiTemplateRevision) =
                     let defaultCardSetting =
-                        cardSettingAndDeckByDeckId.TryFind gromplate.DeckId
+                        cardSettingAndDeckByDeckId.TryFind template.DeckId
                         |> function
                         | Some (cardSetting, _) -> cardSetting
                         | None -> defaultCardSetting // veryLowTODO some anki models have invalid deck ids. Perhaps log this
-                    getGromplates gromplate
+                    getTemplates template
                     |> function
                     | Some (e: TemplateRevisionEntity) ->
                         if e.User_TemplateRevisions.Any(fun x -> x.UserId = userId) |> not then
                             User_TemplateRevisionEntity(
                                 UserId = userId,
-                                DefaultTags = gromplate.DefaultTags.ToArray(),
+                                DefaultTags = template.DefaultTags.ToArray(),
                                 DefaultCardSetting = defaultCardSetting)
                             |> e.User_TemplateRevisions.Add
                         e
-                    | None -> gromplate.CopyToNewWithGromplate userId gromplateEntity defaultCardSetting
-                    |> fun x -> {| Entity = x; Gromplate = gromplate |}
+                    | None -> template.CopyToNewWithTemplate userId templateEntity defaultCardSetting
+                    |> fun x -> {| Entity = x; Template = template |}
                 Anki.parseModels userId col.Models
-                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> (toEntity <| GromplateEntity(AuthorId = userId))))
+                |> Result.map (Map.ofList >> Map.map (fun _ x -> x |> (toEntity <| TemplateEntity(AuthorId = userId))))
             let cardsAndTagsByNoteId =
                 Anki.parseNotes
-                    gromplatesByModelId
+                    templatesByModelId
                     usersTags
                     userId
                     fileEntityByAnkiFileName

@@ -1,5 +1,5 @@
-@page "/my/gromplate"
-@page "/my/gromplate/{GromplateId:guid}"
+@page "/my/template"
+@page "/my/template/{TemplateId:guid}"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Core
@@ -16,22 +16,22 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (_gromplates == null) {
+@if (_templates == null) {
   <p><em>"Loading..."</em></p>
 } else {
   <div class="row">
     <div class="col-sm-10">
-      <GromplateEditor Gromplate=@_gromplates[_selectedIndex] />
+      <TemplateEditor Template=@_templates[_selectedIndex] />
     </div>
     <div class="col-sm-2 list-group">
       <h5 class="text-center">Card Templates</h5>
       <button type="button" class="btn btn-success mb-2" @onclick=@_Add>
         <span class="oi oi-plus"></span>
       </button>
-      @foreach (var x in _gromplates.Select((t, i) => new { Gromplate = t, Index = i })) {
+      @foreach (var x in _templates.Select((t, i) => new { Template = t, Index = i })) {
         <button class="list-group-item list-group-item-action @(x.Index == _selectedIndex ? "active" : "")"
                 @onclick=@(() => _selectedIndex = x.Index)>
-          @x.Gromplate.Editable.Name
+          @x.Template.Editable.Name
         </button>
       }
     </div>
@@ -39,26 +39,26 @@
 }
 
 @code {
-  [Parameter] public Guid GromplateId { get; set; }
+  [Parameter] public Guid TemplateId { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  private List<ViewGromplateWithAllLeafs> _gromplates;
+  private List<ViewTemplateWithAllLeafs> _templates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
     _user = await UserTask;
     if (_user.IsAuthenticated) {
-      _gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMine(db, _user.Id));
-      _selectedIndex = (_gromplates.SingleOrDefault(x => x.Id == GromplateId) ?? _gromplates.First())
-        .Apply(_gromplates.IndexOf);
+      _templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMine(db, _user.Id));
+      _selectedIndex = (_templates.SingleOrDefault(x => x.Id == TemplateId) ?? _templates.First())
+        .Apply(_templates.IndexOf);
     }
     StateHasChanged();
   }
 
   private void _Add() {
-    var t = ViewGromplateWithAllLeafs.initialize(_user.Id, Gulid.Create(), Gulid.Create());
-    _gromplates = _gromplates.Prepend(t).ToList();
-    _selectedIndex = _gromplates.IndexOf(t);
+    var t = ViewTemplateWithAllLeafs.initialize(_user.Id, Gulid.Create(), Gulid.Create());
+    _templates = _templates.Prepend(t).ToList();
+    _selectedIndex = _templates.IndexOf(t);
   }
 
 }

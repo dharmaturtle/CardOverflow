@@ -1,4 +1,4 @@
-@page "/gromplateleaf/{LeafId:guid}"
+@page "/templateleaf/{LeafId:guid}"
 
 @using Microsoft.AspNetCore.Mvc
 @using Microsoft.FSharp.Collections
@@ -32,7 +32,7 @@
           </div>
           <div class="row">
             <div class="col-sm">
-              <GromplateEditor_Type Leaf=@Leaf UpdateGromplateType=@(x => Leaf.CardTemplates = x) />
+              <TemplateEditor_Type Leaf=@Leaf UpdateTemplateType=@(x => Leaf.CardTemplates = x) />
               <table class="table-borderless my-3">
                 <thead>
                   <tr>
@@ -73,16 +73,16 @@
               <ValidationMessage For=@(() => Leaf.Css) />
             </div>
           </div>
-          <GromplateEditor_Templates Leaf=@Leaf IsDisabled=@IsDisabled UpdateGromplateType=@(x => Leaf.CardTemplates = x) />
+          <TemplateEditor_Templates Leaf=@Leaf IsDisabled=@IsDisabled UpdateTemplateType=@(x => Leaf.CardTemplates = x) />
         </fieldset>
         <div class="mt-3">
           <div class="row">
             <div class="col"></div>
             <div class="col btn-group">
-              @if (IsDisabled && Gromplate != null) {
+              @if (IsDisabled && Template != null) {
                 <h5 class="mt-2 mr-2">Revision</h5>
-                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(id => Leaf = Gromplate.Leafs.Single(x => x.Id == id)))>
-                  @foreach (var leaf in Gromplate.Leafs.OrderByDescending(x => x.Created)) {
+                <select class="form-control" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Apply(id => Leaf = Template.Leafs.Single(x => x.Id == id)))>
+                  @foreach (var leaf in Template.Leafs.OrderByDescending(x => x.Created)) {
                     <option value=@leaf.Id selected=@(Leaf.Id == leaf.Id)>
                       @leaf.EditSummary - @leaf.Created
                     </option>
@@ -109,20 +109,20 @@
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public Guid GromplateId { get; set; }
+  [Parameter] public Guid TemplateId { get; set; }
   [Parameter] public Guid LeafId { get; set; }
   [Parameter] public bool IsDisabled { get; set; } = true;
   [Parameter] public ViewTemplateRevision Leaf { get; set; }
-  [Parameter] public ViewGromplateWithAllLeafs Gromplate { get; set; }
+  [Parameter] public ViewTemplateWithAllLeafs Template { get; set; }
   private string _loadingMessage = "Loading...";
 
   private async Task _isChildComponent() {
-    var x = (Gromplate == null || (Gromplate.Id != GromplateId && GromplateId != Guid.Empty))
-      ? await DbExecutor.QueryAsync(db => SanitizeGromplate.AllLeafs(db, GromplateId))
-      : FSharpResult<ViewGromplateWithAllLeafs, string>.NewOk(Gromplate);
+    var x = (Template == null || (Template.Id != TemplateId && TemplateId != Guid.Empty))
+      ? await DbExecutor.QueryAsync(db => SanitizeTemplate.AllLeafs(db, TemplateId))
+      : FSharpResult<ViewTemplateWithAllLeafs, string>.NewOk(Template);
     if (x.IsOk) {
-      Gromplate = x.ResultValue;
-      Leaf = Gromplate.Leafs.SingleOrDefault(x => x.Id == NavigationManager.GetQueryGuid("LeafId")) ?? Gromplate.Leafs.First();
+      Template = x.ResultValue;
+      Leaf = Template.Leafs.SingleOrDefault(x => x.Id == NavigationManager.GetQueryGuid("LeafId")) ?? Template.Leafs.First();
     } else {
       _loadingMessage = x.ErrorValue;
       ToastService.ShowError(x.ErrorValue);
@@ -130,7 +130,7 @@
   }
 
   private async Task _isLeafPage() {
-    var x = await DbExecutor.QueryAsync(db => SanitizeGromplate.leaf(db, LeafId));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.leaf(db, LeafId));
     if (x.IsOk) {
       Leaf = x.ResultValue;
     } else {
@@ -145,12 +145,12 @@
     await (LeafId == Guid.Empty
       ? _isChildComponent()
       : _isLeafPage());
-    IsDisabled = Gromplate.AuthorId != _user.Id;
+    IsDisabled = Template.AuthorId != _user.Id;
   }
 
   async Task Submit() {
     IsDisabled = true;
-    var x = await DbExecutor.QueryAsync(db => SanitizeGromplate.Update(db, _user.Id, Leaf));
+    var x = await DbExecutor.QueryAsync(db => SanitizeTemplate.Update(db, _user.Id, Leaf));
     if (x.IsOk) {
       ToastService.ShowSuccess("Saved!");
     } else {

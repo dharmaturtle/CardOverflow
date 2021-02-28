@@ -58,14 +58,14 @@ type ViewTemplateRevision = {
     [<Required>]
     [<StringLength(100, MinimumLength = 3, ErrorMessage = "Name must be 3-100 characters long.")>]
     Name: string
-    GromplateId: Guid
+    TemplateId: Guid
     Css: string
     Fields: ViewField ResizeArray
     Created: Instant
     Modified: Instant option
     LatexPre: string
     LatexPost: string
-    CardTemplates: GromplateType
+    CardTemplates: TemplateType
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
 } with
@@ -86,7 +86,7 @@ module ViewTemplateRevision =
     let load (bznz: TemplateRevision) = {
         Id = bznz.Id
         Name = bznz.Name
-        GromplateId = bznz.GromplateId
+        TemplateId = bznz.TemplateId
         Css = bznz.Css
         Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
         Created = bznz.Created
@@ -99,7 +99,7 @@ module ViewTemplateRevision =
     let copyTo (view: ViewTemplateRevision): TemplateRevision = {
         Id = view.Id
         Name = view.Name
-        GromplateId = view.GromplateId
+        TemplateId = view.TemplateId
         Css = view.Css
         Fields = view.Fields |> Seq.map ViewField.copyTo |> Seq.toList
         Created = view.Created
@@ -113,24 +113,24 @@ module ViewTemplateRevision =
 type ViewSearchTemplateRevision = {
     Id: Guid
     Name: string
-    GromplateId: Guid
+    TemplateId: Guid
     Css: string
     Fields: ViewField ResizeArray
     Created: Instant
     Modified: Instant option
     LatexPre: string
     LatexPost: string
-    CardTemplates: GromplateType
+    CardTemplates: TemplateType
     EditSummary: string
-    GromplateUsers: int
+    TemplateUsers: int
     IsCollected: bool
 }
 
 module ViewSearchTemplateRevision =
-    let load gromplateUsers isCollected (bznz: TemplateRevision) = {
+    let load templateUsers isCollected (bznz: TemplateRevision) = {
         Id = bznz.Id
         Name = bznz.Name
-        GromplateId = bznz.GromplateId
+        TemplateId = bznz.TemplateId
         Css = bznz.Css
         Fields = bznz.Fields |> List.map ViewField.load |> toResizeArray
         Created = bznz.Created
@@ -139,18 +139,18 @@ module ViewSearchTemplateRevision =
         LatexPost = bznz.LatexPost
         CardTemplates = bznz.CardTemplates
         EditSummary = bznz.EditSummary
-        GromplateUsers = gromplateUsers
+        TemplateUsers = templateUsers
         IsCollected = isCollected
     }
 
 [<CLIMutable>]
-type ViewGromplateWithAllLeafs = {
+type ViewTemplateWithAllLeafs = {
     Id: Guid
     AuthorId: Guid
     Leafs: ViewTemplateRevision ResizeArray
     Editable: ViewTemplateRevision
 } with
-    static member load (entity: GromplateEntity) =
+    static member load (entity: TemplateEntity) =
         let leafs =
             entity.TemplateRevisions
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
@@ -163,28 +163,28 @@ type ViewGromplateWithAllLeafs = {
                 leafs.First() with
                     Id = Guid.Empty
                     EditSummary = "" }}
-    static member initialize userId templateRevisionId gromplateId =
-        let leaf = TemplateRevision.initialize templateRevisionId gromplateId |> ViewTemplateRevision.load
-        {   Id = gromplateId
+    static member initialize userId templateRevisionId templateId =
+        let leaf = TemplateRevision.initialize templateRevisionId templateId |> ViewTemplateRevision.load
+        {   Id = templateId
             AuthorId = userId
             Leafs = [leaf].ToList()
             Editable = leaf
         }
 
-module SanitizeGromplate =
-    let latest (db: CardOverflowDb) gromplateId =
-        GromplateRepository.latest db gromplateId |> TaskResult.map ViewTemplateRevision.load
+module SanitizeTemplate =
+    let latest (db: CardOverflowDb) templateId =
+        TemplateRepository.latest db templateId |> TaskResult.map ViewTemplateRevision.load
     let leaf (db: CardOverflowDb) leafId =
-        GromplateRepository.leaf db leafId |> TaskResult.map ViewTemplateRevision.load
-    let AllLeafs (db: CardOverflowDb) gromplateId = task {
-        let! gromplate =
-            db.Gromplate
+        TemplateRepository.leaf db leafId |> TaskResult.map ViewTemplateRevision.load
+    let AllLeafs (db: CardOverflowDb) templateId = task {
+        let! template =
+            db.Template
                 .Include(fun x -> x.TemplateRevisions)
-                .SingleOrDefaultAsync(fun x -> gromplateId = x.Id)
+                .SingleOrDefaultAsync(fun x -> templateId = x.Id)
         return
-            match gromplate with
-            | null -> sprintf "Gromplate #%A doesn't exist" gromplateId |> Error
-            | x -> Ok <| ViewGromplateWithAllLeafs.load x
+            match template with
+            | null -> sprintf "Template #%A doesn't exist" templateId |> Error
+            | x -> Ok <| ViewTemplateWithAllLeafs.load x
         }
     let Search (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
@@ -194,7 +194,7 @@ module SanitizeGromplate =
                     String.IsNullOrWhiteSpace searchTerm ||
                     x.Tsv.Matches(EF.Functions.PlainToTsQuery(plain).And(EF.Functions.ToTsQuery wildcard))
                 ).Select(fun x ->
-                    x.Gromplate.TemplateRevisions.Select(fun x -> x.User_TemplateRevisions.Count).ToList(), // lowTODO sum here
+                    x.Template.TemplateRevisions.Select(fun x -> x.User_TemplateRevisions.Count).ToList(), // lowTODO sum here
                     x.User_TemplateRevisions.Any(fun x -> x.UserId = userId),
                     x
                 ).ToPagedListAsync(pageNumber, 15)
@@ -210,34 +210,34 @@ module SanitizeGromplate =
         let! x =
             db.User_TemplateRevision
                 .Where(fun x ->  x.UserId = userId)
-                .Select(fun x -> x.TemplateRevision.Gromplate)
+                .Select(fun x -> x.TemplateRevision.Template)
                 .Distinct()
                 .Include(fun x -> x.TemplateRevisions)
                 .ToListAsync()
-        return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
+        return x |> Seq.map ViewTemplateWithAllLeafs.load |> toResizeArray
         }
-    let GetMineWith (db: CardOverflowDb) userId gromplateId = task {
+    let GetMineWith (db: CardOverflowDb) userId templateId = task {
         let! x =
             db.User_TemplateRevision
-                .Where(fun x ->  x.UserId = userId || x.TemplateRevision.GromplateId = gromplateId)
-                .Select(fun x -> x.TemplateRevision.Gromplate)
+                .Where(fun x ->  x.UserId = userId || x.TemplateRevision.TemplateId = templateId)
+                .Select(fun x -> x.TemplateRevision.Template)
                 .Distinct()
                 .Include(fun x -> x.TemplateRevisions)
                 .ToListAsync()
-        return x |> Seq.map ViewGromplateWithAllLeafs.load |> toResizeArray
+        return x |> Seq.map ViewTemplateWithAllLeafs.load |> toResizeArray
         }
     let Update (db: CardOverflowDb) userId (leaf: ViewTemplateRevision) =
-        let update gromplate = task {
-            let! r = ViewTemplateRevision.copyTo leaf |> GromplateRepository.UpdateFieldsToNewLeaf db userId gromplate
+        let update template = task {
+            let! r = ViewTemplateRevision.copyTo leaf |> TemplateRepository.UpdateFieldsToNewLeaf db userId template
             return r |> Ok
         }
         if leaf.Fields.Count = leaf.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
-            db.Gromplate.SingleOrDefault(fun x -> x.Id = leaf.GromplateId)
+            db.Template.SingleOrDefault(fun x -> x.Id = leaf.TemplateId)
             |> function
-            | null -> update (GromplateEntity(Id = leaf.GromplateId, AuthorId = userId))
-            | gromplate ->
-                if gromplate.AuthorId = userId then
-                    update gromplate
-                else Error "You aren't that this gromplate's author." |> Task.FromResult
+            | null -> update (TemplateEntity(Id = leaf.TemplateId, AuthorId = userId))
+            | template ->
+                if template.AuthorId = userId then
+                    update template
+                else Error "You aren't that this template's author." |> Task.FromResult
         else
             Error "Field names must differ" |> Task.FromResult

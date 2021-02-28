@@ -14,9 +14,9 @@ namespace CardOverflow.Entity
         public virtual DbSet<LeafEntity> Leaf { get; set; }
         private DbSet<LeafRelationshipCountEntity> _LeafRelationshipCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
-        public virtual DbSet<GromplateEntity> Gromplate { get; set; }
+        public virtual DbSet<TemplateEntity> Template { get; set; }
         public virtual DbSet<TemplateRevisionEntity> TemplateRevision { get; set; }
-        public virtual DbSet<CommentGromplateEntity> CommentGromplate { get; set; }
+        public virtual DbSet<CommentTemplateEntity> CommentTemplate { get; set; }
         public virtual DbSet<CommentConceptEntity> CommentConcept { get; set; }
         public virtual DbSet<CommieldEntity> Commield { get; set; }
         public virtual DbSet<CommeafEntity> Commeaf { get; set; }
@@ -37,7 +37,7 @@ namespace CardOverflow.Entity
         private DbSet<ConceptRelationshipCountEntity> _ConceptRelationshipCountTracked { get; set; }
         public virtual DbSet<UserEntity> User { get; set; }
         public virtual DbSet<User_TemplateRevisionEntity> User_TemplateRevision { get; set; }
-        public virtual DbSet<Vote_CommentGromplateEntity> Vote_CommentGromplate { get; set; }
+        public virtual DbSet<Vote_CommentTemplateEntity> Vote_CommentTemplate { get; set; }
         public virtual DbSet<Vote_CommentConceptEntity> Vote_CommentConcept { get; set; }
         public virtual DbSet<Vote_FeedbackEntity> Vote_Feedback { get; set; }
 
@@ -225,26 +225,26 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<GromplateEntity>(entity =>
+            modelBuilder.Entity<TemplateEntity>(entity =>
             {
                 entity.HasIndex(e => e.AuthorId);
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.HasOne(d => d.Author)
-                    .WithMany(p => p.Gromplates)
+                    .WithMany(p => p.Templates)
                     .HasForeignKey(d => d.AuthorId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Latest)
-                    .WithMany(p => p.Gromplates)
+                    .WithMany(p => p.Templates)
                     .HasForeignKey(d => d.LatestId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<TemplateRevisionEntity>(entity =>
             {
-                entity.HasIndex(e => e.GromplateId);
+                entity.HasIndex(e => e.TemplateId);
 
                 IfNpg(() => entity.HasIndex(e => e.Hash),
                     () => entity.Ignore(e => e.Hash));
@@ -252,28 +252,28 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
                     () => entity.Ignore(e => e.Tsv));
 
-                entity.HasIndex(e => new { e.Id, e.GromplateId })
+                entity.HasIndex(e => new { e.Id, e.TemplateId })
                     .IsUnique();
 
-                entity.HasOne(d => d.Gromplate)
+                entity.HasOne(d => d.Template)
                     .WithMany(p => p.TemplateRevisions)
-                    .HasForeignKey(d => d.GromplateId)
+                    .HasForeignKey(d => d.TemplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<CommentGromplateEntity>(entity =>
+            modelBuilder.Entity<CommentTemplateEntity>(entity =>
             {
-                entity.HasIndex(e => e.GromplateId);
+                entity.HasIndex(e => e.TemplateId);
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasOne(d => d.Gromplate)
-                    .WithMany(p => p.CommentGromplates)
-                    .HasForeignKey(d => d.GromplateId)
+                entity.HasOne(d => d.Template)
+                    .WithMany(p => p.CommentTemplates)
+                    .HasForeignKey(d => d.TemplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.CommentGromplates)
+                    .WithMany(p => p.CommentTemplates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -536,19 +536,19 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Vote_CommentGromplateEntity>(entity =>
+            modelBuilder.Entity<Vote_CommentTemplateEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommentGromplateId, e.UserId });
+                entity.HasKey(e => new { e.CommentTemplateId, e.UserId });
 
                 entity.HasIndex(e => e.UserId);
 
-                entity.HasOne(d => d.CommentGromplate)
-                    .WithMany(p => p.Vote_CommentGromplates)
-                    .HasForeignKey(d => d.CommentGromplateId)
+                entity.HasOne(d => d.CommentTemplate)
+                    .WithMany(p => p.Vote_CommentTemplates)
+                    .HasForeignKey(d => d.CommentTemplateId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.Vote_CommentGromplates)
+                    .WithMany(p => p.Vote_CommentTemplates)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });

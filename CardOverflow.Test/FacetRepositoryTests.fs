@@ -35,10 +35,10 @@ let normalCommand fieldValues templateRevision tagIds ids =
         Ids = UpsertIds.fromTuple ids
     }
 
-let clozeCommand clozeText (clozeGromplate: ViewTemplateRevision) tagIds ids = {
+let clozeCommand clozeText (clozeTemplate: ViewTemplateRevision) tagIds ids = {
     EditSummary = "Initial creation"
     FieldValues =
-        clozeGromplate.Fields.Select(fun f -> {
+        clozeTemplate.Fields.Select(fun f -> {
             EditField = ViewField.copyTo f
             Value =
                 if f.Name = "Text" then
@@ -46,15 +46,15 @@ let clozeCommand clozeText (clozeGromplate: ViewTemplateRevision) tagIds ids = {
                 else
                     "extra"
         }).ToList()
-    TemplateRevision = clozeGromplate
+    TemplateRevision = clozeTemplate
     Kind = NewOriginal_TagIds (tagIds |> Set.ofList)
     Title = null
     Ids = UpsertIds.fromTuple ids }
 
-let add gromplateName createCommand (db: CardOverflowDb) userId tags (ids: Guid * Guid * Guid * Guid list) = taskResult {
-    let! gromplate = TestGromplateRepo.SearchEarliest db gromplateName
+let add templateName createCommand (db: CardOverflowDb) userId tags (ids: Guid * Guid * Guid * Guid list) = taskResult {
+    let! template = TestTemplateRepo.SearchEarliest db templateName
     return!
-        createCommand gromplate tags ids
+        createCommand template tags ids
         |> SanitizeConceptRepository.Update db userId []
     }
 
@@ -70,11 +70,11 @@ let addBasicCustomConcept fieldValues =
 let addCloze fieldValues =
     add "Cloze" <| clozeCommand fieldValues
 
-let reversedBasicGromplate db =
-    TestGromplateRepo.SearchEarliest db "Basic (and reversed card)"
+let reversedBasicTemplate db =
+    TestTemplateRepo.SearchEarliest db "Basic (and reversed card)"
 
-let basicGromplate db =
-    TestGromplateRepo.SearchEarliest db "Basic"
+let basicTemplate db =
+    TestTemplateRepo.SearchEarliest db "Basic"
 
 let update (c: TestContainer) authorId kind commandTransformer updateIds expectedExampleId = taskResult {
     let! (upsert: ViewEditConceptCommand) = SanitizeConceptRepository.getUpsert c.Db authorId kind updateIds // using |>!! is *extremely* inconsistent and unstable for some reason

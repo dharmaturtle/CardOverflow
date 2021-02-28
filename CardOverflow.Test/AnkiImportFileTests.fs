@@ -24,7 +24,7 @@ open System.Collections.Generic
 open FsToolkit.ErrorHandling
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer(false, ankiFileName)
@@ -43,7 +43,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
     } |> TaskResult.getOk)
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
 let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: Task<unit> = (taskResult {
     let userId = user_3
     use c = new TestContainer(false, ankiFileName)
@@ -76,7 +76,7 @@ let ``Anki.replaceAnkiFilenames transforms anki filenames into our filenames`` (
 </audio>
 Basic back, no mp3"""
         """<img src="/image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4"><img src="/image/AAIEBggKDA4QEhQWGBocHiAiJCYoKiwuMDI0Njg6PD4">"""]
-    let fields = AnkiImportTestData.allDefaultGromplatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
+    let fields = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_colpkg.Notes |> List.map(fun x -> x.Flds)
     let map =
         [ ("png1.png", FileEntity(
             Sha256 = Array.init 32 (fun index -> index + index |> byte)
@@ -480,8 +480,8 @@ let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit>
 let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
-    let! gromplate =
-        TestGromplateRepo.Search c.Db "Basic"
+    let! template =
+        TestTemplateRepo.Search c.Db "Basic"
         |> Task.map (fun x -> x.Single(fun x -> x.Name = "Basic"))
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
@@ -496,7 +496,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                 []
                 {   EditSummary = editSummary
                     FieldValues =
-                        gromplate
+                        template
                             .Fields
                             .Select(fun f ->
                                 let value =
@@ -508,7 +508,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
                                     Value = value
                                 })
                             .ToList()
-                    TemplateRevision = gromplate
+                    TemplateRevision = template
                     Kind = NewOriginal_TagIds Set.empty
                     Title = null
                     Ids = ids_1
@@ -537,28 +537,28 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     Assert.SingleI c.Db.Commeaf }
 
 [<Fact>]
-let ``AnkiDefaults.gromplateIdByHash is same as initial database`` (): unit =
+let ``AnkiDefaults.templateIdByHash is same as initial database`` (): unit =
     let c = new TestContainer()
     use hasher = SHA512.Create()
-    let dbGromplates =
+    let dbTemplates =
         c.Db.TemplateRevision
             .OrderBy(fun x -> x.Id)
             .ToList()
     
     // test that the calculated hash is the same as the one stored in the db
-    for gromplate in dbGromplates do
-        let calculated = TemplateRevisionEntity.hashBase64 hasher gromplate
-        let dbValue = LeafEntity.bitArrayToByteArray gromplate.Hash |> Convert.ToBase64String
-        //for x in TemplateRevisionEntity.hash hasher gromplate do
+    for template in dbTemplates do
+        let calculated = TemplateRevisionEntity.hashBase64 hasher template
+        let dbValue = LeafEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
+        //for x in TemplateRevisionEntity.hash hasher template do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
         Assert.Equal(calculated, dbValue)
 
-    // test that AnkiDefaults.gromplateIdByHash is up to date
-    for dbGromplate in dbGromplates do
-        let calculated = TemplateRevisionEntity.hashBase64 hasher dbGromplate
-        //calculated.D(string dbGromplate.Id)
-        Assert.Equal(AnkiDefaults.templateRevisionIdByHash.[calculated], dbGromplate.Id)
+    // test that AnkiDefaults.templateIdByHash is up to date
+    for dbTemplate in dbTemplates do
+        let calculated = TemplateRevisionEntity.hashBase64 hasher dbTemplate
+        //calculated.D(string dbTemplate.Id)
+        Assert.Equal(AnkiDefaults.templateRevisionIdByHash.[calculated], dbTemplate.Id)
 
 //[<Fact>]
 let ``Manual Anki import`` (): Task<unit> = (taskResult {

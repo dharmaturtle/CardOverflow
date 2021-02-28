@@ -1,5 +1,5 @@
-@page "/gromplate"
-@page "/gromplate/{SelectedId:guid}"
+@page "/template"
+@page "/template/{SelectedId:guid}"
 @using Microsoft.FSharp.Core
 @using CardOverflow.Entity
 @using CardOverflow.Debug
@@ -11,7 +11,7 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/gromplate/" CreateLink=@(x => $"/gromplate/{x}") Ids=@_leafs?.Select(x => x.GromplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_leafs?.Select(x => x.TemplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
   @if (_leafs == null) {
@@ -31,10 +31,10 @@
             </HoverPreview>
           </td>
           <td>
-            @leaf.GromplateUsers
+            @leaf.TemplateUsers
           </td>
           <td>
-            <a href="/gromplate/@leaf.GromplateId">
+            <a href="/template/@leaf.TemplateId">
               @leaf.Name
             </a>
           </td>
@@ -44,7 +44,7 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <GromplateEditor GromplateId=@SelectedId.Value />
+  <TemplateEditor TemplateId=@SelectedId.Value />
 }
 
 @code {
@@ -65,7 +65,7 @@
   }
 
   async Task PageChanged(int pageNumber) {
-    var pagedList = await DbExecutor.QueryAsync(db => SanitizeGromplate.Search(db, _user.Id, pageNumber, _search.Query));
+    var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, _user.Id, pageNumber, _search.Query));
     _details = pagedList.Details;
     _leafs = pagedList.Results.ToList();
   }

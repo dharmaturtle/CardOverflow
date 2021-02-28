@@ -10,22 +10,22 @@ using ThoughtDesign.WebLibrary;
 namespace CardOverflow.UserContentApi.Controllers {
   [ApiController]
   //[Route("[controller]")]
-  public class Gromplate : Controller {
+  public class Template : Controller {
     private readonly CardOverflowDb _db;
 
-    public Gromplate(CardOverflowDb db) => _db = db;
+    public Template(CardOverflowDb db) => _db = db;
 
-    [HttpGet("gromplate/{id}/{index}/front")]
-    public async Task<IActionResult> Front(Guid id, int index) => _front(index, await GromplateRepository.latest(_db, id));
+    [HttpGet("template/{id}/{index}/front")]
+    public async Task<IActionResult> Front(Guid id, int index) => _front(index, await TemplateRepository.latest(_db, id));
 
-    [HttpGet("gromplate/{id}/{index}/back")]
-    public async Task<IActionResult> Back(Guid id, int index) => _back(index, await GromplateRepository.latest(_db, id));
+    [HttpGet("template/{id}/{index}/back")]
+    public async Task<IActionResult> Back(Guid id, int index) => _back(index, await TemplateRepository.latest(_db, id));
 
-    [HttpGet("gromplateleaf/{id}/{index}/front")]
-    public async Task<IActionResult> LeafFront(Guid id, int index) => _front(index, await GromplateRepository.leaf(_db, id));
+    [HttpGet("templateleaf/{id}/{index}/front")]
+    public async Task<IActionResult> LeafFront(Guid id, int index) => _front(index, await TemplateRepository.leaf(_db, id));
 
-    [HttpGet("gromplateleaf/{id}/{index}/back")]
-    public async Task<IActionResult> LeafBack(Guid id, int index) => _back(index, await GromplateRepository.leaf(_db, id));
+    [HttpGet("templateleaf/{id}/{index}/back")]
+    public async Task<IActionResult> LeafBack(Guid id, int index) => _back(index, await TemplateRepository.leaf(_db, id));
 
     private ContentResult _front(int index, FSharpResult<TemplateRevision, string> view) =>
       ( view.IsError

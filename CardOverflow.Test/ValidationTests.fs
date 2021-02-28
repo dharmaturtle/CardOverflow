@@ -82,7 +82,7 @@ module Generators =
                     ShortBack = ""
                 } |> Cloze
         }
-    let gromplateType fields =
+    let templateType fields =
         Gen.oneof [
             standardCardTemplate fields
             clozeCardTemplate fields
@@ -90,14 +90,14 @@ module Generators =
     let fields =
         List.map (fun fieldName -> Gen.genMap<Field> (fun field -> { field with Name = fieldName }))
         >> Gen.sequence
-    let templateRevision gromplateType fieldNames =
+    let templateRevision templateType fieldNames =
         gen {
             let! fields = fields fieldNames
             return!
                 Gen.genMap<TemplateRevision> (fun templateRevision -> {
                     templateRevision with
                         Fields = fields
-                        CardTemplates = gromplateType
+                        CardTemplates = templateType
                 })
         }
     type ClozeText = ClozeText of string
@@ -112,10 +112,10 @@ module Generators =
         Arb.register<NodaGen>() |> ignore
         gen {
             let! fieldNames = alphanumericString |> Gen.nonEmptyListOf
-            let! gromplateType = gromplateType fieldNames
-            let! templateRevision = templateRevision gromplateType fieldNames
+            let! templateType = templateType fieldNames
+            let! templateRevision = templateRevision templateType fieldNames
             let values =
-                match gromplateType with
+                match templateType with
                 | Standard _ -> alphanumericString
                 | Cloze _ -> clozeText
             let! fields = fields fieldNames

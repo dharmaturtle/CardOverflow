@@ -210,7 +210,7 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member this.DeckEvents     id = this.events(Deck    .streamName id, Deck    .Events.codec)
     member this.TemplateEvents id = this.events(Template.streamName id, Template.Events.codec)
 
-module TestGromplateRepo =
+module TestTemplateRepo =
     let Search (db: CardOverflowDb) (query: string) = task {
         let! x =
             db.LatestTemplateRevision

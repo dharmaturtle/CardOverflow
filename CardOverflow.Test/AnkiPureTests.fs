@@ -14,7 +14,7 @@ open MappingTools
 open NodaTime
 
 [<Fact>]
-let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expected`` (): unit =
+let ``AnkiMap.parseDconf on allDefaultTemplatesAndImageAndMp3_apkg returns expected`` (): unit =
     let expected =
         {   Id = Guid.Empty
             Name = "Default"
@@ -39,7 +39,7 @@ let ``AnkiMap.parseDconf on allDefaultGromplatesAndImageAndMp3_apkg returns expe
             AutomaticallyPlayAudio = true
             ReplayQuestionAudioOnAnswer = true
         }
-    let col = AnkiImportTestData.allDefaultGromplatesAndImageAndMp3_apkg.Cols.Head
+    let col = AnkiImportTestData.allDefaultTemplatesAndImageAndMp3_apkg.Cols.Head
 
     let cardSettings = Anki.parseCardSettings col.Dconf
     

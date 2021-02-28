@@ -24,7 +24,7 @@ module Events =
           Modified: Instant
           LatexPre: string
           LatexPost: string
-          CardTemplates: GromplateType // highTODO bring all the types here
+          CardTemplates: TemplateType // highTODO bring all the types here
           EditSummary: string }
     type Edited =
         { RevisionId: TemplateRevisionId
@@ -34,7 +34,7 @@ module Events =
           Modified: Instant
           LatexPre: string
           LatexPost: string
-          CardTemplates: GromplateType
+          CardTemplates: TemplateType
           EditSummary: string }
 
     type Event =
@@ -95,7 +95,7 @@ type LeafSummary =
       Created: Instant
       LatexPre: string
       LatexPost: string
-      CardTemplates: GromplateType
+      CardTemplates: TemplateType
       EditSummary: string }
 
 let toLeafSummary (b: Events.Summary) =

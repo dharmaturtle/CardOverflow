@@ -16,8 +16,8 @@ namespace CardOverflow.Entity
             Cards = new HashSet<CardEntity>();
             Examples = new HashSet<ExampleEntity>();
             CardSettings = new HashSet<CardSettingEntity>();
-            Gromplates = new HashSet<GromplateEntity>();
-            CommentGromplates = new HashSet<CommentGromplateEntity>();
+            Templates = new HashSet<TemplateEntity>();
+            CommentTemplates = new HashSet<CommentTemplateEntity>();
             CommentConcepts = new HashSet<CommentConceptEntity>();
             Commields = new HashSet<CommieldEntity>();
             DeckFollowers = new HashSet<DeckFollowerEntity>();
@@ -29,7 +29,7 @@ namespace CardOverflow.Entity
             ReceivedNotifications = new HashSet<ReceivedNotificationEntity>();
             Concepts = new HashSet<ConceptEntity>();
             User_TemplateRevisions = new HashSet<User_TemplateRevisionEntity>();
-            Vote_CommentGromplates = new HashSet<Vote_CommentGromplateEntity>();
+            Vote_CommentTemplates = new HashSet<Vote_CommentTemplateEntity>();
             Vote_CommentConcepts = new HashSet<Vote_CommentConceptEntity>();
             Vote_Feedbacks = new HashSet<Vote_FeedbackEntity>();
         }
@@ -75,9 +75,9 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<CardSettingEntity> CardSettings { get; set; }
         [InverseProperty("Author")]
-        public virtual ICollection<GromplateEntity> Gromplates { get; set; }
+        public virtual ICollection<TemplateEntity> Templates { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<CommentGromplateEntity> CommentGromplates { get; set; }
+        public virtual ICollection<CommentTemplateEntity> CommentTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<CommentConceptEntity> CommentConcepts { get; set; }
         [InverseProperty("Author")]
@@ -101,7 +101,7 @@ namespace CardOverflow.Entity
         [InverseProperty("User")]
         public virtual ICollection<User_TemplateRevisionEntity> User_TemplateRevisions { get; set; }
         [InverseProperty("User")]
-        public virtual ICollection<Vote_CommentGromplateEntity> Vote_CommentGromplates { get; set; }
+        public virtual ICollection<Vote_CommentTemplateEntity> Vote_CommentTemplates { get; set; }
         [InverseProperty("User")]
         public virtual ICollection<Vote_CommentConceptEntity> Vote_CommentConcepts { get; set; }
         [InverseProperty("User")]

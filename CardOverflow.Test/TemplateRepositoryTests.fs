@@ -1,4 +1,4 @@
-module GromplateRepositoryTests
+module TemplateRepositoryTests
 
 open FsToolkit.ErrorHandling
 open LoadersAndCopiers
@@ -18,36 +18,36 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
+let ``TemplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let userId = user_2
     use c = new TestContainer()
     
-    let gromplateId = c.Db.Gromplate.Single(fun x -> x.TemplateRevisions.Any(fun x -> x.Name = "Basic")).Id
-    let! gromplate = SanitizeGromplate.AllLeafs c.Db gromplateId
-    let latestLeaf = gromplate.Value.Leafs |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
+    let templateId = c.Db.Template.Single(fun x -> x.TemplateRevisions.Any(fun x -> x.Name = "Basic")).Id
+    let! template = SanitizeTemplate.AllLeafs c.Db templateId
+    let latestLeaf = template.Value.Leafs |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
-        gromplate.Value.Leafs.Single().Name)
+        template.Value.Leafs.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
         latestLeaf.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
         latestLeaf.FirstCardTemplate.Front)
-    Assert.Equal(1, c.Db.TemplateRevision.Count(fun x -> x.GromplateId = gromplateId))
+    Assert.Equal(1, c.Db.TemplateRevision.Count(fun x -> x.TemplateId = templateId))
 
     // Testing UpdateFieldsToNewLeaf
     let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
     let newQuestionXemplate = "modified {{Front mutated}}"
-    let newGromplateName = "new name"
+    let newTemplateName = "new name"
     let oldLeafId = c.Db.Card.Single().LeafId
     let newLeafId = Ulid.create
     let updated =
         { latestLeaf with
             Id = newLeafId
-            GromplateId = gromplateId
-            Name = newGromplateName
+            TemplateId = templateId
+            Name = newTemplateName
             CardTemplates =
                 {   latestLeaf.FirstCardTemplate with
                         Front = newQuestionXemplate
@@ -55,16 +55,16 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
             Fields = latestLeaf.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
         }
     
-    let! r = SanitizeGromplate.Update c.Db userId updated
+    let! r = SanitizeTemplate.Update c.Db userId updated
     Assert.Null r.Value
 
-    let! gromplate = SanitizeGromplate.AllLeafs c.Db gromplateId
-    let latestLeaf = gromplate.Value.Leafs.Single(fun x -> x.Id = newLeafId)
+    let! template = SanitizeTemplate.AllLeafs c.Db templateId
+    let latestLeaf = template.Value.Leafs.Single(fun x -> x.Id = newLeafId)
     Assert.Equal(
         newQuestionXemplate,
         latestLeaf.FirstCardTemplate.Front)
     Assert.Equal(
-        newGromplateName,
+        newTemplateName,
         latestLeaf.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
@@ -74,12 +74,12 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     Assert.Equal(
         latestLeaf.Id,
         c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.TemplateRevisionId)
-    Assert.Equal(2, c.Db.TemplateRevision.Count(fun x -> x.GromplateId = gromplateId))
+    Assert.Equal(2, c.Db.TemplateRevision.Count(fun x -> x.TemplateId = templateId))
     Assert.Equal(2, c.Db.Leaf.Count())
     let concept_1 = c.Db.Concept.Single().Id
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Example.ConceptId = concept_1))
     Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.ConceptId = concept_1))
-    let createds = c.Db.TemplateRevision.Where(fun x -> x.GromplateId = gromplateId).Select(fun x -> x.Created) |> Seq.toList
+    let createds = c.Db.TemplateRevision.Where(fun x -> x.TemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = ConceptViewRepository.get c.Db concept_1
     let front, _, _, _ = x.Value.FrontBackFrontSynthBackSynth.[0]
@@ -134,17 +134,17 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
         BusinessLogicTests.assertStripped expectedBack back
     }
     
-    do! testView GromplateRepository.latest gromplateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
+    do! testView TemplateRepository.latest templateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
 
-    let priorLeaf = gromplate.Value.Leafs |> Seq.minBy (fun x -> x.Created)
-    do! testView GromplateRepository.leaf priorLeaf.Id "{{Front}}" "{{Front}} {{Back}}"
+    let priorLeaf = template.Value.Leafs |> Seq.minBy (fun x -> x.Created)
+    do! testView TemplateRepository.leaf priorLeaf.Id "{{Front}}" "{{Front}} {{Back}}"
 
     // test missing
     let testViewError getView id expected =
         getView c.Db id
         |> Task.map(fun (x: Result<_, _>) -> Assert.Equal(expected, x.error))
-    let gromplateMissingId = Ulid.create
-    do! testViewError GromplateRepository.latest gromplateMissingId <| sprintf "Gromplate #%A not found" gromplateMissingId // TODO base64
+    let templateMissingId = Ulid.create
+    do! testViewError TemplateRepository.latest templateMissingId <| sprintf "Template #%A not found" templateMissingId // TODO base64
     let templateRevisionMissingId = Ulid.create
-    do! testViewError GromplateRepository.leaf   templateRevisionMissingId <| sprintf "Gromplate Leaf #%A not found" templateRevisionMissingId // TODO base64
+    do! testViewError TemplateRepository.leaf   templateRevisionMissingId <| sprintf "Template Leaf #%A not found" templateRevisionMissingId // TODO base64
     }

@@ -11,14 +11,14 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchUrl": "gromplate/1/front",
+      "launchUrl": "template/1/front",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "CardOverflow.UserContentApi": {
       "commandName": "Project",
-      "launchUrl": "gromplate/1/front",
+      "launchUrl": "template/1/front",
       "applicationUrl": "https://localhost:44317;http://localhost:61307",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

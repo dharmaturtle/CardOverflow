@@ -12,7 +12,7 @@
 @inject IToastService ToastService
 @inject DbExecutor DbExecutor
 
-@if (Gromplates == null) {
+@if (Templates == null) {
   <p><em>Loading...</em></p>
 } else {
   <EditForm Model=@EditConcept OnValidSubmit=@UpdateCard @onkeydown=@OnKeyDown tabindex="0" style="outline: none;">
@@ -34,17 +34,17 @@
           </div>
           <div class="col-sm">
             <div class="row">
-              <a href="Gromplate/@_selectedGromplateId" class="col-sm-2 mt-2">
+              <a href="Template/@_selectedTemplateId" class="col-sm-2 mt-2">
                 Card Template
               </a>
-              <select value=@_selectedGromplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(id => UpdateSelectedGromplate(id)))>
-                @foreach (var gromplate in Gromplates) {
-                  <option value=@gromplate.Id>@gromplate.Editable.Name</option>
+              <select value=@_selectedTemplateId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(id => UpdateSelectedTemplate(id)))>
+                @foreach (var template in Templates) {
+                  <option value=@template.Id>@template.Editable.Name</option>
                 }
               </select>
             </div>
             <div class="row">
-              <a href="Gromplate/@_selectedGromplateId?LeafId=@_selectedTemplateRevisionId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Template/@_selectedTemplateId?LeafId=@_selectedTemplateRevisionId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
               <select value=@_selectedTemplateRevisionId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(UpdateSelectedTemplateRevision))>
@@ -109,12 +109,12 @@
 @code {
   [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
   [Parameter] public bool NewEditConceptOnSave { get; set; }
-  [Parameter] public List<ViewGromplateWithAllLeafs> Gromplates { get; set; }
+  [Parameter] public List<ViewTemplateWithAllLeafs> Templates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private UserClaims _user = UserClaims.init;
   private List<ViewTemplateRevision> _selectedTemplateRevisions;
-  private Guid _selectedGromplateId;
+  private Guid _selectedTemplateId;
   private Guid _selectedTemplateRevisionId;
   private bool _isDisabled;
   private Guid _savedExampleId;
@@ -129,13 +129,13 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (Gromplates == null) {
-      Gromplates = await DbExecutor.QueryAsync(db => SanitizeGromplate.GetMineWith(db, _user.Id, EditConcept.TemplateRevision.GromplateId));
+    if (Templates == null) {
+      Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMineWith(db, _user.Id, EditConcept.TemplateRevision.TemplateId));
     }
     if (EditConcept == null) {
-      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Gromplates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
     }
-    UpdateSelectedGromplate(EditConcept.TemplateRevision.GromplateId, EditConcept.TemplateRevision.Id);
+    UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Id);
     StateHasChanged();
   }
 
@@ -157,7 +157,7 @@
         if (NewEditConceptOnSave) {
           var fieldValues = EditConcept.FieldValues.Select(x => new EditFieldAndValue(x.EditField, "")).ToList();
           EditConcept = new ViewEditConceptCommand(EditConcept.EditSummary, fieldValues, EditConcept.TemplateRevision, UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
-          UpdateSelectedGromplate(EditConcept.TemplateRevision.GromplateId, EditConcept.TemplateRevision.Id);
+          UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Id);
           _isDisabled = false;
         }
       } else {
@@ -170,15 +170,15 @@
     }
   }
 
-  void UpdateSelectedGromplate(Guid gromplateId, Guid? leafId = null) {
-    _selectedGromplateId = gromplateId;
-    _selectedTemplateRevisions = Gromplates.Single(t => t.Id == gromplateId).Leafs;
+  void UpdateSelectedTemplate(Guid templateId, Guid? leafId = null) {
+    _selectedTemplateId = templateId;
+    _selectedTemplateRevisions = Templates.Single(t => t.Id == templateId).Leafs;
     UpdateSelectedTemplateRevision(leafId ?? _selectedTemplateRevisions.First().Id);
   }
 
   void UpdateSelectedTemplateRevision(Guid leafId) {
     _selectedTemplateRevisionId = leafId;
-    EditConcept.TemplateRevision = Gromplates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
+    EditConcept.TemplateRevision = Templates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
     var valuesByField = EditConcept.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
     EditConcept.FieldValues = EditConcept.TemplateRevision.Fields
       .Select(ViewFieldModule.copyTo)

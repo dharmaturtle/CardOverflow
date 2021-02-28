@@ -17,7 +17,7 @@
 @code {
   [Parameter] public Guid ConceptId { get; set; }
   [Parameter] public (Guid LeafId, short Index) Leaf { get; set; }
-  [Parameter] public Guid GromplateId { get; set; }
+  [Parameter] public Guid TemplateId { get; set; }
   [Parameter] public Guid TemplateRevisionId { get; set; }
   [Parameter] public Guid CommieldId { get; set; }
   [Parameter] public Guid CommeafId { get; set; }
@@ -33,10 +33,10 @@
       middle = "concept/" + ConceptId;
     } else if (!Leaf.Equals(default)) {
       middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
-    } else if (GromplateId != Guid.Empty) {
-      middle = "gromplate/" + GromplateId;
+    } else if (TemplateId != Guid.Empty) {
+      middle = "template/" + TemplateId;
     } else if (TemplateRevisionId != Guid.Empty) {
-      middle = "gromplateleaf/" + TemplateRevisionId;
+      middle = "templateleaf/" + TemplateRevisionId;
     } else if (CommieldId != Guid.Empty) {
       middle = "communalfield/" + CommieldId;
     } else if (CommeafId != Guid.Empty) {

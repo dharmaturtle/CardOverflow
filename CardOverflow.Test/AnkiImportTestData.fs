@@ -500,7 +500,7 @@ let myHighPriority =
         Revlogs = []
     }
 
-let allDefaultGromplatesAndImageAndMp3_apkg =
+let allDefaultTemplatesAndImageAndMp3_apkg =
     {
         Cards = [
             CardEntity(
@@ -811,7 +811,7 @@ let allDefaultGromplatesAndImageAndMp3_apkg =
         Revlogs = []
     }
 
-let allDefaultGromplatesAndImageAndMp3_21_colpkg =
+let allDefaultTemplatesAndImageAndMp3_21_colpkg =
     {
         Cards = [
             CardEntity(
@@ -1122,7 +1122,7 @@ let allDefaultGromplatesAndImageAndMp3_21_colpkg =
         Revlogs = []
     }
 
-let allDefaultGromplatesAndImageAndMp3_colpkg =
+let allDefaultTemplatesAndImageAndMp3_colpkg =
     {
         Cards = [
             CardEntity(
@@ -1433,11 +1433,11 @@ let allDefaultGromplatesAndImageAndMp3_colpkg =
         Revlogs = []
     }
 
-type AllDefaultGromplatesAndImageAndMp3 () =
+type AllDefaultTemplatesAndImageAndMp3 () =
     inherit XunitClassDataBase
-        ([  [|"AllDefaultGromplatesAndImageAndMp3-21.colpkg" ; allDefaultGromplatesAndImageAndMp3_21_colpkg |]
-            [|"AllDefaultGromplatesAndImageAndMp3.colpkg" ; allDefaultGromplatesAndImageAndMp3_colpkg |]
-            [|"AllDefaultGromplatesAndImageAndMp3.apkg" ; allDefaultGromplatesAndImageAndMp3_apkg |] ])
+        ([  [|"AllDefaultTemplatesAndImageAndMp3-21.colpkg" ; allDefaultTemplatesAndImageAndMp3_21_colpkg |]
+            [|"AllDefaultTemplatesAndImageAndMp3.colpkg" ; allDefaultTemplatesAndImageAndMp3_colpkg |]
+            [|"AllDefaultTemplatesAndImageAndMp3.apkg" ; allDefaultTemplatesAndImageAndMp3_apkg |] ])
 
 let recreateAnkiDb ankiFileName callerMemberName =
     let randomizedDestFileName = SanitizeAnki.ankiExportsDir +/ ankiFileName + CardOverflow.Pure.Random.cryptographicString(32) + ".ankiTemp"
@@ -1450,8 +1450,8 @@ let serialize x =
                                      IndentSize = 0))
 
 [<Theory>]
-[<ClassData(typeof<AllDefaultGromplatesAndImageAndMp3>)>]
-let ``Actual AllDefaultGromplatesAndImageAndMp3 matches mock`` fileName mock =
+[<ClassData(typeof<AllDefaultTemplatesAndImageAndMp3>)>]
+let ``Actual AllDefaultTemplatesAndImageAndMp3 matches mock`` fileName mock =
     let actualDb =
         AnkiImporter.getSimpleAnkiDb
         |> using(recreateAnkiDb fileName "Actual testnametoolong matches mock")
