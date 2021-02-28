@@ -735,7 +735,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
                 with
                     Id = Ulid.create
                     Name = name
-                    Templates = Cloze <| latestGromplate.JustTemplates.First()
+                    CardTemplates = Cloze <| latestGromplate.JustCardTemplates.First()
             }
     Assert.Null x.Value
 
@@ -743,7 +743,7 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
     Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
     Assert.True(myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).IsCloze)
 
-    // updating to multiple templates
+    // updating to multiple card templates
     let name = Guid.NewGuid().ToString()
     let! x =
         SanitizeGromplate.Update c.Db userId
@@ -751,13 +751,13 @@ let ``Can create card gromplate and insert a modified one`` (): Task<unit> = tas
                 with
                     Id = Ulid.create
                     Name = name
-                    Templates = Standard [ latestGromplate.JustTemplates.First() ; latestGromplate.JustTemplates.First() ]
+                    CardTemplates = Standard [ latestGromplate.JustCardTemplates.First() ; latestGromplate.JustCardTemplates.First() ]
             }
     Assert.Null x.Value
 
     let! myGromplates = SanitizeGromplate.GetMine c.Db userId
     Assert.Equal(latestGromplate.GromplateId, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).GromplateId)
-    Assert.Equal(2, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).JustTemplates.Count())
+    Assert.Equal(2, myGromplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).JustCardTemplates.Count())
     }
 
 [<Fact>]

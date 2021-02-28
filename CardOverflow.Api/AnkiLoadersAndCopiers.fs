@@ -38,7 +38,7 @@ type AnkiGrompleaf = {
     DefaultCardSettingId: Guid
     LatexPre: string
     LatexPost: string
-    Templates: Template list
+    CardTemplates: CardTemplate list
     DeckId: int64
     IsCloze: bool
 } with
@@ -50,7 +50,7 @@ type AnkiGrompleaf = {
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-        entity.Templates <- this.Templates |> Template.copyToMany
+        entity.CardTemplates <- this.CardTemplates |> CardTemplate.copyToMany
         entity.EditSummary <- "Imported from Anki"
         entity.Type <- if this.IsCloze then 1s else 0s
     member this.CopyToNewWithGromplate userId gromplate defaultCardSetting =
@@ -300,7 +300,7 @@ module Anki =
                         |> Decode.list)
                         |> List.sortBy snd
                         |> List.map fst
-                Templates = gromplates
+                CardTemplates = gromplates
                 Created = get.Required.Field "id" Decode.int64 |> Instant.FromUnixTimeMilliseconds
                 Modified = get.Required.Field "mod" Decode.int64 |> Instant.FromUnixTimeSeconds |> Some
                 DefaultTags = [] // lowTODO the caller should pass in these values, having done some preprocessing on the JSON string to add and retrieve the tag ids

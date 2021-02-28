@@ -24,7 +24,7 @@ module Events =
           Modified: Instant
           LatexPre: string
           LatexPost: string
-          Templates: GromplateType // highTODO bring all the types here
+          CardTemplates: GromplateType // highTODO bring all the types here
           EditSummary: string }
     type Edited =
         { RevisionId: TemplateRevisionId
@@ -34,7 +34,7 @@ module Events =
           Modified: Instant
           LatexPre: string
           LatexPost: string
-          Templates: GromplateType
+          CardTemplates: GromplateType
           EditSummary: string }
 
     type Event =
@@ -64,7 +64,7 @@ module Fold =
             Modified = modified
             LatexPre = latexPre
             LatexPost = latexPost
-            Templates = templates
+            CardTemplates = cardTemplates
             EditSummary = editSummary } : Events.Edited)
         (s: Events.Summary) =
         { s with
@@ -75,7 +75,7 @@ module Fold =
             Modified = modified
             LatexPre = latexPre
             LatexPost = latexPost
-            Templates = templates
+            CardTemplates = cardTemplates
             EditSummary = editSummary }
     
     let evolve state = function
@@ -95,7 +95,7 @@ type LeafSummary =
       Created: Instant
       LatexPre: string
       LatexPost: string
-      Templates: GromplateType
+      CardTemplates: GromplateType
       EditSummary: string }
 
 let toLeafSummary (b: Events.Summary) =
@@ -108,7 +108,7 @@ let toLeafSummary (b: Events.Summary) =
       Created = b.Created
       LatexPre = b.LatexPre
       LatexPost = b.LatexPost
-      Templates = b.Templates
+      CardTemplates = b.CardTemplates
       EditSummary = b.EditSummary }
 
 let fieldNameMax = 50
@@ -160,6 +160,6 @@ let decideCreate (summary: Events.Summary) doesRevisionExist state =
 
 let decideEdit (edited: Events.Edited) callerId doesRevisionExist state =
     match state with
-    | Fold.State.Initial -> Error "Can't edit a template that doesn't exist"
+    | Fold.State.Initial -> Error "Can't edit a Template that doesn't exist"
     | Fold.State.Active summary -> validateEdited summary callerId doesRevisionExist edited
     |> addEvent (Events.Edited edited)

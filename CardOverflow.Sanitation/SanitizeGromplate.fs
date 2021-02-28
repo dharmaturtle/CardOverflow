@@ -65,20 +65,20 @@ type ViewGrompleaf = {
     Modified: Instant option
     LatexPre: string
     LatexPost: string
-    Templates: GromplateType
+    CardTemplates: GromplateType
     [<StringLength(200, ErrorMessage = "The summary must be less than 200 characters")>]
     EditSummary: string
 } with
     member this.IsCloze =
-        match this.Templates with
+        match this.CardTemplates with
         | Cloze _ -> true
         | _ -> false
-    member this.FirstTemplate =
-        match this.Templates with
+    member this.FirstCardTemplate =
+        match this.CardTemplates with
         | Cloze t -> t
         | Standard ts -> ts.[0]
-    member this.JustTemplates =
-        match this.Templates with
+    member this.JustCardTemplates =
+        match this.CardTemplates with
         | Cloze t -> [t]
         | Standard ts -> ts
 
@@ -93,7 +93,7 @@ module ViewGrompleaf =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        Templates = bznz.Templates
+        CardTemplates = bznz.CardTemplates
         EditSummary = bznz.EditSummary
     }
     let copyTo (view: ViewGrompleaf): Grompleaf = {
@@ -106,7 +106,7 @@ module ViewGrompleaf =
         Modified = view.Modified
         LatexPre = view.LatexPre
         LatexPost = view.LatexPost
-        Templates = view.Templates
+        CardTemplates = view.CardTemplates
         EditSummary = view.EditSummary
     }
 
@@ -120,7 +120,7 @@ type ViewSearchGrompleaf = {
     Modified: Instant option
     LatexPre: string
     LatexPost: string
-    Templates: GromplateType
+    CardTemplates: GromplateType
     EditSummary: string
     GromplateUsers: int
     IsCollected: bool
@@ -137,7 +137,7 @@ module ViewSearchGrompleaf =
         Modified = bznz.Modified
         LatexPre = bznz.LatexPre
         LatexPost = bznz.LatexPost
-        Templates = bznz.Templates
+        CardTemplates = bznz.CardTemplates
         EditSummary = bznz.EditSummary
         GromplateUsers = gromplateUsers
         IsCollected = isCollected

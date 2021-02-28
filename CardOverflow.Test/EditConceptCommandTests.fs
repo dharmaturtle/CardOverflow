@@ -44,8 +44,8 @@ let test text expected grompleaf =
             Title = null
             Ids = ids_1
         }
-    if grompleaf.FirstTemplate.Name = "Cloze" then
-        Assert.Equal<string seq>(["Front"], clozeFields view.Grompleaf.Templates)
+    if grompleaf.FirstCardTemplate.Name = "Cloze" then
+        Assert.Equal<string seq>(["Front"], clozeFields view.Grompleaf.CardTemplates)
     view.Backs.Value
     |> Seq.map MappingTools.stripHtmlTags
     |> fun x -> Assert.Equal<string seq>(expected, x)
@@ -55,7 +55,7 @@ let ``EditConceptCommand's back works with basic`` (): unit =
     let testOrdinary text expected =
         test text expected
             ({ (Grompleaf.initialize Ulid.create Ulid.create) with
-                Templates =
+                CardTemplates =
                 {   Name = "Basic"
                     Front = "{{Front}}"
                     Back = "{{Front}} {{Back}}"
@@ -72,7 +72,7 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
     let testCloze text expected =
         test text expected
             ({ (Grompleaf.initialize Ulid.create Ulid.create) with
-                Templates =
+                CardTemplates =
                     {   Name = "Cloze"
                         Front = "{{cloze:Front}}"
                         Back = "{{cloze:Front}} {{Back}}"
@@ -102,8 +102,8 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
                     }).ToList()
                 Grompleaf =
                     {   (Grompleaf.initialize Ulid.create Ulid.create) with
-                            Templates =
-                                {   (Grompleaf.initialize Ulid.create Ulid.create).JustTemplates.[0] with
+                            CardTemplates =
+                                {   (Grompleaf.initialize Ulid.create Ulid.create).JustCardTemplates.[0] with
                                         Front = "{{cloze:Front}}{{cloze:Back}}"
                                         Back = "{{cloze:Front}}{{cloze:Back}}{{Source}}"
                                 } |> Cloze
@@ -112,7 +112,7 @@ let ``EditConceptCommand's back works with cloze`` (): unit =
                 Title = null
                 Ids = ids_1
             }
-        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.Grompleaf.Templates)
+        Assert.Equal<string seq>(["Front"; "Back"], clozeFields view.Grompleaf.CardTemplates)
         view.Backs.Value
         |> Seq.map MappingTools.stripHtmlTags
         |> fun x -> Assert.Equal<string seq>(expectedBack, x)

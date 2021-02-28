@@ -19,7 +19,7 @@
   <div></div>
   <h3>Templates</h3>
   <div>
-    @if (Leaf.Templates.IsStandard) {
+    @if (Leaf.CardTemplates.IsStandard) {
       <button type="button" class="btn btn-success" @onclick=AddTemplate disabled=@IsDisabled>
         <span class="oi oi-plus"></span>
       </button>
@@ -27,12 +27,12 @@
   </div>
 </div>
 <div>
-  @foreach (var template in Leaf.JustTemplates) {
+  @foreach (var cardTemplate in Leaf.JustCardTemplates) {
     <GromplateEditor_Template
-                            Template=@template
+                            Template=@cardTemplate
                             Css=@Leaf.Css
-                            DisplayDelete=@(Leaf.JustTemplates.Count() >= 2)
-                            Delete=@(() => DeleteTemplate(template))
+                            DisplayDelete=@(Leaf.JustCardTemplates.Count() >= 2)
+                            Delete=@(() => DeleteTemplate(cardTemplate))
                             IsDisabled=@IsDisabled />
   }
 </div>
@@ -43,12 +43,12 @@
   [Parameter] public bool IsDisabled { get; set; }
 
   private Task AddTemplate() =>
-    Leaf.JustTemplates.Append(Template.initStandard).ToFList()
+    Leaf.JustCardTemplates.Append(CardTemplate.initStandard).ToFList()
     .Apply(GromplateType.NewStandard)
     .Apply(UpdateGromplateType.InvokeAsync);
 
-  private Task DeleteTemplate(Template template) =>
-    Leaf.JustTemplates.Where(x => x != template).ToFList()
+  private Task DeleteTemplate(CardTemplate cardTemplate) =>
+    Leaf.JustCardTemplates.Where(x => x != cardTemplate).ToFList()
     .Apply(GromplateType.NewStandard)
     .Apply(UpdateGromplateType.InvokeAsync);
 

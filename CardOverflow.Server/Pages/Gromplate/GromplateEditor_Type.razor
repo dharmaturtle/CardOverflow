@@ -17,10 +17,10 @@
 
 <div class="font-weight-bold">Type</div>
 <div class="btn-group" role="group">
-  <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(GromplateType.NewStandard(_originalTemplates)))>
+  <button type="button" class="btn btn-@(_isStandard ? "primary" : "light")" @onclick=@(() => _setType(GromplateType.NewStandard(_originalCardTemplates)))>
     Standard
   </button>
-  <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(GromplateType.NewCloze(_originalTemplates.First())))>
+  <button type="button" class="btn btn-@(_isStandard ? "light" : "primary")" @onclick=@(() => _setType(GromplateType.NewCloze(_originalCardTemplates.First())))>
     Cloze
   </button>
 </div>
@@ -31,15 +31,15 @@
     get => _leaf;
     set {
       _leaf = value;
-      if (_originalTemplates == null) {
-        _originalTemplates = _leaf.JustTemplates;
+      if (_originalCardTemplates == null) {
+        _originalCardTemplates = _leaf.JustCardTemplates;
       }
     }
   }
-  private FSharpList<Template> _originalTemplates;
+  private FSharpList<CardTemplate> _originalCardTemplates;
   [Parameter] public EventCallback<GromplateType> UpdateGromplateType { get; set; }
 
-  private bool _isStandard => Leaf.Templates.IsStandard;
+  private bool _isStandard => Leaf.CardTemplates.IsStandard;
 
   private Task _setType(GromplateType gromplateType) =>
     UpdateGromplateType.InvokeAsync(gromplateType);

@@ -25,11 +25,11 @@
             <span class="text-muted oi oi-chevron-bottom"></span>
           }
           @if (!isEditing) {
-            @Template.Name
+            @CardTemplate.Name
           }
         </a>
         @if (isEditing) {
-          <InputText @bind-Value=@Template.Name />
+          <InputText @bind-Value=@CardTemplate.Name />
         }
       </span>
       @if (!IsDisabled) {
@@ -51,8 +51,8 @@
       <h5 class="text-center">Question Template</h5>
       <div class="row">
         <div class="col">
-          <InputTextArea @bind-Value=@Template.Front class="form-control code" rows="25" />
-          <ValidationMessage For=@(() => Template.Front) />
+          <InputTextArea @bind-Value=@CardTemplate.Front class="form-control code" rows="25" />
+          <ValidationMessage For=@(() => CardTemplate.Front) />
         </div>
         <div class="col">
           <iframe sandbox="allow-scripts" srcdoc=@_front style="height: 30vh; width: 100%; resize: vertical;"></iframe>
@@ -61,8 +61,8 @@
       <h5 class="text-center">Answer Template</h5>
       <div class="row">
         <div class="col">
-          <InputTextArea @bind-Value=@Template.Back class="form-control code" rows="25" />
-          <ValidationMessage For=@(() => Template.Back) />
+          <InputTextArea @bind-Value=@CardTemplate.Back class="form-control code" rows="25" />
+          <ValidationMessage For=@(() => CardTemplate.Back) />
         </div>
         <div class="col">
           <iframe sandbox="allow-scripts" srcdoc=@_back style="height: 30vh; width: 100%; resize: vertical;"></iframe>
@@ -73,7 +73,7 @@
 </div>
 
 @code {
-  [Parameter] public Template Template { get; set; }
+  [Parameter] public CardTemplate CardTemplate { get; set; }
   [Parameter] public string Css { get; set; }
   [Parameter] public EventCallback Delete { get; set; }
   [Parameter] public bool DisplayDelete { get; set; }
@@ -82,7 +82,7 @@
   bool isEditing;
 
   private void _toggleCollapse() => isCollapsed = !isCollapsed;
-  private Tuple<string, string, string, string> _x => Template.FrontBackFrontSynthBackSynth(Css);
+  private Tuple<string, string, string, string> _x => CardTemplate.FrontBackFrontSynthBackSynth(Css);
   private string _front => _x.Item1;
   private string _back => _x.Item2;
 

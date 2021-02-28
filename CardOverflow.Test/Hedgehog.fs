@@ -29,9 +29,9 @@ let tagsGen =
     |> Gen.map Set.ofList
 
 let unicode max = Gen.string (Range.constant 1 max) Gen.unicode
-let standardTemplate fields =
+let standardCardTemplate fields =
     gen {
-        let templateGen =
+        let cardTemplateGen =
             gen {
                 let! name = unicode 100
                 let! front = Gen.item fields
@@ -44,10 +44,10 @@ let standardTemplate fields =
                         ShortBack = ""
                     }
             }
-        let! templates = GenX.cList 1 100 templateGen
-        return Standard templates
+        let! cardTemplates = GenX.cList 1 100 cardTemplateGen
+        return Standard cardTemplates
     }
-let clozeTemplate fields =
+let clozeCardTemplate fields =
     gen {
         let! name  = unicode 100
         let! text  = Gen.item fields
@@ -62,8 +62,8 @@ let clozeTemplate fields =
     }
 let gromplateType fields =
     Gen.choice [
-        standardTemplate fields
-        clozeTemplate fields
+        standardCardTemplate fields
+        clozeCardTemplate fields
     ]
 
 open NodaTime
@@ -101,7 +101,7 @@ let grompleaf gromplateType fieldNames =
             Modified = Some modified
             LatexPre = latexPre
             LatexPost = latexPost
-            Templates = gromplateType
+            CardTemplates = gromplateType
             EditSummary = editSummary
         }
     }
@@ -185,7 +185,7 @@ let templateGen : Template.Events.Summary Gen = gen {
           Modified = modified
           LatexPre = latexPre
           LatexPost = latexPost
-          Templates = gromplateType
+          CardTemplates = gromplateType
           EditSummary = editSummary }
     }
     

@@ -51,9 +51,9 @@ module Generators =
         |> Gen.map (fun x -> x.Get)
         |> Gen.listOfLength n
         |> Gen.filter (fun x -> x.Distinct().Count() = n)
-    let standardTemplate fields =
+    let standardCardTemplate fields =
         gen {
-            let templateGen =
+            let cardTemplateGen =
                 gen {
                     let! name = Arb.generate<string>
                     let! front = Gen.elements fields
@@ -66,10 +66,10 @@ module Generators =
                             ShortBack = ""
                         }
                 }
-            let! templates = Gen.nonEmptyListOf templateGen
-            return Standard templates
+            let! cardTemplate = Gen.nonEmptyListOf cardTemplateGen
+            return Standard cardTemplate
         }
-    let clozeTemplate fields =
+    let clozeCardTemplate fields =
         gen {
             let! name = Arb.generate<string>
             let! text = Gen.elements fields
@@ -84,8 +84,8 @@ module Generators =
         }
     let gromplateType fields =
         Gen.oneof [
-            standardTemplate fields
-            clozeTemplate fields
+            standardCardTemplate fields
+            clozeCardTemplate fields
         ]
     let fields =
         List.map (fun fieldName -> Gen.genMap<Field> (fun field -> { field with Name = fieldName }))
@@ -97,7 +97,7 @@ module Generators =
                 Gen.genMap<Grompleaf> (fun grompleaf -> {
                     grompleaf with
                         Fields = fields
-                        Templates = gromplateType
+                        CardTemplates = gromplateType
                 })
         }
     type ClozeText = ClozeText of string

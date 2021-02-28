@@ -22,7 +22,7 @@ module GrompleafEntity =
             e.Css
             e.LatexPre
             e.LatexPost
-            e.Templates
+            e.CardTemplates
             e.Fields
             e.Type |> string
         ]
@@ -200,22 +200,22 @@ type EditFieldAndValue with
                 Value = value }
         ) |> toResizeArray
 
-type Template with
-    static member load template =
-        let x = template |> MappingTools.splitByUnitSeparator
+type CardTemplate with
+    static member load cardTemplate =
+        let x = cardTemplate |> MappingTools.splitByUnitSeparator
         {   Name = x.[0]
             Front = x.[1]
             Back = x.[2]
             ShortFront = x.[3]
             ShortBack = x.[4]
         }
-    static member copyTo (t: Template) =
+    static member copyTo (t: CardTemplate) =
         [t.Name; t.Front; t.Back; t.ShortFront; t.ShortBack] |> MappingTools.joinByUnitSeparator
     static member loadMany =
         MappingTools.splitByRecordSeparator
-        >> List.map Template.load
+        >> List.map CardTemplate.load
     static member copyToMany =
-        List.map Template.copyTo
+        List.map CardTemplate.copyTo
         >> MappingTools.joinByRecordSeparator
 
 type Grompleaf with
@@ -229,12 +229,12 @@ type Grompleaf with
             Modified = entity.Modified |> Option.ofNullable
             LatexPre = entity.LatexPre
             LatexPost = entity.LatexPost
-            Templates = entity.Type |> GromplateType.fromDb (entity.Templates |> Template.loadMany)
+            CardTemplates = entity.Type |> GromplateType.fromDb (entity.CardTemplates |> CardTemplate.loadMany)
             EditSummary = entity.EditSummary
         }
     static member initialize grompleafId gromplateId = {
         Id = grompleafId
-        Name = "New Template"
+        Name = "New Card Template"
         GromplateId = gromplateId
         Css = """.card {
      font-family: arial;
@@ -263,7 +263,7 @@ type Grompleaf with
 \begin{document}
 """
         LatexPost = """\end{document}"""
-        Templates = GromplateType.initStandard
+        CardTemplates = GromplateType.initStandard
         EditSummary = "Initial creation" }
     member this.CopyTo (entity: GrompleafEntity) =
         entity.Name <- this.Name
@@ -272,10 +272,10 @@ type Grompleaf with
         entity.Modified <- this.Modified |> Option.toNullable
         entity.LatexPre <- this.LatexPre
         entity.LatexPost <- this.LatexPost
-        entity.Templates <- this.JustTemplates |> Template.copyToMany
+        entity.CardTemplates <- this.JustCardTemplates |> CardTemplate.copyToMany
         entity.EditSummary <- this.EditSummary
         entity.Type <-
-            match this.Templates with
+            match this.CardTemplates with
             | Standard _ -> 0s
             | Cloze _ -> 1s
     member this.CopyToNewLeaf =
@@ -297,7 +297,7 @@ type LeafView with
             Grompleaf = Grompleaf.load grompleaf }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.Grompleaf.Templates)
+            (this.Grompleaf.CardTemplates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     static member load (entity: LeafEntity) =
         LeafView.toView

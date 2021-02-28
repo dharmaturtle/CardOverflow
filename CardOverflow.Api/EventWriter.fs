@@ -185,8 +185,8 @@ module Stack =
             let! doesRevisionExist = tableClient.Exists summary.ExampleRevisionId
             return! stream.Transact(decideCreate summary doesRevisionExist)
             }
-        member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId templateId =
-            let stream = resolve templateId
+        member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId stackId =
+            let stream = resolve stackId
             stream.Transact(decideChangeTags tagsChanged callerId)
 
     let create resolve tableClient =

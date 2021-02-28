@@ -34,7 +34,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
         latestLeaf.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
-        latestLeaf.FirstTemplate.Front)
+        latestLeaf.FirstCardTemplate.Front)
     Assert.Equal(1, c.Db.Grompleaf.Count(fun x -> x.GromplateId = gromplateId))
 
     // Testing UpdateFieldsToNewLeaf
@@ -48,8 +48,8 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
             Id = newLeafId
             GromplateId = gromplateId
             Name = newGromplateName
-            Templates =
-                {   latestLeaf.FirstTemplate with
+            CardTemplates =
+                {   latestLeaf.FirstCardTemplate with
                         Front = newQuestionXemplate
                 } |> List.singleton |> Standard
             Fields = latestLeaf.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
@@ -62,7 +62,7 @@ let ``GromplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let latestLeaf = gromplate.Value.Leafs.Single(fun x -> x.Id = newLeafId)
     Assert.Equal(
         newQuestionXemplate,
-        latestLeaf.FirstTemplate.Front)
+        latestLeaf.FirstCardTemplate.Front)
     Assert.Equal(
         newGromplateName,
         latestLeaf.Name)

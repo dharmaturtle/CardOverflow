@@ -114,7 +114,7 @@ namespace CardOverflow.Entity {
         gromplate.Hash = _entityHasher.GrompleafHasher.Invoke((gromplate, sha512));
         gromplate.CWeightTsvHelper =
           Fields.fromString.Invoke(gromplate.Fields).Select(x => x.Name)
-            .Append(MappingTools.stripHtmlTags(gromplate.Templates))
+            .Append(MappingTools.stripHtmlTags(gromplate.CardTemplates))
             .Apply(x => string.Join(' ', x));
       }
       foreach (var leaf in _filter<LeafEntity>(entries)) {

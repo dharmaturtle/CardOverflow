@@ -668,7 +668,7 @@ type ViewEditConceptCommand = {
 } with
     member this.Backs = 
         let valueByFieldName = this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> List.ofSeq // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-        match this.Grompleaf.Templates with
+        match this.Grompleaf.CardTemplates with
         | Cloze t ->
              result {
                 let! max = ClozeLogic.maxClozeIndexInclusive "Something's wrong with your cloze indexes." (valueByFieldName |> Map.ofSeq) t.Front

@@ -95,7 +95,7 @@ module Fields =
         >> List.map Field.fromString
 
 [<CLIMutable>]
-type Template = {
+type CardTemplate = {
     Name: string
     [<RegularExpression(@"^[^\x1c\x1d\x1e\x1f]*$", ErrorMessage = "Unit, record, group, and file separators are not permitted.")>]
     Front: string
@@ -109,7 +109,7 @@ type Template = {
     member this.FrontBackFrontSynthBackSynth css = // medTODO split this up
         CardHtml.generate [] this.Front this.Back css CardHtml.Standard
     static member initStandard =
-        {   Name = "New Template"
+        {   Name = "New Card Template"
             Front = """{{Front}}"""
             Back = """{{FrontSide}}
 
@@ -121,20 +121,20 @@ type Template = {
         }
 
 type GromplateType =
-    | Standard of Template list
-    | Cloze of Template
+    | Standard of CardTemplate list
+    | Cloze of CardTemplate
   with
     member this.toDb =
         match this with
         | Standard _ -> 0s
         | Cloze _ -> 1s
-    static member fromDb templates =
+    static member fromDb cardTemplates =
         function
-        | 0s -> Standard templates
-        | 1s -> Cloze <| templates.Single()
+        | 0s -> Standard cardTemplates
+        | 1s -> Cloze <| cardTemplates.Single()
         | x -> failwith <| sprintf "Unable to convert '%i' to a GromplateType" x
     static member initStandard =
-        Template.initStandard |> List.singleton |> Standard
+        CardTemplate.initStandard |> List.singleton |> Standard
 
 type Grompleaf = {
     Id: Guid
@@ -146,19 +146,19 @@ type Grompleaf = {
     Modified: Instant option
     LatexPre: string
     LatexPost: string
-    Templates: GromplateType
+    CardTemplates: GromplateType
     EditSummary: string
 } with
-    member this.JustTemplates =
-        match this.Templates with
+    member this.JustCardTemplates =
+        match this.CardTemplates with
         | Cloze t -> [t]
         | Standard ts -> ts
     member this.IsCloze =
-        match this.Templates with
+        match this.CardTemplates with
         | Cloze _ -> true
         | _ -> false
     member this.FrontBackFrontSynthBackSynth () = // medTODO split this up
-        match this.Templates with
+        match this.CardTemplates with
         | Standard ts -> 
             ts.Select(fun t ->
                 CardHtml.generate [] t.Front t.Back this.Css CardHtml.Standard
@@ -289,8 +289,8 @@ type EditFieldAndValue = {
 }
 
 module Helper =
-    let maxIndexInclusive templates valueByFieldName =
-        match templates with
+    let maxIndexInclusive cardTemplate valueByFieldName =
+        match cardTemplate with
         | Cloze t ->
             let max = AnkiImportLogic.maxClozeIndex "Something's wrong with your cloze indexes." valueByFieldName t.Front |> Result.getOk
             max - 1s
@@ -303,11 +303,11 @@ type LeafView = {
 } with
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.Grompleaf.Templates)
+            (this.Grompleaf.CardTemplates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
     member this.Indexes = [0s .. this.MaxIndexInclusive]
     member this.FrontBackFrontSynthBackSynth = // medTODO split this up
-        match this.Grompleaf.Templates with
+        match this.Grompleaf.CardTemplates with
         | Standard ts -> 
             ts.Select(fun t ->
                 CardHtml.generate
@@ -520,5 +520,5 @@ type EditConceptCommand = {
         Grompleaf = this.Grompleaf }
     member this.MaxIndexInclusive =
         Helper.maxIndexInclusive
-            (this.Grompleaf.Templates)
+            (this.Grompleaf.CardTemplates)
             (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
