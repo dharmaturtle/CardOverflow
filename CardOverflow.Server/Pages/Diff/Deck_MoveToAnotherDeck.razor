@@ -19,11 +19,11 @@
   <div class="row">
     <div class="col-auto mt-2">
       Move
-      <a href="my/concept?leaf=@Mine.LeafId&index=@Mine.Index" class="mx-1">
+      <a href="my/concept?revision=@Mine.RevisionId&index=@Mine.Index" class="mx-1">
         <HoverPreview Padding="0">
-          <ResizingIframe Leaf=@((Mine.LeafId, Mine.Index)) Back />
+          <ResizingIframe Revision=@((Mine.RevisionId, Mine.Index)) Back />
         </HoverPreview>
-        @Mine.LeafId with index @Mine.Index
+        @Mine.RevisionId with index @Mine.Index
       </a>
       to another deck
     </div>
@@ -32,7 +32,7 @@
                     SelectedId=@Mine.DeckId
                     DeckSelected=@(async newDeckId => {
                                      if (newDeckId != Mine.DeckId) {
-                                       await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, _user.Id, newDeckId, Mine.LeafId, Mine.Index))
+                                       await DbExecutor.QueryAsync(db => SanitizeDeckRepository.switchByIds(db, _user.Id, newDeckId, Mine.RevisionId, Mine.Index))
                                          .Match(ToastService, _ => ToastService.ShowInfo("Deck saved!"));
                                        await Remove.InvokeAsync(null);
                                      }
@@ -45,7 +45,7 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public List<SimpleDeck> Decks { get; set; }
-  [Parameter] public ConceptLeafIndex Mine { get; set; }
+  [Parameter] public ConceptRevisionIndex Mine { get; set; }
   [Parameter] public EventCallback Remove { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {

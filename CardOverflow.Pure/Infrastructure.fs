@@ -16,8 +16,8 @@ type ConceptId = Guid<conceptId>
     and [<Measure>] conceptId
 type ExampleId = Guid<exampleId>
     and [<Measure>] exampleId
-type LeafId = Guid<leafId>
-    and [<Measure>] leafId
+type RevisionId = Guid<revisionId>
+    and [<Measure>] revisionId
 type StackId = Guid<stackId>
     and [<Measure>] stackId
 type SubtemplateName = string<subtemplateName>

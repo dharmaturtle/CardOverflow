@@ -20,9 +20,9 @@ using Npgsql.NameTranslation;
 namespace CardOverflow.Entity {
 
   public interface IEntityHasher {
-    FSharpFunc<(LeafEntity, BitArray, SHA512), BitArray> LeafHasher { get; }
+    FSharpFunc<(RevisionEntity, BitArray, SHA512), BitArray> RevisionHasher { get; }
     FSharpFunc<(TemplateRevisionEntity, SHA512), BitArray> TemplateRevisionHasher { get; }
-    FSharpFunc<LeafEntity, short> GetMaxIndexInclusive { get; }
+    FSharpFunc<RevisionEntity, short> GetMaxIndexInclusive { get; }
     FSharpFunc<string, string> SanitizeTag { get; }
   }
 
@@ -33,8 +33,8 @@ namespace CardOverflow.Entity {
 
   public static class IQueryableExtensions {
     // In C# because SQL's SUM returns NULL on an empty list, so we need the ?? operator, which doesn't exist in F#. At least not one that LINQ to Entities can parse
-    public static IOrderedQueryable<LeafEntity> Search(
-      this IQueryable<LeafEntity> leafs,
+    public static IOrderedQueryable<RevisionEntity> Search(
+      this IQueryable<RevisionEntity> revisions,
       string searchTerm,
       string plain,
       string wildcard,
@@ -44,18 +44,18 @@ namespace CardOverflow.Entity {
           NpgsqlTsRankingNormalization.DivideBy1PlusLogLength
         | NpgsqlTsRankingNormalization.DivideByMeanHarmonicDistanceBetweenExtents;
 
-      IQueryable<LeafEntity> where(IQueryable<LeafEntity> query) =>
+      IQueryable<RevisionEntity> where(IQueryable<RevisionEntity> query) =>
         string.IsNullOrWhiteSpace(searchTerm)
         ? query
         : query.Where(x => x.Tsv.Matches(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard))));
 
-      IOrderedQueryable<LeafEntity> order(IQueryable<LeafEntity> query) =>
+      IOrderedQueryable<RevisionEntity> order(IQueryable<RevisionEntity> query) =>
         searchOrder == SearchOrder.Popularity
         ? query.OrderByDescending(x => x.Example.Users)
         : query.OrderByDescending(x =>
           x.Tsv.RankCoverDensity(Functions.WebSearchToTsQuery(plain).And(Functions.ToTsQuery(wildcard)), normalization));
 
-      return leafs
+      return revisions
         .Apply(where)
         .Apply(order);
     }
@@ -117,14 +117,14 @@ namespace CardOverflow.Entity {
             .Append(MappingTools.stripHtmlTags(template.CardTemplates))
             .Apply(x => string.Join(' ', x));
       }
-      foreach (var leaf in _filter<LeafEntity>(entries)) {
-        if (leaf.TemplateRevision == null) {
-          leaf.TemplateRevision = await TemplateRevision.FindAsync(leaf.TemplateRevisionId);
+      foreach (var revision in _filter<RevisionEntity>(entries)) {
+        if (revision.TemplateRevision == null) {
+          revision.TemplateRevision = await TemplateRevision.FindAsync(revision.TemplateRevisionId);
         }
-        leaf.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(leaf);
-        var templateHash = leaf.TemplateRevision?.Hash ?? TemplateRevision.Find(leaf.TemplateRevisionId).Hash;
-        leaf.Hash = _entityHasher.LeafHasher.Invoke((leaf, templateHash, sha512));
-        leaf.TsvHelper = MappingTools.stripHtmlTags(leaf.FieldValues);
+        revision.MaxIndexInclusive = _entityHasher.GetMaxIndexInclusive.Invoke(revision);
+        var templateHash = revision.TemplateRevision?.Hash ?? TemplateRevision.Find(revision.TemplateRevisionId).Hash;
+        revision.Hash = _entityHasher.RevisionHasher.Invoke((revision, templateHash, sha512));
+        revision.TsvHelper = MappingTools.stripHtmlTags(revision.FieldValues);
       }
       foreach (var commeaf in _filter<CommeafEntity>(entries)) {
         commeaf.BWeightTsvHelper = MappingTools.stripHtmlTags(commeaf.Value);
@@ -139,10 +139,10 @@ namespace CardOverflow.Entity {
     }
 
     public IQueryable<CardIsLatestEntity> CardIsLatest => _CardIsLatestTracked.AsNoTracking();
-    public IQueryable<LeafRelationshipCountEntity> LeafRelationshipCount => _LeafRelationshipCountTracked.AsNoTracking();
+    public IQueryable<RevisionRelationshipCountEntity> RevisionRelationshipCount => _RevisionRelationshipCountTracked.AsNoTracking();
     public IQueryable<ConceptRelationshipCountEntity> ConceptRelationshipCount => _ConceptRelationshipCountTracked.AsNoTracking();
-    public IQueryable<LeafEntity> LatestLeaf => Leaf.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
-    public IQueryable<LeafEntity> LatestDefaultLeaf => LatestLeaf.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
+    public IQueryable<RevisionEntity> LatestRevision => Revision.Where(x => x.Example.LatestId == x.Id).AsNoTracking();
+    public IQueryable<RevisionEntity> LatestDefaultRevision => LatestRevision.Where(x => x.Example.Concept.DefaultExampleId == x.ExampleId).AsNoTracking();
     public IQueryable<CommeafEntity> LatestCommeaf => Commeaf.Where(x => x.Commield.LatestId == x.Id).AsNoTracking();
     public IQueryable<TemplateRevisionEntity> LatestTemplateRevision => TemplateRevision.Where(x => x.Template.LatestId == x.Id).AsNoTracking();
 

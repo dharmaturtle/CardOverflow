@@ -6,21 +6,21 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    [Table("commeaf_2_leaf")]
-    public partial class Commeaf_LeafEntity
+    [Table("commeaf_2_revision")]
+    public partial class Commeaf_RevisionEntity
     {
         [Key]
-        public Guid LeafId { get; set; }
+        public Guid RevisionId { get; set; }
         [Key]
         public Guid CommeafId { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Instant Created { get; set; }
 
-        [ForeignKey("LeafId")]
-        [InverseProperty("Commeaf_Leafs")]
-        public virtual LeafEntity Leaf { get; set; }
+        [ForeignKey("RevisionId")]
+        [InverseProperty("Commeaf_Revisions")]
+        public virtual RevisionEntity Revision { get; set; }
         [ForeignKey("CommeafId")]
-        [InverseProperty("Commeaf_Leafs")]
+        [InverseProperty("Commeaf_Revisions")]
         public virtual CommeafEntity Commeaf { get; set; }
     }
 }

@@ -85,7 +85,7 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-type LeafSummary =
+type RevisionSummary =
     { Id: TemplateRevisionId
       TemplateId: TemplateId
       AuthorId: UserId
@@ -98,7 +98,7 @@ type LeafSummary =
       CardTemplates: TemplateType
       EditSummary: string }
 
-let toLeafSummary (b: Events.Summary) =
+let toRevisionSummary (b: Events.Summary) =
     { Id = b.RevisionIds.Head
       TemplateId = b.Id
       AuthorId = b.AuthorId

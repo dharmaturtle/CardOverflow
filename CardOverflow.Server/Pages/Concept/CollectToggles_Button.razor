@@ -38,9 +38,9 @@
         <span>&nbsp;</span>
       }
     </div>
-    @if (LeafUsers != default) {
+    @if (RevisionUsers != default) {
       <div>
-        @LeafUsers
+        @RevisionUsers
       </div>
     }
   </div>
@@ -50,7 +50,7 @@
   [Parameter] public string Css { get; set; }
   [Parameter] public EventCallback OnClick { get; set; }
   [Parameter] public int? ExampleUsers { get; set; }
-  [Parameter] public int? LeafUsers { get; set; }
+  [Parameter] public int? RevisionUsers { get; set; }
   private double _scaleX() => Math.Max(1.5, (ExampleUsers?.ToString() ?? "").Length);
 
 }

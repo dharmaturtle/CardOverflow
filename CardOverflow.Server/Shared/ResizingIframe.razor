@@ -16,7 +16,7 @@
 
 @code {
   [Parameter] public Guid ConceptId { get; set; }
-  [Parameter] public (Guid LeafId, short Index) Leaf { get; set; }
+  [Parameter] public (Guid RevisionId, short Index) Revision { get; set; }
   [Parameter] public Guid TemplateId { get; set; }
   [Parameter] public Guid TemplateRevisionId { get; set; }
   [Parameter] public Guid CommieldId { get; set; }
@@ -31,16 +31,16 @@
     var middle = "";
     if (ConceptId != Guid.Empty) {
       middle = "concept/" + ConceptId;
-    } else if (!Leaf.Equals(default)) {
-      middle = "leaf/" + Leaf.LeafId + "/" + Leaf.Index;
+    } else if (!Revision.Equals(default)) {
+      middle = "revision/" + Revision.RevisionId + "/" + Revision.Index;
     } else if (TemplateId != Guid.Empty) {
       middle = "template/" + TemplateId;
     } else if (TemplateRevisionId != Guid.Empty) {
-      middle = "templateleaf/" + TemplateRevisionId;
+      middle = "templaterevision/" + TemplateRevisionId;
     } else if (CommieldId != Guid.Empty) {
       middle = "communalfield/" + CommieldId;
     } else if (CommeafId != Guid.Empty) {
-      middle = "communalfieldleaf/" + CommeafId;
+      middle = "communalfieldrevision/" + CommeafId;
     } else {
       throw new Exception("You done goofed.");
     }

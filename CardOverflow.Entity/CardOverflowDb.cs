@@ -11,8 +11,8 @@ namespace CardOverflow.Entity
         private DbSet<CardIsLatestEntity> _CardIsLatestTracked { get; set; }
         public virtual DbSet<AlphaBetaKeyEntity> AlphaBetaKey { get; set; }
         public virtual DbSet<ExampleEntity> Example { get; set; }
-        public virtual DbSet<LeafEntity> Leaf { get; set; }
-        private DbSet<LeafRelationshipCountEntity> _LeafRelationshipCountTracked { get; set; }
+        public virtual DbSet<RevisionEntity> Revision { get; set; }
+        private DbSet<RevisionRelationshipCountEntity> _RevisionRelationshipCountTracked { get; set; }
         public virtual DbSet<CardSettingEntity> CardSetting { get; set; }
         public virtual DbSet<TemplateEntity> Template { get; set; }
         public virtual DbSet<TemplateRevisionEntity> TemplateRevision { get; set; }
@@ -20,12 +20,12 @@ namespace CardOverflow.Entity
         public virtual DbSet<CommentConceptEntity> CommentConcept { get; set; }
         public virtual DbSet<CommieldEntity> Commield { get; set; }
         public virtual DbSet<CommeafEntity> Commeaf { get; set; }
-        public virtual DbSet<Commeaf_LeafEntity> Commeaf_Leaf { get; set; }
+        public virtual DbSet<Commeaf_RevisionEntity> Commeaf_Revision { get; set; }
         public virtual DbSet<DeckEntity> Deck { get; set; }
         public virtual DbSet<DeckFollowerEntity> DeckFollower { get; set; }
         public virtual DbSet<FeedbackEntity> Feedback { get; set; }
         public virtual DbSet<FileEntity> File { get; set; }
-        public virtual DbSet<File_LeafEntity> File_Leaf { get; set; }
+        public virtual DbSet<File_RevisionEntity> File_Revision { get; set; }
         public virtual DbSet<FilterEntity> Filter { get; set; }
         public virtual DbSet<HistoryEntity> History { get; set; }
         public virtual DbSet<NotificationEntity> Notification { get; set; }
@@ -73,7 +73,7 @@ namespace CardOverflow.Entity
                 IfNpg(() => entity.HasIndex(e => e.Tsv).HasMethod("gin"),
                     () => entity.Ignore(e => e.Tsv));
 
-                entity.HasIndex(e => e.LeafId);
+                entity.HasIndex(e => e.RevisionId);
 
                 entity.HasIndex(e => e.CardSettingId);
 
@@ -88,7 +88,7 @@ namespace CardOverflow.Entity
                 entity.HasIndex(e => new { e.Id, e.ConceptId, e.UserId })
                     .IsUnique();
 
-                entity.HasIndex(e => new { e.UserId, e.LeafId, e.Index })
+                entity.HasIndex(e => new { e.UserId, e.RevisionId, e.Index })
                     .IsUnique();
 
                 entity.HasOne(d => d.Example)
@@ -96,9 +96,9 @@ namespace CardOverflow.Entity
                     .HasForeignKey(d => d.ExampleId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
-                entity.HasOne(d => d.Leaf)
+                entity.HasOne(d => d.Revision)
                     .WithMany(p => p.Cards)
-                    .HasForeignKey(d => d.LeafId)
+                    .HasForeignKey(d => d.RevisionId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.CardSetting)
@@ -124,7 +124,7 @@ namespace CardOverflow.Entity
                 //entity.HasOne(d => d.ExampleI)
                 //    .WithMany(p => p.CardExampleIs)
                 //    .HasPrincipalKey(p => new { p.ExampleId, p.Id })
-                //    .HasForeignKey(d => new { d.ExampleId, d.LeafId })
+                //    .HasForeignKey(d => new { d.ExampleId, d.RevisionId })
                 //    .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.ExampleNavigation)
@@ -168,7 +168,7 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<LeafEntity>(entity =>
+            modelBuilder.Entity<RevisionEntity>(entity =>
             {
                 entity.HasIndex(e => e.ExampleId);
 
@@ -187,12 +187,12 @@ namespace CardOverflow.Entity
                     .IsUnique();
 
                 entity.HasOne(d => d.Example)
-                    .WithMany(p => p.Leafs)
+                    .WithMany(p => p.Revisions)
                     .HasForeignKey(d => d.ExampleId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.TemplateRevision)
-                    .WithMany(p => p.Leafs)
+                    .WithMany(p => p.Revisions)
                     .HasForeignKey(d => d.TemplateRevisionId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
@@ -200,16 +200,16 @@ namespace CardOverflow.Entity
                     .WithOne()
                     .HasForeignKey(x => x.ConceptId);
 
-                entity.HasMany(x => x.LeafRelationshipCounts)
+                entity.HasMany(x => x.RevisionRelationshipCounts)
                     .WithOne()
-                    .HasForeignKey(x => x.LeafId);
+                    .HasForeignKey(x => x.RevisionId);
             });
 
-            modelBuilder.Entity<LeafRelationshipCountEntity>(entity =>
+            modelBuilder.Entity<RevisionRelationshipCountEntity>(entity =>
             {
-                entity.HasKey(e => new { e.SourceLeafId, e.TargetLeafId, e.Name });
+                entity.HasKey(e => new { e.SourceRevisionId, e.TargetRevisionId, e.Name });
 
-                entity.ToView("leaf_relationship_count");
+                entity.ToView("revision_relationship_count");
             });
 
             modelBuilder.Entity<CardSettingEntity>(entity =>
@@ -328,19 +328,19 @@ namespace CardOverflow.Entity
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
-            modelBuilder.Entity<Commeaf_LeafEntity>(entity =>
+            modelBuilder.Entity<Commeaf_RevisionEntity>(entity =>
             {
-                entity.HasKey(e => new { e.CommeafId, e.LeafId });
+                entity.HasKey(e => new { e.CommeafId, e.RevisionId });
 
-                entity.HasIndex(e => e.LeafId);
+                entity.HasIndex(e => e.RevisionId);
 
-                entity.HasOne(d => d.Leaf)
-                    .WithMany(p => p.Commeaf_Leafs)
-                    .HasForeignKey(d => d.LeafId)
+                entity.HasOne(d => d.Revision)
+                    .WithMany(p => p.Commeaf_Revisions)
+                    .HasForeignKey(d => d.RevisionId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.Commeaf)
-                    .WithMany(p => p.Commeaf_Leafs)
+                    .WithMany(p => p.Commeaf_Revisions)
                     .HasForeignKey(d => d.CommeafId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });
@@ -397,19 +397,19 @@ namespace CardOverflow.Entity
                     .IsUnique();
             });
 
-            modelBuilder.Entity<File_LeafEntity>(entity =>
+            modelBuilder.Entity<File_RevisionEntity>(entity =>
             {
-                entity.HasKey(e => new { e.LeafId, e.FileId });
+                entity.HasKey(e => new { e.RevisionId, e.FileId });
 
                 entity.HasIndex(e => e.FileId);
 
-                entity.HasOne(d => d.Leaf)
-                    .WithMany(p => p.File_Leafs)
-                    .HasForeignKey(d => d.LeafId)
+                entity.HasOne(d => d.Revision)
+                    .WithMany(p => p.File_Revisions)
+                    .HasForeignKey(d => d.RevisionId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.File)
-                    .WithMany(p => p.File_Leafs)
+                    .WithMany(p => p.File_Revisions)
                     .HasForeignKey(d => d.FileId)
                     .OnDelete(DeleteBehavior.ClientSetNull);
             });

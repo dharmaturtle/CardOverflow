@@ -49,7 +49,7 @@ type ElseClient (client: ElasticClient) =
         | Example.Events.Created summary ->
             client.IndexDocumentAsync summary |> Task.map ignore
         | Example.Events.Edited
-            { LeafId             = leafId
+            { RevisionId             = revisionId
               Title              = title
               TemplateRevisionId = templateRevisionId
               FieldValues        = fieldValues
@@ -61,7 +61,7 @@ type ElseClient (client: ElasticClient) =
                         .Index<Example.Events.Summary>()
                         .Doc
                         {| 
-                            LeafId             = leafId
+                            RevisionId             = revisionId
                             Title              = title
                             TemplateRevisionId = templateRevisionId
                             FieldValues        = fieldValues

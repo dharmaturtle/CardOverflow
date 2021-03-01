@@ -21,11 +21,11 @@ namespace CardOverflow.UserContentApi.Controllers {
     [HttpGet("template/{id}/{index}/back")]
     public async Task<IActionResult> Back(Guid id, int index) => _back(index, await TemplateRepository.latest(_db, id));
 
-    [HttpGet("templateleaf/{id}/{index}/front")]
-    public async Task<IActionResult> LeafFront(Guid id, int index) => _front(index, await TemplateRepository.leaf(_db, id));
+    [HttpGet("templaterevision/{id}/{index}/front")]
+    public async Task<IActionResult> RevisionFront(Guid id, int index) => _front(index, await TemplateRepository.revision(_db, id));
 
-    [HttpGet("templateleaf/{id}/{index}/back")]
-    public async Task<IActionResult> LeafBack(Guid id, int index) => _back(index, await TemplateRepository.leaf(_db, id));
+    [HttpGet("templaterevision/{id}/{index}/back")]
+    public async Task<IActionResult> RevisionBack(Guid id, int index) => _back(index, await TemplateRepository.revision(_db, id));
 
     private ContentResult _front(int index, FSharpResult<TemplateRevision, string> view) =>
       ( view.IsError

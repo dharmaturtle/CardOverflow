@@ -35,7 +35,7 @@ let ``AnkiImporter.save saves three files`` ankiFileName ankiDb: Task<unit> = (t
         |> Task.FromResult
         |> TaskResult.bind(AnkiImporter.save c.Db ankiDb userId)
 
-    Assert.Equal(3, c.Db.File_Leaf.Count())
+    Assert.Equal(3, c.Db.File_Revision.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(7, c.Db.TemplateRevision.Count())
@@ -55,7 +55,7 @@ let ``Running AnkiImporter.save 3x only imports 3 files`` ankiFileName ankiDb: T
             |> Task.FromResult
             |> TaskResult.bind(AnkiImporter.save c.Db ankiDb userId)
 
-    Assert.Equal(3, c.Db.File_Leaf.Count())
+    Assert.Equal(3, c.Db.File_Revision.Count())
     Assert.Equal(3, c.Db.File.Count())
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     } |> TaskResult.getOk)
@@ -111,7 +111,7 @@ let ``AnkiImporter import cards that have the same collectHash as distinct cards
         c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).OrderBy(fun x -> x))
     Assert.SingleI(c.Db.Deck.Where(fun x -> x.Name = "duplicate cards"))
     Assert.Equal(3, c.Db.Concept.Count())
-    Assert.Equal(3, c.Db.Leaf.Count())
+    Assert.Equal(3, c.Db.Revision.Count())
     Assert.Equal(8, c.Db.TemplateRevision.Count())
     Assert.Equal(6, c.Db.LatestTemplateRevision.Count())
     } |> TaskResult.getOk)
@@ -121,7 +121,7 @@ let testCommields (c: TestContainer) userId conceptId expected = task {
     let collected = collected.Value.Single()
     Assert.Equal<string seq>(
         expected |> List.map MappingTools.stripHtmlTags |> List.sort,
-        collected.LeafMeta.Commields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
+        collected.RevisionMeta.Commields.Select(fun x -> x.Value |> MappingTools.stripHtmlTags) |> Seq.sort)}
 
 [<Fact>]
 let ``Multiple cloze indexes works and missing image => <img src="missingImage.jpg">`` (): Task<unit> = task {
@@ -130,20 +130,20 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
     let testCommields = testCommields c userId
     let! x = AnkiImporter.save c.Db multipleClozeAndSingleClozeAndNoClozeWithMissingImage userId Map.empty
     Assert.Equal(7, c.Db.Card.Count())
-    Assert.Equal(3, c.Db.Leaf.Count())
+    Assert.Equal(3, c.Db.Revision.Count())
     Assert.Equal(3, c.Db.Example.Count())
     Assert.Equal(3, c.Db.Concept.Count())
-    Assert.Equal(4s, c.Db.Leaf.Single(fun x -> x.FieldValues.Contains "Drugs").MaxIndexInclusive)
+    Assert.Equal(4s, c.Db.Revision.Single(fun x -> x.FieldValues.Contains "Drugs").MaxIndexInclusive)
     Assert.Null x.Value
-    let allLeafViews =
-        c.Db.Leaf
+    let allRevisionViews =
+        c.Db.Revision
             .Include(fun x -> x.TemplateRevision)
-            .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
+            .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
+                .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
             .ToList()
-            .Select(LeafView.load)
+            .Select(RevisionView.load)
     let assertCount expected (clozeText: string) =
-        allLeafViews
+        allRevisionViews
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
     assertCount 1 "may be remembered with the mnemonic"
@@ -153,44 +153,44 @@ let ``Multiple cloze indexes works and missing image => <img src="missingImage.j
         [   """↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic FibrosisImage here"""
             """↑↑ BUN/CR ratio indicates which type of acute renal failure?Prerenal azotemia"""
             longThingUs],
-        c.Db.Leaf.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
+        c.Db.Revision.ToList().Select(fun x -> x.FieldValues |> MappingTools.stripHtmlTags).OrderBy(fun x -> x))
     assertCount 1 "Fibrosis"
     Assert.areEquivalent
         [   "<b><br /></b>"
             "<br /><div><br /></div><div>Image here</div>" ]
-        (allLeafViews.SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value)))
+        (allRevisionViews.SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Extra").Select(fun x -> x.Value)))
     Assert.areEquivalent
         [   longThing
             "↑ {{c1::Cl−}} concentration (> 60 mEq/L) in sweat is diagnostic for Cystic Fibrosis" ]
-        (allLeafViews.SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value)))
+        (allRevisionViews.SelectMany(fun x -> x.FieldValues.Where(fun x -> x.Field.Name = "Text").Select(fun x -> MappingTools.stripHtmlTags x.Value)))
     Assert.SingleI
-        <| c.Db.Leaf
+        <| c.Db.Revision
             .Where(fun x -> x.FieldValues.Contains("acute"))
-    Assert.True(c.Db.Leaf.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
-    let leaf = Assert.Single <| c.Db.Leaf.Where(fun x -> x.FieldValues.Contains("microtubules"))
-    let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+    Assert.True(c.Db.Revision.Select(fun x -> x.FieldValues).Single(fun x -> x.Contains "Prerenal").Contains """<img src="/missingImage.jpg">""")
+    let revision = Assert.Single <| c.Db.Revision.Where(fun x -> x.FieldValues.Contains("microtubules"))
+    let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
     let concept = concept.Value
     Assert.Equal(
         """Drugs that act on microtubules may be remembered with the mnemonic "Microtubules Get Constructed Very Poorly":M: [ ... ] G: Griseofulvin (antifungal) C: Colchicine (antigout) V: Vincristine/Vinblastine (anticancer)P: Palcitaxel (anticancer)""",
-        concept.Default.Leaf.StrippedFront)
-    let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+        concept.Default.Revision.StrippedFront)
+    let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
     Assert.Empty concept.Value.Relationships
     Assert.Empty c.Db.Relationship
 
-    let! clozes = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value.Contains "mnemonic")).ToListAsync()
-    for leaf in clozes do
-        do! testCommields leaf.ConceptId [longThing; ""]
+    let! clozes = c.Db.Revision.Where(fun x -> x.Commeaf_Revisions.Any(fun x -> x.Commeaf.Value.Contains "mnemonic")).ToListAsync()
+    for revision in clozes do
+        do! testCommields revision.ConceptId [longThing; ""]
     }
 
 [<Fact>]
-let ``LeafView.load works on cloze`` (): Task<unit> = task {
+let ``RevisionView.load works on cloze`` (): Task<unit> = task {
     let userId = user_3
     use c = new TestContainer()
     let clozeText = "{{c1::Portland::city}} was founded in {{c2::1845}}."
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_1, example_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_1, example_1, revision_1, [card_1; card_2])
 
     Assert.Equal(2, c.Db.Card.Count(fun x -> x.UserId = userId))
-    let! view = ConceptViewRepository.leaf c.Db leaf_1
+    let! view = ConceptViewRepository.revision c.Db revision_1
     Assert.Equal(2, view.Value.FrontBackFrontSynthBackSynth.Count)
     Assert.Equal(1s, view.Value.MaxIndexInclusive)
     Assert.Equal<string seq>(
@@ -207,7 +207,7 @@ let ``Create card works with EditCardCommand`` (): Task<unit> = (taskResult {
         |> Task.map (fun x -> x.ConceptId)
         |> Task.bind (fun conceptId -> ConceptRepository.GetCollected c.Db userId conceptId |> TaskResult.map Seq.exactlyOne)
     let exampleId = example_1
-    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     Assert.equal exampleId actualExampleId
     let ccId = card_1
     
@@ -289,20 +289,20 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let testCommields = testCommields c userId
 
-    let getLeafs clozeText = c.Db.Leaf.Where(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText))
+    let getRevisions clozeText = c.Db.Revision.Where(fun x -> x.Commeaf_Revisions.Any(fun x -> x.Commeaf.Value = clozeText))
     let test clozeMaxIndex clozeText otherTest = task {
         let! r = FacetRepositoryTests.addCloze clozeText c.Db userId [] (Ulid.create, Ulid.create, Ulid.create, [1 .. clozeMaxIndex] |> List.map (fun _ -> Ulid.create))
         Assert.NotNull r.Value
         for i in [1 .. clozeMaxIndex] |> List.map int16 do
-            Assert.SingleI <| c.Db.LatestLeaf.Where(fun x -> x.FieldValues.Contains clozeText)
-            Assert.Equal(0, c.Db.LatestLeaf.Count(fun x -> x.Commeaf_Leafs.Any(fun x -> x.Commeaf.Value = clozeText)))
+            Assert.SingleI <| c.Db.LatestRevision.Where(fun x -> x.FieldValues.Contains clozeText)
+            Assert.Equal(0, c.Db.LatestRevision.Count(fun x -> x.Commeaf_Revisions.Any(fun x -> x.Commeaf.Value = clozeText)))
             let! commeafIds =
-                (getLeafs clozeText)
-                    .Select(fun x -> x.Commeaf_Leafs.Single().Commeaf.Id)
+                (getRevisions clozeText)
+                    .Select(fun x -> x.Commeaf_Revisions.Single().Commeaf.Id)
                     .ToListAsync()
             for id in commeafIds do
                 Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = id))
-            let! conceptIds = (getLeafs clozeText).Select(fun x -> x.ConceptId).ToListAsync()
+            let! conceptIds = (getRevisions clozeText).Select(fun x -> x.ConceptId).ToListAsync()
             for id in conceptIds do
                 do! testCommields id [clozeText]
         otherTest clozeText }
@@ -311,12 +311,12 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
     do! assertUserHasNormalCardCount 0
     let assertCount expected (clozeText: string) =
-        c.Db.Leaf
+        c.Db.Revision
             .Include(fun x -> x.TemplateRevision)
-            .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
+            .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
+                .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
             .ToList()
-            .Select(LeafView.load)
+            .Select(RevisionView.load)
             .Count(fun x -> x.FieldValues.Any(fun x -> x.Value.Contains clozeText))
             |> fun x -> Assert.Equal(expected, x)
     do! test 1 "Canberra was founded in {{c1::1913}}."
@@ -338,7 +338,7 @@ let ``Create cloze card works`` (): Task<unit> = (taskResult {
             "[ city ] was founded in [ ... ] .", "[ Canberra ] was founded in [ 1913 ] . extra"
             "[ city ] was founded in 1845.", "[ Portland ] was founded in 1845. extra"
             "Portland was founded in [ ... ] .", "Portland was founded in [ 1845 ] . extra" ]
-    Assert.areEquivalent expected <| e.Results.Select(fun x -> x.Value.LeafMeta.StrippedFront, x.Value.LeafMeta.StrippedBack)
+    Assert.areEquivalent expected <| e.Results.Select(fun x -> x.Value.RevisionMeta.StrippedFront, x.Value.RevisionMeta.StrippedBack)
     do! assertUserHasNormalCardCount 4
     } |> TaskResult.getOk)
 
@@ -349,18 +349,18 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     let assertUserHasNormalCardCount expected =
         c.Db.Card.CountAsync(fun x -> x.UserId = userId && x.CardState = CardState.toDb Normal)
         |> Task.map (fun actual -> Assert.Equal(expected, actual))
-    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addCloze "Canberra was founded in {{c1::1913}}." c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     do! assertUserHasNormalCardCount 1
 
     // updating card fails for mismatching cardIds
     let mismatching = Ulid.create
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, revision_2, []) |> UpsertIds.fromTuple)
     let! (r: Result<_, _>) = SanitizeConceptRepository.Update c.Db userId [] (FacetRepositoryTests.setCardIds command [mismatching])
     Assert.equal (sprintf "Card ids don't match. Was given %A and expected %A" mismatching card_1) r.error
     do! assertUserHasNormalCardCount 1
 
     // go from 1 cloze to 2 clozes
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_2, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, revision_2, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditConceptCommand.FieldValues =
@@ -375,7 +375,7 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     do! assertUserHasNormalCardCount 2
     
     // go from 2 clozes to 1 cloze
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_3, []) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, revision_3, []) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditConceptCommand.FieldValues =
@@ -390,7 +390,7 @@ let ``Create cloze card works with changing card number`` (): Task<unit> = (task
     do! assertUserHasNormalCardCount 1
     
     // multiple c1's works
-    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, leaf_ 4, [card_1]) |> UpsertIds.fromTuple)
+    let! command = SanitizeConceptRepository.getUpsert c.Db userId (VUpdate_ExampleId example_1) ((concept_1, example_1, revision_ 4, [card_1]) |> UpsertIds.fromTuple)
     let command =
         { command with
             ViewEditConceptCommand.FieldValues =
@@ -416,7 +416,7 @@ let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult
 
     let ex =
         Assert.Throws<Microsoft.EntityFrameworkCore.DbUpdateException>(fun () -> 
-            (FacetRepositoryTests.addBasicConcept c.Db userId [] (Guid.Empty, example_1, leaf_1, [card_1]))
+            (FacetRepositoryTests.addBasicConcept c.Db userId [] (Guid.Empty, example_1, revision_1, [card_1]))
                 .GetAwaiter().GetResult() |> ignore
         )
     Assert.equal
@@ -426,7 +426,7 @@ let ``SanitizeConceptRepository.Update checks ids`` (): Task<unit> = (taskResult
     // https://codereview.stackexchange.com/questions/188948/correct-using-of-try-catch-clause-on-database-execution
     // https://github.com/StackExchange/Dapper/issues/710
     // this code is very temp
-    //let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    //let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     //let! (x: Result<_, _>) = FacetRepositoryTests.update c userId (VNewExample_SourceConceptId concept_1) id ids_1 example_1
     
     //Assert.equal "Concept #00000000-0000-0000-0000-57ac00000001 not found." x.error
@@ -438,11 +438,11 @@ let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit>
     use c = new TestContainer()
 
     // inserting with just 1 cardId fails
-    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
-    Assert.equal "Leaf#00000000-0000-0000-0000-1eaf00000001 requires 2 card id(s). You provided 1." x.error
+    let! (x: Result<_, _>) = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
+    Assert.equal "Revision#00000000-0000-0000-0000-1eaf00000001 requires 2 card id(s). You provided 1." x.error
 
     // setup
-    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1; card_2])
     let conceptId = concept_1
     let exampleId_og = example_1
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_og)
@@ -459,7 +459,7 @@ let ``UpdateRepository.concept on addReversedBasicConcept works`` (): Task<unit>
 
     // updating an uncollected example doesn't change the Cards
     do! FacetRepositoryTests.update c userId
-            (VUpdate_ExampleId exampleId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { ConceptId = concept_1; ExampleId = exampleId_og; LeafId = leaf_3; CardIds = [] } exampleId_og
+            (VUpdate_ExampleId exampleId_og) (fun command -> (FacetRepositoryTests.setCardIds command [card_1; card_2])) { ConceptId = concept_1; ExampleId = exampleId_og; RevisionId = revision_3; CardIds = [] } exampleId_og
 
     Assert.equal 0 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_og)
     Assert.equal 2 <| c.Db.Card.Count(fun x -> x.UserId = userId && x.ExampleId = exampleId_alt)
@@ -486,7 +486,7 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
     let editSummary = Guid.NewGuid().ToString()
     let communalValue = Guid.NewGuid().ToString()
     let conceptId = concept_1
-    let leafId = leaf_1
+    let revisionId = revision_1
 
     let test customTest = task {
         let! _ =
@@ -517,21 +517,21 @@ let ``Creating card with shared "Back" field works twice`` (): Task<unit> = task
         let! field = c.Db.Commield.SingleAsync()
         Assert.Equal(conceptId, field.Id)
         Assert.Equal(user_3, field.AuthorId)
-        let! leaf = c.Db.Commeaf.Include(fun x -> x.Commeaf_Leafs).SingleAsync(fun x -> x.Value = communalValue)
-        Assert.Equal(leafId, leaf.Id)
-        Assert.Equal(commield_1, leaf.CommieldId)
-        Assert.Equal("Back", leaf.FieldName)
-        Assert.Equal(communalValue, leaf.Value)
-        Assert.Null leaf.Modified
-        Assert.Equal(editSummary, leaf.EditSummary)
-        customTest leaf }
+        let! revision = c.Db.Commeaf.Include(fun x -> x.Commeaf_Revisions).SingleAsync(fun x -> x.Value = communalValue)
+        Assert.Equal(revisionId, revision.Id)
+        Assert.Equal(commield_1, revision.CommieldId)
+        Assert.Equal("Back", revision.FieldName)
+        Assert.Equal(communalValue, revision.Value)
+        Assert.Null revision.Modified
+        Assert.Equal(editSummary, revision.EditSummary)
+        customTest revision }
     do! test <| fun i ->
-            Assert.Equal(leafId, i.Commeaf_Leafs.Single().LeafId)
-            Assert.Equal(commeaf_1, i.Commeaf_Leafs.Single().CommeafId)
+            Assert.Equal(revisionId, i.Commeaf_Revisions.Single().RevisionId)
+            Assert.Equal(commeaf_1, i.Commeaf_Revisions.Single().CommeafId)
             Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
     do! test <| fun i ->
-            Assert.Equal([leaf_1   ; leaf_2   ], i.Commeaf_Leafs.Select(fun x -> x.LeafId))
-            Assert.Equal([commeaf_1; commeaf_1], i.Commeaf_Leafs.Select(fun x -> x.CommeafId))
+            Assert.Equal([revision_1   ; revision_2   ], i.Commeaf_Revisions.Select(fun x -> x.RevisionId))
+            Assert.Equal([commeaf_1; commeaf_1], i.Commeaf_Revisions.Select(fun x -> x.CommeafId))
             Assert.True(c.Db.LatestCommeaf.Any(fun x -> x.Id = i.Id))
     Assert.SingleI c.Db.Commield
     Assert.SingleI c.Db.Commeaf }
@@ -548,7 +548,7 @@ let ``AnkiDefaults.templateIdByHash is same as initial database`` (): unit =
     // test that the calculated hash is the same as the one stored in the db
     for template in dbTemplates do
         let calculated = TemplateRevisionEntity.hashBase64 hasher template
-        let dbValue = LeafEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
+        let dbValue = RevisionEntity.bitArrayToByteArray template.Hash |> Convert.ToBase64String
         //for x in TemplateRevisionEntity.hash hasher template do
         //    Console.Write(if x then "1" else "0")
         //Console.WriteLine()
@@ -572,7 +572,7 @@ let ``Manual Anki import`` (): Task<unit> = (taskResult {
     //c.RegisterStuffTestOnly
     //c.RegisterStandardConnectionString
     //use __ = AsyncScopedLifestyle.BeginScope c
-    //let db = c.GetLeaf<CardOverflowDb>()
+    //let db = c.GetRevision<CardOverflowDb>()
 
     let ankiDb =
         AnkiImporter.getSimpleAnkiDb

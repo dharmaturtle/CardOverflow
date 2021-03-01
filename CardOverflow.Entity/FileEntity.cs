@@ -11,7 +11,7 @@ namespace CardOverflow.Entity
     {
         public FileEntity()
         {
-            File_Leafs = new HashSet<File_LeafEntity>();
+            File_Revisions = new HashSet<File_RevisionEntity>();
         }
 
         [Key]
@@ -35,6 +35,6 @@ namespace CardOverflow.Entity
         public byte[] Sha256 { get; set; }
 
         [InverseProperty("File")]
-        public virtual ICollection<File_LeafEntity> File_Leafs { get; set; }
+        public virtual ICollection<File_RevisionEntity> File_Revisions { get; set; }
     }
 }

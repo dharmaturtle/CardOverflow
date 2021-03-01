@@ -45,14 +45,14 @@ type TableClient(connectionString, tableName) =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :? Domain.Concept .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Stack   .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Example .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Example    .LeafSummary as x -> string x.Id, string x.Id
-        | :? Domain.User    .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Deck    .Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Template.Events.Summary as x -> string x.Id, string x.Id
-        | :? Domain.Template   .LeafSummary as x -> string x.Id, string x.Id
+        | :? Domain.Concept  .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Stack    .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Example  .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Example .RevisionSummary as x -> string x.Id, string x.Id
+        | :? Domain.User     .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Deck     .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Template .Events.Summary as x -> string x.Id, string x.Id
+        | :? Domain.Template.RevisionSummary as x -> string x.Id, string x.Id
         | _ -> failwith $"The type '{summary.GetType().FullName}' has not yet registered a PartitionKey or RowKey."
 
     let wrap payload =
@@ -134,7 +134,7 @@ type TableClient(connectionString, tableName) =
     member this.UpsertExample' (exampleId: string) e =
         match e with
         | Example.Events.Created summary ->
-            [ this.InsertOrReplace (Example.toLeafSummary summary)
+            [ this.InsertOrReplace (Example.toRevisionSummary summary)
               this.InsertOrReplace summary
             ] |> Async.Parallel |>% ignore
         | Example.Events.Edited e -> async {
@@ -142,7 +142,7 @@ type TableClient(connectionString, tableName) =
             let summary = Example.Fold.evolveEdited e summary
             return!
                 [ this.InsertOrReplace summary
-                  this.InsertOrReplace (Example.toLeafSummary summary)
+                  this.InsertOrReplace (Example.toRevisionSummary summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =
@@ -152,8 +152,8 @@ type TableClient(connectionString, tableName) =
     member this.GetExample (exampleId: ExampleId) =
         exampleId.ToString() |> this.GetExample
     member this.GetExampleRevision (exampleRevisionId: string) =
-        this.Get<Example.LeafSummary> exampleRevisionId
-    member this.GetExampleRevision (exampleRevisionId: LeafId) =
+        this.Get<Example.RevisionSummary> exampleRevisionId
+    member this.GetExampleRevision (exampleRevisionId: RevisionId) =
         exampleRevisionId.ToString() |> this.GetExampleRevision
     
     member this.UpsertUser' (userId: string) e =
@@ -191,7 +191,7 @@ type TableClient(connectionString, tableName) =
     member this.UpsertTemplate' (templateId: string) e =
         match e with
         | Template.Events.Created summary ->
-            [ this.InsertOrReplace (Template.toLeafSummary summary)
+            [ this.InsertOrReplace (Template.toRevisionSummary summary)
               this.InsertOrReplace summary
             ] |> Async.Parallel |>% ignore
         | Template.Events.Edited e -> async {
@@ -199,7 +199,7 @@ type TableClient(connectionString, tableName) =
             let summary = Template.Fold.evolveEdited e summary
             return!
                 [ this.InsertOrReplace summary
-                  this.InsertOrReplace (Template.toLeafSummary summary)
+                  this.InsertOrReplace (Template.toRevisionSummary summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertTemplate (templateId: TemplateId) =
@@ -209,7 +209,7 @@ type TableClient(connectionString, tableName) =
     member this.GetTemplate (templateId: TemplateId) =
         templateId.ToString() |> this.GetTemplate
     member this.GetTemplateRevision (templateRevisionId: string) =
-        this.Get<Template.LeafSummary> templateRevisionId
+        this.Get<Template.RevisionSummary> templateRevisionId
     member this.GetTemplateRevision (templateRevisionId: TemplateRevisionId) =
         templateRevisionId.ToString() |> this.GetTemplateRevision
 

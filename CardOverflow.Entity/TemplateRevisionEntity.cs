@@ -13,7 +13,7 @@ namespace CardOverflow.Entity
     {
         public TemplateRevisionEntity()
         {
-            Leafs = new HashSet<LeafEntity>();
+            Revisions = new HashSet<RevisionEntity>();
             Templates = new HashSet<TemplateEntity>();
             Notifications = new HashSet<NotificationEntity>();
             User_TemplateRevisions = new HashSet<User_TemplateRevisionEntity>();
@@ -111,7 +111,7 @@ namespace CardOverflow.Entity
         [InverseProperty("TemplateRevisions")]
         public virtual TemplateEntity Template { get; set; }
         [InverseProperty("TemplateRevision")]
-        public virtual ICollection<LeafEntity> Leafs { get; set; }
+        public virtual ICollection<RevisionEntity> Revisions { get; set; }
         [InverseProperty("Latest")]
         public virtual ICollection<TemplateEntity> Templates { get; set; }
         [InverseProperty("TemplateRevision")]

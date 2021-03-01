@@ -126,9 +126,9 @@ module Generators =
             let! kind = Gen.genMap<UpsertKind> (fun x ->
                 match x with
                 | NewOriginal_TagIds tags -> tags |> Set.filter (fun t -> t <> null) |> NewOriginal_TagIds
-                | NewCopy_SourceLeafId_TagIds (x, tags) ->
+                | NewCopy_SourceRevisionId_TagIds (x, tags) ->
                     let tags = tags |> Set.filter (fun t -> t <> null)
-                    NewCopy_SourceLeafId_TagIds (x, tags)
+                    NewCopy_SourceRevisionId_TagIds (x, tags)
                 | _ -> x
             )
             return!
@@ -163,31 +163,31 @@ module Generators =
         return array }
     let uniqueGuids length =
         Arb.generate<Guid> |> Gen.listOfLength length
-    let ConceptLeafIds length = gen {
+    let ConceptRevisionIds length = gen {
         let! concepts = uniqueGuids length
         let! examples = uniqueGuids length
-        let! leafs = uniqueGuids length
+        let! revisions = uniqueGuids length
         return
-            Seq.zip3 concepts examples leafs
-            |> Seq.map ConceptLeafIds.fromTuple
+            Seq.zip3 concepts examples revisions
+            |> Seq.map ConceptRevisionIds.fromTuple
             |> List.ofSeq
         }
-    let ConceptLeafIds3 =
-        ConceptLeafIds 3
-    let ConceptLeafIndex length = gen {
+    let ConceptRevisionIds3 =
+        ConceptRevisionIds 3
+    let ConceptRevisionIndex length = gen {
         let! concepts = uniqueGuids length
         let! examples = uniqueGuids length
-        let! leafs = uniqueGuids length
+        let! revisions = uniqueGuids length
         let! indexes = Arb.generate<int16> |> Gen.listOfLength length
         let! deckId = Arb.generate<Guid> |> Gen.listOfLength length
         let! cardId = uniqueGuids length
         return
-            Seq.zip6 concepts examples leafs indexes deckId cardId
-            |> Seq.map ConceptLeafIndex.fromTuple
+            Seq.zip6 concepts examples revisions indexes deckId cardId
+            |> Seq.map ConceptRevisionIndex.fromTuple
             |> List.ofSeq
         }
-    let ConceptLeafIndex3 =
-        ConceptLeafIndex 3
+    let ConceptRevisionIndex3 =
+        ConceptRevisionIndex 3
 
 type Generators =
     static member instant =
@@ -200,10 +200,10 @@ type Generators =
         |> Arb.fromGen
     static member notificationEntity =
         Generators.notificationEntity |> Arb.fromGen
-    static member ConceptLeafIds3 =
-        Generators.ConceptLeafIds3 |> Arb.fromGen
-    static member ConceptLeafIndex3 =
-        Generators.ConceptLeafIndex3 |> Arb.fromGen
+    static member ConceptRevisionIds3 =
+        Generators.ConceptRevisionIds3 |> Arb.fromGen
+    static member ConceptRevisionIndex3 =
+        Generators.ConceptRevisionIndex3 |> Arb.fromGen
 
 type GeneratorsAttribute() =
     inherit PropertyAttribute(Arbitrary = [| typeof<Generators> |])

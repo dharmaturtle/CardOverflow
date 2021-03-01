@@ -14,7 +14,7 @@ module Events =
 
     type Summary =
         { Id: ExampleId
-          LeafIds: LeafId list
+          RevisionIds: RevisionId list
           Title: string
           ConceptId: ConceptId
           AuthorId: UserId
@@ -23,7 +23,7 @@ module Events =
           FieldValues: Map<string, string>
           EditSummary: string }
     type Edited =
-        { LeafId: LeafId
+        { RevisionId: RevisionId
           Title: string
           TemplateRevisionId: TemplateRevisionId
           FieldValues: Map<string, string>
@@ -49,14 +49,14 @@ module Fold =
         | x -> x
     
     let evolveEdited
-        ({  LeafId = leafId
+        ({  RevisionId = revisionId
             Title = title
             TemplateRevisionId = templateRevisionId
             FieldValues = fieldValues
             EditSummary = editSummary }: Events.Edited)
         (s: Events.Summary) =
         { s with
-            LeafIds            = leafId :: s.LeafIds
+            RevisionIds            = revisionId :: s.RevisionIds
             Title              = title
             TemplateRevisionId = templateRevisionId
             FieldValues        = fieldValues
@@ -69,8 +69,8 @@ module Fold =
     let fold : State -> Events.Event seq -> State = Seq.fold evolve
     let isOrigin = function Events.Created _ -> true | _ -> false
 
-type LeafSummary =
-    { Id: LeafId
+type RevisionSummary =
+    { Id: RevisionId
       ExampleId: ExampleId
       Title: string
       ConceptId: ConceptId
@@ -79,8 +79,8 @@ type LeafSummary =
       FieldValues: Map<string, string>
       EditSummary: string }
 
-let toLeafSummary (b: Events.Summary) =
-    { Id = b.LeafIds.Head
+let toRevisionSummary (b: Events.Summary) =
+    { Id = b.RevisionIds.Head
       ExampleId = b.Id
       Title = b.Title
       ConceptId = b.ConceptId
@@ -111,7 +111,7 @@ let validateSummary (summary: Events.Summary) = result {
     do! validateTitle summary.Title
     }
 
-// medTODO validate leafId global uniqueness
+// medTODO validate revisionId global uniqueness
 
 let decideCreate (summary: Events.Summary) state =
     match state with
@@ -124,5 +124,5 @@ let decideEdit (edited: Events.Edited) callerId state =
     | Fold.State.Initial  -> Error "Can't edit a example that doesn't exist"
     | Fold.State.Active x -> result {
         do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author"
-        do! x.LeafIds |> Seq.contains edited.LeafId |> Result.requireFalse $"Duplicate leafId:{edited.LeafId}"
+        do! x.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate revisionId:{edited.RevisionId}"
     } |> addEvent (Events.Edited edited)

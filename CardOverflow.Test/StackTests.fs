@@ -22,7 +22,7 @@ let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (exampleS
     let c = TestEsContainer()
     let stackWriter = c.StackWriter()
     do! c.ExampleWriter().Create exampleSummary
-    let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.LeafIds.Head }
+    let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.RevisionIds.Head }
 
     do! stackWriter.Create stackSummary
 
@@ -42,7 +42,7 @@ let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) exampleSummary ta
     let c = TestEsContainer()
     let stackWriter = c.StackWriter()
     do! c.ExampleWriter().Create exampleSummary
-    let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.LeafIds.Head }
+    let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.RevisionIds.Head }
     do! stackWriter.Create stackSummary
     
     do! stackWriter.ChangeTags tagsChanged stackSummary.AuthorId stackSummary.Id

@@ -656,13 +656,13 @@ CREATE FUNCTION public.fn_ctr_card_insertupdate() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc.leaf_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.concept_id = NEW.concept_id) _)) THEN
-            RAISE EXCEPTION 'UserId #% with Card #% and Concept #% tried to have LeafId #%, but they already have LeafId #%',
-            (NEW.user_id), (NEW.id), (NEW.concept_id), (NEW.leaf_id), (SELECT cc.leaf_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.concept_id = NEW.concept_id LIMIT 1);
+        IF (1 < (SELECT COUNT(*) FROM (SELECT DISTINCT cc.revision_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.concept_id = NEW.concept_id) _)) THEN
+            RAISE EXCEPTION 'UserId #% with Card #% and Concept #% tried to have RevisionId #%, but they already have RevisionId #%',
+            (NEW.user_id), (NEW.id), (NEW.concept_id), (NEW.revision_id), (SELECT cc.revision_id FROM card cc WHERE cc.user_id = NEW.user_id AND cc.concept_id = NEW.concept_id LIMIT 1);
         END IF;
-		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id OR OLD.index <> NEW.index))) THEN
-		IF ((SELECT bi.max_index_inclusive FROM public.leaf bi WHERE bi.id = NEW.leaf_id) < NEW.index) THEN
-			RAISE EXCEPTION 'UserId #% with Card #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its LeafId #%', (NEW.user_id), (NEW.id), (NEW.index), (SELECT bi.max_index_inclusive FROM public.leaf bi WHERE bi.id = NEW.leaf_id), (NEW.leaf_id);
+		IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (OLD.revision_id <> NEW.revision_id OR OLD.index <> NEW.index))) THEN
+		IF ((SELECT bi.max_index_inclusive FROM public.revision bi WHERE bi.id = NEW.revision_id) < NEW.index) THEN
+			RAISE EXCEPTION 'UserId #% with Card #% tried to have index %, which exceeds the MaxIndexInclusive value of % on its RevisionId #%', (NEW.user_id), (NEW.id), (NEW.index), (SELECT bi.max_index_inclusive FROM public.revision bi WHERE bi.id = NEW.revision_id), (NEW.revision_id);
 		END IF;
 		END IF;
         RETURN NULL;
@@ -724,11 +724,11 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
         old_is_public boolean NOT NULL := 'f';
     BEGIN
 		IF ((TG_OP = 'DELETE' AND OLD.index = 0 AND OLD.card_state <> 3) OR 
-            (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id
+            (TG_OP = 'UPDATE' AND (OLD.revision_id <> NEW.revision_id
                                       OR (OLD.card_state <> 3 AND NEW.card_state = 3)))) THEN
-            UPDATE	leaf ci
+            UPDATE	revision ci
             SET     users = ci.users - 1
-            WHERE	ci.id = OLD.leaf_id;
+            WHERE	ci.id = OLD.revision_id;
             UPDATE	example b
             SET		users = b.users - 1
             WHERE	b.id = OLD.example_id;
@@ -737,11 +737,11 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             WHERE concept.id = OLD.concept_id;
         END IF;
         IF ((TG_OP = 'INSERT' AND NEW.index = 0) OR
-            (TG_OP = 'UPDATE' AND (OLD.leaf_id <> NEW.leaf_id
+            (TG_OP = 'UPDATE' AND (OLD.revision_id <> NEW.revision_id
                                       OR (OLD.card_state = 3 AND NEW.card_state <> 3)))) THEN
-            UPDATE	leaf ci
+            UPDATE	revision ci
             SET     users = ci.users + 1
-            WHERE	ci.id = NEW.leaf_id;
+            WHERE	ci.id = NEW.revision_id;
             UPDATE	example b
             SET		users = b.users + 1
             WHERE	b.id = NEW.example_id;
@@ -754,8 +754,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
         IF (new_is_public OR old_is_public) THEN
             IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND new_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     example_id,     leaf_id,     deck_id,     template_id, template_revision_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,            message,  concept_id,     example_id,     revision_id,     deck_id,     template_id, template_revision_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckAddedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.revision_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -763,10 +763,10 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
                                                   WHERE df.deck_id = NEW.deck_id
                                                  );
             END IF;
-            IF (TG_OP = 'UPDATE' AND OLD.leaf_id <> NEW.leaf_id) THEN
+            IF (TG_OP = 'UPDATE' AND OLD.revision_id <> NEW.revision_id) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     template_id, template_revision_id)
-                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.leaf_id, NEW.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     revision_id,     deck_id,     template_id, template_revision_id)
+                                            VALUES (NEW.user_id, (timezone('utc', now())), 'DeckUpdatedConcept', NULL,     NEW.concept_id, NEW.example_id, NEW.revision_id, NEW.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -776,8 +776,8 @@ CREATE FUNCTION public.fn_tr_card_afterinsertdeleteupdate() RETURNS trigger
             END IF;
             IF (TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deck_id <> NEW.deck_id AND old_is_public)) THEN
                 WITH notification_id AS (
-                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     leaf_id,     deck_id,     template_id, template_revision_id)
-                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedConcept', NULL,     OLD.concept_id, OLD.example_id, OLD.leaf_id, OLD.deck_id, NULL,         NULL)
+                    INSERT INTO public.notification(sender_id,   created,                   type,              message,  concept_id,     example_id,     revision_id,     deck_id,     template_id, template_revision_id)
+                                            VALUES (OLD.user_id, (timezone('utc', now())), 'DeckDeletedConcept', NULL,     OLD.concept_id, OLD.example_id, OLD.revision_id, OLD.deck_id, NULL,         NULL)
                     RETURNING id
                 ) INSERT INTO public.received_notification(receiver_id, notification_id)
                                                  (SELECT df.follower_id, (SELECT id FROM notification_id)
@@ -883,7 +883,7 @@ $$;
 
 ALTER FUNCTION public.fn_tr_template_revision_beforeinsert() OWNER TO postgres;
 
-CREATE FUNCTION public.fn_tr_leaf_beforeinsert() RETURNS trigger
+CREATE FUNCTION public.fn_tr_revision_beforeinsert() RETURNS trigger
     LANGUAGE plpgsql
     AS $$  
 begin
@@ -899,7 +899,7 @@ end
 $$;
 
 
-ALTER FUNCTION public.fn_tr_leaf_beforeinsert() OWNER TO postgres;
+ALTER FUNCTION public.fn_tr_revision_beforeinsert() OWNER TO postgres;
 
 CREATE FUNCTION public.fn_tr_relationship_beforeinsertupdate() RETURNS trigger
     LANGUAGE plpgsql
@@ -1063,7 +1063,7 @@ CREATE TABLE public.card (
     user_id uuid NOT NULL,
     concept_id uuid NOT NULL,
     example_id uuid NOT NULL,
-    leaf_id uuid NOT NULL,
+    revision_id uuid NOT NULL,
     index smallint NOT NULL,
     card_state smallint NOT NULL,
     ease_factor_in_permille smallint NOT NULL,
@@ -1091,7 +1091,7 @@ CREATE VIEW public.card_is_latest AS
     a.user_id,
     a.concept_id,
     a.example_id,
-    a.leaf_id,
+    a.revision_id,
     a.index,
     a.card_state,
     a.ease_factor_in_permille,
@@ -1105,7 +1105,7 @@ CREATE VIEW public.card_is_latest AS
     a.tags,
     (b.latest_id IS NULL) AS is_latest
    FROM (public.card a
-     LEFT JOIN public.example b ON ((b.latest_id = a.leaf_id)));
+     LEFT JOIN public.example b ON ((b.latest_id = a.revision_id)));
 
 
 ALTER TABLE public.card_is_latest OWNER TO postgres;
@@ -1158,14 +1158,14 @@ CREATE TABLE public.commeaf (
 
 ALTER TABLE public.commeaf OWNER TO postgres;
 
-CREATE TABLE public.commeaf_2_leaf (
-    leaf_id uuid NOT NULL,
+CREATE TABLE public.commeaf_2_revision (
+    revision_id uuid NOT NULL,
     commeaf_id uuid NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
-ALTER TABLE public.commeaf_2_leaf OWNER TO postgres;
+ALTER TABLE public.commeaf_2_revision OWNER TO postgres;
 
 CREATE TABLE public.comment_template (
     id uuid NOT NULL,
@@ -1260,14 +1260,14 @@ CREATE TABLE public.file (
 
 ALTER TABLE public.file OWNER TO postgres;
 
-CREATE TABLE public.file_2_leaf (
-    leaf_id uuid NOT NULL,
+CREATE TABLE public.file_2_revision (
+    revision_id uuid NOT NULL,
     file_id uuid NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 
-ALTER TABLE public.file_2_leaf OWNER TO postgres;
+ALTER TABLE public.file_2_revision OWNER TO postgres;
 
 CREATE TABLE public.filter (
     id uuid NOT NULL,
@@ -1324,7 +1324,7 @@ CREATE TABLE public.history (
     id uuid NOT NULL,
     card_id uuid,
     user_id uuid NOT NULL,
-    leaf_id uuid,
+    revision_id uuid,
     index smallint NOT NULL,
     score smallint NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -1337,7 +1337,7 @@ CREATE TABLE public.history (
 
 ALTER TABLE public.history OWNER TO postgres;
 
-CREATE TABLE public.leaf (
+CREATE TABLE public.revision (
     id uuid NOT NULL,
     created timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     modified timestamp with time zone,
@@ -1355,12 +1355,12 @@ CREATE TABLE public.leaf (
     max_index_inclusive smallint NOT NULL,
     tags character varying(300)[] DEFAULT '{}'::character varying[] NOT NULL,
     tags_count integer[] DEFAULT '{}'::integer[] NOT NULL,
-    CONSTRAINT "leaf. id. is valid" CHECK (public.validate_ulid(id)),
-    CONSTRAINT "leaf. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
+    CONSTRAINT "revision. id. is valid" CHECK (public.validate_ulid(id)),
+    CONSTRAINT "revision. tsv_helper. is null check" CHECK ((tsv_helper IS NULL))
 );
 
 
-ALTER TABLE public.leaf OWNER TO postgres;
+ALTER TABLE public.revision OWNER TO postgres;
 
 CREATE TABLE public.relationship (
     id uuid NOT NULL,
@@ -1386,10 +1386,10 @@ CREATE TABLE public.relationship_2_card (
 
 ALTER TABLE public.relationship_2_card OWNER TO postgres;
 
-CREATE VIEW public.leaf_relationship_count AS
- SELECT sac.leaf_id AS source_leaf_id,
-    tac.leaf_id AS target_leaf_id,
-    unnest(ARRAY[sac.leaf_id, tac.leaf_id]) AS leaf_id,
+CREATE VIEW public.revision_relationship_count AS
+ SELECT sac.revision_id AS source_revision_id,
+    tac.revision_id AS target_revision_id,
+    unnest(ARRAY[sac.revision_id, tac.revision_id]) AS revision_id,
     ( SELECT r.name
            FROM public.relationship r
           WHERE (r.id = rac.relationship_id)
@@ -1399,10 +1399,10 @@ CREATE VIEW public.leaf_relationship_count AS
      JOIN public.card sac ON ((rac.source_card_id = sac.id)))
      JOIN public.card tac ON ((rac.target_card_id = tac.id)))
   WHERE ((sac.card_state <> 3) AND (tac.card_state <> 3))
-  GROUP BY sac.leaf_id, tac.leaf_id, rac.relationship_id;
+  GROUP BY sac.revision_id, tac.revision_id, rac.relationship_id;
 
 
-ALTER TABLE public.leaf_relationship_count OWNER TO postgres;
+ALTER TABLE public.revision_relationship_count OWNER TO postgres;
 
 CREATE TABLE public.notification (
     id uuid DEFAULT public.generate_ulid() NOT NULL,
@@ -1412,7 +1412,7 @@ CREATE TABLE public.notification (
     message character varying(4000),
     concept_id uuid,
     example_id uuid,
-    leaf_id uuid,
+    revision_id uuid,
     deck_id uuid,
     template_id uuid,
     template_revision_id uuid,
@@ -1796,8 +1796,8 @@ ALTER TABLE ONLY public.card_setting
     ADD CONSTRAINT card_setting_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.commeaf_2_leaf
-    ADD CONSTRAINT commeaf_2_leaf_pkey PRIMARY KEY (commeaf_id, leaf_id);
+ALTER TABLE ONLY public.commeaf_2_revision
+    ADD CONSTRAINT commeaf_2_revision_pkey PRIMARY KEY (commeaf_id, revision_id);
 
 
 ALTER TABLE ONLY public.commeaf
@@ -1836,8 +1836,8 @@ ALTER TABLE ONLY public.feedback
     ADD CONSTRAINT feedback_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.file_2_leaf
-    ADD CONSTRAINT file_2_leaf_pkey PRIMARY KEY (leaf_id, file_id);
+ALTER TABLE ONLY public.file_2_revision
+    ADD CONSTRAINT file_2_revision_pkey PRIMARY KEY (revision_id, file_id);
 
 
 ALTER TABLE ONLY public.file
@@ -1864,16 +1864,16 @@ ALTER TABLE ONLY public.history
     ADD CONSTRAINT history_pkey PRIMARY KEY (id);
 
 
-ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_id_example_id_key UNIQUE (id, example_id);
+ALTER TABLE ONLY public.revision
+    ADD CONSTRAINT revision_id_example_id_key UNIQUE (id, example_id);
 
 
-ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_id_concept_id_key UNIQUE (id, concept_id);
+ALTER TABLE ONLY public.revision
+    ADD CONSTRAINT revision_id_concept_id_key UNIQUE (id, concept_id);
 
 
-ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT leaf_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.revision
+    ADD CONSTRAINT revision_pkey PRIMARY KEY (id);
 
 
 ALTER TABLE ONLY public.notification
@@ -1932,7 +1932,7 @@ CREATE INDEX "card. card_setting_id. idx" ON public.card USING btree (card_setti
 CREATE INDEX "card. card_state. idx" ON public.card USING btree (card_state);
 
 
-CREATE INDEX "card. leaf_id. idx" ON public.card USING btree (leaf_id);
+CREATE INDEX "card. revision_id. idx" ON public.card USING btree (revision_id);
 
 
 CREATE INDEX "card. tsv. idx" ON public.card USING gin (tsv);
@@ -1941,7 +1941,7 @@ CREATE INDEX "card. tsv. idx" ON public.card USING gin (tsv);
 CREATE INDEX "card. user_id, example_id. idx" ON public.card USING btree (user_id, example_id);
 
 
-CREATE UNIQUE INDEX "card. user_id, leaf_id, index. uq idx" ON public.card USING btree (user_id, leaf_id, index);
+CREATE UNIQUE INDEX "card. user_id, revision_id, index. uq idx" ON public.card USING btree (user_id, revision_id, index);
 
 
 CREATE INDEX "card. user_id, concept_id. idx" ON public.card USING btree (user_id, concept_id);
@@ -1959,7 +1959,7 @@ CREATE INDEX "commeaf. commield_id. idx" ON public.commeaf USING btree (commield
 CREATE INDEX "commeaf. tsv. idx" ON public.commeaf USING gin (tsv);
 
 
-CREATE INDEX "commeaf_2_leaf. leaf_id. idx" ON public.commeaf_2_leaf USING btree (leaf_id);
+CREATE INDEX "commeaf_2_revision. revision_id. idx" ON public.commeaf_2_revision USING btree (revision_id);
 
 
 CREATE INDEX "comment_template. template_id. idx" ON public.comment_template USING btree (template_id);
@@ -1998,7 +1998,7 @@ CREATE INDEX "feedback. user_id. idx" ON public.feedback USING btree (user_id);
 CREATE UNIQUE INDEX "file. sha256. uq idx" ON public.file USING btree (sha256);
 
 
-CREATE INDEX "file_2_leaf. file_id. idx" ON public.file_2_leaf USING btree (file_id);
+CREATE INDEX "file_2_revision. file_id. idx" ON public.file_2_revision USING btree (file_id);
 
 
 CREATE INDEX "filter. user_id. idx" ON public.filter USING btree (user_id);
@@ -2019,16 +2019,16 @@ CREATE INDEX "template_revision. tsv. idx" ON public.template_revision USING gin
 CREATE INDEX "history. card_id. idx" ON public.history USING btree (card_id);
 
 
-CREATE INDEX "leaf. example_id. idx" ON public.leaf USING btree (example_id);
+CREATE INDEX "revision. example_id. idx" ON public.revision USING btree (example_id);
 
 
-CREATE INDEX "leaf. template_revision_id. idx" ON public.leaf USING btree (template_revision_id);
+CREATE INDEX "revision. template_revision_id. idx" ON public.revision USING btree (template_revision_id);
 
 
-CREATE INDEX "leaf. hash. idx" ON public.leaf USING btree (hash);
+CREATE INDEX "revision. hash. idx" ON public.revision USING btree (hash);
 
 
-CREATE INDEX "leaf. tsv. idx" ON public.leaf USING gin (tsv);
+CREATE INDEX "revision. tsv. idx" ON public.revision USING gin (tsv);
 
 
 CREATE INDEX "relationship. tsv. idx" ON public.relationship USING gin (tsv);
@@ -2094,7 +2094,7 @@ CREATE TRIGGER tr_deckfollower_afterinsertdeleteupdate AFTER INSERT OR DELETE OR
 CREATE TRIGGER tr_template_revision_beforeinsert BEFORE INSERT ON public.template_revision FOR EACH ROW EXECUTE FUNCTION public.fn_tr_template_revision_beforeinsert();
 
 
-CREATE TRIGGER tr_leaf_beforeinsert BEFORE INSERT ON public.leaf FOR EACH ROW EXECUTE FUNCTION public.fn_tr_leaf_beforeinsert();
+CREATE TRIGGER tr_revision_beforeinsert BEFORE INSERT ON public.revision FOR EACH ROW EXECUTE FUNCTION public.fn_tr_revision_beforeinsert();
 
 
 CREATE TRIGGER tr_relationship_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.relationship FOR EACH ROW EXECUTE FUNCTION public.fn_tr_relationship_beforeinsertupdate();
@@ -2107,7 +2107,7 @@ CREATE TRIGGER tr_user_beforeinsertupdate BEFORE INSERT OR UPDATE ON public.pada
 
 
 ALTER TABLE ONLY public.example
-    ADD CONSTRAINT "example to leaf. latest_id, id. FK" FOREIGN KEY (latest_id, id) REFERENCES public.leaf(id, example_id) DEFERRABLE INITIALLY DEFERRED;
+    ADD CONSTRAINT "example to revision. latest_id, id. FK" FOREIGN KEY (latest_id, id) REFERENCES public.revision(id, example_id) DEFERRABLE INITIALLY DEFERRED;
 
 
 ALTER TABLE ONLY public.example
@@ -2135,11 +2135,11 @@ ALTER TABLE ONLY public.card
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to leaf. example_id, leaf_id. FK" FOREIGN KEY (example_id, leaf_id) REFERENCES public.leaf(example_id, id);
+    ADD CONSTRAINT "card to revision. example_id, revision_id. FK" FOREIGN KEY (example_id, revision_id) REFERENCES public.revision(example_id, id);
 
 
 ALTER TABLE ONLY public.card
-    ADD CONSTRAINT "card to leaf. leaf_id. FK" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "card to revision. revision_id. FK" FOREIGN KEY (revision_id) REFERENCES public.revision(id);
 
 
 ALTER TABLE ONLY public.card
@@ -2158,12 +2158,12 @@ ALTER TABLE ONLY public.commeaf
     ADD CONSTRAINT "commeaf to commield. commield_id. FK" FOREIGN KEY (commield_id) REFERENCES public.commield(id);
 
 
-ALTER TABLE ONLY public.commeaf_2_leaf
-    ADD CONSTRAINT "commeaf_2_leaf to commeaf. commeaf_id. FK" FOREIGN KEY (commeaf_id) REFERENCES public.commeaf(id);
+ALTER TABLE ONLY public.commeaf_2_revision
+    ADD CONSTRAINT "commeaf_2_revision to commeaf. commeaf_id. FK" FOREIGN KEY (commeaf_id) REFERENCES public.commeaf(id);
 
 
-ALTER TABLE ONLY public.commeaf_2_leaf
-    ADD CONSTRAINT "commeaf_2_leaf to leaf. leaf_id. FK" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+ALTER TABLE ONLY public.commeaf_2_revision
+    ADD CONSTRAINT "commeaf_2_revision to revision. revision_id. FK" FOREIGN KEY (revision_id) REFERENCES public.revision(id);
 
 
 ALTER TABLE ONLY public.comment_template
@@ -2214,12 +2214,12 @@ ALTER TABLE ONLY public.feedback
     ADD CONSTRAINT "feedback to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id);
 
 
-ALTER TABLE ONLY public.file_2_leaf
-    ADD CONSTRAINT "file_2_leaf to file. file_id. FK" FOREIGN KEY (file_id) REFERENCES public.file(id);
+ALTER TABLE ONLY public.file_2_revision
+    ADD CONSTRAINT "file_2_revision to file. file_id. FK" FOREIGN KEY (file_id) REFERENCES public.file(id);
 
 
-ALTER TABLE ONLY public.file_2_leaf
-    ADD CONSTRAINT "file_2_leaf to leaf. leaf_id. FK" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+ALTER TABLE ONLY public.file_2_revision
+    ADD CONSTRAINT "file_2_revision to revision. revision_id. FK" FOREIGN KEY (revision_id) REFERENCES public.revision(id);
 
 
 ALTER TABLE ONLY public.filter
@@ -2243,23 +2243,23 @@ ALTER TABLE ONLY public.history
 
 
 ALTER TABLE ONLY public.history
-    ADD CONSTRAINT "history to leaf. leaf_id. FK" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "history to revision. revision_id. FK" FOREIGN KEY (revision_id) REFERENCES public.revision(id);
 
 
 ALTER TABLE ONLY public.history
     ADD CONSTRAINT "history to user. user_id. FK" FOREIGN KEY (user_id) REFERENCES public.padawan(id) ON DELETE CASCADE;
 
 
-ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to example. example_id. FK" FOREIGN KEY (example_id) REFERENCES public.example(id);
+ALTER TABLE ONLY public.revision
+    ADD CONSTRAINT "revision to example. example_id. FK" FOREIGN KEY (example_id) REFERENCES public.example(id);
 
 
-ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to example. concept_id, example_id. FK" FOREIGN KEY (concept_id, example_id) REFERENCES public.example(concept_id, id) DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE ONLY public.revision
+    ADD CONSTRAINT "revision to example. concept_id, example_id. FK" FOREIGN KEY (concept_id, example_id) REFERENCES public.example(concept_id, id) DEFERRABLE INITIALLY DEFERRED;
 
 
-ALTER TABLE ONLY public.leaf
-    ADD CONSTRAINT "leaf to template_revision. template_revision_id. FK" FOREIGN KEY (template_revision_id) REFERENCES public.template_revision(id);
+ALTER TABLE ONLY public.revision
+    ADD CONSTRAINT "revision to template_revision. template_revision_id. FK" FOREIGN KEY (template_revision_id) REFERENCES public.template_revision(id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2283,15 +2283,15 @@ ALTER TABLE ONLY public.notification
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to leaf. leaf_id, example_id. FK" FOREIGN KEY (leaf_id, example_id) REFERENCES public.leaf(id, example_id);
+    ADD CONSTRAINT "notification to revision. revision_id, example_id. FK" FOREIGN KEY (revision_id, example_id) REFERENCES public.revision(id, example_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to leaf. leaf_id, concept_id. FK" FOREIGN KEY (leaf_id, concept_id) REFERENCES public.leaf(id, concept_id);
+    ADD CONSTRAINT "notification to revision. revision_id, concept_id. FK" FOREIGN KEY (revision_id, concept_id) REFERENCES public.revision(id, concept_id);
 
 
 ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT "notification to leaf. leaf_id. FK" FOREIGN KEY (leaf_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "notification to revision. revision_id. FK" FOREIGN KEY (revision_id) REFERENCES public.revision(id);
 
 
 ALTER TABLE ONLY public.notification
@@ -2335,7 +2335,7 @@ ALTER TABLE ONLY public.concept
 
 
 ALTER TABLE ONLY public.concept
-    ADD CONSTRAINT "concept to leaf. copy_source_id. FK" FOREIGN KEY (copy_source_id) REFERENCES public.leaf(id);
+    ADD CONSTRAINT "concept to revision. copy_source_id. FK" FOREIGN KEY (copy_source_id) REFERENCES public.revision(id);
 
 
 ALTER TABLE ONLY public.concept

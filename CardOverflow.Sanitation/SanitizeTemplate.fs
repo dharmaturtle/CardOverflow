@@ -144,39 +144,39 @@ module ViewSearchTemplateRevision =
     }
 
 [<CLIMutable>]
-type ViewTemplateWithAllLeafs = {
+type ViewTemplateWithAllRevisions = {
     Id: Guid
     AuthorId: Guid
-    Leafs: ViewTemplateRevision ResizeArray
+    Revisions: ViewTemplateRevision ResizeArray
     Editable: ViewTemplateRevision
 } with
     static member load (entity: TemplateEntity) =
-        let leafs =
+        let revisions =
             entity.TemplateRevisions
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
             |> Seq.map (TemplateRevision.load >> ViewTemplateRevision.load)
             |> toResizeArray
         {   Id = entity.Id
             AuthorId = entity.AuthorId
-            Leafs = leafs
+            Revisions = revisions
             Editable = {
-                leafs.First() with
+                revisions.First() with
                     Id = Guid.Empty
                     EditSummary = "" }}
     static member initialize userId templateRevisionId templateId =
-        let leaf = TemplateRevision.initialize templateRevisionId templateId |> ViewTemplateRevision.load
+        let revision = TemplateRevision.initialize templateRevisionId templateId |> ViewTemplateRevision.load
         {   Id = templateId
             AuthorId = userId
-            Leafs = [leaf].ToList()
-            Editable = leaf
+            Revisions = [revision].ToList()
+            Editable = revision
         }
 
 module SanitizeTemplate =
     let latest (db: CardOverflowDb) templateId =
         TemplateRepository.latest db templateId |> TaskResult.map ViewTemplateRevision.load
-    let leaf (db: CardOverflowDb) leafId =
-        TemplateRepository.leaf db leafId |> TaskResult.map ViewTemplateRevision.load
-    let AllLeafs (db: CardOverflowDb) templateId = task {
+    let revision (db: CardOverflowDb) revisionId =
+        TemplateRepository.revision db revisionId |> TaskResult.map ViewTemplateRevision.load
+    let AllRevisions (db: CardOverflowDb) templateId = task {
         let! template =
             db.Template
                 .Include(fun x -> x.TemplateRevisions)
@@ -184,7 +184,7 @@ module SanitizeTemplate =
         return
             match template with
             | null -> sprintf "Template #%A doesn't exist" templateId |> Error
-            | x -> Ok <| ViewTemplateWithAllLeafs.load x
+            | x -> Ok <| ViewTemplateWithAllRevisions.load x
         }
     let Search (db: CardOverflowDb) (userId: Guid) (pageNumber: int) (searchTerm: string) = task {
         let plain, wildcard = FullTextSearch.parse searchTerm
@@ -214,7 +214,7 @@ module SanitizeTemplate =
                 .Distinct()
                 .Include(fun x -> x.TemplateRevisions)
                 .ToListAsync()
-        return x |> Seq.map ViewTemplateWithAllLeafs.load |> toResizeArray
+        return x |> Seq.map ViewTemplateWithAllRevisions.load |> toResizeArray
         }
     let GetMineWith (db: CardOverflowDb) userId templateId = task {
         let! x =
@@ -224,17 +224,17 @@ module SanitizeTemplate =
                 .Distinct()
                 .Include(fun x -> x.TemplateRevisions)
                 .ToListAsync()
-        return x |> Seq.map ViewTemplateWithAllLeafs.load |> toResizeArray
+        return x |> Seq.map ViewTemplateWithAllRevisions.load |> toResizeArray
         }
-    let Update (db: CardOverflowDb) userId (leaf: ViewTemplateRevision) =
+    let Update (db: CardOverflowDb) userId (revision: ViewTemplateRevision) =
         let update template = task {
-            let! r = ViewTemplateRevision.copyTo leaf |> TemplateRepository.UpdateFieldsToNewLeaf db userId template
+            let! r = ViewTemplateRevision.copyTo revision |> TemplateRepository.UpdateFieldsToNewRevision db userId template
             return r |> Ok
         }
-        if leaf.Fields.Count = leaf.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
-            db.Template.SingleOrDefault(fun x -> x.Id = leaf.TemplateId)
+        if revision.Fields.Count = revision.Fields.Select(fun x -> x.Name.ToLower()).Distinct().Count() then
+            db.Template.SingleOrDefault(fun x -> x.Id = revision.TemplateId)
             |> function
-            | null -> update (TemplateEntity(Id = leaf.TemplateId, AuthorId = userId))
+            | null -> update (TemplateEntity(Id = revision.TemplateId, AuthorId = userId))
             | template ->
                 if template.AuthorId = userId then
                     update template

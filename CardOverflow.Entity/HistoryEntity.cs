@@ -14,7 +14,7 @@ namespace CardOverflow.Entity
         public Guid Id { get; set; } = Ulid.NewUlid().ToGuid();
         public Guid? CardId { get; set; }
         public Guid UserId { get; set; }
-        public Guid? LeafId { get; set; }
+        public Guid? RevisionId { get; set; }
         public short Index { get; set; }
         public short Score { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -26,9 +26,9 @@ namespace CardOverflow.Entity
         [ForeignKey("CardId")]
         [InverseProperty("Histories")]
         public virtual CardEntity Card { get; set; }
-        [ForeignKey("LeafId")]
+        [ForeignKey("RevisionId")]
         [InverseProperty("Histories")]
-        public virtual LeafEntity Leaf { get; set; }
+        public virtual RevisionEntity Revision { get; set; }
         [ForeignKey("UserId")]
         [InverseProperty("Histories")]
         public virtual UserEntity User { get; set; }

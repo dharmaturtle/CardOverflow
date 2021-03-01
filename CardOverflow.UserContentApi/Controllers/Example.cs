@@ -23,20 +23,20 @@ namespace CardOverflow.UserContentApi.Controllers {
     [HttpGet("example/{id}/{index}/back")]
     public async Task<IActionResult> Back(Guid id, int index) => _Back(index, await ConceptViewRepository.get(_db, id));
 
-    [HttpGet("leaf/{id}/{index}/front")]
-    public async Task<IActionResult> LeafFront(Guid id, int index) => _Front(index, await ConceptViewRepository.leaf(_db, id));
+    [HttpGet("revision/{id}/{index}/front")]
+    public async Task<IActionResult> RevisionFront(Guid id, int index) => _Front(index, await ConceptViewRepository.revision(_db, id));
 
-    [HttpGet("leaf/{id}/{index}/back")]
-    public async Task<IActionResult> LeafBack(Guid id, int index) => _Back(index, await ConceptViewRepository.leaf(_db, id));
+    [HttpGet("revision/{id}/{index}/back")]
+    public async Task<IActionResult> RevisionBack(Guid id, int index) => _Back(index, await ConceptViewRepository.revision(_db, id));
 
-    private ContentResult _Front(int index, FSharpResult<LeafView, string> view) =>
+    private ContentResult _Front(int index, FSharpResult<RevisionView, string> view) =>
       ( view.IsError
       ? view.ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).IsError
       ? view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).ResultValue.Item1).ToTextHtmlContent(this);
 
-    private ContentResult _Back(int index, FSharpResult<LeafView, string> view) =>
+    private ContentResult _Back(int index, FSharpResult<RevisionView, string> view) =>
       ( view.IsError
       ? view.ErrorValue
       : view.ResultValue.FrontBackFrontSynthBackSynthIndex(index).IsError

@@ -40,7 +40,7 @@ module Events =
     type Summary =
         { Id: StackId
           AuthorId: UserId
-          ExampleRevisionId: LeafId
+          ExampleRevisionId: RevisionId
           FrontPersonalField: string
           BackPersonalField: string
           Cards: Card list }
@@ -98,7 +98,7 @@ let validateTags (tags: string Set) = result {
         do! validateTag tag
     }
 
-let validateRevisionExists doesRevisionExist (revisionId: LeafId) =
+let validateRevisionExists doesRevisionExist (revisionId: RevisionId) =
     doesRevisionExist |> Result.requireTrue $"ExampleRevisionId '{revisionId}' doesn't exist."
 
 let validateSummary (summary: Events.Summary) doesRevisionExist = result {

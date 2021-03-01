@@ -76,18 +76,18 @@ type AnkiCardWrite = {
     Modified: Instant option
     AuthorId: Guid
 } with
-    member this.CopyTo (entity: LeafEntity) =
+    member this.CopyTo (entity: RevisionEntity) =
         entity.FieldValues <- this.FieldValues
         entity.Created <- this.Created
         entity.Modified <- this.Modified |> Option.toNullable
         entity.TemplateRevision <- this.Template
         entity.AnkiNoteId <- Nullable this.AnkiNoteId
-        entity.Commeaf_Leafs <-
+        entity.Commeaf_Revisions <-
             this.Commields
-            |> List.map (fun cf -> Commeaf_LeafEntity(Leaf = entity, Commeaf = cf))
+            |> List.map (fun cf -> Commeaf_RevisionEntity(Revision = entity, Commeaf = cf))
             |> toResizeArray
     member this.CopyToNew (files: FileEntity seq) = // lowTODO add a tag indicating that it was imported from Anki
-        let entity = LeafEntity()
+        let entity = RevisionEntity()
         entity.EditSummary <- "Imported from Anki"
         let concept = ConceptEntity(AuthorId = this.AuthorId)
         entity.Concept <- concept
@@ -96,10 +96,10 @@ type AnkiCardWrite = {
                 Concept = concept,
                 AuthorId = this.AuthorId
             )
-        entity.File_Leafs <-
+        entity.File_Revisions <-
             files.Select(fun x ->
-                File_LeafEntity(
-                    Leaf = entity,
+                File_RevisionEntity(
+                    Revision = entity,
                     File = x
                 )
             ).ToList()
@@ -107,17 +107,17 @@ type AnkiCardWrite = {
         entity
     member this.CollectedEquality (db: CardOverflowDb) (hasher: SHA512) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
         let templateHash = this.Template |> TemplateRevisionEntity.hash hasher
-        let hash = this.CopyToNew [] |> LeafEntity.hash templateHash hasher
-        db.Leaf
-            .Include(fun x -> x.Commeaf_Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: Commeaf_LeafEntity) -> x.Commeaf)
+        let hash = this.CopyToNew [] |> RevisionEntity.hash templateHash hasher
+        db.Revision
+            .Include(fun x -> x.Commeaf_Revisions :> IEnumerable<_>)
+                .ThenInclude(fun (x: Commeaf_RevisionEntity) -> x.Commeaf)
             .OrderBy(fun x -> x.Created)
             .FirstOrDefault(fun c -> c.Hash = hash)
         |> Option.ofObj
 
 type AnkiCard = {
     UserId: Guid
-    Leaf: LeafEntity
+    Revision: RevisionEntity
     TemplateRevision: TemplateRevisionEntity
     Index: int16
     CardState: CardState
@@ -141,9 +141,9 @@ type AnkiCard = {
     member this.CopyToNew i =
         let entity = CardEntity()
         this.CopyToX entity i
-        entity.Concept <- this.Leaf.Example.Concept
-        entity.Example <- this.Leaf.Example
-        entity.Leaf <- this.Leaf
+        entity.Concept <- this.Revision.Example.Concept
+        entity.Example <- this.Revision.Example
+        entity.Revision <- this.Revision
         entity.CardSetting <- this.CardSetting
         entity
     member this.CollectedEquality (db: CardOverflowDb) = // lowTODO ideally this method only does the equality check, but I can't figure out how to get F# quotations/expressions working
@@ -151,7 +151,7 @@ type AnkiCard = {
             .SingleOrDefault(fun c ->
                 this.UserId = c.UserId &&
                 this.Index = c.Index &&
-                this.Leaf.Id = c.LeafId
+                this.Revision.Id = c.RevisionId
             )
 
 type AnkiHistory = {
@@ -169,7 +169,7 @@ type AnkiHistory = {
         | Some cc ->
             db.History.FirstOrDefault(fun h -> 
                 this.UserId = h.UserId &&
-                Nullable cc.LeafId = h.LeafId &&
+                Nullable cc.RevisionId = h.RevisionId &&
                 this.Score = h.Score &&
                 this.Timestamp = h.Created &&
                 interval = h.IntervalWithUnusedStepsIndex &&
@@ -192,7 +192,7 @@ type AnkiHistory = {
         entity.IntervalWithUnusedStepsIndex <- this.IntervalWithUnusedStepsIndex |> IntervalOrStepsIndex.intervalToDb
         entity.EaseFactorInPermille <- this.EaseFactorInPermille
         entity.TimeFromSeeingQuestionToScoreInSecondsPlus32768 <- this.TimeFromSeeingQuestionToScoreInSecondsMinus32768
-        entity.Leaf <- this.Card |> Option.map (fun x -> x.Leaf) |> Option.toObj
+        entity.Revision <- this.Card |> Option.map (fun x -> x.Revision) |> Option.toObj
         entity.UserId <- this.UserId
         entity.Index <- this.Card |> Option.map (fun x -> x.Index) |> Option.defaultValue 0s
     member this.CopyToNew =
@@ -409,7 +409,7 @@ module Anki =
         parseNotesRec initialTags []
     let mapCard
         (cardSettingAndDeckByDeckId: Map<int64, CardSettingEntity * DeckEntity>)
-        (cardAndTagsByNoteId: Map<int64, LeafEntity * (string list)>)
+        (cardAndTagsByNoteId: Map<int64, RevisionEntity * (string list)>)
         (colCreateDate: Instant)
         userId
         getCard
@@ -427,7 +427,7 @@ module Anki =
             let entity =
                 let c: AnkiCard =
                     { UserId = userId
-                      Leaf = card
+                      Revision = card
                       TemplateRevision = cti
                       Index = ankiCard.Ord |> int16
                       CardState =

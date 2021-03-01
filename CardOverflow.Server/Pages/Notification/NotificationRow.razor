@@ -23,9 +23,9 @@
     @if (Notification.Message.TryDeckAddedConcept(out var deckAddedConcept)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeExample LeafId=@(deckAddedConcept.New.LeafId) Back />
+          <ResizingIframeExample RevisionId=@(deckAddedConcept.New.RevisionId) Back />
         </HoverPreview>
-        @Concept(deckAddedConcept.New.LeafId)
+        @Concept(deckAddedConcept.New.RevisionId)
         added to
         @Sender()&apos;s
         deck
@@ -45,7 +45,7 @@
         </button>
       </div>
     } else if (Notification.Message.TryDeckUpdatedConcept(out var deckUpdatedConcept)) {
-      var showBoth = _collectedState.HasValue() && _collectedState.Value.LeafId != deckUpdatedConcept.New.LeafId;
+      var showBoth = _collectedState.HasValue() && _collectedState.Value.RevisionId != deckUpdatedConcept.New.RevisionId;
       var newId = $"Notification-{Notification.Id}-New";
       var oldId = $"Notification-{Notification.Id}-Old";
       <span>
@@ -54,21 +54,21 @@
         }
         <span id="@newId">
           <HoverPreview Padding="0">
-            <ResizingIframeExample LeafId=@deckUpdatedConcept.New.LeafId Back />
+            <ResizingIframeExample RevisionId=@deckUpdatedConcept.New.RevisionId Back />
           </HoverPreview>
         </span>
         @if (showBoth) {
           <BSTooltip Target="@oldId" Placement="Placement.Top">Yours</BSTooltip>
           <span id="@oldId">
             <HoverPreview Padding="0">
-              <ResizingIframeExample LeafId=@_collectedState.Value.LeafId Back />
+              <ResizingIframeExample RevisionId=@_collectedState.Value.RevisionId Back />
             </HoverPreview>
           </span>
-          <a href="conceptdiff/@_collectedState.Value.LeafId/@deckUpdatedConcept.New.LeafId" class="btn btn-info px-2 py-0" title="Go to diff.">
+          <a href="conceptdiff/@_collectedState.Value.RevisionId/@deckUpdatedConcept.New.RevisionId" class="btn btn-info px-2 py-0" title="Go to diff.">
             &Delta;
           </a>
         }
-        @Concept(deckUpdatedConcept.New.LeafId)
+        @Concept(deckUpdatedConcept.New.RevisionId)
         updated in
         @Sender()&apos;s
         deck
@@ -90,9 +90,9 @@
     } else if (Notification.Message.TryDeckDeletedConcept(out var deckDeletedConcept)) {
       <span>
         <HoverPreview Padding="0">
-          <ResizingIframeExample LeafId=@(deckDeletedConcept.Deleted.LeafId) Back />
+          <ResizingIframeExample RevisionId=@(deckDeletedConcept.Deleted.RevisionId) Back />
         </HoverPreview>
-        @Concept(deckDeletedConcept.Deleted.LeafId)
+        @Concept(deckDeletedConcept.Deleted.RevisionId)
         deleted from
         @Sender()&apos;s
         deck
@@ -164,8 +164,8 @@
   private RenderFragment Sender() =>
   @<a href="user/@Notification.SenderId">@Notification.SenderDisplayName</a>;
 
-private RenderFragment Concept(Guid leafId) =>
-@<a href="concept?leaf=@leafId">
+private RenderFragment Concept(Guid revisionId) =>
+@<a href="concept?revision=@revisionId">
   Concept
 </a>;
 

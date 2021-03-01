@@ -47,113 +47,113 @@ let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<u
 let ``GetCollectedPages works if updated``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     let exampleId = example_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_ExampleId exampleId) (fun x -> { x with EditSummary = secondVersion }) ((concept_1, example_1, leaf_2, [card_1]) |> UpsertIds.fromTuple) exampleId
-    let oldLeafId = leaf_1
-    let updatedLeafId = leaf_2
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
+            (VUpdate_ExampleId exampleId) (fun x -> { x with EditSummary = secondVersion }) ((concept_1, example_1, revision_2, [card_1]) |> UpsertIds.fromTuple) exampleId
+    let oldRevisionId = revision_1
+    let updatedRevisionId = revision_2
+    do! c.Db.Revision.SingleAsync(fun x -> x.Id = oldRevisionId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
+    do! c.Db.Revision.SingleAsync(fun x -> x.Id = updatedRevisionId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<Card, string>>) = ConceptRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedLeafId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
+    Assert.Equal(updatedRevisionId, cards.Select(fun x -> x.RevisionMeta.Id).Distinct().Single())
 
-    // getCollectedLeafFromLeaf gets the updatedLeafId when given the oldLeafId
-    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId oldLeafId
+    // getCollectedRevisionFromRevision gets the updatedRevisionId when given the oldRevisionId
+    let! actual = CardRepository.getCollectedRevisionFromRevision c.Db userId oldRevisionId
 
-    Assert.Equal(updatedLeafId, actual)
+    Assert.Equal(updatedRevisionId, actual)
 
-    // getCollectedLeafFromLeaf gets the updatedLeafId when given the updatedLeafId
-    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId updatedLeafId
+    // getCollectedRevisionFromRevision gets the updatedRevisionId when given the updatedRevisionId
+    let! actual = CardRepository.getCollectedRevisionFromRevision c.Db userId updatedRevisionId
 
-    Assert.Equal(updatedLeafId, actual)
+    Assert.Equal(updatedRevisionId, actual)
 
-    // getCollectedLeafFromLeaf fails gracefully on invalid leafId
-    let invalidLeafId = Ulid.create
+    // getCollectedRevisionFromRevision fails gracefully on invalid revisionId
+    let invalidRevisionId = Ulid.create
 
-    let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
+    let! (actual: Result<_,_>) = CardRepository.getCollectedRevisionFromRevision c.Db userId invalidRevisionId
 
-    Assert.equal (sprintf "You don't have any cards with Example Leaf #%A" invalidLeafId) actual.error
+    Assert.equal (sprintf "You don't have any cards with Example Revision #%A" invalidRevisionId) actual.error
 
-    // ConceptRepository.Revisions says we collected the most recent leaf
+    // ConceptRepository.Revisions says we collected the most recent revision
     let! revision = ConceptRepository.Revisions c.Db userId exampleId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
+    |> Assert.equal [(oldRevisionId, false); (updatedRevisionId, true)]
 
-    // collect oldest leaf, then ConceptRepository.Revisions says we collected the oldest leaf
-    let! _ = ConceptRepository.CollectCard c.Db userId oldLeafId [ card_1 ]
+    // collect oldest revision, then ConceptRepository.Revisions says we collected the oldest revision
+    let! _ = ConceptRepository.CollectCard c.Db userId oldRevisionId [ card_1 ]
     
     let! revision = ConceptRepository.Revisions c.Db userId exampleId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldLeafId, true); (updatedLeafId, false)]
+    |> Assert.equal [(oldRevisionId, true); (updatedRevisionId, false)]
     } |> TaskResult.getOk)
 
 [<Fact>]
 let ``GetCollectedPages works if updated, but pair``(): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1; card_2])
     let exampleId = example_1
     let secondVersion = Guid.NewGuid().ToString()
     do! FacetRepositoryTests.update c userId
-            (VUpdate_ExampleId exampleId) (fun x -> { x with EditSummary = secondVersion }) ((concept_1, example_1, leaf_2, [card_1; card_2]) |> UpsertIds.fromTuple) exampleId
-    let oldLeafId = leaf_1
-    let updatedLeafId = leaf_2
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = oldLeafId)
+            (VUpdate_ExampleId exampleId) (fun x -> { x with EditSummary = secondVersion }) ((concept_1, example_1, revision_2, [card_1; card_2]) |> UpsertIds.fromTuple) exampleId
+    let oldRevisionId = revision_1
+    let updatedRevisionId = revision_2
+    do! c.Db.Revision.SingleAsync(fun x -> x.Id = oldRevisionId)
         |> Task.map (fun x -> Assert.Equal("Initial creation", x.EditSummary))
-    do! c.Db.Leaf.SingleAsync(fun x -> x.Id = updatedLeafId)
+    do! c.Db.Revision.SingleAsync(fun x -> x.Id = updatedRevisionId)
         |> Task.map (fun x -> Assert.Equal(secondVersion, x.EditSummary))
 
     let! (cards: PagedList<Result<Card, string>>) = ConceptRepository.GetCollectedPages c.Db userId 1 ""
     let cards = cards.Results |> Seq.map Result.getOk |> Seq.toList
 
-    Assert.Equal(updatedLeafId, cards.Select(fun x -> x.LeafMeta.Id).Distinct().Single())
+    Assert.Equal(updatedRevisionId, cards.Select(fun x -> x.RevisionMeta.Id).Distinct().Single())
 
-    // getCollectedLeafFromLeaf gets the updatedLeafId when given the oldLeafId
-    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId oldLeafId
+    // getCollectedRevisionFromRevision gets the updatedRevisionId when given the oldRevisionId
+    let! actual = CardRepository.getCollectedRevisionFromRevision c.Db userId oldRevisionId
 
-    Assert.Equal(updatedLeafId, actual)
+    Assert.Equal(updatedRevisionId, actual)
 
-    // getCollectedLeafFromLeaf gets the updatedLeafId when given the updatedLeafId
-    let! actual = CardRepository.getCollectedLeafFromLeaf c.Db userId updatedLeafId
+    // getCollectedRevisionFromRevision gets the updatedRevisionId when given the updatedRevisionId
+    let! actual = CardRepository.getCollectedRevisionFromRevision c.Db userId updatedRevisionId
 
-    Assert.Equal(updatedLeafId, actual)
+    Assert.Equal(updatedRevisionId, actual)
 
-    // getCollectedLeafFromLeaf fails gracefully on invalid leafId
-    let invalidLeafId = Ulid.create
+    // getCollectedRevisionFromRevision fails gracefully on invalid revisionId
+    let invalidRevisionId = Ulid.create
 
-    let! (actual: Result<_,_>) = CardRepository.getCollectedLeafFromLeaf c.Db userId invalidLeafId
+    let! (actual: Result<_,_>) = CardRepository.getCollectedRevisionFromRevision c.Db userId invalidRevisionId
 
-    Assert.equal (sprintf "You don't have any cards with Example Leaf #%A" invalidLeafId) actual.error
+    Assert.equal (sprintf "You don't have any cards with Example Revision #%A" invalidRevisionId) actual.error
 
-    // ConceptRepository.Revisions says we collected the most recent leaf
+    // ConceptRepository.Revisions says we collected the most recent revision
     let! revision = ConceptRepository.Revisions c.Db userId exampleId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldLeafId, false); (updatedLeafId, true)]
+    |> Assert.equal [(oldRevisionId, false); (updatedRevisionId, true)]
 
-    // collect oldest leaf, then ConceptRepository.Revisions says we collected the oldest leaf
-    let! _ = ConceptRepository.CollectCard c.Db userId oldLeafId [card_1; card_2]
+    // collect oldest revision, then ConceptRepository.Revisions says we collected the oldest revision
+    let! _ = ConceptRepository.CollectCard c.Db userId oldRevisionId [card_1; card_2]
     
     let! revision = ConceptRepository.Revisions c.Db userId exampleId
 
     revision.SortedMeta.OrderBy(fun x -> x.Id).Select(fun x -> x.Id, x.IsCollected) |> List.ofSeq 
-    |> Assert.equal [(oldLeafId, true); (updatedLeafId, false)]
+    |> Assert.equal [(oldRevisionId, true); (updatedRevisionId, false)]
     } |> TaskResult.getOk)
 
 [<Fact(Skip=PgSkip.reason)>]
 let ``GetForUser isn't empty``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId ["A"; "B"] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId ["A"; "B"] (concept_1, example_1, revision_1, [card_1])
     do! CommentConceptEntity (
             ConceptId = concept_1,
             UserId = userId,
@@ -169,7 +169,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
     let front, _, _, _ = view.Value.FrontBackFrontSynthBackSynth.[0]
     Assert.DoesNotContain("{{Front}}", front)
     Assert.NotEmpty <| concept.Comments
-    Assert.True concept.Default.Leaf.IsCollected
+    Assert.True concept.Default.Revision.IsCollected
     Assert.areEquivalent
         [{  Name = "A"
             Count = 1
@@ -187,7 +187,7 @@ let ``GetForUser isn't empty``(): Task<unit> = task {
 let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId ["A"; "B"] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId ["A"; "B"] (concept_1, example_1, revision_1, [card_1])
 
     let stopwatch = Stopwatch.StartNew()
     for i in 1 .. 10 do
@@ -212,18 +212,18 @@ let ``Getting 10 pages of GetAsync takes less than 1 minute, and has users``(): 
     let! x = ConceptRepository.editState c.Db userId cc.CardId CardState.Suspended
     Assert.Null x.Value
     let! concept = ExploreConceptRepository.get c.Db userId concept_1
-    Assert.Equal(0, concept.Value.Default.Leaf.Users) // suspended cards don't count to User count
+    Assert.Equal(0, concept.Value.Default.Revision.Users) // suspended cards don't count to User count
     }
 
 let testGetCollected (acCount: int) addCard getTemplate name = task {
     use c = new TestContainer(false, name)
     
     let authorId = user_1 // this user creates the card
-    let! x = addCard c.Db authorId ["A"] (concept_1, example_1, leaf_1, [1..acCount] |> List.map (fun _ -> Ulid.create)) |> TaskResult.getOk
+    let! x = addCard c.Db authorId ["A"] (concept_1, example_1, revision_1, [1..acCount] |> List.map (fun _ -> Ulid.create)) |> TaskResult.getOk
     Assert.NotNull x
     let conceptId = concept_1
     let exampleId = example_1
-    let leafId = leaf_1
+    let revisionId = revision_1
     let! cards = ConceptRepository.GetCollectedPages c.Db authorId 1 ""
     Assert.Equal(acCount, cards.Results.Count())
     let! cc = ConceptRepository.GetCollected c.Db authorId conceptId
@@ -232,7 +232,7 @@ let testGetCollected (acCount: int) addCard getTemplate name = task {
 
     let collectorId = user_2  // this user collects the card
     let cardIds = [1..acCount] |> List.map (fun _ -> Ulid.create)
-    let! _ = ConceptRepository.CollectCard c.Db collectorId leafId cardIds |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db collectorId revisionId cardIds |> TaskResult.getOk
     let! concept = ExploreConceptRepository.get c.Db collectorId conceptId |> TaskResult.getOk
     Assert.Equal<ViewTag seq>(
         [{  Name = "A"
@@ -317,9 +317,9 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
         addRelationshipCommand2, addRelationshipCommand1 ]
 
     let userId = user_1 // this user creates the card
-    let! x = FacetRepositoryTests.addBasicConcept          c.Db userId [] (concept_1, example_1, leaf_1, [Ulid.create])
+    let! x = FacetRepositoryTests.addBasicConcept          c.Db userId [] (concept_1, example_1, revision_1, [Ulid.create])
     Assert.NotNull x.Value
-    let! x = FacetRepositoryTests.addReversedBasicConcept  c.Db userId [] (concept_2, example_2, leaf_2, [Ulid.create; Ulid.create])
+    let! x = FacetRepositoryTests.addReversedBasicConcept  c.Db userId [] (concept_2, example_2, revision_2, [Ulid.create; Ulid.create])
     Assert.NotNull x.Value
 
     let! x = SanitizeRelationshipRepository.Add c.Db userId addRelationshipCommand1
@@ -354,7 +354,7 @@ let relationshipTestInit (c: TestContainer) relationshipName = task {
 let ``Relationships can't be self related``(): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
-    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let! actualExampleId = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     Assert.Equal(example_ 1, actualExampleId.Value)
     let addRelationshipCommand =
         {   Name = ""
@@ -368,7 +368,7 @@ let ``Relationships can't be self related``(): Task<unit> = task {
 
 [<Fact>]
 let ``Directional relationship tests``(): Task<unit> = task {
-    let leafIds = [leaf_1; leaf_2]
+    let revisionIds = [revision_1; revision_2]
     use c = new TestContainer()
     let relationshipName = "Test/Relationship"
     
@@ -419,16 +419,16 @@ let ``Directional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = user_2 // this user collects the card
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[0] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
     //do! testRelationships userId commands.[3]
 
     let userId = user_3 // this user collects card in opposite order from user2
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[0] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     //do! testRelationships userId commands.[2]
@@ -437,7 +437,7 @@ let ``Directional relationship tests``(): Task<unit> = task {
 
 [<Fact>]
 let ``Nondirectional relationship tests``(): Task<unit> = task {
-    let leafIds = [leaf_1; leaf_2]
+    let revisionIds = [revision_1; revision_2]
     use c = new TestContainer()
     let relationshipName = Guid.NewGuid().ToString() |> MappingTools.toTitleCase
     
@@ -482,16 +482,16 @@ let ``Nondirectional relationship tests``(): Task<unit> = task {
         Assert.Null r.Value }
 
     let userId = user_2 // this user collects the card
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[0] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
     do! testRelationships userId commands.[3]
 
     let userId = user_3 // this user collects card in opposite order from user2
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
-    let! _ = ConceptRepository.CollectCard c.Db userId leafIds.[0] [ Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[1] [ Ulid.create; Ulid.create ] |> TaskResult.getOk
+    let! _ = ConceptRepository.CollectCard c.Db userId revisionIds.[0] [ Ulid.create ] |> TaskResult.getOk
     do! testRelationships userId commands.[0]
     do! testRelationships userId commands.[1]
     do! testRelationships userId commands.[2]
@@ -542,12 +542,12 @@ let ``Card search works`` (): Task<unit> = task {
     use c = new TestContainer()
     let userId = user_3
     let basicTag = "basic"
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [basicTag] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [basicTag] (concept_1, example_1, revision_1, [card_1])
     let front = Guid.NewGuid().ToString()
     let back = Guid.NewGuid().ToString()
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [front; back] c.Db userId ["custom"] (concept_2, example_2, leaf_2, [card_2])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [front; back] c.Db userId ["custom"] (concept_2, example_2, revision_2, [card_2])
     let clozeText = "{{c1::" + Guid.NewGuid().ToString() + "}}"
-    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_3, example_3, leaf_3, [card_3])
+    let! _ = FacetRepositoryTests.addCloze clozeText c.Db userId [] (concept_3, example_3, revision_3, [card_3])
     
     // testing search
     let search = ConceptRepository.search c.Db userId 1 SearchOrder.Popularity
@@ -621,27 +621,27 @@ let ``Card search works`` (): Task<unit> = task {
     let term = "relevant "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [less; less] c.Db userId ["tag1"] (concept_ 4, example_ 4, leaf_ 4, [card_ 4])
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [more; more] c.Db userId ["tag2"] (concept_ 5, example_ 5, leaf_ 5, [card_ 5])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [less; less] c.Db userId ["tag1"] (concept_ 4, example_ 4, revision_ 4, [card_ 4])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [more; more] c.Db userId ["tag2"] (concept_ 5, example_ 5, revision_ 5, [card_ 5])
     let! hits = search term
-    Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
+    Assert.Equal(more.Trim(), hits.Results.First().Revision.StrippedFront)
 
     // testing relevance sans tags
     let term = "nightwish "
     let less = String.replicate 1 term
     let more = String.replicate 3 term
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [less; less] c.Db userId [] (concept_ 6, example_ 6, leaf_ 6, [card_ 6])
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [more; more] c.Db userId [] (concept_ 7, example_ 7, leaf_ 7, [card_ 7])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [less; less] c.Db userId [] (concept_ 6, example_ 6, revision_ 6, [card_ 6])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [more; more] c.Db userId [] (concept_ 7, example_ 7, revision_ 7, [card_ 7])
     let! hits = search term
-    Assert.Equal(more.Trim(), hits.Results.First().Leaf.StrippedFront)
+    Assert.Equal(more.Trim(), hits.Results.First().Revision.StrippedFront)
     
     // tags outweigh fields
     let lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
     let tag = " batman"
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [lorem      ; ""] c.Db userId [tag] (concept_ 8, example_ 8, leaf_ 8, [card_ 8])
-    let! _ = FacetRepositoryTests.addBasicCustomConcept [lorem + tag; ""] c.Db userId []    (concept_ 9, example_ 9, leaf_ 9, [card_ 9])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [lorem      ; ""] c.Db userId [tag] (concept_ 8, example_ 8, revision_ 8, [card_ 8])
+    let! _ = FacetRepositoryTests.addBasicCustomConcept [lorem + tag; ""] c.Db userId []    (concept_ 9, example_ 9, revision_ 9, [card_ 9])
     let! hits = search tag
-    Assert.Equal(lorem, hits.Results.First().Leaf.StrippedFront)
+    Assert.Equal(lorem, hits.Results.First().Revision.StrippedFront)
 
     // testing template search
     let search = SanitizeTemplate.Search c.Db userId 1
@@ -688,7 +688,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     let name = Guid.NewGuid().ToString()
     let templateRevisionId1 = templateRevision_ 8
     let templateId1 = template_ 8
-    let initialTemplate = ViewTemplateWithAllLeafs.initialize userId templateRevisionId1 templateId1
+    let initialTemplate = ViewTemplateWithAllRevisions.initialize userId templateRevisionId1 templateId1
 
     let! x = SanitizeTemplate.Update c.Db userId { initialTemplate.Editable with Name = name }
     Assert.Null x.Value
@@ -725,7 +725,7 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     Assert.Null x.Value
 
     let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).TemplateId)
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Revisions.First()).Single(fun x -> x.Name = name).TemplateId)
 
     // updating to cloze
     let name = Guid.NewGuid().ToString()
@@ -740,8 +740,8 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     Assert.Null x.Value
 
     let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).TemplateId)
-    Assert.True(myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).IsCloze)
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Revisions.First()).Single(fun x -> x.Name = name).TemplateId)
+    Assert.True(myTemplates.Select(fun x -> x.Revisions.First()).Single(fun x -> x.Name = name).IsCloze)
 
     // updating to multiple card templates
     let name = Guid.NewGuid().ToString()
@@ -756,15 +756,15 @@ let ``Can create card template and insert a modified one`` (): Task<unit> = task
     Assert.Null x.Value
 
     let! myTemplates = SanitizeTemplate.GetMine c.Db userId
-    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).TemplateId)
-    Assert.Equal(2, myTemplates.Select(fun x -> x.Leafs.First()).Single(fun x -> x.Name = name).JustCardTemplates.Count())
+    Assert.Equal(latestTemplate.TemplateId, myTemplates.Select(fun x -> x.Revisions.First()).Single(fun x -> x.Name = name).TemplateId)
+    Assert.Equal(2, myTemplates.Select(fun x -> x.Revisions.First()).Single(fun x -> x.Name = name).JustCardTemplates.Count())
     }
 
 [<Fact>]
 let ``New card template has correct hash`` (): Task<unit> = (taskResult {
     use c = new TestContainer()
     let userId = user_3
-    let initialTemplate = ViewTemplateWithAllLeafs.initialize userId Ulid.create Ulid.create
+    let initialTemplate = ViewTemplateWithAllRevisions.initialize userId Ulid.create Ulid.create
     use sha512 = SHA512.Create()
     do! SanitizeTemplate.Update c.Db userId initialTemplate.Editable
     let! (dbTemplate: TemplateRevisionEntity) = c.Db.TemplateRevision.SingleAsync(fun x -> x.Template.AuthorId = userId)
@@ -772,7 +772,7 @@ let ``New card template has correct hash`` (): Task<unit> = (taskResult {
     let computedHash =
         initialTemplate.Editable
         |> ViewTemplateRevision.copyTo
-        |> fun x -> x.CopyToNewLeaf
+        |> fun x -> x.CopyToNewRevision
         |> TemplateRevisionEntity.hash sha512
     
     Assert.Equal<BitArray>(dbTemplate.Hash, computedHash)

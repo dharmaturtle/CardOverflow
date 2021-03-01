@@ -53,7 +53,7 @@ module ConceptExample =
 
     let example authorId command title : Example.Events.Summary =
         { Id = % command.Ids.ExampleId
-          LeafIds = [ % command.Ids.LeafId ]
+          RevisionIds = [ % command.Ids.RevisionId ]
           Title = title
           ConceptId = % command.Ids.ConceptId
           AuthorId = authorId
@@ -61,13 +61,13 @@ module ConceptExample =
           AnkiNoteId = None
           FieldValues = command.FieldValues |> Seq.map (fun x -> x.EditField.Name, x.Value) |> Map.ofSeq
           EditSummary = command.EditSummary }
-    let concept authorId command sourceLeafId : Concept.Events.Summary =
+    let concept authorId command sourceRevisionId : Concept.Events.Summary =
         { Id = % command.Ids.ConceptId
           DefaultExampleId = % command.Ids.ExampleId
           AuthorId = authorId
-          CopySourceLeafId = sourceLeafId }
-    let conceptExample authorId command sourceLeafId title =
-        (concept  authorId command sourceLeafId),
+          CopySourceRevisionId = sourceRevisionId }
+    let conceptExample authorId command sourceRevisionId title =
+        (concept  authorId command sourceRevisionId),
         (example authorId command title)
 
     type Writer
@@ -83,14 +83,14 @@ module ConceptExample =
             match command.Kind with
             | NewOriginal_TagIds tags -> // highTODO create card (with tag)
                 conceptExample authorId command None                     "Default" |> create
-            | NewCopy_SourceLeafId_TagIds (sourceLeafId, tags) -> // highTODO create card (with tag)
-                conceptExample authorId command (% sourceLeafId |> Some) "Default" |> create
+            | NewCopy_SourceRevisionId_TagIds (sourceRevisionId, tags) -> // highTODO create card (with tag)
+                conceptExample authorId command (% sourceRevisionId |> Some) "Default" |> create
             | NewExample_Title title ->
                 exampleWriter.Create(example authorId command title)
-            | NewLeaf_Title title ->
+            | NewRevision_Title title ->
                 let example        = example authorId command title
                 let edited : Example.Events.Edited =
-                    { LeafId             = example.LeafIds.Head
+                    { RevisionId             = example.RevisionIds.Head
                       Title              = example.Title
                       TemplateRevisionId = example.TemplateRevisionId
                       FieldValues        = example.FieldValues

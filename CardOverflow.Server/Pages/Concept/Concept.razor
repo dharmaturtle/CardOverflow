@@ -21,7 +21,7 @@
     <div class="col-4">
       <Concept_Examples Concept=@_concept
                         Examples=@_concept.Examples
-                        LeafSelected=@(x => _selected = x)
+                        RevisionSelected=@(x => _selected = x)
                         CollectedIds=@_concept.CollectedIds
                         UpdateCollectedIds=@(async ids => {
                                                _concept.CollectedIds = ids;
@@ -33,9 +33,9 @@
     <div class="col">
       <div class="row">
         <div class="col-xl">
-          <Concept_IFrameHeader Concept=@_concept Leaf=@_selected />
+          <Concept_IFrameHeader Concept=@_concept Revision=@_selected />
           @foreach (var i in _selected.Indexes) {
-            var card = _cards.SingleOrDefault(x => x.LeafMeta.Id == _selected.Id && x.Index == i);
+            var card = _cards.SingleOrDefault(x => x.RevisionMeta.Id == _selected.Id && x.Index == i);
             <div class="row @(i == Index ? "border border-warning mb-3 pb-2 mt-2 pt-3 rounded" : "")" style="border-width: medium!important;">
               @if (IsCurate && card != default) {
                 <div class="col-4 @(card.CardState.IsSuspended ? "text-white bg-secondary" : "")">
@@ -43,7 +43,7 @@
                 </div>
               }
               <div class="col">
-                <ResizingIframe Leaf=@((_selected.Id, i)) Back />
+                <ResizingIframe Revision=@((_selected.Id, i)) Back />
               </div>
             </div>
           }
@@ -65,13 +65,13 @@
 @code {
   [Parameter] public Guid? ConceptId { get; set; }
   [Parameter] public Guid? ExampleId { get; set; }
-  [Parameter] public Guid? LeafId { get; set; }
+  [Parameter] public Guid? RevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   [Parameter] public bool IsCurate { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   private CardOverflow.Pure.ExploreConcept _concept;
-  private LeafMeta _selected;
+  private RevisionMeta _selected;
   private List<Card> _cards = new List<Card>();
   private string _loadingMessage = "Loading...";
 
@@ -83,7 +83,7 @@
       _selected.Users--;
     }
     foreach (var example in _concept.Examples) {
-      if (example.Leaf.Id == _concept.CollectedIds?.Value?.LeafId || example.Id == _concept.CollectedIds?.Value?.ExampleId) {
+      if (example.Revision.Id == _concept.CollectedIds?.Value?.RevisionId || example.Id == _concept.CollectedIds?.Value?.ExampleId) {
         example.Summary.Users--;
       }
     }
@@ -92,13 +92,13 @@
   public override async Task SetParametersAsync(ParameterView parameters) {
     var oldConceptId = ConceptId;
     var oldExampleId = ExampleId;
-    var oldLeafId = LeafId;
+    var oldRevisionId = RevisionId;
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (ConceptId.HasValue && oldConceptId != ConceptId) {
       await DbExecutor.QueryAsync(db => ExploreConceptRepository.get(db, _user.Id, ConceptId.Value)).Match(_ShowError, x => {
         _concept = x;
-        _selected = _concept.Default.Leaf;
+        _selected = _concept.Default.Revision;
         sub1();
       });
     } else if (ExampleId.HasValue && oldExampleId != ExampleId) {
@@ -106,8 +106,8 @@
         (_selected, _concept) = x;
         sub1();
       });
-    } else if (LeafId.HasValue && oldLeafId != LeafId) {
-      await DbExecutor.QueryAsync(db => ExploreConceptRepository.leaf(db, _user.Id, LeafId.Value)).Match(_ShowError, x => {
+    } else if (RevisionId.HasValue && oldRevisionId != RevisionId) {
+      await DbExecutor.QueryAsync(db => ExploreConceptRepository.revision(db, _user.Id, RevisionId.Value)).Match(_ShowError, x => {
         (_selected, _concept) = x;
         sub1();
       });
@@ -127,13 +127,13 @@
   }
 
   private void _CardStateUpdated(int index, CardState newState) {
-    var oldState = _cards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == index).CardState;
+    var oldState = _cards.Single(x => x.RevisionMeta.Id == _selected.Id && x.Index == index).CardState;
     if (!oldState.IsSuspended && newState.IsSuspended && _cards.All(x => x.CardState.IsSuspended)) {
       _concept.Users--;
     } else if (oldState.IsSuspended && !newState.IsSuspended && _cards.All(x => !x.CardState.IsSuspended)) {
       _concept.Users++;
     }
-    _cards.Single(x => x.LeafMeta.Id == _selected.Id && x.Index == index).CardState = newState;
+    _cards.Single(x => x.RevisionMeta.Id == _selected.Id && x.Index == index).CardState = newState;
   }
 
 }

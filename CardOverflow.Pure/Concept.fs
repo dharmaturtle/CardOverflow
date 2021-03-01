@@ -15,7 +15,7 @@ module Events =
         { Id: ConceptId
           DefaultExampleId: ExampleId
           AuthorId: UserId
-          CopySourceLeafId: LeafId Option }
+          CopySourceRevisionId: RevisionId Option }
     type DefaultExampleChanged = { ExampleId: ExampleId }
 
     type Event =

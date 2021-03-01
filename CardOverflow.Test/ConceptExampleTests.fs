@@ -39,20 +39,20 @@ let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, 
     Assert.equal expectedConcept actual
     let! actual, _ = c.TableClient().GetExample (string command.Ids.ExampleId)
     Assert.equal expectedExample actual
-    let! actual, _ = c.TableClient().GetExampleRevision (string command.Ids.LeafId)
-    Assert.equal (Example.toLeafSummary expectedExample) actual
+    let! actual, _ = c.TableClient().GetExampleRevision (string command.Ids.RevisionId)
+    Assert.equal (Example.toRevisionSummary expectedExample) actual
     }
     
 [<StandardProperty>]
 let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2, tags, title) = asyncResult {
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = { command1.Ids with LeafId = command2.Ids.LeafId } }
+    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; Ids = { command1.Ids with RevisionId = command2.Ids.RevisionId } }
     let c = TestEsContainer()
     let conceptExampleWriter = c.ConceptExampleWriter()
     let expectedConcept, expectedBanchSummary1 = ConceptExample.conceptExample authorId command1 None "Default"
     let expectedExampleEdit : Example.Events.Edited =
         let _, b = ConceptExample.conceptExample authorId command2 None title
-        { LeafId             = b.LeafIds.Head
+        { RevisionId             = b.RevisionIds.Head
           Title              = b.Title
           TemplateRevisionId = b.TemplateRevisionId
           FieldValues        = b.FieldValues
@@ -72,10 +72,10 @@ let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2,
     let! actual, _ = c.TableClient().GetExample (string command2.Ids.ExampleId)
     let evolvedSummary = Example.Fold.evolveEdited expectedExampleEdit expectedBanchSummary1
     Assert.equal evolvedSummary actual
-    let! actual, _ = c.TableClient().GetExampleRevision (string command1.Ids.LeafId)
-    Assert.equal (Example.toLeafSummary expectedBanchSummary1) actual
-    let! actual, _ = c.TableClient().GetExampleRevision (string command2.Ids.LeafId)
-    Assert.equal (Example.toLeafSummary evolvedSummary) actual
+    let! actual, _ = c.TableClient().GetExampleRevision (string command1.Ids.RevisionId)
+    Assert.equal (Example.toRevisionSummary expectedBanchSummary1) actual
+    let! actual, _ = c.TableClient().GetExampleRevision (string command2.Ids.RevisionId)
+    Assert.equal (Example.toRevisionSummary evolvedSummary) actual
     }
     
 [<StandardProperty>]
@@ -95,21 +95,21 @@ let ``ConceptExampleWriter.Upsert persists new example`` (authorId, { NewOrigina
     |> Assert.equal (Example.Events.Created expectedExample)
 
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert fails to persist edit with duplicate leafId`` (authorId, command1, command2, tags, title) =
+let ``ConceptExampleWriter.Upsert fails to persist edit with duplicate revisionId`` (authorId, command1, command2, tags, title) =
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
+    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; Ids = command1.Ids }
     let c = TestEsContainer()
     let conceptExampleWriter = c.ConceptExampleWriter()
     conceptExampleWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
         
     conceptExampleWriter.Upsert(authorId, command2)
 
-    |> RunSynchronously.ErrorEquals $"Duplicate leafId:{command1.Ids.LeafId}"
+    |> RunSynchronously.ErrorEquals $"Duplicate revisionId:{command1.Ids.RevisionId}"
 
 [<StandardProperty>]
 let ``ConceptExampleWriter.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title) =
     let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewLeaf_Title title; Ids = command1.Ids }
+    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; Ids = command1.Ids }
     let c = TestEsContainer()
     let conceptExampleWriter = c.ConceptExampleWriter()
     conceptExampleWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()

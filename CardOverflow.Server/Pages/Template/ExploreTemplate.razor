@@ -11,10 +11,10 @@
 @inject DbExecutor DbExecutor
 
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_leafs?.Select(x => x.TemplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink="/template/" CreateLink=@(x => $"/template/{x}") Ids=@_revisions?.Select(x => x.TemplateId.ToString())?.ToList() SelectedId=@SelectedId.ToString() />
 </div>
 @if (SelectedId == null) {
-  @if (_leafs == null) {
+  @if (_revisions == null) {
     <p><em>Loading...</em></p>
   } else {
     <table class="table">
@@ -23,19 +23,19 @@
         <th>Users</th>
         <th>Name</th>
       </tr>
-      @foreach (var leaf in _leafs) {
+      @foreach (var revision in _revisions) {
         <tr>
           <td>
-            <HoverPreview IsCollected=@leaf.IsCollected>
-              <ResizingIframe TemplateRevisionId=@leaf.Id Back />
+            <HoverPreview IsCollected=@revision.IsCollected>
+              <ResizingIframe TemplateRevisionId=@revision.Id Back />
             </HoverPreview>
           </td>
           <td>
-            @leaf.TemplateUsers
+            @revision.TemplateUsers
           </td>
           <td>
-            <a href="/template/@leaf.TemplateId">
-              @leaf.Name
+            <a href="/template/@revision.TemplateId">
+              @revision.Name
             </a>
           </td>
         </tr>
@@ -51,14 +51,14 @@
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
   [Parameter] public Guid? SelectedId { get; set; }
-  private IList<ViewSearchTemplateRevision> _leafs;
+  private IList<ViewSearchTemplateRevision> _revisions;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (SelectedId == null && _leafs == null) {
+    if (SelectedId == null && _revisions == null) {
       await PageChanged(1);
     }
     StateHasChanged();
@@ -67,7 +67,7 @@
   async Task PageChanged(int pageNumber) {
     var pagedList = await DbExecutor.QueryAsync(db => SanitizeTemplate.Search(db, _user.Id, pageNumber, _search.Query));
     _details = pagedList.Details;
-    _leafs = pagedList.Results.ToList();
+    _revisions = pagedList.Results.ToList();
   }
 
   Task SearchClicked(SearchCommand newSearch) {

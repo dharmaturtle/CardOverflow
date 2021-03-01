@@ -13,7 +13,7 @@ namespace CardOverflow.Entity
         public Guid UserId { get; set; }
         public Guid ConceptId { get; set; }
         public Guid ExampleId { get; set; }
-        public Guid LeafId { get; set; }
+        public Guid RevisionId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
@@ -26,6 +26,6 @@ namespace CardOverflow.Entity
         public Guid DeckId { get; set; }
         public bool IsLatest { get; set; }
         public string[] Tags { get; set; }
-        public virtual LeafEntity Leaf { get; set; }
+        public virtual RevisionEntity Revision { get; set; }
     }
 }

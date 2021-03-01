@@ -13,7 +13,7 @@ namespace CardOverflow.Entity
         {
             CardExampleNavigations = new HashSet<CardEntity>();
             CardExamples = new HashSet<CardEntity>();
-            Leafs = new HashSet<LeafEntity>();
+            Revisions = new HashSet<RevisionEntity>();
             NotificationExamples = new HashSet<NotificationEntity>();
         }
 
@@ -47,7 +47,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Examples")]
         public virtual UserEntity Author { get; set; }
         [ForeignKey("LatestId")]
-        public virtual LeafEntity Latest { get; set; }
+        public virtual RevisionEntity Latest { get; set; }
         [ForeignKey("ConceptId")]
         [InverseProperty("Examples")]
         public virtual ConceptEntity Concept { get; set; }
@@ -55,7 +55,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Example")]
         public virtual ICollection<CardEntity> CardExamples { get; set; }
         [InverseProperty("Example")]
-        public virtual ICollection<LeafEntity> Leafs { get; set; }
+        public virtual ICollection<RevisionEntity> Revisions { get; set; }
         [InverseProperty("Example")]
         public virtual ICollection<NotificationEntity> NotificationExamples { get; set; }
     }

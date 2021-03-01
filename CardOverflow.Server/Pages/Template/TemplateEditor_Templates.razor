@@ -19,7 +19,7 @@
   <div></div>
   <h3>Templates</h3>
   <div>
-    @if (Leaf.CardTemplates.IsStandard) {
+    @if (Revision.CardTemplates.IsStandard) {
       <button type="button" class="btn btn-success" @onclick=AddTemplate disabled=@IsDisabled>
         <span class="oi oi-plus"></span>
       </button>
@@ -27,28 +27,28 @@
   </div>
 </div>
 <div>
-  @foreach (var cardTemplate in Leaf.JustCardTemplates) {
+  @foreach (var cardTemplate in Revision.JustCardTemplates) {
     <TemplateEditor_Template
                             Template=@cardTemplate
-                            Css=@Leaf.Css
-                            DisplayDelete=@(Leaf.JustCardTemplates.Count() >= 2)
+                            Css=@Revision.Css
+                            DisplayDelete=@(Revision.JustCardTemplates.Count() >= 2)
                             Delete=@(() => DeleteTemplate(cardTemplate))
                             IsDisabled=@IsDisabled />
   }
 </div>
 
 @code {
-  [Parameter] public ViewTemplateRevision Leaf { get; set; }
+  [Parameter] public ViewTemplateRevision Revision { get; set; }
   [Parameter] public EventCallback<TemplateType> UpdateTemplateType { get; set; }
   [Parameter] public bool IsDisabled { get; set; }
 
   private Task AddTemplate() =>
-    Leaf.JustCardTemplates.Append(CardTemplate.initStandard).ToFList()
+    Revision.JustCardTemplates.Append(CardTemplate.initStandard).ToFList()
     .Apply(TemplateType.NewStandard)
     .Apply(UpdateTemplateType.InvokeAsync);
 
   private Task DeleteTemplate(CardTemplate cardTemplate) =>
-    Leaf.JustCardTemplates.Where(x => x != cardTemplate).ToFList()
+    Revision.JustCardTemplates.Where(x => x != cardTemplate).ToFList()
     .Apply(TemplateType.NewStandard)
     .Apply(UpdateTemplateType.InvokeAsync);
 

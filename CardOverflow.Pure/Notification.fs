@@ -34,7 +34,7 @@ type IdName = {
 type DeckAddedConcept = {
     TheirDeck: IdName
     MyDeck: IdName Option
-    New: ConceptLeafIds
+    New: ConceptRevisionIds
     NewCardCount: int
     Collected: UpsertIds Option
 }
@@ -42,7 +42,7 @@ type DeckAddedConcept = {
 type DeckUpdatedConcept = {
     TheirDeck: IdName
     MyDeck: IdName Option
-    New: ConceptLeafIds
+    New: ConceptRevisionIds
     NewCardCount: int
     Collected: UpsertIds Option
 }
@@ -50,7 +50,7 @@ type DeckUpdatedConcept = {
 type DeckDeletedConcept = {
     TheirDeck: IdName
     MyDeck: IdName Option
-    Deleted: ConceptLeafIds
+    Deleted: ConceptRevisionIds
     DeletedCardCount: int
     Collected: UpsertIds Option
 }

@@ -83,7 +83,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
                 UserId = userId
                 ConceptId = conceptId
                 ExampleId = exampleId
-                LeafMeta = cc.LeafMeta // untested
+                RevisionMeta = cc.RevisionMeta // untested
                 Index = 0s
                 CardState = basicCommand.CardState
                 IsLapsed = false
@@ -114,7 +114,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
                 UserId = userId
                 ConceptId = conceptId
                 ExampleId = exampleId
-                LeafMeta = a.LeafMeta // untested
+                RevisionMeta = a.RevisionMeta // untested
                 Index = 0s
                 CardState = aRevCommand.CardState
                 IsLapsed = false
@@ -131,7 +131,7 @@ let ``SanitizeConceptRepository.Update with EditCardCommands``(stdGen: Random.St
                 UserId = userId
                 ConceptId = conceptId
                 ExampleId = exampleId
-                LeafMeta = b.LeafMeta // untested
+                RevisionMeta = b.RevisionMeta // untested
                 Index = 1s
                 CardState = bRevCommand.CardState
                 IsLapsed = false

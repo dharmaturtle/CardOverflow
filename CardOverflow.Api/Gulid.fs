@@ -27,5 +27,5 @@ type UpsertIdsModule =
     static member create with get () =
         {   ConceptId = Ulid.create
             ExampleId = Ulid.create
-            LeafId = Ulid.create
+            RevisionId = Ulid.create
             CardIds = [ Ulid.create ] }

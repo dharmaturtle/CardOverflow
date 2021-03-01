@@ -9,16 +9,16 @@ using NodaTime;
 
 namespace CardOverflow.Entity
 {
-    public partial class LeafEntity
+    public partial class RevisionEntity
     {
-        public LeafEntity()
+        public RevisionEntity()
         {
             Cards = new HashSet<CardEntity>();
-            Commeaf_Leafs = new HashSet<Commeaf_LeafEntity>();
-            File_Leafs = new HashSet<File_LeafEntity>();
+            Commeaf_Revisions = new HashSet<Commeaf_RevisionEntity>();
+            File_Revisions = new HashSet<File_RevisionEntity>();
             Histories = new HashSet<HistoryEntity>();
             ConceptCopySources = new HashSet<ConceptEntity>();
-            NotificationLeafs = new HashSet<NotificationEntity>();
+            NotificationRevisions = new HashSet<NotificationEntity>();
         }
 
         [Key]
@@ -71,24 +71,24 @@ namespace CardOverflow.Entity
         public virtual ConceptEntity Concept { get; set; }
 
         [ForeignKey("ExampleId")]
-        [InverseProperty("Leafs")]
+        [InverseProperty("Revisions")]
         public virtual ExampleEntity Example { get; set; }
         [ForeignKey("TemplateRevisionId")]
-        [InverseProperty("Leafs")]
+        [InverseProperty("Revisions")]
         public virtual TemplateRevisionEntity TemplateRevision { get; set; }
-        [InverseProperty("Leaf")]
+        [InverseProperty("Revision")]
         public virtual ICollection<CardEntity> Cards { get; set; }
-        [InverseProperty("Leaf")]
-        public virtual ICollection<Commeaf_LeafEntity> Commeaf_Leafs { get; set; }
-        [InverseProperty("Leaf")]
-        public virtual ICollection<File_LeafEntity> File_Leafs { get; set; }
-        [InverseProperty("Leaf")]
+        [InverseProperty("Revision")]
+        public virtual ICollection<Commeaf_RevisionEntity> Commeaf_Revisions { get; set; }
+        [InverseProperty("Revision")]
+        public virtual ICollection<File_RevisionEntity> File_Revisions { get; set; }
+        [InverseProperty("Revision")]
         public virtual ICollection<HistoryEntity> Histories { get; set; }
-        [InverseProperty("Leaf")]
-        public virtual ICollection<NotificationEntity> NotificationLeafs { get; set; }
+        [InverseProperty("Revision")]
+        public virtual ICollection<NotificationEntity> NotificationRevisions { get; set; }
         [InverseProperty("CopySource")]
         public virtual ICollection<ConceptEntity> ConceptCopySources { get; set; }
         public virtual ICollection<ConceptRelationshipCountEntity> ConceptRelationshipCounts { get; set; }
-        public virtual ICollection<LeafRelationshipCountEntity> LeafRelationshipCounts { get; set; }
+        public virtual ICollection<RevisionRelationshipCountEntity> RevisionRelationshipCounts { get; set; }
   }
 }

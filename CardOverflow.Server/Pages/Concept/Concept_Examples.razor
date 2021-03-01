@@ -22,8 +22,8 @@
         <th scope="col" style="text-align:center;">
           <CollectToggles IsConcept=true
                           CollectedIds=@CollectedIds
-                          Ids=@(new ConceptLeafIds(Concept.Id, Concept.Default.Id, Concept.Default.Leaf.Id))
-                          CardCount=@Concept.Default.Leaf.Indexes.Count()
+                          Ids=@(new ConceptRevisionIds(Concept.Id, Concept.Default.Id, Concept.Default.Revision.Id))
+                          CardCount=@Concept.Default.Revision.Indexes.Count()
                           ExampleUsers=@Concept.Users
                           UpdateCollectedIds=@UpdateCollectedIds />
         </th>
@@ -33,10 +33,10 @@
           <h4>Examples</h4>
         } else {
           <div class="btn-group" role="group">
-            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="concept?leaf=@CollectedIds.Value.LeafId">
+            <a class="btn btn-@(IsExplore ? "primary" : "light")" href="concept?revision=@CollectedIds.Value.RevisionId">
               All Examples
             </a>
-            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/concept?leaf=@CollectedIds.Value.LeafId">
+            <a class="btn btn-@(!IsExplore ? "primary" : "light")" href="my/concept?revision=@CollectedIds.Value.RevisionId">
               My Example
             </a>
           </div>
@@ -55,7 +55,7 @@
     <tbody>
       @foreach (var example in Examples) {
         <Concept_Example Example=@example
-                      LeafSelected=@LeafSelected
+                      RevisionSelected=@RevisionSelected
                       CollectedIds=@CollectedIds
                       UpdateCollectedIds=@UpdateCollectedIds
                       Selected=@Selected />
@@ -69,10 +69,10 @@
   private UserClaims _user = UserClaims.init;
   [Parameter] public ExploreConcept Concept { get; set; }
   [Parameter] public List<Example> Examples { get; set; }
-  [Parameter] public EventCallback<LeafMeta> LeafSelected { get; set; }
+  [Parameter] public EventCallback<RevisionMeta> RevisionSelected { get; set; }
   [Parameter] public FSharpOption<UpsertIds> CollectedIds { get; set; }
   [Parameter] public EventCallback<FSharpOption<UpsertIds>> UpdateCollectedIds { get; set; }
-  [Parameter] public LeafMeta Selected { get; set; }
+  [Parameter] public RevisionMeta Selected { get; set; }
   [Parameter] public bool IsExplore { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {

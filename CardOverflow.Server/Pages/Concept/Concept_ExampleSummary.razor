@@ -14,21 +14,21 @@
 @inject UserContentHttpClient UserContentHttpClient
 @inject TimeProvider TimeProvider
 
-@if (string.IsNullOrWhiteSpace(Leaf.EditSummary)) {
+@if (string.IsNullOrWhiteSpace(Revision.EditSummary)) {
   <span>
     &laquo; No Edit Summary &raquo;
   </span>
 } else {
-  @Leaf.EditSummary
+  @Revision.EditSummary
 }
-<a style="color:unset" class="font-italic float-right" title=@(Leaf.Created + " UTC") href=@($"concept?leaf={Leaf.Id}")>
-  - @ViewLogic.timestampToPretty(Leaf.Created, TimeProvider.utcNow)
+<a style="color:unset" class="font-italic float-right" title=@(Revision.Created + " UTC") href=@($"concept?revision={Revision.Id}")>
+  - @ViewLogic.timestampToPretty(Revision.Created, TimeProvider.utcNow)
 </a>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public LeafMeta Leaf { get; set; }
+  [Parameter] public RevisionMeta Revision { get; set; }
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);

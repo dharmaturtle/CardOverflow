@@ -23,7 +23,7 @@ namespace CardOverflow.Entity
         public Guid UserId { get; set; }
         public Guid ConceptId { get; set; }
         public Guid ExampleId { get; set; }
-        public Guid LeafId { get; set; }
+        public Guid RevisionId { get; set; }
         public short Index { get; set; }
         public short CardState { get; set; }
         public short EaseFactorInPermille { get; set; }
@@ -68,9 +68,9 @@ namespace CardOverflow.Entity
         [ForeignKey("ExampleId")]
         [InverseProperty("CardExamples")]
         public virtual ExampleEntity Example { get; set; }
-        [ForeignKey("LeafId")]
+        [ForeignKey("RevisionId")]
         [InverseProperty("Cards")]
-        public virtual LeafEntity Leaf { get; set; }
+        public virtual RevisionEntity Revision { get; set; }
         public virtual ExampleEntity ExampleNavigation { get; set; }
         [ForeignKey("CardSettingId")]
         [InverseProperty("Cards")]

@@ -42,10 +42,10 @@ module Notification =
             lazy (myDeck |> Option.ofObj |> Option.map(fun myDeck ->
                 { Id = myDeck.Id
                   Name = myDeck.Name }))
-        let conceptLeafIds =
+        let conceptRevisionIds =
             lazy{ ConceptId = n.ConceptId.Value
                   ExampleId = n.ExampleId.Value
-                  LeafId = n.LeafId.Value
+                  RevisionId = n.RevisionId.Value
                 }
         let cardCount = newCardCount |> int |> (+) 1
         let collected =
@@ -54,7 +54,7 @@ module Notification =
                 | card ->
                     {   ConceptId = card.First().ConceptId
                         ExampleId = card.First().ExampleId
-                        LeafId = card.First().LeafId
+                        RevisionId = card.First().RevisionId
                         CardIds = card.Select(fun x -> x.Id) |> Seq.toList
                     } |> Some
                 )
@@ -63,21 +63,21 @@ module Notification =
             | NotificationType.DeckAddedConcept ->
                 {   DeckAddedConcept.TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    New = conceptLeafIds.Value
+                    New = conceptRevisionIds.Value
                     NewCardCount = cardCount
                     Collected = collected.Value
                 } |> DeckAddedConcept
             | NotificationType.DeckUpdatedConcept ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    New = conceptLeafIds.Value
+                    New = conceptRevisionIds.Value
                     NewCardCount = cardCount
                     Collected = collected.Value
                 } |> DeckUpdatedConcept
             | NotificationType.DeckDeletedConcept ->
                 {   TheirDeck = theirDeck.Value
                     MyDeck = myDeck.Value
-                    Deleted = conceptLeafIds.Value
+                    Deleted = conceptRevisionIds.Value
                     DeletedCardCount = cardCount
                     Collected = collected.Value
                 } |> DeckDeletedConcept
@@ -89,13 +89,13 @@ module Notification =
             Message = message
         }
 
-module LeafEntity =
+module RevisionEntity =
     let bitArrayToByteArray (bitArray: BitArray) = // https://stackoverflow.com/a/45760138
         let bytes = Array.zeroCreate ((bitArray.Length - 1) / 8 + 1)
         bitArray.CopyTo(bytes, 0)
         bytes
-    let hash (templateHash: BitArray) (hasher: SHA512) (e: LeafEntity) =
-        e.Commeaf_Leafs
+    let hash (templateHash: BitArray) (hasher: SHA512) (e: RevisionEntity) =
+        e.Commeaf_Revisions
             .Select(fun x -> x.Commeaf.Value)
             .OrderBy(fun x -> x)
         |> Seq.toList
@@ -278,7 +278,7 @@ type TemplateRevision with
             match this.CardTemplates with
             | Standard _ -> 0s
             | Cloze _ -> 1s
-    member this.CopyToNewLeaf =
+    member this.CopyToNewRevision =
         let e = TemplateRevisionEntity()
         this.CopyTo e
         e.Id <- this.Id
@@ -291,7 +291,7 @@ type CollectedTemplateRevision with
           DefaultCardSettingId = entity.User_TemplateRevisions.Single().DefaultCardSettingId
           TemplateRevision = TemplateRevision.load entity }
 
-type LeafView with
+type RevisionView with
     static member private toView (templateRevision: TemplateRevisionEntity) (fieldValues: string)=
         {   FieldValues = FieldAndValue.load (Fields.fromString templateRevision.Fields) fieldValues
             TemplateRevision = TemplateRevision.load templateRevision }
@@ -299,22 +299,22 @@ type LeafView with
         Helper.maxIndexInclusive
             (this.TemplateRevision.CardTemplates)
             (this.FieldValues.Select(fun x -> x.Field.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls
-    static member load (entity: LeafEntity) =
-        LeafView.toView
+    static member load (entity: RevisionEntity) =
+        RevisionView.toView
             entity.TemplateRevision
             entity.FieldValues
-    member this.CopyToX (entity: LeafEntity) (commields: CommeafEntity seq) =
+    member this.CopyToX (entity: RevisionEntity) (commields: CommeafEntity seq) =
         entity.FieldValues <- FieldAndValue.join (this.FieldValues |> List.ofSeq)
-        entity.Commeaf_Leafs <-
-            commields.Select(fun x -> Commeaf_LeafEntity(Commeaf = x))
-            |> entity.Commeaf_Leafs.Concat
+        entity.Commeaf_Revisions <-
+            commields.Select(fun x -> Commeaf_RevisionEntity(Commeaf = x))
+            |> entity.Commeaf_Revisions.Concat
             |> toResizeArray
         entity.TemplateRevisionId <- this.TemplateRevision.Id
     member this.CopyToNew commields =
-        let entity = LeafEntity()
+        let entity = RevisionEntity()
         this.CopyToX entity commields
         entity
-    member this.CopyFieldsToNewLeaf (example: ExampleEntity) editSummary commields leafId =
+    member this.CopyFieldsToNewRevision (example: ExampleEntity) editSummary commields revisionId =
         let e = this.CopyToNew commields
         if example.Concept = null then
             if example.ConceptId = Guid.Empty then failwith "ConceptId is Guid.Empty, you gotta .Include it"
@@ -322,7 +322,7 @@ type LeafView with
         else
             e.Concept <- example.Concept
             e.ConceptId <- example.Concept.Id
-        e.Id <- leafId
+        e.Id <- revisionId
         e.Example <- example
         e.ExampleId <- example.Id
         e.EditSummary <- editSummary
@@ -335,9 +335,9 @@ type Commeaf with
         FieldName = entity.FieldName
         Value = entity.Value }
 
-type LeafMeta with
-    static member loadIndex (i: int16) isCollected isLatest (entity: LeafEntity) =
-        let front, back, _, _ = entity |> LeafView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
+type RevisionMeta with
+    static member loadIndex (i: int16) isCollected isLatest (entity: RevisionEntity) =
+        let front, back, _, _ = entity |> RevisionView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int i]
         {   Id = entity.Id
             ConceptId = entity.ConceptId
             ExampleId = entity.ExampleId
@@ -349,14 +349,14 @@ type LeafMeta with
             IsCollected = isCollected
             StrippedFront = MappingTools.stripHtmlTagsForDisplay front
             StrippedBack = MappingTools.stripHtmlTagsForDisplay back
-            Commields = entity.Commeaf_Leafs.Select(fun x -> Commeaf.load x.Commeaf).ToList()
+            Commields = entity.Commeaf_Revisions.Select(fun x -> Commeaf.load x.Commeaf).ToList()
             Users = entity.Users
             EditSummary = entity.EditSummary
         }
-    static member load = LeafMeta.loadIndex 0s
-    static member loadAll isCollected isLatest (entity: LeafEntity) =
+    static member load = RevisionMeta.loadIndex 0s
+    static member loadAll isCollected isLatest (entity: RevisionEntity) =
         [0s .. entity.MaxIndexInclusive]
-        |> List.map(fun i -> LeafMeta.loadIndex i isCollected isLatest entity)
+        |> List.map(fun i -> RevisionMeta.loadIndex i isCollected isLatest entity)
     static member initialize =
         {   Id = Guid.Empty
             ConceptId = Guid.Empty
@@ -373,23 +373,23 @@ type LeafMeta with
             Users = 0
             EditSummary = ""
         }
-    member this.copyTo (entity: LeafEntity) =
+    member this.copyTo (entity: RevisionEntity) =
         entity.Modified <- this.Modified |> Option.toNullable
         entity.IsDmca <- this.IsDmca
     member this.copyToNew =
-        let e = LeafEntity()
+        let e = RevisionEntity()
         this.copyTo e
         e
 
 type QuizCard with
     static member load (entity: CardEntity) =
         let front, back, frontSynthVoice, backSynthVoice =
-            entity.Leaf |> LeafView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int entity.Index]
+            entity.Revision |> RevisionView.load |> fun x -> x.FrontBackFrontSynthBackSynth.[int entity.Index]
         result {
             let! cardState = CardState.create entity.CardState
             return {
                 CardId = entity.Id
-                LeafId = entity.LeafId
+                RevisionId = entity.RevisionId
                 Due = entity.Due
                 Front = front
                 Back = back
@@ -425,7 +425,7 @@ type Card with
         {   ConceptId = Guid.Empty
             ExampleId = Guid.Empty
             CardId = cardId
-            LeafMeta = LeafMeta.initialize
+            RevisionMeta = RevisionMeta.initialize
             Index = 0s
             UserId = userId
             CardState = CardState.Normal
@@ -443,7 +443,7 @@ type Card with
             {   ConceptId = entity.ConceptId
                 ExampleId = entity.ExampleId
                 CardId = entity.Id
-                LeafMeta = LeafMeta.loadIndex entity.Index isCollected entity.IsLatest entity.Leaf
+                RevisionMeta = RevisionMeta.loadIndex entity.Index isCollected entity.IsLatest entity.Revision
                 Index = entity.Index
                 UserId = entity.UserId
                 CardState = cardState
@@ -467,12 +467,12 @@ type Comment with
     }
 
 type ExploreExampleSummary with
-    static member load leaf (entity: ExampleEntity) = {
+    static member load revision (entity: ExampleEntity) = {
         Id = entity.Id
         Author = entity.Author.DisplayName
         AuthorId = entity.AuthorId
         Users = entity.Users
-        Leaf = leaf
+        Revision = revision
     }
 
 type Example with
@@ -480,7 +480,7 @@ type Example with
         Name = example.Name
         Summary =
             ExploreExampleSummary.load
-                <| LeafMeta.load (example.LatestId = CollectedIds.leafId ids) true example.Latest
+                <| RevisionMeta.load (example.LatestId = CollectedIds.revisionId ids) true example.Latest
                 <| example
     }
 
@@ -503,14 +503,14 @@ type ExploreConcept with
     }
 
 type ExampleRevision with
-    static member load leafId (e: ExampleEntity) = {
+    static member load revisionId (e: ExampleEntity) = {
         Id = e.Id
         Author = e.Author.DisplayName
         AuthorId = e.AuthorId
         Name = e.Name
         SortedMeta =
-            e.Leafs
+            e.Revisions
             |> Seq.sortByDescending (fun x -> x.Modified |?? lazy x.Created)
-            |> Seq.mapi (fun i e -> LeafMeta.load (e.Id = leafId) (i = 0) e)
+            |> Seq.mapi (fun i e -> RevisionMeta.load (e.Id = revisionId) (i = 0) e)
             |> Seq.toList
     }

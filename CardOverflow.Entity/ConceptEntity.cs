@@ -41,7 +41,7 @@ namespace CardOverflow.Entity
         public virtual ExampleEntity DefaultExample { get; set; }
         [ForeignKey("CopySourceId")]
         [InverseProperty("ConceptCopySources")]
-        public virtual LeafEntity CopySource { get; set; }
+        public virtual RevisionEntity CopySource { get; set; }
         [InverseProperty("Concept")]
         public virtual ICollection<CardEntity> Cards { get; set; }
         [InverseProperty("Concept")]

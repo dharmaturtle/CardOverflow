@@ -141,8 +141,8 @@ let editConceptCommandGen =
             match k with
             | NewOriginal_TagIds _ ->
                 NewOriginal_TagIds tags
-            | NewCopy_SourceLeafId_TagIds (x, _) ->
-                NewCopy_SourceLeafId_TagIds (x, tags)
+            | NewCopy_SourceRevisionId_TagIds (x, _) ->
+                NewCopy_SourceRevisionId_TagIds (x, tags)
             | _ -> k
             )
         let! ids = GenX.auto<UpsertIds>
@@ -212,7 +212,7 @@ let deckSummaryGen = gen {
 let exampleSummaryGen = gen {
     let! title       = GenX.lString 0 Example.titleMax       Gen.latin1
     let! editSummary = GenX.lString 0 Example.editSummaryMax Gen.latin1
-    let! leafId = GenX.auto
+    let! revisionId = GenX.auto
     return!
         nodaConfig
         |> GenX.autoWith<Example.Events.Summary>
@@ -220,7 +220,7 @@ let exampleSummaryGen = gen {
             { b with
                 Title = title
                 EditSummary = editSummary
-                LeafIds = [ leafId ]      })
+                RevisionIds = [ revisionId ]      })
         |> Gen.filter (Example.validateSummary >> Result.isOk)
     }
 

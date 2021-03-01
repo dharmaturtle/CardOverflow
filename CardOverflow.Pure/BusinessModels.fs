@@ -190,7 +190,7 @@ type IntervalOrStepsIndex =
 
 type QuizCard = {
     CardId: Guid
-    LeafId: Guid
+    RevisionId: Guid
     Due: Instant
     Front: string
     Back: string
@@ -203,7 +203,7 @@ type QuizCard = {
     Settings: CardSetting
 }
 
-//type Leaf = {
+//type Revision = {
 //    Id: Guid
 //    Created: Instant
 //    Modified: Instant option
@@ -276,8 +276,8 @@ type PagedList<'T> = {
 
 [<CLIMutable>]
 type CommieldValue = {
-    LeafId: Guid option
-    CommunalLeafIds: int ResizeArray
+    RevisionId: Guid option
+    CommunalRevisionIds: int ResizeArray
 }
 
 [<CLIMutable>]
@@ -297,7 +297,7 @@ module Helper =
         | Standard ts ->
             (ts.Length |> int16) - 1s
 
-type LeafView = {
+type RevisionView = {
     FieldValues: FieldAndValue ResizeArray
     TemplateRevision: TemplateRevision
 } with
@@ -378,7 +378,7 @@ type ViewRelationship = {
         Relationship.split this.Name |> snd
 
 [<CLIMutable>]
-type LeafMeta = {
+type RevisionMeta = {
     Id: Guid
     ConceptId: Guid
     ExampleId: Guid
@@ -402,7 +402,7 @@ type Card = {
     UserId: Guid
     ConceptId: Guid
     ExampleId: Guid
-    LeafMeta: LeafMeta
+    RevisionMeta: RevisionMeta
     Index: int16
     CardState: CardState
     IsLapsed: bool
@@ -428,9 +428,9 @@ type ExploreConceptSummary = {
     Users: int
     Author: string
     AuthorId: Guid
-    Leaf: LeafMeta
+    Revision: RevisionMeta
 } with
-    member this.IsCollected = this.Leaf.IsCollected
+    member this.IsCollected = this.Revision.IsCollected
 
 [<CLIMutable>]
 type ExploreExampleSummary = {
@@ -438,9 +438,9 @@ type ExploreExampleSummary = {
     Users: int
     Author: string
     AuthorId: Guid
-    Leaf: LeafMeta
+    Revision: RevisionMeta
 } with
-    member this.IsCollected = this.Leaf.IsCollected
+    member this.IsCollected = this.Revision.IsCollected
 
 type Example = {
     Name: string
@@ -450,14 +450,14 @@ type Example = {
     member this.Users = this.Summary.Users
     member this.Author = this.Summary.Author
     member this.AuthorId = this.Summary.AuthorId
-    member this.Leaf = this.Summary.Leaf
+    member this.Revision = this.Summary.Revision
 
 type CollectedIds = UpsertIds Option
 
 module CollectedIds =
-    let leafId =
+    let revisionId =
         function
-        | Some (x: UpsertIds) -> x.LeafId
+        | Some (x: UpsertIds) -> x.RevisionId
         | None -> Guid.Empty
     let exampleId =
         function
@@ -490,18 +490,18 @@ type ExampleRevision = {
     Author: string
     AuthorId: Guid
     Name: string
-    SortedMeta: LeafMeta list
+    SortedMeta: RevisionMeta list
 }
 
 type UpsertKind =
     | NewOriginal_TagIds of string Set
-    | NewCopy_SourceLeafId_TagIds of Guid * string Set
+    | NewCopy_SourceRevisionId_TagIds of Guid * string Set
     | NewExample_Title of string
-    | NewLeaf_Title of string
+    | NewRevision_Title of string
 with
-    member this.TryGetCopySourceLeafId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
+    member this.TryGetCopySourceRevisionId([<Out>] x:byref<_>) = // https://stackoverflow.com/a/17264768
         match this with
-        | NewCopy_SourceLeafId_TagIds (leafId, _) -> x <- leafId; true
+        | NewCopy_SourceRevisionId_TagIds (revisionId, _) -> x <- revisionId; true
         | _ -> false
 
 type EditConceptCommand = {

@@ -109,8 +109,8 @@ let ``Import relationships has reduced Templates, also fieldvalue tests`` (): un
         |> Result.getOk
     let getFieldValues (templateName: string) =
         cards
-            .Where(fun x -> x.Leaf.TemplateRevision.Name.Contains templateName)
-            .Select(fun x -> (LeafView.load x.Leaf).FieldValues.Select(fun x -> x.Value) |> List.ofSeq |> List.distinct) |> List.ofSeq |> List.distinct |> List.exactlyOne
+            .Where(fun x -> x.Revision.TemplateRevision.Name.Contains templateName)
+            .Select(fun x -> (RevisionView.load x.Revision).FieldValues.Select(fun x -> x.Value) |> List.ofSeq |> List.distinct) |> List.ofSeq |> List.distinct |> List.exactlyOne
 
     Assert.Equal<string list>(
         [   """What is the null hypothesis for the slope?"""
@@ -174,26 +174,26 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
     Assert.Null r.Value
     
     Assert.Equal(3, c.Db.Concept.Count())
-    Assert.Equal(3, c.Db.Leaf.Count())
+    Assert.Equal(3, c.Db.Revision.Count())
     Assert.Equal(AnkiDefaults.templateRevisionIdByHash.Count + 1, c.Db.Template.Count())
     Assert.Equal(10, c.Db.TemplateRevision.Count())
 
-    let getLeafs (templateName: string) =
+    let getRevisions (templateName: string) =
         c.Db.TemplateRevision
-            .Include(fun x -> x.Leafs :> IEnumerable<_>)
-                .ThenInclude(fun (x: LeafEntity) -> x.TemplateRevision)
+            .Include(fun x -> x.Revisions :> IEnumerable<_>)
+                .ThenInclude(fun (x: RevisionEntity) -> x.TemplateRevision)
             .Where(fun x -> x.Name.Contains templateName)
-            .SelectMany(fun x -> x.Leafs :> IEnumerable<_>)
+            .SelectMany(fun x -> x.Revisions :> IEnumerable<_>)
             .ToListAsync()
     
-    let! basic = getLeafs "Basic"
-    for leaf in basic do
-        let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+    let! basic = getRevisions "Basic"
+    for revision in basic do
+        let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Leaf.Commields
+        Assert.Empty concept.Default.Revision.Commields
     
-    let! sketchy = getLeafs "Sketchy"
+    let! sketchy = getRevisions "Sketchy"
     let expectedFieldAndValues =
         ["Entire Sketch", """8.2 - Ganciclovir, valganciclovir, foscarnet, cidofovir<img src="/missingImage.jpg" />"""
          "More About This Topic","""<img src="/missingImage.jpg" /><img src="/missingImage.jpg" /><img src="/missingImage.jpg" />"""]
@@ -201,7 +201,7 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
         let! concept = ExploreConceptRepository.get c.Db userId card.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Leaf.Commields
+        Assert.Empty concept.Default.Revision.Commields
         let! view = ConceptViewRepository.get c.Db concept.Id
         Assert.Equal(
             expectedFieldAndValues,
@@ -209,15 +209,15 @@ let ``Import relationships has relationships`` (): Task<unit> = task {
                 .Where(fun x -> expectedFieldAndValues.Select(fun (field, _) -> field).Contains(x.Field.Name))
                 .Select(fun x -> x.Field.Name, x.Value).OrderBy(fun x -> x))
 
-    let! cloze = getLeafs "Cloze"
-    for leaf in cloze do
-        let! view = ConceptViewRepository.get c.Db leaf.ConceptId
+    let! cloze = getRevisions "Cloze"
+    for revision in cloze do
+        let! view = ConceptViewRepository.get c.Db revision.ConceptId
         [   "Text", "{{c2::Toxic adenomas}} are thyroid nodules that usually contain a mutated {{c1::TSH receptor}}"
             "Extra", "<br /><div><br /></div><div><i>Multiple Toxic adenomas = Toxic multinodular goiter</i></div>" ]
         |> fun expected -> Assert.Equal(expected, view.Value.FieldValues.Select(fun x -> x.Field.Name, x.Value))
-        let leafs = LeafMeta.loadAll true true leaf
-        Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", leafs.[0].StrippedFront)
-        Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", leafs.[1].StrippedFront)
+        let revisions = RevisionMeta.loadAll true true revision
+        Assert.Equal("Toxic adenomas are thyroid nodules that usually contain a mutated [ ... ]", revisions.[0].StrippedFront)
+        Assert.Equal("[ ... ] are thyroid nodules that usually contain a mutated TSH receptor", revisions.[1].StrippedFront)
     }
 
 [<Fact>]
@@ -227,7 +227,7 @@ let ``Can import myHighPriority, but really testing duplicate card templates`` (
     do! AnkiImporter.save c.Db AnkiImportTestData.myHighPriority userId Map.empty
     
     Assert.Equal(2, c.Db.Concept.Count())
-    Assert.Equal(2, c.Db.Leaf.Count())
+    Assert.Equal(2, c.Db.Revision.Count())
     Assert.Equal(6, c.Db.Template.Count())
     Assert.Equal(8, c.Db.TemplateRevision.Count())
     Assert.Equal(0, c.Db.Relationship.Count())
@@ -272,7 +272,7 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:21:11"
             "6/16/2019 00:53:20"
         ].ToList(),
-        c.Db.Leaf.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
+        c.Db.Revision.AsEnumerable().Select(fun x -> x.Created.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
     Assert.Equal<IEnumerable<string>>(
         [   "4/8/2019 02:14:53"
@@ -284,11 +284,11 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
             "4/8/2019 02:43:51"
             "6/16/2019 00:56:27"
         ].ToList(),
-        c.Db.Leaf.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
+        c.Db.Revision.AsEnumerable().Select(fun x -> x.Modified.Value.ToString("M/d/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).OrderBy(fun x -> x)
     )
     Assert.Equal(8, c.Db.Concept.Count())
     Assert.Equal(10, c.Db.Card.Count(fun x -> x.UserId = userId))
-    Assert.Equal(8, c.Db.User.Include(fun x -> x.Cards).Single(fun x -> x.Id = userId).Cards.Select(fun x -> x.LeafId).Distinct().Count())
+    Assert.Equal(8, c.Db.User.Include(fun x -> x.Cards).Single(fun x -> x.Id = userId).Cards.Select(fun x -> x.RevisionId).Distinct().Count())
     Assert.Equal(2, c.Db.CardSetting.Count(fun db -> db.UserId = userId))
     Assert.Equal<string seq>(
         [ "Default"; "Default Deck" ] |> Seq.sort,
@@ -300,37 +300,37 @@ let ``AnkiImporter can import AnkiImportTestData.All`` ankiFileName ankiDb: Task
     Assert.Equal<string>(
         [ "Othertag" ],
         c.Db.Card
-            .Include(fun x -> x.Leaf)
-            .Single(fun c -> c.Leaf.FieldValues.Contains("mp3"))
+            .Include(fun x -> x.Revision)
+            .Single(fun c -> c.Revision.FieldValues.Contains("mp3"))
             .Tags
             |> Seq.sort)
     Assert.Equal<string>(
         "Default",
         c.Db.Card
             .Include(fun x -> x.Deck)
-            .Single(fun c -> c.Leaf.FieldValues.Contains("mp3"))
+            .Single(fun c -> c.Revision.FieldValues.Contains("mp3"))
             .Deck.Name)
 
-    let getLeafs (templateName: string) =
+    let getRevisions (templateName: string) =
         c.Db.TemplateRevision
-            .Include(fun x -> x.Leafs)
+            .Include(fun x -> x.Revisions)
             .Where(fun x -> x.Name.Contains templateName)
-            .SelectMany(fun x -> x.Leafs :> IEnumerable<_>)
+            .SelectMany(fun x -> x.Revisions :> IEnumerable<_>)
             .ToListAsync()
 
-    let! leafs = getLeafs "optional"
-    for leaf in leafs do
-        let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+    let! revisions = getRevisions "optional"
+    for revision in revisions do
+        let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Leaf.Commields
+        Assert.Empty concept.Default.Revision.Commields
 
-    let! leafs = getLeafs "and reversed card)"
-    for leaf in leafs do
-        let! concept = ExploreConceptRepository.get c.Db userId leaf.ConceptId
+    let! revisions = getRevisions "and reversed card)"
+    for revision in revisions do
+        let! concept = ExploreConceptRepository.get c.Db userId revision.ConceptId
         let concept = concept.Value
         Assert.Empty concept.Relationships
-        Assert.Empty concept.Default.Leaf.Commields
+        Assert.Empty concept.Default.Revision.Commields
 
     Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
     Assert.Equal(AnkiDefaults.templateRevisionIdByHash.Count - 1, c.Db.User_TemplateRevision.Count(fun x -> x.UserId = userId))
@@ -385,7 +385,7 @@ let ``110reviewsWithNoMatchingCards can be imported``() : Task<unit> = task {
 let ``Importing AnkiDb reuses old tags`` ankiFileName simpleAnkiDb: Task<unit> = (taskResult {
     use c = new TestContainer(false, ankiFileName)
     let userId = user_3
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [ "Tag"; "Deck:Default" ] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [ "Tag"; "Deck:Default" ] (concept_1, example_1, revision_1, [card_1])
     Assert.Equal(2, c.Db.Card.ToList().SelectMany(fun x -> x.Tags :> IEnumerable<_>).Distinct().Count())
 
     do! AnkiImporter.save c.Db simpleAnkiDb userId Map.empty
@@ -410,13 +410,13 @@ let ``Importing AnkiDb reuses previous CardSettings, Tags, and Templates`` ankiF
         Assert.Equal(0, c.Db.Template.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(8, c.Db.Concept.Count(fun x -> x.AuthorId = userId))
         Assert.Equal(8, c.Db.Concept.Count())
-        Assert.Equal(2, c.Db.Leaf.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
-        Assert.Equal(1, c.Db.Leaf.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
-        Assert.Equal(1, c.Db.Leaf.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
+        Assert.Equal(2, c.Db.Revision.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic Front%")))
+        Assert.Equal(1, c.Db.Revision.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(1, c.Db.Revision.Count(fun x -> EF.Functions.ILike(x.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.Equal(10, c.Db.Card.Count())
-        Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic Front%")))
-        Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic (and reversed card) front%")))
-        Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Leaf.FieldValues, "%Basic (optional reversed card) front%")))
+        Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Revision.FieldValues, "%Basic Front%")))
+        Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Revision.FieldValues, "%Basic (and reversed card) front%")))
+        Assert.Equal(2, c.Db.Card.Count(fun x -> EF.Functions.ILike(x.Revision.FieldValues, "%Basic (optional reversed card) front%")))
         Assert.NotEmpty(c.Db.Card.Where(fun x -> x.Index = 1s))
         Assert.Equal(0, c.Db.Commeaf.Count())
         Assert.Equal(0, c.Db.Commield.Count())

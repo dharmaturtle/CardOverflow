@@ -26,20 +26,20 @@
 </div>
 
 @code {
-  private ViewTemplateRevision _leaf;
-  [Parameter] public ViewTemplateRevision Leaf {
-    get => _leaf;
+  private ViewTemplateRevision _revision;
+  [Parameter] public ViewTemplateRevision Revision {
+    get => _revision;
     set {
-      _leaf = value;
+      _revision = value;
       if (_originalCardTemplates == null) {
-        _originalCardTemplates = _leaf.JustCardTemplates;
+        _originalCardTemplates = _revision.JustCardTemplates;
       }
     }
   }
   private FSharpList<CardTemplate> _originalCardTemplates;
   [Parameter] public EventCallback<TemplateType> UpdateTemplateType { get; set; }
 
-  private bool _isStandard => Leaf.CardTemplates.IsStandard;
+  private bool _isStandard => Revision.CardTemplates.IsStandard;
 
   private Task _setType(TemplateType templateType) =>
     UpdateTemplateType.InvokeAsync(templateType);

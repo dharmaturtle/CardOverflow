@@ -18,67 +18,67 @@ open System.Threading.Tasks
 open CardOverflow.Sanitation
 
 [<Fact>]
-let ``TemplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
+let ``TemplateRepository.UpdateFieldsToNewRevision works``(): Task<unit> = task {
     let userId = user_2
     use c = new TestContainer()
     
     let templateId = c.Db.Template.Single(fun x -> x.TemplateRevisions.Any(fun x -> x.Name = "Basic")).Id
-    let! template = SanitizeTemplate.AllLeafs c.Db templateId
-    let latestLeaf = template.Value.Leafs |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
+    let! template = SanitizeTemplate.AllRevisions c.Db templateId
+    let latestRevision = template.Value.Revisions |> Seq.maxBy (fun x -> x.Modified |?? lazy x.Created)
     
     Assert.Equal(
         "Basic",
-        template.Value.Leafs.Single().Name)
+        template.Value.Revisions.Single().Name)
     Assert.Equal<string seq>(
         ["Front"; "Back"],
-        latestLeaf.Fields.Select(fun x -> x.Name))
+        latestRevision.Fields.Select(fun x -> x.Name))
     Assert.Equal(
         "{{Front}}",
-        latestLeaf.FirstCardTemplate.Front)
+        latestRevision.FirstCardTemplate.Front)
     Assert.Equal(1, c.Db.TemplateRevision.Count(fun x -> x.TemplateId = templateId))
 
-    // Testing UpdateFieldsToNewLeaf
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    // Testing UpdateFieldsToNewRevision
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     let newQuestionXemplate = "modified {{Front mutated}}"
     let newTemplateName = "new name"
-    let oldLeafId = c.Db.Card.Single().LeafId
-    let newLeafId = Ulid.create
+    let oldRevisionId = c.Db.Card.Single().RevisionId
+    let newRevisionId = Ulid.create
     let updated =
-        { latestLeaf with
-            Id = newLeafId
+        { latestRevision with
+            Id = newRevisionId
             TemplateId = templateId
             Name = newTemplateName
             CardTemplates =
-                {   latestLeaf.FirstCardTemplate with
+                {   latestRevision.FirstCardTemplate with
                         Front = newQuestionXemplate
                 } |> List.singleton |> Standard
-            Fields = latestLeaf.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
+            Fields = latestRevision.Fields |> Seq.map (fun x -> { x with Name = x.Name + " mutated" }) |> toResizeArray
         }
     
     let! r = SanitizeTemplate.Update c.Db userId updated
     Assert.Null r.Value
 
-    let! template = SanitizeTemplate.AllLeafs c.Db templateId
-    let latestLeaf = template.Value.Leafs.Single(fun x -> x.Id = newLeafId)
+    let! template = SanitizeTemplate.AllRevisions c.Db templateId
+    let latestRevision = template.Value.Revisions.Single(fun x -> x.Id = newRevisionId)
     Assert.Equal(
         newQuestionXemplate,
-        latestLeaf.FirstCardTemplate.Front)
+        latestRevision.FirstCardTemplate.Front)
     Assert.Equal(
         newTemplateName,
-        latestLeaf.Name)
+        latestRevision.Name)
     Assert.Equal<string seq>(
         ["Front mutated"; "Back mutated"],
-        latestLeaf.Fields.Select(fun x -> x.Name))
+        latestRevision.Fields.Select(fun x -> x.Name))
     Assert.Equal(userId, c.Db.Card.Single().UserId)
-    Assert.NotEqual(oldLeafId, c.Db.Card.Single().LeafId)
+    Assert.NotEqual(oldRevisionId, c.Db.Card.Single().RevisionId)
     Assert.Equal(
-        latestLeaf.Id,
-        c.Db.Card.Include(fun x -> x.Leaf).Single().Leaf.TemplateRevisionId)
+        latestRevision.Id,
+        c.Db.Card.Include(fun x -> x.Revision).Single().Revision.TemplateRevisionId)
     Assert.Equal(2, c.Db.TemplateRevision.Count(fun x -> x.TemplateId = templateId))
-    Assert.Equal(2, c.Db.Leaf.Count())
+    Assert.Equal(2, c.Db.Revision.Count())
     let concept_1 = c.Db.Concept.Single().Id
-    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.Example.ConceptId = concept_1))
-    Assert.Equal(2, c.Db.Leaf.Count(fun x -> x.ConceptId = concept_1))
+    Assert.Equal(2, c.Db.Revision.Count(fun x -> x.Example.ConceptId = concept_1))
+    Assert.Equal(2, c.Db.Revision.Count(fun x -> x.ConceptId = concept_1))
     let createds = c.Db.TemplateRevision.Where(fun x -> x.TemplateId = templateId).Select(fun x -> x.Created) |> Seq.toList
     Assert.NotEqual(createds.[0], createds.[1])
     let! x = ConceptViewRepository.get c.Db concept_1
@@ -136,8 +136,8 @@ let ``TemplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     
     do! testView TemplateRepository.latest templateId newQuestionXemplate <| newQuestionXemplate + " {{Back}}"
 
-    let priorLeaf = template.Value.Leafs |> Seq.minBy (fun x -> x.Created)
-    do! testView TemplateRepository.leaf priorLeaf.Id "{{Front}}" "{{Front}} {{Back}}"
+    let priorRevision = template.Value.Revisions |> Seq.minBy (fun x -> x.Created)
+    do! testView TemplateRepository.revision priorRevision.Id "{{Front}}" "{{Front}} {{Back}}"
 
     // test missing
     let testViewError getView id expected =
@@ -146,5 +146,5 @@ let ``TemplateRepository.UpdateFieldsToNewLeaf works``(): Task<unit> = task {
     let templateMissingId = Ulid.create
     do! testViewError TemplateRepository.latest templateMissingId <| sprintf "Template #%A not found" templateMissingId // TODO base64
     let templateRevisionMissingId = Ulid.create
-    do! testViewError TemplateRepository.leaf   templateRevisionMissingId <| sprintf "Template Leaf #%A not found" templateRevisionMissingId // TODO base64
+    do! testViewError TemplateRepository.revision   templateRevisionMissingId <| sprintf "Template Revision #%A not found" templateRevisionMissingId // TODO base64
     }

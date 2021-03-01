@@ -42,7 +42,7 @@
   [Parameter] public Guid TemplateId { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  private List<ViewTemplateWithAllLeafs> _templates;
+  private List<ViewTemplateWithAllRevisions> _templates;
   private int _selectedIndex;
 
   protected override async Task OnParametersSetAsync() {
@@ -56,7 +56,7 @@
   }
 
   private void _Add() {
-    var t = ViewTemplateWithAllLeafs.initialize(_user.Id, Gulid.Create(), Gulid.Create());
+    var t = ViewTemplateWithAllRevisions.initialize(_user.Id, Gulid.Create(), Gulid.Create());
     _templates = _templates.Prepend(t).ToList();
     _selectedIndex = _templates.IndexOf(t);
   }

@@ -58,13 +58,13 @@ module Logger =
 
 type EntityHasher () =
     interface IEntityHasher with
-        member val LeafHasher =
-            fun struct (leaf, templateRevisionHash, sha512) -> LeafEntity.hash templateRevisionHash sha512 leaf
+        member val RevisionHasher =
+            fun struct (revision, templateRevisionHash, sha512) -> RevisionEntity.hash templateRevisionHash sha512 revision
         member val TemplateRevisionHasher =
-            fun struct (leaf, sha512) -> TemplateRevisionEntity.hash sha512 leaf
+            fun struct (revision, sha512) -> TemplateRevisionEntity.hash sha512 revision
         member _.GetMaxIndexInclusive =
-            fun (e: LeafEntity) ->
-                (e |> LeafView.load).MaxIndexInclusive
+            fun (e: RevisionEntity) ->
+                (e |> RevisionView.load).MaxIndexInclusive
         member _.SanitizeTag = SanitizeTagRepository.sanitize
 
 open Humanizer

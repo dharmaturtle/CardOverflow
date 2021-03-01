@@ -15,7 +15,7 @@ open Hedgehog
 open CardOverflow.Api
 
 [<StandardProperty>]
-let ``can insert, get, and update concept summary`` (concept: Concept.Events.Summary, leafId: LeafId) = async {
+let ``can insert, get, and update concept summary`` (concept: Concept.Events.Summary, revisionId: RevisionId) = async {
     let tc = TestEsContainer().TableClient()
 
     // insert
@@ -27,9 +27,9 @@ let ``can insert, get, and update concept summary`` (concept: Concept.Events.Sum
     Assert.equal concept actual 
 
     // update
-    do! tc.Update(fun (x: Concept.Events.Summary) -> { x with CopySourceLeafId = Some leafId }) concept.Id
+    do! tc.Update(fun (x: Concept.Events.Summary) -> { x with CopySourceRevisionId = Some revisionId }) concept.Id
     
     let! actual, _ = tc.Get<Concept.Events.Summary> concept.Id
 
-    Assert.equal { concept with CopySourceLeafId = Some leafId } actual 
+    Assert.equal { concept with CopySourceRevisionId = Some revisionId } actual 
     }

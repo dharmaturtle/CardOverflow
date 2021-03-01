@@ -20,7 +20,7 @@
       <div class="form-group">
         <div class="row">
           <div class="col-sm">
-            @if (EditConcept.Kind.IsNewExample_Title || EditConcept.Kind.IsNewLeaf_Title) {
+            @if (EditConcept.Kind.IsNewExample_Title || EditConcept.Kind.IsNewRevision_Title) {
               <div class="input-group">
                 <label for="exampleTitleInput" class="col-form-label mr-2">
                   Title:
@@ -44,12 +44,12 @@
               </select>
             </div>
             <div class="row">
-              <a href="Template/@_selectedTemplateId?LeafId=@_selectedTemplateRevisionId" class="col-sm-2 mt-2" tabindex="-1">
+              <a href="Template/@_selectedTemplateId?RevisionId=@_selectedTemplateRevisionId" class="col-sm-2 mt-2" tabindex="-1">
                 Revision
               </a>
               <select value=@_selectedTemplateRevisionId class="form-control col-sm-10" @onchange=@(x => x.Value.ToString().Apply(Guid.Parse).Do(UpdateSelectedTemplateRevision))>
-                @foreach (var leaf in _selectedTemplateRevisions) {
-                  <option value=@leaf.Id>@leaf.Created - @leaf.EditSummary</option>
+                @foreach (var revision in _selectedTemplateRevisions) {
+                  <option value=@revision.Id>@revision.Created - @revision.EditSummary</option>
                 }
               </select>
             </div>
@@ -68,9 +68,9 @@
       </div>
       <div class="row">
         <div class="col-sm">
-          @if (EditConcept.Kind.TryGetCopySourceLeafId(out var leafId)) {
+          @if (EditConcept.Kind.TryGetCopySourceRevisionId(out var revisionId)) {
             <span>Copied from</span>
-            <a href="leaf/@leafId">
+            <a href="revision/@revisionId">
               Card
             </a>
           }
@@ -109,7 +109,7 @@
 @code {
   [Parameter] public ViewEditConceptCommand EditConcept { get; set; }
   [Parameter] public bool NewEditConceptOnSave { get; set; }
-  [Parameter] public List<ViewTemplateWithAllLeafs> Templates { get; set; }
+  [Parameter] public List<ViewTemplateWithAllRevisions> Templates { get; set; }
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private List<EditCardCommand> _ccCommands = new List<EditCardCommand>();
   private UserClaims _user = UserClaims.init;
@@ -133,7 +133,7 @@
       Templates = await DbExecutor.QueryAsync(db => SanitizeTemplate.GetMineWith(db, _user.Id, EditConcept.TemplateRevision.TemplateId));
     }
     if (EditConcept == null) {
-      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Leafs.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
+      EditConcept = new ViewEditConceptCommand("Initial creation", new List<EditFieldAndValue>(), Templates.First().Revisions.First(), UpsertKind.NewNewOriginal_TagIds(SetModule.Empty<string>()), null, UpsertIdsC.Create());
     }
     UpdateSelectedTemplate(EditConcept.TemplateRevision.TemplateId, EditConcept.TemplateRevision.Id);
     StateHasChanged();
@@ -145,7 +145,7 @@
 
   async Task UpdateCard() {
     if (EditConcept.Backs.IsOk) {
-      if (EditConcept.Kind.IsNewCopy_SourceLeafId_TagIds) {
+      if (EditConcept.Kind.IsNewCopy_SourceRevisionId_TagIds) {
         EditConcept.Ids.CardIds = FSharpList<Guid>.Empty;
       }
       EditConcept.Ids.CardIds = Ulid.resizeList(EditConcept.Backs.ResultValue.Count(), EditConcept.Ids.CardIds);
@@ -170,15 +170,15 @@
     }
   }
 
-  void UpdateSelectedTemplate(Guid templateId, Guid? leafId = null) {
+  void UpdateSelectedTemplate(Guid templateId, Guid? revisionId = null) {
     _selectedTemplateId = templateId;
-    _selectedTemplateRevisions = Templates.Single(t => t.Id == templateId).Leafs;
-    UpdateSelectedTemplateRevision(leafId ?? _selectedTemplateRevisions.First().Id);
+    _selectedTemplateRevisions = Templates.Single(t => t.Id == templateId).Revisions;
+    UpdateSelectedTemplateRevision(revisionId ?? _selectedTemplateRevisions.First().Id);
   }
 
-  void UpdateSelectedTemplateRevision(Guid leafId) {
-    _selectedTemplateRevisionId = leafId;
-    EditConcept.TemplateRevision = Templates.SelectMany(x => x.Leafs).Single(x => x.Id == leafId);
+  void UpdateSelectedTemplateRevision(Guid revisionId) {
+    _selectedTemplateRevisionId = revisionId;
+    EditConcept.TemplateRevision = Templates.SelectMany(x => x.Revisions).Single(x => x.Id == revisionId);
     var valuesByField = EditConcept.FieldValues.ToDictionary(fv => fv.EditField.Name, fv => fv.Value);
     EditConcept.FieldValues = EditConcept.TemplateRevision.Fields
       .Select(ViewFieldModule.copyTo)

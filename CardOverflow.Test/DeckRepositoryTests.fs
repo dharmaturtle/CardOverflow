@@ -25,7 +25,7 @@ open NodaTime
 
 let emptyDiffStateSummary =
     {   Unchanged = []
-        LeafChanged = []
+        RevisionChanged = []
         ExampleChanged = []
         AddedConcept = []
         RemovedConcept = []
@@ -347,7 +347,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     Assert.areEquivalent [ newDeck; defaultDeck] actualDecks
 
     // new cards are in the "Default" deck
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db userId [] (concept_1, example_1, revision_1, [card_1])
     let conceptId = concept_1
     let cardId = card_1
     let assertDeckId expectedDeckId = taskResult {
@@ -469,7 +469,7 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db nonauthor newDeckId cardId
     Assert.Equal(sprintf "Either Deck #%A doesn't belong to you or it doesn't exist" newDeckId, x.error)
 
-    let! _ = FacetRepositoryTests.addBasicConcept c.Db nonauthor [] (concept_2, example_2, leaf_2, [card_2])
+    let! _ = FacetRepositoryTests.addBasicConcept c.Db nonauthor [] (concept_2, example_2, revision_2, [card_2])
     let nonauthorCardId = user_2
     let! (x: Result<_,_>) = SanitizeDeckRepository.switch c.Db userId newDeckId nonauthorCardId
     Assert.Equal(sprintf "Either Card #%A doesn't belong to you or it doesn't exist" nonauthorCardId, x.error)
@@ -487,8 +487,8 @@ let ``SanitizeDeckRepository works``(): Task<unit> = (taskResult {
 let getRealError = function
     | RealError e -> e
     | _ -> failwith "dude"
-let getEditExistingIsNull_LeafIdsByDeckId = function
-    | EditExistingIsNull_LeafIdsByDeckId e -> e
+let getEditExistingIsNull_RevisionIdsByDeckId = function
+    | EditExistingIsNull_RevisionIdsByDeckId e -> e
     | _ -> failwith "dude"
 
 [<Fact>]
@@ -548,15 +548,15 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
 
     //adding a card notifies
     do! SanitizeDeckRepository.setDefault c.Db authorId publicDeck.Id
-    let! _ = addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
+    let! _ = addBasicConcept c.Db authorId [] (concept_1, example_1, revision_1, [card_1])
     let notificationId = c.Db.Notification.Single().Id
     let conceptId = concept_1
     let exampleId = example_1
     let authorCollectedId = card_1
-    let leaf1 =
+    let revision1 =
         {   ConceptId = conceptId
             ExampleId = exampleId
-            LeafId = leaf_1 }
+            RevisionId = revision_1 }
     
     do! assertNotificationThenDelete
             {   Id = notificationId
@@ -565,7 +565,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 Created = Instant.MinValue
                 Message = DeckAddedConcept { TheirDeck = theirDeck
                                              MyDeck = None
-                                             New = leaf1
+                                             New = revision1
                                              NewCardCount = 1
                                              Collected = None } }
 
@@ -580,9 +580,9 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     Assert.Empty c.Db.Notification
 
     // example update notifies follower
-    let leaf2 = { leaf1 with LeafId = leaf_2 }
+    let revision2 = { revision1 with RevisionId = revision_2 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId exampleId) ((concept_1, example_1, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! old = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId exampleId) ((concept_1, example_1, revision_2, [card_1]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditConceptCommand.FieldValues =
@@ -600,7 +600,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Created = Instant.MinValue
               Message = DeckUpdatedConcept { TheirDeck = theirDeck
                                              MyDeck = None
-                                             New = leaf2
+                                             New = revision2
                                              NewCardCount = 1
                                              Collected = None } }
 
@@ -612,10 +612,10 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     ns.Results |> Assert.Empty
 
     // Update notifies with follower's collected card
-    do! ConceptRepository.CollectCard c.Db followerId leaf2.LeafId [ card_2 ]
-    let leaf3 = { leaf2 with LeafId = leaf_3 }
+    do! ConceptRepository.CollectCard c.Db followerId revision2.RevisionId [ card_2 ]
+    let revision3 = { revision2 with RevisionId = revision_3 }
     let newValue = Guid.NewGuid().ToString()
-    let! old = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId exampleId) ((concept_1, example_1, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! old = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId exampleId) ((concept_1, example_1, revision_3, [card_1]) |> UpsertIds.fromTuple)
     let updated = {
         old with
             ViewEditConceptCommand.FieldValues =
@@ -627,9 +627,9 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
     let! actualExampleId = SanitizeConceptRepository.Update c.Db authorId [] updated
     Assert.Equal(exampleId, actualExampleId)
     let collected =
-        {   ConceptId = leaf2.ConceptId
-            ExampleId = leaf2.ExampleId
-            LeafId = leaf2.LeafId
+        {   ConceptId = revision2.ConceptId
+            ExampleId = revision2.ExampleId
+            RevisionId = revision2.RevisionId
             CardIds = [card_2] } |> Some
     do! assertNotificationThenDelete
             { Id = notification_3
@@ -638,7 +638,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Created = Instant.MinValue
               Message = DeckUpdatedConcept { TheirDeck = theirDeck
                                              MyDeck = None
-                                             New = leaf3
+                                             New = revision3
                                              NewCardCount = 1
                                              Collected = collected } }
 
@@ -653,7 +653,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckDeletedConcept { TheirDeck = theirDeck
                                              MyDeck = None
                                              Collected = collected
-                                             Deleted = leaf3
+                                             Deleted = revision3
                                              DeletedCardCount = 1 } }
 
     // changing back to public deck has notification
@@ -666,7 +666,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Created = Instant.MinValue
               Message = DeckAddedConcept { TheirDeck = theirDeck
                                            MyDeck = None
-                                           New = leaf3
+                                           New = revision3
                                            NewCardCount = 1
                                            Collected = collected } }
 
@@ -690,7 +690,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                                           { Id = authorDefaultDeckId
                                             Name = "Default Deck" }
                                        MyDeck = None
-                                       New = leaf3
+                                       New = revision3
                                        NewCardCount = 1
                                        Collected = collected } }
     b |> Assert.equal
@@ -702,7 +702,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                      { TheirDeck = theirDeck
                        MyDeck = None
                        Collected = collected
-                       Deleted = leaf3
+                       Deleted = revision3
                        DeletedCardCount = 1 } }
     
     // back to public deck and some cleanup
@@ -724,7 +724,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
               Message = DeckDeletedConcept { TheirDeck = theirDeck
                                              MyDeck = None
                                              Collected = collected
-                                             Deleted = leaf3
+                                             Deleted = revision3
                                              DeletedCardCount = 1 } }
 
     // diff says a concept was removed
@@ -735,7 +735,7 @@ let ``SanitizeDeckRepository.follow works with "NoDeck true None"``(): Task<unit
                 RemovedConcept =
                     [ { ConceptId = conceptId
                         ExampleId = exampleId
-                        LeafId = leaf2.LeafId
+                        RevisionId = revision2.RevisionId
                         Index = 0s
                         DeckId = followerDefaultDeckId
                         CardId = Guid.Empty }] }
@@ -806,10 +806,10 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, revision_1, [card_1])
     let conceptId = concept_1
     let exampleId = example_1
-    let leafId = leaf_1
+    let revisionId = revision_1
     let followerId = user_1
     let followerDeckId = deck_1
     let newFollowerDeckId = Ulid.create
@@ -817,13 +817,13 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     let follow oldDeckId editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (OldDeck oldDeckId) false editExisting // mind the test name
 
     // follow targeting newFollowerDeckId with extant card in default deck fails
-    do! ConceptRepository.CollectCard c.Db followerId leafId [ Ulid.create ]
+    do! ConceptRepository.CollectCard c.Db followerId revisionId [ Ulid.create ]
 
     do! follow newFollowerDeckId None
         |> TaskResult.getError
-        |>% getEditExistingIsNull_LeafIdsByDeckId
+        |>% getEditExistingIsNull_RevisionIdsByDeckId
         |>% Assert.Single
-        |>% Assert.equal (followerDeckId, ResizeArray.singleton leafId)
+        |>% Assert.equal (followerDeckId, ResizeArray.singleton revisionId)
 
     // follow targeting default deck with extant card in default deck works
     do! follow followerDeckId None
@@ -848,7 +848,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
           UserId = followerId
           ConceptId = conceptId
           ExampleId = exampleId
-          LeafMeta = cc.LeafMeta // untested
+          RevisionMeta = cc.RevisionMeta // untested
           Index = 0s
           CardState = Normal
           IsLapsed = false
@@ -862,8 +862,8 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_ExampleId exampleId) id ((conceptId, exampleId, leaf_2, [card_1]) |> UpsertIds.fromTuple) exampleId
-    let newLeafId = leaf_2
+            (VUpdate_ExampleId exampleId) id ((conceptId, exampleId, revision_2, [card_1]) |> UpsertIds.fromTuple) exampleId
+    let newRevisionId = revision_2
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
 
@@ -872,12 +872,12 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         |>%% Assert.Single
     Assert.equal
         { cc with
-            LeafMeta = ac2.LeafMeta // untested
+            RevisionMeta = ac2.RevisionMeta // untested
         }   // unchanged
         ac2
     Assert.equal
-        leafId
-        ac2.LeafMeta.Id
+        revisionId
+        ac2.RevisionMeta.Id
     
     // follow with "editExisting true" after update, updates
     do! follow followerDeckId (Some true) |> TaskResult.getOk
@@ -887,12 +887,12 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false *"``(): Task<unit>
         |>%% Assert.Single
     Assert.equal
         { cc with
-            LeafMeta = ac3.LeafMeta // untested
+            RevisionMeta = ac3.RevisionMeta // untested
         }   // unchanged
         ac3
     Assert.equal
-        newLeafId
-        ac3.LeafMeta.Id
+        newRevisionId
+        ac3.RevisionMeta.Id
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -901,7 +901,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1; card_2])
+    let! _ = FacetRepositoryTests.addReversedBasicConcept c.Db authorId [] (concept_1, example_1, revision_1, [card_1; card_2])
     let ccId1 = card_1
     let conceptId = concept_1
     let exampleId = example_1
@@ -922,7 +922,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
           UserId = followerId
           ConceptId = conceptId
           ExampleId = example_1
-          LeafMeta = a.LeafMeta // untested
+          RevisionMeta = a.RevisionMeta // untested
           Index = 0s
           CardState = Normal
           IsLapsed = false
@@ -937,7 +937,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         { a with
             Due = b.Due
             CardId = ccs.[1].CardId
-            LeafMeta = b.LeafMeta // untested
+            RevisionMeta = b.RevisionMeta // untested
             Index = 1s }
         b
     
@@ -954,14 +954,14 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         |>%% Assert.Single
     Assert.equal
         { b with
-            LeafMeta = cc.LeafMeta // untested
+            RevisionMeta = cc.RevisionMeta // untested
             Due = cc.Due // untested
             CardId = cc.CardId }
         cc
     
     // follow with "editExisting false" after update, doesn't update
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_ExampleId exampleId) id ((concept_1, example_1, leaf_2, [card_1; card_2]) |> UpsertIds.fromTuple) exampleId
+            (VUpdate_ExampleId exampleId) id ((concept_1, example_1, revision_2, [card_1; card_2]) |> UpsertIds.fromTuple) exampleId
     
     do! follow followerDeckId (Some false) |> TaskResult.getOk
     
@@ -970,7 +970,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         |>%% Assert.Single
     Assert.equal
         { b with
-            LeafMeta = cc.LeafMeta // untested
+            RevisionMeta = cc.RevisionMeta // untested
             Due = cc.Due // untested
             CardId = cc.CardId }
         cc
@@ -991,7 +991,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
           UserId = followerId
           ConceptId = conceptId
           ExampleId = example_1
-          LeafMeta = a.LeafMeta // untested
+          RevisionMeta = a.RevisionMeta // untested
           Index = 0s
           CardState = Normal
           IsLapsed = false
@@ -1006,7 +1006,7 @@ let ``SanitizeDeckRepository.follow works with "OldDeck false None" pair``(): Ta
         { a with
             Due = b.Due
             CardId = b.CardId
-            LeafMeta = b.LeafMeta // untested
+            RevisionMeta = b.RevisionMeta // untested
             Index = 1s }
         b
     } |> TaskResult.getOk)
@@ -1017,24 +1017,24 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     let authorId = user_3
     let publicDeckId = deck_3
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, revision_1, [card_1])
     let conceptId = concept_1
     let exampleId = example_1
-    let leafId = leaf_1
+    let revisionId = revision_1
     let followerId = user_1
     let followerDeckId = deck_1
     let follow newDeckId deckName editExisting = SanitizeDeckRepository.follow c.Db followerId publicDeckId (NewDeck (newDeckId, deckName)) false editExisting // mind the test name
 
     // follow with extant card fails and doesn't add a deck
     Assert.equal 3 <| c.Db.Deck.Count()
-    do! ConceptRepository.CollectCard c.Db followerId leafId [ Ulid.create ]
+    do! ConceptRepository.CollectCard c.Db followerId revisionId [ Ulid.create ]
 
     do! follow Ulid.create (Guid.NewGuid().ToString()) None
         
         |> TaskResult.getError
-        |>% getEditExistingIsNull_LeafIdsByDeckId
+        |>% getEditExistingIsNull_RevisionIdsByDeckId
         |>% Assert.Single
-        |>% Assert.equal (followerDeckId, ResizeArray.singleton leafId)
+        |>% Assert.equal (followerDeckId, ResizeArray.singleton revisionId)
     Assert.equal 3 <| c.Db.Deck.Count()
 
     // follow with huge name fails
@@ -1057,7 +1057,7 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
           UserId = followerId
           ConceptId = conceptId
           ExampleId = exampleId
-          LeafMeta = cc.LeafMeta // untested
+          RevisionMeta = cc.RevisionMeta // untested
           Index = 0s
           CardState = Normal
           IsLapsed = false
@@ -1070,9 +1070,9 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         cc
     
     // follow with "editExisting false" after update, doesn't update
-    let newLeafId = leaf_2
+    let newRevisionId = revision_2
     do! FacetRepositoryTests.update c authorId
-            (VUpdate_ExampleId exampleId) id (((conceptId, exampleId, newLeafId, [card_1]) |> UpsertIds.fromTuple)) exampleId
+            (VUpdate_ExampleId exampleId) id (((conceptId, exampleId, newRevisionId, [card_1]) |> UpsertIds.fromTuple)) exampleId
     
     do! follow Ulid.create (Guid.NewGuid().ToString()) (Some false) |> TaskResult.getOk
 
@@ -1081,12 +1081,12 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
         |>%% Assert.Single
     Assert.equal
         { cc with
-            LeafMeta = ac2.LeafMeta // untested
+            RevisionMeta = ac2.RevisionMeta // untested
         }   // unchanged
         ac2
     Assert.equal
-        leafId
-        ac2.LeafMeta.Id
+        revisionId
+        ac2.RevisionMeta.Id
     
     // follow with "editExisting true" after update, updates
     let newestDeckId = deck_ 6
@@ -1098,12 +1098,12 @@ let ``SanitizeDeckRepository.follow works with "NewDeck false *"``(): Task<unit>
     Assert.equal
         { cc with
             DeckId = newestDeckId
-            LeafMeta = ac3.LeafMeta // untested
+            RevisionMeta = ac3.RevisionMeta // untested
         }   // unchanged
         ac3
     Assert.equal
-        newLeafId
-        ac3.LeafMeta.Id
+        newRevisionId
+        ac3.RevisionMeta.Id
     } |> TaskResult.getOk)
 
 [<Fact>]
@@ -1112,22 +1112,22 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     let publicDeckId = deck_3
     use c = new TestContainer()
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, revision_1, [card_1])
     let conceptId = concept_1
     let exampleId = example_1
-    let leafId = leaf_1
+    let revisionId = revision_1
     let followerId = user_1
     let followerDeckId = deck_1
     let standardIds =
         { ConceptId = conceptId
           ExampleId = exampleId
-          LeafId = leafId
+          RevisionId = revisionId
           Index = 0s
           DeckId = followerDeckId
           CardId = Guid.Empty }
 
     // diffing two decks with the same card yields Unchanged
-    do! ConceptRepository.CollectCard c.Db followerId leafId [ card_2 ]
+    do! ConceptRepository.CollectCard c.Db followerId revisionId [ card_2 ]
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -1192,13 +1192,13 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
 
     do! ConceptRepository.uncollectConcept c.Db authorId conceptId
     // Unchanged with two clozes
-    let! actualExampleId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (concept_2, example_2, leaf_2, [card_2; card_3])
+    let! actualExampleId = FacetRepositoryTests.addCloze "{{c1::Portland::city}} was founded in {{c2::1845}}." c.Db authorId [] (concept_2, example_2, revision_2, [card_2; card_3])
     let! (ccs: CardEntity ResizeArray) = c.Db.Card.Where(fun x -> x.ExampleId = actualExampleId).ToListAsync()
-    let! _ = ConceptRepository.CollectCard c.Db followerId (ccs.First().LeafId) [ card_ 4; card_ 5 ]
+    let! _ = ConceptRepository.CollectCard c.Db followerId (ccs.First().RevisionId) [ card_ 4; card_ 5 ]
     let ids =
         {   ConceptId = concept_2
             ExampleId = actualExampleId
-            LeafId = leaf_2
+            RevisionId = revision_2
             Index = 0s
             DeckId = followerDeckId
             CardId = Guid.Empty }
@@ -1240,27 +1240,27 @@ let ``SanitizeDeckRepository.diff works``(): Task<unit> = (taskResult {
     } |> TaskResult.getOk)
 
 [<Fact>]
-let ``SanitizeDeckRepository.diff works on Example(Leaf)Changed and deckchanges``(): Task<unit> = (taskResult {
+let ``SanitizeDeckRepository.diff works on Example(Revision)Changed and deckchanges``(): Task<unit> = (taskResult {
     let authorId = user_3
     let publicDeckId = deck_3
     use c = new TestContainer()
     do! SanitizeDeckRepository.setIsPublic c.Db authorId publicDeckId true
-    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, leaf_1, [card_1])
+    do! FacetRepositoryTests.addBasicConcept c.Db authorId [] (concept_1, example_1, revision_1, [card_1])
     let conceptId = concept_1
     let exampleId = example_1
-    let leafId = leaf_1
+    let revisionId = revision_1
     let followerId = user_1
     let followerDeckId = deck_1
     let standardIds =
         { ConceptId = conceptId
           ExampleId = exampleId
-          LeafId = leafId
+          RevisionId = revisionId
           Index = 0s
           DeckId = followerDeckId
           CardId = Guid.Empty }
 
     // diffing two decks with the same card yields Unchanged
-    let! _ = ConceptRepository.CollectCard c.Db followerId leafId [ card_2 ]
+    let! _ = ConceptRepository.CollectCard c.Db followerId revisionId [ card_2 ]
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -1269,12 +1269,12 @@ let ``SanitizeDeckRepository.diff works on Example(Leaf)Changed and deckchanges`
                 Unchanged = [ standardIds ] }
 
     // author switches to new example
-    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VNewExample_SourceConceptId standardIds.ConceptId) ((concept_1, example_2, leaf_2, [card_1]) |> UpsertIds.fromTuple)
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VNewExample_SourceConceptId standardIds.ConceptId) ((concept_1, example_2, revision_2, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeConceptRepository.Update c.Db authorId [] conceptCommand
     let newExampleIds =
         { standardIds with
               ExampleId = example_2
-              LeafId = leaf_2 }
+              RevisionId = revision_2 }
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
@@ -1297,42 +1297,42 @@ let ``SanitizeDeckRepository.diff works on Example(Leaf)Changed and deckchanges`
                        { standardIds with DeckId = newFollowerDeckId; CardId = card_2 }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
-    let! _ = ConceptRepository.CollectCard c.Db followerId newExampleIds.LeafId [ card_2 ]
-    // author switches to new leaf
-    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId newExampleIds.ExampleId) ((concept_1, example_2, leaf_3, [card_1]) |> UpsertIds.fromTuple)
+    let! _ = ConceptRepository.CollectCard c.Db followerId newExampleIds.RevisionId [ card_2 ]
+    // author switches to new revision
+    let! conceptCommand = SanitizeConceptRepository.getUpsert c.Db authorId (VUpdate_ExampleId newExampleIds.ExampleId) ((concept_1, example_2, revision_3, [card_1]) |> UpsertIds.fromTuple)
     let! _ = SanitizeConceptRepository.Update c.Db authorId [] conceptCommand
-    let newLeafIds =
+    let newRevisionIds =
         { newExampleIds with
-              LeafId = leaf_3 }
+              RevisionId = revision_3 }
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
         {   emptyDiffStateSummary with
-                LeafChanged = [ ({ newLeafIds with DeckId = publicDeckId }, newExampleIds) ] }
+                RevisionChanged = [ ({ newRevisionIds with DeckId = publicDeckId }, newExampleIds) ] }
 
-    // author switches to new leaf, and follower's old card is in different deck
+    // author switches to new revision, and follower's old card is in different deck
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId cc.Id
     
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
         {   emptyDiffStateSummary with
-                LeafChanged =
-                    [ ({ newLeafIds with DeckId = publicDeckId },
+                RevisionChanged =
+                    [ ({ newRevisionIds with DeckId = publicDeckId },
                        { newExampleIds with DeckId = newFollowerDeckId; CardId = card_2 }) ] }
 
     do! SanitizeDeckRepository.switch c.Db followerId followerDeckId cc.Id
-    // author on new example with new leaf, follower on old example & leaf
-    let! _ = ConceptRepository.CollectCard c.Db followerId standardIds.LeafId [ card_2 ]
+    // author on new example with new revision, follower on old example & revision
+    let! _ = ConceptRepository.CollectCard c.Db followerId standardIds.RevisionId [ card_2 ]
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
     
     |>%% Assert.equal
         {   emptyDiffStateSummary with
-                ExampleChanged = [ ({ newLeafIds with DeckId = publicDeckId }, standardIds) ] }
+                ExampleChanged = [ ({ newRevisionIds with DeckId = publicDeckId }, standardIds) ] }
 
-    // author on new example with new leaf, follower on old example & leaf and different deck
+    // author on new example with new revision, follower on old example & revision and different deck
     do! SanitizeDeckRepository.switch c.Db followerId newFollowerDeckId cc.Id
 
     do! SanitizeDeckRepository.diff c.Db followerId publicDeckId followerDeckId
@@ -1340,6 +1340,6 @@ let ``SanitizeDeckRepository.diff works on Example(Leaf)Changed and deckchanges`
     |>%% Assert.equal
         {   emptyDiffStateSummary with
                 ExampleChanged =
-                    [ ({ newLeafIds with DeckId = publicDeckId },
+                    [ ({ newRevisionIds with DeckId = publicDeckId },
                        { standardIds with DeckId = newFollowerDeckId; CardId = card_2 }) ] }
     } |> TaskResult.getOk)

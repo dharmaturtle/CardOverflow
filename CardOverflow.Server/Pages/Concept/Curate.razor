@@ -12,9 +12,9 @@
 
 <AuthorizeView>
   <div class="d-flex justify-content-between align-items-center">
-    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?leaf={x}") Ids=@cards?.Select(x => x.LeafMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedLeafId.ToString() Query=@search.Query />
+    <SearchBar SearchClicked="@SearchClicked" BackLink="/my/concept" CreateLink=@(x => $"/my/concept?revision={x}") Ids=@cards?.Select(x => x.RevisionMeta.Id.ToString())?.Distinct()?.ToList() SelectedId=@SelectedRevisionId.ToString() Query=@search.Query />
   </div>
-  @if (SelectedLeafId == null) {
+  @if (SelectedRevisionId == null) {
     <div>
       @if (cards == null) {
         <p><em>Loading...</em></p>
@@ -29,13 +29,13 @@
           @foreach (var card in cards) {
             <tr>
               <td>
-                <HoverPreview IsCollected=@card.LeafMeta.IsCollected>
-                  <ResizingIframeExample LeafId=@card.LeafMeta.Id MaxIndexInclusive=@card.LeafMeta.MaxIndexInclusive Front />
+                <HoverPreview IsCollected=@card.RevisionMeta.IsCollected>
+                  <ResizingIframeExample RevisionId=@card.RevisionMeta.Id MaxIndexInclusive=@card.RevisionMeta.MaxIndexInclusive Front />
                 </HoverPreview>
               </td>
               <td>
-                <a href="/my/concept?leaf=@card.LeafMeta.Id">
-                  @card.LeafMeta.StrippedFront
+                <a href="/my/concept?revision=@card.RevisionMeta.Id">
+                  @card.RevisionMeta.StrippedFront
                 </a>
               </td>
               <td>
@@ -51,14 +51,14 @@
       <Pager Details=@details PageChanged=@PageChanged />
     </div>
   } else {
-    <Concept LeafId=@SelectedLeafId.Value IsCurate=true Index=@Index />
+    <Concept RevisionId=@SelectedRevisionId.Value IsCurate=true Index=@Index />
   }
 </AuthorizeView>
 
 @code {
   [CascadingParameter] Task<UserClaims> UserTask { get; set; }
   private UserClaims _user = UserClaims.init;
-  [Parameter] public Guid? SelectedLeafId { get; set; }
+  [Parameter] public Guid? SelectedRevisionId { get; set; }
   [Parameter] public short? Index { get; set; }
   private SearchCommand search = new SearchCommand("", SearchOrder.Popularity);
   private List<Card> cards;
@@ -68,20 +68,20 @@
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
     if (_user.IsAuthenticated) {
-      if (SelectedLeafId == null && cards == null) {
+      if (SelectedRevisionId == null && cards == null) {
         await PageChanged(1);
       }
-      if (SelectedLeafId != null) {
-        if (cards == null || (cards != null && !cards.Any(card => card.LeafMeta.Id == SelectedLeafId.Value))) {
-          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedLeafFromLeaf(db, _user.Id, SelectedLeafId.Value));
+      if (SelectedRevisionId != null) {
+        if (cards == null || (cards != null && !cards.Any(card => card.RevisionMeta.Id == SelectedRevisionId.Value))) {
+          var x = await DbExecutor.QueryAsync(db => CardRepository.getCollectedRevisionFromRevision(db, _user.Id, SelectedRevisionId.Value));
           if (x.IsOk) {
-            if (SelectedLeafId != x.ResultValue) {
-              NavigationManager.NavigateTo($"my/concept?leaf={x.ResultValue}");
+            if (SelectedRevisionId != x.ResultValue) {
+              NavigationManager.NavigateTo($"my/concept?revision={x.ResultValue}");
             } else {
-              SelectedLeafId = x.ResultValue;
+              SelectedRevisionId = x.ResultValue;
             }
           } else {
-            SelectedLeafId = null;
+            SelectedRevisionId = null;
             ToastService.ShowError(x.ErrorValue);
           }
         }
@@ -103,7 +103,7 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    SelectedLeafId = null;
+    SelectedRevisionId = null;
     search = newSearch;
     return PageChanged(1);
   }

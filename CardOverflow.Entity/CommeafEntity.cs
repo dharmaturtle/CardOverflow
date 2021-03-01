@@ -12,7 +12,7 @@ namespace CardOverflow.Entity
     {
         public CommeafEntity()
         {
-            Commeaf_Leafs = new HashSet<Commeaf_LeafEntity>();
+            Commeaf_Revisions = new HashSet<Commeaf_RevisionEntity>();
             Commields = new HashSet<CommieldEntity>();
         }
 
@@ -62,7 +62,7 @@ namespace CardOverflow.Entity
         [InverseProperty("Commeafs")]
         public virtual CommieldEntity Commield { get; set; }
         [InverseProperty("Commeaf")]
-        public virtual ICollection<Commeaf_LeafEntity> Commeaf_Leafs { get; set; }
+        public virtual ICollection<Commeaf_RevisionEntity> Commeaf_Revisions { get; set; }
         [InverseProperty("Latest")]
         public virtual ICollection<CommieldEntity> Commields { get; set; }
     }

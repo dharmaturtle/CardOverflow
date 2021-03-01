@@ -34,9 +34,9 @@
   </h3>
 }
 <div class="d-flex justify-content-between align-items-center">
-  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?leaf={x}") Ids=@_concepts?.Select(x => x.Leaf.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedLeafId.ToString() />
+  <SearchBar SearchClicked="@SearchClicked" BackLink=@($"/deck/{DeckId}") CreateLink=@(x => $"/deck/{DeckId}?revision={x}") Ids=@_concepts?.Select(x => x.Revision.Id.ToString())?.Distinct()?.ToList() SelectedId=@_selectedRevisionId.ToString() />
 </div>
-@if (_selectedLeafId == default) {
+@if (_selectedRevisionId == default) {
   @if (_concepts == null) {
     <p><em>Loading...</em></p>
   } else {
@@ -50,15 +50,15 @@
         <tr>
           <td>
             <HoverPreview IsCollected=@concept.IsCollected>
-              <ResizingIframeExample LeafId=@concept.Leaf.Id Front />
+              <ResizingIframeExample RevisionId=@concept.Revision.Id Front />
             </HoverPreview>
           </td>
           <td>
             @concept.Users
           </td>
           <td>
-            <a href="/deck/@DeckId?leaf=@concept.Leaf.Id">
-              @concept.Leaf.StrippedFront
+            <a href="/deck/@DeckId?revision=@concept.Revision.Id">
+              @concept.Revision.StrippedFront
             </a>
           </td>
         </tr>
@@ -67,7 +67,7 @@
   }
   <Pager Details=@_details PageChanged=@PageChanged />
 } else {
-  <Concept LeafId=@_selectedLeafId.Value />
+  <Concept RevisionId=@_selectedRevisionId.Value />
 }
 
 @code {
@@ -77,13 +77,13 @@
   private IList<CardOverflow.Pure.ExploreConceptSummary> _concepts;
   private PagedListDetails _details;
   private SearchCommand _search = new SearchCommand { Query = "" };
-  private Guid? _selectedLeafId;
+  private Guid? _selectedRevisionId;
   private DeckWithFollowMeta _deck;
 
   public override async Task SetParametersAsync(ParameterView parameters) {
     await base.SetParametersAsync(parameters);
     _user = await UserTask;
-    if (_selectedLeafId == default) {
+    if (_selectedRevisionId == default) {
       await PageChanged(1);
     }
     await DbExecutor.QueryAsync(db => SanitizeDeckRepository.getDeckWithFollowMeta(db, _user.Id, DeckId)).Match(ToastService, x => _deck = x);
@@ -97,12 +97,12 @@
   }
 
   Task SearchClicked(SearchCommand newSearch) {
-    _selectedLeafId = null;
+    _selectedRevisionId = null;
     _search = newSearch;
     return PageChanged(1);
   }
 
   protected override void GetQueryStringValues() =>
-    NavigationManager.TryGetQueryString<Guid?>("leaf", out _selectedLeafId);
+    NavigationManager.TryGetQueryString<Guid?>("revision", out _selectedRevisionId);
 
 }

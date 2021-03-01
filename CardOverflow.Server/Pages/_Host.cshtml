@@ -55,7 +55,7 @@
     var recognition = new SpeechRecognition();
     var isListening = false
 
-    window.Listen = (leaf) => {
+    window.Listen = (revision) => {
       isListening = true
       var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
       var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
@@ -81,7 +81,7 @@
         // We then return the transcript property of the SpeechRecognitionAlternative object
         let mostRecent = event.results[event.results.length - 1][0]
         console.log('Confidence: ' + mostRecent.confidence + " Transcript:" + mostRecent.transcript)
-        leaf.invokeMethodAsync('GetTranscript', mostRecent.transcript)
+        revision.invokeMethodAsync('GetTranscript', mostRecent.transcript)
           .then((message) => {
             console.log(message);
           });
@@ -99,7 +99,7 @@
         }
       }
     }
-    window.StopListening = (leaf) => {
+    window.StopListening = (revision) => {
       isListening = false;
       recognition.stop();
     }
