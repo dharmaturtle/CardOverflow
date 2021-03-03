@@ -75,17 +75,17 @@ type RevisionSummary =
       Title: string
       ConceptId: ConceptId
       AuthorId: UserId
-      TemplateRevisionId: TemplateRevisionId
+      TemplateRevision: Template.RevisionSummary
       FieldValues: Map<string, string>
       EditSummary: string }
 
-let toRevisionSummary (b: Events.Summary) =
+let toRevisionSummary templateRevision (b: Events.Summary) =
     { Id = b.RevisionIds.Head
       ExampleId = b.Id
       Title = b.Title
       ConceptId = b.ConceptId
       AuthorId = b.AuthorId
-      TemplateRevisionId = b.TemplateRevisionId
+      TemplateRevision = templateRevision
       FieldValues = b.FieldValues
       EditSummary = b.EditSummary }
 

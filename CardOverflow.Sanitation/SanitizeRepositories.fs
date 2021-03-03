@@ -22,6 +22,8 @@ open System.Runtime.InteropServices
 open NodaTime
 open Npgsql
 open Dapper
+open Domain.Infrastructure
+open FSharp.UMX
 
 [<CLIMutable>]
 type ViewFilter = {
@@ -705,7 +707,7 @@ type ViewEditConceptCommand = {
                 | NewRevision_Title _ -> NewRevision_Title title
         {   EditConceptCommand.EditSummary = this.EditSummary
             FieldValues = this.FieldValues
-            TemplateRevision = this.TemplateRevision |> ViewTemplateRevision.copyTo
+            TemplateRevisionId = % this.TemplateRevision.Id
             Kind = kind
             Ids = this.Ids
         }

@@ -149,7 +149,7 @@ let editConceptCommandGen =
         return {
             EditSummary = editSummary
             FieldValues = fields |> toResizeArray
-            TemplateRevision = templateRevision
+            TemplateRevisionId = % templateRevision.Id
             Kind = kind
             Ids = ids
         }
@@ -253,22 +253,26 @@ let newOriginalGen =
         return { NewOriginal = c }
     }
 
-type NewExample = { NewOriginal: EditConceptCommand; NewExample: EditConceptCommand; ExampleTitle: string }
+type NewExample = { NewOriginal: EditConceptCommand; NewExample: EditConceptCommand; Template: Template.Events.Summary; ExampleTitle: string }
 let newExampleGen =
     gen {
         let! { NewOriginal = newOriginal } = newOriginalGen
+        let! template = templateGen
+        let newOriginal = { newOriginal with TemplateRevisionId = template.RevisionIds.Head }
         let! title = GenX.auto<string>
         let! newExample = editConceptCommandGen
         let newExample =
             { newExample with
                 Kind = UpsertKind.NewExample_Title title
+                TemplateRevisionId = template.RevisionIds.Head
                 Ids =
                     { newExample.Ids with
                         ConceptId = newOriginal.Ids.ConceptId } }
         return
-            { NewOriginal = newOriginal
+            { NewOriginal  = newOriginal
               NewExample   = newExample
-              ExampleTitle = title }
+              ExampleTitle = title
+              Template     = template }
     }
 
 open Hedgehog.Xunit

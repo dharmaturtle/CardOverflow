@@ -530,7 +530,10 @@ module UpdateRepository =
         let exampleNameCheckConceptId conceptId name =
             db.Concept.AnyAsync(fun s -> s.Id = conceptId && s.Examples.Any(fun b -> b.Name = name)) // veryLowTODO make case insensitive
             |> Task.map (Result.requireFalse <| sprintf "Concept #%A already has a Example named '%s'." conceptId name)
+        let templateRevisionId = FSharp.UMX.UMX.untag command.TemplateRevisionId
         taskResult {
+            let! template = db.TemplateRevision.SingleAsync(fun x -> x.Id = templateRevisionId)
+            let template = TemplateRevision.load template
             let! (example: ExampleEntity) =
                 match command.Kind with
                     | NewRevision_Title name ->
@@ -571,7 +574,7 @@ module UpdateRepository =
                                     Id = command.Ids.ConceptId,
                                     AuthorId = userId
                                 )) |> Ok |> Task.FromResult
-            return command.CardView.CopyFieldsToNewRevision example command.EditSummary [] command.Ids.RevisionId
+            return (command.CardView template).CopyFieldsToNewRevision example command.EditSummary [] command.Ids.RevisionId
         }
 
 module NotificationRepository =

@@ -504,21 +504,3 @@ with
         | NewCopy_SourceRevisionId_TagIds (revisionId, _) -> x <- revisionId; true
         | _ -> false
 
-type EditConceptCommand = {
-    EditSummary: string
-    FieldValues: EditFieldAndValue ResizeArray
-    TemplateRevision: TemplateRevision
-    Kind: UpsertKind
-    Ids: UpsertIds
-} with
-    member this.CardView = {   
-        FieldValues =
-            this.FieldValues.Select(fun x ->
-                {   Field = x.EditField
-                    Value =  x.Value
-                }).ToList()
-        TemplateRevision = this.TemplateRevision }
-    member this.MaxIndexInclusive =
-        Helper.maxIndexInclusive
-            (this.TemplateRevision.CardTemplates)
-            (this.FieldValues.Select(fun x -> x.EditField.Name, x.Value |?? lazy "") |> Map.ofSeq) // null coalesce is because <EjsRichTextEditor @bind-Value=@Field.Value> seems to give us nulls

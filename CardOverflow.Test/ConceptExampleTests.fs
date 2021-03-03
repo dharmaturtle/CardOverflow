@@ -16,9 +16,10 @@ open CardOverflow.Api
 open FsToolkit.ErrorHandling
 
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, tags) = asyncResult {
-    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
+let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, tags, (templateSummary: Template.Events.Summary)) = asyncResult {
+    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
     let expectedConcept, expectedExample = ConceptExample.conceptExample authorId command None "Default"
     
@@ -40,14 +41,16 @@ let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, 
     let! actual, _ = c.TableClient().GetExample (string command.Ids.ExampleId)
     Assert.equal expectedExample actual
     let! actual, _ = c.TableClient().GetExampleRevision (string command.Ids.RevisionId)
-    Assert.equal (Example.toRevisionSummary expectedExample) actual
+    let! template, _ = c.TableClient().GetTemplateRevision actual.TemplateRevision.Id
+    Assert.equal (Example.toRevisionSummary template expectedExample) actual
     }
     
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2, tags, title) = asyncResult {
-    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; Ids = { command1.Ids with RevisionId = command2.Ids.RevisionId } }
+let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
+    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = { command1.Ids with RevisionId = command2.Ids.RevisionId } }
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
     let expectedConcept, expectedBanchSummary1 = ConceptExample.conceptExample authorId command1 None "Default"
     let expectedExampleEdit : Example.Events.Edited =
@@ -73,58 +76,67 @@ let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2,
     let evolvedSummary = Example.Fold.evolveEdited expectedExampleEdit expectedBanchSummary1
     Assert.equal evolvedSummary actual
     let! actual, _ = c.TableClient().GetExampleRevision (string command1.Ids.RevisionId)
-    Assert.equal (Example.toRevisionSummary expectedBanchSummary1) actual
+    let! template, _ = c.TableClient().GetTemplateRevision actual.TemplateRevision.Id
+    Assert.equal (Example.toRevisionSummary template expectedBanchSummary1) actual
     let! actual, _ = c.TableClient().GetExampleRevision (string command2.Ids.RevisionId)
-    Assert.equal (Example.toRevisionSummary evolvedSummary) actual
+    Assert.equal (Example.toRevisionSummary template evolvedSummary) actual
     }
     
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert persists new example`` (authorId, { NewOriginal = newOriginal; NewExample = newExample; ExampleTitle = title }) =
+let ``ConceptExampleWriter.Upsert persists new example`` (authorId, { NewOriginal = newOriginal; NewExample = newExample; Template = template; ExampleTitle = title }) = asyncResult {
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create template
     let conceptExampleWriter = c.ConceptExampleWriter()
     let expectedExample : Example.Events.Summary =
         ConceptExample.conceptExample authorId newExample None title
         |> snd
-    conceptExampleWriter.Upsert(authorId, newOriginal) |> RunSynchronously.OkEquals ()
+    do! conceptExampleWriter.Upsert(authorId, newOriginal)
         
-    conceptExampleWriter.Upsert(authorId, newExample) |> RunSynchronously.OkEquals ()
+    do! conceptExampleWriter.Upsert(authorId, newExample)
 
     % newExample.Ids.ExampleId
     |> c.ExampleEvents
     |> Seq.exactlyOne
     |> Assert.equal (Example.Events.Created expectedExample)
+    }
 
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert fails to persist edit with duplicate revisionId`` (authorId, command1, command2, tags, title) =
-    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; Ids = command1.Ids }
+let ``ConceptExampleWriter.Upsert rejects edit with duplicate revisionId`` (authorId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
+    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
     conceptExampleWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
         
-    conceptExampleWriter.Upsert(authorId, command2)
+    let! (result: Result<_,_>) = conceptExampleWriter.Upsert(authorId, command2)
 
-    |> RunSynchronously.ErrorEquals $"Duplicate revisionId:{command1.Ids.RevisionId}"
+    Assert.equal result.error $"Duplicate revisionId:{command1.Ids.RevisionId}"
+    }
 
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title) =
-    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags }
-    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; Ids = command1.Ids }
+let ``ConceptExampleWriter.Upsert fails to persist edit with another author`` (authorId, hackerId, command1, command2, tags, title, (templateSummary: Template.Events.Summary)) = asyncResult {
+    let command1 = { command1 with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
+    let command2 = { command2 with Kind = UpsertKind.NewRevision_Title title; TemplateRevisionId = templateSummary.RevisionIds.Head; Ids = command1.Ids }
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
     conceptExampleWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
         
-    conceptExampleWriter.Upsert(hackerId, command2)
+    let! (result: Result<_,_>) = conceptExampleWriter.Upsert(hackerId, command2)
 
-    |> RunSynchronously.ErrorEquals $"You ({hackerId}) aren't the author"
+    Assert.equal result.error $"You ({hackerId}) aren't the author"
+    }
 
 [<StandardProperty>]
-let ``ConceptExampleWriter.Upsert fails to insert twice`` (authorId, command, tags) =
-    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags }
+let ``ConceptExampleWriter.Upsert fails to insert twice`` (authorId, command, tags, (templateSummary: Template.Events.Summary)) = asyncResult {
+    let command = { command with Kind = UpsertKind.NewOriginal_TagIds tags; TemplateRevisionId = templateSummary.RevisionIds.Head }
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
     conceptExampleWriter.Upsert(authorId, command) |> RunSynchronously.OkEquals ()
         
-    conceptExampleWriter.Upsert(authorId, command)
+    let! (result: Result<_,_>) = conceptExampleWriter.Upsert(authorId, command)
 
-    |> RunSynchronously.ErrorEquals $"Concept '{command.Ids.ConceptId}' already exists."
+    Assert.equal result.error $"Concept '{command.Ids.ConceptId}' already exists."
+    }

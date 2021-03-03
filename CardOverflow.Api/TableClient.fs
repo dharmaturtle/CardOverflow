@@ -133,16 +133,20 @@ type TableClient(connectionString, tableName) =
         conceptId.ToString() |> this.GetConcept
     member this.UpsertExample' (exampleId: string) e =
         match e with
-        | Example.Events.Created summary ->
-            [ this.InsertOrReplace (Example.toRevisionSummary summary)
-              this.InsertOrReplace summary
-            ] |> Async.Parallel |>% ignore
+        | Example.Events.Created summary -> async {
+            let! templateRevision, _ = this.GetTemplateRevision summary.TemplateRevisionId
+            return!
+                [ this.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
+                  this.InsertOrReplace summary
+                ] |> Async.Parallel |>% ignore
+            }
         | Example.Events.Edited e -> async {
             let! summary, _ = this.GetExample exampleId
             let summary = Example.Fold.evolveEdited e summary
+            let! templateRevision, _ = this.GetTemplateRevision summary.TemplateRevisionId
             return!
                 [ this.InsertOrReplace summary
-                  this.InsertOrReplace (Example.toRevisionSummary summary)
+                  this.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =

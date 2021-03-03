@@ -18,8 +18,10 @@ open AsyncOp
 open Domain.Stack
 
 [<StandardProperty>]
-let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (exampleSummary: Example.Events.Summary) = asyncResult {
+let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (templateSummary: Template.Events.Summary) (exampleSummary: Example.Events.Summary) = asyncResult {
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create templateSummary
+    let exampleSummary = { exampleSummary with TemplateRevisionId = templateSummary.RevisionIds.Head }
     let stackWriter = c.StackWriter()
     do! c.ExampleWriter().Create exampleSummary
     let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.RevisionIds.Head }
@@ -38,11 +40,13 @@ let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (exampleS
     }
 
 [<StandardProperty>]
-let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) exampleSummary tagsChanged = asyncResult {
+let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) (templateSummary: Template.Events.Summary) (exampleSummary: Example.Events.Summary) tagsChanged = asyncResult {
     let c = TestEsContainer()
-    let stackWriter = c.StackWriter()
+    do! c.TemplateWriter().Create templateSummary
+    let exampleSummary = { exampleSummary with TemplateRevisionId = templateSummary.RevisionIds.Head }
     do! c.ExampleWriter().Create exampleSummary
     let stackSummary = { stackSummary with ExampleRevisionId = exampleSummary.RevisionIds.Head }
+    let stackWriter = c.StackWriter()
     do! stackWriter.Create stackSummary
     
     do! stackWriter.ChangeTags tagsChanged stackSummary.AuthorId stackSummary.Id

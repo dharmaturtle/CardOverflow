@@ -17,8 +17,9 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``ChangeDefaultExample works`` (authorId, { NewOriginal = s; NewExample = b; ExampleTitle = _ }) = asyncResult {
+let ``ChangeDefaultExample works`` (authorId, { NewOriginal = s; NewExample = b; Template = template }) = asyncResult {
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create template
     let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
     do! conceptExampleWriter.Upsert(authorId, s)
@@ -33,8 +34,10 @@ let ``ChangeDefaultExample works`` (authorId, { NewOriginal = s; NewExample = b;
     }
 
 [<StandardProperty>]
-let ``ChangeDefaultExample fails when example is on a different concept`` (authorId, { NewOriginal = s1; NewExample = _; ExampleTitle = _ }, { NewOriginal = s2; NewExample = b2; ExampleTitle = _ }) = asyncResult {
+let ``ChangeDefaultExample fails when example is on a different concept`` (authorId, { NewOriginal = s1; Template = template1 }, { NewOriginal = s2; NewExample = b2; Template = template2 }) = asyncResult {
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create template1
+    do! c.TemplateWriter().Create template2
     let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
     do! conceptExampleWriter.Upsert(authorId, s1)
@@ -48,8 +51,9 @@ let ``ChangeDefaultExample fails when example is on a different concept`` (autho
     }
 
 [<StandardProperty>]
-let ``ChangeDefaultExample fails when example author tries to be default`` (conceptAuthorId, exampleAuthorId, { NewOriginal = s; NewExample = b; ExampleTitle = _ }) = asyncResult {
+let ``ChangeDefaultExample fails when example author tries to be default`` (conceptAuthorId, exampleAuthorId, { NewOriginal = s; NewExample = b; Template = template }) = asyncResult {
     let c = TestEsContainer()
+    do! c.TemplateWriter().Create template
     let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
     do! conceptExampleWriter.Upsert(conceptAuthorId,  s)

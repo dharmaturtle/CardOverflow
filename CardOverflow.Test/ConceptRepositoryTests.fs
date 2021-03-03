@@ -26,6 +26,7 @@ open CardOverflow.Sanitation
 open System.Collections
 open System.Security.Cryptography
 open FsToolkit.ErrorHandling
+open FSharp.UMX
 
 [<Fact>]
 let ``Getting 10 pages of GetCollectedPages takes less than 1 minute``(): Task<unit> = task {
@@ -252,11 +253,11 @@ let testGetCollected (acCount: int) addCard getTemplate name = task {
     Assert.Equal(1, concepts.Results.Count())
 
     // author creating another example keeps tags
-    let! template = getTemplate c.Db
+    let! (template: ViewTemplateRevision) = getTemplate c.Db
     let! _ =
         {   EditConceptCommand.EditSummary = ""
             FieldValues = [].ToList()
-            TemplateRevision = template |> ViewTemplateRevision.copyTo
+            TemplateRevisionId = % template.Id
             Kind = NewExample_Title "New Example"
             Ids = ids_1
         } |> UpdateRepository.concept c.Db authorId

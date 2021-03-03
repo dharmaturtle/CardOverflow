@@ -13,6 +13,8 @@ open FsCheck
 open FsCheck.Xunit
 open CardOverflow.Entity
 open NodaTime
+open FSharp.UMX
+open Domain
 
 module internal Gen =
     let gen<'a> = // uses the reflection based default generator instead of the registered generator
@@ -135,7 +137,7 @@ module Generators =
                 Gen.genMap<EditConceptCommand> (fun c ->
                     {   c with
                             FieldValues = fields |> toResizeArray
-                            TemplateRevision = templateRevision
+                            TemplateRevisionId = % templateRevision.Id
                             Kind = kind
                     })
         }
