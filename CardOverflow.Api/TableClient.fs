@@ -36,11 +36,11 @@ type AzureTableStorageWrapper =
       _8: string
       _9: string }
 
-type TableClient(connectionString, tableName) =
+type KeyValueStore(connectionString, tableName) =
     let account = CloudStorageAccount.Parse connectionString
-    let tableClient = account.CreateCloudTableClient()
-    let inTable   = inTableAsync   tableClient tableName
-    let fromTable = fromTableAsync tableClient tableName
+    let keyValueStore = account.CreateCloudTableClient()
+    let inTable   = inTableAsync   keyValueStore tableName
+    let fromTable = fromTableAsync keyValueStore tableName
     let encoding = System.Text.UnicodeEncoding() // this is UTF16 https://docs.microsoft.com/en-us/dotnet/api/system.text.unicodeencoding?view=net-5.0
     
     let getPartitionRow (summary: obj) =
@@ -74,7 +74,7 @@ type TableClient(connectionString, tableName) =
           _8  = get 8
           _9  = get 9 } // according to math https://www.wolframalpha.com/input/?i=1+mib+%2F+64+kib this should keep going until _15 (0 indexed), but running tests on the Azure Table Emulator throws at about _9. medTODO find the real limit with the real Azure Table Storage
 
-    member _.CloudTableClient = tableClient
+    member _.CloudTableClient = keyValueStore
     member _.TableName = tableName
     
     member _.InsertOrReplace summary =

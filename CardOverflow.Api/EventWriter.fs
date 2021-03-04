@@ -33,7 +33,7 @@ module Example =
 module Concept =
     open Concept
 
-    type Writer internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve conceptId : Stream<_, _> = resolve conceptId
 
         member internal _.Create(state: Events.Summary) =
@@ -41,13 +41,13 @@ module Concept =
             stream.Transact(decideCreate state)
         member _.ChangeDefaultExample conceptId (newDefaultExampleId: ExampleId) callerId = asyncResult {
             let stream = resolve conceptId
-            let! b, _ = tableClient.GetExample newDefaultExampleId
+            let! b, _ = keyValueStore.GetExample newDefaultExampleId
             return! decideDefaultExampleChanged b.Id b.ConceptId callerId |> stream.Transact
         }
 
-    let create resolve tableClient =
+    let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, tableClient)
+        Writer(resolve, keyValueStore)
 
 module ConceptExample =
 
@@ -100,12 +100,12 @@ module ConceptExample =
 module User =
     open User
 
-    type Writer internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve userId : Stream<_, _> = resolve userId
 
         member _.OptionsEdited userId (o: Events.OptionsEdited) = async {
             let stream = resolve userId
-            let! deck, _ = tableClient.GetDeck o.DefaultDeckId
+            let! deck, _ = keyValueStore.GetDeck o.DefaultDeckId
             return! stream.Transact(decideOptionsEdited o deck.AuthorId)
             }
         member _.CardSettingsEdited userId cardSettingsEdited =
@@ -113,27 +113,27 @@ module User =
             stream.Transact(decideCardSettingsEdited cardSettingsEdited)
         member _.DeckFollowed userId deckId = async {
             let stream = resolve userId
-            let! doesDeckExist = tableClient.Exists deckId
+            let! doesDeckExist = keyValueStore.Exists deckId
             return! stream.Transact(decideFollowDeck deckId doesDeckExist)
             }
         member _.DeckUnfollowed userId deckId =
             let stream = resolve userId
             stream.Transact(decideUnfollowDeck deckId)
 
-    let create resolve tableClient =
+    let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, tableClient)
+        Writer(resolve, keyValueStore)
 
 module Deck =
     open Deck
 
-    type Writer internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve deckId : Stream<_, _> = resolve deckId
 
         let doesSourceExist (source: DeckId option) =
             match source with
             | None -> Async.singleton true
-            | Some x -> tableClient.Exists x
+            | Some x -> keyValueStore.Exists x
 
         member _.Create (summary: Events.Summary) = async {
             let stream = resolve summary.Id
@@ -146,52 +146,52 @@ module Deck =
             return! stream.Transact(decideEdited edited callerId doesSourceExist)
             }
 
-    let create resolve tableClient =
+    let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, tableClient)
+        Writer(resolve, keyValueStore)
 
 module Template =
     open Template
 
-    type Writer internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve templateId : Stream<_, _> = resolve templateId
 
         member _.Create (summary: Events.Summary) =
             summary.RevisionIds |> Seq.tryExactlyOne |> function
             | Some revisionId -> async {
                 let stream = resolve summary.Id
-                let! doesRevisionExist = tableClient.Exists revisionId
+                let! doesRevisionExist = keyValueStore.Exists revisionId
                 return! stream.Transact(decideCreate summary doesRevisionExist)
                 }
             | None -> $"There are {summary.RevisionIds.Length} RevisionIds, but there must be exactly 1." |> Error |> Async.singleton
         member _.Edit (edited: Events.Edited) callerId templateId = async {
             let stream = resolve templateId
-            let! doesRevisionExist = tableClient.Exists edited.RevisionId
+            let! doesRevisionExist = keyValueStore.Exists edited.RevisionId
             return! stream.Transact(decideEdit edited callerId doesRevisionExist)
             }
 
-    let create resolve tableClient =
+    let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, tableClient)
+        Writer(resolve, keyValueStore)
 
 module Stack =
     open Stack
 
-    type Writer internal (resolve, tableClient: TableClient) =
+    type Writer internal (resolve, keyValueStore: KeyValueStore) =
         let resolve templateId : Stream<_, _> = resolve templateId
 
         member _.Create (summary: Events.Summary) = async {
             let stream = resolve summary.Id
-            let! doesRevisionExist = tableClient.Exists summary.ExampleRevisionId
+            let! doesRevisionExist = keyValueStore.Exists summary.ExampleRevisionId
             return! stream.Transact(decideCreate summary doesRevisionExist)
             }
         member _.ChangeTags (tagsChanged: Events.TagsChanged) callerId stackId =
             let stream = resolve stackId
             stream.Transact(decideChangeTags tagsChanged callerId)
 
-    let create resolve tableClient =
+    let create resolve keyValueStore =
         let resolve id = Stream(Log.ForContext<Writer>(), resolve (streamName id), maxAttempts=3)
-        Writer(resolve, tableClient)
+        Writer(resolve, keyValueStore)
 
 module UserSaga = // medTODO turn into a real saga
     open User

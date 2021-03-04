@@ -120,9 +120,9 @@ type Container with
     member container.RegisterTestConnectionString dbName =
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
-        container.RegisterSingleton<TableClient>(fun () ->
+        container.RegisterSingleton<KeyValueStore>(fun () ->
             let cs = container.GetInstance<IConfiguration>().GetConnectionString "AzureTableStorage"
-            TableClient(cs, (dbName.Substring 2).Pascalize()) // chopping off the omega and first underscore, then pascal casing
+            KeyValueStore(cs, (dbName.Substring 2).Pascalize()) // chopping off the omega and first underscore, then pascal casing
         )
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()

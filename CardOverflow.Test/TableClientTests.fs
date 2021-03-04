@@ -16,7 +16,7 @@ open CardOverflow.Api
 
 [<StandardProperty>]
 let ``can insert, get, and update concept summary`` (concept: Concept.Events.Summary, revisionId: RevisionId) = async {
-    let tc = TestEsContainer().TableClient()
+    let tc = TestEsContainer().KeyValueStore()
 
     // insert
     let! _ = tc.InsertOrReplace concept

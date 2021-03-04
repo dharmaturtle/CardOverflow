@@ -119,31 +119,31 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterSingleton<User.Writer>(fun () ->
             User.memoryStore
                 <| vStore()
-                <| container.GetInstance<TableClient>() )
+                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Deck.Writer>(fun () ->
             Deck.memoryStore
                 <| vStore()
-                <| container.GetInstance<TableClient>() )
+                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Template.Writer>(fun () ->
             Template.memoryStore
                 <| vStore()
-                <| container.GetInstance<TableClient>() )
+                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<UserSaga.Writer>(fun () ->
             UserSaga.memoryStore
                 <| vStore()
                 <| container.GetInstance<Deck.Writer>() )
         container.RegisterInitializer<VolatileStore<byte[]>>(fun store ->
             let elseClient = container.GetInstance<ElseClient>()
-            let tableClient = container.GetInstance<TableClient>()
+            let keyValueStore = container.GetInstance<KeyValueStore>()
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 let category, id = streamName |> StreamName.splitCategoryAndId
                 match category with
-                | "Concept"  -> events |> Array.map (Concept .Events.codec.TryDecode >> Option.get >> tableClient.UpsertConcept'  id)
-                | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> tableClient.UpsertExample'  id)
-                | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertUser'     id)
-                | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> tableClient.UpsertDeck'     id)
-                | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> tableClient.UpsertTemplate' id)
-                | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> tableClient.UpsertStack'    id)
+                | "Concept"  -> events |> Array.map (Concept .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertConcept'  id)
+                | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertExample'  id)
+                | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertUser'     id)
+                | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertDeck'     id)
+                | "Template" -> events |> Array.map (Template.Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertTemplate' id)
+                | "Stack"    -> events |> Array.map (Stack   .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertStack'    id)
                 | _ -> failwith $"Unsupported category: {category}"
                 |> Async.Parallel
                 |> Async.RunSynchronously
@@ -153,21 +153,21 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterSingleton<Concept.Writer>(fun () ->
             Concept.memoryStore
                 <| vStore()
-                <| container.GetInstance<TableClient>() )
+                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Stack.Writer>(fun () ->
             Stack.memoryStore
                 <| vStore()
-                <| container.GetInstance<TableClient>() )
+                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Example.Writer>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Example.memoryStore)
         container.Verify()
-        let tc = container.GetInstance<TableClient>()
+        let tc = container.GetInstance<KeyValueStore>()
         let table = tc.CloudTableClient.GetTableReference tc.TableName
         table.DeleteIfExists()    |> ignore
         table.CreateIfNotExists() |> ignore
 
-    member _.TableClient () =
-        container.GetInstance<TableClient>()
+    member _.KeyValueStore () =
+        container.GetInstance<KeyValueStore>()
 
     member _.ElasticClient () =
         container.GetInstance<ElasticClient>()

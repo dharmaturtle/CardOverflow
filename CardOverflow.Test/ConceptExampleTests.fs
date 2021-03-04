@@ -36,12 +36,12 @@ let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, 
     |> Assert.equal (Example.Events.Created expectedExample)
     
     // azure table roundtrips
-    let! actual, _ = c.TableClient().GetConcept (string command.Ids.ConceptId)
+    let! actual, _ = c.KeyValueStore().GetConcept (string command.Ids.ConceptId)
     Assert.equal expectedConcept actual
-    let! actual, _ = c.TableClient().GetExample (string command.Ids.ExampleId)
+    let! actual, _ = c.KeyValueStore().GetExample (string command.Ids.ExampleId)
     Assert.equal expectedExample actual
-    let! actual, _ = c.TableClient().GetExampleRevision (string command.Ids.RevisionId)
-    let! template, _ = c.TableClient().GetTemplateRevision actual.TemplateRevision.Id
+    let! actual, _ = c.KeyValueStore().GetExampleRevision (string command.Ids.RevisionId)
+    let! template, _ = c.KeyValueStore().GetTemplateRevision actual.TemplateRevision.Id
     Assert.equal (Example.toRevisionSummary template expectedExample) actual
     }
     
@@ -70,15 +70,15 @@ let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2,
     |> Assert.equal (Example.Events.Edited expectedExampleEdit)
     
     // azure table roundtrips
-    let! actual, _ = c.TableClient().GetConcept (string command2.Ids.ConceptId)
+    let! actual, _ = c.KeyValueStore().GetConcept (string command2.Ids.ConceptId)
     Assert.equal expectedConcept actual
-    let! actual, _ = c.TableClient().GetExample (string command2.Ids.ExampleId)
+    let! actual, _ = c.KeyValueStore().GetExample (string command2.Ids.ExampleId)
     let evolvedSummary = Example.Fold.evolveEdited expectedExampleEdit expectedBanchSummary1
     Assert.equal evolvedSummary actual
-    let! actual, _ = c.TableClient().GetExampleRevision (string command1.Ids.RevisionId)
-    let! template, _ = c.TableClient().GetTemplateRevision actual.TemplateRevision.Id
+    let! actual, _ = c.KeyValueStore().GetExampleRevision (string command1.Ids.RevisionId)
+    let! template, _ = c.KeyValueStore().GetTemplateRevision actual.TemplateRevision.Id
     Assert.equal (Example.toRevisionSummary template expectedBanchSummary1) actual
-    let! actual, _ = c.TableClient().GetExampleRevision (string command2.Ids.RevisionId)
+    let! actual, _ = c.KeyValueStore().GetExampleRevision (string command2.Ids.RevisionId)
     Assert.equal (Example.toRevisionSummary template evolvedSummary) actual
     }
     

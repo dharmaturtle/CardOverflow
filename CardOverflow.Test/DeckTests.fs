@@ -33,11 +33,11 @@ let ``Create summary roundtrips (event store)`` (deckSummary: Deck.Events.Summar
 let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) = asyncResult {
     let c = TestEsContainer()
     let deckWriter = c.DeckWriter()
-    let tableClient = c.TableClient()
+    let keyValueStore = c.KeyValueStore()
 
     do! deckWriter.Create deckSummary
 
-    let! actual, _ = tableClient.GetDeck deckSummary.Id
+    let! actual, _ = keyValueStore.GetDeck deckSummary.Id
     Assert.equal deckSummary actual
     }
 
@@ -59,11 +59,11 @@ let ``Edited roundtrips (event store)`` (deckSummary: Deck.Events.Summary) (edit
 let ``Edited roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) (edited: Deck.Events.Edited) = asyncResult {
     let c = TestEsContainer()
     let deckWriter = c.DeckWriter()
-    let tableClient = c.TableClient()
+    let keyValueStore = c.KeyValueStore()
     do! deckWriter.Create deckSummary
     
     do! deckWriter.Edit edited deckSummary.AuthorId deckSummary.Id
 
-    let! actual, _ = tableClient.GetDeck deckSummary.Id
+    let! actual, _ = keyValueStore.GetDeck deckSummary.Id
     Assert.equal (Deck.Fold.evolveEdited edited deckSummary) actual
     }
