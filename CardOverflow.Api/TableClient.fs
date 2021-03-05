@@ -36,11 +36,7 @@ type AzureTableStorageWrapper =
       _8: string
       _9: string }
 
-type KeyValueStore(connectionString, tableName) =
-    let account = CloudStorageAccount.Parse connectionString
-    let keyValueStore = account.CreateCloudTableClient()
-    let inTable   = inTableAsync   keyValueStore tableName
-    let fromTable = fromTableAsync keyValueStore tableName
+module KeyValueStore =
     let encoding = System.Text.UnicodeEncoding() // this is UTF16 https://docs.microsoft.com/en-us/dotnet/api/system.text.unicodeencoding?view=net-5.0
     
     let getPartitionRow (summary: obj) =
@@ -74,23 +70,34 @@ type KeyValueStore(connectionString, tableName) =
           _8  = get 8
           _9  = get 9 } // according to math https://www.wolframalpha.com/input/?i=1+mib+%2F+64+kib this should keep going until _15 (0 indexed), but running tests on the Azure Table Emulator throws at about _9. medTODO find the real limit with the real Azure Table Storage
 
-    member _.CloudTableClient = keyValueStore
+type IKeyValueStore =
+    abstract InsertOrReplace: 'a -> Async<OperationResult>
+    abstract PointQuery: key: obj -> Async<seq<AzureTableStorageWrapper * EntityMetadata>>
+
+type TableClient(connectionString, tableName) =
+    let account     = CloudStorageAccount.Parse connectionString
+    let tableClient = account.CreateCloudTableClient()
+    let inTable     = inTableAsync   tableClient tableName
+    let fromTable   = fromTableAsync tableClient tableName
+    
+    member _.CloudTableClient = tableClient
     member _.TableName = tableName
     
-    member _.InsertOrReplace summary =
-        summary |> wrap |> InsertOrReplace |> inTable
+    interface IKeyValueStore with
+        member _.InsertOrReplace summary =
+            summary |> KeyValueStore.wrap |> InsertOrReplace |> inTable
+        member _.PointQuery (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
+            Query.all<AzureTableStorageWrapper>
+            |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
+            |> fromTable
 
-    member private _.PointQuery (key: obj) = // point query https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-design-for-query#how-your-choice-of-partitionkey-and-rowkey-impacts-query-performance:~:text=Point%20Query,-is
-        Query.all<AzureTableStorageWrapper>
-        |> Query.where <@ fun _ s -> s.PartitionKey = string key && s.RowKey = string key @>
-        |> fromTable
-
-    member this.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever)
-        this.PointQuery key
+type KeyValueStore(keyValueStore: IKeyValueStore) =
+    member _.Exists (key: obj) = // medTODO this needs to make sure it's in the Active state (could be just deleted or whatever)
+        keyValueStore.PointQuery key
         |>% (Seq.isEmpty >> not)
 
-    member this.TryGet<'a> (key: obj) =
-        this.PointQuery key
+    member _.TryGet<'a> (key: obj) =
+        keyValueStore.PointQuery key
         |>% Seq.tryExactlyOne
         |>% Option.map (fun (x, m) ->
             String.concat "" [
@@ -115,12 +122,12 @@ type KeyValueStore(connectionString, tableName) =
         |> this.Get
         |>% fst
         |>% update
-        |>! this.InsertOrReplace
+        |>! keyValueStore.InsertOrReplace
         |>% ignore
     member this.UpsertConcept' (conceptId: string) e =
         match e with
         | Concept.Events.Created summary ->
-            this.InsertOrReplace summary |>% ignore
+            keyValueStore.InsertOrReplace summary |>% ignore
         | Concept.Events.DefaultExampleChanged b ->
             this.Update (fun (x:Concept.Events.Summary) ->
                 { x with DefaultExampleId = b.ExampleId }
@@ -136,8 +143,8 @@ type KeyValueStore(connectionString, tableName) =
         | Example.Events.Created summary -> async {
             let! templateRevision, _ = this.GetTemplateRevision summary.TemplateRevisionId
             return!
-                [ this.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
-                  this.InsertOrReplace summary
+                [ keyValueStore.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
+                  keyValueStore.InsertOrReplace summary
                 ] |> Async.Parallel |>% ignore
             }
         | Example.Events.Edited e -> async {
@@ -145,8 +152,8 @@ type KeyValueStore(connectionString, tableName) =
             let summary = Example.Fold.evolveEdited e summary
             let! templateRevision, _ = this.GetTemplateRevision summary.TemplateRevisionId
             return!
-                [ this.InsertOrReplace summary
-                  this.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
+                [ keyValueStore.InsertOrReplace summary
+                  keyValueStore.InsertOrReplace (Example.toRevisionSummary templateRevision summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertExample (exampleId: ExampleId) =
@@ -163,7 +170,7 @@ type KeyValueStore(connectionString, tableName) =
     member this.UpsertUser' (userId: string) e =
         match e with
         | User.Events.Created summary ->
-            this.InsertOrReplace summary |>% ignore
+            keyValueStore.InsertOrReplace summary |>% ignore
         | User.Events.OptionsEdited o ->
             this.Update (User.Fold.evolveOptionsEdited o) userId
         | User.Events.CardSettingsEdited cs ->
@@ -182,7 +189,7 @@ type KeyValueStore(connectionString, tableName) =
     member this.UpsertDeck' (deckId: string) e =
         match e with
         | Deck.Events.Created summary ->
-            this.InsertOrReplace summary |>% ignore
+            keyValueStore.InsertOrReplace summary |>% ignore
         | Deck.Events.Edited e ->
             this.Update (Deck.Fold.evolveEdited e) deckId
     member this.UpsertDeck (deckId: DeckId) =
@@ -195,15 +202,15 @@ type KeyValueStore(connectionString, tableName) =
     member this.UpsertTemplate' (templateId: string) e =
         match e with
         | Template.Events.Created summary ->
-            [ this.InsertOrReplace (Template.toRevisionSummary summary)
-              this.InsertOrReplace summary
+            [ keyValueStore.InsertOrReplace (Template.toRevisionSummary summary)
+              keyValueStore.InsertOrReplace summary
             ] |> Async.Parallel |>% ignore
         | Template.Events.Edited e -> async {
             let! summary, _ = this.GetTemplate templateId
             let summary = Template.Fold.evolveEdited e summary
             return!
-                [ this.InsertOrReplace summary
-                  this.InsertOrReplace (Template.toRevisionSummary summary)
+                [ keyValueStore.InsertOrReplace summary
+                  keyValueStore.InsertOrReplace (Template.toRevisionSummary summary)
                 ] |> Async.Parallel |>% ignore
             }
     member this.UpsertTemplate (templateId: TemplateId) =
@@ -220,7 +227,7 @@ type KeyValueStore(connectionString, tableName) =
     member this.UpsertStack' (stackId: string) e =
         match e with
         | Stack.Events.Created summary ->
-            this.InsertOrReplace summary |>% ignore
+            keyValueStore.InsertOrReplace summary |>% ignore
         | Stack.Events.TagsChanged e ->
             this.Update (Stack.Fold.evolveTagsChanged e) stackId
     member this.UpsertStack (stackId: StackId) =

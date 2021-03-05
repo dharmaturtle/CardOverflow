@@ -102,7 +102,35 @@ module Example =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
 
+open FSharp.Azure.Storage.Table
+open FsToolkit.ErrorHandling
+
+type TableMemoryClient() =
+    let dict = new System.Collections.Generic.Dictionary<(string * string), AzureTableStorageWrapper>()
+    interface IKeyValueStore with
+        member _.InsertOrReplace summary =
+            let value = summary |> KeyValueStore.wrap
+            let key = value.Partition, value.Partition
+            dict.Remove key |> ignore
+            dict.Add(key, value)
+            {   HttpStatusCode = 0
+                Etag = ""
+            } |> Async.singleton
+        member _.PointQuery (key: obj) =
+            let key = string key, string key
+            if dict.ContainsKey key then
+                let meta =
+                    { Etag = ""
+                      Timestamp = DateTimeOffset.MinValue }
+                (dict.Item key, meta)
+                |> Seq.singleton
+                |> Async.singleton
+            else
+                Seq.empty |> Async.singleton
+
+open Humanizer
 type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName: string) =
+    let isMemoryKeyValueStore = true
     let container = new Container()
     do
         let dbName =
@@ -115,6 +143,20 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterStuff
         container.RegisterTestConnectionString dbName
         container.RegisterSingleton<VolatileStore<byte[]>>()
+        if isMemoryKeyValueStore then
+            container.RegisterSingleton<IKeyValueStore, TableMemoryClient>()
+        else
+            container.RegisterSingleton<IKeyValueStore>(fun () ->
+                let cs = container.GetInstance<IConfiguration>().GetConnectionString "AzureTableStorage"
+                TableClient(cs, (dbName.Substring 2).Pascalize()) // chopping off the omega and first underscore, then pascal casing
+                :> IKeyValueStore
+            )
+            container.RegisterInitializer<IKeyValueStore>(fun tc ->
+                let tc = tc :?> TableClient
+                let table = tc.CloudTableClient.GetTableReference tc.TableName
+                table.DeleteIfExists()    |> ignore
+                table.CreateIfNotExists() |> ignore
+            )
         let vStore () = container.GetInstance<VolatileStore<byte[]>>()
         container.RegisterSingleton<User.Writer>(fun () ->
             User.memoryStore
@@ -161,10 +203,6 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
         container.RegisterSingleton<Example.Writer>(fun () ->
             container.GetInstance<VolatileStore<byte[]>>() |> Example.memoryStore)
         container.Verify()
-        let tc = container.GetInstance<KeyValueStore>()
-        let table = tc.CloudTableClient.GetTableReference tc.TableName
-        table.DeleteIfExists()    |> ignore
-        table.CreateIfNotExists() |> ignore
 
     member _.KeyValueStore () =
         container.GetInstance<KeyValueStore>()
