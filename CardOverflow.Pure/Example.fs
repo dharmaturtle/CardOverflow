@@ -121,8 +121,8 @@ let decideCreate (summary: Events.Summary) state =
 
 let decideEdit (edited: Events.Edited) callerId state =
     match state with
-    | Fold.State.Initial  -> Error "Can't edit a example that doesn't exist"
+    | Fold.State.Initial  -> Error "Can't edit a example that doesn't exist."
     | Fold.State.Active x -> result {
-        do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author"
-        do! x.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate revisionId:{edited.RevisionId}"
+        do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author of Example {x.Id}."
+        do! x.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate RevisionId:{edited.RevisionId}"
     } |> addEvent (Events.Edited edited)

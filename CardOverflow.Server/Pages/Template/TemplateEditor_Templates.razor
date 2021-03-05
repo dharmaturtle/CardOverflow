@@ -29,7 +29,7 @@
 <div>
   @foreach (var cardTemplate in Revision.JustCardTemplates) {
     <TemplateEditor_Template
-                            Template=@cardTemplate
+                            CardTemplate=@cardTemplate
                             Css=@Revision.Css
                             DisplayDelete=@(Revision.JustCardTemplates.Count() >= 2)
                             Delete=@(() => DeleteTemplate(cardTemplate))

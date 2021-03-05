@@ -23,7 +23,7 @@ let ``ConceptExampleWriter.Upsert persists both summaries`` (authorId, command, 
     let conceptExampleWriter = c.ConceptExampleWriter()
     let expectedConcept, expectedExample = ConceptExample.conceptExample authorId command None "Default"
     
-    do! conceptExampleWriter.Upsert(authorId, command)
+    do! conceptExampleWriter.Upsert authorId command
     
     // memory store roundtrips
     % expectedConcept.Id
@@ -60,9 +60,9 @@ let ``ConceptExampleWriter.Upsert persists edit`` (authorId, command1, command2,
           TemplateRevisionId = b.TemplateRevisionId
           FieldValues        = b.FieldValues
           EditSummary        = b.EditSummary }
-    do! conceptExampleWriter.Upsert(authorId, command1)
+    do! conceptExampleWriter.Upsert authorId command1
         
-    do! conceptExampleWriter.Upsert(authorId, command2)
+    do! conceptExampleWriter.Upsert authorId command2
 
     % command2.Ids.ExampleId
     |> c.ExampleEvents
@@ -90,9 +90,9 @@ let ``ConceptExampleWriter.Upsert persists new example`` (authorId, { NewOrigina
     let expectedExample : Example.Events.Summary =
         ConceptExample.conceptExample authorId newExample None title
         |> snd
-    do! conceptExampleWriter.Upsert(authorId, newOriginal)
+    do! conceptExampleWriter.Upsert authorId newOriginal
         
-    do! conceptExampleWriter.Upsert(authorId, newExample)
+    do! conceptExampleWriter.Upsert authorId newExample
 
     % newExample.Ids.ExampleId
     |> c.ExampleEvents
@@ -107,11 +107,11 @@ let ``ConceptExampleWriter.Upsert rejects edit with duplicate revisionId`` (auth
     let c = TestEsContainer()
     do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
-    conceptExampleWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
+    do! conceptExampleWriter.Upsert authorId command1
         
-    let! (result: Result<_,_>) = conceptExampleWriter.Upsert(authorId, command2)
+    let! (result: Result<_,_>) = conceptExampleWriter.Upsert authorId command2
 
-    Assert.equal result.error $"Duplicate revisionId:{command1.Ids.RevisionId}"
+    Assert.equal result.error $"Duplicate RevisionId:{command1.Ids.RevisionId}"
     }
 
 [<StandardProperty>]
@@ -121,11 +121,11 @@ let ``ConceptExampleWriter.Upsert fails to persist edit with another author`` (a
     let c = TestEsContainer()
     do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
-    conceptExampleWriter.Upsert(authorId, command1) |> RunSynchronously.OkEquals ()
+    do! conceptExampleWriter.Upsert authorId command1
         
-    let! (result: Result<_,_>) = conceptExampleWriter.Upsert(hackerId, command2)
+    let! (result: Result<_,_>) = conceptExampleWriter.Upsert hackerId command2
 
-    Assert.equal result.error $"You ({hackerId}) aren't the author"
+    Assert.equal result.error $"You ({hackerId}) aren't the author of Example {command1.Ids.ExampleId}."
     }
 
 [<StandardProperty>]
@@ -134,9 +134,9 @@ let ``ConceptExampleWriter.Upsert fails to insert twice`` (authorId, command, ta
     let c = TestEsContainer()
     do! c.TemplateWriter().Create templateSummary
     let conceptExampleWriter = c.ConceptExampleWriter()
-    conceptExampleWriter.Upsert(authorId, command) |> RunSynchronously.OkEquals ()
+    do! conceptExampleWriter.Upsert authorId command
         
-    let! (result: Result<_,_>) = conceptExampleWriter.Upsert(authorId, command)
+    let! (result: Result<_,_>) = conceptExampleWriter.Upsert authorId command
 
     Assert.equal result.error $"Concept '{command.Ids.ConceptId}' already exists."
     }

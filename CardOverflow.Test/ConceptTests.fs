@@ -22,8 +22,8 @@ let ``ChangeDefaultExample works`` (authorId, { NewOriginal = s; NewExample = b;
     do! c.TemplateWriter().Create template
     let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
-    do! conceptExampleWriter.Upsert(authorId, s)
-    do! conceptExampleWriter.Upsert(authorId, b)
+    do! conceptExampleWriter.Upsert authorId s
+    do! conceptExampleWriter.Upsert authorId b
 
     do! conceptWriter.ChangeDefaultExample (% s.Ids.ConceptId) (% b.Ids.ExampleId) authorId
 
@@ -40,9 +40,9 @@ let ``ChangeDefaultExample fails when example is on a different concept`` (autho
     do! c.TemplateWriter().Create template2
     let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
-    do! conceptExampleWriter.Upsert(authorId, s1)
-    do! conceptExampleWriter.Upsert(authorId, s2)
-    do! conceptExampleWriter.Upsert(authorId, b2)
+    do! conceptExampleWriter.Upsert authorId s1
+    do! conceptExampleWriter.Upsert authorId s2
+    do! conceptExampleWriter.Upsert authorId b2
 
     do! conceptWriter.ChangeDefaultExample (% s1.Ids.ConceptId) (% b2.Ids.ExampleId) authorId
         
@@ -56,8 +56,8 @@ let ``ChangeDefaultExample fails when example author tries to be default`` (conc
     do! c.TemplateWriter().Create template
     let conceptExampleWriter = c.ConceptExampleWriter()
     let conceptWriter = c.ConceptWriter()
-    do! conceptExampleWriter.Upsert(conceptAuthorId,  s)
-    do! conceptExampleWriter.Upsert(exampleAuthorId, b)
+    do! conceptExampleWriter.Upsert conceptAuthorId s
+    do! conceptExampleWriter.Upsert exampleAuthorId b
 
     do! conceptWriter.ChangeDefaultExample (% s.Ids.ConceptId) (% b.Ids.ExampleId) exampleAuthorId
 

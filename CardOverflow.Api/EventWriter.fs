@@ -79,7 +79,7 @@ module ConceptExample =
             return! exampleWriter.Create exampleSummary
         }
 
-        member _.Upsert (authorId, command) =
+        member _.Upsert authorId command =
             match command.Kind with
             | NewOriginal_TagIds tags -> // highTODO create card (with tag)
                 conceptExample authorId command None                     "Default" |> create

@@ -27,7 +27,7 @@ module Events =
            Created: Instant
            Modified: Instant
            Timezone: DateTimeZone
-           CardSettings: CardSetting list
+           CardSettings: CardSetting list // medTODO move card settings here
            FollowedDecks: DeckId Set
         }
     type OptionsEdited =
