@@ -122,12 +122,9 @@ type Container with
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
         let exampleIndex = nameof Domain.Example |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
-            let sourceSerializerFactory =
-                ConnectionSettings.SourceSerializerFactory
-                    (fun x y -> Nest.JsonNetSerializer.JsonNetSerializer.Default (x, y))
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
-            (new ConnectionSettings(pool, sourceSerializerFactory))
+            (new ConnectionSettings(pool, Else.sourceSerializerFactory))
                 .DefaultMappingFor<Domain.Example.Events.Summary>(fun x ->
                     x.IndexName exampleIndex :> IClrTypeMapping<_>
                 )
