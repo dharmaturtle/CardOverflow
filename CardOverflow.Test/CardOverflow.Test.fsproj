@@ -82,7 +82,6 @@
     <Compile Include="UserTests.fs" />
     <Compile Include="DeckTests.fs" />
     <Compile Include="TemplateTests.fs" />
-    <Compile Include="ConceptTests.fs" />
     <Compile Include="ConceptExampleTests.fs" />
     <Compile Include="StackTests.fs" />
   </ItemGroup>

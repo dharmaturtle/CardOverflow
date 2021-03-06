@@ -41,7 +41,6 @@ module KeyValueStore =
     
     let getPartitionRow (summary: obj) =
         match summary with
-        | :? Domain.Concept  .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Stack    .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Example  .Events.Summary as x -> string x.Id, string x.Id
         | :? Domain.Example .RevisionSummary as x -> string x.Id, string x.Id
@@ -124,20 +123,6 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         |>% update
         |>! keyValueStore.InsertOrReplace
         |>% ignore
-    member this.UpsertConcept' (conceptId: string) e =
-        match e with
-        | Concept.Events.Created summary ->
-            keyValueStore.InsertOrReplace summary |>% ignore
-        | Concept.Events.DefaultExampleChanged b ->
-            this.Update (fun (x:Concept.Events.Summary) ->
-                { x with DefaultExampleId = b.ExampleId }
-            ) conceptId |>% ignore
-    member this.UpsertConcept (conceptId: ConceptId) =
-        conceptId.ToString() |> this.UpsertConcept'
-    member this.GetConcept (conceptId: string) =
-        this.Get<Concept.Events.Summary> conceptId
-    member this.GetConcept (conceptId: ConceptId) =
-        conceptId.ToString() |> this.GetConcept
     member this.UpsertExample' (exampleId: string) e =
         match e with
         | Example.Events.Created summary -> async {

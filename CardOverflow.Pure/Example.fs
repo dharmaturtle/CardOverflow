@@ -14,9 +14,9 @@ module Events =
 
     type Summary =
         { Id: ExampleId
+          ParentId: ExampleId option
           RevisionIds: RevisionId list
           Title: string
-          ConceptId: ConceptId
           AuthorId: UserId
           TemplateRevisionId: TemplateRevisionId
           AnkiNoteId: int64 option
@@ -71,9 +71,8 @@ module Fold =
 
 type RevisionSummary =
     { Id: RevisionId
-      ExampleId: ExampleId
+      ParentedExampleId: ParentedExampleId
       Title: string
-      ConceptId: ConceptId
       AuthorId: UserId
       TemplateRevision: Template.RevisionSummary
       FieldValues: Map<string, string>
@@ -81,9 +80,8 @@ type RevisionSummary =
 
 let toRevisionSummary templateRevision (b: Events.Summary) =
     { Id = b.RevisionIds.Head
-      ExampleId = b.Id
+      ParentedExampleId = ParentedExampleId.create b.Id b.ParentId
       Title = b.Title
-      ConceptId = b.ConceptId
       AuthorId = b.AuthorId
       TemplateRevision = templateRevision
       FieldValues = b.FieldValues

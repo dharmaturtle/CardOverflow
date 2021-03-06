@@ -86,11 +86,6 @@ module Template =
     let memoryStore store =
         Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
         |> create
-module Concept =
-    open Concept
-    let memoryStore store =
-        Resolver(store, Events.codec, Fold.fold, Fold.initial).Resolve
-        |> create
 module Stack =
     open Stack
     let memoryStore store =
@@ -180,7 +175,6 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
             Handler(fun _ (streamName:StreamName, events:ITimelineEvent<byte[]> []) ->
                 let category, id = streamName |> StreamName.splitCategoryAndId
                 match category with
-                | "Concept"  -> events |> Array.map (Concept .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertConcept'  id)
                 | "Example"  -> events |> Array.map (Example .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertExample'  id)
                 | "User"     -> events |> Array.map (User    .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertUser'     id)
                 | "Deck"     -> events |> Array.map (Deck    .Events.codec.TryDecode >> Option.get >> keyValueStore.UpsertDeck'     id)
@@ -192,10 +186,6 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
                 |> ignore
             ) |> store.Committed.AddHandler
         )
-        container.RegisterSingleton<Concept.Writer>(fun () ->
-            Concept.memoryStore
-                <| vStore()
-                <| container.GetInstance<KeyValueStore>() )
         container.RegisterSingleton<Stack.Writer>(fun () ->
             Stack.memoryStore
                 <| vStore()
@@ -228,20 +218,13 @@ type TestEsContainer(?callerMembersArg: string, [<CallerMemberName>] ?memberName
     member _.StackWriter () =
         container.GetInstance<Stack.Writer>()
     
-    member _.ConceptWriter () =
-        container.GetInstance<Concept.Writer>()
-    
     member _.ExampleWriter () =
         container.GetInstance<Example.Writer>()
-    
-    member _.ConceptExampleWriter () =
-        container.GetInstance<ConceptExample.Writer>()
     
     member private _.events(streamName, codec: IEventCodec<_, _, _>) =
         streamName.ToString()
         |> (container.GetInstance<VolatileStore<byte[]>>().TryLoad >> Option.get)
         |> Array.map (codec.TryDecode >> Option.get)
-    member this.ConceptEvents  id = this.events(Concept .streamName id, Concept .Events.codec)
     member this.StackEvents    id = this.events(Stack   .streamName id, Stack   .Events.codec)
     member this.ExampleEvents  id = this.events(Example .streamName id, Example .Events.codec)
     member this.UserEvents     id = this.events(User    .streamName id, User    .Events.codec)

@@ -120,7 +120,6 @@ type Container with
         container.RegisterSingleton<ConnectionString>(fun () -> container.GetInstance<IConfiguration>().GetConnectionString("TestConnection").Replace("CardOverflow_{TestName}", dbName) |> ConnectionString)
         
         let elasticSearchIndexName t = $"{dbName}_{t}".ToLower()
-        let conceptIndex  = nameof Domain.Concept  |> elasticSearchIndexName
         let exampleIndex = nameof Domain.Example |> elasticSearchIndexName
         container.RegisterSingleton<ElasticClient>(fun () ->
             let sourceSerializerFactory =
@@ -129,9 +128,6 @@ type Container with
             let uri = container.GetInstance<IConfiguration>().GetConnectionString("ElasticSearchUri") |> Uri
             let pool = new SingleNodeConnectionPool(uri)
             (new ConnectionSettings(pool, sourceSerializerFactory))
-                .DefaultMappingFor<Domain.Concept.Events.Summary>(fun x ->
-                    x.IndexName conceptIndex :> IClrTypeMapping<_>
-                )
                 .DefaultMappingFor<Domain.Example.Events.Summary>(fun x ->
                     x.IndexName exampleIndex :> IClrTypeMapping<_>
                 )

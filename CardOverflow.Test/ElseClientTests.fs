@@ -21,20 +21,20 @@ open FsToolkit.ErrorHandling
 open AsyncOp
 
 [<StandardProperty>]
-let ``ElseClient can handle all Concept events`` ((summary: Concept.Events.Summary), exampleId) = async {
+let ``ElseClient can handle all Example events`` (summary: Example.Events.Summary) (edited: Example.Events.Edited) = async {
     let client = TestEsContainer().ElseClient()
 
     // Created
     do! summary
-        |> Concept.Events.Event.Created
-        |> client.UpsertConcept summary.Id
+        |> Example.Events.Event.Created
+        |> client.UpsertExample summary.Id
     
-    do! client.Get summary.Id |>% Assert.equal summary
+    do! client.GetExample summary.Id |>% Assert.equal summary
 
     // DefaultExampleChanged
-    do! { Concept.Events.ExampleId = exampleId }
-        |> Concept.Events.Event.DefaultExampleChanged
-        |> client.UpsertConcept summary.Id
+    do! edited
+        |> Example.Events.Event.Edited
+        |> client.UpsertExample summary.Id
     
-    do! client.Get summary.Id |>% Assert.equal { summary with DefaultExampleId = exampleId }
+    do! client.GetExample summary.Id |>% Assert.equal (summary |> Example.Fold.evolveEdited edited)
     }

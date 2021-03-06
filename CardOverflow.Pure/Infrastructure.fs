@@ -12,10 +12,16 @@ type DeckId = Guid<deckId>
 type CardSettingId = Guid<cardSettingId>
     and [<Measure>] cardSettingId
 
-type ConceptId = Guid<conceptId>
-    and [<Measure>] conceptId
 type ExampleId = Guid<exampleId>
     and [<Measure>] exampleId
+type ParentedExampleId =
+    { ExampleId: ExampleId
+      ParentId:  ExampleId option }
+module ParentedExampleId =
+    let create exampleId parentId = {
+        ExampleId = exampleId
+        ParentId  = parentId
+    }
 type RevisionId = Guid<revisionId>
     and [<Measure>] revisionId
 type StackId = Guid<stackId>
