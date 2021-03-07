@@ -35,7 +35,7 @@ let ``Create summary roundtrips`` (stackSummary: Stack.Events.Summary) (template
     |> Assert.equal (Stack.Events.Created stackSummary)
 
     // azure table roundtrips
-    let! actual, _ = c.KeyValueStore().GetStack stackSummary.Id
+    let! actual = c.KeyValueStore().GetStack stackSummary.Id
     Assert.equal stackSummary actual
     }
 
@@ -58,6 +58,6 @@ let ``Edited roundtrips`` (stackSummary: Stack.Events.Summary) (templateSummary:
     |> Assert.equal (Stack.Events.TagsChanged tagsChanged)
 
     // azure table roundtrips
-    let! actual, _ = c.KeyValueStore().GetStack stackSummary.Id
+    let! actual = c.KeyValueStore().GetStack stackSummary.Id
     Assert.equal (stackSummary |> Fold.evolveTagsChanged tagsChanged) actual
     }

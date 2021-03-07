@@ -30,7 +30,7 @@ let ``Create summary roundtrips`` (userSummary: User.Events.Summary) = asyncResu
     |> Assert.equal (User.Events.Created userSummary)
 
     // azure table roundtrips
-    let! user, _ = c.KeyValueStore().GetUser userSummary.Id
+    let! user = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal userSummary user
     }
 
@@ -49,7 +49,7 @@ let ``CardSettingsEdited roundtrips`` (userSummary: User.Events.Summary) (cardSe
     |> Assert.equal (User.Events.CardSettingsEdited cardSettings)
 
     // azure table roundtrips
-    let! user, _ = c.KeyValueStore().GetUser userSummary.Id
+    let! user = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal { userSummary with CardSettings = cardSettings.CardSettings } user
     }
 
@@ -70,7 +70,7 @@ let ``OptionsEdited roundtrips`` (userSummary: User.Events.Summary) (deckSummary
     |> Assert.equal (User.Events.OptionsEdited optionsEdited)
 
     // azure table roundtrips
-    let! user, _ = c.KeyValueStore().GetUser userSummary.Id
+    let! user = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal (User.Fold.evolveOptionsEdited optionsEdited userSummary) user
     }
 
@@ -86,14 +86,14 @@ let ``(Un)FollowDeck roundtrips`` (userSummary: User.Events.Summary) (deckSummar
     (***   when followed, then azure table updated   ***)
     do! userWriter.DeckFollowed userSummary.Id deckSummary.Id
 
-    let! actual, _ = c.KeyValueStore().GetUser userSummary.Id
+    let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal { userSummary with FollowedDecks = userSummary.FollowedDecks |> Set.add deckSummary.Id } actual
 
 
     (***   when unfollowed, then azure table updated   ***)
     do! userWriter.DeckUnfollowed userSummary.Id deckSummary.Id
 
-    let! actual, _ = c.KeyValueStore().GetUser userSummary.Id
+    let! actual = c.KeyValueStore().GetUser userSummary.Id
     Assert.equal userSummary actual
 
     
@@ -128,7 +128,7 @@ let ``Azure Tables max payload size`` () : unit =
 
             do! userSaga.Create userSummary
 
-            let! user, _ = keyValueStore.GetUser userSummary.Id
+            let! user = keyValueStore.GetUser userSummary.Id
             Assert.equal userSummary user
         } |> Async.RunSynchronously |> Result.getOk
     } |> Property.check

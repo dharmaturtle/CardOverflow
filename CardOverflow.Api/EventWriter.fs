@@ -38,7 +38,7 @@ module User =
 
         member _.OptionsEdited userId (o: Events.OptionsEdited) = async {
             let stream = resolve userId
-            let! deck, _ = keyValueStore.GetDeck o.DefaultDeckId
+            let! deck = keyValueStore.GetDeck o.DefaultDeckId
             return! stream.Transact(decideOptionsEdited o deck.AuthorId)
             }
         member _.CardSettingsEdited userId cardSettingsEdited =

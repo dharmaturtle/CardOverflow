@@ -37,7 +37,7 @@ let ``Create summary roundtrips (azure table)`` (deckSummary: Deck.Events.Summar
 
     do! deckWriter.Create deckSummary
 
-    let! actual, _ = keyValueStore.GetDeck deckSummary.Id
+    let! actual = keyValueStore.GetDeck deckSummary.Id
     Assert.equal deckSummary actual
     }
 
@@ -64,6 +64,6 @@ let ``Edited roundtrips (azure table)`` (deckSummary: Deck.Events.Summary) (edit
     
     do! deckWriter.Edit edited deckSummary.AuthorId deckSummary.Id
 
-    let! actual, _ = keyValueStore.GetDeck deckSummary.Id
+    let! actual = keyValueStore.GetDeck deckSummary.Id
     Assert.equal (Deck.Fold.evolveEdited edited deckSummary) actual
     }
