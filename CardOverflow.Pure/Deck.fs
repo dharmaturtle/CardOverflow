@@ -69,19 +69,25 @@ let validateSourceId doesSourceExist (sourceId: DeckId option) =
     | Some sourceId -> doesSourceExist |> Result.requireTrue $"The source deck '{sourceId}' doesn't exist"
     | None -> Ok()
 
+let validateSummary doesSourceExist (summary: Events.Summary) = result {
+    do! validateSourceId doesSourceExist summary.SourceId
+    do! validateName summary.Name
+    }
+
+let validateEdit callerId doesSourceExist (summary: Events.Summary) (edit: Events.Edited) = result {
+    do! Result.requireEqual callerId summary.AuthorId $"You ({callerId}) didn't author this deck ({summary.Id})."
+    do! validateSourceId doesSourceExist edit.SourceId
+    do! validateName edit.Name
+    }
+
 let decideCreate (summary: Events.Summary) doesSourceExist state =
     match state with
     | Fold.State.Active s -> Error $"Deck '{s.Id}' already exists."
-    | Fold.State.Initial  -> result {
-        do! validateSourceId doesSourceExist summary.SourceId
-        do! validateName summary.Name
-    } |> addEvent (Events.Created summary)
+    | Fold.State.Initial  -> validateSummary doesSourceExist summary
+    |> addEvent (Events.Created summary)
 
-let decideEdited (e: Events.Edited) callerId doesSourceExist state =
+let decideEdited (edit: Events.Edited) callerId doesSourceExist state =
     match state with
     | Fold.State.Initial  -> Error $"You ({callerId}) can't edit a deck that doesn't exist."
-    | Fold.State.Active s -> result {
-        do! Result.requireEqual callerId s.AuthorId $"You ({callerId}) didn't author this deck ({s.Id})."
-        do! validateSourceId doesSourceExist e.SourceId
-        do! validateName e.Name
-    } |> addEvent (Events.Edited e)
+    | Fold.State.Active s -> validateEdit callerId doesSourceExist s edit
+    |> addEvent (Events.Edited edit)
