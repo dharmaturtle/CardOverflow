@@ -109,6 +109,14 @@ let validateSummary (summary: Events.Summary) = result {
     do! validateTitle summary.Title
     }
 
+let validateEdit callerId (summary: Events.Summary) (edited: Events.Edited) = result {
+    do! validateFieldValues edited.FieldValues
+    do! validateEditSummary edited.EditSummary
+    do! validateTitle edited.Title
+    do! Result.requireEqual summary.AuthorId callerId $"You ({callerId}) aren't the author of Example {summary.Id}."
+    do! summary.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate RevisionId:{edited.RevisionId}"
+    }
+
 // medTODO validate revisionId global uniqueness
 
 let decideCreate (summary: Events.Summary) state =
@@ -120,7 +128,5 @@ let decideCreate (summary: Events.Summary) state =
 let decideEdit (edited: Events.Edited) callerId state =
     match state with
     | Fold.State.Initial  -> Error "Can't edit a example that doesn't exist."
-    | Fold.State.Active x -> result {
-        do! Result.requireEqual x.AuthorId callerId $"You ({callerId}) aren't the author of Example {x.Id}."
-        do! x.RevisionIds |> Seq.contains edited.RevisionId |> Result.requireFalse $"Duplicate RevisionId:{edited.RevisionId}"
-    } |> addEvent (Events.Edited edited)
+    | Fold.State.Active s -> validateEdit callerId s edited
+    |> addEvent (Events.Edited edited)

@@ -220,8 +220,24 @@ let exampleSummaryGen = gen {
             { b with
                 Title = title
                 EditSummary = editSummary
-                RevisionIds = [ revisionId ]      })
+                RevisionIds = [ revisionId ] })
         |> Gen.filter (Example.validateSummary >> Result.isOk)
+    }
+
+type ExampleEdit = { Summary: Example.Events.Summary; Edit: Example.Events.Edited }
+let exampleEditGen = gen {
+    let! exampleSummary = exampleSummaryGen
+    let! title          = GenX.lString 0 Example.titleMax       Gen.latin1
+    let! editSummary    = GenX.lString 0 Example.editSummaryMax Gen.latin1
+    let! edit =
+        nodaConfig
+        |> GenX.autoWith<Example.Events.Edited>
+        |> Gen.map (fun b ->
+            { b with
+                Title = title
+                EditSummary = editSummary })
+        |> Gen.filter (Example.validateEdit exampleSummary.AuthorId exampleSummary >> Result.isOk)
+    return { Summary = exampleSummary; Edit = edit }
     }
 
 let deckEditGen = gen {
