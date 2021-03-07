@@ -14,38 +14,41 @@ let streamName (id: UserId) = StreamName.create "User" (id.ToString())
 module Events =
     
     type Summary =
-        {  Id: UserId
-           DisplayName: string
-           DefaultDeckId: DeckId
-           ShowNextReviewTime: bool
-           ShowRemainingCardCount: bool
-           StudyOrder: StudyOrder
-           NextDayStartsAt: LocalTime
-           LearnAheadLimit: Duration
-           TimeboxTimeLimit: Duration
-           IsNightMode: bool
-           Created: Instant
-           Modified: Instant
-           Timezone: DateTimeZone
-           CardSettings: CardSetting list // medTODO move card settings here
-           FollowedDecks: DeckId Set
-        }
-    type OptionsEdited =
-        {  DefaultDeckId: DeckId
-           ShowNextReviewTime: bool
-           ShowRemainingCardCount: bool
-           StudyOrder: StudyOrder
-           NextDayStartsAt: LocalTime
-           LearnAheadLimit: Duration
-           TimeboxTimeLimit: Duration
-           IsNightMode: bool
-           Timezone: DateTimeZone
-        }
-    type DeckFollowed   = { DeckId: DeckId}
-    type DeckUnfollowed = { DeckId: DeckId}
+        { Id: UserId
+          DisplayName: string
+          DefaultDeckId: DeckId
+          ShowNextReviewTime: bool
+          ShowRemainingCardCount: bool
+          StudyOrder: StudyOrder
+          NextDayStartsAt: LocalTime
+          LearnAheadLimit: Duration
+          TimeboxTimeLimit: Duration
+          IsNightMode: bool
+          Created: Instant
+          Modified: Instant
+          Timezone: DateTimeZone
+          CardSettings: CardSetting list // medTODO move card settings here
+          FollowedDecks: DeckId Set
+          FavoriteTemplateRevisions: TemplateRevisionId list }
 
-    type CardSettingsEdited =
-        { CardSettings: CardSetting list }
+    type OptionsEdited =
+        { DefaultDeckId: DeckId
+          ShowNextReviewTime: bool
+          ShowRemainingCardCount: bool
+          StudyOrder: StudyOrder
+          NextDayStartsAt: LocalTime
+          LearnAheadLimit: Duration
+          TimeboxTimeLimit: Duration
+          IsNightMode: bool
+          Timezone: DateTimeZone }
+
+    type DeckFollowed   = { DeckId: DeckId }
+    type DeckUnfollowed = { DeckId: DeckId }
+
+    type TemplateRevisionFavorited   = { TemplateRevisionId: TemplateRevisionId }
+    type TemplateRevisionUnfavorited = { TemplateRevisionId: TemplateRevisionId }
+
+    type CardSettingsEdited = { CardSettings: CardSetting list }
 
     type Event =
         | CardSettingsEdited of CardSettingsEdited
@@ -73,6 +76,12 @@ module Fold =
 
     let evolveDeckUnfollowed (d: Events.DeckUnfollowed) (s: Events.Summary) =
         { s with FollowedDecks = s.FollowedDecks |> Set.remove d.DeckId }
+
+    let evolveTemplateRevisionFavorited (d: Events.TemplateRevisionFavorited) (s: Events.Summary) =
+        { s with FavoriteTemplateRevisions = d.TemplateRevisionId :: s.FavoriteTemplateRevisions }
+
+    let evolveTemplateRevisionUnfavorited (d: Events.TemplateRevisionUnfavorited) (s: Events.Summary) =
+        { s with FavoriteTemplateRevisions = s.FavoriteTemplateRevisions |> List.filter ((<>) d.TemplateRevisionId) }
 
     let evolveCardSettingsEdited (cs: Events.CardSettingsEdited) (s: Events.Summary) =
         { s with CardSettings = cs.CardSettings }

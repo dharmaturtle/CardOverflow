@@ -208,6 +208,10 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
         this.Get<Template.RevisionSummary> templateRevisionId
     member this.GetTemplateRevision (templateRevisionId: TemplateRevisionId) =
         templateRevisionId.ToString() |> this.GetTemplateRevision
+    member this.GetTemplateRevisions (templateRevisionIds: TemplateRevisionId seq) =
+        templateRevisionIds
+        |> Seq.map (this.GetTemplateRevision >> Async.map fst)
+        |> Async.Parallel
 
     member this.UpsertStack' (stackId: string) e =
         match e with
