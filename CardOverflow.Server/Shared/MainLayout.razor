@@ -5,10 +5,13 @@
 @using CardOverflow.Api
 @using CardOverflow.Pure
 @using CardOverflow.Sanitation
+@using Fluxor
+@using CardOverflow.Server.Store
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject DbExecutor DbExecutor
 @inject UrlProvider UrlProvider
+@inject IDispatcher Dispatcher
 
 <CascadingValue Value=@_userTask>
   <BlazoredToasts Timeout="10" />
@@ -33,6 +36,7 @@
   // to rerun, leading to duplicate API calls. One possible improvement is to drop the CascadingValue and _userTask and
   // simply register a UserClaims provider with the container.
   protected override void OnInitialized() {
+    Dispatcher.Dispatch(new GetUserAction());
     _userTask = AuthenticationStateProvider.GetAuthenticationStateAsync().ContinueWith(x => toUserClaims(x.Result));
   }
 

@@ -40,6 +40,8 @@ namespace CardOverflow.Server {
         onError(r.ErrorValue);
       }
     }
+    
+    public static void UnsupportedCase(object theCase) => throw new Exception($"Case unsupported:{theCase}");
 
   }
 }
