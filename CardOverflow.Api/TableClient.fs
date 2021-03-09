@@ -113,8 +113,13 @@ type KeyValueStore(keyValueStore: IKeyValueStore) =
             ] |> fun x -> JsonConvert.DeserializeObject<'a> (x, Infrastructure.jsonSerializerSettings), m
         )
 
-    member this.Get<'a> (key: obj) =
-        this.TryGet<'a> key |>% Option.get |>% fst
+    member this.Get<'a> (key: obj) = async {
+        let! x = this.TryGet<'a> key
+        return
+            match x with
+            | Some (a, _) -> a
+            | None -> failwith $"The {nameof KeyValueStore} couldn't find anything with the key '{key}'."
+        }
     
     member this.Update update (rowKey: obj) =
         rowKey
