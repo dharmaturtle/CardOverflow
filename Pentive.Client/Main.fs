@@ -18,7 +18,7 @@ type Page =
 type Model =
     {
         page: Page
-        counter: int
+        counter: Counter.Model
         books: Book[] option
         error: string option
         username: string
@@ -38,7 +38,7 @@ and Book =
 let initModel =
     {
         page = Home
-        counter = 0
+        counter = Counter.initModel
         books = None
         error = None
         username = ""
@@ -75,9 +75,7 @@ type BookService =
 /// The Elmish application's update messages.
 type Message =
     | SetPage of Page
-    | Increment
-    | Decrement
-    | SetCounter of int
+    | CounterMsg of Counter.Message
     | GetBooks
     | GotBooks of Book[]
     | SetUsername of string
@@ -99,12 +97,9 @@ let update remote message model =
     | SetPage page ->
         { model with page = page }, Cmd.none
 
-    | Increment ->
-        { model with counter = model.counter + 1 }, Cmd.none
-    | Decrement ->
-        { model with counter = model.counter - 1 }, Cmd.none
-    | SetCounter value ->
-        { model with counter = value }, Cmd.none
+    | CounterMsg msg ->
+        let counter, cmd = Counter.update msg model.counter
+        { model with counter = counter }, cmd
 
     | GetBooks ->
         let cmd = Cmd.OfAsync.either remote.getBooks () GotBooks Error
@@ -143,13 +138,6 @@ type Main = Template<"wwwroot/main.html">
 
 let homePage model dispatch =
     Main.Home().Elt()
-
-let counterPage model dispatch =
-    Main.Counter()
-        .Decrement(fun _ -> dispatch Decrement)
-        .Increment(fun _ -> dispatch Increment)
-        .Value(model.counter, fun v -> dispatch (SetCounter v))
-        .Elt()
 
 let dataPage model (username: string) dispatch =
     Main.Data()
@@ -202,7 +190,7 @@ let view model dispatch =
         .Body(
             cond model.page <| function
             | Home -> homePage model dispatch
-            | Counter -> counterPage model dispatch
+            | Counter -> Counter.view model.counter (CounterMsg >> dispatch)
             | Data ->
                 cond model.signedInAs <| function
                 | Some username -> dataPage model username dispatch
