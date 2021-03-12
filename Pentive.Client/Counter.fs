@@ -26,11 +26,11 @@ type Message =
 let update message model =
     match message with
     | Increment ->
-        { model with counter = model.counter + 1 }, Cmd.none
+        { model with counter = model.counter + 1 }
     | Decrement ->
-        { model with counter = model.counter - 1 }, Cmd.none
+        { model with counter = model.counter - 1 }
     | SetCounter value ->
-        { model with counter = value }, Cmd.none
+        { model with counter = value }
 
 type Counter = Template<"wwwroot/counter.html">
 

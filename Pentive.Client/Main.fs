@@ -89,47 +89,53 @@ type Message =
     | Error of exn
     | ClearError
 
-let update remote message model =
+type CmdMsg =
+    | CM_GetBooks
+    | CM_GotBooks
+    | CM_RecvSignIn of Model
+    | CM_RecvSignedInAs
+    | CM_RecvSignOut
+
+let update message model =
     let onSignIn = function
-        | Some _ -> Cmd.ofMsg GetBooks
-        | None -> Cmd.none
+        | Some _ -> [CM_GetBooks]
+        | None -> []
     match message with
     | SetPage page ->
-        { model with page = page }, Cmd.none
+        { model with page = page }, []
 
     | CounterMsg msg ->
-        let counter, cmd = Counter.update msg model.counter
-        { model with counter = counter }, cmd
+        let counter = Counter.update msg model.counter
+        { model with counter = counter }, []
 
     | GetBooks ->
-        let cmd = Cmd.OfAsync.either remote.getBooks () GotBooks Error
-        { model with books = None }, cmd
+        { model with books = None }, [CM_GotBooks]
     | GotBooks books ->
-        { model with books = Some books }, Cmd.none
+        { model with books = Some books }, []
 
     | SetUsername s ->
-        { model with username = s }, Cmd.none
+        { model with username = s }, []
     | SetPassword s ->
-        { model with password = s }, Cmd.none
+        { model with password = s }, []
     | GetSignedInAs ->
-        model, Cmd.OfAuthorized.either remote.getUsername () RecvSignedInAs Error
+        model, [CM_RecvSignedInAs]
     | RecvSignedInAs username ->
         { model with signedInAs = username }, onSignIn username
     | SendSignIn ->
-        model, Cmd.OfAsync.either remote.signIn (model.username, model.password) RecvSignIn Error
+        model, [CM_RecvSignIn model]
     | RecvSignIn username ->
         { model with signedInAs = username; signInFailed = Option.isNone username }, onSignIn username
     | SendSignOut ->
-        model, Cmd.OfAsync.either remote.signOut () (fun () -> RecvSignOut) Error
+        model, [CM_RecvSignOut]
     | RecvSignOut ->
-        { model with signedInAs = None; signInFailed = false }, Cmd.none
+        { model with signedInAs = None; signInFailed = false }, []
 
     | Error RemoteUnauthorizedException ->
-        { model with error = Some "You have been logged out."; signedInAs = None }, Cmd.none
+        { model with error = Some "You have been logged out."; signedInAs = None }, []
     | Error exn ->
-        { model with error = Some exn.Message }, Cmd.none
+        { model with error = Some exn.Message }, []
     | ClearError ->
-        { model with error = None }, Cmd.none
+        { model with error = None }, []
 
 /// Connects the routing system to the Elmish application.
 let router = Router.infer SetPage (fun model -> model.page)
@@ -207,12 +213,24 @@ let view model dispatch =
         )
         .Elt()
 
+let toCmd remote = function
+    | CM_GetBooks
+    | CM_GotBooks -> Cmd.OfAsync.either remote.getBooks () GotBooks Error
+    | CM_RecvSignIn model -> Cmd.OfAsync.either remote.signIn (model.username, model.password) RecvSignIn Error
+    | CM_RecvSignedInAs -> Cmd.OfAuthorized.either remote.getUsername () RecvSignedInAs Error
+    | CM_RecvSignOut -> Cmd.OfAsync.either remote.signOut () (fun () -> RecvSignOut) Error
+
+let toCmds remote =
+    List.map (toCmd remote)
+
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
     override this.Program =
         let bookService = this.Remote<BookService>()
-        let update = update bookService
+        let update msg model =
+            let model, cmdMsgs = update msg model
+            model, toCmds bookService cmdMsgs |> Cmd.batch
         Program.mkProgram (fun _ -> initModel, Cmd.ofMsg GetSignedInAs) update view
         |> Program.withRouter router
 #if DEBUG
