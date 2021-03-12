@@ -11,11 +11,11 @@ open Bolero.Remoting.Server
 open Pentive
 
 type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
-    inherit RemoteHandler<Client.Main.BookService>()
+    inherit RemoteHandler<Client.Book.BookService>()
 
     let books =
         let json = Path.Combine(env.ContentRootPath, "data/books.json") |> File.ReadAllText
-        JsonSerializer.Deserialize<Client.Main.Book[]>(json)
+        JsonSerializer.Deserialize<Client.Book.Book[]>(json)
         |> ResizeArray
 
     override this.Handler =

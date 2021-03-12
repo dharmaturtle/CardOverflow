@@ -1,0 +1,23 @@
+<h1 class="title">
+  Download data
+  <button class="button" onclick="${Reload}">Reload</button>
+</h1>
+<p>
+  Signed in as ${Username}.
+</p>
+<table class="table is-fullwidth">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Author</th>
+      <th>Published</th>
+      <th>ISBN</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${Rows}
+    <template id="EmptyData">
+      <tr><td colspan="4">Downloading book list...</td></tr>
+    </template>
+  </tbody>
+</table>
