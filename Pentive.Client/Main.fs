@@ -8,13 +8,6 @@ open Bolero.Remoting
 open Bolero.Remoting.Client
 open Bolero.Templating.Client
 
-/// Routing endpoints definition.
-type Page =
-    | [<EndPoint "/">] Home
-    | [<EndPoint "/counter">] Counter
-    | [<EndPoint "/data">] Data
-    | [<EndPoint "/login">] Login
-
 /// The Elmish application's model.
 type Model =
     {
@@ -22,10 +15,7 @@ type Model =
         counter: Counter.Model
         books: Book[] option
         error: string option
-        username: string
-        password: string
-        signedInAs: option<string>
-        signInFailed: bool
+        login: Login.Model
     }
 
 and Book =
@@ -42,10 +32,7 @@ let initModel =
         counter = Counter.initModel
         books = None
         error = None
-        username = ""
-        password = ""
-        signedInAs = None
-        signInFailed = false
+        login = Login.initModel
     }
 
 /// Remote service definition.
@@ -77,38 +64,25 @@ type BookService =
 type Message =
     | SetPage of Page
     | CounterMsg of Counter.Message
+    | LoginMsg of Login.Message
     | GetBooks
     | GotBooks of Book[]
-    | SetUsername of string
-    | SetPassword of string
-    | GetSignedInAs
-    | RecvSignedInAs of option<string>
-    | SendSignIn
-    | RecvSignIn of option<string>
-    | SendSignOut
-    | RecvSignOut
     | Error of exn
     | ClearError
 
 type CmdMsg =
     | CM_SetPage of Page
-    | CM_GetBooks
     | CM_GotBooks
-    | CM_RecvSignIn of Model
-    | CM_RecvSignedInAs
-    | CM_RecvSignOut
+    | CM_Login of Login.CmdMsg
 
 let update message (model: Model) =
-    let onSignIn = function
-        | Some _ -> [CM_GetBooks]
-        | None -> []
     match message with
     | SetPage page ->
         match page with
         | Data ->
-            match model.signedInAs with
+            match model.login.signedInAs with
             | Some _ -> { model with page = page }, []
-            | None ->  { model with error = Some "You must login to view the Download Data page." }, [CM_SetPage Login]
+            | None -> { model with error = Some "You must login to view the Download Data page." }, [CM_SetPage Login]
         | _ -> { model with page = page }, []
 
     | CounterMsg msg ->
@@ -120,25 +94,12 @@ let update message (model: Model) =
     | GotBooks books ->
         { model with books = Some books }, []
 
-    | SetUsername s ->
-        { model with username = s }, []
-    | SetPassword s ->
-        { model with password = s }, []
-    | GetSignedInAs ->
-        model, [CM_RecvSignedInAs]
-    | RecvSignedInAs username ->
-        { model with signedInAs = username }, onSignIn username
-    | SendSignIn ->
-        model, [CM_RecvSignIn model]
-    | RecvSignIn username ->
-        { model with signedInAs = username; signInFailed = Option.isNone username }, onSignIn username
-    | SendSignOut ->
-        model, [CM_RecvSignOut]
-    | RecvSignOut ->
-        { model with signedInAs = None; signInFailed = false }, []
+    | LoginMsg msg ->
+        let login, cmds = Login.update msg model.login
+        { model with login = login }, cmds |> List.map CmdMsg.CM_Login
 
     | Error RemoteUnauthorizedException ->
-        { model with error = Some "You have been logged out."; signedInAs = None }, []
+        { model with error = Some "You have been logged out."; login = Login.logout model.login }, []
     | Error exn ->
         { model with error = Some exn.Message }, []
     | ClearError ->
@@ -153,12 +114,12 @@ let homePage =
     Main.Home().Elt()
 
 let dataPage (model: Model) dispatch =
-    match model.signedInAs with
+    match model.login.signedInAs with
     | Some username ->
         Main.Data()
             .Reload(fun _ -> dispatch GetBooks)
             .Username(username)
-            .SignOut(fun _ -> dispatch SendSignOut)
+            .SignOut(fun _ -> Login.SendSignOut |> Message.LoginMsg |> dispatch)
             .Rows(cond model.books <| function
                 | None ->
                     Main.EmptyData().Elt()
@@ -172,22 +133,6 @@ let dataPage (model: Model) dispatch =
                         ])
             .Elt()
     | None -> text "You must login to view the Download Data page."
-
-let loginPage model dispatch =
-    Main.SignIn()
-        .Username(model.username, fun s -> dispatch (SetUsername s))
-        .Password(model.password, fun s -> dispatch (SetPassword s))
-        .SignIn(fun _ -> dispatch SendSignIn)
-        .ErrorNotification(
-            cond model.signInFailed <| function
-            | false -> empty
-            | true ->
-                Main.ErrorNotification()
-                    .HideClass("is-hidden")
-                    .Text("Sign in failed. Use any username and the password \"password\".")
-                    .Elt()
-        )
-        .Elt()
 
 let menuItem (model: Model) (page: Page) (text: string) =
     Main.MenuItem()
@@ -207,7 +152,7 @@ let view model dispatch =
         .Body(
             cond model.page <| function
             | Home -> homePage
-            | Login -> loginPage model dispatch
+            | Login -> Login.view model.login (LoginMsg >> dispatch)
             | Counter -> Counter.view model.counter (CounterMsg >> dispatch)
             | Data -> dataPage model dispatch
         )
@@ -224,11 +169,13 @@ let view model dispatch =
 
 let toCmd remote = function
     | CM_SetPage page -> SetPage page |> Cmd.ofMsg
-    | CM_GetBooks
     | CM_GotBooks -> Cmd.OfAsync.either remote.getBooks () GotBooks Error
-    | CM_RecvSignIn model -> Cmd.OfAsync.either remote.signIn (model.username, model.password) RecvSignIn Error
-    | CM_RecvSignedInAs -> Cmd.OfAuthorized.either remote.getUsername () RecvSignedInAs Error
-    | CM_RecvSignOut -> Cmd.OfAsync.either remote.signOut () (fun () -> RecvSignOut) Error
+    | CM_Login cmdMsg ->
+        match cmdMsg with
+        | Login.CM_RecvSignIn model -> Cmd.OfAsync.either remote.signIn (model.username, model.password) (Login.RecvSignIn >> Message.LoginMsg) Error
+        | Login.CM_RecvSignedInAs -> Cmd.OfAuthorized.either remote.getUsername () (Login.RecvSignedInAs >> Message.LoginMsg) Error
+        | Login.CM_RecvSignOut -> Cmd.OfAsync.either remote.signOut () (fun () -> Login.RecvSignOut |> Message.LoginMsg) Error
+        | Login.CM_SetPage page -> SetPage page |> Cmd.ofMsg
 
 let toCmds remote =
     List.map (toCmd remote)
@@ -241,7 +188,7 @@ type MyApp() =
         let update msg model =
             let model, cmdMsgs = update msg model
             model, toCmds bookService cmdMsgs |> Cmd.batch
-        Program.mkProgram (fun _ -> initModel, Cmd.ofMsg GetSignedInAs) update view
+        Program.mkProgram (fun _ -> initModel, Login.GetSignedInAs |> Message.LoginMsg |> Cmd.ofMsg) update view
         |> Program.withRouter router
 #if DEBUG
         |> Program.withHotReload

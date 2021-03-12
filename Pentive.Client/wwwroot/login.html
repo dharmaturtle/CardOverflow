@@ -1,0 +1,21 @@
+<h1 class="title">Sign in</h1>
+<form onsubmit="${SignIn}">
+  <div class="field">
+    <label class="label">Username</label>
+    <div class="control">
+      <input class="input" bind="${Username}" />
+    </div>
+  </div>
+  <div class="field">
+    <label class="label">Password</label>
+    <div class="control">
+      <input class="input" type="password" bind="${Password}" />
+    </div>
+  </div>
+  <div class="field">
+    <div class="control">
+      <input type="submit" value="Sign in" />
+    </div>
+  </div>
+  ${ErrorNotification}
+</form>
