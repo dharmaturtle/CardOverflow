@@ -13,6 +13,7 @@ type Page =
     | [<EndPoint "/">] Home
     | [<EndPoint "/counter">] Counter
     | [<EndPoint "/data">] Data
+    | [<EndPoint "/login">] Login
 
 /// The Elmish application's model.
 type Model =
@@ -90,19 +91,25 @@ type Message =
     | ClearError
 
 type CmdMsg =
+    | CM_SetPage of Page
     | CM_GetBooks
     | CM_GotBooks
     | CM_RecvSignIn of Model
     | CM_RecvSignedInAs
     | CM_RecvSignOut
 
-let update message model =
+let update message (model: Model) =
     let onSignIn = function
         | Some _ -> [CM_GetBooks]
         | None -> []
     match message with
     | SetPage page ->
-        { model with page = page }, []
+        match page with
+        | Data ->
+            match model.signedInAs with
+            | Some _ -> { model with page = page }, []
+            | None ->  { model with error = Some "You must login to view the Download Data page." }, [CM_SetPage Login]
+        | _ -> { model with page = page }, []
 
     | CounterMsg msg ->
         let counter = Counter.update msg model.counter
@@ -142,28 +149,31 @@ let router = Router.infer SetPage (fun model -> model.page)
 
 type Main = Template<"wwwroot/main.html">
 
-let homePage model dispatch =
+let homePage =
     Main.Home().Elt()
 
-let dataPage model (username: string) dispatch =
-    Main.Data()
-        .Reload(fun _ -> dispatch GetBooks)
-        .Username(username)
-        .SignOut(fun _ -> dispatch SendSignOut)
-        .Rows(cond model.books <| function
-            | None ->
-                Main.EmptyData().Elt()
-            | Some books ->
-                forEach books <| fun book ->
-                    tr [] [
-                        td [] [text book.title]
-                        td [] [text book.author]
-                        td [] [text (book.publishDate.ToString("yyyy-MM-dd"))]
-                        td [] [text book.isbn]
-                    ])
-        .Elt()
+let dataPage (model: Model) dispatch =
+    match model.signedInAs with
+    | Some username ->
+        Main.Data()
+            .Reload(fun _ -> dispatch GetBooks)
+            .Username(username)
+            .SignOut(fun _ -> dispatch SendSignOut)
+            .Rows(cond model.books <| function
+                | None ->
+                    Main.EmptyData().Elt()
+                | Some books ->
+                    forEach books <| fun book ->
+                        tr [] [
+                            td [] [text book.title]
+                            td [] [text book.author]
+                            td [] [text (book.publishDate.ToString("yyyy-MM-dd"))]
+                            td [] [text book.isbn]
+                        ])
+            .Elt()
+    | None -> text "You must login to view the Download Data page."
 
-let signInPage model dispatch =
+let loginPage model dispatch =
     Main.SignIn()
         .Username(model.username, fun s -> dispatch (SetUsername s))
         .Password(model.password, fun s -> dispatch (SetPassword s))
@@ -190,17 +200,16 @@ let view model dispatch =
     Main()
         .Menu(concat [
             menuItem model Home "Home"
+            menuItem model Login "Login"
             menuItem model Counter "Counter"
             menuItem model Data "Download data"
         ])
         .Body(
             cond model.page <| function
-            | Home -> homePage model dispatch
+            | Home -> homePage
+            | Login -> loginPage model dispatch
             | Counter -> Counter.view model.counter (CounterMsg >> dispatch)
-            | Data ->
-                cond model.signedInAs <| function
-                | Some username -> dataPage model username dispatch
-                | None -> signInPage model dispatch
+            | Data -> dataPage model dispatch
         )
         .Error(
             cond model.error <| function
@@ -214,6 +223,7 @@ let view model dispatch =
         .Elt()
 
 let toCmd remote = function
+    | CM_SetPage page -> SetPage page |> Cmd.ofMsg
     | CM_GetBooks
     | CM_GotBooks -> Cmd.OfAsync.either remote.getBooks () GotBooks Error
     | CM_RecvSignIn model -> Cmd.OfAsync.either remote.signIn (model.username, model.password) RecvSignIn Error
