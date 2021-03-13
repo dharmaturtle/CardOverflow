@@ -8,16 +8,16 @@ open Bolero.Html
 
 type Model =
     {
-        username: string
-        password: string
-        loginFailed: bool
+        Username: string
+        Password: string
+        LoginFailed: bool
     }
 
 let initModel =
     {
-        username = ""
-        password = ""
-        loginFailed = false
+        Username = ""
+        Password = ""
+        LoginFailed = false
     }
 
 type Message =
@@ -29,21 +29,21 @@ type Message =
 let update message model =
     match message with
     | SetUsername s ->
-        { model with username = s }, []
+        { model with Username = s }, []
     | SetPassword s ->
-        { model with password = s }, []
+        { model with Password = s }, []
     | SendSignIn ->
-        { model with password = ""; loginFailed = false }, [Auth.CmdMsg.CM_AttemptLogin (model.username, model.password)]
+        { model with Password = ""; LoginFailed = false }, [Auth.CmdMsg.CM_AttemptLogin (model.Username, model.Password)]
     | LoginFailed ->
-        { model with loginFailed = true }, []
+        { model with LoginFailed = true }, []
 
 type LoginTemplate = Template<"wwwroot/login.html">
 
 let view model dispatch =
     LoginTemplate()
-        .Username(model.username, fun s -> dispatch (SetUsername s))
-        .Password(model.password, fun s -> dispatch (SetPassword s))
+        .Username(model.Username, fun s -> dispatch (SetUsername s))
+        .Password(model.Password, fun s -> dispatch (SetPassword s))
         .SignIn(fun _ -> dispatch SendSignIn)
-        .ErrorClass(if model.loginFailed then "" else "is-hidden")
+        .ErrorClass(if model.LoginFailed then "" else "is-hidden")
         .ErrorText("Sign in failed. Use any username and the password \"password\".")
         .Elt()

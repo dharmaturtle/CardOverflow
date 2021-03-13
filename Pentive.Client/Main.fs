@@ -11,22 +11,22 @@ open Bolero.Templating.Client
 /// The Elmish application's model.
 type Model =
     {
-        page: Page
-        counter: Counter.Model
-        book: Book.Model
-        error: string option
-        login: Login.Model
-        auth: Auth.Model
+        Page: Page
+        Counter: Counter.Model
+        Book: Book.Model
+        Error: string option
+        Login: Login.Model
+        Auth: Auth.Model
     }
 
 let initModel =
     {
-        page = Home
-        counter = Counter.initModel
-        book = Book.initModel
-        error = None
-        login = Login.initModel
-        auth = Auth.initModel
+        Page = Home
+        Counter = Counter.initModel
+        Book = Book.initModel
+        Error = None
+        Login = Login.initModel
+        Auth = Auth.initModel
     }
 
 /// The Elmish application's update messages.
@@ -54,35 +54,35 @@ let update message (model: Model) =
         match page with
         | Book
         | Profile ->
-            match model.auth.username with
-            | Some _ -> { model with page = page }, initializeCmds
-            | None -> { model with error = Some "You must login to view that page." }, [CM_SetPage Login]
+            match model.Auth.Username with
+            | Some _ -> { model with Page = page }, initializeCmds
+            | None -> { model with Error = Some "You must login to view that page." }, [CM_SetPage Login]
         | Home
         | Login
-        | Counter -> { model with page = page }, initializeCmds
+        | Counter -> { model with Page = page }, initializeCmds
 
     | CounterMsg msg ->
-        let counter = Counter.update msg model.counter
-        { model with counter = counter }, []
+        let counter = Counter.update msg model.Counter
+        { model with Counter = counter }, []
     | BookMsg msg ->
-        let book, cmds = Book.update msg model.book
-        { model with book = book }, cmds |> List.map CmdMsg.CM_Book
+        let book, cmds = Book.update msg model.Book
+        { model with Book = book }, cmds |> List.map CmdMsg.CM_Book
     | LoginMsg msg ->
-        let login, cmds = Login.update msg model.login
-        { model with login = login }, cmds |> List.map CmdMsg.CM_Auth
+        let login, cmds = Login.update msg model.Login
+        { model with Login = login }, cmds |> List.map CmdMsg.CM_Auth
     | AuthMsg msg ->
-        let auth, cmds = Auth.update msg model.auth
-        { model with auth = auth }, cmds |> List.map CmdMsg.CM_Auth
+        let auth, cmds = Auth.update msg model.Auth
+        { model with Auth = auth }, cmds |> List.map CmdMsg.CM_Auth
 
     | Error RemoteUnauthorizedException ->
-        { model with error = Some "You have been logged out."; auth = Auth.logout model.auth }, []
+        { model with Error = Some "You have been logged out."; Auth = Auth.logout model.Auth }, []
     | Error exn ->
-        { model with error = Some exn.Message }, []
+        { model with Error = Some exn.Message }, []
     | ClearError ->
-        { model with error = None }, []
+        { model with Error = None }, []
 
 /// Connects the routing system to the Elmish application.
-let router = Router.infer SetPage (fun model -> model.page)
+let router = Router.infer SetPage (fun model -> model.Page)
 
 type Main = Template<"wwwroot/main.html">
 
@@ -91,7 +91,7 @@ let homePage =
 
 let menuItem (model: Model) (page: Page) (text: string) =
     Main.MenuItem()
-        .Active(if model.page = page then "is-active" else "")
+        .Active(if model.Page = page then "is-active" else "")
         .Url(router.Link page)
         .Text(text)
         .Elt()
@@ -106,15 +106,15 @@ let view model dispatch =
             menuItem model Book "Download Books"
         ])
         .Body(
-            cond model.page <| function
+            cond model.Page <| function
             | Home -> homePage
-            | Login -> Login.view model.login (LoginMsg >> dispatch)
-            | Counter -> Counter.view model.counter (CounterMsg >> dispatch)
-            | Book -> Book.view model.auth.username model.book (BookMsg >> dispatch)
-            | Profile -> Profile.view model.auth (AuthMsg >> dispatch)
+            | Login -> Login.view model.Login (LoginMsg >> dispatch)
+            | Counter -> Counter.view model.Counter (CounterMsg >> dispatch)
+            | Book -> Book.view model.Auth.Username model.Book (BookMsg >> dispatch)
+            | Profile -> Profile.view model.Auth (AuthMsg >> dispatch)
         )
         .Error(
-            cond model.error <| function
+            cond model.Error <| function
             | None -> empty
             | Some err ->
                 Main.ErrorNotification()

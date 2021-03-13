@@ -8,20 +8,20 @@ open Bolero.Remoting
 
 type Model =
     {
-        books: Book[] Loadable
+        Books: Book[] Loadable
     }
 
 and Book =
     {
-        title: string
-        author: string
-        publishDate: DateTime
-        isbn: string
+        Title: string
+        Author: string
+        PublishDate: DateTime
+        Isbn: string
     }
 
 let initModel =
     {
-        books = Initial
+        Books = Initial
     }
 
 type BookService =
@@ -59,9 +59,9 @@ type CmdMsg =
 let update message model =
     match message with
     | GetBooks ->
-        { model with books = Loading }, [CM_GetBooks]
+        { model with Books = Loading }, [CM_GetBooks]
     | GotBooks books ->
-        { model with books = Loaded books }, []
+        { model with Books = Loaded books }, []
 
 type BookTemplate = Template<"wwwroot/book.html">
 
@@ -71,7 +71,7 @@ let view (username: string option) (model: Model) dispatch =
         BookTemplate()
             .Reload(fun _ -> dispatch GetBooks)
             .Username(username)
-            .Rows(cond model.books <| function
+            .Rows(cond model.Books <| function
                 | Initial ->
                     BookTemplate.Initial().Elt()
                 | Loading ->
@@ -79,10 +79,10 @@ let view (username: string option) (model: Model) dispatch =
                 | Loaded books ->
                     forEach books <| fun book ->
                         tr [] [
-                            td [] [text book.title]
-                            td [] [text book.author]
-                            td [] [text (book.publishDate.ToString("yyyy-MM-dd"))]
-                            td [] [text book.isbn]
+                            td [] [text book.Title]
+                            td [] [text book.Author]
+                            td [] [text (book.PublishDate.ToString("yyyy-MM-dd"))]
+                            td [] [text book.Isbn]
                         ])
             .Elt()
     | None -> text "You must login to view the Download Data page."

@@ -10,12 +10,12 @@ open Bolero.Templating.Client
 
 type Model =
     {
-        counter: int
+        Counter: int
     }
 
 let initModel =
     {
-        counter = 0
+        Counter = 0
     }
 
 type Message =
@@ -26,11 +26,11 @@ type Message =
 let update message model =
     match message with
     | Increment ->
-        { model with counter = model.counter + 1 }
+        { model with Counter = model.Counter + 1 }
     | Decrement ->
-        { model with counter = model.counter - 1 }
+        { model with Counter = model.Counter - 1 }
     | SetCounter value ->
-        { model with counter = value }
+        { model with Counter = value }
 
 type Counter = Template<"wwwroot/counter.html">
 
@@ -38,5 +38,5 @@ let view model dispatch =
     Counter()
         .Decrement(fun _ -> dispatch Decrement)
         .Increment(fun _ -> dispatch Increment)
-        .Value(model.counter, dispatch << SetCounter)
+        .Value(model.Counter, dispatch << SetCounter)
         .Elt()

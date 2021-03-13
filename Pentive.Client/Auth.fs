@@ -8,12 +8,12 @@ open Bolero.Html
 
 type Model =
     {
-        username: string option
+        Username: string option
     }
 
 let initModel =
     {
-        username = None
+        Username = None
     }
 
 type Redirect =
@@ -38,16 +38,16 @@ type CmdMsg =
     | CM_Initialize
 
 let logout model =
-    { model with username = None }
+    { model with Username = None }
 
 let update message model =
     match message with
     | Logout ->
-        { model with username = None }, [CM_SetPage Home; CM_Logout]
+        { model with Username = None }, [CM_SetPage Home; CM_Logout]
     | LoginAttempted (username, page) ->
         let cmd =
             match  page, username with
             | Page page  , Some _ -> [CM_SetPage page]
             | Page _     , None   -> [CM_LoginFailed]
             | InitialLoad, _      -> []
-        { model with username = username }, cmd
+        { model with Username = username }, cmd

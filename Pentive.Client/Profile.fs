@@ -10,7 +10,7 @@ open Auth
 type ProfileTemplate = Template<"wwwroot/profile.html">
 
 let view model dispatch =
-    match model.username with
+    match model.Username with
     | Some username ->
         ProfileTemplate()
             .Username(username)

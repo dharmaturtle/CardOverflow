@@ -14,8 +14,10 @@ type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
     inherit RemoteHandler<Client.Book.BookService>()
 
     let books =
+        let options = JsonSerializerOptions()
+        options.PropertyNameCaseInsensitive <- true
         let json = Path.Combine(env.ContentRootPath, "data/books.json") |> File.ReadAllText
-        JsonSerializer.Deserialize<Client.Book.Book[]>(json)
+        JsonSerializer.Deserialize<Client.Book.Book[]>(json, options)
         |> ResizeArray
 
     override this.Handler =
@@ -29,7 +31,7 @@ type BookService(ctx: IRemoteContext, env: IWebHostEnvironment) =
             }
 
             removeBookByIsbn = ctx.Authorize <| fun isbn -> async {
-                books.RemoveAll(fun b -> b.isbn = isbn) |> ignore
+                books.RemoveAll(fun b -> b.Isbn = isbn) |> ignore
             }
 
             signIn = fun (username, password) -> async {
