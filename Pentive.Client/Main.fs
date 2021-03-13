@@ -49,11 +49,14 @@ let update message (model: Model) =
     match message with
     | SetPage page ->
         match page with
-        | Data ->
+        | Data
+        | Profile ->
             match model.auth.username with
             | Some _ -> { model with page = page }, []
-            | None -> { model with error = Some "You must login to view the Download Data page." }, [CM_SetPage Login]
-        | _ -> { model with page = page }, []
+            | None -> { model with error = Some "You must login to view that page." }, [CM_SetPage Login]
+        | Home
+        | Login
+        | Counter -> { model with page = page }, []
 
     | CounterMsg msg ->
         let counter = Counter.update msg model.counter
