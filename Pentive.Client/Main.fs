@@ -52,6 +52,10 @@ let isPermitted page (auth: Auth.Model) =
 let update message (model: Model) =
     match message with
     | SetPage page ->
+        let model = // navigating from Login resets it
+            match model.Page with
+            | Login -> { model with Login = Login.initModel}
+            | _ -> model
         if isPermitted page model.Auth then
             let initializeCmds =
                 match page with
