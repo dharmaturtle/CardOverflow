@@ -48,15 +48,19 @@ type CmdMsg =
 let update message (model: Model) =
     match message with
     | SetPage page ->
+        let initializeCmds =
+            match page with
+            | Book -> [CmdMsg.CM_Book Book.CM_Initialize]
+            | _ -> []
         match page with
-        | Data
+        | Book
         | Profile ->
             match model.auth.username with
-            | Some _ -> { model with page = page }, []
+            | Some _ -> { model with page = page }, initializeCmds
             | None -> { model with error = Some "You must login to view that page." }, [CM_SetPage Login]
         | Home
         | Login
-        | Counter -> { model with page = page }, []
+        | Counter -> { model with page = page }, initializeCmds
 
     | CounterMsg msg ->
         let counter = Counter.update msg model.counter
@@ -103,14 +107,14 @@ let view model dispatch =
             menuItem model Login "Login"
             menuItem model Profile "Profile"
             menuItem model Counter "Counter"
-            menuItem model Data "Download data"
+            menuItem model Book "Download Books"
         ])
         .Body(
             cond model.page <| function
             | Home -> homePage
             | Login -> Login.view model.login (LoginMsg >> dispatch)
             | Counter -> Counter.view model.counter (CounterMsg >> dispatch)
-            | Data -> Book.view model.auth.username model.book (BookMsg >> dispatch)
+            | Book -> Book.view model.auth.username model.book (BookMsg >> dispatch)
             | Profile -> Profile.view model.auth (AuthMsg >> dispatch)
         )
         .Error(
@@ -129,7 +133,8 @@ let toCmd (remote: Book.BookService) = function
     | CM_InitialLoad -> Cmd.OfAuthorized.either remote.getUsername () (Auth.initialLoginAttempted >> Message.AuthMsg) Error
     | CM_Book cmdMsg ->
         match cmdMsg with
-        | Book.CM_GetBooks -> Cmd.OfAsync.either remote.getBooks () (Book.GotBooks >> Message.BookMsg) Error
+        | Book.CM_GetBooks
+        | Book.CM_Initialize -> Cmd.OfAsync.either remote.getBooks () (Book.GotBooks >> Message.BookMsg) Error
     | CM_Auth cmdMsg ->
         match cmdMsg with
         | Auth.CM_AttemptLogin (username, password) -> Cmd.OfAsync.either remote.signIn (username, password) (Auth.loginAttemptedTo Page.Profile >> Message.AuthMsg) Error

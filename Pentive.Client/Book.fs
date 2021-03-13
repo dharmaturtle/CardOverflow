@@ -54,6 +54,7 @@ type Message =
 
 type CmdMsg =
     | CM_GetBooks
+    | CM_Initialize
 
 let update message model =
     match message with

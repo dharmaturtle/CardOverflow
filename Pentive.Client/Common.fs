@@ -5,7 +5,7 @@ open Bolero
 type Page =
     | [<EndPoint "/">] Home
     | [<EndPoint "/counter">] Counter
-    | [<EndPoint "/data">] Data
+    | [<EndPoint "/book">] Book
     | [<EndPoint "/login">] Login
     | [<EndPoint "/profile">] Profile
 
