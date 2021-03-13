@@ -49,7 +49,7 @@ let isPermitted page (auth: Auth.Model) =
         auth.Username |> Option.isSome
     else true
 
-let update message (model: Model) =
+let updateModel message (model: Model) =
     match message with
     | SetPage page ->
         let model = // navigating from Login resets it
@@ -57,33 +57,53 @@ let update message (model: Model) =
             | Login -> { model with Login = Login.initModel}
             | _ -> model
         if isPermitted page model.Auth then
-            let initializeCmds =
-                match page with
-                | Book -> [CmdMsg.CM_Book Book.CM_Initialize]
-                | _ -> []
-            { model with Page = page }, initializeCmds
+            { model with Page = page }
         else
-            { model with Error = Some "You must login to view that page." }, [CM_SetPage Login]
+            { model with Error = Some "You must login to view that page." }
 
     | CounterMsg msg ->
         let counter = Counter.update msg model.Counter
-        { model with Counter = counter }, []
+        { model with Counter = counter }
     | BookMsg msg ->
         let book, cmds = Book.update msg model.Book
-        { model with Book = book }, cmds |> List.map CmdMsg.CM_Book
+        { model with Book = book }
     | LoginMsg msg ->
         let login, cmds = Login.update msg model.Login
-        { model with Login = login }, cmds |> List.map CmdMsg.CM_Auth
+        { model with Login = login }
     | AuthMsg msg ->
         let auth, cmds = Auth.update msg model.Auth
-        { model with Auth = auth }, cmds |> List.map CmdMsg.CM_Auth
+        { model with Auth = auth }
 
     | Error RemoteUnauthorizedException ->
-        { model with Error = Some "You have been logged out."; Auth = Auth.logout model.Auth }, []
+        { model with Error = Some "You have been logged out."; Auth = Auth.logout model.Auth }
     | Error exn ->
-        { model with Error = Some exn.Message }, []
+        { model with Error = Some exn.Message }
     | ClearError ->
-        { model with Error = None }, []
+        { model with Error = None }
+
+let updateMsg message (model: Model) =
+    match message with
+    | SetPage page ->
+        if isPermitted page model.Auth then
+            match page with
+            | Book -> [CmdMsg.CM_Book Book.CM_Initialize]
+            | _ -> []
+        else
+            [CM_SetPage Login]
+
+    | BookMsg msg ->
+        let book, cmds = Book.update msg model.Book
+        cmds |> List.map CmdMsg.CM_Book
+    | LoginMsg msg ->
+        let login, cmds = Login.update msg model.Login
+        cmds |> List.map CmdMsg.CM_Auth
+    | AuthMsg msg ->
+        let auth, cmds = Auth.update msg model.Auth
+        cmds |> List.map CmdMsg.CM_Auth
+
+    | CounterMsg _
+    | Error _
+    | ClearError -> []
 
 /// Connects the routing system to the Elmish application.
 let router = Router.infer SetPage (fun model -> model.Page)
@@ -155,7 +175,8 @@ type MyApp() =
         let bookRemote = this.Remote<Book.BookService>()
         let authRemote = this.Remote<Auth.AuthService>()
         let update msg model =
-            let model, cmdMsgs = update msg model
+            let model = updateModel msg model
+            let cmdMsgs = updateMsg msg model
             model, toCmds authRemote bookRemote cmdMsgs |> Cmd.batch
         Program.mkProgram (fun _ -> initModel, Auth.CM_Initialize |> CmdMsg.CM_Auth |> toCmd authRemote bookRemote) update view
         |> Program.withRouter router
